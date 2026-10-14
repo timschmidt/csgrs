@@ -1,0 +1,555 @@
+[
+  {
+    "name": "format",
+    "group": "baseline",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/mesh_identity_cost_probe_v1.rs"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.018424666952341795,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-time",
+    "group": "baseline",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/mesh_identity_cost_probe_v1.rs",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-time"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.4932974730618298,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-memory",
+    "group": "baseline",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/mesh_identity_cost_probe_v1.rs",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-memory"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.47476313309744,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-time",
+    "group": "candidate",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/mesh_identity_cost_probe_v1.rs",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-time"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.4564118096604943,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-memory",
+    "group": "candidate",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/mesh_identity_cost_probe_v1.rs",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-memory"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.47662636591121554,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "size-baseline",
+    "group": "baseline",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-time"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.007471167948096991,
+    "stdout_sha256": "b8180fb1b489f60a8406c883bd4bdd98c216f56ff6b8cf64461ec83fbc7675e1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "size-candidate",
+    "group": "candidate",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-time"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.0028837621212005615,
+    "stdout_sha256": "7333848b21a7798ba9799887fa57431e6e05e9a3898b3b4e77a6c6d5570afe3f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-time-0-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-time",
+      "16"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.004950281232595444,
+    "stdout_sha256": "5420cab95cbbc24cd9804a0dd41727075eabb25848325380fae9f638a8db4d1b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-time-0-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-time",
+      "16"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.005140687804669142,
+    "stdout_sha256": "7e8341ffbe04ae5b72fc5e02d74566db2a01e3bb0facc056d25198ed7f448e67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-memory-0-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-memory",
+      "16"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.005344913806766272,
+    "stdout_sha256": "5525fcff6bde3891fdb3350605c1800f8e19b4ae8c346320dfcae54db02ba15b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-memory-0-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-memory",
+      "16"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.005810852162539959,
+    "stdout_sha256": "8d5e99f00bb77872060e190545071f128f4f47866e0109f4538c6955e2dff9e3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-1-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.06331948190927505,
+    "stdout_sha256": "d83672e22efda77abc5d417316697fa5449e0cdd171f8c12c1a888cd866153d8",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-1-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.06308481795713305,
+    "stdout_sha256": "4f2f54b1896abf0f4de5a25972db30bbc8698ba35a08f844bdaac75281ce1f0f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-2-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.06624135235324502,
+    "stdout_sha256": "a5e8ee1540a9d15fd4f73cfce34bdea2d8e33f3edf0b1b536e1f687dbc462e58",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-2-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.06257979199290276,
+    "stdout_sha256": "53f1d4c50fa5e8a5c084751441916403676f435b85288c37048c755c0a10bae7",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-3-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.06309664715081453,
+    "stdout_sha256": "ff6c38bfb80b4b44f2e302498d98d5f2ee4be71c96dd71aa40273f19080d31c5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-3-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.06391060166060925,
+    "stdout_sha256": "daa112e9999914dc01d5187d126fb23d0d611949a6182673fd474891930a6107",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-4-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.08028036030009389,
+    "stdout_sha256": "17a2ed6fa1a65bd01e4f2dc6bd488410835f9c2c92acd566539b74820cd92cf5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-4-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.063104507047683,
+    "stdout_sha256": "8eb993b930d5a4fa86806d0487b014fde26dc7270a01ebf6f7c2afbeb88fbf06",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-5-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.06331169279292226,
+    "stdout_sha256": "0a896e3f1934043c660e17f09fb779eae52504b38a94fe0f44f8ce8040683756",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-5-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.08234182791784406,
+    "stdout_sha256": "99cddde530c6efecf8bed8c85380b13c569ed272022f748ec8027c90bf966f4e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-6-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.06701391795650125,
+    "stdout_sha256": "8276f89e1f325a68feef1cdac19675e0b643a06cfc72b4adf94f920f2dcf63fa",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-6-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.062492539174854755,
+    "stdout_sha256": "804855bcb5cab4ecc58bd30af9caed13fef5d58e4dec2bbc0703715d96ddb524",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-1-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.01627491507679224,
+    "stdout_sha256": "301de7a56e689d3cb001a102826214471cebe03859f2ebde663fa4a008d00903",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-1-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.0115394601598382,
+    "stdout_sha256": "1618faff2da98e65fda123c82cc240276f65146552d7315f81e0382f46991a38",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-2-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.012133247684687376,
+    "stdout_sha256": "fddcda9f3d21c29c1cbf86845fd62092179e08e97b7a0e641f405f7397ed363c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-2-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.016398766078054905,
+    "stdout_sha256": "4374315567b54d27b558d1a12a1318940942cf90bbc4d71c1af8f977d14e1666",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-3-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.016212178859859705,
+    "stdout_sha256": "8ae1d2c56760ec0807aef8fceb10e80395c19563e7c9fd83d3eedb0a5f2eeab4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-3-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.016184231266379356,
+    "stdout_sha256": "88e7d0a685ba9d227173fcfbdf88d57074564ac5e62f9a2ffa4b05c2fbcdcefd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-4-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.015160520561039448,
+    "stdout_sha256": "3150c338ea4c2bcd1a86e9156a6092f024f40ffbd39f31c16f00ca4453a2082f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-4-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.016366619151085615,
+    "stdout_sha256": "ec9eed29d05f76da4dda9d9cc1d00753f321ca9edf2cc51de30b385da09731bf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-5-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.010944030713289976,
+    "stdout_sha256": "bd4c3d3dfcae89d54763207f55e86cfe1c85752968af60674a5fb86bc04828fc",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-5-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.012135067954659462,
+    "stdout_sha256": "d7e51dae43e12f185514f75647f1725220d892e11deb9cff1f5dd617f6d3c808",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-6-candidate",
+    "group": "candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.013339645694941282,
+    "stdout_sha256": "deee41959a4813641b7f4b782db56945127c521c022a4579189b8ab1f351f20a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-6-baseline",
+    "group": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-memory",
+      "128"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.016490960028022528,
+    "stdout_sha256": "1373deafec617e1ec60d105594cb28bf6cb087b06f9c21b32faebe274dd86cc4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

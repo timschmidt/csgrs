@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1824       832
+.gnu.version                152      2656
+.gnu.version_r              352      2808
+.gnu.hash                    28      3160
+.dynstr                    1155      3188
+.rela.dyn                 59400      4344
+.rela.plt                    48     63744
+.gcc_except_table        300068     63792
+.rodata                  105016    363872
+.eh_frame_hdr             23612    468888
+.eh_frame                177364    492504
+.text                   2258441    673968
+.init                        27   2932412
+.fini                        13   2932440
+.plt                         48   2932464
+.tdata                      448   2936608
+.tbss                       560   2937056
+.data.rel.ro              38200   2937056
+.fini_array                   8   2975256
+.init_array                  16   2975264
+.dynamic                    480   2975280
+.got                       5744   2975760
+.got.plt                     40   2981504
+.relro_padding              344   2981544
+.tm_clone_table               0   2985640
+.data                    197224   2985640
+.bss                        208   3182864
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6101         0
+.debug_info             1140274         0
+.debug_aranges            32256         0
+.debug_ranges            517616         0
+.debug_str              1921374         0
+.debug_line              473653         0
+Total                   7262946
+
+

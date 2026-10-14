@@ -1,0 +1,94 @@
+{
+  "qualification_sha256": "cd2edefcb9e8f56efec1cf3abab0cb9a2fe268a0803bff966ad8913ae5230665",
+  "inputs_sha256": {
+    "measure_mesh_identity_v1.py": "94192f29f3807dfc090a42ccbe65eff0fad55c077d5b2a3758b64445fa8d3893",
+    "mesh_identity_cost_probe_v1.rs": "c0540f5b2590d7923586aded075333d4a4f5458b8ca482823ce07c2aaa847599"
+  },
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/source",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/source"
+  },
+  "libraries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "sha256": "cc2caf036bd8737f8184e3856d32418b38159c7001924889d8feca0d557bce85",
+      "features": [
+        "default"
+      ]
+    },
+    "candidate": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "sha256": "0b76b6f09db87fb5d40b56d1565c1f3cffc0405a078686340ccaa4da85825e6d",
+      "features": [
+        "default"
+      ]
+    }
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 3500.024\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "pinned_cpu": 0,
+  "phases": [
+    "retain_empty",
+    "retain_cube",
+    "cold_bounds",
+    "warm_bounds",
+    "cold_box",
+    "warm_box",
+    "cold_soup",
+    "warm_soup",
+    "reversed",
+    "subdivided",
+    "union",
+    "replace_positions",
+    "drop_replaced",
+    "make_mut_positions",
+    "drop_make_mut"
+  ],
+  "orders": [
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ]
+  ],
+  "time_count": 1024,
+  "memory_count": 128,
+  "preflight_count": 16,
+  "fixed_sample_processes": 24,
+  "preflight_processes": 4,
+  "all_links_before_preflights_and_samples": true,
+  "samples_may_be_extended_or_filtered": false,
+  "allocation_scope": "Requested global allocator bytes, including cached data and retained weak backing allocations; not allocator usable sizes or RSS.",
+  "witness_scope": "Full final exact geometry, bounds, planes, certainty and Boolean provenance per phase; repeated operations consume the same fixed geometry.",
+  "compatibility_change": "Arc::get_mut succeeds for independent baseline cube buffers and fails while candidate weak identities exist.",
+  "interpretation": "Descriptive paired ratios only. Correctness outranks these costs; no performance improvement is presumed.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

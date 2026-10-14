@@ -1,0 +1,22 @@
+{
+  "baseline-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-time",
+    "sha256": "801c05b70410976f060d386ce437834372e11ed188a387772548d97026291e43",
+    "bytes": 7937352
+  },
+  "baseline-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/baseline-memory",
+    "sha256": "c1f5ac4e2e753daf77eaa83ff3f7e9c2ac10d5e9b1d72562304a6ffc69e44a3c",
+    "bytes": 7943032
+  },
+  "candidate-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-time",
+    "sha256": "d59484723d20e83ce57ebc93b574c378e6243b79196762ae4386a42277dca53f",
+    "bytes": 7939232
+  },
+  "candidate-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-identity-costs-v1/candidate-memory",
+    "sha256": "3c76578659b38dd708c9149decb13e50c6742cf21f3ece48938de2c3dbc21b95",
+    "bytes": 7944904
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "admission_decision_sha256": "863acd0c1f0e564e5921343b0e96e12d1fe73f6640466ce94646a854eaccf32e",
+  "cost_assessment_sha256": "1e1ebb48175e569612c420de4f0c2e34e9024fcd5781a3e5f7ec8453c10873d9",
+  "qualified_source_files": 10129,
+  "main_matches_qualified_source_except_ledger": true,
+  "main_cargo_fmt_exit_code": 0,
+  "git_diff_check_exit_code": 0,
+  "runtime_paths_sha256": {
+    "crates/hypermesh/src/mesh.rs": "eb612d8dc55e2c6e37312952f8973ffde9a0cf77b34d46afaa349b6a5f816281",
+    "crates/hypermesh/src/mesh/fact_identity_tests.rs": "7287ff9e14d53111778af4b2878d3796646cca0f22919dce439f611b07fb0aac"
+  },
+  "all_35_pending_native_paths_unchanged": true,
+  "runtime_admitted": true,
+  "runtime_scope": "Mesh fact/source identity repair only. No new sphere certificate.",
+  "sphere_certificate_pending": true,
+  "plan_complete": false
+}

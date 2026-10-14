@@ -1,0 +1,6834 @@
+[
+  {
+    "name": "preflight-time-0-baseline",
+    "group": "baseline",
+    "mode": "time",
+    "count": 16,
+    "round": 0,
+    "position": 1,
+    "preflight": true,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 16,
+        "nanos": 1339,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 16,
+        "nanos": 16349,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 16,
+        "nanos": 10309,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 256,
+        "nanos": 27718,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 16,
+        "nanos": 13369,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 256,
+        "nanos": 24279,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 16,
+        "nanos": 397493,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 16,
+        "nanos": 103273,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 16,
+        "nanos": 1750,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 16,
+        "nanos": 134691,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 1,
+        "nanos": 412392,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 16,
+        "nanos": 15319,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 16,
+        "nanos": 4840,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 16,
+        "nanos": 7469,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 16,
+        "nanos": 2970,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 10,
+        "fnv64": 6824781785951424439
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 2,
+        "fnv64": 574367315260998974
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 2,
+        "fnv64": 574367315260998974
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "preflight-time-0-candidate",
+    "group": "candidate",
+    "mode": "time",
+    "count": 16,
+    "round": 0,
+    "position": 2,
+    "preflight": true,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 16,
+        "nanos": 1570,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 16,
+        "nanos": 21048,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 16,
+        "nanos": 13859,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 256,
+        "nanos": 32127,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 16,
+        "nanos": 20919,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 256,
+        "nanos": 30038,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 16,
+        "nanos": 483646,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 16,
+        "nanos": 109113,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 16,
+        "nanos": 2110,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 16,
+        "nanos": 159999,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 1,
+        "nanos": 479647,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 16,
+        "nanos": 17809,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 16,
+        "nanos": 6030,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 16,
+        "nanos": 9769,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 16,
+        "nanos": 3760,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 10,
+        "fnv64": 6824781785951424439
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 2,
+        "fnv64": 574367315260998974
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 2,
+        "fnv64": 574367315260998974
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "preflight-memory-0-baseline",
+    "group": "baseline",
+    "mode": "memory",
+    "count": 16,
+    "round": 0,
+    "position": 1,
+    "preflight": true,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 16,
+        "nanos": 1700,
+        "allocation_accounting": true,
+        "allocation_calls": 49,
+        "allocated_bytes": 2304,
+        "retained_bytes_delta": 2304,
+        "peak_bytes_delta": 2304
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 16,
+        "nanos": 19189,
+        "allocation_accounting": true,
+        "allocation_calls": 81,
+        "allocated_bytes": 48384,
+        "retained_bytes_delta": 25344,
+        "peak_bytes_delta": 26408
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 16,
+        "nanos": 13340,
+        "allocation_accounting": true,
+        "allocation_calls": 16,
+        "allocated_bytes": 4864,
+        "retained_bytes_delta": 4864,
+        "peak_bytes_delta": 4864
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 256,
+        "nanos": 31428,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 16,
+        "nanos": 15029,
+        "allocation_accounting": true,
+        "allocation_calls": 16,
+        "allocated_bytes": 4864,
+        "retained_bytes_delta": 4864,
+        "peak_bytes_delta": 4864
+      },
+      {
+        "name": "warm_box",
+        "iterations": 256,
+        "nanos": 27338,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 16,
+        "nanos": 481917,
+        "allocation_accounting": true,
+        "allocation_calls": 580,
+        "allocated_bytes": 328256,
+        "retained_bytes_delta": 24232,
+        "peak_bytes_delta": 37088
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 16,
+        "nanos": 110603,
+        "allocation_accounting": true,
+        "allocation_calls": 288,
+        "allocated_bytes": 178944,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 16,
+        "nanos": 2280,
+        "allocation_accounting": true,
+        "allocation_calls": 49,
+        "allocated_bytes": 11264,
+        "retained_bytes_delta": 6656,
+        "peak_bytes_delta": 6944
+      },
+      {
+        "name": "subdivided",
+        "iterations": 16,
+        "nanos": 170718,
+        "allocation_accounting": true,
+        "allocation_calls": 199,
+        "allocated_bytes": 258040,
+        "retained_bytes_delta": 80952,
+        "peak_bytes_delta": 85472
+      },
+      {
+        "name": "union",
+        "iterations": 1,
+        "nanos": 527253,
+        "allocation_accounting": true,
+        "allocation_calls": 915,
+        "allocated_bytes": 162898,
+        "retained_bytes_delta": 12760,
+        "peak_bytes_delta": 55404
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 16,
+        "nanos": 19338,
+        "allocation_accounting": true,
+        "allocation_calls": 227,
+        "allocated_bytes": 44944,
+        "retained_bytes_delta": 7824,
+        "peak_bytes_delta": 10144
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 16,
+        "nanos": 6070,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -33024,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 16,
+        "nanos": 9639,
+        "allocation_accounting": true,
+        "allocation_calls": 192,
+        "allocated_bytes": 7680,
+        "retained_bytes_delta": 7680,
+        "peak_bytes_delta": 7680
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 16,
+        "nanos": 3560,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -33024,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 10,
+        "fnv64": 6824781785951424439
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 2,
+        "fnv64": 574367315260998974
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 2,
+        "fnv64": 574367315260998974
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "preflight-memory-0-candidate",
+    "group": "candidate",
+    "mode": "memory",
+    "count": 16,
+    "round": 0,
+    "position": 2,
+    "preflight": true,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 16,
+        "nanos": 1840,
+        "allocation_accounting": true,
+        "allocation_calls": 49,
+        "allocated_bytes": 2816,
+        "retained_bytes_delta": 2816,
+        "peak_bytes_delta": 2816
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 16,
+        "nanos": 21099,
+        "allocation_accounting": true,
+        "allocation_calls": 81,
+        "allocated_bytes": 48896,
+        "retained_bytes_delta": 25856,
+        "peak_bytes_delta": 26888
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 16,
+        "nanos": 14689,
+        "allocation_accounting": true,
+        "allocation_calls": 16,
+        "allocated_bytes": 4864,
+        "retained_bytes_delta": 4864,
+        "peak_bytes_delta": 4864
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 256,
+        "nanos": 33738,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 16,
+        "nanos": 17799,
+        "allocation_accounting": true,
+        "allocation_calls": 16,
+        "allocated_bytes": 4864,
+        "retained_bytes_delta": 4864,
+        "peak_bytes_delta": 4864
+      },
+      {
+        "name": "warm_box",
+        "iterations": 256,
+        "nanos": 28408,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 16,
+        "nanos": 475027,
+        "allocation_accounting": true,
+        "allocation_calls": 580,
+        "allocated_bytes": 328256,
+        "retained_bytes_delta": 24232,
+        "peak_bytes_delta": 37088
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 16,
+        "nanos": 119152,
+        "allocation_accounting": true,
+        "allocation_calls": 288,
+        "allocated_bytes": 178944,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 16,
+        "nanos": 2130,
+        "allocation_accounting": true,
+        "allocation_calls": 49,
+        "allocated_bytes": 11776,
+        "retained_bytes_delta": 7168,
+        "peak_bytes_delta": 7352
+      },
+      {
+        "name": "subdivided",
+        "iterations": 16,
+        "nanos": 158189,
+        "allocation_accounting": true,
+        "allocation_calls": 199,
+        "allocated_bytes": 258552,
+        "retained_bytes_delta": 81464,
+        "peak_bytes_delta": 85952
+      },
+      {
+        "name": "union",
+        "iterations": 1,
+        "nanos": 486487,
+        "allocation_accounting": true,
+        "allocation_calls": 915,
+        "allocated_bytes": 162898,
+        "retained_bytes_delta": 12760,
+        "peak_bytes_delta": 55404
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 16,
+        "nanos": 14759,
+        "allocation_accounting": true,
+        "allocation_calls": 227,
+        "allocated_bytes": 44944,
+        "retained_bytes_delta": 26512,
+        "peak_bytes_delta": 27664
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 16,
+        "nanos": 4780,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -52224,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 16,
+        "nanos": 7979,
+        "allocation_accounting": true,
+        "allocation_calls": 208,
+        "allocated_bytes": 26368,
+        "retained_bytes_delta": 26368,
+        "peak_bytes_delta": 26368
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 16,
+        "nanos": 2910,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -52224,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 10,
+        "fnv64": 6824781785951424439
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 2,
+        "fnv64": 574367315260998974
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 2,
+        "fnv64": 574367315260998974
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-1-baseline",
+    "group": "baseline",
+    "mode": "time",
+    "count": 1024,
+    "round": 1,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 158169,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 1163700,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 598039,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 1700174,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 781536,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1611289,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 21214087,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 5967401,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 214055,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 7240904,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 14147631,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 842032,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 291380,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 365225,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 172708,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-1-candidate",
+    "group": "candidate",
+    "mode": "time",
+    "count": 1024,
+    "round": 1,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 147589,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 999272,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 536183,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 1806277,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 821524,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1469819,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 20874360,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 5656632,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 201016,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 7479197,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 13534103,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 1246804,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 354105,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 777426,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 296170,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-2-candidate",
+    "group": "candidate",
+    "mode": "time",
+    "count": 1024,
+    "round": 2,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 169349,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 1029579,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 476998,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 1669035,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 736220,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1464620,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 24191483,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 5589317,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 194257,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 7054047,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 13440230,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 1163270,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 356846,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 1231075,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 463609,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-2-baseline",
+    "group": "baseline",
+    "mode": "time",
+    "count": 1024,
+    "round": 2,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 152370,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 1137562,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 620818,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 1975354,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 790196,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1455731,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 20607228,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 5748926,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 218895,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 7005870,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 14109103,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 783036,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 266021,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 402533,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 167899,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-3-baseline",
+    "group": "baseline",
+    "mode": "time",
+    "count": 1024,
+    "round": 3,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 142421,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 1114943,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 714561,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 1781538,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 1056067,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1460620,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 20795475,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 5765495,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 223624,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 7142561,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 14545034,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 792405,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 274151,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 357945,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 172418,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-3-candidate",
+    "group": "candidate",
+    "mode": "time",
+    "count": 1024,
+    "round": 3,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 180038,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 1365576,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 538913,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 1749800,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 749489,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1483249,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 20911037,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 5662193,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 198606,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 7321678,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 13856291,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 1154911,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 377264,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 788266,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 298350,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-4-candidate",
+    "group": "candidate",
+    "mode": "time",
+    "count": 1024,
+    "round": 4,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 185547,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 1200687,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 614648,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 1838414,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 802765,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1527716,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 20959174,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 6709220,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 322728,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 11775533,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 24042283,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 1163790,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 373934,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 772278,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 298320,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-4-baseline",
+    "group": "baseline",
+    "mode": "time",
+    "count": 1024,
+    "round": 4,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 152770,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 1164560,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 517834,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 1717093,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 774157,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1481938,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 20951805,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 6064475,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 224814,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 7223915,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 13844432,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 837833,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 267331,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 351636,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 170118,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-5-baseline",
+    "group": "baseline",
+    "mode": "time",
+    "count": 1024,
+    "round": 5,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 152989,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 1104365,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 606888,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 1779778,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 774757,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1503467,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 21055208,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 5621595,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 228034,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 7287251,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 14394554,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 788996,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 266981,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 355196,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 182867,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-5-candidate",
+    "group": "candidate",
+    "mode": "time",
+    "count": 1024,
+    "round": 5,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 210425,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 1283502,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 713892,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 2198860,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 1145151,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1859182,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 33841132,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 7423492,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 205326,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 7106303,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 13562841,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 1158611,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 379904,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 781847,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 299450,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-6-candidate",
+    "group": "candidate",
+    "mode": "time",
+    "count": 1024,
+    "round": 6,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 181638,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 975203,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 501195,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 1716873,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 726410,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1460900,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 21419343,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 5671301,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 202726,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 7086375,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 17057311,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 1182089,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 363115,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 792836,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 303259,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-time-6-baseline",
+    "group": "baseline",
+    "mode": "time",
+    "count": 1024,
+    "round": 6,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 1024,
+        "nanos": 151869,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 1024,
+        "nanos": 1093326,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 1024,
+        "nanos": 593829,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 16384,
+        "nanos": 1991994,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 1024,
+        "nanos": 771557,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_box",
+        "iterations": 16384,
+        "nanos": 1544284,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 1024,
+        "nanos": 20776937,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 1024,
+        "nanos": 6062404,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "reversed",
+        "iterations": 1024,
+        "nanos": 221355,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "subdivided",
+        "iterations": 1024,
+        "nanos": 7164619,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "union",
+        "iterations": 64,
+        "nanos": 13446569,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 1024,
+        "nanos": 783516,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 1024,
+        "nanos": 268561,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 1024,
+        "nanos": 350536,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 1024,
+        "nanos": 174528,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 12,
+        "fnv64": 13441687126010762043
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 4,
+        "fnv64": 975409685799914914
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-1-baseline",
+    "group": "baseline",
+    "mode": "memory",
+    "count": 128,
+    "round": 1,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 30428,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 18432,
+        "retained_bytes_delta": 18432,
+        "peak_bytes_delta": 18432
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 165038,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 387072,
+        "retained_bytes_delta": 202752,
+        "peak_bytes_delta": 203816
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 101033,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 281830,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 152029,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 253832,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 4354002,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 1012570,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 17269,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 90112,
+        "retained_bytes_delta": 53248,
+        "peak_bytes_delta": 53536
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 1478618,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2062136,
+        "retained_bytes_delta": 645432,
+        "peak_bytes_delta": 649952
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 3199111,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 183447,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 61584,
+        "peak_bytes_delta": 63904
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 54326,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 98963,
+        "allocation_accounting": true,
+        "allocation_calls": 1536,
+        "allocated_bytes": 61440,
+        "retained_bytes_delta": 61440,
+        "peak_bytes_delta": 61440
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 37617,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-1-candidate",
+    "group": "candidate",
+    "mode": "memory",
+    "count": 128,
+    "round": 1,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 23068,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 22528,
+        "retained_bytes_delta": 22528,
+        "peak_bytes_delta": 22528
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 125241,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 391168,
+        "retained_bytes_delta": 206848,
+        "peak_bytes_delta": 207880
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 69795,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 215965,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 98254,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 192597,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 2643498,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 711001,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 10650,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 94208,
+        "retained_bytes_delta": 57344,
+        "peak_bytes_delta": 57528
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 923747,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2066232,
+        "retained_bytes_delta": 649528,
+        "peak_bytes_delta": 654016
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 1988623,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 123691,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 211088,
+        "peak_bytes_delta": 212240
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 43547,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 75164,
+        "allocation_accounting": true,
+        "allocation_calls": 1664,
+        "allocated_bytes": 210944,
+        "retained_bytes_delta": 210944,
+        "peak_bytes_delta": 210944
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 24129,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-2-candidate",
+    "group": "candidate",
+    "mode": "memory",
+    "count": 128,
+    "round": 2,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 21898,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 22528,
+        "retained_bytes_delta": 22528,
+        "peak_bytes_delta": 22528
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 166428,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 391168,
+        "retained_bytes_delta": 206848,
+        "peak_bytes_delta": 207880
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 81505,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 268912,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 110842,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 244723,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 3038802,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 712851,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 10629,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 94208,
+        "retained_bytes_delta": 57344,
+        "peak_bytes_delta": 57528
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 915307,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2066232,
+        "retained_bytes_delta": 649528,
+        "peak_bytes_delta": 654016
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 2020982,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 126802,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 211088,
+        "peak_bytes_delta": 212240
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 45557,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 74035,
+        "allocation_accounting": true,
+        "allocation_calls": 1664,
+        "allocated_bytes": 210944,
+        "retained_bytes_delta": 210944,
+        "peak_bytes_delta": 210944
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 23998,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-2-baseline",
+    "group": "baseline",
+    "mode": "memory",
+    "count": 128,
+    "round": 2,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 25948,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 18432,
+        "retained_bytes_delta": 18432,
+        "peak_bytes_delta": 18432
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 162279,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 387072,
+        "retained_bytes_delta": 202752,
+        "peak_bytes_delta": 203816
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 104423,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 253023,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 146820,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 226565,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 4378480,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 1005751,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 16839,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 90112,
+        "retained_bytes_delta": 53248,
+        "peak_bytes_delta": 53536
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 1493318,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2062136,
+        "retained_bytes_delta": 645432,
+        "peak_bytes_delta": 649952
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 3179303,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 180198,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 61584,
+        "peak_bytes_delta": 63904
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 52387,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 90963,
+        "allocation_accounting": true,
+        "allocation_calls": 1536,
+        "allocated_bytes": 61440,
+        "retained_bytes_delta": 61440,
+        "peak_bytes_delta": 61440
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 35577,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-3-baseline",
+    "group": "baseline",
+    "mode": "memory",
+    "count": 128,
+    "round": 3,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 25749,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 18432,
+        "retained_bytes_delta": 18432,
+        "peak_bytes_delta": 18432
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 181097,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 387072,
+        "retained_bytes_delta": 202752,
+        "peak_bytes_delta": 203816
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 102093,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 272231,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 146889,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 240823,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 4382610,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 988842,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 21479,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 90112,
+        "retained_bytes_delta": 53248,
+        "peak_bytes_delta": 53536
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 1458130,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2062136,
+        "retained_bytes_delta": 645432,
+        "peak_bytes_delta": 649952
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 3185651,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 193377,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 61584,
+        "peak_bytes_delta": 63904
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 57406,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 97264,
+        "allocation_accounting": true,
+        "allocation_calls": 1536,
+        "allocated_bytes": 61440,
+        "retained_bytes_delta": 61440,
+        "peak_bytes_delta": 61440
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 35348,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-3-candidate",
+    "group": "candidate",
+    "mode": "memory",
+    "count": 128,
+    "round": 3,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 29088,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 22528,
+        "retained_bytes_delta": 22528,
+        "peak_bytes_delta": 22528
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 182318,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 391168,
+        "retained_bytes_delta": 206848,
+        "peak_bytes_delta": 207880
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 112363,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 265012,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 154970,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 234304,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 4225141,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 1004211,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 17309,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 94208,
+        "retained_bytes_delta": 57344,
+        "peak_bytes_delta": 57528
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 1470859,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2066232,
+        "retained_bytes_delta": 649528,
+        "peak_bytes_delta": 654016
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 3193141,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 191817,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 211088,
+        "peak_bytes_delta": 212240
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 63526,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 130501,
+        "allocation_accounting": true,
+        "allocation_calls": 1664,
+        "allocated_bytes": 210944,
+        "retained_bytes_delta": 210944,
+        "peak_bytes_delta": 210944
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 38537,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-4-candidate",
+    "group": "candidate",
+    "mode": "memory",
+    "count": 128,
+    "round": 4,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 35298,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 22528,
+        "retained_bytes_delta": 22528,
+        "peak_bytes_delta": 22528
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 176688,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 391168,
+        "retained_bytes_delta": 206848,
+        "peak_bytes_delta": 207880
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 107493,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 257133,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 133280,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 233474,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 3902063,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 938656,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 16569,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 94208,
+        "retained_bytes_delta": 57344,
+        "peak_bytes_delta": 57528
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 1367906,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2066232,
+        "retained_bytes_delta": 649528,
+        "peak_bytes_delta": 654016
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 2842955,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 186947,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 211088,
+        "peak_bytes_delta": 212240
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 67145,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 116032,
+        "allocation_accounting": true,
+        "allocation_calls": 1664,
+        "allocated_bytes": 210944,
+        "retained_bytes_delta": 210944,
+        "peak_bytes_delta": 210944
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 38127,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-4-baseline",
+    "group": "baseline",
+    "mode": "memory",
+    "count": 128,
+    "round": 4,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 25828,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 18432,
+        "retained_bytes_delta": 18432,
+        "peak_bytes_delta": 18432
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 176368,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 387072,
+        "retained_bytes_delta": 202752,
+        "peak_bytes_delta": 203816
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 109903,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 273041,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 140630,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 254372,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 4378490,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 981783,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 17599,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 90112,
+        "retained_bytes_delta": 53248,
+        "peak_bytes_delta": 53536
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 1503107,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2062136,
+        "retained_bytes_delta": 645432,
+        "peak_bytes_delta": 649952
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 3212860,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 186827,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 61584,
+        "peak_bytes_delta": 63904
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 72335,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 97643,
+        "allocation_accounting": true,
+        "allocation_calls": 1536,
+        "allocated_bytes": 61440,
+        "retained_bytes_delta": 61440,
+        "peak_bytes_delta": 61440
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 40817,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-5-baseline",
+    "group": "baseline",
+    "mode": "memory",
+    "count": 128,
+    "round": 5,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 15499,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 18432,
+        "retained_bytes_delta": 18432,
+        "peak_bytes_delta": 18432
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 119992,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 387072,
+        "retained_bytes_delta": 202752,
+        "peak_bytes_delta": 203816
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 61556,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 205645,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 86934,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 187367,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 2643659,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 705612,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 9849,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 90112,
+        "retained_bytes_delta": 53248,
+        "peak_bytes_delta": 53536
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 923016,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2062136,
+        "retained_bytes_delta": 645432,
+        "peak_bytes_delta": 649952
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 1949507,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 110152,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 61584,
+        "peak_bytes_delta": 63904
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 44057,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 55956,
+        "allocation_accounting": true,
+        "allocation_calls": 1536,
+        "allocated_bytes": 61440,
+        "retained_bytes_delta": 61440,
+        "peak_bytes_delta": 61440
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 20968,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-5-candidate",
+    "group": "candidate",
+    "mode": "memory",
+    "count": 128,
+    "round": 5,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 21789,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 22528,
+        "retained_bytes_delta": 22528,
+        "peak_bytes_delta": 22528
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 154859,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 391168,
+        "retained_bytes_delta": 206848,
+        "peak_bytes_delta": 207880
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 83494,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 265982,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 109902,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 230955,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 3288834,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 726560,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 10139,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 94208,
+        "retained_bytes_delta": 57344,
+        "peak_bytes_delta": 57528
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 911457,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2066232,
+        "retained_bytes_delta": 649528,
+        "peak_bytes_delta": 654016
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 1927998,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 121431,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 211088,
+        "peak_bytes_delta": 212240
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 42607,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 72855,
+        "allocation_accounting": true,
+        "allocation_calls": 1664,
+        "allocated_bytes": 210944,
+        "retained_bytes_delta": 210944,
+        "peak_bytes_delta": 210944
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 22819,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-6-candidate",
+    "group": "candidate",
+    "mode": "memory",
+    "count": 128,
+    "round": 6,
+    "position": 1,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 21629,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 22528,
+        "retained_bytes_delta": 22528,
+        "peak_bytes_delta": 22528
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 151280,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 391168,
+        "retained_bytes_delta": 206848,
+        "peak_bytes_delta": 207880
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 84994,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 272742,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 112342,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 222724,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 3432264,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 852112,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 17109,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 94208,
+        "retained_bytes_delta": 57344,
+        "peak_bytes_delta": 57528
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 1296511,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2066232,
+        "retained_bytes_delta": 649528,
+        "peak_bytes_delta": 654016
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 2174231,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 155850,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 211088,
+        "peak_bytes_delta": 212240
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 44947,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 127311,
+        "allocation_accounting": true,
+        "allocation_calls": 1664,
+        "allocated_bytes": 210944,
+        "retained_bytes_delta": 210944,
+        "peak_bytes_delta": 210944
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 38938,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -417792,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": false,
+      "triangles_get_mut": false,
+      "mesh_bytes": 40
+    }
+  },
+  {
+    "name": "sample-memory-6-baseline",
+    "group": "baseline",
+    "mode": "memory",
+    "count": 128,
+    "round": 6,
+    "position": 2,
+    "preflight": false,
+    "rows": [
+      {
+        "name": "retain_empty",
+        "iterations": 128,
+        "nanos": 26259,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 18432,
+        "retained_bytes_delta": 18432,
+        "peak_bytes_delta": 18432
+      },
+      {
+        "name": "retain_cube",
+        "iterations": 128,
+        "nanos": 169868,
+        "allocation_accounting": true,
+        "allocation_calls": 641,
+        "allocated_bytes": 387072,
+        "retained_bytes_delta": 202752,
+        "peak_bytes_delta": 203816
+      },
+      {
+        "name": "cold_bounds",
+        "iterations": 128,
+        "nanos": 100773,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_bounds",
+        "iterations": 2048,
+        "nanos": 265922,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_box",
+        "iterations": 128,
+        "nanos": 112693,
+        "allocation_accounting": true,
+        "allocation_calls": 128,
+        "allocated_bytes": 38912,
+        "retained_bytes_delta": 38912,
+        "peak_bytes_delta": 38912
+      },
+      {
+        "name": "warm_box",
+        "iterations": 2048,
+        "nanos": 220115,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "cold_soup",
+        "iterations": 128,
+        "nanos": 4321534,
+        "allocation_accounting": true,
+        "allocation_calls": 4612,
+        "allocated_bytes": 2625152,
+        "retained_bytes_delta": 114728,
+        "peak_bytes_delta": 127584
+      },
+      {
+        "name": "warm_soup",
+        "iterations": 128,
+        "nanos": 983353,
+        "allocation_accounting": true,
+        "allocation_calls": 2304,
+        "allocated_bytes": 1431552,
+        "retained_bytes_delta": 11176,
+        "peak_bytes_delta": 22352
+      },
+      {
+        "name": "reversed",
+        "iterations": 128,
+        "nanos": 17119,
+        "allocation_accounting": true,
+        "allocation_calls": 385,
+        "allocated_bytes": 90112,
+        "retained_bytes_delta": 53248,
+        "peak_bytes_delta": 53536
+      },
+      {
+        "name": "subdivided",
+        "iterations": 128,
+        "nanos": 1500377,
+        "allocation_accounting": true,
+        "allocation_calls": 1543,
+        "allocated_bytes": 2062136,
+        "retained_bytes_delta": 645432,
+        "peak_bytes_delta": 649952
+      },
+      {
+        "name": "union",
+        "iterations": 8,
+        "nanos": 3154794,
+        "allocation_accounting": true,
+        "allocation_calls": 5317,
+        "allocated_bytes": 1083376,
+        "retained_bytes_delta": 14024,
+        "peak_bytes_delta": 64276
+      },
+      {
+        "name": "replace_positions",
+        "iterations": 128,
+        "nanos": 184587,
+        "allocation_accounting": true,
+        "allocation_calls": 1795,
+        "allocated_bytes": 358544,
+        "retained_bytes_delta": 61584,
+        "peak_bytes_delta": 63904
+      },
+      {
+        "name": "drop_replaced",
+        "iterations": 128,
+        "nanos": 51666,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "make_mut_positions",
+        "iterations": 128,
+        "nanos": 91513,
+        "allocation_accounting": true,
+        "allocation_calls": 1536,
+        "allocated_bytes": 61440,
+        "retained_bytes_delta": 61440,
+        "peak_bytes_delta": 61440
+      },
+      {
+        "name": "drop_make_mut",
+        "iterations": 128,
+        "nanos": 35367,
+        "allocation_accounting": true,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -264192,
+        "peak_bytes_delta": 0
+      }
+    ],
+    "witnesses": [
+      {
+        "witness": "retain_empty",
+        "bytes": 11,
+        "fnv64": 7146897389503714347
+      },
+      {
+        "witness": "retain_cube",
+        "bytes": 3836,
+        "fnv64": 9892292322760189454
+      },
+      {
+        "witness": "cold_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_bounds",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "warm_box",
+        "bytes": 926,
+        "fnv64": 12536187135629768515
+      },
+      {
+        "witness": "cold_soup",
+        "bytes": 25431,
+        "fnv64": 11863576300326754924
+      },
+      {
+        "witness": "warm_soup",
+        "bytes": 25458,
+        "fnv64": 3026344856110511085
+      },
+      {
+        "witness": "reversed",
+        "bytes": 4052,
+        "fnv64": 15430344845377533414
+      },
+      {
+        "witness": "subdivided",
+        "bytes": 13052,
+        "fnv64": 6783796570603964745
+      },
+      {
+        "witness": "union",
+        "bytes": 11672,
+        "fnv64": 16892744380526470622
+      },
+      {
+        "witness": "replace_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_replaced",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      },
+      {
+        "witness": "make_mut_positions",
+        "bytes": 3836,
+        "fnv64": 3076974293890004182
+      },
+      {
+        "witness": "drop_make_mut",
+        "bytes": 3,
+        "fnv64": 5003423423190448374
+      }
+    ],
+    "compatibility": {
+      "compatibility": true,
+      "positions_get_mut": true,
+      "triangles_get_mut": true,
+      "mesh_bytes": 40
+    }
+  }
+]

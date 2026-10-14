@@ -1,0 +1,71 @@
+{"start": "format"}
+{"finished": "format", "exit_code": 0}
+{"start": "link-baseline-time"}
+{"finished": "link-baseline-time", "exit_code": 0}
+{"start": "link-baseline-memory"}
+{"finished": "link-baseline-memory", "exit_code": 0}
+{"start": "link-candidate-time"}
+{"finished": "link-candidate-time", "exit_code": 0}
+{"start": "link-candidate-memory"}
+{"finished": "link-candidate-memory", "exit_code": 0}
+{"start": "size-baseline"}
+{"finished": "size-baseline", "exit_code": 0}
+{"start": "size-candidate"}
+{"finished": "size-candidate", "exit_code": 0}
+{"start": "preflight-time-0-baseline"}
+{"finished": "preflight-time-0-baseline", "exit_code": 0}
+{"start": "preflight-time-0-candidate"}
+{"finished": "preflight-time-0-candidate", "exit_code": 0}
+{"start": "preflight-memory-0-baseline"}
+{"finished": "preflight-memory-0-baseline", "exit_code": 0}
+{"start": "preflight-memory-0-candidate"}
+{"finished": "preflight-memory-0-candidate", "exit_code": 0}
+{"start": "sample-time-1-baseline"}
+{"finished": "sample-time-1-baseline", "exit_code": 0}
+{"start": "sample-time-1-candidate"}
+{"finished": "sample-time-1-candidate", "exit_code": 0}
+{"start": "sample-time-2-candidate"}
+{"finished": "sample-time-2-candidate", "exit_code": 0}
+{"start": "sample-time-2-baseline"}
+{"finished": "sample-time-2-baseline", "exit_code": 0}
+{"start": "sample-time-3-baseline"}
+{"finished": "sample-time-3-baseline", "exit_code": 0}
+{"start": "sample-time-3-candidate"}
+{"finished": "sample-time-3-candidate", "exit_code": 0}
+{"start": "sample-time-4-candidate"}
+{"finished": "sample-time-4-candidate", "exit_code": 0}
+{"start": "sample-time-4-baseline"}
+{"finished": "sample-time-4-baseline", "exit_code": 0}
+{"start": "sample-time-5-baseline"}
+{"finished": "sample-time-5-baseline", "exit_code": 0}
+{"start": "sample-time-5-candidate"}
+{"finished": "sample-time-5-candidate", "exit_code": 0}
+{"start": "sample-time-6-candidate"}
+{"finished": "sample-time-6-candidate", "exit_code": 0}
+{"start": "sample-time-6-baseline"}
+{"finished": "sample-time-6-baseline", "exit_code": 0}
+{"start": "sample-memory-1-baseline"}
+{"finished": "sample-memory-1-baseline", "exit_code": 0}
+{"start": "sample-memory-1-candidate"}
+{"finished": "sample-memory-1-candidate", "exit_code": 0}
+{"start": "sample-memory-2-candidate"}
+{"finished": "sample-memory-2-candidate", "exit_code": 0}
+{"start": "sample-memory-2-baseline"}
+{"finished": "sample-memory-2-baseline", "exit_code": 0}
+{"start": "sample-memory-3-baseline"}
+{"finished": "sample-memory-3-baseline", "exit_code": 0}
+{"start": "sample-memory-3-candidate"}
+{"finished": "sample-memory-3-candidate", "exit_code": 0}
+{"start": "sample-memory-4-candidate"}
+{"finished": "sample-memory-4-candidate", "exit_code": 0}
+{"start": "sample-memory-4-baseline"}
+{"finished": "sample-memory-4-baseline", "exit_code": 0}
+{"start": "sample-memory-5-baseline"}
+{"finished": "sample-memory-5-baseline", "exit_code": 0}
+{"start": "sample-memory-5-candidate"}
+{"finished": "sample-memory-5-candidate", "exit_code": 0}
+{"start": "sample-memory-6-candidate"}
+{"finished": "sample-memory-6-candidate", "exit_code": 0}
+{"start": "sample-memory-6-baseline"}
+{"finished": "sample-memory-6-baseline", "exit_code": 0}
+{"complete": true, "commands_passed": 35, "all_exact_witnesses_match": true}

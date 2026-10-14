@@ -1,0 +1,1134 @@
+{
+  "cost_result_sha256": "daa95a5291a48ecb32baa261a81f8708961663c5eb1909dd44e248e44bc210ff",
+  "assessor_sha256": "8f296b682a2a8bab137482ad2735a456b81603a6fb3ac4144b87c0831b0cce90",
+  "complete": true,
+  "commands_passed": 35,
+  "fixed_samples": 24,
+  "preflights": 4,
+  "all_raw_rows_reparsed": true,
+  "all_exact_final_witnesses_match": true,
+  "all_phases": [
+    {
+      "phase": "retain_empty",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        158169,
+        152370,
+        142421,
+        152770,
+        152989,
+        151869
+      ],
+      "candidate_nanos": [
+        147589,
+        169349,
+        180038,
+        185547,
+        210425,
+        181638
+      ],
+      "paired_candidate_over_baseline": [
+        0.933109522093457,
+        1.1114326967250772,
+        1.2641253747691703,
+        1.2145512862472998,
+        1.3754256841995176,
+        1.196017620449203
+      ],
+      "median_paired_ratio": 1.2052844533482514,
+      "candidate_slower_pairs": 5,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            385
+          ],
+          "allocated_bytes": [
+            18432
+          ],
+          "retained_bytes_delta": [
+            18432
+          ],
+          "peak_bytes_delta": [
+            18432
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            385
+          ],
+          "allocated_bytes": [
+            22528
+          ],
+          "retained_bytes_delta": [
+            22528
+          ],
+          "peak_bytes_delta": [
+            22528
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 4096,
+        "retained_bytes_delta": 4096,
+        "peak_bytes_delta": 4096
+      }
+    },
+    {
+      "phase": "retain_cube",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        1163700,
+        1137562,
+        1114943,
+        1164560,
+        1104365,
+        1093326
+      ],
+      "candidate_nanos": [
+        999272,
+        1029579,
+        1365576,
+        1200687,
+        1283502,
+        975203
+      ],
+      "paired_candidate_over_baseline": [
+        0.8587024147116955,
+        0.9050750640404654,
+        1.224794451375541,
+        1.0310220168990865,
+        1.162208146763072,
+        0.891959946072809
+      ],
+      "median_paired_ratio": 0.968048540469776,
+      "candidate_slower_pairs": 3,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            641
+          ],
+          "allocated_bytes": [
+            387072
+          ],
+          "retained_bytes_delta": [
+            202752
+          ],
+          "peak_bytes_delta": [
+            203816
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            641
+          ],
+          "allocated_bytes": [
+            391168
+          ],
+          "retained_bytes_delta": [
+            206848
+          ],
+          "peak_bytes_delta": [
+            207880
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 4096,
+        "retained_bytes_delta": 4096,
+        "peak_bytes_delta": 4064
+      }
+    },
+    {
+      "phase": "cold_bounds",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        598039,
+        620818,
+        714561,
+        517834,
+        606888,
+        593829
+      ],
+      "candidate_nanos": [
+        536183,
+        476998,
+        538913,
+        614648,
+        713892,
+        501195
+      ],
+      "paired_candidate_over_baseline": [
+        0.8965686184345837,
+        0.7683379025737012,
+        0.754187536123578,
+        1.1869595275706115,
+        1.1763158935421363,
+        0.8440055975710179
+      ],
+      "median_paired_ratio": 0.8702871080028007,
+      "candidate_slower_pairs": 2,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            128
+          ],
+          "allocated_bytes": [
+            38912
+          ],
+          "retained_bytes_delta": [
+            38912
+          ],
+          "peak_bytes_delta": [
+            38912
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            128
+          ],
+          "allocated_bytes": [
+            38912
+          ],
+          "retained_bytes_delta": [
+            38912
+          ],
+          "peak_bytes_delta": [
+            38912
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    },
+    {
+      "phase": "warm_bounds",
+      "iterations_time": 16384,
+      "baseline_nanos": [
+        1700174,
+        1975354,
+        1781538,
+        1717093,
+        1779778,
+        1991994
+      ],
+      "candidate_nanos": [
+        1806277,
+        1669035,
+        1749800,
+        1838414,
+        2198860,
+        1716873
+      ],
+      "paired_candidate_over_baseline": [
+        1.0624071418572452,
+        0.8449295670548165,
+        0.9821850558337796,
+        1.0706548800792968,
+        1.235468693286466,
+        0.8618866321886511
+      ],
+      "median_paired_ratio": 1.0222960988455123,
+      "candidate_slower_pairs": 3,
+      "iterations_memory": 2048,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            0
+          ],
+          "allocated_bytes": [
+            0
+          ],
+          "retained_bytes_delta": [
+            0
+          ],
+          "peak_bytes_delta": [
+            0
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            0
+          ],
+          "allocated_bytes": [
+            0
+          ],
+          "retained_bytes_delta": [
+            0
+          ],
+          "peak_bytes_delta": [
+            0
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    },
+    {
+      "phase": "cold_box",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        781536,
+        790196,
+        1056067,
+        774157,
+        774757,
+        771557
+      ],
+      "candidate_nanos": [
+        821524,
+        736220,
+        749489,
+        802765,
+        1145151,
+        726410
+      ],
+      "paired_candidate_over_baseline": [
+        1.051165909183966,
+        0.9316928964459451,
+        0.7096983430028587,
+        1.0369537445246895,
+        1.4780776424091684,
+        0.9414858526330524
+      ],
+      "median_paired_ratio": 0.9892197985788709,
+      "candidate_slower_pairs": 3,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            128
+          ],
+          "allocated_bytes": [
+            38912
+          ],
+          "retained_bytes_delta": [
+            38912
+          ],
+          "peak_bytes_delta": [
+            38912
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            128
+          ],
+          "allocated_bytes": [
+            38912
+          ],
+          "retained_bytes_delta": [
+            38912
+          ],
+          "peak_bytes_delta": [
+            38912
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    },
+    {
+      "phase": "warm_box",
+      "iterations_time": 16384,
+      "baseline_nanos": [
+        1611289,
+        1455731,
+        1460620,
+        1481938,
+        1503467,
+        1544284
+      ],
+      "candidate_nanos": [
+        1469819,
+        1464620,
+        1483249,
+        1527716,
+        1859182,
+        1460900
+      ],
+      "paired_candidate_over_baseline": [
+        0.9122007287333309,
+        1.006106210556758,
+        1.015492735961441,
+        1.0308906310520414,
+        1.2365964800025542,
+        0.9460047504215546
+      ],
+      "median_paired_ratio": 1.0107994732590995,
+      "candidate_slower_pairs": 4,
+      "iterations_memory": 2048,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            0
+          ],
+          "allocated_bytes": [
+            0
+          ],
+          "retained_bytes_delta": [
+            0
+          ],
+          "peak_bytes_delta": [
+            0
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            0
+          ],
+          "allocated_bytes": [
+            0
+          ],
+          "retained_bytes_delta": [
+            0
+          ],
+          "peak_bytes_delta": [
+            0
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    },
+    {
+      "phase": "cold_soup",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        21214087,
+        20607228,
+        20795475,
+        20951805,
+        21055208,
+        20776937
+      ],
+      "candidate_nanos": [
+        20874360,
+        24191483,
+        20911037,
+        20959174,
+        33841132,
+        21419343
+      ],
+      "paired_candidate_over_baseline": [
+        0.9839857826547048,
+        1.1739319330091365,
+        1.005557074315446,
+        1.000351711940809,
+        1.6072570738792986,
+        1.0309191869812186
+      ],
+      "median_paired_ratio": 1.0182381306483324,
+      "candidate_slower_pairs": 5,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            4612
+          ],
+          "allocated_bytes": [
+            2625152
+          ],
+          "retained_bytes_delta": [
+            114728
+          ],
+          "peak_bytes_delta": [
+            127584
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            4612
+          ],
+          "allocated_bytes": [
+            2625152
+          ],
+          "retained_bytes_delta": [
+            114728
+          ],
+          "peak_bytes_delta": [
+            127584
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    },
+    {
+      "phase": "warm_soup",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        5967401,
+        5748926,
+        5765495,
+        6064475,
+        5621595,
+        6062404
+      ],
+      "candidate_nanos": [
+        5656632,
+        5589317,
+        5662193,
+        6709220,
+        7423492,
+        5671301
+      ],
+      "paired_candidate_over_baseline": [
+        0.9479222194050643,
+        0.9722367273469862,
+        0.982082717962638,
+        1.1063150561260455,
+        1.3205312727081904,
+        0.9354871433840437
+      ],
+      "median_paired_ratio": 0.9771597226548121,
+      "candidate_slower_pairs": 2,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            2304
+          ],
+          "allocated_bytes": [
+            1431552
+          ],
+          "retained_bytes_delta": [
+            11176
+          ],
+          "peak_bytes_delta": [
+            22352
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            2304
+          ],
+          "allocated_bytes": [
+            1431552
+          ],
+          "retained_bytes_delta": [
+            11176
+          ],
+          "peak_bytes_delta": [
+            22352
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    },
+    {
+      "phase": "reversed",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        214055,
+        218895,
+        223624,
+        224814,
+        228034,
+        221355
+      ],
+      "candidate_nanos": [
+        201016,
+        194257,
+        198606,
+        322728,
+        205326,
+        202726
+      ],
+      "paired_candidate_over_baseline": [
+        0.9390857489897456,
+        0.8874437515703876,
+        0.8881247093335242,
+        1.4355333742560517,
+        0.900418358665813,
+        0.9158410697747962
+      ],
+      "median_paired_ratio": 0.9081297142203046,
+      "candidate_slower_pairs": 1,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            385
+          ],
+          "allocated_bytes": [
+            90112
+          ],
+          "retained_bytes_delta": [
+            53248
+          ],
+          "peak_bytes_delta": [
+            53536
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            385
+          ],
+          "allocated_bytes": [
+            94208
+          ],
+          "retained_bytes_delta": [
+            57344
+          ],
+          "peak_bytes_delta": [
+            57528
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 4096,
+        "retained_bytes_delta": 4096,
+        "peak_bytes_delta": 3992
+      }
+    },
+    {
+      "phase": "subdivided",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        7240904,
+        7005870,
+        7142561,
+        7223915,
+        7287251,
+        7164619
+      ],
+      "candidate_nanos": [
+        7479197,
+        7054047,
+        7321678,
+        11775533,
+        7106303,
+        7086375
+      ],
+      "paired_candidate_over_baseline": [
+        1.0329092886744529,
+        1.006876661999152,
+        1.0250774197098211,
+        1.6300763505661404,
+        0.9751692373434098,
+        0.9890791122319275
+      ],
+      "median_paired_ratio": 1.0159770408544866,
+      "candidate_slower_pairs": 4,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            1543
+          ],
+          "allocated_bytes": [
+            2062136
+          ],
+          "retained_bytes_delta": [
+            645432
+          ],
+          "peak_bytes_delta": [
+            649952
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            1543
+          ],
+          "allocated_bytes": [
+            2066232
+          ],
+          "retained_bytes_delta": [
+            649528
+          ],
+          "peak_bytes_delta": [
+            654016
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 4096,
+        "retained_bytes_delta": 4096,
+        "peak_bytes_delta": 4064
+      }
+    },
+    {
+      "phase": "union",
+      "iterations_time": 64,
+      "baseline_nanos": [
+        14147631,
+        14109103,
+        14545034,
+        13844432,
+        14394554,
+        13446569
+      ],
+      "candidate_nanos": [
+        13534103,
+        13440230,
+        13856291,
+        24042283,
+        13562841,
+        17057311
+      ],
+      "paired_candidate_over_baseline": [
+        0.9566338703631725,
+        0.9525928048012691,
+        0.9526475496722799,
+        1.7366030617940844,
+        0.942220300816545,
+        1.2685251531450141
+      ],
+      "median_paired_ratio": 0.9546407100177262,
+      "candidate_slower_pairs": 2,
+      "iterations_memory": 8,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            5317
+          ],
+          "allocated_bytes": [
+            1083376
+          ],
+          "retained_bytes_delta": [
+            14024
+          ],
+          "peak_bytes_delta": [
+            64276
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            5317
+          ],
+          "allocated_bytes": [
+            1083376
+          ],
+          "retained_bytes_delta": [
+            14024
+          ],
+          "peak_bytes_delta": [
+            64276
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      }
+    },
+    {
+      "phase": "replace_positions",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        842032,
+        783036,
+        792405,
+        837833,
+        788996,
+        783516
+      ],
+      "candidate_nanos": [
+        1246804,
+        1163270,
+        1154911,
+        1163790,
+        1158611,
+        1182089
+      ],
+      "paired_candidate_over_baseline": [
+        1.480708571645733,
+        1.485589423730199,
+        1.4574756595427842,
+        1.3890476980496114,
+        1.4684624510136934,
+        1.5086979717070232
+      ],
+      "median_paired_ratio": 1.4745855113297133,
+      "candidate_slower_pairs": 6,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            1795
+          ],
+          "allocated_bytes": [
+            358544
+          ],
+          "retained_bytes_delta": [
+            61584
+          ],
+          "peak_bytes_delta": [
+            63904
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            1795
+          ],
+          "allocated_bytes": [
+            358544
+          ],
+          "retained_bytes_delta": [
+            211088
+          ],
+          "peak_bytes_delta": [
+            212240
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 149504,
+        "peak_bytes_delta": 148336
+      }
+    },
+    {
+      "phase": "drop_replaced",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        291380,
+        266021,
+        274151,
+        267331,
+        266981,
+        268561
+      ],
+      "candidate_nanos": [
+        354105,
+        356846,
+        377264,
+        373934,
+        379904,
+        363115
+      ],
+      "paired_candidate_over_baseline": [
+        1.2152687212574644,
+        1.341420414177828,
+        1.3761175410631368,
+        1.398767819669249,
+        1.4229626827377229,
+        1.352076437010586
+      ],
+      "median_paired_ratio": 1.3640969890368613,
+      "candidate_slower_pairs": 6,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            0
+          ],
+          "allocated_bytes": [
+            0
+          ],
+          "retained_bytes_delta": [
+            -264192
+          ],
+          "peak_bytes_delta": [
+            0
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            0
+          ],
+          "allocated_bytes": [
+            0
+          ],
+          "retained_bytes_delta": [
+            -417792
+          ],
+          "peak_bytes_delta": [
+            0
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -153600,
+        "peak_bytes_delta": 0
+      }
+    },
+    {
+      "phase": "make_mut_positions",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        365225,
+        402533,
+        357945,
+        351636,
+        355196,
+        350536
+      ],
+      "candidate_nanos": [
+        777426,
+        1231075,
+        788266,
+        772278,
+        781847,
+        792836
+      ],
+      "paired_candidate_over_baseline": [
+        2.128622082278048,
+        3.05832068426688,
+        2.2021986618055847,
+        2.1962427055250315,
+        2.2011706212907804,
+        2.261781956774768
+      ],
+      "median_paired_ratio": 2.2016846415481828,
+      "candidate_slower_pairs": 6,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            1536
+          ],
+          "allocated_bytes": [
+            61440
+          ],
+          "retained_bytes_delta": [
+            61440
+          ],
+          "peak_bytes_delta": [
+            61440
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            1664
+          ],
+          "allocated_bytes": [
+            210944
+          ],
+          "retained_bytes_delta": [
+            210944
+          ],
+          "peak_bytes_delta": [
+            210944
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 128,
+        "allocated_bytes": 149504,
+        "retained_bytes_delta": 149504,
+        "peak_bytes_delta": 149504
+      }
+    },
+    {
+      "phase": "drop_make_mut",
+      "iterations_time": 1024,
+      "baseline_nanos": [
+        172708,
+        167899,
+        172418,
+        170118,
+        182867,
+        174528
+      ],
+      "candidate_nanos": [
+        296170,
+        463609,
+        298350,
+        298320,
+        299450,
+        303259
+      ],
+      "paired_candidate_over_baseline": [
+        1.714859763299905,
+        2.7612374105861264,
+        1.7303877785382036,
+        1.7536063203188375,
+        1.6375289144569551,
+        1.7375951136780345
+      ],
+      "median_paired_ratio": 1.733991446108119,
+      "candidate_slower_pairs": 6,
+      "iterations_memory": 128,
+      "memory_observed_values": {
+        "baseline": {
+          "allocation_calls": [
+            0
+          ],
+          "allocated_bytes": [
+            0
+          ],
+          "retained_bytes_delta": [
+            -264192
+          ],
+          "peak_bytes_delta": [
+            0
+          ]
+        },
+        "candidate": {
+          "allocation_calls": [
+            0
+          ],
+          "allocated_bytes": [
+            0
+          ],
+          "retained_bytes_delta": [
+            -417792
+          ],
+          "peak_bytes_delta": [
+            0
+          ]
+        }
+      },
+      "all_memory_fields_repeat": true,
+      "candidate_minus_baseline_memory": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -153600,
+        "peak_bytes_delta": 0
+      }
+    }
+  ],
+  "native_uninstrumented_sizes": {
+    "baseline": {
+      "binary_bytes": 7937352,
+      "sections": {
+        ".interp": 28,
+        ".note.ABI-tag": 32,
+        ".note.gnu.build-id": 36,
+        ".dynsym": 1824,
+        ".gnu.version": 152,
+        ".gnu.version_r": 352,
+        ".gnu.hash": 28,
+        ".dynstr": 1155,
+        ".rela.dyn": 59376,
+        ".rela.plt": 48,
+        ".gcc_except_table": 300116,
+        ".rodata": 105016,
+        ".eh_frame_hdr": 23596,
+        ".eh_frame": 177272,
+        ".text": 2257065,
+        ".init": 27,
+        ".fini": 13,
+        ".plt": 48,
+        ".tdata": 448,
+        ".tbss": 560,
+        ".data.rel.ro": 38176,
+        ".fini_array": 8,
+        ".init_array": 16,
+        ".dynamic": 480,
+        ".got": 5744,
+        ".got.plt": 40,
+        ".relro_padding": 1840,
+        ".tm_clone_table": 0,
+        ".data": 197224,
+        ".bss": 208,
+        ".comment": 185,
+        ".annobin.notes": 247,
+        ".gnu.build.attributes": 324,
+        ".debug_abbrev": 6101,
+        ".debug_info": 1140274,
+        ".debug_aranges": 32256,
+        ".debug_ranges": 517616,
+        ".debug_str": 1921374,
+        ".debug_line": 473653
+      }
+    },
+    "candidate": {
+      "binary_bytes": 7939232,
+      "sections": {
+        ".interp": 28,
+        ".note.ABI-tag": 32,
+        ".note.gnu.build-id": 36,
+        ".dynsym": 1824,
+        ".gnu.version": 152,
+        ".gnu.version_r": 352,
+        ".gnu.hash": 28,
+        ".dynstr": 1155,
+        ".rela.dyn": 59400,
+        ".rela.plt": 48,
+        ".gcc_except_table": 300068,
+        ".rodata": 105016,
+        ".eh_frame_hdr": 23612,
+        ".eh_frame": 177364,
+        ".text": 2258441,
+        ".init": 27,
+        ".fini": 13,
+        ".plt": 48,
+        ".tdata": 448,
+        ".tbss": 560,
+        ".data.rel.ro": 38200,
+        ".fini_array": 8,
+        ".init_array": 16,
+        ".dynamic": 480,
+        ".got": 5744,
+        ".got.plt": 40,
+        ".relro_padding": 344,
+        ".tm_clone_table": 0,
+        ".data": 197224,
+        ".bss": 208,
+        ".comment": 185,
+        ".annobin.notes": 247,
+        ".gnu.build.attributes": 324,
+        ".debug_abbrev": 6101,
+        ".debug_info": 1140274,
+        ".debug_aranges": 32256,
+        ".debug_ranges": 517616,
+        ".debug_str": 1921374,
+        ".debug_line": 473653
+      }
+    }
+  },
+  "raw_binary_delta_bytes": 1880,
+  "text_delta_bytes": 1376,
+  "compatibility": "All baseline fresh cube buffers allow Arc::get_mut; all candidate fresh buffers return None. Public docs prescribe Arc::make_mut.",
+  "interpretation_limits": [
+    "Six paired observations are descriptive, not confidence intervals or significance tests.",
+    "Requested allocator bytes are not RSS, usable sizes, or whole-process peaks.",
+    "The final exact output per repeated fixed-geometry phase is witnessed; this does not claim every intermediate is serialized.",
+    "Safe edit phases measure allocation and release without reusing the known-broken baseline cached queries.",
+    "No original sphere hull or native DRC performance gate is improved by these controls."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

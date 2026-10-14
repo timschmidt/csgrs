@@ -1,0 +1,72 @@
+{
+  "decision": "admit as exactness repair",
+  "base_commit": "9e5f33774a1485621194ada1e6d4a989cc6c3eb1",
+  "qualified_runtime_delta_sha256": {
+    "crates/hypermesh/src/mesh.rs": "eb612d8dc55e2c6e37312952f8973ffde9a0cf77b34d46afaa349b6a5f816281",
+    "crates/hypermesh/src/mesh/fact_identity_tests.rs": "7287ff9e14d53111778af4b2878d3796646cca0f22919dce439f611b07fb0aac"
+  },
+  "qualification_result_sha256": "cd2edefcb9e8f56efec1cf3abab0cb9a2fe268a0803bff966ad8913ae5230665",
+  "cost_result_sha256": "daa95a5291a48ecb32baa261a81f8708961663c5eb1909dd44e248e44bc210ff",
+  "cost_assessment_sha256": "1e1ebb48175e569612c420de4f0c2e34e9024fcd5781a3e5f7ec8453c10873d9",
+  "priority_reason": "Thirteen deterministic public controls produce incorrect certified geometry or accept invalid input on the baseline. Source identities restore honest facts. P1/P3/P4/P22 outrank the explicitly measured resource costs. This is not retained as a performance optimization.",
+  "validation": {
+    "default_tests_passed": 234,
+    "all_feature_tests_passed": 235,
+    "ignored_per_configuration": 7,
+    "new_regression_tests_per_configuration": 12,
+    "root_consumer_tests_passed": 18,
+    "doctests_executed": 0,
+    "strict_clippy": "default and all-feature, all targets",
+    "format_and_warning_denied_docs": true,
+    "owned_and_borrowed_external_controls_fixed": 13,
+    "original_sphere_outcomes_preserved": 4
+  },
+  "costs": {
+    "fixed_samples": 24,
+    "paired_rounds": 6,
+    "all_exact_final_witnesses_match": true,
+    "all_memory_fields_repeat": true,
+    "extra_bytes_per_constructed_mesh": 32,
+    "extra_allocation_calls_per_constructed_mesh": 0,
+    "bounds_box_soup_union_all_four_allocation_fields": "unchanged",
+    "first_make_mut_extra_allocations_per_edited_cube": 1,
+    "extra_retained_position_backing_bytes_per_edited_cube": 1168,
+    "extra_bytes_released_when_edited_cube_drops": 1200,
+    "median_paired_ratios": {
+      "retain_empty": 1.2052844533482514,
+      "retain_cube": 0.968048540469776,
+      "cold_bounds": 0.8702871080028007,
+      "warm_bounds": 1.0222960988455123,
+      "cold_box": 0.9892197985788709,
+      "warm_box": 1.0107994732590995,
+      "cold_soup": 1.0182381306483324,
+      "warm_soup": 0.9771597226548121,
+      "reversed": 0.9081297142203046,
+      "subdivided": 1.0159770408544866,
+      "union": 0.9546407100177262,
+      "replace_positions": 1.4745855113297133,
+      "drop_replaced": 1.3640969890368613,
+      "make_mut_positions": 2.2016846415481828,
+      "drop_make_mut": 1.733991446108119
+    },
+    "all_six_pairs_slower": [
+      "replace_positions",
+      "drop_replaced",
+      "make_mut_positions",
+      "drop_make_mut"
+    ],
+    "raw_binary_delta_bytes": 1880,
+    "text_delta_bytes": 1376
+  },
+  "compatibility": "Fresh buffers now have weak identities: Arc::get_mut returns None. Use Arc::make_mut; rebuilding edited meshes allows fresh caching and releases obsolete fact ownership. Public documentation states this behavior.",
+  "scope_limits": [
+    "Seven pre-existing ignored Hypermesh tests per configuration remain ignored.",
+    "The three original typed sphere hull failures remain open.",
+    "Native full-board 120-second CPU and copper-neck 60-second check-body wall gates were not rerun or relaxed.",
+    "Only the two qualified Hypermesh files are admitted; all prior unadmitted scalar variants and the 35 native pending paths are unchanged.",
+    "Timing ratios are descriptive paired observations, not statistical significance claims."
+  ],
+  "future_cost_work": "Lazy identity binding could reduce cold-edit allocation and preserve Arc::get_mut before any facts exist. It is unimplemented and must preserve the same thirteen controls plus publication and lifetime rules before evaluation.",
+  "runtime_copy_verified": false,
+  "plan_complete": false
+}
