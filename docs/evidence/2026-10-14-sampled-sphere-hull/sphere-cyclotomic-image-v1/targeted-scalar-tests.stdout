@@ -1,0 +1,17 @@
+
+running 12 tests
+test computable::node::cyclotomic::image::tests::cyclotomic_finite_collisions_and_bad_units_preserve_exact_fallbacks ... ok
+test computable::node::cyclotomic::image::tests::cyclotomic_finite_field_roots_satisfy_every_native_modulus ... ok
+test computable::node::cyclotomic::image::tests::cyclotomic_finite_images_match_exact_polynomial_denotations ... ok
+test computable::node::cyclotomic::tests::cyclotomic_affine_filter_reads_original_coordinate_payloads ... ok
+test computable::node::cyclotomic::tests::cyclotomic_captured_exact_zero_determinants ... ok
+test computable::node::cyclotomic::tests::cyclotomic_concurrent_replay_preserves_available_facts ... ok
+test computable::node::cyclotomic::tests::cyclotomic_joint_field_and_breadth_limits_remain_unknown ... ok
+test computable::node::cyclotomic::tests::cyclotomic_moduli_and_root_branches ... ok
+test computable::node::cyclotomic::tests::cyclotomic_nonzero_face_controls_and_signed_perturbations ... ok
+test computable::node::cyclotomic::tests::cyclotomic_resource_guards_are_unknown ... ok
+test computable::node::cyclotomic::tests::cyclotomic_retained_representation_recipes_preserve_known_identities ... ok
+test computable::node::cyclotomic::tests::cyclotomic_sine_pythagorean_and_angle_addition ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 781 filtered out; finished in 0.06s
+

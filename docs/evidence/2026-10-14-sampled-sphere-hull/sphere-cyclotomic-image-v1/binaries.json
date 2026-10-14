@@ -1,0 +1,12 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-baseline",
+    "sha256": "0a3b8efa750460b1094f145534ff00ef3b3b5196122abafde7327d01a3e4e403",
+    "bytes": 8703584
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+    "sha256": "0149616d97d13bf17e6fcafb01a384a28cd336b34d0e7ef4d0bb491081b98449",
+    "bytes": 8760200
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "purpose": "Fresh fixed native timing screen of the early finite-field rejection candidate against the late normal-form candidate, following exact-output qualification.",
+  "late_assessment_sha256": "c5252385450169387996c12bcb9c1e3848d18ad9c163fb8370b620d56669f718",
+  "late_broad_qualification_sha256": "ec9f5771599a1ec1fbddaf704947acb25f61f33ba1f5f15b9b51c439c99477d1",
+  "groups": [
+    "late normal-form V2",
+    "early finite-field rejection V1"
+  ],
+  "native_cases": [
+    "fifteen_degrees",
+    "original_medium",
+    "fifth_turn",
+    "seventh_turn"
+  ],
+  "unchanged_workload": "Use the already linked candidate binaries from both frozen trials, built from the same reproduce_rows_v1.rs with release libraries. Every run must reproduce the previously independently verified full stdout exactly.",
+  "preflight_processes": 8,
+  "fixed_sample_processes": 48,
+  "rounds": 6,
+  "orders": [
+    [
+      "late",
+      "image"
+    ],
+    [
+      "image",
+      "late"
+    ],
+    [
+      "late",
+      "image"
+    ],
+    [
+      "image",
+      "late"
+    ],
+    [
+      "late",
+      "image"
+    ],
+    [
+      "image",
+      "late"
+    ]
+  ],
+  "limits_seconds": {
+    "original_medium": 600,
+    "other_cases": 180
+  },
+  "measurement": "Fresh native process wall time and child user/system CPU. This includes construction, hull, exact output validation and row serialization. Pin all runs to the same permitted CPU. Retain all preflights and samples; never extend, replace, filter or pool. This run is independent of the earlier placement screen; no prior timing samples enter its assessment.",
+  "decision": "Flag a reproducible cost regression for a case only when all six image/late process-wall ratios exceed 1.10 and their median exceeds 1.15. Otherwise classify this screen as inconclusive for that case. This is a placement decision, not a performance admission or general speed claim.",
+  "next_if_regression": "Preserve this new trial and investigate its bounded algebraic dispatch cost; do not admit an unchanged placement with a flagged regression.",
+  "excluded": [
+    "Allocation and retained-byte measurements",
+    "Native check-body timing",
+    "Formal proof or broad qualification of the early candidate",
+    "Runtime admission or full plan completion"
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "image_assessment_sha256": "4c9bfbffab6c311c39075c20e5fbb370ada2b4ff6c5f452de9676a7e812e8792",
+  "prior_rejected_placement": "sphere-cyclotomic-placement-cost-closure-v1.json"
+}
