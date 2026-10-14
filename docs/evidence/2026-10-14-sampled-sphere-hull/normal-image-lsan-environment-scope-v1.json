@@ -1,0 +1,24 @@
+{
+  "objective": "Determine whether a standalone program reproduces the closed qualification's LeakSanitizer shutdown failure, and whether separately authorized unrestricted execution permits leak scanning.",
+  "source": "normal_image_lsan_control_v1.rs",
+  "repository_crates_linked": false,
+  "native_control_side_effects": "Temporary process allocations and two joined threads only; stdout diagnostics. No filesystem or network operations. The leak mode intentionally leaves one 4096-byte allocation until process exit.",
+  "contexts": ["sandbox", "unrestricted"],
+  "modes_per_context": ["single", "threads", "leak"],
+  "fixed_native_executions": 6,
+  "preparation_commands": 2,
+  "native_wall_limit_seconds": 30,
+  "asan_options": "detect_leaks=1:halt_on_error=1:abort_on_error=0:exitcode=66",
+  "lsan_options": "verbosity=1:log_threads=1",
+  "environment_hypothesis": "Both cleanup modes fail with LeakSanitizer's fatal scanning error inside the sandbox, but exit zero outside it; outside execution of the deliberate leak exits 66 with a leak report instead of a scanning error.",
+  "execution_authority": "The unrestricted phase must be invoked through exec_command with require_escalated, after the exact standalone source, binary and sandbox results are reviewable. Do not infer that permission from elapsed time.",
+  "failure_policy": "Preserve every stdout, stderr and code. Stop on any native exit other than 0 or 66. A completed diagnostic is not a successful library qualification. Do not rerun, extend or pool this six-execution protocol.",
+  "limits": [
+    "The test does not modify or resume the failed library qualification.",
+    "The standard library remains precompiled; no new production proof or memory-safety coverage claim.",
+    "Successful standalone controls do not establish that repository tests pass under the same configuration.",
+    "The observed context comparison can identify a sandbox-associated scanning restriction without proving which kernel permission caused it."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
