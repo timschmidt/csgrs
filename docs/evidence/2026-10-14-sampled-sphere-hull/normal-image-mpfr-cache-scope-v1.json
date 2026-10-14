@@ -1,0 +1,24 @@
+{
+  "objective": "Independently test whether missing MPFR thread-local cache cleanup can produce the GMP leak-report pattern seen in the preserved unrestricted test run.",
+  "source": "normal_image_mpfr_cache_probe_v1.rs",
+  "repository_crates_linked": false,
+  "rug_library": "Use the exact ASan-instrumented Rug rlib and dependency/native libraries from the closed normal-image-asan-v2 build; do not rebuild or modify that target.",
+  "modes": ["retain", "cleanup"],
+  "workers_per_process": 2,
+  "operations_per_worker": ["512-bit natural logarithm of 2", "512-bit exponential of 2", "512-bit arctangent of 2", "decimal serialization"],
+  "difference": "Both modes drop all Float values and join both workers. Both clear shared/main-thread caches after joining. Only cleanup calls rug::float::free_cache(FreeCache::Local) inside each worker before it exits.",
+  "commands": 4,
+  "expected_exit_codes": [0, 0, 66, 0],
+  "native_wall_limit_seconds": 30,
+  "build_wall_limit_seconds": 180,
+  "output_contract": "Both modes must produce byte-identical serialized values in joined-worker order. The retain mode must report a nonzero leak through GMP, without a scanner fatal error or invalid-access diagnostic; cleanup must exit zero without any sanitizer error.",
+  "execution_context": "Prepare and review the binary first. Run the two native controls using exec_command require_escalated so LeakSanitizer can inspect threads. Leak detection stays enabled, with no inherited suppressions.",
+  "no_extension_retry_or_pooling": true,
+  "limits": [
+    "This is a standalone cache-lifecycle control, not a new library qualification or a performance sample.",
+    "A positive result demonstrates this mechanism for two workers and three MPFR functions. It does not yet explain every allocation in the original 163672-byte report.",
+    "No Hyperreal production code is linked or changed. A test-harness cleanup fix still requires independent review and complete qualification."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
