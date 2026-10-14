@@ -1,0 +1,31 @@
+{
+  "all_new_cost_source_changes_reviewed": true,
+  "preparation_sha256": "1c52acdba777fe42dc0be3784ce5890c97d8e6761e412adb353808386a58fcb5",
+  "metadata_patch_sha256": "f11f0e4b6c5b7ef143d7b85f271c9c5a48b8b8624eac0208ff4bc47750293301",
+  "qualified_production_source_unchanged": true,
+  "qualification_assessment_sha256": "1bd264da9e1897cabfbfcfe3458b0046bb9fd68d638aec6916ce14032cd95d15",
+  "metadata_only_delta_sha256": {
+    "crates/hypercurve/src/bezier_region.rs": "dfd389bc1ec108bffb7231bdd29383dce4a8ded595d9e9bd2dcdb595151b8832",
+    "crates/hypercurve/src/bezier_region/combined_admission_metadata.rs": "c83bbe490453b81804ee3d48948694a1b65f0e57651ea59d526076d93742d5cc"
+  },
+  "metadata_module_sha256": "c83bbe490453b81804ee3d48948694a1b65f0e57651ea59d526076d93742d5cc",
+  "findings": [
+    "The prepared metadata delta adds only the cfg(test) module declaration and the same 296-line original module. The complete module was read; actual bytes match both old metadata groups. Production runtime source and all qualification artifacts are reused without modification.",
+    "The three metadata controls cover independent exact geometry, strict/approximate policy behavior, duplicate/source error priority, empty input and monotone availability of warmed facts through cloning/drop/refinement.",
+    "The cost module preserves six fixture families, all first/warm/cloned validation windows, counts, exact expected errors and per-output assertions. Its existing System-backed TLS allocator hook is identical in all groups and remains inactive for counting in time mode.",
+    "All six new protocol/parser/runner/assessor files were reviewed before execution. The pure row parser matches the original closed runner body exactly. The pre-execution trailing-newline correction is separately recorded; no preparation or measurement had started at that correction.",
+    "The runner uses original probe paths and all 18 frozen source hashes, reuses 22 old binaries and ten libraries, builds candidate code in new targets and finishes all builds and controls before costs. Feature sets must match every group and the qualified scalar library.",
+    "Each suite/mode has six fixed rounds covering all three-group permutations. Preflights and abort controls are separate from all 198 cost processes; there is no conditional replacement or extension. Raw logs are preserved before checking exit status.",
+    "The assessor independently reconstructs command order/counts, reparses every raw process log, checks all identities and historical broad witnesses, actual library/binary hashes and sizes, and retains all 1095 timing and 402 allocation rows plus 33 executable-size comparisons.",
+    "Allocation repeatability and every paired value are retained; no duration from allocation mode is used as a timing result. Current host snapshots do not establish historical frequency or timing causes."
+  ],
+  "format_passed": true,
+  "new_production_runtime_edits_since_qualification": 0,
+  "pre_execution_correction": {
+    "path": "cost-pre-execution-correction-v1.json",
+    "sha256": "1929f18ca473d54cc3b2f53551aaf6f18054dfe8c53e42c96aa922139498e598"
+  },
+  "native_gates_not_run_by_this_trial": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

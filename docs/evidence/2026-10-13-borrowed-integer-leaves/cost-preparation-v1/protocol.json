@@ -1,0 +1,465 @@
+{
+  "scope": "Freeze unchanged production inputs and an identical private metadata harness.",
+  "variants": {
+    "main": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target",
+      "files": 10128,
+      "source_hashes_sha256": "c689b8acb155a0f4b526935598cc4f04beb508a50bcd6d1a54807595fcc83553",
+      "delta_sha256": {},
+      "source_and_target_borrowed_unchanged": true
+    },
+    "main-metadata": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline-metadata/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline-metadata/target",
+      "files": 10129,
+      "source_hashes_sha256": "edb0664027bfa976736147855bea40c7b32132574c132e150d6b604050281948",
+      "delta_sha256": {
+        "crates/hypercurve/src/bezier_region.rs": "e0444ab46a9ef7533526a663bca430758b8c8f85faff50397cd34cb996998948",
+        "crates/hypercurve/src/bezier_region/combined_admission_metadata.rs": "c83bbe490453b81804ee3d48948694a1b65f0e57651ea59d526076d93742d5cc"
+      },
+      "source_and_target_borrowed_unchanged": true
+    },
+    "full-cache": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target",
+      "files": 10133,
+      "source_hashes_sha256": "e335876ed2f16f18715ee360a8402af6e2bdce50a5f86a7b315d6d860fdc110d",
+      "delta_sha256": {
+        "Cargo.lock": "76070fa4a72353546495b18e13214c10fd8902b7c536a95aa786ffb2b17d628c",
+        "crates/hyperdrc/Cargo.toml": "06861fc83221fc060e59b9d728391a954615a62f25055513ff5790dde502ec3b",
+        "crates/hyperdrc/src/process_allocator.rs": "099d34a4ba6e8f4d5768b14e77d1a602ac1e614a47c8a76fe7ed9d2c3b21ed66",
+        "crates/hyperdrc/src/allocator_contract_tests.rs": "14d82c0d58ea7f29d44260f5143e8ae5b505c4e22189379e6fa3321255c689ec",
+        "crates/hyperdrc/src/main.rs": "c40bfb9c0184f1d9c99dbea71465eb96defea4489bebd16528582f5e167ea7b4",
+        "crates/hyperdrc/src/lib.rs": "386115d6d7f43d7c901389e36784b296cc23fcd471b2323c65880e12de403b1c",
+        "crates/hypercurve/src/segment.rs": "e9ecf7c57aa3281373b41c6c69b3e94c63fc76edd8db6a25b4d87d8af1a3d8c3",
+        "crates/hypercurve/src/point.rs": "de1aa84aeb802a42c419be3f1af0d2f680a5d3e5ee84321fe0892dcbae164786",
+        "crates/hypercurve/src/bezier_region.rs": "f94f30baee3331690d8bb556b9d64ab45355dffb4c4d209683f0535d739fbfee",
+        "crates/hypercurve/src/segment/endpoint_proof_tests.rs": "83be67d1fd7bc49f2afa64568b286ea0fbec4db679bed885dd9ea526ec48c2a1",
+        "crates/hypercurve/src/bezier_region/metadata_order_tests.rs": "58b97430f65150fc7eb8f408fdda8383a6e2eb6f9148ce28da7f39857038c92f",
+        "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs": "b9b91d3c20d1e63a4afb8ea4847334116d00808f7e0f62fbe5a9ddf35642293d",
+        "crates/hyperreal/src/computable/node/structural_analysis.rs": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+        "crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+        "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+        "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs": "2497f82c7dfc85b71725e8c86f6c541c9f384678ba637b9a699aa56c03a534ee",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "e2276f9257c73c361f8fa862dcef09bc4909e99255254b34f2bf1f513a26f805"
+      },
+      "source_and_target_borrowed_unchanged": true
+    },
+    "full-cache-metadata": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate-metadata/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate-metadata/target",
+      "files": 10134,
+      "source_hashes_sha256": "6b5f0663f7f8d796bea11537c63445ad19e854449a7d8b59cc86eb361ea69fbc",
+      "delta_sha256": {
+        "Cargo.lock": "76070fa4a72353546495b18e13214c10fd8902b7c536a95aa786ffb2b17d628c",
+        "crates/hyperdrc/Cargo.toml": "06861fc83221fc060e59b9d728391a954615a62f25055513ff5790dde502ec3b",
+        "crates/hyperdrc/src/process_allocator.rs": "099d34a4ba6e8f4d5768b14e77d1a602ac1e614a47c8a76fe7ed9d2c3b21ed66",
+        "crates/hyperdrc/src/allocator_contract_tests.rs": "14d82c0d58ea7f29d44260f5143e8ae5b505c4e22189379e6fa3321255c689ec",
+        "crates/hyperdrc/src/main.rs": "c40bfb9c0184f1d9c99dbea71465eb96defea4489bebd16528582f5e167ea7b4",
+        "crates/hyperdrc/src/lib.rs": "386115d6d7f43d7c901389e36784b296cc23fcd471b2323c65880e12de403b1c",
+        "crates/hypercurve/src/segment.rs": "e9ecf7c57aa3281373b41c6c69b3e94c63fc76edd8db6a25b4d87d8af1a3d8c3",
+        "crates/hypercurve/src/point.rs": "de1aa84aeb802a42c419be3f1af0d2f680a5d3e5ee84321fe0892dcbae164786",
+        "crates/hypercurve/src/bezier_region.rs": "dfd389bc1ec108bffb7231bdd29383dce4a8ded595d9e9bd2dcdb595151b8832",
+        "crates/hypercurve/src/segment/endpoint_proof_tests.rs": "83be67d1fd7bc49f2afa64568b286ea0fbec4db679bed885dd9ea526ec48c2a1",
+        "crates/hypercurve/src/bezier_region/combined_admission_metadata.rs": "c83bbe490453b81804ee3d48948694a1b65f0e57651ea59d526076d93742d5cc",
+        "crates/hypercurve/src/bezier_region/metadata_order_tests.rs": "58b97430f65150fc7eb8f408fdda8383a6e2eb6f9148ce28da7f39857038c92f",
+        "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs": "b9b91d3c20d1e63a4afb8ea4847334116d00808f7e0f62fbe5a9ddf35642293d",
+        "crates/hyperreal/src/computable/node/structural_analysis.rs": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+        "crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+        "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+        "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs": "2497f82c7dfc85b71725e8c86f6c541c9f384678ba637b9a699aa56c03a534ee",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "e2276f9257c73c361f8fa862dcef09bc4909e99255254b34f2bf1f513a26f805"
+      },
+      "source_and_target_borrowed_unchanged": true
+    },
+    "candidate": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+      "files": 10134,
+      "source_hashes_sha256": "6a8811b107b1116d2095a16ac4b340332427bc43c9e9ab7b64b35f6a2270890e",
+      "delta_sha256": {
+        "crates/hyperreal/src/rational/arithmetic.rs": "71ac496a9101e217d8a83ee187230e6851484b6e3f39aeb5cb247c4b85b5ea26",
+        "crates/hyperreal/src/computable/node/structural_analysis.rs": "c654f42e4e1be8afbe4f44f28a27f1458dec075e192d92120b8870c7ad1cd0f2",
+        "crates/hyperreal/src/rational/arithmetic/construction.rs": "389c8a52713117794168c02fcd78e7193afb4371571158926f6bd61a7c3e3a43",
+        "crates/hyperreal/src/rational/arithmetic/borrowed_integer_tests.rs": "e60df2dc96a276c38771b6f0c0288f46b7cd99dddc612ef978fc2d5919e8fe4e"
+      },
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target",
+      "source_borrowed_unchanged_from_qualification": true,
+      "target_is_new": true,
+      "delta_parent": "full-cache"
+    },
+    "candidate-metadata": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-metadata/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-metadata/target",
+      "files": 10135,
+      "source_hashes_sha256": "8215ad449daeaeffb63a32fb7d448f5fe9dede4329a8ac1183cb7dc828f2f3a9",
+      "delta_sha256": {
+        "crates/hyperreal/src/rational/arithmetic.rs": "71ac496a9101e217d8a83ee187230e6851484b6e3f39aeb5cb247c4b85b5ea26",
+        "crates/hyperreal/src/computable/node/structural_analysis.rs": "c654f42e4e1be8afbe4f44f28a27f1458dec075e192d92120b8870c7ad1cd0f2",
+        "crates/hyperreal/src/rational/arithmetic/construction.rs": "389c8a52713117794168c02fcd78e7193afb4371571158926f6bd61a7c3e3a43",
+        "crates/hyperreal/src/rational/arithmetic/borrowed_integer_tests.rs": "e60df2dc96a276c38771b6f0c0288f46b7cd99dddc612ef978fc2d5919e8fe4e",
+        "crates/hypercurve/src/bezier_region.rs": "dfd389bc1ec108bffb7231bdd29383dce4a8ded595d9e9bd2dcdb595151b8832",
+        "crates/hypercurve/src/bezier_region/combined_admission_metadata.rs": "c83bbe490453b81804ee3d48948694a1b65f0e57651ea59d526076d93742d5cc"
+      },
+      "metadata_only_delta_sha256": {
+        "crates/hypercurve/src/bezier_region.rs": "dfd389bc1ec108bffb7231bdd29383dce4a8ded595d9e9bd2dcdb595151b8832",
+        "crates/hypercurve/src/bezier_region/combined_admission_metadata.rs": "c83bbe490453b81804ee3d48948694a1b65f0e57651ea59d526076d93742d5cc"
+      },
+      "delta_parent": "full-cache",
+      "metadata_delta_parent": "candidate",
+      "target_is_new": true
+    }
+  },
+  "reused_libraries": {
+    "main": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+        "sha256": "e464113814d6927e7a06401660a2076345f5b84e4c3906bea559af9245d3b4e1",
+        "bytes": 11697454,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperreal/Cargo.toml"
+      },
+      "hyperlimit": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libhyperlimit-b1f0276ca4eb4351.rlib",
+        "sha256": "8d2c0074e1e76a5b86da47ae8d49dbcbac760c01cd0268f8523ed983be80aa87",
+        "bytes": 4007458,
+        "features": [
+          "default",
+          "dispatch-trace",
+          "std"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperlimit/Cargo.toml"
+      },
+      "hypercurve": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhypercurve.rlib",
+        "sha256": "9b006af05631f7a521db5b7e1e8cdeccc23184878fb1c0661c30e801f93be379",
+        "bytes": 48769786,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hypercurve/Cargo.toml"
+      },
+      "hyperdrc": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperdrc.rlib",
+        "sha256": "6543c3dfe602173019ffe9b7611c54e67e7d44356a165dea379ac4be7b0c6ec5",
+        "bytes": 26698760,
+        "features": [],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperdrc/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "805db435411150cbd63b08fc0180d592752be704c52deb4af751310afe50176b",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    },
+    "full-cache": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/libhyperreal.rlib",
+        "sha256": "2e4eabb67f81045828dd3303a94de14d6500c4e266a61a902934ab7b95a3da85",
+        "bytes": 11700770,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source/crates/hyperreal/Cargo.toml"
+      },
+      "hyperlimit": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps/libhyperlimit-b1f0276ca4eb4351.rlib",
+        "sha256": "b7d2e8ba200f66c38d502e1ff2f5fc6b313ba7189e6b68679d257c421faacd33",
+        "bytes": 4007500,
+        "features": [
+          "default",
+          "dispatch-trace",
+          "std"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source/crates/hyperlimit/Cargo.toml"
+      },
+      "hypercurve": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/libhypercurve.rlib",
+        "sha256": "a39dea478b32e5e86cdd4c1366a189667beee16bfc20a927ec1078364a7a832c",
+        "bytes": 48757790,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source/crates/hypercurve/Cargo.toml"
+      },
+      "hyperdrc": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/libhyperdrc.rlib",
+        "sha256": "51f02e4fb0dbb1c62ae32c22955608b880ff036b1fafd1b4579c14559254bdb0",
+        "bytes": 26694830,
+        "features": [],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source/crates/hyperdrc/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "09d2f92170c0b940c26293f5ad803a13da7fb8a64ba6f9bc6dbe384909c88283",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    }
+  },
+  "reused_binaries": {
+    "main-rational-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-rational-time",
+      "sha256": "1fe09cc1f1133d1659348809e468757fb05b55d8eeafb037d0168e9528e3a58f",
+      "bytes": 6182576
+    },
+    "main-rational-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-rational-memory",
+      "sha256": "65b26069ccf005b73166609704f4d7a70f1022e2967e591e586e6a326a30f60e",
+      "bytes": 6184464
+    },
+    "main-quadratic-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-quadratic-time",
+      "sha256": "53a2b5c79bab891916d480d33dfc3333476e466a1311a3962deb12b1cbb5f467",
+      "bytes": 6157456
+    },
+    "main-quadratic-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-quadratic-memory",
+      "sha256": "9a32909ff38a41d49b8a7ecc5d59fa04c770dbf38b52c51a2b48b15f25093c05",
+      "bytes": 6160712
+    },
+    "main-integer-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-integer-time",
+      "sha256": "714b32d667405551b9bca2ebda9632b4d1ca1621a62ee680d32a7cf0d45a7ec0",
+      "bytes": 6052552
+    },
+    "main-integer-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-integer-memory",
+      "sha256": "fb3a710d7dfc060c62e143ebe375b8cabb78a686699a7f1f7d81505b992f30b3",
+      "bytes": 6055456
+    },
+    "main-arc-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-arc-time",
+      "sha256": "2bc4f85f1e8bd19e18bbdeca2b24e1ce0ec94d68dc462db4f24b82d13b20411f",
+      "bytes": 8602288
+    },
+    "main-arc-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-arc-memory",
+      "sha256": "e204bf40d7ae8741f17f57e54d7a0a2abb787cc75211100b8a2309787191cbe9",
+      "bytes": 8604640
+    },
+    "main-broad-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-broad-time",
+      "sha256": "fdb0f03e01cf1759d6198c34ee1d2795261ce6e3ac383b860257ab708ebbf25f",
+      "bytes": 26375280
+    },
+    "main-abort-control": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-abort-control",
+      "sha256": "cd5d59f5d342fd167dafecd8b34b630265cea4ff674e54852fb4546278bf70c3",
+      "bytes": 8539736
+    },
+    "main-metadata": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline-metadata/target/release/deps/hypercurve-c64b9a6905916d79",
+      "sha256": "c43402cff51b09fef8144168a7d0393c2a85d41d308b968d2d1e431b382718e4",
+      "bytes": 41727056,
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline-metadata/source/crates/hypercurve/Cargo.toml"
+    },
+    "full-cache-rational-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-rational-time",
+      "sha256": "4b96f007150874d51bb53f02382c51c3bd4eae8c2c76a8bfcd6e0e3134b72d61",
+      "bytes": 6179224
+    },
+    "full-cache-rational-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-rational-memory",
+      "sha256": "ea2ab53daa05358db9c1e1110d3c35e88d38394af6dd4ba1eab2070e7bc4ac43",
+      "bytes": 6181120
+    },
+    "full-cache-quadratic-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-quadratic-time",
+      "sha256": "a630b1c8ebde63d0f63ca2bffa8ceaad327e30a0cc54b2689b2e90f110061e55",
+      "bytes": 6154240
+    },
+    "full-cache-quadratic-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-quadratic-memory",
+      "sha256": "82b1774981dde06c7ba582745beb57259ecd1cc96fabbd06c656d60b88d5241b",
+      "bytes": 6157536
+    },
+    "full-cache-integer-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-integer-time",
+      "sha256": "d5c95eae73cddc384a31f3f4be4b5001352ffb8ba4662e7d92668e4c40267e8f",
+      "bytes": 6049928
+    },
+    "full-cache-integer-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-integer-memory",
+      "sha256": "3d17164462c6ad8975e20541f948df1eb34110d814c89266c8a48ff1a9936dd3",
+      "bytes": 6052832
+    },
+    "full-cache-arc-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-arc-time",
+      "sha256": "9144c7d864585a5159cc398c2206052efb4e91a476b4250ebf047d5787dab0c6",
+      "bytes": 8597136
+    },
+    "full-cache-arc-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-arc-memory",
+      "sha256": "146f46a166d7ca9ac30f414155560e7e29e21f9e1b66f1b984e4e82a9eb93b5c",
+      "bytes": 8599472
+    },
+    "full-cache-broad-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-broad-time",
+      "sha256": "1fae83594c1d4c1d9e6c176dbd67eb4d73c58f03784ad8d61e3151d304b02aac",
+      "bytes": 26366592
+    },
+    "full-cache-abort-control": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-abort-control",
+      "sha256": "e5d0cfa5d8da6c38f83f2f3c6e46de0b4a0523048ef278b3ae701147fe3e68e7",
+      "bytes": 8534448
+    },
+    "full-cache-metadata": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate-metadata/target/release/deps/hypercurve-c64b9a6905916d79",
+      "sha256": "b797f095834bc95366ad72d2cf64fe8da494cd7e034264861b6056f1b24de061",
+      "bytes": 41386896,
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate-metadata/source/crates/hypercurve/Cargo.toml"
+    }
+  },
+  "probes": {
+    "affine_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/affine_probe.rs",
+      "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+    },
+    "arc_cost.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/arc_cost.rs",
+      "sha256": "87bda9e1cabf99df2824ca9cca640fe6be837a4ec6310975b3b47ad7a7d43740"
+    },
+    "authored_center_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/authored_center_probe.rs",
+      "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+    },
+    "cost_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/cost_probe.rs",
+      "sha256": "2efd62d7d89effa8bd79b83858a9209a33914de967e99389085a855fcc0bb4d6"
+    },
+    "dense_cluster_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/dense_cluster_probe.rs",
+      "sha256": "78661e9564294b4a8efee9324118b6bc520b91a43ab63911bdea602593e7e421"
+    },
+    "final_abort.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/final_abort.rs",
+      "sha256": "187357bc79cde9068fb6d7afd2a9ae7f64b29640e63aee8a11711f94ddee5181"
+    },
+    "fixture_access_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/fixture_access_probe.rs",
+      "sha256": "a96b532091e6648cb4583e45d40bd517a40cc8faf75c1dfa8599cf271cfb7d95"
+    },
+    "integer_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/integer_probe.rs",
+      "sha256": "53350d83a6b41e8abb4f9dcc3b609a7c61b5e9f50bea0ab55fa30101a1999294"
+    },
+    "ipc_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/ipc_probe.rs",
+      "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+    },
+    "layer_order_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/layer_order_probe.rs",
+      "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+    },
+    "metadata_order_tests.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/metadata_order_tests.rs",
+      "sha256": "a06e10a4b014372af5ac6457d671a2ffc005f804dc71ee911dcbfb461ca0a0e1"
+    },
+    "native_drill_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/native_drill_probe.rs",
+      "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+    },
+    "operation_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/operation_probe.rs",
+      "sha256": "e8c672dfcc64b73cc912d804e39aab17c8d9c9532341be9f7b49e4fe950970e4"
+    },
+    "pad_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/pad_probe.rs",
+      "sha256": "93965c81cdb9bbbca7a435bfa797cd9a034b065c379ba5570dd246320decb8aa"
+    },
+    "point_consumer_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/point_consumer_probe.rs",
+      "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+    },
+    "quadratic_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/quadratic_probe.rs",
+      "sha256": "3e4d0f7494f7a6f22fcde14a35077279a06e091030585c7266745599e457ec60"
+    },
+    "rational_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/rational_probe.rs",
+      "sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae"
+    },
+    "rectangle_probe.rs": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/rectangle_probe.rs",
+      "sha256": "8313616b2b8488076ab25ea95e29c9a65674ef61e5aa5353d018d27a0c85026c"
+    }
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "inputs_sha256": {
+    "cost_common_v1.py": "1f0a53843e9acf30d9f350dcbea04aea6168a0c0774498f9a8be5550b7e0b64a",
+    "prepare_costs_v1.py": "23f2c43ed19db81b448977243f8ca483b1eadbddd4e24b5cf86a5bb10ea74338",
+    "measure_costs_v1.py": "53f9fdb5c87c5eb328a8c5fb6675b520303b4dbd9851fbf48b568fe59edf5c8f",
+    "assess_costs_v1.py": "639bbe9ff253aebbff7ece4d416e80c470bf0e4d4278f9d89fed38d7ae01b7f7",
+    "cost_rows_v1.py": "25a72855da69aed2d2d262dd58f68a871b8c98ecede41318e22ead82551c7c20",
+    "cost-scope-v1.json": "202d93a2e31f837901b37ca02450f254d666bc762aada0ce924fcbf4301d2a6a",
+    "next-cost-plan-v1.json": "8fd736f2c2de741ce26c40a5113578c9d89d4654f0d82c9d3a2f5a3e931fc116",
+    "source-review-v1.json": "3602ce91565637a193628ed7edc1a0b275abb721e80e9ee152f0a030f8b1ed00",
+    "qualification-assessment-v1.json": "1bd264da9e1897cabfbfcfe3458b0046bb9fd68d638aec6916ce14032cd95d15",
+    "preparation-v1/protocol.json": "6bc8a21241cf125b561bf681ad14acff9a606e57ff4a73fd98b89c9840c3c06f",
+    "qualification-v1/result.json": "a7f4d0bb4f38ffaedeb4b93515b02fb0676b3e1af67a4d31924efdcb2785118b"
+  },
+  "prior_inputs_sha256": {
+    "docs/evidence/2026-10-13-combined-native-admission/preparation-v1/protocol.json": "2701bf2b3474c6ebf953b146c63e4c6abf880e21d920a790fffeb0082c6f836f",
+    "docs/evidence/2026-10-13-combined-native-admission/library-assessment-v1.json": "8d6497a1f38ac8221ee940a051740771f92ce6bd84acf22596bcd3ef3afd6b00",
+    "docs/evidence/2026-10-13-combined-native-admission/library-costs-v1/protocol.json": "e7a9f0f5420c93a6024dc910dfff904103a99c3a2abb2678da28872a7ed8ed78",
+    "docs/evidence/2026-10-13-combined-native-admission/library-costs-v1/libraries.json": "09f0a382955cdbf7a75fa3b73e6ba79c46001ea4aacdc21116879a5f321cd745",
+    "docs/evidence/2026-10-13-combined-native-admission/library-costs-v1/binaries.json": "2792aa2024c8a683968092b74356b8dbf967ebb3bf4c87c20667317e2d17214b",
+    "docs/evidence/2026-10-13-combined-native-admission/library-costs-v1/result.json": "37428bdf40d4d944d8389908c3c37613d42f4f5b38ead39a97c4e82e3b9ee37c",
+    "docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/cost/rows.json": "5fa8936b39564a0ac9158917935e4d43a8e36a5c1359cd1ff36474fc5ac27c4b",
+    "target/combined-native-admission-v1/candidate-metadata/source/crates/hypercurve/src/bezier_region/combined_admission_metadata.rs": "c83bbe490453b81804ee3d48948694a1b65f0e57651ea59d526076d93742d5cc"
+  },
+  "metadata_patch_sha256": "f11f0e4b6c5b7ef143d7b85f271c9c5a48b8b8624eac0208ff4bc47750293301",
+  "metadata_archive_sha256": "1a5ebde4bf152d92ca9addfe07c325ceddf688d32c5f020fcadb04f129ce69ce",
+  "all_qualified_production_sources_and_artifacts_preserved": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
