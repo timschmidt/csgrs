@@ -1,0 +1,31 @@
+{
+  "status": "v2-delta-reviewed-before-qualification",
+  "preparation_sha256": "ed676a5bb5cff807a99ca4858b8093312d5a4ed289d1a13eba9cef35ac170d74",
+  "source_patch_sha256": "e1c802665a9d953876bacc6caafd8002e1406be057684b2fbf33bce0286535d1",
+  "all_five_source_paths_reviewed": true,
+  "all_three_drivers_reviewed": true,
+  "source_files": 10136,
+  "old_event_names_and_order_unchanged": 27,
+  "all_60_node_kind_indices_match_exported_names": true,
+  "unclassified_bucket_index": 60,
+  "one_actual_pointer_read_and_one_locked_field_read": true,
+  "driver_suffixes": "Quadratic unchanged. Rational retains the established newline-array spelling correction. Integer has exactly two equivalent usize parity spelling changes; all original values, witnesses and query phases are retained.",
+  "source_review": [
+    "The diagnostic parent has the original unconditional RETAIN lookup. The rejected entry predicate is absent.",
+    "The helper borrows the immutable approximation, stores only a numeric thread-local tag, and adds no Arc owners. The original lookup still precedes memo and budget checks.",
+    "The same actual pointer read determines empty_cell. A single original read lock protects the Laurent field for initialized_miss/hit, and remains held through the original closed conversion.",
+    "Thread-local category counts and pending kind reset with every old recording window. Every outcome consumes pending context; direct private calls enter the explicit Unclassified bucket.",
+    "Old arithmetic, publication eligibility, cache payloads, ownership, term/work limits and original retry are unchanged. Old 27 event insertions are reused, plus classification-only additions.",
+    "Two added controls cover original publication/replay and independent valid empty/initialized/hit states, preservation of another cache payload, owner-drop zero-budget replay and reclamation.",
+    "Qualification and all 12 driver Clippy/link commands precede all 24 fixed count processes. Instrumented timings and allocations are not analyzed."
+  ],
+  "qualification_executed": false,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "prior_review_sha256": "1740290b3cf303686131b8765afc26f755b82140225a227148532ba8bfe1ade8",
+  "prior_failure_sha256": "6cc66506b6cfa1f211d2dacbec8a452521c2040dfa93cc9975ab9e115584d6df",
+  "v1_to_v2_source_paths_changed": 1,
+  "v1_to_v2_driver_paths_changed": 1,
+  "review_correction": "V1 missed the struct pattern for NormalInterval. The full enum declaration and V2 delta were read; both struct variants now use { .. }. Names, indices, reader, counters and controls are unchanged. Compilation remains a separate pending gate."
+}
