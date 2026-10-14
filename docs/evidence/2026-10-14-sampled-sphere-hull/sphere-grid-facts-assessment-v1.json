@@ -1,0 +1,98 @@
+{
+  "result_sha256": "8f5fc856cfcb99e453e3f5cbf54f563890e252b4c005bcfe8bc1abc9e8b61068",
+  "driver_terminal_exit_code": 0,
+  "commands_passed": 14,
+  "original_queries": 12,
+  "previously_certified_case_preserved_in_all_three_modes": true,
+  "all_three_original_failures_remain_in_all_three_modes": true,
+  "observations": [
+    {
+      "case": "fifteen_degrees",
+      "mode": "adjacent",
+      "input": "input case=fifteen_degrees mode=adjacent positions=266 triangles=528 groups=240",
+      "result": "result case=fifteen_degrees mode=adjacent certified=true original_positions_preserved=true prior_certified_rows_check=passed",
+      "certified": true
+    },
+    {
+      "case": "fifteen_degrees",
+      "mode": "all_rectangles",
+      "input": "input case=fifteen_degrees mode=all_rectangles positions=266 triangles=528 groups=15203",
+      "result": "result case=fifteen_degrees mode=all_rectangles certified=true original_positions_preserved=true prior_certified_rows_check=passed",
+      "certified": true
+    },
+    {
+      "case": "fifteen_degrees",
+      "mode": "coordinate_symmetries",
+      "input": "input case=fifteen_degrees mode=coordinate_symmetries positions=266 triangles=528 groups=15203",
+      "result": "result case=fifteen_degrees mode=coordinate_symmetries certified=true original_positions_preserved=true prior_certified_rows_check=passed",
+      "certified": true
+    },
+    {
+      "case": "original_medium",
+      "mode": "adjacent",
+      "input": "input case=original_medium mode=adjacent positions=482 triangles=960 groups=448",
+      "result": "result case=original_medium mode=adjacent certified=false error=ConvexHullPredicate { stage: \"face outside linear query\" }",
+      "certified": false
+    },
+    {
+      "case": "original_medium",
+      "mode": "all_rectangles",
+      "input": "input case=original_medium mode=all_rectangles positions=482 triangles=960 groups=52111",
+      "result": "result case=original_medium mode=all_rectangles certified=false error=ConvexHullPredicate { stage: \"face outside linear query\" }",
+      "certified": false
+    },
+    {
+      "case": "original_medium",
+      "mode": "coordinate_symmetries",
+      "input": "input case=original_medium mode=coordinate_symmetries positions=482 triangles=960 groups=52111",
+      "result": "result case=original_medium mode=coordinate_symmetries certified=false error=ConvexHullPredicate { stage: \"face outside linear query\" }",
+      "certified": false
+    },
+    {
+      "case": "fifth_turn",
+      "mode": "adjacent",
+      "input": "input case=fifth_turn mode=adjacent positions=62 triangles=120 groups=50",
+      "result": "result case=fifth_turn mode=adjacent certified=false error=ConvexHullPredicate { stage: \"face outside linear query\" }",
+      "certified": false
+    },
+    {
+      "case": "fifth_turn",
+      "mode": "all_rectangles",
+      "input": "input case=fifth_turn mode=all_rectangles positions=62 triangles=120 groups=686",
+      "result": "result case=fifth_turn mode=all_rectangles certified=false error=ConvexHullPredicate { stage: \"face outside linear query\" }",
+      "certified": false
+    },
+    {
+      "case": "fifth_turn",
+      "mode": "coordinate_symmetries",
+      "input": "input case=fifth_turn mode=coordinate_symmetries positions=62 triangles=120 groups=686",
+      "result": "result case=fifth_turn mode=coordinate_symmetries certified=false error=ConvexHullPredicate { stage: \"face outside linear query\" }",
+      "certified": false
+    },
+    {
+      "case": "seventh_turn",
+      "mode": "adjacent",
+      "input": "input case=seventh_turn mode=adjacent positions=30 triangles=56 groups=21",
+      "result": "result case=seventh_turn mode=adjacent certified=false error=ConvexHullPredicate { stage: \"face outside linear query\" }",
+      "certified": false
+    },
+    {
+      "case": "seventh_turn",
+      "mode": "all_rectangles",
+      "input": "input case=seventh_turn mode=all_rectangles positions=30 triangles=56 groups=137",
+      "result": "result case=seventh_turn mode=all_rectangles certified=false error=ConvexHullPredicate { stage: \"face outside linear query\" }",
+      "certified": false
+    },
+    {
+      "case": "seventh_turn",
+      "mode": "coordinate_symmetries",
+      "input": "input case=seventh_turn mode=coordinate_symmetries positions=30 triangles=56 groups=137",
+      "result": "result case=seventh_turn mode=coordinate_symmetries certified=false error=ConvexHullPredicate { stage: \"face outside linear query\" }",
+      "certified": false
+    }
+  ],
+  "interpretation": "Adjacent quads, all longitude/latitude rectangles plus latitude/meridian planes, and coordinate product symmetries do not suffice. Trace the actual undecided orientation before designing a retained runtime certificate.",
+  "runtime_candidate_prepared": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

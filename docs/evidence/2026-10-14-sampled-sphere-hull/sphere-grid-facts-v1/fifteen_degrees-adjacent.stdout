@@ -1,0 +1,2 @@
+input case=fifteen_degrees mode=adjacent positions=266 triangles=528 groups=240
+result case=fifteen_degrees mode=adjacent certified=true original_positions_preserved=true prior_certified_rows_check=passed

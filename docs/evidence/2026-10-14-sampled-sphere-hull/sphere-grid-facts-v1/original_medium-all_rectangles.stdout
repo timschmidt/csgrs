@@ -1,0 +1,2 @@
+input case=original_medium mode=all_rectangles positions=482 triangles=960 groups=52111
+result case=original_medium mode=all_rectangles certified=false error=ConvexHullPredicate { stage: "face outside linear query" }

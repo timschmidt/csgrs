@@ -1,0 +1,41 @@
+{
+  "head": "839c4320f2e937810a938942f30f47356d2fb296",
+  "inputs_sha256": {
+    "probe_sphere_grid_facts_v1.py": "0243e4831deae24f0ae31a4cc3fb515b6650fa5c7865b110c429640e66f506d9",
+    "sphere_grid_facts_probe_v1.rs": "44abc2326fb0de85e108911adf02bec23110455e219fb71120fb10ac127ed35d",
+    "sphere-grid-facts-scope-v1.json": "dc256d3717997687412ee6851cafdad88937e20472d1d8126be3ad77939e4571"
+  },
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/source",
+  "source_files": 10129,
+  "libraries": {
+    "csgrs": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/libcsgrs.rlib",
+      "sha256": "ed39e41dbab80903de387c18e363201411f20dce839530a9fcbb3cc66698408d",
+      "features": []
+    },
+    "hypermesh": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "sha256": "0b76b6f09db87fb5d40b56d1565c1f3cffc0405a078686340ccaa4da85825e6d",
+      "features": [
+        "default"
+      ]
+    }
+  },
+  "cases": [
+    "fifteen_degrees",
+    "original_medium",
+    "fifth_turn",
+    "seventh_turn"
+  ],
+  "modes": [
+    "adjacent",
+    "all_rectangles",
+    "coordinate_symmetries"
+  ],
+  "runs": 12,
+  "timeout_seconds": 180,
+  "timing_scope": "Diagnostic stop only; not matched performance evidence.",
+  "qualified_runtime_unchanged": true,
+  "sphere_runtime_candidate_prepared": false,
+  "plan_complete": false
+}

@@ -1,0 +1,2 @@
+input case=original_medium mode=adjacent positions=482 triangles=960 groups=448
+result case=original_medium mode=adjacent certified=false error=ConvexHullPredicate { stage: "face outside linear query" }

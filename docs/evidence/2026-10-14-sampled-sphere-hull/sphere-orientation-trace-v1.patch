@@ -1,0 +1,18 @@
+--- a/crates/hypermesh/src/convex_hull.rs
++++ b/crates/hypermesh/src/convex_hull.rs
+@@ -512,7 +512,14 @@
+     {
+         return Ok(Classification::On);
+     }
+-    orientation(decisions, points, face, &points[point_index])
++    let result = orientation(decisions, points, face, &points[point_index]);
++    if matches!(&result, Err(HypermeshError::PredicateUndecided { .. })) {
++        eprintln!(
++            "sphere-hull-undecided face={face:?} point={point_index} point_count={}",
++            points.len()
++        );
++    }
++    result
+ }
+ 
+ fn opposite_edges_share_axis_coordinates(

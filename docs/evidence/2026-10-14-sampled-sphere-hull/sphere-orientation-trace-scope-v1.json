@@ -1,0 +1,18 @@
+{
+  "expected_delta_sha256": {
+    "crates/hypermesh/src/convex_hull.rs": "1965c69876773e612f8e75d597d8a63cca88c5a12f78947aae4ff2d44ee51409"
+  },
+  "cases": [
+    "original_medium",
+    "fifth_turn",
+    "seventh_turn"
+  ],
+  "mode": "coordinate_symmetries",
+  "purpose": "Record point indices for the actual undecided orientation after the strongest fixed construction-fact probe.",
+  "intervention": "A diagnostic stderr record after orientation returns PredicateUndecided; no additional scalar query, precision, policy, point, or predicate changes.",
+  "required_outcomes": "All three stdout records byte-identical to original grid-fact diagnostic; at least one undecided orientation stderr row each.",
+  "commands": 7,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,2 @@
+input case=fifth_turn mode=adjacent positions=62 triangles=120 groups=50
+result case=fifth_turn mode=adjacent certified=false error=ConvexHullPredicate { stage: "face outside linear query" }

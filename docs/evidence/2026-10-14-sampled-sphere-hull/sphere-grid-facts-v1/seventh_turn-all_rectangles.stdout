@@ -1,0 +1,2 @@
+input case=seventh_turn mode=all_rectangles positions=30 triangles=56 groups=137
+result case=seventh_turn mode=all_rectangles certified=false error=ConvexHullPredicate { stage: "face outside linear query" }
