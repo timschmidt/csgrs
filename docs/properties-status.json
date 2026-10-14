@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "stable-selection-cost-trial-closed-resource-evidence-open",
+      "status": "stable-selection-resource-trial-ready",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5178,7 +5178,10 @@
         "seventh_turn": 1.109532756408826
       },
       "sphere_stable_selection_cost_flagged_cases": [],
-      "sphere_stable_selection_cost_increases_retained": true
+      "sphere_stable_selection_cost_increases_retained": true,
+      "sphere_stable_selection_resources_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-resources-scope-v1.json",
+      "sphere_stable_selection_resources_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_stable_resources_v1.py",
+      "sphere_stable_selection_resources_executed": false
     }
   },
   "status_meanings": {
