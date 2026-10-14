@@ -1,0 +1,29 @@
+{
+  "all_four_paths_reviewed": true,
+  "preparation_sha256": "6bc8a21241cf125b561bf681ad14acff9a606e57ff4a73fd98b89c9840c3c06f",
+  "source_patch_sha256": "824c8a7f633a15ce72cb4245b5cd799d61bb25042a5dba8070d177a370f60126",
+  "changed_paths": {
+    "crates/hyperreal/src/rational/arithmetic.rs": "71ac496a9101e217d8a83ee187230e6851484b6e3f39aeb5cb247c4b85b5ea26",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "c654f42e4e1be8afbe4f44f28a27f1458dec075e192d92120b8870c7ad1cd0f2",
+    "crates/hyperreal/src/rational/arithmetic/construction.rs": "389c8a52713117794168c02fcd78e7193afb4371571158926f6bd61a7c3e3a43",
+    "crates/hyperreal/src/rational/arithmetic/borrowed_integer_tests.rs": "e60df2dc96a276c38771b6f0c0288f46b7cd99dddc612ef978fc2d5919e8fe4e"
+  },
+  "findings": [
+    "The complete four-path prepared diff was read. Node::exact_rational changes only its Int branch; One, Ratio and unsupported composite behavior are unchanged.",
+    "The new constructor is crate-private. Zero and signed one return the same canonical owners as Rational::new. Remaining signed-word values delegate only the canonical lookup to existing small_integer; its bound remains unchanged and is not duplicated at the caller.",
+    "No BigUint is rebuilt from a primitive magnitude on a cache miss. The fallback is exactly the earlier Rational::from_bigint(n.clone()) expression for every magnitude outside the bounded table, including values beyond i64. unsigned_abs handles i64::MIN without overflow.",
+    "The helper neither refines expressions nor changes certificates, retained cache payloads, term/expansion budgets, atomic ordering or expression ownership. Existing exact wide-integer and P4 cases remain required.",
+    "The first new test compares the actual Rational sign, arbitrary-width numerator and unit denominator with independent BigInt inputs for 199 values, including both signs near eleven word/wide boundaries through 4096 bits.",
+    "The second test proves reuse of the existing canonical owners for all 129 values from -64 through 64 and distinct Rational owners for six uncached boundaries. It does not enlarge the cache or change public constructors.",
+    "The sole arithmetic.rs change is cfg(test) module wiring. The 38-line module is separate from the existing long tests.rs file. All 874 preexisting test names will be required, using the earlier 875-name instrumentation run minus its single diagnostic-only counter test.",
+    "The qualification runner uses six fixed allocation processes with the original unchanged public integer driver, 1000 inputs and all twelve phases. It preserves exact witnesses and raw printed times; no duration inference or admission follows from this qualification."
+  ],
+  "format_passed": true,
+  "new_tests": 2,
+  "expected_scalar_tests": 876,
+  "main_and_all_old_source_trees_unchanged": true,
+  "runtime_candidate": true,
+  "runtime_admitted": false,
+  "full_library_cost_matrix_pending": true,
+  "plan_complete": false
+}
