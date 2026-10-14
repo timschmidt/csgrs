@@ -4721,7 +4721,7 @@
       "runtime_candidate_prepared": false
     },
     "pi_local_memo": {
-      "status": "pi-local-memo-qualified-scalar-cost-protocol-prepared",
+      "status": "qualified-pi-memo-fixed-scalar-costs-prepared",
       "source_audit": "docs/evidence/2026-10-14-local-memo-leaf-coverage/pi-memo-source-audit-v1.json",
       "scope": "docs/evidence/2026-10-14-pi-local-memo/scope-v2.json",
       "parent_source_files": 10135,
@@ -4759,7 +4759,9 @@
       "scalar_cost_scope": "docs/evidence/2026-10-14-pi-local-memo/scalar-cost-scope-v1.json",
       "fixed_scalar_cost_processes": 108,
       "scalar_preflight_processes": 18,
-      "costs_prepared": false
+      "costs_prepared": true,
+      "scalar_cost_preparation": "docs/evidence/2026-10-14-pi-local-memo/scalar-cost-preparation-v1/protocol.json",
+      "scalar_cost_source_review": "docs/evidence/2026-10-14-pi-local-memo/scalar-cost-source-review-v1.json"
     }
   },
   "status_meanings": {
