@@ -1,0 +1,12 @@
+{
+  "purpose": "Assess every completed v2 diagnostic process while preserving its failed final coverage assertion.",
+  "classification": "Post-observation analysis revision; no driver, fixture, library, counter hook, process count or raw output changes.",
+  "original_failure": "All 17 commands and eight sample processes exited zero. The Python runner then exited one because it incorrectly required a positive opaque-copy rejection count. The actual count is zero, while all 36864 copy attempts succeeded.",
+  "guard_policy": "Verify exact original artifact inventory and hashes from the failure record; reparse all logs; repeat full old/new source and library guards; require original phase order, 4096 inputs, all exact witnesses, two identical count runs per group and identical full-cache arithmetic counts with and without cache instrumentation.",
+  "coverage_policy": "Retain the zero rejection count. Check the same unchanged instrumented library previously emitted positive opaque-copy rejection counts in its closed quadratic trace. No assertion or sample is deleted from the old run.",
+  "outputs": "A separate rational-trace-assessment-v3.json, explicitly recording the original runner exit code 1 and failure record. Do not create or forge the missing v2 result.json.",
+  "new_processes": 0,
+  "new_library_builds": 0,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

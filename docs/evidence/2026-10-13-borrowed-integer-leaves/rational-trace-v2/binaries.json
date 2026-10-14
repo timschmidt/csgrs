@@ -1,0 +1,22 @@
+{
+  "main": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-main",
+    "sha256": "50497bb1aa2751652bff755fdb4688c82aea7c8f4bb9be4761c3f9d390d3d7c8",
+    "bytes": 6273984
+  },
+  "full-cache": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-full-cache",
+    "sha256": "221b2260a6b231c360f00c335eef3715f84a36732641055aad1707ab894a7569",
+    "bytes": 6270696
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-candidate",
+    "sha256": "01f1e26efd74e0947add8e0ac383b8130491f43a50d3d9667176d4b23119a3f4",
+    "bytes": 6273928
+  },
+  "cache-coverage": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-cache-coverage",
+    "sha256": "75f373cf06a73411994516a7fd8a9441c51ef7d306b315723fcf542ddbfe7d7d",
+    "bytes": 6337312
+  }
+}

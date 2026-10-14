@@ -1,0 +1,322 @@
+[
+  {
+    "name": "format-header",
+    "command": [
+      "rustfmt",
+      "--check",
+      "--edition",
+      "2024",
+      "--config-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/.rustfmt.toml",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-integer-leaves/rational_trace_header_v1.rs"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-main",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-preparation-v2/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/main.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-main",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-preparation-v2/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-main"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-full-cache",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-preparation-v2/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/full-cache.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-full-cache",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-preparation-v2/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-full-cache"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-candidate",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-preparation-v2/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/candidate.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-candidate",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-preparation-v2/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-candidate"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-cache-coverage",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-preparation-v2/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/cache-coverage.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-cache-coverage",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-preparation-v2/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-cache-coverage"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-1-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "f03395ecbd25915c2a2811d7873306fe1c3dd890b3ed1775086f18a0b90c0c75",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-1-full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-full-cache",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "0e746cb020bf11ea5cf913d54d25a4c29813fcf933ce7236df018763802cac70",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-candidate",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "0e746cb020bf11ea5cf913d54d25a4c29813fcf933ce7236df018763802cac70",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-1-cache-coverage",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-cache-coverage",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "ebb9aafeef1d27b3c0fb0ae549c6142b65ffd28d7a8984af9c737a02781bbdd1",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-2-cache-coverage",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-cache-coverage",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "ebb9aafeef1d27b3c0fb0ae549c6142b65ffd28d7a8984af9c737a02781bbdd1",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-candidate",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "0e746cb020bf11ea5cf913d54d25a4c29813fcf933ce7236df018763802cac70",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-2-full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-full-cache",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "0e746cb020bf11ea5cf913d54d25a4c29813fcf933ce7236df018763802cac70",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-2-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v2/probe-main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "f03395ecbd25915c2a2811d7873306fe1c3dd890b3ed1775086f18a0b90c0c75",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  }
+]
