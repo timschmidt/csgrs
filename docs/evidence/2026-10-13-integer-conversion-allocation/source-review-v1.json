@@ -1,0 +1,31 @@
+{
+  "reviewed_sources": {
+    "probe_v1.rs": "afbd663cbe8f1b6e49d391b96e356ce6f727011704b173d18d108e3c21451640",
+    "common_v1.py": "f74b9a464d881bd060bac709a18e80dce1e22e1de0e0e47901445c15788dda37",
+    "run_v1.py": "99f53b39e38c5f083aa9fc8028b0fd9bf5876f12f3b9df808bde3b973552e9df",
+    "assess_v1.py": "ecf601f1794910e3f3cbfcdceb7590023e1059fe27299bdc3013ca670fd4ecc2"
+  },
+  "read_repository_code": [
+    "Rational construction.rs through both integer and reduced-fraction constructors; bounded small_integer implementation and canonical-storage tests.",
+    "Node::exact_rational Int branch and frozen candidate ToPrimitive::to_i64/map_or_else delta.",
+    "Complete original integer_probe.rs fixtures, expected values, witnesses, family order and measurement count."
+  ],
+  "read_dependency_code": [
+    "Pinned num-bigint 0.4.6 BigInt::clone delegates to BigUint::clone, which delegates to Vec::clone.",
+    "BigUint::from(u64/u128) grows an initially empty digit vector with push; no fixed buffer capacity was assumed in the measurement assertions.",
+    "BigInt::to_i64 treats zero, negative magnitude 2^63 and out-of-range values exactly; magnitudes remain arbitrary precision outside the signed range."
+  ],
+  "findings": [
+    "The diagnostic recreates the exact old and candidate integer leaf constructor expressions using unchanged public APIs. It does not introduce a prototype branch or reuse a modified library.",
+    "Global allocator operations preserve pointer/layout/zeroing and realloc failure contracts. Atomic bookkeeping allocates no memory or payload ownership. LIVE counts all successful requests and matching frees; interval calls/bytes/histograms count only while ACTIVE.",
+    "The RAII guard disables counters before snapshots, histogram collection, assertions and JSON. The program is single-threaded; nested scopes are rejected. Input parsing and canonical initialization are outside observations.",
+    "Direct values are independently checked against parsed exact values after measurement. The batched constructors use the same frozen functions and inputs and drop each result before the next conversion.",
+    "Histogram bins below 512 mean exact requested sizes; the assessor rejects an overflow bin before checking weighted byte conservation. Requested bytes are not allocator usable size or RSS.",
+    "The runner guards old hardware, library and native evidence, hashes actual num/hyperreal/serde_json rlibs, proves constructor source identity, freezes extracted inputs and runs exactly two process orders.",
+    "The assessor keeps all raw results, checks repeatability and marks the mechanism confirmed only when the signed range has the predicted individual and batch deltas. Historical allocation rows are carried separately without replacing any observation."
+  ],
+  "format_completed_before_freezing": true,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

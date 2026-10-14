@@ -1,0 +1,27 @@
+{
+  "purpose": "Confirm or reject the proposed 24-byte digit-vector reconstruction cost behind the repeated 12024-byte signed-word construction excess.",
+  "trigger": "Both closed combined and cache-free trials report unchanged 12501 allocation calls, 652000 to 664024 requested bytes, unchanged 388000 retained bytes and peak 388264 to 388288 for the original 1000-input signed-word construction phase.",
+  "libraries": "Reuse the original main release hyperreal, serde_json and num libraries. The Rational constructor source must be byte-identical in all three prior variants. No library rebuild or runtime source change.",
+  "inputs": "Extract all 19 integer literals directly from the original three-family integer probe. Check all available direct clone/primitive magnitude and original/signed-word Rational constructor paths. Replay the original six signed-word values cyclically for 1000 conversions; 501 fit i64.",
+  "measurement": "System requested-allocation histograms, total calls/bytes, retained and peak deltas. Fixed atomic storage; collect/format only after stopping counters. Single-threaded standalone process, no spawned work. Canonical constants are warmed equally outside all observations.",
+  "controls": "Empty scope, one 17-byte zeroed allocation with matching retained/histogram, and disabling on unwind. All case values independently match parsed exact Rational/BigInt magnitudes.",
+  "qualification": [
+    "rustfmt check",
+    "standalone Clippy -D warnings",
+    "rustc -O -D warnings"
+  ],
+  "fixed_processes": [
+    "forward method order",
+    "reverse method order"
+  ],
+  "rows": "71 case/method rows, two 1000-conversion batches and one allocator control in each process. Raw rows retained whether the allocation mechanism matches the hypothesis or not.",
+  "analysis": "Verify every row/histogram, original input literals, reversed order and unchanged evidence. Compare both process counts and the whole 1000-conversion excess without collecting timings. Allocation-mechanism confirmation is scoped to this backend and these direct constructors.",
+  "limits": [
+    "This probe omits the surrounding affine fixture; it cannot replace the original costs.",
+    "No direct causal claim about the separate quadratic construction timings or any native deadline.",
+    "A proposed borrowed-integer helper remains unimplemented and unadmitted until correctness and the existing end-to-end costs are checked."
+  ],
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
