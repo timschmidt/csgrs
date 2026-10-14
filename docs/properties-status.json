@@ -4505,19 +4505,23 @@
       "plan_complete": false
     },
     "laurent_cache_eligibility": {
-      "status": "source-audit-complete-isolated-qualification-protocol-frozen",
+      "status": "isolated-snapshots-formatted-reviewed-qualification-pending",
       "evidence": "docs/evidence/2026-10-14-laurent-cache-eligibility/source-audit-v1.json",
       "scope": "docs/evidence/2026-10-14-laurent-cache-eligibility/scope-v1.json",
       "immutable_node_kinds": 60,
       "publication_eligible_kinds": 8,
       "publication_ineligible_kinds": 52,
-      "prototype_prepared": false,
+      "prototype_prepared": true,
       "qualification_executed": false,
       "cost_samples": 0,
       "main_and_35_pending_native_paths_unchanged": true,
       "runtime_candidate": true,
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "preparation": "docs/evidence/2026-10-14-laurent-cache-eligibility/preparation-v1/protocol.json",
+      "source_review": "docs/evidence/2026-10-14-laurent-cache-eligibility/source-review-v1.json",
+      "isolated_sources": 2,
+      "source_files_each": 10135
     }
   },
   "status_meanings": {
