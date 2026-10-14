@@ -1,0 +1,52 @@
+{
+  "objective": "Qualify the identical test-only MPFR/thread-label cleanup on the admitted main runtime before separate main admission.",
+  "source": "target/mpfr-test-cleanup-main-v1/source",
+  "source_files": 10130,
+  "expected_delta_sha256": {
+    "crates/hyperreal/tests/checked_scientific.rs": "193e889cfa1d617f20bdb23e44c097cf52eb0ceb176c24ef4e14ca51ddea377a",
+    "crates/hyperreal/tests/numerical_cross_reference.rs": "8b28d8b35d04cc5b9c5927e7f872d34025cc938bdb1396f3459317cefca2ad47",
+    "crates/hyperreal/src/dispatch_trace.rs": "bc110215433a88291763f32a91c067dbf7790394af6a1289bef860332ac9e834",
+    "crates/hyperreal/src/lib.rs": "a95aafa088c9daee1033031e0a4d1bb72ba10549c4c88fbcc204ca3b38b69352",
+    "crates/hyperreal/src/real/convert.rs": "4d7f275abbd1b51bc0766a2c98afc7737fed0cdbd93f7bda47e185f1ebf8a291",
+    "crates/hyperreal/src/real/tests.rs": "f4ffb900827d76afa883380ec15196fb6753db720977b1fbb649632b2ccf465a",
+    "crates/hyperreal/src/computable/approximation.rs": "1c2c4edbf1b69387dabe891e8bdfa426004f8c0804f1d2172b1c1b317774dd73",
+    "crates/hyperreal/src/computable/approximation/e_plan_tests.rs": "8a4cf5a1a8f2d168367cb033833734ca20e8646d451e015ddaf44389061f5334",
+    "crates/hyperreal/src/computable/node/fractional_separation_tests.rs": "cb7ec9978691908d2a4b875f4e281a46a250ab2251e5411bda66c7340740ca2e",
+    "crates/hyperreal/src/computable/node/tests.rs": "fffbd4d8c35eefbe3dbbbfa1914947a6d5904edd77b6b535fa855553521058c5",
+    "crates/hyperreal/src/computable/node/certified_planning_tests.rs": "4867cae76633e2670a092921fdc3e5925e026763c23e99f1f38328f31781747a",
+    "crates/hyperreal/src/rational/arithmetic/tests.rs": "ca02e28060a1387978f860730df855d7ed274effb3bb8503d3f185205d9f6c53",
+    "crates/hyperreal/tests/support/mpfr.rs": "a6f4aa02d16ee8107aa72833399b8d4b976dbdf367a631cfe4916cb122be7272"
+  },
+  "candidate_ledger_sha256": {
+    "docs/properties-status.json": "c7ef40d0cb44060bb32fc237f6da2145ba50432342e432f63d8e2fa6e1cbdc05"
+  },
+  "prerequisite": "A completed, independently assessed normal-image-test-cleanup-v1 qualification, including enabled ASan/LSan controls and normal/unwinding worker cleanup.",
+  "test_patch": "normal-image-test-cleanup-v1.patch",
+  "test_only_changed_files": 13,
+  "commands": 5,
+  "expected_exit_codes": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "command_wall_limit_seconds": 1800,
+  "validation": [
+    "Workspace formatting check",
+    "Strict release all-target Hyperreal Clippy with default features",
+    "Strict release all-target Hyperreal Clippy with all features",
+    "All Hyperreal library/integration tests with default features and ASan/LSan enabled",
+    "All Hyperreal library/integration tests with all features and ASan/LSan enabled"
+  ],
+  "execution_context": "exec_command require_escalated, offline, serialized, leak detection enabled with no suppressions; the sandbox thread-attachment restriction is separately established.",
+  "unadmitted_scalar_or_mesh_runtime_prototypes_included": false,
+  "no_extension_retry_filter_or_pooling": true,
+  "limits": [
+    "The exact test cleanup patch is reused by byte identity; its independently tested ordinary/unwinding helper controls are prerequisite evidence, not rerun samples.",
+    "This validates the Hyperreal test-harness change on main-equivalent production sources. It is not full workspace CI or push readiness.",
+    "No runtime optimization, performance improvement, or general leak freedom is claimed. The standard library and native GMP/MPFR code are not claimed rebuilt with ASan."
+  ],
+  "test_cleanup_admitted": false,
+  "plan_complete": false
+}
