@@ -1,0 +1,34 @@
+{
+  "default-tests": {
+    "passed": 234,
+    "failed": 0,
+    "ignored": 7,
+    "measured": 0,
+    "filtered_out": 0,
+    "completed_test_summaries": 7
+  },
+  "all-features-tests": {
+    "passed": 235,
+    "failed": 0,
+    "ignored": 7,
+    "measured": 0,
+    "filtered_out": 0,
+    "completed_test_summaries": 7
+  },
+  "doctests": {
+    "passed": 0,
+    "failed": 0,
+    "ignored": 0,
+    "measured": 0,
+    "filtered_out": 0,
+    "completed_test_summaries": 1
+  },
+  "native-consumer-tests": {
+    "passed": 19,
+    "failed": 0,
+    "ignored": 0,
+    "measured": 0,
+    "filtered_out": 0,
+    "completed_test_summaries": 4
+  }
+}

@@ -1,0 +1,200 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 10.659973597154021,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "default-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 8.856004335917532,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "d58d2447e11d6e732b3cce0e89b88fc956bb386e03e4fbf0eeefa2e11953eb7d"
+  },
+  {
+    "name": "default-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 26.993055851664394,
+    "stdout_sha256": "a053dd0dd338267b8971b50ed783ad03cda7a695f2a1779f9037957ed9651373",
+    "stderr_sha256": "6a74427506d0f78f358ffbd7c8482a4a38c4ca5b9d502762839824f8db1550ef"
+  },
+  {
+    "name": "all-features-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "--all-targets",
+      "--all-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 5.770118903834373,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "850d19636c228f77042fc2b6f7661d78c908dcdd9eca062446c6251906cc4f01"
+  },
+  {
+    "name": "all-features-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "--lib",
+      "--tests",
+      "--all-features",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 20.18032593699172,
+    "stdout_sha256": "cde17d6280e624505bbc6994287e10fe21f60dc52b1abb642500cfeb8474202f",
+    "stderr_sha256": "60b09c4c8a71734924e99f22bf94f6afa0fac0b643704c34b7e986311fa01c53"
+  },
+  {
+    "name": "doctests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "--all-features",
+      "--doc"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.2925590220838785,
+    "stdout_sha256": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd",
+    "stderr_sha256": "f7d8f7f49070985174602cbb0e35ff2279290eac022e85a3c7821d02b5740c33"
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "--all-features",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 6.776905491948128,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e2f8ed9da71cb175b87635d2cf249fe74cd3ce010f6e5a84360c6dc74ce3d52b"
+  },
+  {
+    "name": "native-consumer-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--test",
+      "native_queries",
+      "--test",
+      "geometry_context",
+      "--test",
+      "solid_cache",
+      "--test",
+      "native_hull_determinism",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 21.254496455192566,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "af68f263738ff60ce2412dae160cc0375976d6b83693020d13daefc357f36605"
+  },
+  {
+    "name": "native-consumer-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--test",
+      "native_queries",
+      "--test",
+      "geometry_context",
+      "--test",
+      "solid_cache",
+      "--test",
+      "native_hull_determinism",
+      "--",
+      "--test-threads=1",
+      "--show-output"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 147.05786592001095,
+    "stdout_sha256": "7ba40b40b5133cc427d4b76f9a2b83c17ee08d9a0543b60b1034f3b1c13b5561",
+    "stderr_sha256": "b1a0151c5f9e244b9a6a028b7b59373c77679c4f447d2525c7c84f8b18bc457f"
+  },
+  {
+    "name": "mesh-fuzz-check",
+    "command": [
+      "cargo",
+      "check",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source/crates/hypermesh/fuzz/Cargo.toml",
+      "--bins"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 6.646117023192346,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "fb67e76334333ad31eeed766c8160a76862e533a23f596715ef715315fb74b2b"
+  }
+]

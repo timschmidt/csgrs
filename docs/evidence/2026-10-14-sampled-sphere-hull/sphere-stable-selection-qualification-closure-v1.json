@@ -1,0 +1,63 @@
+{
+  "complete": true,
+  "driver_terminal_exit_code": 0,
+  "commands_all_zero": 10,
+  "result_sha256": "41f7c06cf14875636a230ae744218914e235460f10eb53c2f0d754f7cb7ec5a7",
+  "test_counts": {
+    "default-tests": {
+      "passed": 234,
+      "failed": 0,
+      "ignored": 7,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 7
+    },
+    "all-features-tests": {
+      "passed": 235,
+      "failed": 0,
+      "ignored": 7,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 7
+    },
+    "doctests": {
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 1
+    },
+    "native-consumer-tests": {
+      "passed": 19,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 4
+    }
+  },
+  "source_files_rechecked": 10136,
+  "root_source_files_rechecked": 10129,
+  "source_delta_from_broadly_qualified_finite_image": {
+    "crates/hypermesh/src/convex_hull.rs": "b4fcd4f3c69cfe02cc81402c5632e18fa3e0fb8ac6f6605c184cffeb9d39ea7a",
+    "tests/native_hull_determinism.rs": "752490127cd32d6e7fadd1083ecf71301ea42beb30aa5b922987a68ba74a351e"
+  },
+  "all_frozen_source_and_qualification_artifacts_rechecked": true,
+  "strict_lint_docs_and_fuzz_binary_compilation_passed": true,
+  "fuzz_campaign_executed": false,
+  "new_scalar_suite_executed": false,
+  "scope": [
+    "Workspace format check on the frozen candidate.",
+    "Default and all-feature release hypermesh strict all-target Clippy and complete lib/integration tests.",
+    "All-feature hypermesh doctests and strict docs.",
+    "Strict no-default-feature Clippy and tests for native_queries, geometry_context, solid_cache, and native_hull_determinism.",
+    "Release compile check of every hypermesh fuzz binary."
+  ],
+  "limits": "Fuzz target compilation is not an executed fuzz campaign. The existing mesh_and_hull target does not cover non-dyadic replay. No new ASan, formal verification, native cost, allocation or size evidence is claimed. This is not full workspace CI or pre-push qualification.",
+  "cost_trial_prepared": true,
+  "cost_trial_executed": false,
+  "additional_source_review": "Before cost sampling, audit whether signed-zero projection cache changes can alter the retained dyadic branch through BVH iteration order. This is an open hypothesis, not a demonstrated failure.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

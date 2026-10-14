@@ -1,0 +1,75 @@
+{
+  "complete": true,
+  "commands_all_zero": 10,
+  "test_counts": {
+    "default-tests": {
+      "passed": 234,
+      "failed": 0,
+      "ignored": 7,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 7
+    },
+    "all-features-tests": {
+      "passed": 235,
+      "failed": 0,
+      "ignored": 7,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 7
+    },
+    "doctests": {
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 1
+    },
+    "native-consumer-tests": {
+      "passed": 19,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 4
+    }
+  },
+  "all_frozen_sources_inputs_and_native_artifacts_unchanged": true,
+  "artifacts_sha256": {
+    "all-features-clippy.stderr": "850d19636c228f77042fc2b6f7661d78c908dcdd9eca062446c6251906cc4f01",
+    "all-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "all-features-tests.stderr": "60b09c4c8a71734924e99f22bf94f6afa0fac0b643704c34b7e986311fa01c53",
+    "all-features-tests.stdout": "cde17d6280e624505bbc6994287e10fe21f60dc52b1abb642500cfeb8474202f",
+    "commands.json": "83027aab7a3f883cbd57aacd21a93999fd473216c0f9d72637979ab3f84ea20d",
+    "default-clippy.stderr": "d58d2447e11d6e732b3cce0e89b88fc956bb386e03e4fbf0eeefa2e11953eb7d",
+    "default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-tests.stderr": "6a74427506d0f78f358ffbd7c8482a4a38c4ca5b9d502762839824f8db1550ef",
+    "default-tests.stdout": "a053dd0dd338267b8971b50ed783ad03cda7a695f2a1779f9037957ed9651373",
+    "docs.stderr": "e2f8ed9da71cb175b87635d2cf249fe74cd3ce010f6e5a84360c6dc74ce3d52b",
+    "docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "doctests.stderr": "f7d8f7f49070985174602cbb0e35ff2279290eac022e85a3c7821d02b5740c33",
+    "doctests.stdout": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-fuzz-check.stderr": "fb67e76334333ad31eeed766c8160a76862e533a23f596715ef715315fb74b2b",
+    "mesh-fuzz-check.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native-consumer-clippy.stderr": "af68f263738ff60ce2412dae160cc0375976d6b83693020d13daefc357f36605",
+    "native-consumer-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native-consumer-tests.stderr": "b1a0151c5f9e244b9a6a028b7b59373c77679c4f447d2525c7c84f8b18bc457f",
+    "native-consumer-tests.stdout": "7ba40b40b5133cc427d4b76f9a2b83c17ee08d9a0543b60b1034f3b1c13b5561",
+    "protocol.json": "e24fa86957c94a6ae3655a78932fc0418353d79b5af43c74b8dd0d5789e108fb",
+    "root-source-hashes.json.gz": "aa2e5a5bbd2a42806e1a587a329a0e1cde3fde5e3758d7150cb3852a4f567c08",
+    "test-counts.json": "dc8d481dbeec189ce2b149abe19c8ebc86b3c350bec96f99144010fec373765b"
+  },
+  "coverage": [
+    "Workspace format check on the frozen candidate.",
+    "Default and all-feature release hypermesh strict all-target Clippy and complete lib/integration tests.",
+    "All-feature hypermesh doctests and strict docs.",
+    "Strict no-default-feature Clippy and tests for native_queries, geometry_context, solid_cache, and native_hull_determinism.",
+    "Release compile check of every hypermesh fuzz binary."
+  ],
+  "limits": "Fuzz target compilation is not an executed fuzz campaign. The existing mesh_and_hull target does not cover non-dyadic replay. No new ASan, formal verification, native cost, allocation or size evidence is claimed. This is not full workspace CI or pre-push qualification.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

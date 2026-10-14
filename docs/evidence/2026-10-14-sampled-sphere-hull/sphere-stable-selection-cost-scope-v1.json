@@ -1,0 +1,20 @@
+{
+  "objective": "Measure the native process cost and binary size of the proposed deterministic-selection correctness repair against the unchanged finite-image implementation.",
+  "groups": ["image", "stable"],
+  "cases": ["fifteen_degrees", "original_medium", "fifth_turn", "seventh_turn"],
+  "orders": [["image", "stable"], ["stable", "image"], ["image", "stable"], ["stable", "image"], ["image", "stable"], ["stable", "image"]],
+  "commands": 58,
+  "preflight_processes": 8,
+  "fixed_sample_processes": 48,
+  "hull_queries_per_process": 3,
+  "native_wall_stop_seconds": 600,
+  "measurement": "Full default-allocator process wall and child user/system CPU for sphere construction, three STRICT hull calls with all outputs retained, validation and serialization. Each process has fresh process-local state; the second and third calls reuse the first call's input graph. No separate per-query or check-body times are inferred.",
+  "output_contract": "Every process must match its own group's full frozen three-query transcript. The parent 32x16 warm rows differ from its cold rows, and the repaired sphere rows differ from the parent. Both groups' outputs have independent exact support proofs for the same full original finite point sets. Record all reference byte sizes and hashes; do not claim row-preserving optimization.",
+  "reproducible_cost_increase_flag": "For a case, all six paired stable/image process-wall ratios exceed 1.10 and their median exceeds 1.15. Publish every pair, absolute medians and CPU ratios regardless of the flag. An unflagged case is not proof of no regression.",
+  "prerequisite": "The fixed ten-command broader deterministic-selection qualification must have completed successfully before sampling.",
+  "sample_extension_filtering_or_pooling_allowed": false,
+  "old_trials_resumed_or_reused_as_samples": false,
+  "limitations": "No allocation, retained-byte, RSS, per-query timing, universal speedup or runtime-admission claim. This measures a correctness repair with recorded row changes.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,22 @@
+   Compiling autocfg v1.5.1
+   Compiling libc v0.2.186
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.9
+    Checking arbitrary v1.4.2
+   Compiling num-traits v0.2.19
+   Compiling jobserver v0.1.35
+    Checking num-integer v0.1.46
+    Checking num-complex v0.4.6
+   Compiling cc v1.2.67
+    Checking num-bigint v0.4.8
+    Checking num-iter v0.1.46
+   Compiling libfuzzer-sys v0.4.13
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source/crates/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source/crates/hypertri)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source/crates/hypermesh)
+    Checking hypermesh-fuzz v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source/crates/hypermesh/fuzz)
+    Finished `release` profile [optimized] target(s) in 6.62s
