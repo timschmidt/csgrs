@@ -1,0 +1,69 @@
+{
+  "scope": "Review of all newly added native proof bodies, the narrow raw-rational accessor, and the changed normal-form call site; selected existing callers were read. This is not credited as a whole-source audit.",
+  "reviewed_candidate_files_sha256": {
+    "crates/hyperreal/src/computable/node/cyclotomic.rs": "9188481cd464af456e540e9f3390c376fd5c5833b85f3343dfa859e2fd0320fd",
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "af9ba7569ed45091a6fbd35a57799f0cb6f0888f952eeca58eb46be6500c42aa",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "c4357156ea87c68268eb3c49a63d2a078a1757e2aceaf784a9ab1d54dd15f2d7"
+  },
+  "invariants": [
+    {
+      "component": "Rational leaves",
+      "argument": "Read raw u64 numerator and denominator magnitudes plus sign. Do not request canonicalization or clone arbitrary-size integers. Internal unreduced ratios denote the same quotient; the positive denominator invariant comes from Rational."
+    },
+    {
+      "component": "Plan",
+      "argument": "Borrowed immutable DAG nodes stay alive for the call. Pointer identities are local and never retained. Each recursive visit decrements a fixed budget, depth is capped, children precede each expression, and lcm arithmetic is checked before field allocation."
+    },
+    {
+      "component": "Fractions and coefficient arithmetic",
+      "argument": "Positive denominators; gcd is nonzero because denominator is positive. Signed i128 add/multiply/negation-sensitive paths use checked operations. Unsigned absolute value handles i128::MIN; normalizations divide only by positive divisors."
+    },
+    {
+      "component": "Modulus",
+      "argument": "For each divisor d of L, divide X^d-1 by all previously constructed proper-divisor cyclotomic polynomials. Every division is monic and verifies exact remainder zero. Reductions preserve evaluation at the primitive L-th root."
+    },
+    {
+      "component": "Trig and root mapping",
+      "argument": "Use the exact exponential formulas for sine and cosine, with i=zeta^(L/4). L is divisible by 4 and every angle denominator times two. sqrt(2), sqrt(3), sqrt(6) have the positive cosine embeddings explicitly described in source."
+    },
+    {
+      "component": "Polynomial evaluation",
+      "argument": "Arithmetic in Q[zeta] preserves the stored DAG denotation. Inverse is supported only when its reduced argument is a nonzero rational. A proof is returned only for an all-zero reduced coefficient vector; nonzero or unavailable reduction yields no fact."
+    },
+    {
+      "component": "Resources",
+      "argument": "Field order <=256, degree <=128, visits <=512 and depth <96 bound vector lengths and recursion. Charged coefficient work <=262144 is not a wall-time budget and does not count every loop or gcd step; remaining loops and Euclidean operations are separately bounded by fixed lengths and i128 width. No exact byte/latency bound is claimed."
+    },
+    {
+      "component": "Caches",
+      "argument": "The added reducer publishes no cache facts and changes no value representation. The result is returned as an owned rational zero through the pre-existing normal-form API. The existing normalizer may still warm its own caches. Repeated new proofs are recomputed; concurrent replay passed the targeted test."
+    }
+  ],
+  "open_before_admission": [
+    {
+      "item": "Early proof placement",
+      "reason": "The isolated candidate uses the existing exact-normal-form hook. Hyperlimit currently invokes this after its bounded refinement attempt. The normative admission protocol asks structural/rational proofs to precede refinement, and P2/P10 ask avoidable refinement to be removed. A separately qualified earlier query placement or narrowly justified dispatch design is still needed; do not silently label polynomial reduction as bounded refinement or cheap pre-existing facts."
+    },
+    {
+      "item": "Receipt compatibility",
+      "reason": "RealSignCertificate currently has StructuralFacts, ExactZeroScale and BoundedRefinement. Inserting the reducer into sign_until without a truthful route would blur these meanings. No such insertion is present in V2."
+    },
+    {
+      "item": "Coverage",
+      "reason": "The six tests cover 157 captured zeros and selected guards/controls, not every added expression variant or each guard boundary. Plan memo hits, raw unreduced ratios, dot nodes, exact rational inverses, large LCM combinations, graph breadth and abort behavior need targeted recipe coverage."
+    },
+    {
+      "item": "Formal scope",
+      "reason": "The mathematical reduction argument and independent finite oracle are not Verus proofs of production bodies. Existing proof target coverage must not be extended by inventory alone."
+    },
+    {
+      "item": "Cost",
+      "reason": "No matched timing, allocation, peak/retained bytes or binary-size trial exists for this candidate. Unsupported and eligible nonzero normal-form calls must be represented, not just newly solved zeros."
+    }
+  ],
+  "native_evidence": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-assessment-v2.json",
+  "independent_geometry_evidence": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-native-support-v1/result.json",
+  "broad_rust_qualification": "running, not yet assessed",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

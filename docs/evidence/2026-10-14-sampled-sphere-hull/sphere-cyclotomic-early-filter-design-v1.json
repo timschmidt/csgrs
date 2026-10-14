@@ -1,0 +1,28 @@
+{
+  "status": "design_implemented_in_unexecuted_isolated_draft",
+  "owning_layer": "hyperreal fixed affine determinant filter",
+  "motivation": "P2/P5/P10 and docs/admission.md favor a sufficient exact proof before determinant graph construction and bounded refinement. V2 proves feasibility through a later general normal-form fallback.",
+  "selected_candidate": "Extend existing Real::certified_affine_det3_sign with a capped exact cyclotomic zero branch when exact primitive views are unavailable. Preserve its existing exact-dyadic filter route and return contract.",
+  "input": "The original twelve Real coordinate references, including their separate exact rational scales and optional non-rational computable payloads. Rational Class::One must be handled directly; computable_ref panics for rational values without an attached payload.",
+  "output": "Some(RealSign::Zero) only after an exactly reduced zero affine determinant; None on unsupported graphs, overflow, nonzero remainder or exhausted bounds. Existing certified nonzero filter answers remain unchanged.",
+  "algorithm": "Plan/evaluate all coordinate payloads and bounded raw scales in one common cyclotomic field, form the nine coordinate differences in that field, then reduce the fixed determinant polynomial. Reuse the reviewed checked polynomial operations and cap all attachment visits and determinant work.",
+  "common_path": "Return from the existing primitive exact filter whenever primitive views exist, including its None result. Skip additional field work for wholly rational inputs outside that filter.",
+  "compatibility": "No new public API or certificate variant. Hyperlimit already reports this filter as an exact proof. Keep the V2 general normal-form extension available for other callers and fallback coverage.",
+  "required_checks": [
+    "All 157 captured zero fixtures through the public affine filter and existing normal form",
+    "Independent nonzero faces and signed displacements stay undecided by this zero-only branch or are correctly certified by the pre-existing dyadic filter",
+    "Rational inputs and aborted/overlarge scales do not trigger unsafe computable_ref access",
+    "Shared field order, depth, work, coordinate attachment and coefficient bounds",
+    "All original native sphere points and prior 24x12 rows/certainty unchanged",
+    "Reassess selected tests and perform fixed cost qualification after any final implementation change"
+  ],
+  "not_selected": [
+    "Adding an enum variant or mislabelling a polynomial proof as numerical refinement",
+    "Unconditionally moving the entire generic normalizer before every sign query",
+    "Introducing a sphere-specific plane table or geometry carrier"
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "draft": "target/sphere-cyclotomic-early-draft-v1/source",
+  "fixed_trial_scope": "sphere-cyclotomic-early-scope-v1.json"
+}

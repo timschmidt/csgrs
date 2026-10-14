@@ -1,0 +1,63 @@
+{
+  "purpose": "Qualify the early exact affine determinant zero filter before determinant construction or bounded refinement, preserving every previously certified sphere row.",
+  "closed_diagnostic_assessment_sha256": "f69d8fe49827d4615052a8b4fe4ed4eeafc1b9b671f2af05bf1aa23597877d25",
+  "expected_source_delta_sha256": {
+    "crates/hyperreal/src/computable/node.rs": "66cbbef90aa636d64bfc87dc477776e9b295f91dd544116b4bf01c659e0e256f",
+    "crates/hyperreal/src/computable/node/cyclotomic.rs": "9db77eda2fa6d62e2b458dbfd12cf9facb5e714c2e611df6475c3d1bc40c2c2c",
+    "crates/hyperreal/src/computable/node/cyclotomic/witnesses.rs": "7c8daebde62c32937d1024cdb3bc563a6e206c1ea5f471e6d9062e741e771999",
+    "crates/hyperreal/src/computable/node/cyclotomic/tests.rs": "415eb1659c21e032fc9d9f004a6d0d6ddbbc13785f6d0c3524361c12b2ea49ba",
+    "crates/hyperreal/src/real/arithmetic/linear_algebra.rs": "eed0e0170fae9c264b2f9ab9a04981255f02106fbd6d65461d3ad30f86542da5",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "c4357156ea87c68268eb3c49a63d2a078a1757e2aceaf784a9ab1d54dd15f2d7",
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "af9ba7569ed45091a6fbd35a57799f0cb6f0888f952eeca58eb46be6500c42aa"
+  },
+  "integration": "Existing Real::certified_affine_det3_sign keeps its exact primitive path; otherwise a private outlined helper reads the twelve original coordinate payloads and bounded scales into a common cyclotomic field. Rational-only inputs skip the new branch. Zero proof has the existing exact predicate receipt. The V2 normal-form fallback remains available.",
+  "supported": "Rational leaves; rational pi multiples as sine/cosine arguments; sqrt(2), sqrt(3), sqrt(6); arithmetic sums, products, squares, rational inverses, bounded binary scales and retained three-term linear combinations. At least one retained trig node is required.",
+  "caps": {
+    "root_of_unity_order": 256,
+    "field_degree": 128,
+    "graph_visits": 512,
+    "recursive_depth_exclusive": 96,
+    "charged_coefficient_work": 262144,
+    "raw_rational_numerator_and_denominator_bits": 64,
+    "binary_scale_absolute_shift": 63,
+    "coefficient_arithmetic": "checked i128; any overflow is Unknown"
+  },
+  "proof": "Exact monic cyclotomic division and polynomial zero remainder. Principal sqrt branches are 2cos(pi/4), 2cos(pi/6) and their product. Division is allowed only after the divisor reduces to a nonzero rational. Mathematical basis is recorded in sphere-cyclotomic-oracle-audit-v1.json; no formal verification is claimed.",
+  "controls": {
+    "distinct_prior_independently_proven_zero_determinants": 157,
+    "unit_tests": 9,
+    "other_cases": [
+      "exact nonzero face controls",
+      "signed 2^-20 perturbations",
+      "Pythagorean and double-angle identities",
+      "sqrt positive branches",
+      "field-order, recursion, shift and work rejection",
+      "checked overflow",
+      "unsupported transcendental and inverse-zero rejection",
+      "concurrent replay",
+      "157 captured zero quadruples through early affine filter without per-value approximation-cache changes",
+      "314 signed 1/10^12 normal displacements and three original nonzero faces",
+      "abort and overlarge coordinate scale rejection",
+      "raw unreduced rational angle, pi/tau/offset/add/negate angle forms, exact rational inverse and retained three-term dot recipes with nonzero controls",
+      "joint field order overflow and broad shallow DAG rejection"
+    ]
+  },
+  "native_inputs": [
+    "fifteen_degrees r8 24x12",
+    "original_medium r10 32x16",
+    "fifth_turn r8 10x7",
+    "seventh_turn r8 7x5"
+  ],
+  "native_control": "All four original ordinary STRICT native sphere calls must certify with full stdout byte-identical to isolated V2. The 24x12 case must also equal the separately linked admitted mesh baseline. No external plane tables, alternate samples or approximate coordinates.",
+  "trial_type": "Fixed nine-test and four-case feasibility; per-command 900 seconds, original medium query 600 seconds, other native queries 180 seconds. This is not a matched performance comparison. Preserve any failure and do not edit or extend an executed version.",
+  "admission_pending": [
+    "broader scalar/predicate/mesh/grammar tests and feature combinations",
+    "independent negative/adversarial and resource-bound coverage",
+    "formal obligations and mathematical implementation review",
+    "native timing/allocation/retention/binary costs",
+    "monotone proof contracts and precise public normal-form documentation"
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "qualification_prerequisite": "The unchanged V2 broad Rust qualification must finish all eleven commands before this fixed trial starts."
+}
