@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "maximal-plane-trial-closed-native-cyclotomic-design-pending",
+      "status": "native-cyclotomic-feasibility-protocol-frozen",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -4939,7 +4939,7 @@
       "mesh_identity_main_admission": "docs/evidence/2026-10-14-sampled-sphere-hull/mesh-identity-main-admission-v1.json",
       "mesh_identity_runtime_admitted": true,
       "admitted_runtime_scope": "Mesh source identity repair only; no sphere certificate.",
-      "sphere_certificate_candidate_prepared": false,
+      "sphere_certificate_candidate_prepared": true,
       "sphere_grid_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-grid-facts-scope-v1.json",
       "sphere_grid_coverage_executed": true,
       "sphere_grid_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-grid-facts-assessment-v1.json",
@@ -4959,7 +4959,10 @@
       "sphere_maximal_plane_collection_executed": true,
       "sphere_maximal_plane_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/collect_sphere_zero_witnesses_v2.py",
       "sphere_maximal_plane_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-zero-witness-assessment-v2.json",
-      "sphere_maximal_plane_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-zero-witness-closure-v2.json"
+      "sphere_maximal_plane_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-zero-witness-closure-v2.json",
+      "sphere_cyclotomic_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-scope-v1.json",
+      "sphere_cyclotomic_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_sphere_cyclotomic_v1.py",
+      "sphere_cyclotomic_executed": false
     }
   },
   "status_meanings": {

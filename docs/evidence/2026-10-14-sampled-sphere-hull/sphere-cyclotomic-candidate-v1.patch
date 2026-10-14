@@ -1,0 +1,938 @@
+--- a/crates/hyperreal/src/computable/node.rs
++++ b/crates/hyperreal/src/computable/node.rs
+@@ -30,6 +30,7 @@
+ include!("node/logarithms.rs");
+ include!("node/roots_inverse_hyperbolic.rs");
+ include!("node/algebra.rs");
++mod cyclotomic;
+ include!("node/quadratic_tower.rs");
+ include!("node/radical_tower.rs");
+ include!("node/approximation_queries.rs");
+--- a/crates/hyperreal/src/computable/node/cyclotomic.rs
++++ b/crates/hyperreal/src/computable/node/cyclotomic.rs
+@@ -0,0 +1,514 @@
++//! Bounded exact-zero proofs in a cyclotomic field. No numerical evaluation.
++//!
++//! With zeta = exp(2 pi i / L), the exact sine and cosine formulas become
++//! rational polynomials in zeta. Phi_L(zeta) = 0 makes a zero polynomial
++//! remainder a certificate of equality. The modulus is built by exact monic
++//! division of X^d - 1 for divisors d of L, checking every remainder. Square
++//! roots 2 and 3 use 2 cos(pi/4) and 2 cos(pi/6), both positive; sqrt(6) is
++//! their product. No conclusion is drawn from a nonzero remainder.
++//!
++//! Checked i128 operations reject overflow. Field order, polynomial degree,
++//! graph visits, recursion depth and coefficient work have fixed ceilings.
++//! Rational leaves are read before canonicalization and fit in two u64 words.
++//! The query does not change scalar representations or publish cache facts.
++use super::{Approximation, Computable, SharedConstant};
++
++const MAX_ORDER: usize = 256;
++const MAX_DEGREE: usize = 128;
++const MAX_VISITS: usize = 512;
++const MAX_DEPTH: usize = 96;
++const MAX_WORK: usize = 262_144;
++
++#[derive(Clone, Copy)]
++struct Fraction {
++    numerator: i128,
++    denominator: i128,
++}
++
++fn gcd(mut a: u128, mut b: u128) -> u128 {
++    while b != 0 {
++        (a, b) = (b, a % b);
++    }
++    a
++}
++
++impl Fraction {
++    fn new(numerator: i128, denominator: i128) -> Option<Self> {
++        if denominator <= 0 {
++            return None;
++        }
++        let divisor = i128::try_from(gcd(numerator.unsigned_abs(), denominator as u128)).ok()?;
++        Some(Self {
++            numerator: numerator / divisor,
++            denominator: denominator / divisor,
++        })
++    }
++
++    fn add(self, other: Self) -> Option<Self> {
++        Self::new(
++            self.numerator
++                .checked_mul(other.denominator)?
++                .checked_add(other.numerator.checked_mul(self.denominator)?)?,
++            self.denominator.checked_mul(other.denominator)?,
++        )
++    }
++
++    fn mul(self, other: Self) -> Option<Self> {
++        Self::new(
++            self.numerator.checked_mul(other.numerator)?,
++            self.denominator.checked_mul(other.denominator)?,
++        )
++    }
++
++    fn binary_scale(shift: i32) -> Option<Self> {
++        if !(-63..=63).contains(&shift) {
++            return None;
++        }
++        Self::new(1_i128 << shift.max(0), 1_i128 << (-shift).max(0))
++    }
++}
++
++fn rational_leaf(node: &Computable) -> Option<Fraction> {
++    match &node.internal.approximation {
++        Approximation::One => Fraction::new(1, 1),
++        Approximation::Int(value) => {
++            if value.bits() > 64 {
++                return None;
++            }
++            Fraction::new(num::ToPrimitive::to_i128(value)?, 1)
++        }
++        Approximation::Ratio(value) => {
++            let (numerator, denominator) = value.bounded_raw_word_parts()?;
++            Fraction::new(numerator, denominator)
++        }
++        _ => None,
++    }
++}
++
++enum Expression {
++    Rational(Fraction),
++    Trig(Fraction, bool),
++    Root(u8),
++    Scale(usize, Fraction),
++    Add(usize, usize),
++    Multiply(usize, usize),
++    Inverse(usize),
++    Dot([usize; 3], [Fraction; 3]),
++}
++
++struct Plan {
++    expressions: Vec<Expression>,
++    identities: Vec<(usize, usize)>,
++    remaining: usize,
++    order: usize,
++    has_trig: bool,
++}
++
++impl Plan {
++    fn visit(&mut self, depth: usize) -> Option<()> {
++        if depth >= MAX_DEPTH {
++            return None;
++        }
++        self.remaining = self.remaining.checked_sub(1)?;
++        Some(())
++    }
++
++    fn include_order(&mut self, order: usize) -> Option<()> {
++        self.order =
++            (self.order / gcd(self.order as u128, order as u128) as usize).checked_mul(order)?;
++        (self.order <= MAX_ORDER).then_some(())
++    }
++
++    fn pi_multiple(&mut self, node: &Computable, depth: usize) -> Option<Fraction> {
++        self.visit(depth)?;
++        match &node.internal.approximation {
++            Approximation::Constant(SharedConstant::Pi) => Fraction::new(1, 1),
++            Approximation::Constant(SharedConstant::Tau) => Fraction::new(2, 1),
++            Approximation::Negate(child) => self
++                .pi_multiple(child, depth + 1)?
++                .mul(Fraction::new(-1, 1)?),
++            Approximation::Offset(child, shift) => self
++                .pi_multiple(child, depth + 1)?
++                .mul(Fraction::binary_scale(*shift)?),
++            Approximation::Add(left, right) => self
++                .pi_multiple(left, depth + 1)?
++                .add(self.pi_multiple(right, depth + 1)?),
++            Approximation::Multiply(left, right) => {
++                if let Some(scale) = rational_leaf(left) {
++                    self.pi_multiple(right, depth + 1)?.mul(scale)
++                } else {
++                    self.pi_multiple(left, depth + 1)?
++                        .mul(rational_leaf(right)?)
++                }
++            }
++            _ => None,
++        }
++    }
++
++    fn parse(&mut self, node: &Computable, depth: usize) -> Option<usize> {
++        self.visit(depth)?;
++        let identity = std::sync::Arc::as_ptr(&node.internal) as usize;
++        if let Some((_, index)) = self.identities.iter().find(|(key, _)| *key == identity) {
++            return Some(*index);
++        }
++        let expression = if let Some(value) = rational_leaf(node) {
++            Expression::Rational(value)
++        } else {
++            match &node.internal.approximation {
++                Approximation::PrescaledSin(argument) | Approximation::PrescaledCos(argument) => {
++                    let angle = self.pi_multiple(argument, depth + 1)?;
++                    let denominator = usize::try_from(angle.denominator).ok()?;
++                    self.include_order(denominator.checked_mul(2)?)?;
++                    self.has_trig = true;
++                    Expression::Trig(
++                        angle,
++                        matches!(&node.internal.approximation, Approximation::PrescaledSin(_)),
++                    )
++                }
++                Approximation::Constant(SharedConstant::Sqrt2) => {
++                    self.include_order(8)?;
++                    Expression::Root(2)
++                }
++                Approximation::Constant(SharedConstant::Sqrt3) => {
++                    self.include_order(12)?;
++                    Expression::Root(3)
++                }
++                Approximation::Sqrt(child) => {
++                    let square = rational_leaf(child)?;
++                    if square.denominator != 1 {
++                        return None;
++                    }
++                    let order = match square.numerator {
++                        2 => 8,
++                        3 => 12,
++                        6 => 24,
++                        _ => return None,
++                    };
++                    self.include_order(order)?;
++                    Expression::Root(square.numerator as u8)
++                }
++                Approximation::Negate(child) => {
++                    Expression::Scale(self.parse(child, depth + 1)?, Fraction::new(-1, 1)?)
++                }
++                Approximation::Offset(child, shift) => Expression::Scale(
++                    self.parse(child, depth + 1)?,
++                    Fraction::binary_scale(*shift)?,
++                ),
++                Approximation::Add(left, right) => {
++                    Expression::Add(self.parse(left, depth + 1)?, self.parse(right, depth + 1)?)
++                }
++                Approximation::Multiply(left, right) => Expression::Multiply(
++                    self.parse(left, depth + 1)?,
++                    self.parse(right, depth + 1)?,
++                ),
++                Approximation::Square(child) => {
++                    let child = self.parse(child, depth + 1)?;
++                    Expression::Multiply(child, child)
++                }
++                Approximation::Inverse(child) => Expression::Inverse(self.parse(child, depth + 1)?),
++                Approximation::LinearCombination3(dot) => {
++                    let mut nodes = [0; 3];
++                    let mut scales = [Fraction::new(0, 1)?; 3];
++                    for index in 0..3 {
++                        nodes[index] = self.parse(&dot.coefficients[index], depth + 1)?;
++                        let (numerator, denominator) =
++                            dot.values[index].bounded_raw_word_parts()?;
++                        scales[index] = Fraction::new(numerator, denominator)?;
++                    }
++                    Expression::Dot(nodes, scales)
++                }
++                _ => return None,
++            }
++        };
++        let index = self.expressions.len();
++        self.expressions.push(expression);
++        self.identities.push((identity, index));
++        Some(index)
++    }
++}
++
++struct Work(usize);
++
++impl Work {
++    fn charge(&mut self, amount: usize) -> Option<()> {
++        self.0 = self.0.checked_sub(amount)?;
++        Some(())
++    }
++}
++
++fn divide_monic(mut dividend: Vec<i128>, divisor: &[i128], work: &mut Work) -> Option<Vec<i128>> {
++    if divisor.last() != Some(&1) || dividend.len() < divisor.len() {
++        return None;
++    }
++    let mut quotient = vec![0; dividend.len() - divisor.len() + 1];
++    for index in (0..quotient.len()).rev() {
++        let leading = dividend[index + divisor.len() - 1];
++        quotient[index] = leading;
++        work.charge(divisor.len())?;
++        for (offset, coefficient) in divisor.iter().enumerate() {
++            dividend[index + offset] =
++                dividend[index + offset].checked_sub(leading.checked_mul(*coefficient)?)?;
++        }
++    }
++    dividend
++        .iter()
++        .all(|coefficient| *coefficient == 0)
++        .then_some(quotient)
++}
++
++fn cyclotomic(order: usize, work: &mut Work) -> Option<Vec<i128>> {
++    if order == 0 || order > MAX_ORDER {
++        return None;
++    }
++    let mut known: Vec<(usize, Vec<i128>)> = Vec::new();
++    for divisor in 1..=order {
++        if !order.is_multiple_of(divisor) {
++            continue;
++        }
++        let mut polynomial = vec![0; divisor + 1];
++        polynomial[0] = -1;
++        polynomial[divisor] = 1;
++        for (factor, minimal) in &known {
++            if divisor.is_multiple_of(*factor) {
++                polynomial = divide_monic(polynomial, minimal, work)?;
++            }
++        }
++        known.push((divisor, polynomial));
++    }
++    let (_, polynomial) = known.pop()?;
++    (polynomial.len() - 1 <= MAX_DEGREE).then_some(polynomial)
++}
++
++struct Polynomial {
++    coefficients: Vec<i128>,
++    denominator: i128,
++}
++
++impl Polynomial {
++    fn normalized(mut self) -> Option<Self> {
++        if self.denominator <= 0 {
++            return None;
++        }
++        let divisor = self
++            .coefficients
++            .iter()
++            .fold(self.denominator as u128, |divisor, coefficient| {
++                gcd(divisor, coefficient.unsigned_abs())
++            });
++        let divisor = i128::try_from(divisor).ok()?;
++        self.denominator /= divisor;
++        for coefficient in &mut self.coefficients {
++            *coefficient /= divisor;
++        }
++        Some(self)
++    }
++
++    fn rational(value: Fraction, degree: usize) -> Self {
++        let mut coefficients = vec![0; degree];
++        coefficients[0] = value.numerator;
++        Self {
++            coefficients,
++            denominator: value.denominator,
++        }
++    }
++
++    fn reduce(
++        mut coefficients: Vec<i128>,
++        denominator: i128,
++        modulus: &[i128],
++        work: &mut Work,
++    ) -> Option<Self> {
++        let degree = modulus.len() - 1;
++        if modulus.last() != Some(&1) || degree == 0 {
++            return None;
++        }
++        for index in (degree..coefficients.len()).rev() {
++            let leading = coefficients[index];
++            if leading != 0 {
++                work.charge(degree)?;
++                for offset in 0..degree {
++                    coefficients[index - degree + offset] =
++                        coefficients[index - degree + offset]
++                            .checked_sub(leading.checked_mul(modulus[offset])?)?;
++                }
++            }
++        }
++        coefficients.resize(degree, 0);
++        Self {
++            coefficients,
++            denominator,
++        }
++        .normalized()
++    }
++
++    fn scale(&self, scale: Fraction, work: &mut Work) -> Option<Self> {
++        work.charge(self.coefficients.len())?;
++        let coefficients = self
++            .coefficients
++            .iter()
++            .map(|value| value.checked_mul(scale.numerator))
++            .collect::<Option<Vec<_>>>()?;
++        Self {
++            coefficients,
++            denominator: self.denominator.checked_mul(scale.denominator)?,
++        }
++        .normalized()
++    }
++
++    fn add(&self, other: &Self, work: &mut Work) -> Option<Self> {
++        work.charge(self.coefficients.len())?;
++        let divisor = gcd(self.denominator as u128, other.denominator as u128) as i128;
++        let left = other.denominator / divisor;
++        let right = self.denominator / divisor;
++        let coefficients = self
++            .coefficients
++            .iter()
++            .zip(&other.coefficients)
++            .map(|(a, b)| a.checked_mul(left)?.checked_add(b.checked_mul(right)?))
++            .collect::<Option<Vec<_>>>()?;
++        Self {
++            coefficients,
++            denominator: self.denominator.checked_mul(left)?,
++        }
++        .normalized()
++    }
++
++    fn multiply(&self, other: &Self, modulus: &[i128], work: &mut Work) -> Option<Self> {
++        let degree = modulus.len() - 1;
++        work.charge(degree.checked_mul(degree)?)?;
++        let mut coefficients = vec![0_i128; 2 * degree - 1];
++        for (i, a) in self.coefficients.iter().enumerate() {
++            if *a == 0 {
++                continue;
++            }
++            for (j, b) in other.coefficients.iter().enumerate() {
++                coefficients[i + j] = coefficients[i + j].checked_add(a.checked_mul(*b)?)?;
++            }
++        }
++        Self::reduce(
++            coefficients,
++            self.denominator.checked_mul(other.denominator)?,
++            modulus,
++            work,
++        )
++    }
++
++    fn inverse_rational(&self) -> Option<Self> {
++        if self.coefficients[1..].iter().any(|value| *value != 0) || self.coefficients[0] == 0 {
++            return None;
++        }
++        let sign = self.coefficients[0].signum();
++        Some(Self::rational(
++            Fraction::new(
++                self.denominator.checked_mul(sign)?,
++                self.coefficients[0].checked_abs()?,
++            )?,
++            self.coefficients.len(),
++        ))
++    }
++
++    fn trig(
++        angle: Fraction,
++        sine: bool,
++        order: usize,
++        modulus: &[i128],
++        work: &mut Work,
++    ) -> Option<Self> {
++        let denominator = angle.denominator.checked_mul(2)?;
++        if (order as i128) % denominator != 0 {
++            return None;
++        }
++        let exponent = angle
++            .numerator
++            .checked_mul(order as i128 / denominator)?
++            .rem_euclid(order as i128) as usize;
++        let opposite = (order - exponent) % order;
++        let mut coefficients = vec![0_i128; order];
++        if sine {
++            let shift = order / 4;
++            coefficients[(exponent + shift) % order] -= 1;
++            coefficients[(opposite + shift) % order] += 1;
++        } else {
++            coefficients[exponent] += 1;
++            coefficients[opposite] += 1;
++        }
++        Self::reduce(coefficients, 2, modulus, work)
++    }
++
++    fn root(square: u8, order: usize, modulus: &[i128], work: &mut Work) -> Option<Self> {
++        let twice = Fraction::new(2, 1)?;
++        match square {
++            2 => Self::trig(Fraction::new(1, 4)?, false, order, modulus, work)?.scale(twice, work),
++            3 => Self::trig(Fraction::new(1, 6)?, false, order, modulus, work)?.scale(twice, work),
++            6 => {
++                let first = Self::root(2, order, modulus, work)?;
++                let second = Self::root(3, order, modulus, work)?;
++                first.multiply(&second, modulus, work)
++            }
++            _ => None,
++        }
++    }
++}
++
++fn prove_zero(node: &Computable) -> Option<()> {
++    let mut plan = Plan {
++        expressions: Vec::new(),
++        identities: Vec::new(),
++        remaining: MAX_VISITS,
++        order: 4,
++        has_trig: false,
++    };
++    let root = plan.parse(node, 0)?;
++    if !plan.has_trig {
++        return None;
++    }
++    let mut work = Work(MAX_WORK);
++    let modulus = cyclotomic(plan.order, &mut work)?;
++    let degree = modulus.len() - 1;
++    let mut values: Vec<Polynomial> = Vec::with_capacity(plan.expressions.len());
++    for expression in plan.expressions {
++        let value = match expression {
++            Expression::Rational(value) => Polynomial::rational(value, degree),
++            Expression::Trig(angle, sine) => {
++                Polynomial::trig(angle, sine, plan.order, &modulus, &mut work)?
++            }
++            Expression::Root(square) => Polynomial::root(square, plan.order, &modulus, &mut work)?,
++            Expression::Scale(child, scale) => values[child].scale(scale, &mut work)?,
++            Expression::Add(left, right) => values[left].add(&values[right], &mut work)?,
++            Expression::Multiply(left, right) => {
++                values[left].multiply(&values[right], &modulus, &mut work)?
++            }
++            Expression::Inverse(child) => values[child].inverse_rational()?,
++            Expression::Dot(nodes, scales) => {
++                let mut sum = Polynomial::rational(Fraction::new(0, 1)?, degree);
++                for index in 0..3 {
++                    sum = sum.add(
++                        &values[nodes[index]].scale(scales[index], &mut work)?,
++                        &mut work,
++                    )?;
++                }
++                sum
++            }
++        };
++        values.push(value);
++    }
++    values[root]
++        .coefficients
++        .iter()
++        .all(|coefficient| *coefficient == 0)
++        .then_some(())
++}
++
++impl Computable {
++    /// Certifies zero only for a bounded retained rational-angle expression.
++    /// Unsupported forms and every exhausted resource guard return false.
++    pub(crate) fn bounded_cyclotomic_zero(&self) -> bool {
++        if super::should_stop(&self.signal) || prove_zero(self).is_none() {
++            return false;
++        }
++        true
++    }
++}
++
++#[cfg(test)]
++mod tests;
+--- a/crates/hyperreal/src/computable/node/cyclotomic/tests.rs
++++ b/crates/hyperreal/src/computable/node/cyclotomic/tests.rs
+@@ -0,0 +1,200 @@
++use super::super::{BoundCache, ExactSignCache, Node};
++use super::*;
++use crate::{Rational, Real, RealSign};
++use std::sync::Arc;
++
++include!("witnesses.rs");
++
++fn raw(kind: Approximation) -> Computable {
++    Computable {
++        internal: Arc::new(Node::new(
++            kind,
++            BoundCache::Invalid,
++            ExactSignCache::Invalid,
++        )),
++        signal: None,
++    }
++}
++
++fn point(index: usize, segments: usize, stacks: usize) -> [Real; 3] {
++    if index == 0 {
++        return [Real::zero(), Real::one(), Real::zero()];
++    }
++    if index == segments * (stacks - 1) + 1 {
++        return [Real::zero(), -Real::one(), Real::zero()];
++    }
++    let longitude = (index - 1) / (stacks - 1);
++    let latitude = (index - 1) % (stacks - 1) + 1;
++    let theta = Real::new(Rational::fraction(2 * longitude, segments).unwrap());
++    let phi = Real::new(Rational::fraction(latitude, stacks).unwrap());
++    [
++        theta.clone().cos_pi() * phi.clone().sin_pi(),
++        phi.cos_pi(),
++        theta.sin_pi() * Real::new(Rational::fraction(latitude, stacks).unwrap()).sin_pi(),
++    ]
++}
++
++fn determinant(indices: [usize; 4], segments: usize, stacks: usize) -> Real {
++    let [a, b, c, d] = indices.map(|index| point(index, segments, stacks));
++    let ad = std::array::from_fn::<_, 3, _>(|i| &a[i] - &d[i]);
++    let bd = std::array::from_fn::<_, 3, _>(|i| &b[i] - &d[i]);
++    let cd = std::array::from_fn::<_, 3, _>(|i| &c[i] - &d[i]);
++    Real::signed_product_sum(
++        [true, false, true, false, true, false],
++        [
++            [&ad[0], &bd[1], &cd[2]],
++            [&ad[0], &bd[2], &cd[1]],
++            [&ad[1], &bd[2], &cd[0]],
++            [&ad[1], &bd[0], &cd[2]],
++            [&ad[2], &bd[0], &cd[1]],
++            [&ad[2], &bd[1], &cd[0]],
++        ],
++    )
++}
++
++#[test]
++fn cyclotomic_captured_exact_zero_determinants() {
++    for &(segments, stacks, indices) in CAPTURED_ZEROS {
++        let value = determinant(indices, segments, stacks);
++        assert_eq!(
++            value.exact_rational_normal_form(),
++            Some(Rational::zero()),
++            "{segments}x{stacks} {indices:?}"
++        );
++        assert_eq!(value.exact_rational_normal_form(), Some(Rational::zero()));
++    }
++}
++
++#[test]
++fn cyclotomic_nonzero_face_controls_and_signed_perturbations() {
++    for (segments, stacks, indices, control) in [
++        (32, 16, [0, 1, 368, 256], 2),
++        (10, 7, [2, 51, 56, 9], 0),
++        (7, 5, [2, 5, 22, 17], 0),
++    ] {
++        let mut nonzero = indices;
++        nonzero[3] = control;
++        assert!(
++            !determinant(nonzero, segments, stacks)
++                .fold_ref()
++                .bounded_cyclotomic_zero()
++        );
++        for numerator in [-1, 1] {
++            let value = determinant(indices, segments, stacks)
++                + Real::new(Rational::fraction(numerator, 1_048_576).unwrap());
++            assert!(!value.fold_ref().bounded_cyclotomic_zero());
++            let expected = if numerator < 0 {
++                RealSign::Negative
++            } else {
++                RealSign::Positive
++            };
++            assert_eq!(value.refine_sign_until(-128), Some(expected));
++            assert_eq!(value.refine_sign_until(0), Some(expected));
++        }
++    }
++}
++
++#[test]
++fn cyclotomic_moduli_and_root_branches() {
++    let mut work = Work(MAX_WORK);
++    let phi32 = cyclotomic(32, &mut work).unwrap();
++    let mut expected = vec![0; 17];
++    expected[0] = 1;
++    expected[16] = 1;
++    assert_eq!(phi32, expected);
++    assert!(cyclotomic(MAX_ORDER + 1, &mut work).is_none());
++    for square in [2_u8, 3, 6] {
++        let order = if square == 2 {
++            8
++        } else if square == 3 {
++            12
++        } else {
++            24
++        };
++        let modulus = cyclotomic(order, &mut work).unwrap();
++        let root = Polynomial::root(square, order, &modulus, &mut work).unwrap();
++        let squared = root.multiply(&root, &modulus, &mut work).unwrap();
++        assert_eq!(squared.denominator, 1);
++        assert_eq!(squared.coefficients[0], i128::from(square));
++        assert!(squared.coefficients[1..].iter().all(|c| *c == 0));
++    }
++}
++
++#[test]
++fn cyclotomic_sine_pythagorean_and_angle_addition() {
++    for denominator in [5, 7, 16, 17, 35, 64] {
++        let angle = Real::new(Rational::fraction(1, denominator).unwrap());
++        let sine = angle.clone().sin_pi();
++        let cosine = angle.cos_pi();
++        let identity = &sine * &sine + &cosine * &cosine - Real::one();
++        assert_eq!(
++            identity.exact_rational_normal_form(),
++            Some(Rational::zero())
++        );
++        let double = Real::new(Rational::fraction(2, denominator).unwrap()).sin_pi();
++        let identity = double - Real::from(2) * sine * cosine;
++        assert_eq!(
++            identity.exact_rational_normal_form(),
++            Some(Rational::zero())
++        );
++    }
++}
++
++#[test]
++fn cyclotomic_resource_guards_are_unknown() {
++    let angle = raw(Approximation::Multiply(
++        Computable::pi(),
++        Computable::rational(Rational::fraction(1, 7).unwrap()),
++    ));
++    let sine = raw(Approximation::PrescaledSin(angle));
++    let zero = raw(Approximation::Add(
++        sine.clone(),
++        raw(Approximation::Negate(sine.clone())),
++    ));
++    assert!(zero.bounded_cyclotomic_zero());
++    assert!(zero.cached().is_none());
++    let mut deep = sine.clone();
++    for _ in 0..MAX_DEPTH {
++        deep = raw(Approximation::Negate(deep));
++    }
++    assert!(!deep.bounded_cyclotomic_zero());
++    let huge = raw(Approximation::Offset(zero.clone(), 64));
++    assert!(!huge.bounded_cyclotomic_zero());
++    let outside = raw(Approximation::PrescaledSin(raw(Approximation::Multiply(
++        Computable::pi(),
++        Computable::rational(Rational::fraction(1, 257).unwrap()),
++    ))));
++    assert!(!outside.bounded_cyclotomic_zero());
++    let unsupported = raw(Approximation::Add(zero.clone(), Computable::pi()));
++    assert!(!unsupported.bounded_cyclotomic_zero());
++    let inverse_zero = raw(Approximation::Inverse(zero));
++    assert!(!inverse_zero.bounded_cyclotomic_zero());
++    assert!(
++        Fraction::new(i128::MAX, 1)
++            .unwrap()
++            .mul(Fraction::new(2, 1).unwrap())
++            .is_none()
++    );
++    assert!(Work(0).charge(1).is_none());
++    let mut work = Work(0);
++    assert!(cyclotomic(32, &mut work).is_none());
++}
++
++#[test]
++fn cyclotomic_concurrent_replay_preserves_available_facts() {
++    let value = Arc::new(determinant([0, 1, 368, 256], 32, 16));
++    std::thread::scope(|scope| {
++        for _ in 0..4 {
++            let value = value.clone();
++            scope.spawn(move || {
++                for _ in 0..8 {
++                    assert_eq!(value.exact_rational_normal_form(), Some(Rational::zero()));
++                    assert!(matches!(
++                        value.refine_sign_until(0),
++                        None | Some(RealSign::Zero)
++                    ));
++                }
++            });
++        }
++    });
++}
+--- a/crates/hyperreal/src/computable/node/cyclotomic/witnesses.rs
++++ b/crates/hyperreal/src/computable/node/cyclotomic/witnesses.rs
+@@ -0,0 +1,160 @@
++// Exact zero fixtures independently reduced by the frozen integer-polynomial oracle.
++const CAPTURED_ZEROS: &[(usize, usize, [usize; 4])] = &[
++    (7, 5, [2, 5, 22, 17]),
++    (7, 5, [7, 16, 24, 3]),
++    (7, 5, [16, 7, 11, 4]),
++    (7, 5, [16, 22, 26, 8]),
++    (7, 5, [22, 2, 16, 12]),
++    (7, 5, [26, 2, 7, 23]),
++    (7, 5, [26, 2, 24, 8]),
++    (10, 7, [2, 51, 56, 9]),
++    (10, 7, [5, 12, 59, 54]),
++    (10, 7, [19, 37, 32, 26]),
++    (10, 7, [20, 38, 28, 34]),
++    (10, 7, [24, 5, 11, 54]),
++    (10, 7, [24, 11, 17, 6]),
++    (10, 7, [35, 24, 29, 42]),
++    (10, 7, [40, 24, 16, 36]),
++    (10, 7, [48, 5, 12, 53]),
++    (10, 7, [48, 35, 41, 30]),
++    (32, 16, [0, 1, 368, 256]),
++    (32, 16, [0, 1, 368, 383]),
++    (32, 16, [2, 16, 47, 31]),
++    (32, 16, [2, 47, 469, 64]),
++    (32, 16, [2, 364, 377, 19]),
++    (32, 16, [2, 377, 406, 451]),
++    (32, 16, [2, 436, 466, 422]),
++    (32, 16, [5, 469, 34, 3]),
++    (32, 16, [5, 469, 34, 18]),
++    (32, 16, [5, 469, 34, 20]),
++    (32, 16, [8, 51, 68, 21]),
++    (32, 16, [16, 47, 32, 61]),
++    (32, 16, [32, 47, 18, 63]),
++    (32, 16, [34, 469, 18, 3]),
++    (32, 16, [34, 469, 18, 20]),
++    (32, 16, [40, 8, 68, 36]),
++    (32, 16, [40, 51, 85, 66]),
++    (32, 16, [40, 85, 71, 56]),
++    (32, 16, [40, 433, 415, 28]),
++    (32, 16, [47, 5, 17, 65]),
++    (32, 16, [47, 16, 91, 62]),
++    (32, 16, [47, 16, 122, 151]),
++    (32, 16, [47, 91, 77, 31]),
++    (32, 16, [58, 40, 85, 73]),
++    (32, 16, [58, 209, 359, 28]),
++    (32, 16, [58, 433, 12, 477]),
++    (32, 16, [58, 433, 460, 25]),
++    (32, 16, [78, 47, 122, 93]),
++    (32, 16, [80, 51, 35, 66]),
++    (32, 16, [85, 40, 68, 39]),
++    (32, 16, [91, 122, 77, 106]),
++    (32, 16, [111, 122, 156, 137]),
++    (32, 16, [111, 129, 51, 39]),
++    (32, 16, [111, 129, 85, 67]),
++    (32, 16, [111, 129, 85, 69]),
++    (32, 16, [111, 129, 85, 81]),
++    (32, 16, [111, 129, 85, 115]),
++    (32, 16, [111, 129, 85, 127]),
++    (32, 16, [111, 156, 142, 127]),
++    (32, 16, [122, 47, 91, 76]),
++    (32, 16, [122, 184, 156, 94]),
++    (32, 16, [122, 184, 156, 126]),
++    (32, 16, [122, 184, 156, 152]),
++    (32, 16, [129, 111, 156, 144]),
++    (32, 16, [147, 111, 173, 83]),
++    (32, 16, [147, 111, 173, 117]),
++    (32, 16, [147, 111, 173, 141]),
++    (32, 16, [147, 209, 119, 177]),
++    (32, 16, [147, 283, 58, 192]),
++    (32, 16, [156, 111, 124, 139]),
++    (32, 16, [160, 173, 204, 159]),
++    (32, 16, [160, 173, 204, 188]),
++    (32, 16, [160, 173, 204, 205]),
++    (32, 16, [173, 156, 202, 157]),
++    (32, 16, [173, 156, 202, 188]),
++    (32, 16, [173, 156, 202, 201]),
++    (32, 16, [173, 160, 159, 188]),
++    (32, 16, [173, 160, 159, 205]),
++    (32, 16, [173, 248, 221, 201]),
++    (32, 16, [173, 248, 221, 206]),
++    (32, 16, [173, 248, 221, 216]),
++    (32, 16, [184, 122, 212, 154]),
++    (32, 16, [184, 124, 168, 138]),
++    (32, 16, [184, 212, 229, 197]),
++    (32, 16, [184, 274, 202, 262]),
++    (32, 16, [184, 274, 246, 216]),
++    (32, 16, [184, 274, 246, 242]),
++    (32, 16, [202, 184, 229, 217]),
++    (32, 16, [212, 122, 91, 241]),
++    (32, 16, [248, 147, 173, 282]),
++    (32, 16, [248, 173, 184, 189]),
++    (32, 16, [248, 173, 184, 229]),
++    (32, 16, [248, 173, 184, 234]),
++    (32, 16, [248, 277, 265, 262]),
++    (32, 16, [248, 277, 265, 280]),
++    (32, 16, [248, 277, 265, 293]),
++    (32, 16, [248, 368, 283, 343]),
++    (32, 16, [248, 368, 433, 193]),
++    (32, 16, [272, 316, 347, 301]),
++    (32, 16, [272, 318, 288, 332]),
++    (32, 16, [274, 184, 212, 216]),
++    (32, 16, [274, 184, 212, 242]),
++    (32, 16, [274, 184, 212, 246]),
++    (32, 16, [274, 246, 229, 261]),
++    (32, 16, [274, 248, 173, 139]),
++    (32, 16, [274, 248, 184, 186]),
++    (32, 16, [274, 248, 184, 218]),
++    (32, 16, [274, 248, 184, 276]),
++    (32, 16, [283, 248, 321, 276]),
++    (32, 16, [283, 248, 321, 328]),
++    (32, 16, [283, 248, 321, 353]),
++    (32, 16, [283, 433, 209, 29]),
++    (32, 16, [305, 274, 288, 290]),
++    (32, 16, [305, 321, 276, 290]),
++    (32, 16, [316, 272, 241, 287]),
++    (32, 16, [316, 274, 184, 136]),
++    (32, 16, [318, 272, 347, 303]),
++    (32, 16, [318, 363, 349, 334]),
++    (32, 16, [318, 377, 363, 302]),
++    (32, 16, [321, 277, 276, 293]),
++    (32, 16, [321, 366, 337, 352]),
++    (32, 16, [347, 316, 331, 302]),
++    (32, 16, [359, 433, 119, 43]),
++    (32, 16, [361, 377, 346, 332]),
++    (32, 16, [363, 318, 347, 332]),
++    (32, 16, [364, 377, 424, 407]),
++    (32, 16, [366, 321, 349, 334]),
++    (32, 16, [368, 147, 248, 477]),
++    (32, 16, [368, 248, 274, 334]),
++    (32, 16, [368, 433, 283, 338]),
++    (32, 16, [377, 2, 424, 439]),
++    (32, 16, [377, 2, 442, 427]),
++    (32, 16, [377, 316, 361, 302]),
++    (32, 16, [377, 364, 274, 257]),
++    (32, 16, [377, 406, 422, 391]),
++    (32, 16, [377, 406, 436, 467]),
++    (32, 16, [385, 415, 431, 371]),
++    (32, 16, [393, 377, 422, 408]),
++    (32, 16, [398, 368, 382, 384]),
++    (32, 16, [406, 377, 361, 392]),
++    (32, 16, [415, 368, 398, 355]),
++    (32, 16, [415, 433, 385, 373]),
++    (32, 16, [415, 442, 460, 427]),
++    (32, 16, [422, 2, 469, 439]),
++    (32, 16, [422, 393, 407, 438]),
++    (32, 16, [423, 452, 468, 437]),
++    (32, 16, [423, 468, 439, 454]),
++    (32, 16, [424, 469, 456, 441]),
++    (32, 16, [433, 40, 58, 445]),
++    (32, 16, [433, 58, 119, 374]),
++    (32, 16, [433, 58, 209, 284]),
++    (32, 16, [433, 58, 359, 134]),
++    (32, 16, [433, 147, 283, 87]),
++    (32, 16, [433, 415, 460, 448]),
++    (32, 16, [442, 40, 415, 7]),
++    (32, 16, [442, 424, 469, 457]),
++    (32, 16, [460, 415, 429, 444]),
++    (32, 16, [469, 2, 17, 34]),
++    (32, 16, [469, 18, 4, 453]),
++    (32, 16, [469, 424, 452, 437]),
++];
+--- a/crates/hyperreal/src/rational/arithmetic/queries_conversion.rs
++++ b/crates/hyperreal/src/rational/arithmetic/queries_conversion.rs
+@@ -174,6 +174,19 @@
+             &self.denominator,
+         );
+         Self::from_parts_raw(self.sign, n, self.denominator.clone())
++    }
++
++    /// Borrow a bounded raw ratio without canonicalization or allocation.
++    /// Internal unreduced values have the same exact quotient.
++    pub(crate) fn bounded_raw_word_parts(&self) -> Option<(i128, i128)> {
++        let numerator = num::ToPrimitive::to_u64(&self.numerator)?;
++        let denominator = num::ToPrimitive::to_u64(&self.denominator)?;
++        let numerator = match self.sign {
++            Sign::Minus => -i128::from(numerator),
++            Sign::NoSign => 0,
++            Sign::Plus => i128::from(numerator),
++        };
++        Some((numerator, i128::from(denominator)))
+     }
+ 
+     /// Returns the reduced positive denominator magnitude.
+--- a/crates/hyperreal/src/real/arithmetic/facts.rs
++++ b/crates/hyperreal/src/real/arithmetic/facts.rs
+@@ -72,14 +72,18 @@
+     /// Return the exact rational value when bounded symbolic normalization proves one.
+     ///
+     /// Unlike [`Real::exact_rational`], this query may inspect a retained
+-    /// rational/π/quadratic expression or cancel structurally identical opaque
++    /// rational/π/quadratic expression, prove zero in a bounded rational-angle
++    /// cyclotomic field, or cancel structurally identical opaque
+     /// nonlinear atoms in a bounded affine form. It never approximates: `None`
+     /// means only that the bounded normal form does not cover the expression.
+     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
+         if let Some(rational) = self.exact_rational() {
+             return Some(rational);
+         }
+-        Some(self.computable_ref().bounded_laurent_rational(64)? * &self.rational)
++        let value = self.computable_ref().bounded_laurent_rational(64).or_else(|| {
++            self.computable_ref().bounded_cyclotomic_zero().then(Rational::zero)
++        })?;
++        Some(value * &self.rational)
+     }
+ 
+     /// Returns `(a, b, d)` when bounded symbolic normalization proves that
