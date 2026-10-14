@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "mesh-identity-repair-admitted-sphere-construction-coverage-prepared",
+      "status": "sphere-construction-identities-insufficient-orientation-trace-next",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -4941,7 +4941,10 @@
       "admitted_runtime_scope": "Mesh source identity repair only; no sphere certificate.",
       "sphere_certificate_candidate_prepared": false,
       "sphere_grid_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-grid-facts-scope-v1.json",
-      "sphere_grid_coverage_executed": false
+      "sphere_grid_coverage_executed": true,
+      "sphere_grid_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-grid-facts-assessment-v1.json",
+      "sphere_orientation_trace_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-orientation-trace-scope-v1.json",
+      "sphere_orientation_trace_executed": false
     }
   },
   "status_meanings": {
