@@ -1,0 +1,29 @@
+{
+  "scope": "Unchanged candidate native viability only; no matched application speedup or final admission.",
+  "trigger": "Library sample is closed with exact witnesses preserved, substantial intended gains and unresolved consumer tradeoffs. This diagnostic determines whether omitting persistent storage can meet the original native deadlines before more consumer-path work.",
+  "candidate_preparation_sha256": "2fc88038d7ef5c49b81bcd69a36179b2e10ea5ffb7b32ff1cceba67c32cae5bc",
+  "library_interpretation_sha256": "8df8948724c37c97f251aa66f46f0dbd1490852c0fe74d70704b6e0bd552968d",
+  "source_unchanged": true,
+  "preflights": "Verify both original full-resolution ZIPs, expected PCB entries, unzip availability/archive integrity, exact Cargo artifact source and real MiMalloc dispatch in the native test binary. Run existing two allocator contract tests.",
+  "commands": 10,
+  "native_assertions": [
+    {
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "metric": "worker CPU",
+      "limit_seconds": 120
+    },
+    {
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "metric": "check-body wall",
+      "limit_seconds": 60
+    }
+  ],
+  "schedule": "One sequential invocation of each original test after all builds and allocator controls. No fixture reduction, source instrumentation, threshold adjustment or rerun to seek a pass.",
+  "coverage_limits": [
+    "Passing internal durations are unprinted; process wall includes setup and is not the assertion metric.",
+    "Original finding counts and completed reports are checked, but text report counts are not complete JSON byte identity.",
+    "This diagnostic does not replace full stack qualification or resolve any library cost row."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
