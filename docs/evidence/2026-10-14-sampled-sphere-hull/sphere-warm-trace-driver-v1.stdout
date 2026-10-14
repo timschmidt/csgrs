@@ -1,0 +1,4 @@
+{"start": "apply"}
+{"finished": "apply", "exit_code": 0}
+{"start": "format"}
+{"finished": "format", "exit_code": 1}

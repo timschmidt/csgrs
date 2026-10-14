@@ -1,0 +1,31 @@
+[
+  {
+    "name": "apply",
+    "command": [
+      "patch",
+      "--batch",
+      "--forward",
+      "-p1",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-v1.patch"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.00358703825622797,
+    "stdout_sha256": "e415514c6c78546ba38f6dfb70830a8cb19e690d1faa6dc00222315b7ea88c64",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 1,
+    "diagnostic_process_wall_seconds": 10.591924597974867,
+    "stdout_sha256": "d88b9b09f31c2d8a156901b4af6ec6020a8b080d4cfafcaeb754c7b579707e09",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

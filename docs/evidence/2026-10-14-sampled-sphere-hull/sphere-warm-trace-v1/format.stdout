@@ -1,0 +1,12 @@
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-trace-v1/source/crates/hypermesh/src/convex_hull.rs:96:
+             ]
+         })
+         .collect::<Vec<_>>();
+[31m-    eprintln!("hull-warm-trace begin points={} seed={seed:?}", points.len());
+(B[m[32m+    eprintln!(
+(B[m[32m+        "hull-warm-trace begin points={} seed={seed:?}",
+(B[m[32m+        points.len()
+(B[m[32m+    );
+(B[m     for (index, point) in approximate_points.iter().enumerate() {
+         eprintln!(
+             "hull-warm-trace approx point={index} bits={:?}",

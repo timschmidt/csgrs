@@ -1,0 +1,19 @@
+{
+  "complete": false,
+  "failed_command": {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 1,
+    "diagnostic_process_wall_seconds": 10.591924597974867,
+    "stdout_sha256": "d88b9b09f31c2d8a156901b4af6ec6020a8b080d4cfafcaeb754c7b579707e09",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

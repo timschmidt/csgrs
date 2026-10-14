@@ -1,0 +1,35 @@
+{
+  "complete": false,
+  "closed": true,
+  "driver_terminal_exit_code": 1,
+  "commands_completed": [
+    {
+      "name": "apply",
+      "exit_code": 0
+    },
+    {
+      "name": "format",
+      "exit_code": 1
+    }
+  ],
+  "reason": "rustfmt requires a multiline seed-trace eprintln; no compile or native hull query ran.",
+  "all_frozen_sources_and_inputs_unchanged": true,
+  "executed_sources_will_not_be_edited": true,
+  "artifacts_sha256": {
+    "apply.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "apply.stdout": "e415514c6c78546ba38f6dfb70830a8cb19e690d1faa6dc00222315b7ea88c64",
+    "commands.json": "86d112ee383f7109ca3929204b0c293708afd1ce689b77f6a7115cd0945ebc8e",
+    "failure.json": "98678b9f2206a297c737d216ba95d5fee2e4d6a6533bc879015c4ed10de0b434",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stdout": "d88b9b09f31c2d8a156901b4af6ec6020a8b080d4cfafcaeb754c7b579707e09",
+    "protocol.json": "b2eee0308ba3227d7c7d0816b19f66d529bee890f5f84399db647d3c6f4ee4cd",
+    "root-source-hashes.json.gz": "c3c7fd9d3545e3a5443434285f219406ef5f7aea2fc5efef3c41570c49ec3ccb",
+    "source-hashes.json.gz": "08bea33669693cf708fc1415ecf7223392fa98657c0050d696a41102f5f3fcb9"
+  },
+  "driver_sha256": {
+    "sphere-warm-trace-driver-v1.stdout": "4340cf8cf88e5d55db952285173a071b905ee3e6e02f9c91661bcd6d422fd225",
+    "sphere-warm-trace-driver-v1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

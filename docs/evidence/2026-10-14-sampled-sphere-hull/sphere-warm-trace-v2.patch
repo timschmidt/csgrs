@@ -1,0 +1,56 @@
+--- a/crates/hypermesh/src/convex_hull.rs
++++ b/crates/hypermesh/src/convex_hull.rs
+@@ -96,12 +96,23 @@
+             ]
+         })
+         .collect::<Vec<_>>();
++    eprintln!(
++        "hull-warm-trace begin points={} seed={seed:?}",
++        points.len()
++    );
++    for (index, point) in approximate_points.iter().enumerate() {
++        eprintln!(
++            "hull-warm-trace approx point={index} bits={:?}",
++            point.map(f64::to_bits)
++        );
++    }
+     let point_bvh =
+         match ExactPointBvh::build_with_approximate(decisions, &points, &approximate_points) {
+             Ok(point_bvh) => Some(point_bvh),
+             Err(HypermeshError::PredicateUndecided { .. }) => None,
+             Err(error) => return Err(error),
+         };
++    eprintln!("hull-warm-trace bvh available={}", point_bvh.is_some());
+     let mut processed = vec![false; points.len()];
+     for index in seed {
+         processed[index] = true;
+@@ -207,6 +218,13 @@
+                 .total_cmp(&approximate_face_distance(points, face.vertices, right))
+         })?
+         .0;
++    eprintln!(
++        "hull-warm-trace select face={:?} outside={:?} eye={} score_bits={}",
++        face.vertices,
++        face.outside,
++        face.outside[farthest],
++        approximate_face_distance(points, face.vertices, face.outside[farthest]).to_bits()
++    );
+     Some(face.outside.swap_remove(farthest))
+ }
+ 
+@@ -404,6 +422,7 @@
+         match query {
+             Ok(()) => {}
+             Err(HypermeshError::PredicateUndecided { .. }) => {
++                eprintln!("hull-warm-trace fallback face={vertices:?}");
+                 outside.clear();
+                 linear_outside_query(
+                     decisions,
+@@ -428,6 +447,7 @@
+             processed,
+         )?;
+     }
++    eprintln!("hull-warm-trace face vertices={vertices:?} outside={outside:?}");
+     Ok(HullFace {
+         vertices,
+         outside,
