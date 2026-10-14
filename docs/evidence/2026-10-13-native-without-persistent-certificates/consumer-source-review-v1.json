@@ -1,0 +1,76 @@
+{
+  "scope": "Source review after the closed library sample and native viability failure; hypotheses are untested.",
+  "reviewed": [
+    {
+      "path": "target/native-without-persistent-certificates-v1/candidate/source/crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "sha256": "81739c160a5af6263a5adf10671f37bdaf594aac0b88f3af97945602798521c9",
+      "lines_read": "1350-1364",
+      "finding": "Integer leaves that fit i64 use Rational::new; larger integers use the original BigInt conversion."
+    },
+    {
+      "path": "crates/hyperreal/src/rational/arithmetic/construction.rs",
+      "sha256": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+      "lines_read": "207-229,289-359,419-471",
+      "finding": "Canonical small integers cover magnitudes 2 through 64 plus the separate zero/one paths. Wider primitive integers construct BigUint from u128. The BigInt path transfers the cloned magnitude and skips GCD when its denominator is one."
+    },
+    {
+      "path": "crates/hyperreal/src/rational/arithmetic/representation.rs",
+      "sha256": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9",
+      "lines_read": "297-300",
+      "finding": "The canonical positive and negative tables each contain 63 OnceLock slots."
+    },
+    {
+      "path": "target/native-without-persistent-certificates-v1/candidate/source/crates/hypercurve/src/point.rs",
+      "sha256": "de1aa84aeb802a42c419be3f1af0d2f680a5d3e5ee84321fe0892dcbae164786",
+      "lines_read": "29-79",
+      "finding": "The new tri-state helper retains the same lazy x-then-y coordinate zero tests, while public PartialEq is unchanged."
+    },
+    {
+      "path": "target/native-without-persistent-certificates-v1/candidate/source/crates/hypercurve/src/segment.rs",
+      "sha256": "e9ecf7c57aa3281373b41c6c69b3e94c63fc76edd8db6a25b4d87d8af1a3d8c3",
+      "lines_read": "870-897,2066-2071",
+      "finding": "Approximate/preview queries still enter tri-state comparison before repeating original policy equality; certified negative reuse applies only to exact non-preview policies."
+    },
+    {
+      "path": "target/combined-native-admission-v1/candidate/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "lines_read": "212-273,461-706",
+      "finding": "A closed certificate copies rational/radical payloads on publication and retrieval. Shared-node local memo copies remain. The first retained pass may retry the original recognizer only after failure with reuse, after dropping its first memo."
+    },
+    {
+      "path": "target/combined-native-admission-v1/candidate/source/crates/hyperreal/src/computable/node/representation.rs",
+      "sha256": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+      "lines_read": "252-285",
+      "finding": "Retained payload is reconstructed under a read lock; publication first creates a closed copy, then writes only an empty field."
+    },
+    {
+      "path": "crates/hyperreal/src/dispatch_trace.rs",
+      "sha256": "3707c3b0c61ae8aca19c8f15eb435c5942ca806f609ae4fbf288ae16f22de126",
+      "lines_read": "1-12,390-424,517-538,605-673,701-735",
+      "finding": "Existing public tracing can count rational temporaries, reductions, GCDs and dispatch labels in explicit scopes without changing runtime source."
+    },
+    {
+      "path": "crates/hyperdrc/src/lib.rs",
+      "sha256": "d32706daff1e54d6c1e481741b357837c431e59b8f396f8ee5b7daa87f996c29",
+      "lines_read": "331-373",
+      "finding": "Linux PerformanceTimer uses CLOCK_THREAD_CPUTIME_ID for the worker test thread; this is not whole-process wall time."
+    }
+  ],
+  "dependency": {
+    "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/biguint/convert.rs",
+    "sha256": "85cdb3e60856d281f45dff602960666fe44af0ab54ba2ce26cfa4018a9309c60",
+    "version": "0.4.6, pinned by Cargo.lock",
+    "finding": "Primitive u64/u128 construction pushes digits into an initially empty Vec; BigUint::clone clones its existing digit slice. This is a plausible allocation mechanism, not a measured attribution of the signed-word row."
+  },
+  "unimplemented_hypotheses": [
+    "Limit integer-leaf canonical reuse to existing cached values while preserving the original wider-value conversion, with the table boundary owned by Rational.",
+    "Route approximate/preview endpoint handling through the original boolean sequence before entering tri-state negative-proof reuse. Existing attribution does not prove the retained payload responsible for its three extra allocations.",
+    "Measure existing rational/dispatch counts in cache-bearing and cache-free construction/query phases to distinguish extra arithmetic from certificate handling before proposing another cache change."
+  ],
+  "constraints": [
+    "The cache-free combination failed the native board gate; small consumer tweaks have no demonstrated ability to close that gap.",
+    "Do not remove the mandatory cache-free retry or weaken retained-fact semantics.",
+    "Existing rejected storage, projection, memo and coefficient variants remain closed.",
+    "No new runtime prototype or causal timing claim follows from this review alone."
+  ]
+}

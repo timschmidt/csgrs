@@ -1,0 +1,86 @@
+{
+  "status": "native-viability-failed",
+  "assessor_sha256": "90346fc11574cbe7b06946be2c6f33f5129d36c5a2b7cd354cb25635a8c801cd",
+  "result_sha256": "fe3348c827bab464f5339668629875b3b2946e94ebaf34f1035c350d622ba6d5",
+  "protocol_sha256": "c0785e4666bb1fda4999be763d4aa011dcac5b57ee7b6ba96eba5808280b5e28",
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc",
+    "sha256": "d9023842e58e6da3cec44eb4db4b2d4a0bee080bd5bc753b926be05bd8e13f15",
+    "bytes": 54168736,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperdrc/Cargo.toml",
+    "features": [],
+    "allocator_dependency_features": {
+      "libmimalloc_sys": [],
+      "mimalloc": []
+    }
+  },
+  "commands": 10,
+  "allocator_contract_tests_passed": 2,
+  "allocator_selection": {
+    "binary_sha256": "d9023842e58e6da3cec44eb4db4b2d4a0bee080bd5bc753b926be05bd8e13f15",
+    "global_symbol": "_RNvCs1njKG4L9aB3_7___rustc12___rust_alloc",
+    "target": "mi_malloc_aligned",
+    "target_address": "11610e0",
+    "got_slots": [
+      "28bb590"
+    ],
+    "verified": true,
+    "scope": "Linux ELF64 x86-64 native lib test binary"
+  },
+  "original_gates": [
+    {
+      "name": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "passed": false,
+      "assertion_metric": "worker thread CPU",
+      "unchanged_limit_seconds": 120,
+      "printed_assertion_seconds": 136.717191044,
+      "process_wall_seconds": 138.12718410696834,
+      "process_wall_is_not_assertion_metric": true,
+      "stdout_sha256": "2ff0e2478862fa339756038966a6894261346048e098177c83d372e794050833",
+      "stderr_sha256": "f631147acbca333ccd0122408ea27de4a82a529c3ec308b9c7ecdd822470fc39"
+    },
+    {
+      "name": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "passed": true,
+      "assertion_metric": "check-body wall",
+      "unchanged_limit_seconds": 60,
+      "printed_assertion_seconds": null,
+      "process_wall_seconds": 127.07985047018155,
+      "process_wall_is_not_assertion_metric": true,
+      "stdout_sha256": "6577dad7c2aa1f13ea66f5bd78711af66952234ea13f36f1f47a734e652efa2b",
+      "stderr_sha256": "f59940ba219e1f75ea53fac2cb413a76ac8572528db8829376ed02b52ecf07c0"
+    }
+  ],
+  "both_original_gates_passed": false,
+  "fixture_findings": [
+    12,
+    197
+  ],
+  "fixture_archives": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "sha256": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+      "board_entry": "CPArti FPGA dev board.kicad_pcb",
+      "board_bytes": 8177693,
+      "board_crc32": 4084561681
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperdrc/docs/HVP109A.zip",
+      "sha256": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a",
+      "board_entry": "HVP109A.kicad_pcb",
+      "board_bytes": 5611517,
+      "board_crc32": 110877790
+    }
+  ],
+  "fixture_skips": 0,
+  "internal_passing_durations_available": false,
+  "single_invocation_each_no_paired_native_speedup_claim": true,
+  "complete_report_byte_identity_established": false,
+  "wider_stack_qualification_complete": false,
+  "library_costs_resolved": false,
+  "all_prior_source_and_closed_library_evidence_preserved": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

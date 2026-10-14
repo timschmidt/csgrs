@@ -1,0 +1,149 @@
+[
+  {
+    "name": "fixture-archive-1",
+    "command": [
+      "unzip",
+      "-t",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperdrc/docs/CPArti FPGA dev board.zip"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "process_wall_seconds": 0.08391312696039677,
+    "stdout_sha256": "14bb1cd1f0186764d78efee9e9624d4f0d478a365308bb3985f26d8c7463187b",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "fixture-archive-2",
+    "command": [
+      "unzip",
+      "-t",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperdrc/docs/HVP109A.zip"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "process_wall_seconds": 0.10332498792558908,
+    "stdout_sha256": "abf5b2ab7c93f94f6ea5f1878453ab259d71154fd2472f1d2654a58547ab7725",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "build-test",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "process_wall_seconds": 116.39907901920378,
+    "stdout_sha256": "a5ac394072874b73d488759695ace8370b3d85e41a9a6d64395c09eac04e1e96",
+    "stderr_sha256": "7e13d490703120292c1e37aa043635f32969d6af9a5c2e4ee98c8a60376fff94"
+  },
+  {
+    "name": "nm-demangled",
+    "command": [
+      "nm",
+      "-C",
+      "--defined-only",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "process_wall_seconds": 0.12610149895772338,
+    "stdout_sha256": "fe546047de53e85e85541fcc8d219d11fe1d8ee43a0a01216729678d9f4b11b3",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "nm-raw",
+    "command": [
+      "nm",
+      "--defined-only",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "process_wall_seconds": 0.06067306827753782,
+    "stdout_sha256": "544d3e7b68c1357efa8c70c51cffc803dac69b11081650e6d753c0e47c29996e",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "global-alloc",
+    "command": [
+      "objdump",
+      "-d",
+      "--disassemble=_RNvCs1njKG4L9aB3_7___rustc12___rust_alloc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "process_wall_seconds": 0.08606926025822759,
+    "stdout_sha256": "74a5d0bc4b1c7da26264e9a19b4476c836172b1603cc0b4e628f513637979e42",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "relocations",
+    "command": [
+      "readelf",
+      "-rW",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "process_wall_seconds": 0.03567952802404761,
+    "stdout_sha256": "e29ae06213665286e2946f406cbfad40e6cee40db26baea2ed5db725ccc4f014",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "allocator-contracts",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc",
+      "allocator_contract_tests",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "process_wall_seconds": 0.005375032313168049,
+    "stdout_sha256": "bbefb04acfdf37b3f24d3af67f22a08855ff85e3c0e9b45ee59f3cb72ae45298",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "full-board",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 101,
+    "process_wall_seconds": 138.12718410696834,
+    "stdout_sha256": "2ff0e2478862fa339756038966a6894261346048e098177c83d372e794050833",
+    "stderr_sha256": "f631147acbca333ccd0122408ea27de4a82a529c3ec308b9c7ecdd822470fc39"
+  },
+  {
+    "name": "copper-neck",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "process_wall_seconds": 127.07985047018155,
+    "stdout_sha256": "6577dad7c2aa1f13ea66f5bd78711af66952234ea13f36f1f47a734e652efa2b",
+    "stderr_sha256": "f59940ba219e1f75ea53fac2cb413a76ac8572528db8829376ed02b52ecf07c0"
+  }
+]

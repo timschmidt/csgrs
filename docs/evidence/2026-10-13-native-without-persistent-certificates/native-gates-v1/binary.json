@@ -1,0 +1,11 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc",
+  "sha256": "d9023842e58e6da3cec44eb4db4b2d4a0bee080bd5bc753b926be05bd8e13f15",
+  "bytes": 54168736,
+  "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperdrc/Cargo.toml",
+  "features": [],
+  "allocator_dependency_features": {
+    "libmimalloc_sys": [],
+    "mimalloc": []
+  }
+}

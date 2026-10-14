@@ -1,0 +1,14 @@
+{
+  "action": "Collect existing public rational and dispatch traces across all eight quadratic fixture families and all four original construction/first/warm/cloned phases.",
+  "variants": [
+    "unchanged current-main baseline",
+    "unchanged full cache-bearing combination",
+    "unchanged combination without persistent certificates"
+  ],
+  "reuse": "Link a separate diagnostic driver against the three already built release rlibs. Do not rebuild or edit library sources.",
+  "schedule": "Two fresh processes per variant, each with the original 4096 inputs and complete eight-family order; all six runs retained. Build all three diagnostic executables before running.",
+  "witnesses": "Keep the original fixture, mathematical expected-value and witness code byte-identical. Check all exact coefficients and compare every witness/representation row with both closed library trials at the same input count.",
+  "limits": "Trace counts are diagnostics, not elapsed cost or allocation measurements. Existing trace labels do not count every cache copy/lock/allocation; unchanged counts cannot establish unchanged performance.",
+  "runtime_candidate_prepared": false,
+  "cost_samples_extended": false
+}

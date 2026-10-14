@@ -1,0 +1,47 @@
+{
+  "status": "reject-cache-free-combination-on-original-board-gate-and-unresolved-library-costs",
+  "library_interpretation_sha256": "8df8948724c37c97f251aa66f46f0dbd1490852c0fe74d70704b6e0bd552968d",
+  "native_assessment_sha256": "120802e98ff356701a33a489f3da5725bf767d9d033a911d8799d2c8fd60954c",
+  "consumer_source_review_sha256": "22deae8cca0abaecc74532c553b1d55b234a849e92e7185d3988f60733ef69e4",
+  "next_diagnostic_sha256": "2fdcf9292c654894410f4df12fda9a8a6b52d7cc6ed6f5fb89b3341916cebed5",
+  "native_gates": [
+    {
+      "name": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "passed": false,
+      "assertion_metric": "worker thread CPU",
+      "unchanged_limit_seconds": 120,
+      "printed_assertion_seconds": 136.717191044,
+      "process_wall_seconds": 138.12718410696834,
+      "process_wall_is_not_assertion_metric": true,
+      "stdout_sha256": "2ff0e2478862fa339756038966a6894261346048e098177c83d372e794050833",
+      "stderr_sha256": "f631147acbca333ccd0122408ea27de4a82a529c3ec308b9c7ecdd822470fc39"
+    },
+    {
+      "name": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "passed": true,
+      "assertion_metric": "check-body wall",
+      "unchanged_limit_seconds": 60,
+      "printed_assertion_seconds": null,
+      "process_wall_seconds": 127.07985047018155,
+      "process_wall_is_not_assertion_metric": true,
+      "stdout_sha256": "6577dad7c2aa1f13ea66f5bd78711af66952234ea13f36f1f47a734e652efa2b",
+      "stderr_sha256": "f59940ba219e1f75ea53fac2cb413a76ac8572528db8829376ed02b52ecf07c0"
+    }
+  ],
+  "allocator_contract_tests_passed": 2,
+  "allocator_linkage_verified": true,
+  "library_witnesses_preserved": true,
+  "library_timing_rows": 365,
+  "library_allocation_rows": 134,
+  "higher_all_five": 20,
+  "lower_all_five": 90,
+  "allocation_rows_with_any_increase": 14,
+  "closure": "All fixed samples and native results are preserved. Native findings were 12 and 197, but full JSON report bytes and wider stack qualification were not re-established for this combination.",
+  "comparison_limit": "Previous cache-bearing native success and current cache-free failure come from separate trials; they do not establish a paired native speed ratio or causal estimate.",
+  "next_step": "docs/evidence/2026-10-13-native-without-persistent-certificates/next-diagnostic-v1.json",
+  "all_main_and_35_pending_native_paths_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

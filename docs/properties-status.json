@@ -4274,8 +4274,8 @@
       "next_measurements_executed": false
     },
     "native_without_persistent_certificates": {
-      "status": "retain-isolated-with-consumer-tradeoffs-check-native-viability",
-      "evidence": "docs/evidence/2026-10-13-native-without-persistent-certificates/library-interpretation-v1.json",
+      "status": "reject-cache-free-combination-on-original-board-gate-and-unresolved-library-costs",
+      "evidence": "docs/evidence/2026-10-13-native-without-persistent-certificates/decision-v1.json",
       "scope": "docs/evidence/2026-10-13-native-without-persistent-certificates/scope-v1.json",
       "preparation": "docs/evidence/2026-10-13-native-without-persistent-certificates/preparation-v1/protocol.json",
       "preparation_sha256": "2fc88038d7ef5c49b81bcd69a36179b2e10ea5ffb7b32ff1cceba67c32cae5bc",
@@ -4293,16 +4293,14 @@
       "timing_lower_all_five": 90,
       "allocation_rows_with_increases": 14,
       "all_measured_witnesses_preserved": true,
-      "native_viability_executed": false,
-      "next_step": {
-        "action": "Run the original two native assertions once on this unchanged candidate, after building its DRC test binary and checking the existing allocator contract tests.",
-        "purpose": "Determine whether removing persistent storage can meet the existing application limits before further tuning consumer paths. This is a new candidate viability check, not an admission or paired speedup claim.",
-        "limits_unchanged": {
-          "full_board": "120 seconds worker CPU",
-          "copper_neck": "60 seconds check-body wall"
-        },
-        "preserve": "The full library sample and all earlier results remain closed and unchanged. Native success cannot erase consumer costs. Complete stack qualification, exact full reports and application cost evidence remain required for admission."
-      }
+      "native_viability_executed": true,
+      "next_step": "docs/evidence/2026-10-13-native-without-persistent-certificates/next-diagnostic-v1.json",
+      "native_assessment": "docs/evidence/2026-10-13-native-without-persistent-certificates/native-gates-assessment-v1.json",
+      "native_full_board_worker_cpu_seconds": 136.717191044,
+      "native_full_board_limit_seconds": 120,
+      "native_full_board_passed": false,
+      "native_copper_neck_passed": true,
+      "native_copper_neck_assertion_seconds": null
     }
   },
   "status_meanings": {

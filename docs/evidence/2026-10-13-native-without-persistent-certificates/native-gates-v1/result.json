@@ -1,0 +1,66 @@
+{
+  "complete": true,
+  "commands": 10,
+  "allocator_contract_tests_passed": 2,
+  "allocator_linkage_verified": true,
+  "gates": [
+    {
+      "name": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "failure_pattern": "KiCad smoke suite took ([0-9.]+)s of worker time",
+      "passed": false,
+      "assertion_seconds": 136.717191044,
+      "process_wall_seconds": 138.12718410696834
+    },
+    {
+      "name": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall",
+      "failure_pattern": "complex project copper neck regression fixture took ([0-9.]+)s",
+      "passed": true,
+      "assertion_seconds": null,
+      "process_wall_seconds": 127.07985047018155
+    }
+  ],
+  "candidate_original_gates_passed": false,
+  "full_board_findings": [
+    12,
+    197
+  ],
+  "complete_report_byte_identity_established": false,
+  "wider_stack_qualification_complete": false,
+  "library_costs_resolved": false,
+  "all_sources_dependencies_main_old_artifacts_and_binaries_unchanged": true,
+  "artifact_sha256": {
+    "allocator-contracts.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "allocator-contracts.stdout.gz": "bbefb04acfdf37b3f24d3af67f22a08855ff85e3c0e9b45ee59f3cb72ae45298",
+    "allocator-selection.json": "95c11e877da3fa905ee5fad2523d18218b23d2781f28b5b20c65711056845809",
+    "binary.json": "25bcdbf91fa1f286d2215903c723bf720ff4f1819379f6f48db7f30b59664858",
+    "build-test.stderr.gz": "7e13d490703120292c1e37aa043635f32969d6af9a5c2e4ee98c8a60376fff94",
+    "build-test.stdout.gz": "a5ac394072874b73d488759695ace8370b3d85e41a9a6d64395c09eac04e1e96",
+    "commands.json": "3ec0f75ce114ae1c5284fd169f31b3df39e207e30d2dd2892c4b63881bf6c9e5",
+    "copper-neck.stderr.gz": "f59940ba219e1f75ea53fac2cb413a76ac8572528db8829376ed02b52ecf07c0",
+    "copper-neck.stdout.gz": "6577dad7c2aa1f13ea66f5bd78711af66952234ea13f36f1f47a734e652efa2b",
+    "fixture-archive-1.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "fixture-archive-1.stdout.gz": "14bb1cd1f0186764d78efee9e9624d4f0d478a365308bb3985f26d8c7463187b",
+    "fixture-archive-2.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "fixture-archive-2.stdout.gz": "abf5b2ab7c93f94f6ea5f1878453ab259d71154fd2472f1d2654a58547ab7725",
+    "full-board.stderr.gz": "f631147acbca333ccd0122408ea27de4a82a529c3ec308b9c7ecdd822470fc39",
+    "full-board.stdout.gz": "2ff0e2478862fa339756038966a6894261346048e098177c83d372e794050833",
+    "gates.json": "91eb94880e941129853e9a4d75362ab39a8f6496eda3d189da21fcbbd813cf2a",
+    "global-alloc.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "global-alloc.stdout.gz": "74a5d0bc4b1c7da26264e9a19b4476c836172b1603cc0b4e628f513637979e42",
+    "nm-demangled.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "nm-demangled.stdout.gz": "fe546047de53e85e85541fcc8d219d11fe1d8ee43a0a01216729678d9f4b11b3",
+    "nm-raw.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "nm-raw.stdout.gz": "544d3e7b68c1357efa8c70c51cffc803dac69b11081650e6d753c0e47c29996e",
+    "protocol.json": "c0785e4666bb1fda4999be763d4aa011dcac5b57ee7b6ba96eba5808280b5e28",
+    "relocations.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "relocations.stdout.gz": "e29ae06213665286e2946f406cbfad40e6cee40db26baea2ed5db725ccc4f014"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

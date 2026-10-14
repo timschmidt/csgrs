@@ -1,0 +1,59 @@
+{
+  "scope": "Check native viability once without changing either original assertion.\n\nThis candidate-only diagnostic is not full stack qualification, paired\napplication timing, report-byte admission or resolution of library costs.\nPassing assertions do not print their internal duration; process wall must\nnot be substituted for worker CPU or copper-neck check-body wall.\n",
+  "runner_sha256": "3174ffe2f349d60fca668bc25916ee282467925ef3cd86977cee306725b07fc1",
+  "scope_sha256": "ffc3cc674d61662b4bc2fddd7488945cf1ddf7b74bdcb81294c8c89af1313bfe",
+  "preparation_sha256": "2fc88038d7ef5c49b81bcd69a36179b2e10ea5ffb7b32ff1cceba67c32cae5bc",
+  "library_result_sha256": "23db44a3dd6c7a82ae266118e6fd9167d1544e7dfa1c9e62ebf187e29d84b14d",
+  "library_interpretation_sha256": "8df8948724c37c97f251aa66f46f0dbd1490852c0fe74d70704b6e0bd552968d",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "inherited_allocator_settings": [],
+  "unzip": {
+    "path": "/usr/bin/unzip",
+    "sha256": "b6e111c483ac63c80ec94633ab191f7107881c721d7e11d9f78510a2dd5c5fe7"
+  },
+  "fixtures": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperdrc/docs/CPArti FPGA dev board.zip",
+      "sha256": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+      "board_entry": "CPArti FPGA dev board.kicad_pcb",
+      "board_bytes": 8177693,
+      "board_crc32": 4084561681
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperdrc/docs/HVP109A.zip",
+      "sha256": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a",
+      "board_entry": "HVP109A.kicad_pcb",
+      "board_bytes": 5611517,
+      "board_crc32": 110877790
+    }
+  ],
+  "gates": [
+    {
+      "name": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "failure_pattern": "KiCad smoke suite took ([0-9.]+)s of worker time"
+    },
+    {
+      "name": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall",
+      "failure_pattern": "complex project copper neck regression fixture took ([0-9.]+)s"
+    }
+  ],
+  "timeout_seconds": 1800,
+  "single_candidate_no_paired_speedup_claim": true,
+  "runtime_admitted": false
+}

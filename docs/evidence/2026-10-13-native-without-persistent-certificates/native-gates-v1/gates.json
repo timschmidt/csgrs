@@ -1,0 +1,22 @@
+[
+  {
+    "name": "full-board",
+    "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+    "limit_seconds": 120,
+    "metric": "worker CPU",
+    "failure_pattern": "KiCad smoke suite took ([0-9.]+)s of worker time",
+    "passed": false,
+    "assertion_seconds": 136.717191044,
+    "process_wall_seconds": 138.12718410696834
+  },
+  {
+    "name": "copper-neck",
+    "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+    "limit_seconds": 60,
+    "metric": "check body wall",
+    "failure_pattern": "complex project copper neck regression fixture took ([0-9.]+)s",
+    "passed": true,
+    "assertion_seconds": null,
+    "process_wall_seconds": 127.07985047018155
+  }
+]

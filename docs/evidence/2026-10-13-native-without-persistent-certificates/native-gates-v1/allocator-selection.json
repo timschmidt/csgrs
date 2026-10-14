@@ -1,0 +1,11 @@
+{
+  "binary_sha256": "d9023842e58e6da3cec44eb4db4b2d4a0bee080bd5bc753b926be05bd8e13f15",
+  "global_symbol": "_RNvCs1njKG4L9aB3_7___rustc12___rust_alloc",
+  "target": "mi_malloc_aligned",
+  "target_address": "11610e0",
+  "got_slots": [
+    "28bb590"
+  ],
+  "verified": true,
+  "scope": "Linux ELF64 x86-64 native lib test binary"
+}
