@@ -1,0 +1,70 @@
+
+running 6 tests
+test bounds_and_positioning_propagate_policy_and_certainty ... ok
+test hulls_and_queries_accept_terminal_equality ... ok
+test polyhedron_and_loft_use_context_for_planarity_and_caps ... ok
+test distributions_do_not_reuse_approximate_results_for_strict_calls ... ok
+test transformation_policy_does_not_allow_collapsed_geometry ... ok
+test scalar_mesh_booleans_expose_context_without_losing_certainty ... ok
+
+successes:
+
+successes:
+    bounds_and_positioning_propagate_policy_and_certainty
+    distributions_do_not_reuse_approximate_results_for_strict_calls
+    hulls_and_queries_accept_terminal_equality
+    polyhedron_and_loft_use_context_for_planarity_and_caps
+    scalar_mesh_booleans_expose_context_without_losing_certainty
+    transformation_policy_does_not_allow_collapsed_geometry
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+
+running 3 tests
+test disjoint_distributions_preserve_every_native_copy ... ok
+test sphere_diameter_ray_reports_only_surface_hits ... ok
+test sampled_sphere_at_fifteen_degree_steps_has_a_certified_convex_hull ... ok
+
+successes:
+
+successes:
+    disjoint_distributions_preserve_every_native_copy
+    sampled_sphere_at_fifteen_degree_steps_has_a_certified_convex_hull
+    sphere_diameter_ray_reports_only_surface_hits
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+
+running 9 tests
+test all_active_caches_obey_their_limits_and_release_entries ... ok
+test each_distribution_family_preserves_geometry_and_certainty ... ok
+test every_cached_primitive_family_replays_the_same_exact_rows ... ok
+test fifo_hits_do_not_refresh_insertion_order ... ok
+test merge_keys_include_input_order_and_both_storage_identities ... ok
+test nested_scopes_shrink_immediately_and_restore_after_unwinding ... ok
+test primitives_preserve_scalar_structure_with_and_without_retention ... ok
+test workers_have_independent_policy_and_retained_storage ... ok
+test approximate_distribution_cannot_satisfy_a_strict_request ... ok
+
+successes:
+
+---- nested_scopes_shrink_immediately_and_restore_after_unwinding stdout ----
+
+thread 'nested_scopes_shrink_immediately_and_restore_after_unwinding' (24243) panicked at tests/solid_cache.rs:140:17:
+exercise scoped policy restoration
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+successes:
+    all_active_caches_obey_their_limits_and_release_entries
+    approximate_distribution_cannot_satisfy_a_strict_request
+    each_distribution_family_preserves_geometry_and_certainty
+    every_cached_primitive_family_replays_the_same_exact_rows
+    fifo_hits_do_not_refresh_insertion_order
+    merge_keys_include_input_order_and_both_storage_identities
+    nested_scopes_shrink_immediately_and_restore_after_unwinding
+    primitives_preserve_scalar_structure_with_and_without_retention
+    workers_have_independent_policy_and_retained_storage
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

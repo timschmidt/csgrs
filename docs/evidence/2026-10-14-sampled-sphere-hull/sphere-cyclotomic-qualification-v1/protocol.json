@@ -1,0 +1,27 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/source",
+  "source_mapping_sha256": "e07e587012041626bebd796701af862e4d8a1125b11be1c12f088c1ff2138c27",
+  "source_files": 10132,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-qualification-v1"
+  },
+  "packages": [
+    "hyperreal",
+    "hyperlimit",
+    "hypermesh",
+    "hypercurve"
+  ],
+  "inputs_sha256": {
+    "qualify_sphere_cyclotomic_v1.py": "2898e263a5c0142d04fd7d2a5a1cc2631e965e57d5aa9fab37680571babdca5b",
+    "sphere-cyclotomic-qualification-scope-v1.json": "32df3a6b4632adc12d70a8d000e51b1f87db3cec3dce46149e694e2f1739258d",
+    "sphere-cyclotomic-assessment-v2.json": "c5252385450169387996c12bcb9c1e3848d18ad9c163fb8370b620d56669f718",
+    "sphere-native-support-v1/result.json": "cfb7b48b194fc52adf1eeb2c9134f1fe82fb353dc6558360be0ccc7ac1fc2e73"
+  },
+  "command_wall_limit_seconds": 1800,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

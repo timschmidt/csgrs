@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "native-four-sphere-support-certified-broad-qualification-frozen",
+      "status": "native-four-sphere-broad-qualified-early-filter-frozen",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -4972,7 +4972,46 @@
       "sphere_native_support_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-native-support-closure-v1.json",
       "sphere_cyclotomic_qualification_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-qualification-scope-v1.json",
       "sphere_cyclotomic_qualification_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_sphere_cyclotomic_v1.py",
-      "sphere_cyclotomic_qualification_executed": false
+      "sphere_cyclotomic_qualification_executed": true,
+      "sphere_cyclotomic_qualification_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-qualification-assessment-v1.json",
+      "sphere_cyclotomic_qualification_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-qualification-closure-v1.json",
+      "sphere_cyclotomic_qualification_counts": {
+        "default-tests": {
+          "passed": 3920,
+          "failed": 0,
+          "ignored": 35,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 95
+        },
+        "all-features-tests": {
+          "passed": 4072,
+          "failed": 0,
+          "ignored": 40,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 96
+        },
+        "doctests": {
+          "passed": 29,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 4
+        },
+        "grammar-native-consumers": {
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 3
+        }
+      },
+      "sphere_cyclotomic_early_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-early-scope-v1.json",
+      "sphere_cyclotomic_early_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_sphere_cyclotomic_early_v1.py",
+      "sphere_cyclotomic_early_executed": false
     }
   },
   "status_meanings": {
