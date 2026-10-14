@@ -1,0 +1,32 @@
+{
+  "complete": true,
+  "commands": 5,
+  "fixed_processes": 2,
+  "case_method_rows_each": 71,
+  "batch_rows_each": 2,
+  "control_rows_each": 1,
+  "all_exact_case_values_verified": true,
+  "no_timings_collected": true,
+  "artifact_sha256": {
+    "allocation-forward.stderr.gz": "d14fbd54e122bcef7d6883c97adebe9fd0a8b43c97024b0563dc2b317dab2c34",
+    "allocation-forward.stdout.gz": "ce9bd0b5a059288f64ccfdee7725164ceda6a8484e92af130a1f0efd0e3669f5",
+    "allocation-reverse.stderr.gz": "da7f2fca8cd4f72a9463ec053d4760709e3b4f732105a1912da43673bf4738bc",
+    "allocation-reverse.stdout.gz": "ddce42ad824dcf28e36288a478eab251706fa2c2a7b486f94b17c37a6ac9c28d",
+    "binary.json": "e1e9ad36388cfa09a301a838f9a8009d485878b1b3dd4c22ccf7420a64b46f1c",
+    "build.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "build.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "clippy.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "clippy.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "commands.json": "385dab3e782e123cd0103ccc3e73543e0a159c9d2a47025ac7b2f8df02e0bcb4",
+    "format.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "format.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "inputs.rs": "da088742f5b7ba3567dc3d3af4405f95922d25c28d6ac8a2a0eac61c8cb83fcf",
+    "probe.rs": "afbd663cbe8f1b6e49d391b96e356ce6f727011704b173d18d108e3c21451640",
+    "protocol.json": "60c4e2effe26c195e5759952729e4d04e4a086b9b0fd81d6f8e3a164da25a90b",
+    "samples.json": "d52721b53cf3d5d45aa17dab849febe8cdafb805581eb1ca2847383389502d05"
+  },
+  "all_old_sources_libraries_and_binaries_unchanged": true,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

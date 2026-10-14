@@ -1,0 +1,277 @@
+{
+  "status": "signed-word-reconstruction-allocation-mechanism-confirmed",
+  "assessor_sha256": "ecf601f1794910e3f3cbfcdceb7590023e1059fe27299bdc3013ca670fd4ecc2",
+  "result_sha256": "3890089b8e9a61d3d72ae7e13c4f38adef3e0f311a375914ccf6913ce6428722",
+  "comparison_sha256": "7fad175d9ffe621988d9b97faa66c98cbb08c995ff2f6c479e5d9f59b52a50b5",
+  "fixed_processes": 2,
+  "case_method_rows": 142,
+  "batch_rows": 4,
+  "all_counts_repeat_with_reversed_method_order": true,
+  "all_exact_case_values_verified": true,
+  "signed_word_fits_in_1000": 501,
+  "predicted_extra_requested_bytes": 12024,
+  "observed_batch_deltas": [
+    {
+      "calls": 0,
+      "requested_bytes": 12024,
+      "retained_bytes": 0,
+      "peak_bytes": 24
+    },
+    {
+      "calls": 0,
+      "requested_bytes": 12024,
+      "retained_bytes": 0,
+      "peak_bytes": 24
+    }
+  ],
+  "historical_allocation_context": [
+    {
+      "assessment": "docs/evidence/2026-10-13-combined-native-admission/library-assessment-v1.json",
+      "sha256": "8d6497a1f38ac8221ee940a051740771f92ce6bd84acf22596bcd3ef3afd6b00",
+      "row": {
+        "suite": "integer",
+        "name": "signed_word_boundary_construction",
+        "iterations": 1000,
+        "fields": {
+          "allocation_calls": {
+            "baseline": [
+              12501,
+              12501,
+              12501,
+              12501,
+              12501
+            ],
+            "candidate": [
+              12501,
+              12501,
+              12501,
+              12501,
+              12501
+            ],
+            "baseline_median": 12501,
+            "candidate_median": 12501,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "allocated_bytes": {
+            "baseline": [
+              652000,
+              652000,
+              652000,
+              652000,
+              652000
+            ],
+            "candidate": [
+              664024,
+              664024,
+              664024,
+              664024,
+              664024
+            ],
+            "baseline_median": 652000,
+            "candidate_median": 664024,
+            "paired_deltas": [
+              12024,
+              12024,
+              12024,
+              12024,
+              12024
+            ],
+            "candidate_higher_pairs": 5,
+            "candidate_lower_pairs": 0
+          },
+          "retained_bytes_delta": {
+            "baseline": [
+              388000,
+              388000,
+              388000,
+              388000,
+              388000
+            ],
+            "candidate": [
+              388000,
+              388000,
+              388000,
+              388000,
+              388000
+            ],
+            "baseline_median": 388000,
+            "candidate_median": 388000,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "peak_bytes_delta": {
+            "baseline": [
+              388264,
+              388264,
+              388264,
+              388264,
+              388264
+            ],
+            "candidate": [
+              388288,
+              388288,
+              388288,
+              388288,
+              388288
+            ],
+            "baseline_median": 388264,
+            "candidate_median": 388288,
+            "paired_deltas": [
+              24,
+              24,
+              24,
+              24,
+              24
+            ],
+            "candidate_higher_pairs": 5,
+            "candidate_lower_pairs": 0
+          }
+        }
+      }
+    },
+    {
+      "assessment": "docs/evidence/2026-10-13-native-without-persistent-certificates/library-assessment-v1.json",
+      "sha256": "904020f218293a34a9572c9a53dea6e49129e458570fbb9720ce770306dfbf79",
+      "row": {
+        "suite": "integer",
+        "name": "signed_word_boundary_construction",
+        "iterations": 1000,
+        "fields": {
+          "allocation_calls": {
+            "baseline": [
+              12501,
+              12501,
+              12501,
+              12501,
+              12501
+            ],
+            "candidate": [
+              12501,
+              12501,
+              12501,
+              12501,
+              12501
+            ],
+            "baseline_median": 12501,
+            "candidate_median": 12501,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "allocated_bytes": {
+            "baseline": [
+              652000,
+              652000,
+              652000,
+              652000,
+              652000
+            ],
+            "candidate": [
+              664024,
+              664024,
+              664024,
+              664024,
+              664024
+            ],
+            "baseline_median": 652000,
+            "candidate_median": 664024,
+            "paired_deltas": [
+              12024,
+              12024,
+              12024,
+              12024,
+              12024
+            ],
+            "candidate_higher_pairs": 5,
+            "candidate_lower_pairs": 0
+          },
+          "retained_bytes_delta": {
+            "baseline": [
+              388000,
+              388000,
+              388000,
+              388000,
+              388000
+            ],
+            "candidate": [
+              388000,
+              388000,
+              388000,
+              388000,
+              388000
+            ],
+            "baseline_median": 388000,
+            "candidate_median": 388000,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "peak_bytes_delta": {
+            "baseline": [
+              388264,
+              388264,
+              388264,
+              388264,
+              388264
+            ],
+            "candidate": [
+              388288,
+              388288,
+              388288,
+              388288,
+              388288
+            ],
+            "baseline_median": 388264,
+            "candidate_median": 388288,
+            "paired_deltas": [
+              24,
+              24,
+              24,
+              24,
+              24
+            ],
+            "candidate_higher_pairs": 5,
+            "candidate_lower_pairs": 0
+          }
+        }
+      }
+    }
+  ],
+  "mechanism": "On this 64-bit backend the signed-word magnitudes clone with one 8-byte request, whereas rebuilding the same magnitude through BigUint::from(u128) requests 32 bytes. Both Rational leaf paths use the same unmodified constructor implementation. The signed-word dispatch takes the rebuilding path for exactly 501 of the original 1000 boundary values.",
+  "limits": [
+    "This direct constructor diagnostic is not the whole affine fixture or a benchmark of a new runtime implementation.",
+    "The exact 12024-byte and 24-byte peak differences account numerically for the closed fixture excess. End-to-end repair still requires testing a new isolated source change against the unchanged original fixture.",
+    "No timing inference, prior-sample replacement, native admission or improvement claim follows from these allocation observations."
+  ],
+  "next_step": "Prototype a crate-private borrowed-integer constructor that reuses only existing bounded canonical values and otherwise preserves the original BigInt-clone path; keep the cache boundary owned by Rational and exactness unbounded. Evaluate the whole existing cost matrix before retention.",
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,1768 @@
+[
+  {
+    "value": "-65",
+    "fits_signed_word": true,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 24,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 24,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "-64",
+    "fits_signed_word": true,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "requested_byte_delta": -120,
+        "call_delta": -3,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "requested_byte_delta": -120,
+        "call_delta": -3,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "-1",
+    "fits_signed_word": true,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "requested_byte_delta": -120,
+        "call_delta": -3,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "requested_byte_delta": -120,
+        "call_delta": -3,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "0",
+    "fits_signed_word": true,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 0
+        },
+        "signed_word_leaf": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "requested_byte_delta": -8,
+        "call_delta": -1,
+        "clone_magnitude": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "primitive_magnitude": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 0
+        },
+        "signed_word_leaf": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "requested_byte_delta": -8,
+        "call_delta": -1,
+        "clone_magnitude": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "primitive_magnitude": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        }
+      }
+    ]
+  },
+  {
+    "value": "1",
+    "fits_signed_word": true,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "requested_byte_delta": -120,
+        "call_delta": -3,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "requested_byte_delta": -120,
+        "call_delta": -3,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "64",
+    "fits_signed_word": true,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "requested_byte_delta": -120,
+        "call_delta": -3,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "requested_byte_delta": -120,
+        "call_delta": -3,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "65",
+    "fits_signed_word": true,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 24,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 24,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "-9223372036854775809",
+    "fits_signed_word": false,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "-9223372036854775808",
+    "fits_signed_word": true,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 24,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 24,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "-9223372036854775807",
+    "fits_signed_word": true,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 24,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 24,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "9223372036854775807",
+    "fits_signed_word": true,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 24,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 24,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "9223372036854775808",
+    "fits_signed_word": false,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "9223372036854775809",
+    "fits_signed_word": false,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "-340282366920938463463374607431768211457",
+    "fits_signed_word": false,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "104": 1,
+            "24": 1,
+            "8": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "104": 1,
+            "24": 1,
+            "8": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 24,
+          "request_size_histogram": {
+            "24": 1
+          },
+          "requested_bytes": 24,
+          "retained_bytes": 24
+        },
+        "primitive_magnitude": null
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "104": 1,
+            "24": 1,
+            "8": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "104": 1,
+            "24": 1,
+            "8": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 24,
+          "request_size_histogram": {
+            "24": 1
+          },
+          "requested_bytes": 24,
+          "retained_bytes": 24
+        },
+        "primitive_magnitude": null
+      }
+    ]
+  },
+  {
+    "value": "340282366920938463463374607431768211455",
+    "fits_signed_word": false,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "104": 1,
+            "16": 1,
+            "8": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "104": 1,
+            "16": 1,
+            "8": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 16,
+          "request_size_histogram": {
+            "16": 1
+          },
+          "requested_bytes": 16,
+          "retained_bytes": 16
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "104": 1,
+            "16": 1,
+            "8": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "104": 1,
+            "16": 1,
+            "8": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 16,
+          "request_size_histogram": {
+            "16": 1
+          },
+          "requested_bytes": 16,
+          "retained_bytes": 16
+        },
+        "primitive_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        }
+      }
+    ]
+  },
+  {
+    "value": "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+    "fits_signed_word": false,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "primitive_magnitude": null
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "primitive_magnitude": null
+      }
+    ]
+  },
+  {
+    "value": "57896044618658097711785492504343953926634992332820282019728792003956564819969",
+    "fits_signed_word": false,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "primitive_magnitude": null
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "primitive_magnitude": null
+      }
+    ]
+  },
+  {
+    "value": "-179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137215",
+    "fits_signed_word": false,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 240,
+          "request_size_histogram": {
+            "104": 1,
+            "128": 1,
+            "8": 1
+          },
+          "requested_bytes": 240,
+          "retained_bytes": 240
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 240,
+          "request_size_histogram": {
+            "104": 1,
+            "128": 1,
+            "8": 1
+          },
+          "requested_bytes": 240,
+          "retained_bytes": 240
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "128": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "primitive_magnitude": null
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 240,
+          "request_size_histogram": {
+            "104": 1,
+            "128": 1,
+            "8": 1
+          },
+          "requested_bytes": 240,
+          "retained_bytes": 240
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 240,
+          "request_size_histogram": {
+            "104": 1,
+            "128": 1,
+            "8": 1
+          },
+          "requested_bytes": 240,
+          "retained_bytes": 240
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "128": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "primitive_magnitude": null
+      }
+    ]
+  },
+  {
+    "value": "179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137217",
+    "fits_signed_word": false,
+    "processes": [
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 248,
+          "request_size_histogram": {
+            "104": 1,
+            "136": 1,
+            "8": 1
+          },
+          "requested_bytes": 248,
+          "retained_bytes": 248
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 248,
+          "request_size_histogram": {
+            "104": 1,
+            "136": 1,
+            "8": 1
+          },
+          "requested_bytes": 248,
+          "retained_bytes": 248
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "136": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "primitive_magnitude": null
+      },
+      {
+        "original_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 248,
+          "request_size_histogram": {
+            "104": 1,
+            "136": 1,
+            "8": 1
+          },
+          "requested_bytes": 248,
+          "retained_bytes": 248
+        },
+        "signed_word_leaf": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 248,
+          "request_size_histogram": {
+            "104": 1,
+            "136": 1,
+            "8": 1
+          },
+          "requested_bytes": 248,
+          "retained_bytes": 248
+        },
+        "requested_byte_delta": 0,
+        "call_delta": 0,
+        "clone_magnitude": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "136": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "primitive_magnitude": null
+      }
+    ]
+  }
+]

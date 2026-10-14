@@ -1,0 +1,92 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-integer-conversion-allocation/run-v1/probe.rs"
+    ],
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--extern",
+      "num=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libnum-3535ef33f71a913a.rlib",
+      "--emit=metadata",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-integer-conversion-allocation/run-v1/probe.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/integer-conversion-allocation-v1/probe.rmeta"
+    ],
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--extern",
+      "num=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libnum-3535ef33f71a913a.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-integer-conversion-allocation/run-v1/probe.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/integer-conversion-allocation-v1/probe"
+    ],
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "allocation-forward",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/integer-conversion-allocation-v1/probe",
+      "forward"
+    ],
+    "exit_code": 0,
+    "stdout_sha256": "ce9bd0b5a059288f64ccfdee7725164ceda6a8484e92af130a1f0efd0e3669f5",
+    "stderr_sha256": "d14fbd54e122bcef7d6883c97adebe9fd0a8b43c97024b0563dc2b317dab2c34"
+  },
+  {
+    "name": "allocation-reverse",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/integer-conversion-allocation-v1/probe",
+      "reverse"
+    ],
+    "exit_code": 0,
+    "stdout_sha256": "ddce42ad824dcf28e36288a478eab251706fa2c2a7b486f94b17c37a6ac9c28d",
+    "stderr_sha256": "da7f2fca8cd4f72a9463ec053d4760709e3b4f732105a1912da43673bf4738bc"
+  }
+]

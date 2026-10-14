@@ -1,0 +1,2328 @@
+[
+  {
+    "order": "forward",
+    "rows": [
+      {
+        "allocated": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 17,
+          "request_size_histogram": {
+            "17": 1
+          },
+          "requested_bytes": 17,
+          "retained_bytes": 17
+        },
+        "control": "allocation",
+        "empty": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "passed": true,
+        "unwind_disabled": true
+      },
+      {
+        "case": "-65",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-65",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-65",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-65",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-64",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-64",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-64",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-64",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-1",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-1",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-1",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-1",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "0",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "0",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "0",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "0",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "1",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "1",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "1",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "1",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "64",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "64",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "64",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "64",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "65",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "65",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "65",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "65",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-9223372036854775809",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-9223372036854775809",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-9223372036854775809",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-9223372036854775809",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-9223372036854775808",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-9223372036854775808",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-9223372036854775808",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-9223372036854775808",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-9223372036854775807",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-9223372036854775807",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-9223372036854775807",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-9223372036854775807",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "9223372036854775807",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "9223372036854775807",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "9223372036854775807",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "9223372036854775807",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "9223372036854775808",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "9223372036854775808",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "9223372036854775808",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "9223372036854775808",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "9223372036854775809",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "9223372036854775809",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "9223372036854775809",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "9223372036854775809",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-340282366920938463463374607431768211457",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 24,
+          "request_size_histogram": {
+            "24": 1
+          },
+          "requested_bytes": 24,
+          "retained_bytes": 24
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-340282366920938463463374607431768211457",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "104": 1,
+            "24": 1,
+            "8": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-340282366920938463463374607431768211457",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "104": 1,
+            "24": 1,
+            "8": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "340282366920938463463374607431768211455",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 16,
+          "request_size_histogram": {
+            "16": 1
+          },
+          "requested_bytes": 16,
+          "retained_bytes": 16
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "340282366920938463463374607431768211455",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "340282366920938463463374607431768211455",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "104": 1,
+            "16": 1,
+            "8": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "340282366920938463463374607431768211455",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "104": 1,
+            "16": 1,
+            "8": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "57896044618658097711785492504343953926634992332820282019728792003956564819969",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "57896044618658097711785492504343953926634992332820282019728792003956564819969",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "57896044618658097711785492504343953926634992332820282019728792003956564819969",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137215",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "128": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137215",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 240,
+          "request_size_histogram": {
+            "104": 1,
+            "128": 1,
+            "8": 1
+          },
+          "requested_bytes": 240,
+          "retained_bytes": 240
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137215",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 240,
+          "request_size_histogram": {
+            "104": 1,
+            "128": 1,
+            "8": 1
+          },
+          "requested_bytes": 240,
+          "retained_bytes": 240
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137217",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "136": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137217",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 248,
+          "request_size_histogram": {
+            "104": 1,
+            "136": 1,
+            "8": 1
+          },
+          "requested_bytes": 248,
+          "retained_bytes": 248
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137217",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 248,
+          "request_size_histogram": {
+            "104": 1,
+            "136": 1,
+            "8": 1
+          },
+          "requested_bytes": 248,
+          "retained_bytes": 248
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "batch": "signed-word-cycle",
+        "counts": {
+          "calls": 3000,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1000,
+            "8": 2000
+          },
+          "requested_bytes": 120000,
+          "retained_bytes": 0
+        },
+        "iterations": 1000,
+        "method": "original-leaf",
+        "signed_word_fits": 501
+      },
+      {
+        "batch": "signed-word-cycle",
+        "counts": {
+          "calls": 3000,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1000,
+            "32": 501,
+            "8": 1499
+          },
+          "requested_bytes": 132024,
+          "retained_bytes": 0
+        },
+        "iterations": 1000,
+        "method": "signed-word-leaf",
+        "signed_word_fits": 501
+      }
+    ]
+  },
+  {
+    "order": "reverse",
+    "rows": [
+      {
+        "allocated": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 17,
+          "request_size_histogram": {
+            "17": 1
+          },
+          "requested_bytes": 17,
+          "retained_bytes": 17
+        },
+        "control": "allocation",
+        "empty": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "passed": true,
+        "unwind_disabled": true
+      },
+      {
+        "case": "-65",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-65",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-65",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-65",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-64",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-64",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-64",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-64",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-1",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-1",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-1",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-1",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "0",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "0",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "0",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "0",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "1",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "1",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "1",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "1",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "64",
+        "counts": {
+          "calls": 0,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 0,
+          "request_size_histogram": {},
+          "requested_bytes": 0,
+          "retained_bytes": 0
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "64",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "64",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "64",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "65",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "65",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "65",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "65",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-9223372036854775809",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-9223372036854775809",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-9223372036854775809",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-9223372036854775809",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-9223372036854775808",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-9223372036854775808",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-9223372036854775808",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-9223372036854775808",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-9223372036854775807",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-9223372036854775807",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-9223372036854775807",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "-9223372036854775807",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "9223372036854775807",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "9223372036854775807",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "9223372036854775807",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "9223372036854775807",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "9223372036854775808",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "9223372036854775808",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "9223372036854775808",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "9223372036854775808",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "9223372036854775809",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "9223372036854775809",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1,
+            "8": 2
+          },
+          "requested_bytes": 120,
+          "retained_bytes": 120
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "9223372036854775809",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "9223372036854775809",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 8,
+          "request_size_histogram": {
+            "8": 1
+          },
+          "requested_bytes": 8,
+          "retained_bytes": 8
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-340282366920938463463374607431768211457",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "104": 1,
+            "24": 1,
+            "8": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-340282366920938463463374607431768211457",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "104": 1,
+            "24": 1,
+            "8": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-340282366920938463463374607431768211457",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 24,
+          "request_size_histogram": {
+            "24": 1
+          },
+          "requested_bytes": 24,
+          "retained_bytes": 24
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "340282366920938463463374607431768211455",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "104": 1,
+            "16": 1,
+            "8": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "340282366920938463463374607431768211455",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "104": 1,
+            "16": 1,
+            "8": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "340282366920938463463374607431768211455",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "primitive-magnitude"
+      },
+      {
+        "case": "340282366920938463463374607431768211455",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 16,
+          "request_size_histogram": {
+            "16": 1
+          },
+          "requested_bytes": 16,
+          "retained_bytes": 16
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "57896044618658097711785492504343953926634992332820282019728792003956564819969",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "57896044618658097711785492504343953926634992332820282019728792003956564819969",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1,
+            "32": 1,
+            "8": 1
+          },
+          "requested_bytes": 144,
+          "retained_bytes": 144
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "57896044618658097711785492504343953926634992332820282019728792003956564819969",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 32,
+          "request_size_histogram": {
+            "32": 1
+          },
+          "requested_bytes": 32,
+          "retained_bytes": 32
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "-179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137215",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 240,
+          "request_size_histogram": {
+            "104": 1,
+            "128": 1,
+            "8": 1
+          },
+          "requested_bytes": 240,
+          "retained_bytes": 240
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "-179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137215",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 240,
+          "request_size_histogram": {
+            "104": 1,
+            "128": 1,
+            "8": 1
+          },
+          "requested_bytes": 240,
+          "retained_bytes": 240
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "-179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137215",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 128,
+          "request_size_histogram": {
+            "128": 1
+          },
+          "requested_bytes": 128,
+          "retained_bytes": 128
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "case": "179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137217",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 248,
+          "request_size_histogram": {
+            "104": 1,
+            "136": 1,
+            "8": 1
+          },
+          "requested_bytes": 248,
+          "retained_bytes": 248
+        },
+        "exact_value_verified": true,
+        "method": "signed-word-leaf"
+      },
+      {
+        "case": "179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137217",
+        "counts": {
+          "calls": 3,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 248,
+          "request_size_histogram": {
+            "104": 1,
+            "136": 1,
+            "8": 1
+          },
+          "requested_bytes": 248,
+          "retained_bytes": 248
+        },
+        "exact_value_verified": true,
+        "method": "original-leaf"
+      },
+      {
+        "case": "179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137217",
+        "counts": {
+          "calls": 1,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 136,
+          "request_size_histogram": {
+            "136": 1
+          },
+          "requested_bytes": 136,
+          "retained_bytes": 136
+        },
+        "exact_value_verified": true,
+        "method": "clone-magnitude"
+      },
+      {
+        "batch": "signed-word-cycle",
+        "counts": {
+          "calls": 3000,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 144,
+          "request_size_histogram": {
+            "104": 1000,
+            "32": 501,
+            "8": 1499
+          },
+          "requested_bytes": 132024,
+          "retained_bytes": 0
+        },
+        "iterations": 1000,
+        "method": "signed-word-leaf",
+        "signed_word_fits": 501
+      },
+      {
+        "batch": "signed-word-cycle",
+        "counts": {
+          "calls": 3000,
+          "last_bin_means_512_or_more": true,
+          "peak_bytes": 120,
+          "request_size_histogram": {
+            "104": 1000,
+            "8": 2000
+          },
+          "requested_bytes": 120000,
+          "retained_bytes": 0
+        },
+        "iterations": 1000,
+        "method": "original-leaf",
+        "signed_word_fits": 501
+      }
+    ]
+  }
+]

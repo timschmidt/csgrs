@@ -1,0 +1,108 @@
+{
+  "scope": "Two fixed allocation observations; no timing or runtime candidate.",
+  "inputs_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-integer-conversion-allocation/probe_v1.rs": "afbd663cbe8f1b6e49d391b96e356ce6f727011704b173d18d108e3c21451640",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-integer-conversion-allocation/common_v1.py": "f74b9a464d881bd060bac709a18e80dce1e22e1de0e0e47901445c15788dda37",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-integer-conversion-allocation/run_v1.py": "99f53b39e38c5f083aa9fc8028b0fd9bf5876f12f3b9df808bde3b973552e9df",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-integer-conversion-allocation/assess_v1.py": "ecf601f1794910e3f3cbfcdceb7590023e1059fe27299bdc3013ca670fd4ecc2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-integer-conversion-allocation/scope-v1.json": "96793fa38904b6714152ce62670394e34b57afd48f3dd8632346462aedb8e0e2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-integer-conversion-allocation/source-review-v1.json": "94231732ede0ed33304cbc04d83f91c3cebd60047eebeaac33f42443357e81e4",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-integer-conversion-allocation/run-v1/probe.rs": "afbd663cbe8f1b6e49d391b96e356ce6f727011704b173d18d108e3c21451640",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-integer-conversion-allocation/run-v1/inputs.rs": "da088742f5b7ba3567dc3d3af4405f95922d25c28d6ac8a2a0eac61c8cb83fcf",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-combined-native-admission/probes-v1/integer_probe.rs": "53350d83a6b41e8abb4f9dcc3b609a7c61b5e9f50bea0ab55fa30101a1999294",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/decision-v1.json": "67958ae8e9fefb473c155090c55a52a0fd55d8f92614bcc92e17dd84bdcfd2db"
+  },
+  "source_reference_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperreal/src/rational/arithmetic/construction.rs": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source/crates/hyperreal/src/rational/arithmetic/construction.rs": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperreal/src/rational/arithmetic/construction.rs": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperreal/src/computable/node/structural_analysis.rs": "631f2975f4498cbe98d524c30476abd9495442c902612f238dfd4beee7671933",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source/crates/hyperreal/src/computable/node/structural_analysis.rs": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperreal/src/computable/node/structural_analysis.rs": "81739c160a5af6263a5adf10671f37bdaf594aac0b88f3af97945602798521c9",
+    "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/biguint.rs": "bf69f80a59b528e0743390663f9a6a8f6d3edc8643a65c8d0f7f01a8f434f478",
+    "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/biguint/convert.rs": "85cdb3e60856d281f45dff602960666fe44af0ab54ba2ce26cfa4018a9309c60",
+    "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs": "e5735688e1345396c21a7f5e8328bcdf77f5a0c7068028caa74063c68a3e4ef7",
+    "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint/convert.rs": "1463ecd5e39c938ae5b8e2b685d69a85c2e795c1fa96531b2192abb11ccdf638"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "libraries": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "sha256": "e464113814d6927e7a06401660a2076345f5b84e4c3906bea559af9245d3b4e1",
+      "bytes": 11697454,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperreal/Cargo.toml"
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "805db435411150cbd63b08fc0180d592752be704c52deb4af751310afe50176b",
+      "bytes": 2042466,
+      "features": [
+        "default",
+        "std"
+      ],
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+    },
+    "num": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libnum-3535ef33f71a913a.rlib",
+      "sha256": "bbfacc104cbd75249c12b2eeab9acc995ffe233b21bf4036cd333f5e6b5f6737",
+      "bytes": 15212
+    }
+  },
+  "dependency_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+  "all_three_original_constructor_sources_identical": true,
+  "original_fixture_values": [
+    "-65",
+    "-64",
+    "-1",
+    "0",
+    "1",
+    "64",
+    "65",
+    "-9223372036854775809",
+    "-9223372036854775808",
+    "-9223372036854775807",
+    "9223372036854775807",
+    "9223372036854775808",
+    "9223372036854775809",
+    "-340282366920938463463374607431768211457",
+    "340282366920938463463374607431768211455",
+    "-57896044618658097711785492504343953926634992332820282019728792003956564819968",
+    "57896044618658097711785492504343953926634992332820282019728792003956564819969",
+    "-179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137215",
+    "179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137217"
+  ],
+  "original_signed_word_values": [
+    "-9223372036854775809",
+    "-9223372036854775808",
+    "-9223372036854775807",
+    "9223372036854775807",
+    "9223372036854775808",
+    "9223372036854775809"
+  ],
+  "process_orders": [
+    "forward",
+    "reverse"
+  ],
+  "batch_inputs": 1000,
+  "cases": 19,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "no_timings_collected": true,
+  "new_library_builds": 0,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
