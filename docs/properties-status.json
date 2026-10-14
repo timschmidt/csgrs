@@ -4588,6 +4588,23 @@
       "new_runtime_admission": false,
       "next_step": "docs/evidence/2026-10-14-laurent-cache-eligibility/cache-miss-classification-audit-v1.json",
       "next_diagnostic_source_audit_complete": true
+    },
+    "laurent_cache_miss_classification": {
+      "status": "diagnostic-protocol-frozen-preparation-pending",
+      "scope": "docs/evidence/2026-10-14-laurent-cache-miss-classification/scope-v1.json",
+      "source_audit": "docs/evidence/2026-10-14-laurent-cache-eligibility/cache-miss-classification-audit-v1.json",
+      "old_events_retained": 27,
+      "kind_buckets": 61,
+      "outcomes": 3,
+      "expected_scalar_tests": 881,
+      "fixed_count_processes": 24,
+      "expected_trace_windows": 544,
+      "diagnostic_prepared": false,
+      "measurements_executed": false,
+      "main_and_35_pending_native_paths_unchanged": true,
+      "runtime_candidate": false,
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
