@@ -1,0 +1,49 @@
+{
+  "objective": "Measure requested allocation traffic and retained bytes for the row-preserving normal-form filter against its deterministic-selection parent.",
+  "groups": [
+    "parent",
+    "candidate"
+  ],
+  "cases": [
+    "fifteen_degrees",
+    "original_medium",
+    "fifth_turn",
+    "seventh_turn"
+  ],
+  "orders": [
+    [
+      "parent",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "parent"
+    ],
+    [
+      "parent",
+      "candidate"
+    ]
+  ],
+  "commands": 29,
+  "fixed_sample_processes": 24,
+  "observations_per_group_case_phase": 3,
+  "preflight_processes": 0,
+  "hull_queries_per_process": 3,
+  "native_wall_stop_seconds": 600,
+  "measurement": "Six phases: construction, cold hull, warm hull, replay hull, drop retained outputs and original input, clear grammar cache. Record requested global allocator calls/bytes, retained live-byte deltas and peaks above phase entry. Instrumented times are diagnostic only.",
+  "output_contract": "All full original vertex orders, triangle rows, certainty, byte sizes and checksums must match the exact-validated parent across both groups and all three phases. All output meshes stay alive until after replay, with no intervening validation or serialization.",
+  "prerequisites": [
+    "Frozen twelve-command broader normal-image qualification completed.",
+    "Frozen fifty-eight-command normal-image native cost trial completed with identical outputs and no predeclared reproducible-cost-increase flag."
+  ],
+  "sample_extension_filtering_or_pooling_allowed": false,
+  "old_samples_reused": false,
+  "limits": [
+    "Requested bytes are not usable allocator sizes, stack usage or RSS.",
+    "Process-global scalar caches may survive input disposal and grammar-cache clearing; lifecycle retention is reported without inferring its owner.",
+    "No uninstrumented timing or universal memory bound is claimed.",
+    "Broader formal and directed adversarial obligations remain."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
