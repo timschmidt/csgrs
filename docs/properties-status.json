@@ -5118,7 +5118,10 @@
         476,
         48,
         12
-      ]
+      ],
+      "sphere_stable_selection_qualification_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-qualification-scope-v1.json",
+      "sphere_stable_selection_qualification_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_sphere_stable_selection_v1.py",
+      "sphere_stable_selection_qualification_executed": false
     }
   },
   "status_meanings": {

@@ -1,0 +1,21 @@
+{
+  "objective": "Qualify the changed hull implementation and full-resolution regression across mesh features and native grammar consumers.",
+  "feasibility_result_sha256": "65d03c03494567d50eb64b1f5280918b816396897a4e7876807cdaf2334f9392",
+  "independent_support_result_sha256": "8898de4af3680c8da1cd9d0fba2bf7c01683c162578f81ddac45a985d1afb7b8",
+  "closure_sha256": "ed545e6be8792c789dddc8d8dbc1bfef03bed314df4120a41cc06671ea1645a8",
+  "source": "target/sphere-stable-selection-v1/source",
+  "source_files": 10136,
+  "commands": 10,
+  "coverage": [
+    "Workspace format check on the frozen candidate.",
+    "Default and all-feature release hypermesh strict all-target Clippy and complete lib/integration tests.",
+    "All-feature hypermesh doctests and strict docs.",
+    "Strict no-default-feature Clippy and tests for native_queries, geometry_context, solid_cache, and native_hull_determinism.",
+    "Release compile check of every hypermesh fuzz binary."
+  ],
+  "command_wall_stop_seconds": 1800,
+  "unchanged_scalar_scope": "Hyperreal, hyperlimit and hypercurve sources remain byte-identical to the previously broadly qualified finite-image candidate. Their prior qualification is recorded separately; this run qualifies the changed mesh implementation and consumer regression only.",
+  "limitations": "Fuzz target compilation is not an executed fuzz campaign. The existing mesh_and_hull target does not cover non-dyadic replay. No new ASan, formal verification, native cost, allocation or size evidence is claimed. This is not full workspace CI or pre-push qualification.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
