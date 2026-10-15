@@ -8,6 +8,9 @@ mod loft;
 mod planar;
 mod prism;
 mod prism_topology;
+mod rectangular_cover;
+#[cfg(test)]
+mod rectangular_cover_tests;
 mod revolution;
 mod shell;
 mod sphere;

@@ -63,3 +63,7 @@ harness = false
 [[bench]]
 name = "archive_limits"
 harness = false
+
+[[bench]]
+name = "periodic_cylinder"
+harness = false

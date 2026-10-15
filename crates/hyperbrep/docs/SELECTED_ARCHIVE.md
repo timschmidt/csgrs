@@ -166,6 +166,16 @@ and cold/warm archive-byte equality are exercised. The
 [solid replay qualification](evidence/2026-10-15-selected-solids/README.md)
 records these cases and their measured costs.
 
+The [periodic-cylinder qualification](evidence/2026-10-15-periodic-cylinder/README.md)
+also reconstructs cylinders with one, two, three or four rectangular side faces,
+unequal angular widths, shifted periodic charts and mixed axial partitions.
+One spatial seam can have two opposite uses on the same face. Replay preserves
+every authored record and reconstructs the one-period coverage proof; no stored
+validity flag or constructor patch count authorizes the solid. Exact area,
+volume, classification, seam subdivision, reflection and coincident-cylinder
+Boolean reuse are exercised. General nonrectangular periodic trims and native
+single-edge closed circles are separate unfinished capabilities.
+
 Prism extraction projects authored cap sources while retaining exact trim
 ranges. Convex planar validation compares every vertex to the oriented face
 planes using retained linear forms. A scalar triangle fan remains the native

@@ -827,3 +827,46 @@ read by OCCT, native exact graph checks and actual WASM execution. OCCT is an
 independent floating-point interoperability check, not an exactness proof.
 Analytic/spline/void exchange, full AP validation, assemblies, explicit approximation
 and the remaining global resource accounting remain open.
+
+## Periodic cylinder admission for analytic STEP (2026-10-15)
+
+The published [`advanced_face`](https://www.steptools.com/stds/stp_aim/html/t_advanced_face.html),
+[`edge_curve`](https://www.steptools.com/stds/stp_aim/html/t_edge_curve.html) and
+[`cylindrical_surface`](https://www.steptools.com/stds/stp_aim/html/t_cylindrical_surface.html)
+schemas separate face bounds, oriented spatial edges and analytic support.
+An original OCCT cylinder export retained in the
+[research evidence](evidence/2026-10-15-periodic-cylinder/research/occt-cylinder.step)
+has one periodic side face, two single-edge circular cap loops and two opposite
+uses of one seam. Native cylinder certification previously required four
+quarter-turn strips. The restored-restriction control demonstrates that this
+constructor-specific condition rejected an otherwise exact, valid native shell.
+
+Our replacement proves the actual domain: all side rectangles share the checked
+cylinder support and required orientation, their angular extent is exactly
+`tau`, their axial extent is positive, and their interiors cover every indexed
+cell exactly once. A sweep groups all start/end events at the same axial cut.
+A range-add tree stores minimum and maximum multiplicity across the angular
+interval. Both must equal one between events and zero after the final events.
+This detects gaps and overlaps even when total areas agree. Existing exact
+pcurve-image, rectangle-boundary, shell-incidence and cap certificates remain
+required. This algorithm is our construction, not a guarantee inferred from
+the STEP schema.
+
+For N rectangles and U ordered angular intervals, the indexed stage uses
+O(N log N + N log U) time and O(N + U) storage, with tree recursion bounded by
+the width of `usize`. It never allocates the U-by-V Cartesian grid. In this
+caller U is at most twice the rectangle count. Existing exact scalar insertion
+and index lookup can still be quadratic; this is not a complexity claim for
+complete geometric validation. New event/tree allocation is checked, while
+global scalar/work/heap admission remains unfinished. The new staircase case
+checks 100 million implicit cells using 19,999 rectangles.
+
+The retained OCCT coordinates also identify a separate exactness issue. Its
+radius-two cap vertex `(2, -4.898587196589E-16, z)` has a strictly positive exact
+radial residual. The [rational audit](evidence/2026-10-15-periodic-cylinder/research/fixture-audit.json)
+preserves that discrepancy; no tolerance silently moves the vertex. Future
+analytic STEP work must account for closed-curve edge subdivision, all 3D/UV
+curve evidence, units, bound orientation and provenance. Explicit healing is
+separate. This increment implements native rectangular-cylinder certification;
+it does not claim that analytic STEP import or periodic trimmed-surface exchange
+is complete.

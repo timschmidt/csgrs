@@ -50,6 +50,12 @@ or geometric validation; see the [archive contract](docs/SELECTED_ARCHIVE.md).
   Archive replay covers selected sheet fixtures, subdivided cuboids and cylinder
   axial edges. General selected surface/contact images remain open; see the
   [archive contract](docs/SELECTED_ARCHIVE.md) for the tested boundary.
+- Native cylinder validation admits rectangular side partitions covering exactly
+  one angular period, including a single side face with a shared seam, unequal
+  widths and axial T-junctions. An indexed sweep checks multiplicity one without
+  allocating the angular–axial grid. Caps, orientation, incidence and complete
+  edge images still require independent exact checks. See the
+  [periodic-cylinder evidence](docs/evidence/2026-10-15-periodic-cylinder/README.md).
 - Geometric equality and ordering use Hyperlimit predicates, not structural
   `PartialEq` or an epsilon.
 - An unresolved predicate is a typed error, never `false`.

@@ -41,7 +41,7 @@ impl ArenaModelBuilder {
         side_faces: &[FaceId],
         orientation: Orientation,
     ) -> Result<Option<CertifiedCylinderShell>, BuildError> {
-        if side_faces.len() < 3 {
+        if side_faces.is_empty() {
             return Ok(None);
         }
         let cylinder_surface_id = self.face_ref(side_faces[0])?.surface;
@@ -107,14 +107,14 @@ impl ArenaModelBuilder {
             insert_sorted_real(&mut v_values, &v_max)?;
             face_coordinates.push((u_min, u_max, v_min, v_max));
         }
-        if u_values.len() != 5 || v_values.len() < 2 {
+        if u_values.len() < 2 || v_values.len() < 2 {
             return Ok(None);
         }
-        let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
-        for pair in u_values.windows(2) {
-            if !real_values_equal(&(&pair[1] - &pair[0]), &quarter)? {
-                return Ok(None);
-            }
+        if !real_values_equal(
+            &(u_values.last().expect("cylinder has angular values") - &u_values[0]),
+            &Real::tau(),
+        )? {
+            return Ok(None);
         }
         let v_min = v_values[0].clone();
         let v_max = v_values.last().expect("cylinder has axial values").clone();
@@ -124,22 +124,22 @@ impl ArenaModelBuilder {
             return Ok(None);
         }
 
-        let mut covered_cells = HashSet::new();
+        let mut rectangles = Vec::new();
+        rectangles
+            .try_reserve_exact(face_coordinates.len())
+            .map_err(|_| GeometryError::Numeric(hyperreal::Problem::Exhausted))?;
         for (u_min, u_max, face_v_min, face_v_max) in face_coordinates {
             let u_start = exact_real_index(&u_values, &u_min)?;
             let u_end = exact_real_index(&u_values, &u_max)?;
             let v_start = exact_real_index(&v_values, &face_v_min)?;
             let v_end = exact_real_index(&v_values, &face_v_max)?;
-            if u_end != u_start + 1 || v_start >= v_end {
-                return Ok(None);
-            }
-            for v_cell in v_start..v_end {
-                if !covered_cells.insert((u_start, v_cell)) {
-                    return Ok(None);
-                }
-            }
+            rectangles.push([u_start, u_end, v_start, v_end]);
         }
-        if covered_cells.len() != (u_values.len() - 1) * (v_values.len() - 1) {
+        if !super::rectangular_cover::exactly_covers(
+            u_values.len() - 1,
+            v_values.len() - 1,
+            &rectangles,
+        )? {
             return Ok(None);
         }
         Ok(Some(CertifiedCylinderShell {
@@ -386,7 +386,7 @@ impl ArenaModelBuilder {
             );
         }
         let cap_groups = self.planar_face_groups(faces)?;
-        if cap_groups.len() != 2 || side_faces.len() < 3 {
+        if cap_groups.len() != 2 || side_faces.is_empty() {
             return Ok(None);
         }
         let Some(cylinder) = self.certified_cylinder_side_faces(shell, &side_faces, orientation)?

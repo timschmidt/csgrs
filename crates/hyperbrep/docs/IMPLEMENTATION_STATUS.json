@@ -614,6 +614,40 @@
       "validation": "359 combined native results (317 existing all-feature HyperBRep; 42 IO comprising one unit test, 38 integration tests and three doctests); all 42 IO results also pass in release. Strict IO all-target/all-feature Clippy, warning-denied rustdoc, workspace formatting and five actual Wasmtime groups with zero host imports pass. Native tests inspect emitted exact points, directed endpoints, plane normals and source mappings independently of geometric import, with edge splits, shear/reflection, coordinates beyond 2^53, a 1e-12 gap, holes, repeated occurrences, unit representability and inclusive limits. Seven original native constructor/edit/transform exports are read and validated by OCCT with expected topology counts and volumes. Six deliberate implementation faults fail focused runtime tests and are restored; three receipt-checker faults are rejected.",
       "cost_evidence": "Six new allocation-instrumented export cases over three CPU-0 processes preserve all receipts, complete text and fingerprints: median box 75.507363 microseconds/736 allocation requests/21780 requested bytes; hole 134.104006 microseconds/1356.002/44732.352; concave 117.505948 microseconds; split 79.357272 microseconds; 32 occurrences 2.2138392 ms; nonterminating rejection 4.152168 microseconds. No previous equivalent exporter or speedup is claimed. Seven unchanged importer cases run in three alternating pairs against a frozen executable bound to 25a48c202, preserving all receipts and allocation counts; median ratios range 0.970498 to 1.024714. Export executable 21808416 bytes, process RSS median 9644 KiB; executed WASM probe 14514067 bytes. Six core source trees and dependency versions are unchanged. Historical archive-admission timing qualification remains open.",
       "limits": "Selected planar line-edge solids only; newly derived exact plane charts and implicit edges do not serialize original pcurves/domains/history. No complete EXPRESS/AP conformance, document/assembly traversal, analytic/spline/void exchange or explicit approximate export. NonRational diagnoses a missing retained rational view, not proven irrationality. Numeric encoder bounds do not precharge native unit/plane arithmetic or bound all scalar work/heap/time. OCCT is floating-point interoperability evidence only. No new fuzz/ASan/lexicase campaign, full workspace/pre-push or release qualification; all 28 work-package gates remain open."
+    },
+    {
+      "id": "periodic-cylinder",
+      "work_packages": [
+        "WP03",
+        "WP14a",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P1",
+        "P3",
+        "P4",
+        "P6",
+        "P8",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P29",
+        "P35",
+        "P36",
+        "P37",
+        "P39",
+        "T13"
+      ],
+      "decision": "kept as expanded exact cylinder admission with linear indexed storage; no work-package gate completed",
+      "change": "Replace the constructor-specific four-quarter-strip restriction with exact one-period rectangular coverage. A sweep and range-add minimum/maximum tree prove multiplicity one with checked allocation and machine-word-bounded recursion. Preserve support identity, exact boundary images, orientation, cap and shell-incidence premises. Admit a full-period face with a shared seam, unequal side widths and axial T-junctions without changing public APIs or archive records.",
+      "source": "../src/topology/validation/cylinder.rs",
+      "contract": "SELECTED_ARCHIVE.md",
+      "evidence": "evidence/2026-10-15-periodic-cylinder/manifest.json",
+      "validation": "366 combined native results in each of debug and release (324 HyperBRep; 42 IO; configurations overlap). Three new library tests include exhaustive 2-by-2 coverage, 2000 deterministic multisets, invalid ranges/capacity and 100 million implicit cells. Four new integration tests cover periodic seams, unequal partitions, shifted charts, T-junctions, exact area/volume/classification, replay, subdivision, reflection and coincident-cylinder Booleans. Three restored implementation faults and three receipt-reader faults are rejected. Strict core/IO all-target/all-feature Clippy and docs, three fuzz-target checks, workspace formatting and five actual zero-import Wasmtime groups pass. Initial Clippy and offline-cache failures are preserved with their fixes.",
+      "cost_evidence": "Three alternating CPU-0 pairs preserve all 66 kernel receipts against frozen 51d41cc50. Median/max ratios of per-case medians are 1.004237/1.025204; raw first-run variation is retained. Six new instrumented cases over three processes preserve receipts and archive bytes/fingerprints. The 19999-rectangle/100-million-implicit-cell indexed stage takes median 6.482475 ms, two allocation requests and 2239936 requested bytes, excluding input. One-side replay median 1.551462 ms/4913 allocation requests/649349 requested bytes; T-junction replay 2.227024 ms. Kernel executable 24997880 to 25008152 bytes; median peak RSS 22024 to 22028 KiB. New benchmark 22337408 bytes/11396 KiB median RSS; executed WASM 15680891 bytes. No matched baseline or speedup for newly admitted capabilities. Historical archive-admission timing gate remains open.",
+      "limits": "Only exact rectangular one-period cylinder partitions are added; scalar ordering/index lookup remains potentially quadratic and global scalar/work/heap admission remains open. Nonrectangular periodic trims, closed single-edge circles, full chart atlas and analytic STEP mapping are unfinished. Original OCCT cylinder/box research inputs are retained; the cylinder has nonzero exact radial residuals and cannot be silently healed. This is feasibility evidence, not successful analytic exchange. No runtime fuzz/ASan/lexicase campaign, full workspace/pre-push or release qualification; all 28 work-package gates remain open."
     }
   ],
   "work_packages": [
@@ -792,7 +826,7 @@
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
     "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
-    "Continue WP14a from selected exact faceted import: implement native STEP geometry writing and simple analytic exchange, use independently generated exporter files, broaden representation traversal and schema/resource admission, and retain source accounting. Then WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. Selected-import/native-archive success does not establish whole-document or STEP geometry round-trip support.",
+    "Continue WP14a from selected exact faceted import/export and native periodic-cylinder certification: implement advanced planar/analytic mapping, exact closed-circle edge refinement and complete source accounting for 3D curves, pcurves, units and bound orientation. Use independent exporter files, diagnose off-carrier decimal vertices, and broaden representation traversal and schema/resource admission. Then WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. Selected-import/native-archive success does not establish whole-document or STEP geometry round-trip support.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
   ]
 }
