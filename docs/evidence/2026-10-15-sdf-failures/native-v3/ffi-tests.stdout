@@ -1,0 +1,20 @@
+
+running 10 tests
+test tests::malformed_face_offsets_fail_without_producing_a_partial_mesh ... ok
+test tests::face_offsets_must_cover_the_entire_index_buffer ... ok
+test tests::singular_mesh_transform_is_reported_instead_of_returning_geometry ... ok
+test tests::nonfinite_float_ingress_fails_without_producing_a_handle ... ok
+test tests::null_pointer_is_a_valid_empty_input_slice ... ok
+test tests::nonempty_input_slice_requires_a_pointer ... ok
+test tests::undecided_native_constructor_does_not_publish_an_ffi_handle ... ok
+test tests::undecided_transform_does_not_publish_an_ffi_handle ... ok
+test tests::bounds_absence_and_uncertainty_do_not_publish_real_values ... ok
+test tests::singular_region_transform_is_reported_instead_of_returning_geometry ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

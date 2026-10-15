@@ -1,0 +1,94 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/bounds-failures/native-v2",
+  "preserved_prior_executables_sha256": {
+    "target/bounds-failures/native-v2/release/deps/csgrs-d5e0741bbc5df635": "3cce1ed60e9a81b92dc40a6a8256cc31a7accdb1faf7ca49c6a119debd9e38d4",
+    "target/bounds-failures/native-v2/release/deps/adversarial-c03dde69c05f1cf2": "544ecb365a31c1e76a10a4c5dac49b90ead84a3cd5b58ad8107e76bb6ae76fe7",
+    "target/bounds-failures/native-v2/release/deps/adversarial_deep-5dea7b8952749c41": "0355c877a797bf8a62875b366049d82dee6a3dbab20efef0df85e55ed563a176",
+    "target/bounds-failures/native-v2/release/deps/adversarial_extrusions-22c8c063f22c33de": "8faf6d9044c6f7a629e12a80eecdb36bc4e0065b773c63dd5f756422c70fdaa4",
+    "target/bounds-failures/native-v2/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/bounds-failures/native-v2/release/deps/adversarial_stress-8c747993ca7dff64": "3ab5e36f7b8ef638bcd7cac1a15de8151e434e6ddc6b25459ffcf8bc0d09f054",
+    "target/bounds-failures/native-v2/release/deps/bounds_failures-aecf08036656e9a3": "7c960bdb5bf8306f3cf8bfc32fda0bcab77a69797e32c61326907a692aa23512",
+    "target/bounds-failures/native-v2/release/deps/competitive-8d824413442e1853": "e84bc2de65e13710efd1a1aa551af8fc5cb3d00b3f7647e2454c5a145ba450d7",
+    "target/bounds-failures/native-v2/release/deps/empty_composition-1b2f2ba6943338cd": "f9b1847150fb7016673ca87e20f919e8a4fd4c79b8acd571d16296c55f7cee33",
+    "target/bounds-failures/native-v2/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "65d3cb635e4d8a4d6c426a1f4552cd50410abcb630052ee88232fbbec262c084",
+    "target/bounds-failures/native-v2/release/deps/geometry_context-d256044952b39c9d": "5861c5ab120d23f280b06c1d973b1a391287e09952b1766144755c8ed1bf41e7",
+    "target/bounds-failures/native-v2/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "6db19b0f3835c452c2eb0dc0e051299311db3907dcfc0eccda8f10631ec8f9af",
+    "target/bounds-failures/native-v2/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "41fb749f256c5f95bc02d04b01711e33b99c94580cec63f12ecd3ea243911034",
+    "target/bounds-failures/native-v2/release/deps/native_queries-32678419862dff6b": "220a28ec4ff70d5f4074c9153fc9dbcd14ca155a5cf5a19284ef428f50f4f367",
+    "target/bounds-failures/native-v2/release/deps/primitive_failures-8e6539f143e56577": "a49c9cd3ff5b7d849160bb72333f575923f8f1347a3e8574cb17d9df9e305087",
+    "target/bounds-failures/native-v2/release/deps/readme-d31b115aba933918": "8483edbeacef8fba5e18bc5540ab74f6d04af3fb977d7d8e7579705fd20eeaaf",
+    "target/bounds-failures/native-v2/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/bounds-failures/native-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "96070451daf1f2f55175a41db855d9d4ddb3a38fa1089b2ac43502623485d916",
+    "target/bounds-failures/native-v2/release/deps/solid_cache-f1483884916afc0e": "77fe010aa715b2b0a3d4cb44f43d072113f478f219476a4a932d8468c9d1bfb0",
+    "target/bounds-failures/native-v2/release/deps/transform_failures-45db55e7bcff3889": "c32612647b5fa098e34fefa8996a5a99992bfc57da613711cc676b467075616f",
+    "target/bounds-failures/native-v2/release/deps/wasm_certainty-d7100c8fa594776c": "b777096b2292bb6d7315a332a3c8b6ca4d3cf9c4ea7f680755349565aef91e64",
+    "target/bounds-failures/native-v2/release/deps/csgrs-12b72f0ccdd38706": "a9aaefd324b9cf383d3640cab2277b05fbef395c2c3341028c37bf88e2e5b92b",
+    "target/bounds-failures/native-v2/release/deps/bounds_failures-c661a92a5b4c7962": "5eb0573d3633b0bc10d23fdbba5c7598aade3bbf57dae2292cbef5c91dd55296",
+    "target/bounds-failures/native-v2/release/deps/hypermesh-3f582b4ca1636641": "714ba486b019c2136dbb13acf76b083cc4bd0010fc552670df381e8427ca1064",
+    "target/bounds-failures/native-v2/release/deps/boolean-5f62d1118823ec97": "8367f96af174239b53c2d34968a437f40bda6a569e64c56aff4fe38e36e66b1e",
+    "target/bounds-failures/native-v2/release/deps/competitive-6172fbc55a698b35": "e976abd9a25f8cbeb75aa8ffb5e46c3daf9fc7fe7077549db45eeb74e37461b1",
+    "target/bounds-failures/native-v2/release/deps/corpus_manifest-70e8b02b4630cdcf": "6064ecc1061d45032a93393df62cb3f2806b80b033f3641c2c4a6c4c4963dc56",
+    "target/bounds-failures/native-v2/release/deps/intersection_corpus-fd36003a26964264": "d2da5dd138715d268235319cd5a67ee61d34ffb7cae4ca654d7c0b391bc34571",
+    "target/bounds-failures/native-v2/release/deps/predicate_policy-da601e01ee57d6f5": "7c4faeceb0aa0394aecc7f0c55116c00b473823489d750823b429d5d477f1ec8",
+    "target/bounds-failures/native-v2/release/deps/readme-6edeb87a0e9ac66f": "95d4d8d1d3a5905bab4c825bf31042a73cac283881f5ca933a1438e008315143",
+    "target/bounds-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f": "9bd2c34b1330e9f88a2e8493699d1180c433c942c1ae7ec65484c1b28ac5c90b"
+  },
+  "base_commit": "a8ca70322ca66f93ac61fc0e89cdf858ffd413c5",
+  "runner_sha256": "cb036f144ee54c33984bff529da093ba46c5f4ad134396852c3369964db01946",
+  "phase": "baseline-v2",
+  "commands": [
+    [
+      "sdf-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--test",
+        "sdf_failures",
+        "--",
+        "--test-threads=1"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/sdf-failures/baseline-v2"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P18",
+    "P20",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "Hypersdf scalar evaluation and domain errors",
+    "CSGRS sampled-field modeling and diagnostics",
+    "native Hypermesh Surface Nets"
+  ],
+  "domain": "Retained Hypersdf expressions and Real callbacks over rectangular sample grids, preserving existing valid fixture resolutions and sampling formulas. Scalar construction remains strict; selected-policy meshing retains certainty. Invalid domains, undecided branches/samples and capacity exhaustion must not become successful empty meshes. Resolution below two is an explicit migration from silent clamping. Certification applies to sampled geometry, not the continuous field.",
+  "consumers": [
+    "solid::sdf and diagnostics",
+    "solid::sdf_expr and diagnostics/context",
+    "TPMS shared sampler",
+    "Hypersdf classification and preview consumers",
+    "examples and benchmarks"
+  ],
+  "missing_acceptance_test": "tests/sdf_failures.rs",
+  "semantic_oracle": "Typed failure categories and native causes; independently derived rational plane samples and constant fields; exact sign counts and extrema; closed sampled-sphere topology and downstream Boolean composition; strict/approximate/strict receipts.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: committed optional bounds, typed positioning/TPMS failures and qualified native/downstream/live-binding evidence as 6095f177e and a8ca70322; overall goal remains active."
+}

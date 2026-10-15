@@ -1,0 +1,7 @@
+{
+  "removed": "target/sdf-failures/native-v1",
+  "bytes_of_unexecuted_seed_copy": 5198695148,
+  "reason": "Phase stopped during formatting before any build or target executable ran. Only the unused copied build cache is removed; the seed, source archive, protocol and raw outputs remain.",
+  "terminal_result_sha256": "558d0bd77c8f739e35900c7aa3116cbe19afe0165cec3956f67d01585f16647c",
+  "observed_target_executables": 0
+}

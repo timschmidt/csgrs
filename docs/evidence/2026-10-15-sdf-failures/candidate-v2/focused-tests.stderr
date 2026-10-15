@@ -1,0 +1,16 @@
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+error: constant `MESH_CONTEXT` is never used
+  --> src/lib.rs:78:18
+   |
+78 | pub(crate) const MESH_CONTEXT: hypermesh::MeshContext =
+   |                  ^^^^^^^^^^^^
+   |
+note: the lint level is defined here
+  --> src/lib.rs:38:9
+   |
+38 | #![deny(unused)]
+   |         ^^^^^^
+   = note: `#[deny(dead_code)]` implied by `#[deny(unused)]`
+
+error: could not compile `csgrs` (lib) due to 1 previous error

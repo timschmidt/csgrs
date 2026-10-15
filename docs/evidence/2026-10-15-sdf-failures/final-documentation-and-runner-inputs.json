@@ -1,0 +1,7 @@
+{
+  "readme.md": "35d212072d44b8242813fc8d03dbd4fdac43950b6c47012b2952fccecbf499cc",
+  "crates/hypersdf/README.md": "246f0c7c367ef3ee7055027c7e89117723117ff19aae0505b07d5093bbc25b25",
+  "docs/evidence/2026-10-15-sdf-failures/validate_v2.py": "cb036f144ee54c33984bff529da093ba46c5f4ad134396852c3369964db01946",
+  "docs/evidence/2026-10-15-sdf-failures/native-v2.json": "6c9988e6e16ae8e907a587b5d247647515f20b6b56cc076c27c4150dc719fdb3",
+  "docs/evidence/2026-10-15-sdf-failures/native-v2-seed.json": "627ee4d56b061f1df0205b9256291784a1f88f4bf83c1a1d274c2b55c75bd704"
+}

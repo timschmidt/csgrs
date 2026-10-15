@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "sdf-regressions",
+      "exit_code": 101,
+      "seconds": 17.17186434334144,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/baseline-v2/release/deps/sdf_failures-1091ba3b6128f768": "7c2e3068de1864213c3e3dbbc3bb67e76c05b73f199b326598dda939d335aac6"
+      },
+      "stdout_sha256": "cc150e7a2e915327133ccac49acdd00c5c7a00b9de8aa08fb0d88fef572adeef",
+      "stderr_sha256": "d6780589ac947948187173716487c9b74d58bff1adaf8d13d2d128ae521e969b"
+    }
+  ],
+  "passed": false
+}

@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "name": "native-evaluation-tests",
+      "exit_code": 0,
+      "seconds": 7.7975256009958684,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/candidate-v2/release/deps/evaluation_errors-336cc11e1d9bcc1d": "58940b9773b433645cd12d2920ca9fdd83fd77ed50cb7966e0dbedcffd5cf321"
+      },
+      "stdout_sha256": "17da2a8a2d0754068d1804d7644b75ebad28e80c44db26ee42c3640edb776562",
+      "stderr_sha256": "3519c522c7dcebe9c476feb5e7e3814a9d6ee09d8fabf4db6c0c73896edd73fb"
+    },
+    {
+      "name": "focused-tests",
+      "exit_code": 101,
+      "seconds": 6.886931130196899,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "02cfc33af7005801e70f595d9b3d232cd3b36dbde878773b804f28f366e4e027"
+    }
+  ],
+  "passed": false
+}

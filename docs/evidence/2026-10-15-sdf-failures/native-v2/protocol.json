@@ -1,0 +1,314 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/sdf-failures/candidate-v4",
+  "preserved_prior_executables_sha256": {
+    "target/sdf-failures/candidate-v4/release/deps/hypermesh-3f582b4ca1636641": "df850867daa82de9c103ee2a31ab56ffe46cba821eaa872f646d45ac3ca9c846",
+    "target/sdf-failures/candidate-v4/release/deps/evaluation_errors-336cc11e1d9bcc1d": "58940b9773b433645cd12d2920ca9fdd83fd77ed50cb7966e0dbedcffd5cf321",
+    "target/sdf-failures/candidate-v4/release/deps/bounds_failures-aecf08036656e9a3": "a037ca65f364d45c4396a67404d45ee82f3f8c3965d4c580201a512417aa1b0d",
+    "target/sdf-failures/candidate-v4/release/deps/geometry_context-d256044952b39c9d": "ae6e08283eecb533620bc2b7e29fc9acf0ffd5606f88794e8c4bc6c62e1a2005",
+    "target/sdf-failures/candidate-v4/release/deps/sdf_failures-1091ba3b6128f768": "04499016e778e94664f01f16f78af91f43cca91d00a9a59288aaa32910943d57",
+    "target/sdf-failures/candidate-v4/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "6df5bd9eaaa0a7d6bfb41ee49bf2183c30ae9069aa59f6831b618c8356028682"
+  },
+  "base_commit": "a8ca70322ca66f93ac61fc0e89cdf858ffd413c5",
+  "runner_sha256": "cb036f144ee54c33984bff529da093ba46c5f4ad134396852c3369964db01946",
+  "phase": "native-v2",
+  "commands": [
+    [
+      "fmt",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "fuzz-fmt",
+      [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "hypersdf-fuzz-fmt",
+      [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "crates/hypersdf/fuzz/Cargo.toml",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "strict-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypermesh",
+        "-p",
+        "csgrs",
+        "-p",
+        "csgrs-ffi",
+        "-p",
+        "hypersdf",
+        "--all-targets",
+        "--all-features",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "all-feature-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "minimal-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--lib",
+        "--test",
+        "bounds_failures",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "sdf-only-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "sdf",
+        "--test",
+        "sdf_failures",
+        "--test",
+        "sdf_tpms_diagnostics",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "hypermesh-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypermesh",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "hypersdf-all-feature-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypersdf",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "hypersdf-default-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hypersdf",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "ffi-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs-ffi"
+      ]
+    ],
+    [
+      "minimal-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "sdf-only-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "sdf",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "fuzz-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bins",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "hypersdf-fuzz-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--manifest-path",
+        "crates/hypersdf/fuzz/Cargo.toml",
+        "--bins",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "docs",
+      [
+        "env",
+        "RUSTDOCFLAGS=-D warnings",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hypermesh",
+        "-p",
+        "csgrs",
+        "-p",
+        "csgrs-ffi",
+        "-p",
+        "hypersdf",
+        "--all-features",
+        "--no-deps"
+      ]
+    ],
+    [
+      "doctests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypermesh",
+        "-p",
+        "csgrs",
+        "-p",
+        "hypersdf",
+        "--all-features",
+        "--doc"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/sdf-failures/native-v2"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P18",
+    "P20",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "Hypersdf scalar evaluation and domain errors",
+    "CSGRS sampled-field modeling and diagnostics",
+    "native Hypermesh Surface Nets"
+  ],
+  "domain": "Retained Hypersdf expressions and Real callbacks over rectangular sample grids, preserving existing valid fixture resolutions and sampling formulas. Scalar construction remains strict; selected-policy meshing retains certainty. Invalid domains, undecided branches/samples and capacity exhaustion must not become successful empty meshes. Resolution below two is an explicit migration from silent clamping. Certification applies to sampled geometry, not the continuous field.",
+  "consumers": [
+    "solid::sdf and diagnostics",
+    "solid::sdf_expr and diagnostics/context",
+    "TPMS shared sampler",
+    "Hypersdf classification and preview consumers",
+    "examples and benchmarks"
+  ],
+  "missing_acceptance_test": "tests/sdf_failures.rs",
+  "semantic_oracle": "Typed failure categories and native causes; independently derived rational plane samples and constant fields; exact sign counts and extrema; closed sampled-sphere topology and downstream Boolean composition; strict/approximate/strict receipts.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: committed optional bounds, typed positioning/TPMS failures and qualified native/downstream/live-binding evidence as 6095f177e and a8ca70322; overall goal remains active."
+}

@@ -1,0 +1,8 @@
+
+running 3 tests
+test surface_nets::tests::affine_plane_vertices_retain_non_binary_coordinate ... ok
+test surface_nets::tests::affine_planes_cover_first_and_last_cell_layers_on_every_axis ... ok
+test surface_nets::tests::rejects_mismatched_sample_count ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 179 filtered out; finished in 0.00s
+

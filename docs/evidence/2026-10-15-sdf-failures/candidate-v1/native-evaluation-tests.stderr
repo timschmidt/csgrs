@@ -1,0 +1,32 @@
+   Compiling num-traits v0.2.19
+   Compiling half v2.7.1
+   Compiling ciborium-ll v0.2.2
+   Compiling rustc-hash v2.1.3
+   Compiling ciborium v0.2.2
+   Compiling num-integer v0.1.46
+   Compiling num-bigint v0.4.6
+   Compiling num-iter v0.1.45
+   Compiling num-complex v0.4.6
+   Compiling plotters v0.3.7
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling criterion v0.5.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypervoxel v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypervoxel)
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+error[E0425]: cannot find type `Real` in this scope
+  --> crates/hypersdf/src/sdf.rs:77:60
+   |
+77 |     pub fn evaluate_point(&self, point: &Point3) -> Result<Real, crate::SdfEvaluationError> {
+   |                                                            ^^^^ not found in this scope
+   |
+help: you might be missing a type parameter
+   |
+49 | impl<Real> Sdf {
+   |     ++++++
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `hypersdf` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

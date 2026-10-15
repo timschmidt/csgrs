@@ -1,0 +1,50 @@
+{
+  "commands": [
+    {
+      "name": "native-grid-tests",
+      "exit_code": 0,
+      "seconds": 15.41440459433943,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/candidate-v4/release/deps/hypermesh-3f582b4ca1636641": "df850867daa82de9c103ee2a31ab56ffe46cba821eaa872f646d45ac3ca9c846"
+      },
+      "stdout_sha256": "6d9ec4bad3d916353324004ab0ed845849e737194ce1531a780d0630b0f08fa6",
+      "stderr_sha256": "90f79f3b458dd870f8de1b5bb762f87139bf2078468050fa49f7fe38027e11a5"
+    },
+    {
+      "name": "native-evaluation-tests",
+      "exit_code": 0,
+      "seconds": 1.8142351070418954,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/candidate-v4/release/deps/evaluation_errors-336cc11e1d9bcc1d": "58940b9773b433645cd12d2920ca9fdd83fd77ed50cb7966e0dbedcffd5cf321"
+      },
+      "stdout_sha256": "17da2a8a2d0754068d1804d7644b75ebad28e80c44db26ee42c3640edb776562",
+      "stderr_sha256": "27bdbe607c894d12218d5a5f715e76a8d04925e737a111b648205da65fa3ef1b"
+    },
+    {
+      "name": "focused-tests",
+      "exit_code": 0,
+      "seconds": 31.951004166156054,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/candidate-v4/release/deps/bounds_failures-aecf08036656e9a3": "a037ca65f364d45c4396a67404d45ee82f3f8c3965d4c580201a512417aa1b0d",
+        "target/sdf-failures/candidate-v4/release/deps/geometry_context-d256044952b39c9d": "ae6e08283eecb533620bc2b7e29fc9acf0ffd5606f88794e8c4bc6c62e1a2005",
+        "target/sdf-failures/candidate-v4/release/deps/sdf_failures-1091ba3b6128f768": "04499016e778e94664f01f16f78af91f43cca91d00a9a59288aaa32910943d57",
+        "target/sdf-failures/candidate-v4/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "6df5bd9eaaa0a7d6bfb41ee49bf2183c30ae9069aa59f6831b618c8356028682"
+      },
+      "stdout_sha256": "157c2aee1e10cf9323fc49eb000efca582554095035b5c3aa5f51eda23b54edd",
+      "stderr_sha256": "73023810cd2f5e016d940c1d3d48504d494a4e1b07fba13a0763fea8bddc3b18"
+    },
+    {
+      "name": "clippy",
+      "exit_code": 101,
+      "seconds": 9.8491107407026,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "b696ee636c96510b312b832b7d1ce640296b0cce3c1e47994502a7219533ff37"
+    }
+  ],
+  "passed": false
+}

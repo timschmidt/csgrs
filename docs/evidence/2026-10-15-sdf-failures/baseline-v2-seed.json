@@ -1,0 +1,4 @@
+{
+  "target": "target/bounds-failures/native-v2",
+  "record": "docs/evidence/2026-10-15-bounds-failures/native-v2/result.json"
+}

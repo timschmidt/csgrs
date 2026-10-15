@@ -1,0 +1,66 @@
+
+running 11 tests
+test all_tpms_families_compose_on_empty_and_zero_thickness ... ok
+test bounds_reject_malformed_indices ... ok
+test cached_position_bounds_do_not_validate_mutated_indices ... ok
+test empty_bounds_are_absent_rather_than_a_point_at_the_origin ... ok
+test empty_curve_bounds_are_absent ... ok
+test placement_preserves_exact_box_geometry_and_empty_composition ... ok
+test shared_sampled_field_path_retains_native_failure_and_recovers ... ok
+test tpms_consumers_preserve_bounds_and_capacity_failures ... ok
+test tpms_invalid_parameters_are_not_successful_empty_models ... ok
+test undecided_bounds_do_not_become_an_origin_box_or_empty_model ... ok
+test undecided_bounds_retain_their_category_through_the_adapter ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 17 tests
+test bounds_and_positioning_propagate_policy_and_certainty ... ok
+test composite_curve_constructors_preserve_nested_predicate_certainty ... ok
+test curve_queries_preserve_boundary_and_uncertainty_distinctions ... ok
+test distributions_do_not_reuse_approximate_results_for_strict_calls ... ok
+test dxf_context_preserves_exact_imports ... ok
+test explicit_geometry_context_is_independent_of_enclosing_display_preview ... ok
+test gerber_boundary_contours_preserve_nested_parity_and_roundtrip ... ok
+test gerber_context_reaches_aperture_composition_and_projection ... ok
+test hulls_and_queries_accept_terminal_equality ... ok
+test javascript_mesh_results_expose_the_consumed_certainty ... ok
+test obj_context_preserves_certified_concave_triangulation_and_parse_errors ... ok
+test polyhedron_and_loft_use_context_for_planarity_and_caps ... ok
+test scalar_mesh_booleans_expose_context_without_losing_certainty ... ok
+test sdf_meshing_consumes_the_selected_policy ... ok
+test slices_and_flattening_report_uncertainty_instead_of_empty_success ... ok
+test transformation_policy_does_not_allow_collapsed_geometry ... ok
+test vrml_context_reaches_transformed_polygon_triangulation ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.70s
+
+
+running 11 tests
+test approximate_samples_do_not_certify_expression_branches_or_poison_strict_queries ... ok
+test closure_uncertainty_is_not_successful_empty_geometry ... ok
+test context_expression_domain_errors_are_distinct_from_uncertainty ... ok
+test diagnostic_expression_domains_remain_invalid_input ... ok
+test diagnostic_plane_has_independently_known_coordinates_and_counts ... ok
+test diagnostic_uncertainty_is_not_nonfinite_empty_geometry ... ok
+test expression_branch_uncertainty_retains_its_category ... ok
+test invalid_expression_domains_remain_invalid_input ... ok
+test overflow_is_resource_exhaustion_before_sampling ... ok
+test partial_sampling_failure_keeps_sample_index_and_native_source ... ok
+test undersized_resolution_is_rejected_instead_of_clamped ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 7 tests
+test implicit_shapes_reject_unrepresentable_grid_dimensions ... ok
+test native_real_sdf_mesh_is_hypermesh_boolean_ready ... ok
+test sdf_expr_preserves_exact_signs_below_float_range ... ok
+test sdf_expr_preview_tracks_nonzero_iso_surface ... ok
+test sdf_native_real_surface_nets_handles_values_above_float_range ... ok
+test sdf_native_real_surface_nets_produces_closed_mesh ... ok
+test tpms_solid_accepts_positive_hyperreal_period_and_thickness ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.82s
+

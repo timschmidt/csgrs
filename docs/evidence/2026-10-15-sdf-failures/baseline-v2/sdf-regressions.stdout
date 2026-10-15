@@ -1,0 +1,83 @@
+
+running 8 tests
+test closure_uncertainty_is_not_successful_empty_geometry ... FAILED
+test context_expression_domain_errors_are_distinct_from_uncertainty ... FAILED
+test diagnostic_expression_domains_remain_invalid_input ... FAILED
+test diagnostic_uncertainty_is_not_nonfinite_empty_geometry ... FAILED
+test expression_branch_uncertainty_retains_its_category ... FAILED
+test invalid_expression_domains_remain_invalid_input ... FAILED
+test overflow_is_resource_exhaustion_before_sampling ... FAILED
+test undersized_resolution_is_rejected_instead_of_clamped ... FAILED
+
+failures:
+
+---- closure_uncertainty_is_not_successful_empty_geometry stdout ----
+
+thread 'closure_uncertainty_is_not_successful_empty_geometry' (153) panicked at tests/sdf_failures.rs:44:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Undecided)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- context_expression_domain_errors_are_distinct_from_uncertainty stdout ----
+
+thread 'context_expression_domain_errors_are_distinct_from_uncertainty' (154) panicked at tests/sdf_failures.rs:109:5:
+assertion `left == right` failed
+  left: Some(Geometry)
+ right: Some(InvalidInput)
+
+---- diagnostic_expression_domains_remain_invalid_input stdout ----
+
+thread 'diagnostic_expression_domains_remain_invalid_input' (155) panicked at tests/sdf_failures.rs:81:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+---- diagnostic_uncertainty_is_not_nonfinite_empty_geometry stdout ----
+
+thread 'diagnostic_uncertainty_is_not_nonfinite_empty_geometry' (156) panicked at tests/sdf_failures.rs:53:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Undecided)
+
+---- expression_branch_uncertainty_retains_its_category stdout ----
+
+thread 'expression_branch_uncertainty_retains_its_category' (157) panicked at tests/sdf_failures.rs:92:5:
+assertion `left == right` failed
+  left: Some(Geometry)
+ right: Some(Undecided)
+
+---- invalid_expression_domains_remain_invalid_input stdout ----
+
+thread 'invalid_expression_domains_remain_invalid_input' (158) panicked at tests/sdf_failures.rs:69:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+---- overflow_is_resource_exhaustion_before_sampling stdout ----
+
+thread 'overflow_is_resource_exhaustion_before_sampling' (159) panicked at tests/sdf_failures.rs:127:5:
+assertion `left == right` failed
+  left: None
+ right: Some(ResourceExhausted)
+
+---- undersized_resolution_is_rejected_instead_of_clamped stdout ----
+
+thread 'undersized_resolution_is_rejected_instead_of_clamped' (160) panicked at tests/sdf_failures.rs:135:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+
+failures:
+    closure_uncertainty_is_not_successful_empty_geometry
+    context_expression_domain_errors_are_distinct_from_uncertainty
+    diagnostic_expression_domains_remain_invalid_input
+    diagnostic_uncertainty_is_not_nonfinite_empty_geometry
+    expression_branch_uncertainty_retains_its_category
+    invalid_expression_domains_remain_invalid_input
+    overflow_is_resource_exhaustion_before_sampling
+    undersized_resolution_is_rejected_instead_of_clamped
+
+test result: FAILED. 0 passed; 8 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

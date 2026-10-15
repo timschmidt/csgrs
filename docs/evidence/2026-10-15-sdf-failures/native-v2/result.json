@@ -1,0 +1,191 @@
+{
+  "commands": [
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.261221006978303,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "fuzz-fmt",
+      "exit_code": 0,
+      "seconds": 1.7033278532326221,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "hypersdf-fuzz-fmt",
+      "exit_code": 0,
+      "seconds": 1.6675326549448073,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "strict-clippy",
+      "exit_code": 0,
+      "seconds": 9.665214536245912,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "003477d449b7f6bf8d38cf5a2c1df046263db598bf0aca0b7efee2f8146f7676"
+    },
+    {
+      "name": "all-feature-tests",
+      "exit_code": 0,
+      "seconds": 50.85042444895953,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/native-v2/release/deps/csgrs-d5e0741bbc5df635": "2a8ff56229bf1c63ce0ea367eda5e49ece4e882b1afc34ba8e90f757554b50e9",
+        "target/sdf-failures/native-v2/release/deps/adversarial-c03dde69c05f1cf2": "b1e13bfd5d7708b95a7a5954de37e86c7e5cd44ab2ba2e88d0c668b9ffe852d1",
+        "target/sdf-failures/native-v2/release/deps/adversarial_deep-5dea7b8952749c41": "0dfd4782d513a26c5abb8aec738ead0e124e7ba292588b543b18d366b56e5db0",
+        "target/sdf-failures/native-v2/release/deps/adversarial_extrusions-22c8c063f22c33de": "117eb5a576e9fc621394e5b83a58ba3ed2ab6ba5e768d1611ed88058fb383013",
+        "target/sdf-failures/native-v2/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+        "target/sdf-failures/native-v2/release/deps/adversarial_stress-8c747993ca7dff64": "ca8c0831a456f4595030a4487e567447e77c1ea2f0a35b6dc6b98d7ec4945d30",
+        "target/sdf-failures/native-v2/release/deps/bounds_failures-aecf08036656e9a3": "19820ce3b9cf7ee6520c46eee705e24c401628db30e0f2c85b531f1bd1c54f46",
+        "target/sdf-failures/native-v2/release/deps/competitive-8d824413442e1853": "99fd7583a37ca859a233bcef7de2556c2d911f82299834a66496caa91b887489",
+        "target/sdf-failures/native-v2/release/deps/empty_composition-1b2f2ba6943338cd": "964c8cef1a1e449e8fdeb6e32958aedc7e8499c9917130b2e6d8198ac6a5ed22",
+        "target/sdf-failures/native-v2/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "f1fecf3004fafae46b5b62f1b9d733e210ac58c7c78bb9b76d2ba82374ebb744",
+        "target/sdf-failures/native-v2/release/deps/geometry_context-d256044952b39c9d": "4f902fcb5ce215f268ee7c05f78ee952cc897784e9df31a9005c12032d8d5c52",
+        "target/sdf-failures/native-v2/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "063d19e527c18ec377e8d5aedce382ef2caf1f86276917e707bfc3c61c4e71ff",
+        "target/sdf-failures/native-v2/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "2ed922d643dbd0ab85f234e910c519bb84d3af1bdc1407cce2e3d531646b81d7",
+        "target/sdf-failures/native-v2/release/deps/native_queries-32678419862dff6b": "e387b64f21c63d5efa32f4d71e1ac7fe9f02c3459eecdd66d92cc8c70bc53fa5",
+        "target/sdf-failures/native-v2/release/deps/primitive_failures-8e6539f143e56577": "f2c937b42d131d6ee80744018285c24da2965f1a5ac3413633c92f852bfbd1b0",
+        "target/sdf-failures/native-v2/release/deps/readme-d31b115aba933918": "4d4db65f8c65d10ba9d81d362ce12018dcf4652d3ef616b629ea5dfaa7fdef3e",
+        "target/sdf-failures/native-v2/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+        "target/sdf-failures/native-v2/release/deps/sdf_failures-1091ba3b6128f768": "2cb9a1db0a8b63624a222f11c05fbace7ee10ebafc6a13da9561ace1eaae2150",
+        "target/sdf-failures/native-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "4f000b2412ccc61f448858c42401d0bd4e408313411ffe08ecbdaef40e9e2b48",
+        "target/sdf-failures/native-v2/release/deps/solid_cache-f1483884916afc0e": "7402db23e9b3613f288a6361c125cb89ba78c05d018a8a9fa4fb5b96acb6d607",
+        "target/sdf-failures/native-v2/release/deps/transform_failures-45db55e7bcff3889": "92e6a4cbaed6d35c1f8c59bc6d566dc86b50dbfcc127ea11c41086fd04f1ecb5",
+        "target/sdf-failures/native-v2/release/deps/wasm_certainty-d7100c8fa594776c": "f61efe95a1fabb2b4357c17ea7adaa3e2d10f9c6a3adb729e962969b1ac21b7d"
+      },
+      "stdout_sha256": "6e371ebaa7fc364e15da2ace3a9813cc71b820c1fc4216c088fc6fb888a5cddc",
+      "stderr_sha256": "0e9dc7e27b9827038f190233f28cf09162edc1d3e2a03b6faf5e4d585eb723bd"
+    },
+    {
+      "name": "minimal-tests",
+      "exit_code": 0,
+      "seconds": 18.353007599245757,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/native-v2/release/deps/csgrs-12b72f0ccdd38706": "3d5afa4ca11d4c4ad7d927f73f290520e00763efef2904d79a56a17c320dc1f0",
+        "target/sdf-failures/native-v2/release/deps/bounds_failures-c661a92a5b4c7962": "2ea37aca34777b98d3795ab4cdc5814b8e9ff2b6e5ffb2cdc9a23f1e847aa44e"
+      },
+      "stdout_sha256": "44fde4548834f43d77196c2d98dd4bae94ff0a8d1cde630ff137401db342f7b9",
+      "stderr_sha256": "5178b2003c0f9d2b8bdd80a05a000027a33471e4524c822950233c88ce6bfd0d"
+    },
+    {
+      "name": "sdf-only-tests",
+      "exit_code": 0,
+      "seconds": 10.731557879131287,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/native-v2/release/deps/sdf_failures-ef9e460be9e301c3": "8c87d80a7981b6d1a3add15db54269771b1ca4bffefa4e42ef5296493b358b41",
+        "target/sdf-failures/native-v2/release/deps/sdf_tpms_diagnostics-9cde959a61ce554f": "eaec0510a0f67bd14d606fdc04a3cadbcc158863040c0a9b8aadc88d3b439c7b"
+      },
+      "stdout_sha256": "e6f40f9c64b628a4d0211ae81d8408b6ab43d8bf7d4eb327761e84aef9425430",
+      "stderr_sha256": "f602634f3d360567fc52a8cd2be494a19c00192d35e480685bd6c844337676d1"
+    },
+    {
+      "name": "hypermesh-tests",
+      "exit_code": 0,
+      "seconds": 30.413327577058226,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/native-v2/release/deps/hypermesh-3f582b4ca1636641": "d110fcf69231d03573759c8c5bf4419f5afba03345d55a0fb6c5c0d90d348560",
+        "target/sdf-failures/native-v2/release/deps/boolean-5f62d1118823ec97": "0fe3b9356a366239f817c9031584f656ef8cd1960726309823eae9e21047c03f",
+        "target/sdf-failures/native-v2/release/deps/competitive-6172fbc55a698b35": "f9794cdcb93bb0c535361a189bae7f6a117fdcc6f2ea7301fd35017094157634",
+        "target/sdf-failures/native-v2/release/deps/corpus_manifest-70e8b02b4630cdcf": "5f4f116426bd3c32969a26433eb35a2e42c82e9dbb6b9fb3695978e17eedf58b",
+        "target/sdf-failures/native-v2/release/deps/intersection_corpus-fd36003a26964264": "7ac24ee126a8d805e7ddbb7b60175824d5790eb93ca08aa71380686d0a65579c",
+        "target/sdf-failures/native-v2/release/deps/predicate_policy-da601e01ee57d6f5": "ee03423e335d4f087ccd9d1a50378e2204ca9dc5fac70e61dfee1400f4a59252",
+        "target/sdf-failures/native-v2/release/deps/readme-6edeb87a0e9ac66f": "95d4d8d1d3a5905bab4c825bf31042a73cac283881f5ca933a1438e008315143"
+      },
+      "stdout_sha256": "02ff7cc41ed0408b32ce2f4598f3267d111902f495b105084407e0950d6e89e5",
+      "stderr_sha256": "3fc45527231d12a26408ba9097fb73ccf27f193aab7d27996540280d38cea7f9"
+    },
+    {
+      "name": "hypersdf-all-feature-tests",
+      "exit_code": 0,
+      "seconds": 7.793325878679752,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/native-v2/release/deps/hypersdf-0bad98822f7a9ce1": "1ac93baa235a1e0e0f17fac80420979014f37df52f6aa91689293cc824a01b58",
+        "target/sdf-failures/native-v2/release/deps/adversarial-8c2a10e795879a70": "4e4c0473e0a46e170d12920c8b3128a07eafac24ab26c9fc910b3fd7228cb80f",
+        "target/sdf-failures/native-v2/release/deps/dispatch_trace-f9027e5baa42f153": "d32f7f5c20711b6d02ba2cd3881ed35e779338b6510806e081532a049fcc47a7",
+        "target/sdf-failures/native-v2/release/deps/evaluation_errors-336cc11e1d9bcc1d": "58940b9773b433645cd12d2920ca9fdd83fd77ed50cb7966e0dbedcffd5cf321",
+        "target/sdf-failures/native-v2/release/deps/readme-a1a2094e1cc05232": "3b1c14341d1fb2d6519cc7d33825dfe61c667e0d4abbabe94788b540687e64c3"
+      },
+      "stdout_sha256": "5e0df2a4729478e0570132900520d418ffcdeadae3daacab6127ee0f7dbed38d",
+      "stderr_sha256": "2fe490509cc2b6da1903905e729e685b93091c19a2ce32236ecb1808b4c1a0bd"
+    },
+    {
+      "name": "hypersdf-default-tests",
+      "exit_code": 0,
+      "seconds": 25.99508936703205,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/native-v2/debug/deps/hypersdf-755a1dcc128e17c8": "13e03c9731eb3c109d7b6fbc27e5cd49ccba41dea109c006ee28e70e9a0aaebd",
+        "target/sdf-failures/native-v2/debug/deps/adversarial-df165d09efeec636": "7dba66796d51acabcf3ec68a5b6aec6a82edd1357b8e2a7aaf2a36f59faabd0c",
+        "target/sdf-failures/native-v2/debug/deps/dispatch_trace-7753b99e91ebdc90": "81877f16394947851b0f155c9926341dfbfa5f2056ae45899ac16381bbb58e20",
+        "target/sdf-failures/native-v2/debug/deps/evaluation_errors-f9acc565efd95c8a": "8c5aa8c99e3cedde50eea25490a90c3fd3e962e1a0b30451ea72acb3b8ba8314",
+        "target/sdf-failures/native-v2/debug/deps/readme-7ae9080dd2e9c3e8": "f1fe0360662c090d630e54de1eac60fa132846a34d22ad9950a9ff209998d6cf"
+      },
+      "stdout_sha256": "021ef68679b63c4cf49df71c71ea19e59b5b0d748dfdfe6325670874ccd6f042",
+      "stderr_sha256": "9e114b21292ea9e6ad4b003205458405656ec175ed2c3effa1a423272e1c795f"
+    },
+    {
+      "name": "ffi-tests",
+      "exit_code": 0,
+      "seconds": 23.10907232016325,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f": "1fe0ad8f3814a5671831a572462c5c22d9ac976de8bf240b3a63c601f94a10b4"
+      },
+      "stdout_sha256": "cb5be41f36407bde266117a6b75c58433f1d7f924bfe603deafe53cdf7526248",
+      "stderr_sha256": "8eb2779a22445756636a9fdad8e01d14aa4e9314c5126c0c1bf295ee6c9b8419"
+    },
+    {
+      "name": "minimal-clippy",
+      "exit_code": 0,
+      "seconds": 4.328484917059541,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "990dd0599cf24414587fe283c3759577e7cb38b07088569aa5ef2d4661c933da"
+    },
+    {
+      "name": "sdf-only-clippy",
+      "exit_code": 0,
+      "seconds": 3.491245583165437,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "65ddd79b2ba9e7027e4a1da4258becdf674de181e7dafc4641554b8b960130f6"
+    },
+    {
+      "name": "fuzz-clippy",
+      "exit_code": 0,
+      "seconds": 4.3466638419777155,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "14621335a1830cd665c8e56a7474f5d75ad0926c40cabfab19c0e29ed8407b8d"
+    },
+    {
+      "name": "hypersdf-fuzz-clippy",
+      "exit_code": 101,
+      "seconds": 6.994978868868202,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "8c376f1645f50b327c9ce5ed5d93ce7cd94096f53b0939d738456348bdb455e3"
+    }
+  ],
+  "passed": false
+}

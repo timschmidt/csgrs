@@ -1,0 +1,7 @@
+{
+  "exit_code": 1,
+  "tests_executed": 0,
+  "reason": "cp could not create target/sdf-failures/baseline-v1 because target/sdf-failures did not exist; CalledProcessError before source snapshot or test invocation.",
+  "runner_sha256": "f3218987864926dfd32d7d3cf70d2f0063d368765771b0810fd640355a8dabf9",
+  "raw_command_logs": "Not opened: failure occurred during build-artifact preparation."
+}

@@ -1,0 +1,10 @@
+
+running 5 tests
+test domain_and_branch_uncertainty_are_not_invalid_input ... ok
+test expression_composition_preserves_exact_scalar_values ... ok
+test nested_arithmetic_failure_keeps_its_native_source ... ok
+test primitive_domain_rejection_survives_scalar_evaluation ... ok
+test primitive_scalar_values_match_independent_integer_geometry ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

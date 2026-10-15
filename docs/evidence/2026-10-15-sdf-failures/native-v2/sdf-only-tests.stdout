@@ -1,0 +1,28 @@
+
+running 11 tests
+test closure_uncertainty_is_not_successful_empty_geometry ... ok
+test context_expression_domain_errors_are_distinct_from_uncertainty ... ok
+test diagnostic_expression_domains_remain_invalid_input ... ok
+test diagnostic_plane_has_independently_known_coordinates_and_counts ... ok
+test diagnostic_uncertainty_is_not_nonfinite_empty_geometry ... ok
+test expression_branch_uncertainty_retains_its_category ... ok
+test approximate_samples_do_not_certify_expression_branches_or_poison_strict_queries ... ok
+test invalid_expression_domains_remain_invalid_input ... ok
+test overflow_is_resource_exhaustion_before_sampling ... ok
+test undersized_resolution_is_rejected_instead_of_clamped ... ok
+test partial_sampling_failure_keeps_sample_index_and_native_source ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 7 tests
+test implicit_shapes_reject_unrepresentable_grid_dimensions ... ok
+test sdf_expr_preserves_exact_signs_below_float_range ... ok
+test native_real_sdf_mesh_is_hypermesh_boolean_ready ... ok
+test sdf_native_real_surface_nets_handles_values_above_float_range ... ok
+test sdf_native_real_surface_nets_produces_closed_mesh ... ok
+test sdf_expr_preview_tracks_nonzero_iso_surface ... ok
+test tpms_solid_accepts_positive_hyperreal_period_and_thickness ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.77s
+

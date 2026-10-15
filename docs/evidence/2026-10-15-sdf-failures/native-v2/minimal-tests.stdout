@@ -1,0 +1,48 @@
+
+running 32 tests
+test adapter::tests::f32_graphics_adapter_preserves_strict_overflow_error ... ok
+test adapter::tests::exact_and_integer_graphics_adapters_keep_generic_conversion ... ok
+test adapter::tests::f64_mesh_adapter_converts_at_edges ... ok
+test adapter::tests::i128_adapter_rejects_fractional_output ... ok
+test context::tests::contexts_and_certainty_remain_one_byte ... ok
+test adapter::tests::primitive_graphics_adapters_match_core_gpu_buffers ... ok
+test context::tests::one_context_derives_matching_kernel_policies ... ok
+test parts::assembly::tests::suppressed_explode_stays_put ... ok
+test parts::assembly::tests::parent_explode_keeps_child_step_seated ... ok
+test parts::attachment::tests::mate_matches_origin_and_axis ... ok
+test parts::attachment::tests::zero_axis_is_rejected ... ok
+test parts::blueprint::tests::overlapping_depth_splits_an_edge_into_visible_and_unknown ... ok
+test parts::blueprint::tests::nearer_box_hides_a_covered_edge_and_no_explode_still_occludes ... ok
+test parts::bom::tests::quantities_merge_and_sort ... ok
+test parts::blueprint::tests::svg_export_records_hidden_dashes ... ok
+test parts::dimension::tests::dimension_x_keeps_the_exact_length ... ok
+test parts::dimension::tests::zero_and_negative_lengths_are_rejected ... ok
+test parts::manual::tests::manual_contains_instructions_and_reports_gaps ... ok
+test parts::occlude::tests::cube_feature_edges_are_visible ... ok
+test parts::occlude::tests::front_box_hides_rear_feature_edges ... ok
+test parts::occlude::tests::half_covered_edge_splits ... ok
+test parts::occlude::tests::suppressed_front_box_still_hides_the_rear_box ... ok
+test parts::occlude::tests::undecided_depth_stays_unknown ... ok
+test parts::occlude::tests::svg_snapshot_mentions_a_rear_coordinate ... ok
+test solid::tests::constructors_return_native_hypermesh_geometry ... ok
+test solid::tests::fluent_boolean_returns_reusable_native_geometry ... ok
+test solid::tests::loft_uses_each_cap_plane_and_rejects_nonplanar_sections ... ok
+test solid::tests::nominal_direct_solid_catalog_is_closed_and_consistently_indexed ... ok
+test solid::tests::polyhedron_certifies_symbolically_planar_faces_before_normalization ... ok
+test solid::tests::primitive_sample_count_arithmetic_is_checked ... ok
+test solid::tests::sampled_circle_retains_exact_cardinal_angles ... ok
+test solid::tests::arrows_and_orientation_reversing_transforms_keep_outward_manifold_winding ... ok
+
+test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+
+running 6 tests
+test bounds_reject_malformed_indices ... ok
+test cached_position_bounds_do_not_validate_mutated_indices ... ok
+test empty_bounds_are_absent_rather_than_a_point_at_the_origin ... ok
+test undecided_bounds_do_not_become_an_origin_box_or_empty_model ... ok
+test undecided_bounds_retain_their_category_through_the_adapter ... ok
+test placement_preserves_exact_box_geometry_and_empty_composition ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

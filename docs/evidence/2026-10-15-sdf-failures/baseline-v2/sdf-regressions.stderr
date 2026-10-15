@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 15.48s
+     Running tests/sdf_failures.rs (target/sdf-failures/baseline-v2/release/deps/sdf_failures-1091ba3b6128f768)
+error: test failed, to rerun pass `-p csgrs --test sdf_failures`

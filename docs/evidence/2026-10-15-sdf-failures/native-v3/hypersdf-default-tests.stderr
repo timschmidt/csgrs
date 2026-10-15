@@ -1,0 +1,7 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src/lib.rs (target/sdf-failures/native-v3/debug/deps/hypersdf-755a1dcc128e17c8)
+     Running tests/adversarial.rs (target/sdf-failures/native-v3/debug/deps/adversarial-df165d09efeec636)
+     Running tests/dispatch_trace.rs (target/sdf-failures/native-v3/debug/deps/dispatch_trace-7753b99e91ebdc90)
+     Running tests/evaluation_errors.rs (target/sdf-failures/native-v3/debug/deps/evaluation_errors-f9acc565efd95c8a)
+     Running tests/readme.rs (target/sdf-failures/native-v3/debug/deps/readme-7ae9080dd2e9c3e8)
+   Doc-tests hypersdf

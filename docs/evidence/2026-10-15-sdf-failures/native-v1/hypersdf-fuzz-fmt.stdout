@@ -1,0 +1,103 @@
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf/fuzz/fuzz_targets/dual_contouring.rs:3:
+ use hyperlimit::Point3;
+ use hyperreal::Real;
+ use hypersdf::{
+[31m-    SdfDualContouringBlocker, SdfDualContouringReport, SdfExpr, SdfPreviewGrid,
+(B[m[31m-    SdfSamplingPrecision, Sdf,
+(B[m[32m+    Sdf, SdfDualContouringBlocker, SdfDualContouringReport, SdfExpr, SdfPreviewGrid,
+(B[m[32m+    SdfSamplingPrecision,
+(B[m };
+ use libfuzzer_sys::fuzz_target;
+ 
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf/fuzz/fuzz_targets/dual_contouring.rs:44:
+     if report.is_validation_ready() {
+         assert_eq!(report.unknown_sample_count(), 0);
+         assert_eq!(report.sampled_edge_root_count(), 0);
+[31m-        assert!(report
+(B[m[31m-            .crossings
+(B[m[31m-            .iter()
+(B[m[31m-            .all(|crossing| crossing.exact_hermite_ready()));
+(B[m[32m+        assert!(
+(B[m[32m+            report
+(B[m[32m+                .crossings
+(B[m[32m+                .iter()
+(B[m[32m+                .all(|crossing| crossing.exact_hermite_ready())
+(B[m[32m+        );
+(B[m     }
+ 
+     let sampled = SdfDualContouringReport::from_signed_grid_samples(report.grid_samples.clone());
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf/fuzz/fuzz_targets/dual_contouring.rs:54:
+     assert!(sampled.is_self_consistent());
+     assert!(!sampled.is_validation_ready());
+[31m-    assert!(sampled
+(B[m[31m-        .blockers
+(B[m[31m-        .contains(&SdfDualContouringBlocker::LossyPrimitiveSamples));
+(B[m[32m+    assert!(
+(B[m[32m+        sampled
+(B[m[32m+            .blockers
+(B[m[32m+            .contains(&SdfDualContouringBlocker::LossyPrimitiveSamples)
+(B[m[32m+    );
+(B[m });
+ 
+ fn r(value: i32) -> Real {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf/fuzz/fuzz_targets/gradient_contouring.rs:3:
+ use hyperlimit::Point3;
+ use hyperreal::Real;
+ use hypersdf::{
+[31m-    SdfExpr, SdfGradientContourBlocker, SdfGradientContourReport, SdfPreviewGrid,
+(B[m[31m-    SdfSamplingPrecision, Sdf,
+(B[m[32m+    Sdf, SdfExpr, SdfGradientContourBlocker, SdfGradientContourReport, SdfPreviewGrid,
+(B[m[32m+    SdfSamplingPrecision,
+(B[m };
+ use libfuzzer_sys::fuzz_target;
+ 
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf/fuzz/fuzz_targets/gradient_contouring.rs:27:
+         1 => Sdf::new(SdfExpr::x()),
+         2 => Sdf::new(SdfExpr::sphere(p(0, 0, 0), r(25))),
+         3 => Sdf::new(SdfExpr::x().tan()),
+[31m-        _ => Sdf::new(SdfExpr::x().mul_expr(SdfExpr::x()).sub_expr(SdfExpr::constant(r(4)))),
+(B[m[32m+        _ => Sdf::new(
+(B[m[32m+            SdfExpr::x()
+(B[m[32m+                .mul_expr(SdfExpr::x())
+(B[m[32m+                .sub_expr(SdfExpr::constant(r(4))),
+(B[m[32m+        ),
+(B[m     };
+     let grid = SdfPreviewGrid::new(
+         p(origin_x, origin_y, origin_z),
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf/fuzz/fuzz_targets/gradient_contouring.rs:39:
+         .expect("positive fuzz grid");
+     assert!(report.is_self_consistent());
+     assert!(!report.is_validation_ready());
+[31m-    assert!(report
+(B[m[31m-        .blockers
+(B[m[31m-        .contains(&SdfGradientContourBlocker::LossyGradientApproximation));
+(B[m[32m+    assert!(
+(B[m[32m+        report
+(B[m[32m+            .blockers
+(B[m[32m+            .contains(&SdfGradientContourBlocker::LossyGradientApproximation)
+(B[m[32m+    );
+(B[m     assert!(report.kept_projection_count() <= report.active_cell_count());
+     assert_eq!(
+         report.rejected_projection_count(),
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf/fuzz/fuzz_targets/gradient_contouring.rs:48:
+[31m-        report.active_cell_count()
+(B[m[32m+        report
+(B[m[32m+            .active_cell_count()
+(B[m             .saturating_sub(report.kept_projection_count())
+     );
+     for projection in &report.projections {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf/fuzz/fuzz_targets/gradient_contouring.rs:61:
+     let sampled = SdfGradientContourReport::from_signed_grid_samples(report.grid_samples.clone());
+     assert!(sampled.is_self_consistent());
+     assert!(!sampled.is_validation_ready());
+[31m-    assert!(sampled
+(B[m[31m-        .blockers
+(B[m[31m-        .contains(&SdfGradientContourBlocker::LossyGradientApproximation));
+(B[m[32m+    assert!(
+(B[m[32m+        sampled
+(B[m[32m+            .blockers
+(B[m[32m+            .contains(&SdfGradientContourBlocker::LossyGradientApproximation)
+(B[m[32m+    );
+(B[m });
+ 
+ fn r(value: i32) -> Real {

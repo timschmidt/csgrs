@@ -1,0 +1,23 @@
+[
+  "benchmarks/rust/feature_pipeline.rs",
+  "crates/hypermesh/src/lib.rs",
+  "crates/hypermesh/src/surface_nets.rs",
+  "crates/hypersdf/README.md",
+  "crates/hypersdf/fuzz/fuzz_targets/dual_contouring.rs",
+  "crates/hypersdf/fuzz/fuzz_targets/gradient_contouring.rs",
+  "crates/hypersdf/src/evaluation.rs",
+  "crates/hypersdf/src/lib.rs",
+  "crates/hypersdf/src/primitive.rs",
+  "crates/hypersdf/src/sampling.rs",
+  "crates/hypersdf/src/sdf.rs",
+  "crates/hypersdf/tests/evaluation_errors.rs",
+  "examples/readme_renders.rs",
+  "fuzz/fuzz_targets/fuzz_sdf_tpms.rs",
+  "readme.md",
+  "src/errors.rs",
+  "src/implicit/sdf.rs",
+  "src/lib.rs",
+  "src/solid.rs",
+  "tests/sdf_failures.rs",
+  "tests/sdf_tpms_diagnostics.rs"
+]

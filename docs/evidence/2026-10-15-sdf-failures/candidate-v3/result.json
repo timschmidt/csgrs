@@ -1,0 +1,29 @@
+{
+  "commands": [
+    {
+      "name": "native-evaluation-tests",
+      "exit_code": 0,
+      "seconds": 1.8261843477375805,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/candidate-v3/release/deps/evaluation_errors-336cc11e1d9bcc1d": "58940b9773b433645cd12d2920ca9fdd83fd77ed50cb7966e0dbedcffd5cf321"
+      },
+      "stdout_sha256": "17da2a8a2d0754068d1804d7644b75ebad28e80c44db26ee42c3640edb776562",
+      "stderr_sha256": "bba0f39f20eaa95cbb6d1b277cca5d7ffdb9a4243c91e3fe831ecbf65f22d47f"
+    },
+    {
+      "name": "focused-tests",
+      "exit_code": 101,
+      "seconds": 21.249939238186926,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sdf-failures/candidate-v3/release/deps/bounds_failures-aecf08036656e9a3": "0e94ecd1d676b7d9dd753d59224e55766acfb3b27a4ffe1faec7b548e8d99f69",
+        "target/sdf-failures/candidate-v3/release/deps/geometry_context-d256044952b39c9d": "df011c90f51a9cbd93595551d273ec603a0c1abb98de12f8068aa35a84cdfb32",
+        "target/sdf-failures/candidate-v3/release/deps/sdf_failures-1091ba3b6128f768": "272481b1db049ef437a79d9e8a024563b8f1c7876464ce2c4667a1d62c583896"
+      },
+      "stdout_sha256": "a28b0e3244951b82273f07e58ed80c2abc095c18837e7355fefe8756eb0b281d",
+      "stderr_sha256": "8e218181b17d862e16afb86682e6c9dd782c6ed9d4542dd0c236a16434763eae"
+    }
+  ],
+  "passed": false
+}

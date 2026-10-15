@@ -1,0 +1,8 @@
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 28.62s
+     Running tests/bounds_failures.rs (target/sdf-failures/candidate-v4/release/deps/bounds_failures-aecf08036656e9a3)
+     Running tests/geometry_context.rs (target/sdf-failures/candidate-v4/release/deps/geometry_context-d256044952b39c9d)
+     Running tests/sdf_failures.rs (target/sdf-failures/candidate-v4/release/deps/sdf_failures-1091ba3b6128f768)
+     Running tests/sdf_tpms_diagnostics.rs (target/sdf-failures/candidate-v4/release/deps/sdf_tpms_diagnostics-682919254ae69ba1)

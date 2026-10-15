@@ -1,0 +1,106 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/sdf-failures/candidate-v2",
+  "preserved_prior_executables_sha256": {
+    "target/sdf-failures/candidate-v2/release/deps/evaluation_errors-336cc11e1d9bcc1d": "58940b9773b433645cd12d2920ca9fdd83fd77ed50cb7966e0dbedcffd5cf321"
+  },
+  "base_commit": "a8ca70322ca66f93ac61fc0e89cdf858ffd413c5",
+  "runner_sha256": "cb036f144ee54c33984bff529da093ba46c5f4ad134396852c3369964db01946",
+  "phase": "candidate-v3",
+  "commands": [
+    [
+      "native-evaluation-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypersdf",
+        "--all-features",
+        "--test",
+        "evaluation_errors",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "focused-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--test",
+        "sdf_failures",
+        "--test",
+        "bounds_failures",
+        "--test",
+        "geometry_context",
+        "--test",
+        "sdf_tpms_diagnostics",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypersdf",
+        "-p",
+        "csgrs",
+        "-p",
+        "csgrs-ffi",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/sdf-failures/candidate-v3"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P18",
+    "P20",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "Hypersdf scalar evaluation and domain errors",
+    "CSGRS sampled-field modeling and diagnostics",
+    "native Hypermesh Surface Nets"
+  ],
+  "domain": "Retained Hypersdf expressions and Real callbacks over rectangular sample grids, preserving existing valid fixture resolutions and sampling formulas. Scalar construction remains strict; selected-policy meshing retains certainty. Invalid domains, undecided branches/samples and capacity exhaustion must not become successful empty meshes. Resolution below two is an explicit migration from silent clamping. Certification applies to sampled geometry, not the continuous field.",
+  "consumers": [
+    "solid::sdf and diagnostics",
+    "solid::sdf_expr and diagnostics/context",
+    "TPMS shared sampler",
+    "Hypersdf classification and preview consumers",
+    "examples and benchmarks"
+  ],
+  "missing_acceptance_test": "tests/sdf_failures.rs",
+  "semantic_oracle": "Typed failure categories and native causes; independently derived rational plane samples and constant fields; exact sign counts and extrema; closed sampled-sphere topology and downstream Boolean composition; strict/approximate/strict receipts.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: committed optional bounds, typed positioning/TPMS failures and qualified native/downstream/live-binding evidence as 6095f177e and a8ca70322; overall goal remains active."
+}

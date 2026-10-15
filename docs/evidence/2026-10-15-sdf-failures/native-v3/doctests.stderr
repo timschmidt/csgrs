@@ -1,0 +1,9 @@
+   Compiling hypervoxel v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypervoxel)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 30.26s
+   Doc-tests csgrs
+   Doc-tests hypermesh
+   Doc-tests hypersdf

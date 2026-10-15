@@ -1,0 +1,14 @@
+{
+  "commands": [
+    {
+      "name": "native-evaluation-tests",
+      "exit_code": 101,
+      "seconds": 34.64790759515017,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "97a70da19f2a0e6e39d774530a1a37acc35446a40c98394585574fb895339b79"
+    }
+  ],
+  "passed": false
+}
