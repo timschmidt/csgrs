@@ -1216,13 +1216,12 @@ fn is_ear(
             continue;
         }
 
-        if !point_in_triangle_bbox(
-            evaluator,
+        if !point_may_be_in_triangle_bbox(
             &vertices[prev],
             &vertices[curr],
             &vertices[next],
             &vertices[candidate],
-        )? {
+        ) {
             diagnostics.containment_bbox_rejects += 1;
             continue;
         }
@@ -1303,21 +1302,16 @@ fn local_vertex_is_strictly_convex(
     )
 }
 
-fn point_in_triangle_bbox(
-    evaluator: &PredicateEvaluator,
-    a: &Point2,
-    b: &Point2,
-    c: &Point2,
-    point: &Point2,
-) -> Result<bool> {
+fn point_may_be_in_triangle_bbox(a: &Point2, b: &Point2, c: &Point2, point: &Point2) -> bool {
     // This is only a rejection filter. Exact coordinate comparisons prove that
     // a point outside the triangle's axis-aligned bounding box cannot be inside
     // the triangle, while points inside the box still go through the exact
-    // orientation-based containment predicate. The box is evaluated with the
-    // crate's predicate evaluator rather than primitive floats.
-    evaluator.decide(
-        hyperlimit::point_in_triangle2_aabb(a, b, c, point, evaluator.policy()),
-        "point_in_triangle2_aabb",
+    // orientation-based containment predicate. An unknown box also reaches that
+    // final predicate; it is not a failed topology decision. Do not consume an
+    // approximate filter when the final predicate may have a certified proof.
+    !matches!(
+        hyperlimit::point_in_triangle2_aabb(a, b, c, point, hyperlimit::PredicatePolicy::STRICT),
+        hyperlimit::PredicateOutcome::Decided { value: false, .. }
     )
 }
 
@@ -1387,6 +1381,38 @@ mod tests {
             Real::from(crate::types::Rational::fraction(xn, xd).unwrap()),
             Real::from(crate::types::Rational::fraction(yn, yd).unwrap()),
         )
+    }
+
+    #[test]
+    fn unknown_box_reaches_certified_triangle_classification() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let a = Point2::new(
+            &sine * &sine + &cosine * &cosine - Real::one(),
+            Real::zero(),
+        );
+        let b = exact_point(0, 1);
+        let c = exact_point(1, 0);
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let evaluator = PredicateEvaluator::new(&context);
+        for (point, inside) in [
+            (exact_point(2, 2), false),
+            (exact_fraction_point(1, 4, 1, 4), true),
+        ] {
+            assert!(matches!(
+                hyperlimit::point_in_triangle2_aabb(&a, &b, &c, &point, context.predicate_policy()),
+                hyperlimit::PredicateOutcome::Unknown { .. }
+            ));
+            assert!(point_may_be_in_triangle_bbox(&a, &b, &c, &point));
+            assert_eq!(
+                predicates::point_in_or_on_triangle(&evaluator, &a, &b, &c, &point).unwrap(),
+                inside
+            );
+        }
+        assert_eq!(
+            evaluator.finish(()).certainty,
+            crate::TriangulationCertainty::Certified
+        );
     }
 
     #[test]
