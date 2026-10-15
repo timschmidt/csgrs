@@ -311,7 +311,7 @@ f 4//4 1//1 5//5 8//8
 
     #[test]
     fn cube_round_trips() {
-        let cube = crate::solid::cube(Real::from(2_u8));
+        let cube = crate::solid::cube(Real::from(2_u8)).expect("valid primitive fixture");
         let text = to_obj(&cube, "cube").unwrap();
         let imported = from_obj(text.as_bytes()).unwrap();
         assert_eq!(imported.triangles.len(), cube.triangles.len());

@@ -219,25 +219,48 @@ fn readme_raster_shape() -> CurveRegion2 {
 }
 
 fn render_readme_meshes() {
-    render_mesh("cube", &solid::cube(r(2.0)));
-    render_mesh("cuboid", &solid::cuboid(r(1.4), r(2.3), r(0.95)));
-    render_mesh("sphere", &solid::sphere(r(1.0), 32, 16));
-    render_mesh("cylinder", &solid::cylinder(r(1.0), r(2.0), 32));
+    render_mesh("cube", &solid::cube(r(2.0)).expect("valid primitive fixture"));
+    render_mesh(
+        "cuboid",
+        &solid::cuboid(r(1.4), r(2.3), r(0.95)).expect("valid primitive fixture"),
+    );
+    render_mesh(
+        "sphere",
+        &solid::sphere(r(1.0), 32, 16).expect("valid primitive fixture"),
+    );
+    render_mesh(
+        "cylinder",
+        &solid::cylinder(r(1.0), r(2.0), 32).expect("valid primitive fixture"),
+    );
     render_mesh(
         "ellipsoid",
-        &solid::ellipsoid(r(1.25), r(0.8), r(1.65), 32, 16),
+        &solid::ellipsoid(r(1.25), r(0.8), r(1.65), 32, 16).expect("valid primitive fixture"),
     );
-    render_mesh("frustum", &solid::frustum(r(0.65), r(1.05), r(2.0), 32));
+    render_mesh(
+        "frustum",
+        &solid::frustum(r(0.65), r(1.05), r(2.0), 32).expect("valid primitive fixture"),
+    );
     render_mesh(
         "frustum_between",
-        &solid::frustum_between(p3(-0.8, -0.5, -0.7), p3(0.8, 0.5, 1.2), r(0.65), r(0.3), 32),
+        &solid::frustum_between(p3(-0.8, -0.5, -0.7), p3(0.8, 0.5, 1.2), r(0.65), r(0.3), 32)
+            .expect("valid primitive fixture"),
     );
-    render_mesh("octahedron", &solid::octahedron(r(1.2)));
-    render_mesh("icosahedron", &solid::icosahedron(r(1.2)));
-    render_mesh("torus", &solid::torus(r(1.25), r(0.35), 36, 14));
+    render_mesh(
+        "octahedron",
+        &solid::octahedron(r(1.2)).expect("valid primitive fixture"),
+    );
+    render_mesh(
+        "icosahedron",
+        &solid::icosahedron(r(1.2)).expect("valid primitive fixture"),
+    );
+    render_mesh(
+        "torus",
+        &solid::torus(r(1.25), r(0.35), 36, 14).expect("valid primitive fixture"),
+    );
     render_mesh(
         "mesh_arrow",
-        &solid::arrow(Point3::origin(), v3(0.8, 0.4, 2.0), 32, false),
+        &solid::arrow(Point3::origin(), v3(0.8, 0.4, 2.0), 32, false)
+            .expect("valid primitive fixture"),
     );
     render_mesh("polyhedron", &readme_polyhedron());
     render_mesh(
@@ -353,18 +376,26 @@ fn render_readme_meshes() {
     );
     render_mesh("loft", &solid::loft(&readme_loft_sections()).expect("loft"));
 
-    render_mesh("inverse", &solid::inverse(&solid::sphere(r(1.0), 32, 16)));
+    render_mesh(
+        "inverse",
+        &solid::inverse(&solid::sphere(r(1.0), 32, 16).expect("valid primitive fixture")),
+    );
     render_mesh("csg", &cube_minus_translated_sphere());
     render_mesh(
         "convex_hull",
-        &solid::convex_hull(&solid::cube(r(1.2))).expect("convex hull"),
+        &solid::convex_hull(&solid::cube(r(1.2)).expect("valid primitive fixture"))
+            .expect("convex hull"),
     );
     render_mesh(
         "minkowski_sum",
-        &solid::minkowski_sum(&solid::cube(r(1.1)), &solid::octahedron(r(0.45)))
-            .expect("Minkowski sum"),
+        &solid::minkowski_sum(
+            &solid::cube(r(1.1)).expect("valid primitive fixture"),
+            &solid::octahedron(r(0.45)).expect("valid primitive fixture"),
+        )
+        .expect("Minkowski sum"),
     );
-    let projection_source = solid::frustum(r(0.65), r(1.05), r(2.0), 12);
+    let projection_source =
+        solid::frustum(r(0.65), r(1.05), r(2.0), 12).expect("valid primitive fixture");
     render_curve("flatten", &solid::flatten(&projection_source));
     let (slice, _, _) = solid::slice_z(&projection_source, r(1.0));
     render_curve("slice_z", &slice);
@@ -410,7 +441,7 @@ fn render_sdf_mesh() {
 
 fn render_tpms_meshes() {
     // Keep implicit thumbnail meshes legible once their vertices are visible.
-    let tpms_box = solid::cube(r(2.0));
+    let tpms_box = solid::cube(r(2.0)).expect("valid primitive fixture");
     render_mesh(
         "gyroid",
         &solid::gyroid_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18)),
@@ -479,8 +510,10 @@ fn readme_loft_sections() -> Vec<Vec<Point3>> {
 }
 
 fn cube_minus_translated_sphere() -> TriangleMesh {
-    let cube = solid::cube(r(2.0));
-    let sphere = solid::sphere(r(1.25), 16, 8).translated(r(1.0), r(1.0), r(1.0));
+    let cube = solid::cube(r(2.0)).expect("valid primitive fixture");
+    let sphere = solid::sphere(r(1.25), 16, 8)
+        .expect("valid primitive fixture")
+        .translated(r(1.0), r(1.0), r(1.0));
     let context = hypermesh::MeshContext::new(hypermesh::PredicatePolicy::APPROXIMATE_512);
     hypermesh::boolean(
         &context,

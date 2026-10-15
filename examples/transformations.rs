@@ -13,7 +13,7 @@ const PATH: &str = "stl/examples/transformations";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let cube = solid::cube(r(1.5));
+    let cube = solid::cube(r(1.5)).expect("valid primitive fixture");
     write_mesh(&cube.translated(r(2.0), r(0.0), r(0.0)), "translated");
     write_mesh(&solid::rotate(&cube, r(30.0), r(45.0), r(10.0)), "rotated");
     write_mesh(&solid::scale(&cube, r(1.0), r(0.5), r(2.0)), "scaled");

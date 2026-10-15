@@ -645,7 +645,10 @@ mod tests {
 
     #[test]
     fn cube_feature_edges_are_visible() {
-        let (document, posed) = document_with(vec![("cube", solid::cube(Real::from(2)))]);
+        let (document, posed) = document_with(vec![(
+            "cube",
+            solid::cube(Real::from(2)).expect("valid primitive fixture"),
+        )]);
         let report =
             blueprint_from_posed_mesh(&document, &posed, BlueprintProjection::Front, false);
         assert!(report.blockers.is_empty(), "{:?}", report.blockers);
@@ -660,13 +663,12 @@ mod tests {
 
     #[test]
     fn front_box_hides_rear_feature_edges() {
-        let rear =
-            solid::cube(Real::from(2)).translated(Real::from(1), Real::from(1), Real::zero());
-        let front = solid::cube(Real::from(6)).translated(
-            Real::from(-1),
-            Real::from(-1),
-            Real::from(3),
-        );
+        let rear = solid::cube(Real::from(2))
+            .expect("valid primitive fixture")
+            .translated(Real::from(1), Real::from(1), Real::zero());
+        let front = solid::cube(Real::from(6))
+            .expect("valid primitive fixture")
+            .translated(Real::from(-1), Real::from(-1), Real::from(3));
         let (document, posed) = document_with(vec![("rear", rear), ("front", front)]);
         let report =
             blueprint_from_posed_mesh(&document, &posed, BlueprintProjection::Front, false);
@@ -686,9 +688,10 @@ mod tests {
 
     #[test]
     fn half_covered_edge_splits() {
-        let rear = solid::cube(Real::from(4));
-        let front =
-            solid::cube(Real::from(2)).translated(Real::zero(), Real::from(-1), Real::from(3));
+        let rear = solid::cube(Real::from(4)).expect("valid primitive fixture");
+        let front = solid::cube(Real::from(2))
+            .expect("valid primitive fixture")
+            .translated(Real::zero(), Real::from(-1), Real::from(3));
         let (document, posed) = document_with(vec![("rear", rear), ("front", front)]);
         let report =
             blueprint_from_posed_mesh(&document, &posed, BlueprintProjection::Front, false);
@@ -716,13 +719,12 @@ mod tests {
 
     #[test]
     fn suppressed_front_box_still_hides_the_rear_box() {
-        let rear =
-            solid::cube(Real::from(2)).translated(Real::from(1), Real::from(1), Real::zero());
-        let front = solid::cube(Real::from(6)).translated(
-            Real::from(-1),
-            Real::from(-1),
-            Real::from(3),
-        );
+        let rear = solid::cube(Real::from(2))
+            .expect("valid primitive fixture")
+            .translated(Real::from(1), Real::from(1), Real::zero());
+        let front = solid::cube(Real::from(6))
+            .expect("valid primitive fixture")
+            .translated(Real::from(-1), Real::from(-1), Real::from(3));
         let mut document = AssemblyDocument::new("occlusion", "main");
         document.node_mut(document.root()).expect("root").instructions = "n/a".into();
         document
@@ -772,13 +774,12 @@ mod tests {
 
     #[test]
     fn svg_snapshot_mentions_a_rear_coordinate() {
-        let rear =
-            solid::cube(Real::from(2)).translated(Real::from(1), Real::from(1), Real::zero());
-        let front = solid::cube(Real::from(6)).translated(
-            Real::from(-1),
-            Real::from(-1),
-            Real::from(3),
-        );
+        let rear = solid::cube(Real::from(2))
+            .expect("valid primitive fixture")
+            .translated(Real::from(1), Real::from(1), Real::zero());
+        let front = solid::cube(Real::from(6))
+            .expect("valid primitive fixture")
+            .translated(Real::from(-1), Real::from(-1), Real::from(3));
         let (document, posed) = document_with(vec![("rear", rear), ("front", front)]);
         let report =
             blueprint_from_posed_mesh(&document, &posed, BlueprintProjection::Front, false);

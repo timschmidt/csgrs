@@ -73,7 +73,7 @@ use csgrs::{
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let body = solid::cube(Real::from(12));
+    let body = solid::cube(Real::from(12))?;
     let opening = curve::try_extrude(
         &curve::square(Real::from(4)),
         Real::from(16),
@@ -189,18 +189,18 @@ Functions in `csgrs::solid` return `TriangleMesh`:
 
 | Preview | Function |
 |---|---|
-| <img src="docs/cube.png" width="144" alt="Cube with visible faces, edges, and vertices"/> | `solid::cube(width: Real) -> TriangleMesh` |
-| <img src="docs/cuboid.png" width="144" alt="Cuboid with visible faces, edges, and vertices"/> | `solid::cuboid(width: Real, length: Real, height: Real) -> TriangleMesh` |
-| <img src="docs/sphere.png" width="144" alt="Sampled sphere with visible faces, edges, and vertices"/> | `solid::sphere(radius: Real, segments: usize, stacks: usize) -> TriangleMesh` |
-| <img src="docs/cylinder.png" width="144" alt="Sampled cylinder with visible faces, edges, and vertices"/> | `solid::cylinder(radius: Real, height: Real, segments: usize) -> TriangleMesh` |
-| <img src="docs/ellipsoid.png" width="144" alt="Sampled ellipsoid with visible faces, edges, and vertices"/> | `solid::ellipsoid(radius_x: Real, radius_y: Real, radius_z: Real, segments: usize, stacks: usize) -> TriangleMesh` |
-| <img src="docs/frustum.png" width="144" alt="Conical frustum with visible faces, edges, and vertices"/> | `solid::frustum(radius_bottom: Real, radius_top: Real, height: Real, segments: usize) -> TriangleMesh` |
-| <img src="docs/frustum_between.png" width="144" alt="Conical frustum between two points with visible faces, edges, and vertices"/> | `solid::frustum_between(start: Point3, end: Point3, start_radius: Real, end_radius: Real, segments: usize) -> TriangleMesh` |
+| <img src="docs/cube.png" width="144" alt="Cube with visible faces, edges, and vertices"/> | `solid::cube(width: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/cuboid.png" width="144" alt="Cuboid with visible faces, edges, and vertices"/> | `solid::cuboid(width: Real, length: Real, height: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/sphere.png" width="144" alt="Sampled sphere with visible faces, edges, and vertices"/> | `solid::sphere(radius: Real, segments: usize, stacks: usize) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/cylinder.png" width="144" alt="Sampled cylinder with visible faces, edges, and vertices"/> | `solid::cylinder(radius: Real, height: Real, segments: usize) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/ellipsoid.png" width="144" alt="Sampled ellipsoid with visible faces, edges, and vertices"/> | `solid::ellipsoid(radius_x: Real, radius_y: Real, radius_z: Real, segments: usize, stacks: usize) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/frustum.png" width="144" alt="Conical frustum with visible faces, edges, and vertices"/> | `solid::frustum(radius_bottom: Real, radius_top: Real, height: Real, segments: usize) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/frustum_between.png" width="144" alt="Conical frustum between two points with visible faces, edges, and vertices"/> | `solid::frustum_between(start: Point3, end: Point3, start_radius: Real, end_radius: Real, segments: usize) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/polyhedron.png" width="144" alt="Indexed polyhedron with visible faces, edges, and vertices"/> | `solid::polyhedron(points: &[[Real; 3]], faces: &[&[usize]]) -> Result<TriangleMesh, ValidationError>` |
-| <img src="docs/octahedron.png" width="144" alt="Regular octahedron with visible faces, edges, and vertices"/> | `solid::octahedron(radius: Real) -> TriangleMesh` |
-| <img src="docs/icosahedron.png" width="144" alt="Regular icosahedron with visible faces, edges, and vertices"/> | `solid::icosahedron(radius: Real) -> TriangleMesh` |
-| <img src="docs/mesh_arrow.png" width="144" alt="Three-dimensional arrow with visible faces, edges, and vertices"/> | `solid::arrow(start: Point3, direction: Vector3, segments: usize, mirrored: bool) -> TriangleMesh` |
-| <img src="docs/torus.png" width="144" alt="Sampled torus with visible faces, edges, and vertices"/> | `solid::torus(major_radius: Real, minor_radius: Real, major_segments: usize, minor_segments: usize) -> TriangleMesh` |
+| <img src="docs/octahedron.png" width="144" alt="Regular octahedron with visible faces, edges, and vertices"/> | `solid::octahedron(radius: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/icosahedron.png" width="144" alt="Regular icosahedron with visible faces, edges, and vertices"/> | `solid::icosahedron(radius: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/mesh_arrow.png" width="144" alt="Three-dimensional arrow with visible faces, edges, and vertices"/> | `solid::arrow(start: Point3, direction: Vector3, segments: usize, mirrored: bool) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/torus.png" width="144" alt="Sampled torus with visible faces, edges, and vertices"/> | `solid::torus(major_radius: Real, minor_radius: Real, major_segments: usize, minor_segments: usize) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/teardrop_cylinder.png" width="144" alt="Extruded teardrop solid with visible faces, edges, and vertices"/> | `solid::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/spur_gear_involute.png" width="144" alt="Involute spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_involute(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/spur_gear_cycloid.png" width="144" alt="Cycloidal spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_cycloid(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, thickness: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
@@ -264,6 +264,29 @@ when the result is necessarily empty. Conversion from a shared Hypermesh
 Boolean batch now gives empty rows zero positions as well as zero triangles;
 nonempty rows continue sharing the batch's position allocation.
 
+Primitive constructors (`cube`, `cuboid`, `sphere`, `cylinder`, `ellipsoid`,
+`frustum`, `frustum_between`, `octahedron`, `icosahedron`, `arrow`, and `torus`)
+now return `Result<TriangleMesh, ValidationError>`. This is an API migration:
+propagate construction errors with `?` before transforming or composing a model.
+Negative dimensions/radii, invalid sample counts, undecided strict predicates,
+unsupported torus representations, and unrepresentable buffer capacities are
+errors, with structured variants retained by `AdapterError::Construction`.
+Proven zero-size primitives remain canonical empty sets after validation of all
+parameters. Cylinder/frustum height is directed, so negative height remains
+supported. A cone may have one zero radius. Sample counts require at least three
+segments and, for spheres/ellipsoids, two stacks. Nonempty tori require
+`major_radius > minor_radius`; a zero minor radius represents the empty set.
+Only successful constructions enter the primitive cache.
+
+These constructors make strict numerical decisions and retain exact sampled
+coordinates. They do not certify fidelity to an analytic surface or attach
+end-to-end provenance to a mesh. Buffer capacity checks and fallible reservations
+report representational overflow and reservation failure. They do not bound total
+work, scalar expression growth, peak heap usage, or allocator/process termination;
+there is no constructor cancellation contract yet. Use external containment for
+large or adversarial sample counts. Other legacy convenience operations that
+replace errors with empty geometry remain an open migration target.
+
 For sampled curved solids whose predicates remain undecided in strict mode,
 select `GeometryContext::APPROXIMATE_512` explicitly:
 
@@ -271,8 +294,8 @@ select `GeometryContext::APPROXIMATE_512` explicitly:
 use csgrs::{GeometryContext, Real, solid::{self, SolidExt}};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4));
-    let drill = solid::cylinder(Real::from(2), Real::from(6), 16)
+    let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4))?;
+    let drill = solid::cylinder(Real::from(2), Real::from(6), 16)?
         .translated(Real::from(6), Real::from(6), Real::from(-1));
     let result = body.try_difference_with_context(
         &drill,
@@ -350,7 +373,7 @@ face information:
 ```rust
 use csgrs::{AttributedMesh, Real, solid};
 
-let geometry = solid::cube(Real::from(2));
+let geometry = solid::cube(Real::from(2)).expect("positive cube width");
 let attributed = AttributedMesh::from_uniform(geometry, "housing");
 assert_eq!(
     attributed.face_metadata().len(),

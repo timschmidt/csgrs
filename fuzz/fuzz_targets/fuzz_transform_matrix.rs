@@ -31,7 +31,7 @@ fuzz_target!(|bytes: &[u8]| {
     let Some(matrix) = Matrix4::from_row_slice(&values) else {
         return;
     };
-    let mesh = csgrs::solid::cube(Real::one());
+    let mesh = csgrs::solid::cube(Real::one()).expect("valid primitive fixture");
     let transformed = csgrs::solid::transform(&mesh, &matrix);
 
     for position in transformed.positions.iter() {

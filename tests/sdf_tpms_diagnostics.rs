@@ -234,7 +234,9 @@ fn native_real_sdf_mesh_is_hypermesh_boolean_ready() {
             .expect("native-real Surface Nets output should be valid Hypermesh input");
     assert_eq!(validation.certainty, MeshCertainty::Certified);
 
-    let enclosing = solid::cube(r(2.0)).translated(r(-1.0), r(-1.0), r(-1.0));
+    let enclosing = solid::cube(r(2.0))
+        .expect("valid primitive fixture")
+        .translated(r(-1.0), r(-1.0), r(-1.0));
     let intersection = mesh
         .try_intersection(&enclosing)
         .expect("native-real SDF mesh should be accepted by Hypermesh Boolean operations");
@@ -289,7 +291,7 @@ fn sdf_expr_preview_tracks_nonzero_iso_surface() {
 
 #[test]
 fn tpms_solid_accepts_positive_hyperreal_period_and_thickness() {
-    let volume = solid::cube(r(2.0));
+    let volume = solid::cube(r(2.0)).expect("valid primitive fixture");
     let solids = [
         (
             "gyroid",
@@ -319,7 +321,7 @@ fn tpms_solid_accepts_positive_hyperreal_period_and_thickness() {
 
 #[test]
 fn implicit_shapes_reject_unrepresentable_grid_dimensions() {
-    let volume = solid::cube(r(2.0));
+    let volume = solid::cube(r(2.0)).expect("valid primitive fixture");
     assert!(
         solid::gyroid(&volume, usize::MAX, r(2.0), r(0.0))
             .triangles

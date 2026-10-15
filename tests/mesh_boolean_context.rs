@@ -45,7 +45,7 @@ fn signed_volume(mesh: &TriangleMesh) -> f64 {
 
 #[test]
 fn rational_booleans_stay_certified_with_either_context() {
-    let left = solid::cube(Real::from(2));
+    let left = solid::cube(Real::from(2)).expect("valid primitive fixture");
     let right = left.translated(Real::one(), Real::zero(), Real::zero());
 
     for (operation, volume) in [
@@ -82,13 +82,12 @@ fn every_boolean_reports_approximation_without_affecting_later_strict_calls() {
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
-    let left =
-        solid::cube(Real::one()).translated(&sine - &Real::one(), Real::zero(), Real::zero());
-    let right = solid::cube(Real::one()).translated(
-        sine + unresolved_zero,
-        Real::zero(),
-        Real::zero(),
-    );
+    let left = solid::cube(Real::one())
+        .expect("valid primitive fixture")
+        .translated(&sine - &Real::one(), Real::zero(), Real::zero());
+    let right = solid::cube(Real::one())
+        .expect("valid primitive fixture")
+        .translated(sine + unresolved_zero, Real::zero(), Real::zero());
 
     for (operation, volume) in [
         (BooleanOp::Union, 2.0),
@@ -124,7 +123,7 @@ fn context_booleans_preserve_input_errors() {
         vec![hyperlattice::Point3::origin()],
         vec![hypermesh::Triangle::new(0, 1, 2)],
     );
-    let cube = solid::cube(Real::one());
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         for operation in [
             BooleanOp::Union,
@@ -145,12 +144,11 @@ fn context_booleans_preserve_input_errors() {
 
 #[test]
 fn drill_cylinder_uses_the_requested_context() {
-    let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4));
-    let drill = solid::cylinder(Real::from(2), Real::from(6), 16).translated(
-        Real::from(6),
-        Real::from(6),
-        Real::from(-1),
-    );
+    let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4))
+        .expect("valid primitive fixture");
+    let drill = solid::cylinder(Real::from(2), Real::from(6), 16)
+        .expect("valid primitive fixture")
+        .translated(Real::from(6), Real::from(6), Real::from(-1));
     assert!(matches!(
         body.try_difference(&drill),
         Err(HypermeshError::PredicateUndecided { .. })

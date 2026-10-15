@@ -17,6 +17,34 @@ pub enum CurveBooleanError {
 #[derive(Debug, Clone, thiserror::Error, PartialEq)]
 #[non_exhaustive]
 pub enum ValidationError {
+    /// A length or radius that must be nonnegative was proved negative.
+    #[error("{name} must be nonnegative")]
+    NegativeParameter { name: &'static str },
+    /// A tessellation count does not meet the constructor's minimum.
+    #[error("{name} must be at least {min}, got {actual}")]
+    InvalidResolution {
+        name: &'static str,
+        min: usize,
+        actual: usize,
+    },
+    /// The requested analytic primitive is outside the supported representation.
+    #[error("unsupported primitive: {reason}")]
+    UnsupportedPrimitive { reason: &'static str },
+    /// A necessary predicate has no admissible proof under the selected policy.
+    #[error("{predicate} is undecided under {policy:?}")]
+    PredicateUndecided {
+        predicate: &'static str,
+        policy: hyperlimit::PredicatePolicy,
+    },
+    /// A mesh buffer length or byte size cannot be represented on this platform.
+    #[error("primitive buffer capacity exceeds platform limits")]
+    CapacityOverflow,
+    /// Reserving a primitive buffer failed before a complete mesh was published.
+    #[error("could not allocate primitive buffer for {elements} elements")]
+    AllocationFailed { elements: usize },
+    /// A checked scalar or lattice operation failed, retaining its native cause.
+    #[error(transparent)]
+    Scalar(#[from] hyperreal::Problem),
     /// Operation requires corresponding loops with the same number of vertices.
     #[error("operation requires loops with the same number of vertices, {left} != {right}")]
     MismatchedVertexCount { left: usize, right: usize },
@@ -32,4 +60,45 @@ pub enum ValidationError {
     /// A native geometry dependency rejected the requested construction.
     #[error("{0}")]
     Geometry(String),
+}
+
+/// Stable failure categories exposed by primitive constructors and bindings.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ValidationErrorKind {
+    InvalidInput,
+    Unsupported,
+    Undecided,
+    ResourceExhausted,
+    Geometry,
+}
+
+impl ValidationErrorKind {
+    /// Machine-readable category used by JavaScript exceptions.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::InvalidInput => "invalid_input",
+            Self::Unsupported => "unsupported",
+            Self::Undecided => "undecided",
+            Self::ResourceExhausted => "resource_exhausted",
+            Self::Geometry => "geometry_failure",
+        }
+    }
+}
+
+impl ValidationError {
+    pub const fn kind(&self) -> ValidationErrorKind {
+        match self {
+            Self::UnsupportedPrimitive { .. } => ValidationErrorKind::Unsupported,
+            Self::PredicateUndecided { .. }
+            | Self::Scalar(hyperreal::Problem::UnknownZero) => ValidationErrorKind::Undecided,
+            Self::CapacityOverflow
+            | Self::AllocationFailed { .. }
+            | Self::Scalar(hyperreal::Problem::Exhausted) => {
+                ValidationErrorKind::ResourceExhausted
+            },
+            Self::Geometry(_) | Self::Scalar(_) => ValidationErrorKind::Geometry,
+            _ => ValidationErrorKind::InvalidInput,
+        }
+    }
 }

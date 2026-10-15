@@ -7,8 +7,7 @@ use libfuzzer_sys::fuzz_target;
 fuzz_target!(|bytes: &[u8]| {
     let text = String::from_utf8_lossy(bytes);
     if let Ok((region, _, _)) = csgrs::io::svg::import_svg(&text) {
-        let Ok(mesh) =
-            csgrs::curve::try_triangulate(&region, &csgrs::GeometryContext::STRICT)
+        let Ok(mesh) = csgrs::curve::try_triangulate(&region, &csgrs::GeometryContext::STRICT)
         else {
             return;
         };

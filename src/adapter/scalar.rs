@@ -10,6 +10,8 @@ pub enum AdapterError {
     NotFiniteApproximation,
     NotExactInteger,
     Validation(String),
+    /// Structured failure from native modeling construction.
+    Construction(crate::errors::ValidationError),
 }
 
 impl fmt::Display for AdapterError {
@@ -23,11 +25,26 @@ impl fmt::Display for AdapterError {
                 f.write_str("hyperreal value is not an exact i128 integer")
             },
             Self::Validation(message) => f.write_str(message),
+            Self::Construction(error) => error.fmt(f),
         }
     }
 }
 
-impl std::error::Error for AdapterError {}
+impl std::error::Error for AdapterError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Hyperreal(error) => Some(error),
+            Self::Construction(error) => Some(error),
+            _ => None,
+        }
+    }
+}
+
+impl From<crate::errors::ValidationError> for AdapterError {
+    fn from(value: crate::errors::ValidationError) -> Self {
+        Self::Construction(value)
+    }
+}
 
 impl From<Problem> for AdapterError {
     fn from(value: Problem) -> Self {

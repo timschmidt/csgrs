@@ -65,13 +65,12 @@ fn main() {
         for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
             // Start each policy with fresh mesh storage so the strict run
             // cannot pre-populate the approximate run's mesh facts.
-            let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4));
+            let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4))
+                .expect("valid primitive fixture");
             let body = TriangleMesh::new(body.positions.to_vec(), body.triangles.to_vec());
-            let drill = solid::cylinder(Real::from(2), Real::from(6), segments).translated(
-                Real::from(6),
-                Real::from(6),
-                Real::from(-1),
-            );
+            let drill = solid::cylinder(Real::from(2), Real::from(6), segments)
+                .expect("valid primitive fixture")
+                .translated(Real::from(6), Real::from(6), Real::from(-1));
             let drill = TriangleMesh::new(drill.positions.to_vec(), drill.triangles.to_vec());
             measure(&body, &drill, segments, context, iterations);
         }

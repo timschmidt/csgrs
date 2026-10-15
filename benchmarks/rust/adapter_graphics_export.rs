@@ -70,7 +70,7 @@ fn measure<S>(name: &str, mut export: impl FnMut() -> GraphicsMesh<S>) {
 }
 
 fn main() {
-    let native = solid::sphere(Real::from(10_u8), 128, 64);
+    let native = solid::sphere(Real::from(10_u8), 128, 64).expect("valid primitive fixture");
     let _ = RawTriangleMesh::from_native(native.clone()).graphics_mesh();
     let f32_mesh = ScalarMesh::<F32>::from_native(native.clone());
     let f64_mesh = ScalarMesh::<F64>::from_native(native.clone());

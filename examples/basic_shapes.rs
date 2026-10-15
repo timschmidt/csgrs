@@ -9,11 +9,23 @@ const PATH: &str = "stl/examples/basic_shapes";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    write_mesh(&solid::cube(r(2.0)), "cube");
-    write_mesh(&solid::sphere(r(1.0), 32, 16), "sphere");
-    write_mesh(&solid::cylinder(r(1.0), r(2.0), 32), "cylinder");
-    write_mesh(&solid::ellipsoid(r(2.0), r(1.0), r(3.0), 32, 16), "ellipsoid");
-    write_mesh(&solid::torus(r(2.0), r(0.35), 48, 16), "torus");
+    write_mesh(&solid::cube(r(2.0)).expect("valid primitive fixture"), "cube");
+    write_mesh(
+        &solid::sphere(r(1.0), 32, 16).expect("valid primitive fixture"),
+        "sphere",
+    );
+    write_mesh(
+        &solid::cylinder(r(1.0), r(2.0), 32).expect("valid primitive fixture"),
+        "cylinder",
+    );
+    write_mesh(
+        &solid::ellipsoid(r(2.0), r(1.0), r(3.0), 32, 16).expect("valid primitive fixture"),
+        "ellipsoid",
+    );
+    write_mesh(
+        &solid::torus(r(2.0), r(0.35), 48, 16).expect("valid primitive fixture"),
+        "torus",
+    );
 }
 
 fn r(value: f64) -> Real {

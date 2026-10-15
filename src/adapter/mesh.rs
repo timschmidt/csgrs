@@ -74,7 +74,7 @@ where
     }
 
     pub fn cube(width: A::Scalar) -> AdapterResult<Self> {
-        Ok(Self::from_native(solid::cube(A::into_real(width)?)))
+        Ok(Self::from_native(solid::cube(A::into_real(width)?)?))
     }
 
     pub fn cuboid(
@@ -86,7 +86,7 @@ where
             A::into_real(width)?,
             A::into_real(length)?,
             A::into_real(height)?,
-        )))
+        )?))
     }
 
     pub fn sphere(radius: A::Scalar, segments: usize, stacks: usize) -> AdapterResult<Self> {
@@ -94,7 +94,7 @@ where
             A::into_real(radius)?,
             segments,
             stacks,
-        )))
+        )?))
     }
 
     pub fn cylinder(
@@ -106,7 +106,7 @@ where
             A::into_real(radius)?,
             A::into_real(height)?,
             segments,
-        )))
+        )?))
     }
 
     pub fn polyhedron(points: &[[A::Scalar; 3]], faces: &[&[usize]]) -> AdapterResult<Self> {
