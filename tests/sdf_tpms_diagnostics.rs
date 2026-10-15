@@ -296,15 +296,18 @@ fn tpms_solid_accepts_positive_hyperreal_period_and_thickness() {
     let solids = [
         (
             "gyroid",
-            solid::gyroid_solid(&volume, 10, r(2.0), r(0.0), r(0.4)),
+            solid::gyroid_solid(&volume, 10, r(2.0), r(0.0), r(0.4))
+                .expect("valid modeling fixture"),
         ),
         (
             "Schwarz-P",
-            solid::schwarz_p_solid(&volume, 10, r(2.0), r(0.0), r(0.4)),
+            solid::schwarz_p_solid(&volume, 10, r(2.0), r(0.0), r(0.4))
+                .expect("valid modeling fixture"),
         ),
         (
             "Schwarz-D",
-            solid::schwarz_d_solid(&volume, 10, r(2.0), r(0.0), r(0.4)),
+            solid::schwarz_d_solid(&volume, 10, r(2.0), r(0.0), r(0.4))
+                .expect("valid modeling fixture"),
         ),
     ];
     for (name, mesh) in solids {
@@ -323,11 +326,10 @@ fn tpms_solid_accepts_positive_hyperreal_period_and_thickness() {
 #[test]
 fn implicit_shapes_reject_unrepresentable_grid_dimensions() {
     let volume = solid::cube(r(2.0)).expect("valid primitive fixture");
-    assert!(
-        solid::gyroid(&volume, usize::MAX, r(2.0), r(0.0))
-            .triangles
-            .is_empty()
-    );
+    assert!(matches!(
+        solid::gyroid(&volume, usize::MAX, r(2.0), r(0.0)),
+        Err(csgrs::errors::ValidationError::CapacityOverflow)
+    ));
     assert!(
         solid::sdf(
             |point| point.to_vector().norm(),

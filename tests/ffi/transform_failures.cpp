@@ -24,6 +24,6 @@ int main() {
     assert(std::string(error.what()).find("crosses infinity") != std::string::npos);
   }
   const auto restored = shifted.translate(0.5, 0, 0);
-  assert(restored.bounding_box().maxs.x == 1);
+  assert(restored.bounding_box().value().maxs.x == 1);
   std::cout << "C++ typed transform errors and recovery passed\n";
 }

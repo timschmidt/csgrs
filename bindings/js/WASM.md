@@ -28,6 +28,13 @@ it when passing the operation's evidence to another consumer. Certainty
 describes predicate decisions, not the fidelity of `f64` display buffers.
 Curve `toArrays` and `toRegionProfiles` also return the named `certainty` field.
 
+`boundingBoxWithContext` returns a receipt with `isEmpty` and optional `min` and
+`max` points. Empty geometry has `isEmpty === true` and `undefined` endpoints;
+its query still carries certainty. A point at the origin has nonempty, zero-size
+bounds. `MeshJs.boundingBox()` returns `undefined` for empty geometry. Bounds
+and positioning failures throw a `GeometryError` whose `code` retains the native
+failure category. Free any endpoint wrappers returned by nonempty queries.
+
 `containsXYWithContext` and `containsPointWithContext` return a
 `GeometryBoolResultJs`. Its `status` distinguishes:
 

@@ -37,7 +37,8 @@ fn public_mesh_construction_is_the_native_indexed_triangle_carrier() {
 
 #[test]
 fn boolean_pipeline_accepts_hyperreal_transforms() {
-    let a = solid::center(&solid::cube(r(2.0)).expect("valid primitive fixture"));
+    let a = solid::center(&solid::cube(r(2.0)).expect("valid primitive fixture"))
+        .expect("valid modeling fixture");
     let b = solid::cube(r(1.1))
         .expect("valid primitive fixture")
         .translated(r(0.4), r(0.2), r(0.1))
@@ -78,7 +79,9 @@ fn boolean_pipeline_accepts_hyperreal_transforms() {
         );
     }
     assert!(!result.triangles.is_empty());
-    let bounds = solid::bounding_box(&result);
+    let bounds = solid::bounding_box(&result)
+        .expect("decidable fixture bounds")
+        .expect("nonempty fixture");
     assert_eq!(
         hyperlimit::compare_reals(&bounds.maxs.x, &bounds.mins.x, PredicatePolicy::STRICT)
             .value(),
@@ -119,7 +122,14 @@ fn exact_near_plane_translation_is_preserved_by_native_geometry() {
         .expect("valid primitive fixture")
         .translated(shift.clone(), r(0.0), r(0.0))
         .expect("valid transform fixture");
-    assert_eq!(solid::bounding_box(&mesh).mins.x, shift);
+    assert_eq!(
+        solid::bounding_box(&mesh)
+            .expect("decidable fixture bounds")
+            .expect("nonempty fixture")
+            .mins
+            .x,
+        shift
+    );
 }
 
 #[test]
@@ -139,7 +149,11 @@ fn curve_offset_and_extrude_keep_hyperreal_scalars() {
     assert!(!mesh.triangles.is_empty());
     assert!(matches!(
         hyperlimit::compare_reals(
-            &solid::bounding_box(&mesh).maxs.z,
+            &solid::bounding_box(&mesh)
+                .expect("decidable fixture bounds")
+                .expect("nonempty fixture")
+                .maxs
+                .z,
             &r(0.75),
             PredicatePolicy::STRICT,
         )

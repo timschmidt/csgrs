@@ -405,8 +405,14 @@ fn composite_curve_constructors_preserve_nested_predicate_certainty() {
     assert!(!clipped.value.is_empty());
     let bounds =
         csgrs::curve::try_bounding_box_with_context(&clipped.value, &APPROXIMATE).unwrap();
-    assert_eq!(bounds.value.mins.y.to_f64_lossy().unwrap(), 0.0);
-    assert_eq!(bounds.value.maxs.y.to_f64_lossy().unwrap(), 1.0);
+    assert_eq!(
+        bounds.value.as_ref().unwrap().mins.y.to_f64_lossy().unwrap(),
+        0.0
+    );
+    assert_eq!(
+        bounds.value.as_ref().unwrap().maxs.y.to_f64_lossy().unwrap(),
+        1.0
+    );
 
     let rounded = csgrs::curve::rounded_rectangle_with_context(
         Real::from(2),

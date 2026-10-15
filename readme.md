@@ -207,12 +207,12 @@ Functions in `csgrs::solid` return `TriangleMesh`:
 | <img src="docs/helical_involute_gear.png" width="144" alt="Helical involute gear with visible faces, edges, and vertices"/> | `solid::helical_involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_degrees: Real, slices: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/metaballs_3d.png" width="144" alt="Sampled metaball solid with visible faces, edges, and vertices"/> | `solid::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real) -> TriangleMesh` |
 | <img src="docs/sdf.png" width="144" alt="Sampled signed-distance-field solid with visible faces, edges, and vertices"/> | `solid::sdf(field: impl Fn(&Point3) -> Real, resolution: (usize, usize, usize), min: Point3, max: Point3, iso_value: Real) -> TriangleMesh` |
-| <img src="docs/gyroid.png" width="144" alt="Bounded gyroid solid with visible faces, edges, and vertices"/> | `solid::gyroid_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> TriangleMesh` |
-| <img src="docs/schwarz_p.png" width="144" alt="Bounded Schwarz-P solid with visible faces, edges, and vertices"/> | `solid::schwarz_p_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> TriangleMesh` |
-| <img src="docs/schwarz_d.png" width="144" alt="Bounded Schwarz-D solid with visible faces, edges, and vertices"/> | `solid::schwarz_d_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> TriangleMesh` |
-| <img src="docs/gyroid_surface.png" width="144" alt="Bounded gyroid level surface with visible faces, edges, and vertices"/> | `solid::gyroid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> TriangleMesh` |
-| <img src="docs/schwarz_p_surface.png" width="144" alt="Bounded Schwarz-P level surface with visible faces, edges, and vertices"/> | `solid::schwarz_p(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> TriangleMesh` |
-| <img src="docs/schwarz_d_surface.png" width="144" alt="Bounded Schwarz-D level surface with visible faces, edges, and vertices"/> | `solid::schwarz_d(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> TriangleMesh` |
+| <img src="docs/gyroid.png" width="144" alt="Bounded gyroid solid with visible faces, edges, and vertices"/> | `solid::gyroid_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/schwarz_p.png" width="144" alt="Bounded Schwarz-P solid with visible faces, edges, and vertices"/> | `solid::schwarz_p_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/schwarz_d.png" width="144" alt="Bounded Schwarz-D solid with visible faces, edges, and vertices"/> | `solid::schwarz_d_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/gyroid_surface.png" width="144" alt="Bounded gyroid level surface with visible faces, edges, and vertices"/> | `solid::gyroid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/schwarz_p_surface.png" width="144" alt="Bounded Schwarz-P level surface with visible faces, edges, and vertices"/> | `solid::schwarz_p(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/schwarz_d_surface.png" width="144" alt="Bounded Schwarz-D level surface with visible faces, edges, and vertices"/> | `solid::schwarz_d(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
 
 `solid::empty()` is intentionally image-free. Diagnostic variants
 `metaballs_with_diagnostics` and `sdf_with_diagnostics` produce the same shape
@@ -292,6 +292,26 @@ Valid transforms of canonical empty geometry remain canonical empty.
 Context variants report operation-local predicate certainty; they do not certify
 the provenance of an earlier approximate construction. Transform work and
 allocation do not yet have an internal total-work, heap-byte, or cancellation bound.
+
+Bounds queries (`solid::bounding_box`, `curve::bounding_box`, their `try_`
+variants, and `SolidExt::exact_bounds`) now return `Result<Option<Aabb>,
+ValidationError>`. Propagate errors with `?`, then handle `None` as a completed
+query on empty geometry. A point at the origin has `Some` zero-size bounds.
+Context queries retain the certainty receipt around the optional bounds.
+Scalar adapters follow the same optional-result contract. Mesh bounds validate
+indices before reusing retained position facts; a bounds query does not validate
+closed-solid topology. `solid::center` and `float` now return `Result`; they
+preserve canonical empty geometry and propagate bounds failures.
+
+The six TPMS constructors (`gyroid`, `schwarz_p`, `schwarz_d`, and their `_solid`
+forms) also return `Result<TriangleMesh, ValidationError>`. Their sampling formulas
+and valid resolutions are unchanged. Resolutions below two are now rejected
+instead of silently clamped. Periods must be proved positive and solid wall
+thickness must be proved nonnegative. Empty bounds and zero wall thickness
+produce canonical empty geometry after parameter validation. Undecided bounds,
+sample signs, interpolation, orientation, and native Surface Nets failures remain
+errors with their diagnostic category; they no longer produce an empty model.
+Certification concerns the sampled representation, not the continuous TPMS field.
 
 These constructors make strict numerical decisions and retain exact sampled
 coordinates. They do not certify fidelity to an analytic surface or attach

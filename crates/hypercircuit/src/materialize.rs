@@ -864,6 +864,8 @@ pub enum GeometryMaterializationError {
     Boolean(String),
     /// Exact zone-island classification or area comparison was indeterminate.
     ZoneIsland(String),
+    /// Native bounds could not be established; retain the curve diagnostic.
+    Bounds(ExactCurveError),
 }
 
 impl Display for GeometryMaterializationError {
@@ -886,11 +888,19 @@ impl Display for GeometryMaterializationError {
                     "PCB zone island policy could not be certified: {source}"
                 )
             }
+            Self::Bounds(source) => write!(formatter, "PCB geometry bounds failed: {source}"),
         }
     }
 }
 
-impl std::error::Error for GeometryMaterializationError {}
+impl std::error::Error for GeometryMaterializationError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Bounds(source) => Some(source),
+            _ => None,
+        }
+    }
+}
 
 impl PcbLayout {
     /// Materializes substrate, copper, and drill geometry without discarding sources.
@@ -1546,14 +1556,19 @@ fn thermal_spoke_mask(
         }
         spokes.ok_or(GeometryMaterializationError::Arithmetic)?
     };
-    let bounds = curve::bounding_box(clearance);
-    let width = bounds.maxs.x.clone() - bounds.mins.x.clone();
-    let height = bounds.maxs.y.clone() - bounds.mins.y.clone();
+    let Some(bounds) = decisions
+        .exact_curve(|| clearance.bounds())
+        .map_err(GeometryMaterializationError::Bounds)?
+    else {
+        return Ok(CurveRegion2::empty());
+    };
+    let width = bounds.max_x() - bounds.min_x();
+    let height = bounds.max_y() - bounds.min_y();
     let two = Real::from(2);
     let clip_center = Point2::new(
-        ((bounds.mins.x + bounds.maxs.x) / two.clone())
+        ((bounds.min_x() + bounds.max_x()) / two.clone())
             .map_err(|_| GeometryMaterializationError::Arithmetic)?,
-        ((bounds.mins.y + bounds.maxs.y) / two)
+        ((bounds.min_y() + bounds.max_y()) / two)
             .map_err(|_| GeometryMaterializationError::Arithmetic)?,
     );
     let clip = curve::translated(
@@ -3966,7 +3981,7 @@ mod tests {
     use super::{
         MaterializationContext, MaterializationDecisions, MaterializationOptions,
         exact_circle_profile, exact_compound_composition, half, pad_profile, project_cubic_bezier,
-        stroked_path_profile, transform_drill, transform_pad_profile,
+        stroked_path_profile, thermal_spoke_mask, transform_drill, transform_pad_profile,
     };
     use crate::{
         BoardSide, CircuitInstanceId, DrillShape, LandPatternId, LandPatternPad, PadId, PadShape,
@@ -3981,6 +3996,34 @@ mod tests {
     use hyperlattice::Point2;
     use hyperpath::{CubicBezier, TraceLayer};
     use hyperreal::Real;
+
+    #[test]
+    fn thermal_spoke_bounds_preserve_empty_clearance() {
+        let boundary = [(-5, -5), (5, -5), (5, 5), (-5, 5)]
+            .map(|(x, y)| Point2::new(Real::from(x), Real::from(y)));
+        for context in [
+            MaterializationContext::STRICT,
+            MaterializationContext::APPROXIMATE_512,
+        ] {
+            let decisions = MaterializationDecisions::new(&context);
+            let mask = thermal_spoke_mask(
+                &boundary,
+                &Point2::origin(),
+                &Real::one(),
+                4,
+                &CurveRegion2::empty(),
+                &decisions,
+            )
+            .unwrap();
+            assert!(mask.is_empty());
+            assert_eq!(decisions.certainty(), GeometryCertainty::Certified);
+            let square = curve::square(Real::one());
+            let restored = decisions
+                .exact_curve(|| mask.boolean_region(&square, BooleanOp::Union))
+                .unwrap();
+            assert_eq!(restored.bounds().unwrap(), square.bounds().unwrap());
+        }
+    }
 
     fn rounded_pad(id: &str, center_x: i32) -> LandPatternPad {
         LandPatternPad {

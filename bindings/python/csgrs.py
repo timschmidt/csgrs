@@ -473,7 +473,10 @@ class TriangleMesh:
 
     def bounding_box(self):
         out = self.family.aabb_type()
-        _call(f"csgrs_triangle_mesh_{self.family.prefix}_bounding_box", self.ptr, ctypes.byref(out))
+        status = getattr(load(), f"csgrs_triangle_mesh_{self.family.prefix}_bounding_box")(self.ptr, ctypes.byref(out))
+        if status == 10:  # CSGRS_STATUS_NO_BOUNDS: completed empty query
+            return None
+        _check(status)
         return out
 
     def vertices_and_indices(self):
@@ -551,7 +554,10 @@ class CurveRegion:
 
     def bounding_box(self):
         out = self.family.aabb_type()
-        _call(f"csgrs_curve_region_{self.family.prefix}_bounding_box", self.ptr, ctypes.byref(out))
+        status = getattr(load(), f"csgrs_curve_region_{self.family.prefix}_bounding_box")(self.ptr, ctypes.byref(out))
+        if status == 10:  # CSGRS_STATUS_NO_BOUNDS: completed empty query
+            return None
+        _check(status)
         return out
 
     def extrude(self, height):

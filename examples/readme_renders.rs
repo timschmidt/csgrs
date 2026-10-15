@@ -444,27 +444,30 @@ fn render_tpms_meshes() {
     let tpms_box = solid::cube(r(2.0)).expect("valid primitive fixture");
     render_mesh(
         "gyroid",
-        &solid::gyroid_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18)),
+        &solid::gyroid_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18))
+            .expect("valid modeling fixture"),
     );
     render_mesh(
         "schwarz_p",
-        &solid::schwarz_p_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18)),
+        &solid::schwarz_p_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18))
+            .expect("valid modeling fixture"),
     );
     render_mesh(
         "schwarz_d",
-        &solid::schwarz_d_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18)),
+        &solid::schwarz_d_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18))
+            .expect("valid modeling fixture"),
     );
     render_mesh(
         "gyroid_surface",
-        &solid::gyroid(&tpms_box, 24, r(2.0), r(0.2)),
+        &solid::gyroid(&tpms_box, 24, r(2.0), r(0.2)).expect("valid modeling fixture"),
     );
     render_mesh(
         "schwarz_p_surface",
-        &solid::schwarz_p(&tpms_box, 24, r(2.0), r(0.2)),
+        &solid::schwarz_p(&tpms_box, 24, r(2.0), r(0.2)).expect("valid modeling fixture"),
     );
     render_mesh(
         "schwarz_d_surface",
-        &solid::schwarz_d(&tpms_box, 24, r(2.0), r(0.2)),
+        &solid::schwarz_d(&tpms_box, 24, r(2.0), r(0.2)).expect("valid modeling fixture"),
     );
 }
 

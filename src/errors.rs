@@ -20,6 +20,12 @@ pub enum ValidationError {
     /// A length or radius that must be nonnegative was proved negative.
     #[error("{name} must be nonnegative")]
     NegativeParameter { name: &'static str },
+    /// A scale or period that must be strictly positive is zero or negative.
+    #[error("{name} must be positive")]
+    NonPositiveParameter { name: &'static str },
+    /// Extraction encountered a degenerate output triangle and published no mesh.
+    #[error("output triangle {triangle_index} is degenerate")]
+    DegenerateOutputTriangle { triangle_index: usize },
     /// A tessellation count does not meet the constructor's minimum.
     #[error("{name} must be at least {min}, got {actual}")]
     InvalidResolution {
@@ -36,11 +42,11 @@ pub enum ValidationError {
         predicate: &'static str,
         policy: hyperlimit::PredicatePolicy,
     },
-    /// A mesh buffer length or byte size cannot be represented on this platform.
-    #[error("primitive buffer capacity exceeds platform limits")]
+    /// A geometry buffer length or byte size cannot be represented on this platform.
+    #[error("geometry buffer capacity exceeds platform limits")]
     CapacityOverflow,
-    /// Reserving a primitive buffer failed before a complete mesh was published.
-    #[error("could not allocate primitive buffer for {elements} elements")]
+    /// Reserving a geometry buffer failed before a complete result was published.
+    #[error("could not allocate geometry buffer for {elements} elements")]
     AllocationFailed { elements: usize },
     /// A checked scalar or lattice operation failed, retaining its native cause.
     #[error(transparent)]
@@ -48,6 +54,12 @@ pub enum ValidationError {
     /// A native mesh operation failed, retaining its typed cause.
     #[error("{0}")]
     Mesh(#[from] hypermesh::HypermeshError),
+    /// A native exact curve operation failed, retaining its context and cause.
+    #[error("{0}")]
+    ExactCurve(#[from] ExactCurveError),
+    /// Native sampled-field extraction failed, retaining its typed diagnostic.
+    #[error("{0}")]
+    SurfaceNets(#[from] hypermesh::SurfaceNetsError),
     /// Operation requires corresponding loops with the same number of vertices.
     #[error("operation requires loops with the same number of vertices, {left} != {right}")]
     MismatchedVertexCount { left: usize, right: usize },
@@ -94,6 +106,31 @@ impl ValidationErrorKind {
 impl ValidationError {
     pub const fn kind(&self) -> ValidationErrorKind {
         match self {
+            Self::ExactCurve(ExactCurveError::Blocked(blocker)) => match blocker.reason() {
+                hypercurve::UncertaintyReason::Unsupported => ValidationErrorKind::Unsupported,
+                hypercurve::UncertaintyReason::BudgetExhausted => {
+                    ValidationErrorKind::ResourceExhausted
+                },
+                hypercurve::UncertaintyReason::Boundary => ValidationErrorKind::InvalidInput,
+                _ => ValidationErrorKind::Undecided,
+            },
+            Self::ExactCurve(ExactCurveError::Invalid { .. }) => {
+                ValidationErrorKind::InvalidInput
+            },
+            Self::SurfaceNets(error) => match error {
+                hypermesh::SurfaceNetsError::UnknownSampleSign { .. }
+                | hypermesh::SurfaceNetsError::PredicateUndecided { .. } => {
+                    ValidationErrorKind::Undecided
+                },
+                hypermesh::SurfaceNetsError::SampleCountOverflow { .. } => {
+                    ValidationErrorKind::ResourceExhausted
+                },
+                hypermesh::SurfaceNetsError::GridTooSmall { .. }
+                | hypermesh::SurfaceNetsError::SampleCountMismatch { .. } => {
+                    ValidationErrorKind::InvalidInput
+                },
+                _ => ValidationErrorKind::Geometry,
+            },
             Self::Mesh(error) => match error {
                 hypermesh::HypermeshError::PredicateUndecided { .. }
                 | hypermesh::HypermeshError::ConvexHullPredicate { .. }
@@ -123,7 +160,9 @@ impl ValidationError {
             | Self::Scalar(hyperreal::Problem::Exhausted) => {
                 ValidationErrorKind::ResourceExhausted
             },
-            Self::Geometry(_) | Self::Scalar(_) => ValidationErrorKind::Geometry,
+            Self::Geometry(_) | Self::Scalar(_) | Self::DegenerateOutputTriangle { .. } => {
+                ValidationErrorKind::Geometry
+            },
             _ => ValidationErrorKind::InvalidInput,
         }
     }

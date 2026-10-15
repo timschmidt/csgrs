@@ -361,6 +361,8 @@ impl TriangleMesh {
         &self,
         decisions: &DecisionContext,
     ) -> HypermeshResult<Option<ExactAabb>> {
+        // Position facts do not validate an independently mutated index buffer.
+        self.validate_triangle_indices()?;
         let facts = self.position_facts();
         if let Some(bounds) = facts.and_then(|facts| facts.exact_bounds.get()) {
             return Ok(bounds.as_deref().cloned());

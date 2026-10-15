@@ -11,7 +11,7 @@ int main() {
   assert(buffers.vertex_len == 0 && buffers.index_len == 0);
   csgrs::F64::mesh_buffers_free(buffers);
   const auto restored = empty.union_with(cube);
-  const auto bounds = restored.bounding_box();
+  const auto bounds = restored.bounding_box().value();
   assert(bounds.mins.x == 0 && bounds.mins.y == 0 && bounds.mins.z == 0);
   assert(bounds.maxs.x == 1 && bounds.maxs.y == 1 && bounds.maxs.z == 1);
   const auto removed = restored.difference(cube).difference(cube);

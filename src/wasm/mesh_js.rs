@@ -18,7 +18,7 @@ fn js_error(error: impl std::fmt::Display) -> JsValue {
     JsValue::from_str(&error.to_string())
 }
 
-fn geometry_error(error: crate::errors::ValidationError) -> JsValue {
+pub(super) fn geometry_error(error: crate::errors::ValidationError) -> JsValue {
     geometry_exception(&error.to_string(), error.kind())
 }
 
@@ -367,7 +367,7 @@ impl MeshJs {
         let context = geometry_context(approximate_512);
         solid::try_center_with_context(&self.inner, &context)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = floatOnZWithContext)]
@@ -378,7 +378,7 @@ impl MeshJs {
         let context = geometry_context(approximate_512);
         solid::try_float_with_context(&self.inner, &context)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = mirrorWithContext)]
@@ -446,7 +446,7 @@ impl MeshJs {
     ) -> Result<GeometryBoundsResultJs, JsValue> {
         solid::try_bounding_box_with_context(&self.inner, &geometry_context(approximate_512))
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(geometry_error)
     }
 
     pub fn transform(&self, matrix: &Matrix4Js) -> Result<Self, JsValue> {
@@ -492,14 +492,14 @@ impl MeshJs {
     pub fn center(&self) -> Result<Self, JsValue> {
         solid::try_center(&self.inner)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = floatOnZ)]
     pub fn float_on_z(&self) -> Result<Self, JsValue> {
         solid::try_float(&self.inner)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(geometry_error)
     }
 
     pub fn inverse(&self) -> Self {
@@ -528,7 +528,10 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = boundingBox)]
     pub fn bounding_box(&self) -> Result<JsValue, JsValue> {
-        let bounds = solid::try_bounding_box(&self.inner).map_err(js_error)?;
+        let Some(bounds) = solid::try_bounding_box(&self.inner).map_err(geometry_error)?
+        else {
+            return Ok(JsValue::UNDEFINED);
+        };
         let object = Object::new();
         Reflect::set(
             &object,

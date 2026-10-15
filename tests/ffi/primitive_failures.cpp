@@ -21,5 +21,5 @@ int main() {
     assert(error.status() == CSGRS_STATUS_RESOURCE_EXHAUSTED);
   }
   const auto restored = Mesh::cube(0).union_with(Mesh::cube(1));
-  assert(restored.bounding_box().maxs.x == 1);
+  assert(restored.bounding_box().value().maxs.x == 1);
 }

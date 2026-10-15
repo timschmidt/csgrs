@@ -1866,7 +1866,11 @@ pub fn hilbert_strings_with_context(
     {
         return Err(ValidationError::InvalidArguments);
     }
-    let bounds = decisions.consume_geometry(try_bounding_box_with_context(boundary, context)?);
+    let Some(bounds) =
+        decisions.consume_geometry(try_bounding_box_with_context(boundary, context)?)
+    else {
+        return Ok(decisions.finish(Vec::new()));
+    };
     let width =
         bounds.maxs.x.clone() - bounds.mins.x.clone() - Real::from(2_u8) * padding.clone();
     let height =
@@ -2951,7 +2955,7 @@ pub fn contains_xy_with_context(
 }
 
 /// Returns the certified exact planar bounds, embedded in the XY plane.
-pub fn try_bounding_box(input: &CurveRegion2) -> Result<Aabb, ValidationError> {
+pub fn try_bounding_box(input: &CurveRegion2) -> Result<Option<Aabb>, ValidationError> {
     try_bounding_box_with_context(input, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -2960,27 +2964,20 @@ pub fn try_bounding_box(input: &CurveRegion2) -> Result<Aabb, ValidationError> {
 pub fn try_bounding_box_with_context(
     input: &CurveRegion2,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<Aabb>, ValidationError> {
+) -> Result<GeometryOutcome<Option<Aabb>>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if input.is_empty() {
-        return Ok(decisions.finish(Aabb::origin()));
-    }
-    let Some(bounds) = decisions
-        .exact_curve(|| input.bounds())
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?
-    else {
-        return Ok(decisions.finish(Aabb::origin()));
-    };
-    let bounds = Aabb::new(
-        Point3::new(bounds.min_x().clone(), bounds.min_y().clone(), Real::zero()),
-        Point3::new(bounds.max_x().clone(), bounds.max_y().clone(), Real::zero()),
-    );
+    let bounds = decisions.exact_curve(|| input.bounds())?.map(|bounds| {
+        Aabb::new(
+            Point3::new(bounds.min_x().clone(), bounds.min_y().clone(), Real::zero()),
+            Point3::new(bounds.max_x().clone(), bounds.max_y().clone(), Real::zero()),
+        )
+    });
     Ok(decisions.finish(bounds))
 }
 
-/// Returns exact bounds, using the origin box only for empty or invalid input.
-pub fn bounding_box(input: &CurveRegion2) -> Aabb {
-    try_bounding_box(input).unwrap_or_else(|_| Aabb::origin())
+/// Returns exact planar bounds, absent for empty regions; errors remain typed.
+pub fn bounding_box(input: &CurveRegion2) -> Result<Option<Aabb>, ValidationError> {
+    try_bounding_box(input)
 }
 
 /// Returns the same native solid translation helper used by the 3D grammar.
@@ -3358,7 +3355,9 @@ mod tests {
 
     #[test]
     fn normalized_egg_and_heart_match_requested_sampled_bounds() {
-        let egg_bounds = bounding_box(&egg(Real::from(3_u8), Real::from(5_u8), 24));
+        let egg_bounds = bounding_box(&egg(Real::from(3_u8), Real::from(5_u8), 24))
+            .unwrap()
+            .unwrap();
         assert_eq!(
             egg_bounds.maxs.x.clone() - egg_bounds.mins.x,
             Real::from(3_u8)
@@ -3368,7 +3367,9 @@ mod tests {
             Real::from(5_u8)
         );
 
-        let heart_bounds = bounding_box(&heart(Real::from(4_u8), Real::from(6_u8), 32));
+        let heart_bounds = bounding_box(&heart(Real::from(4_u8), Real::from(6_u8), 32))
+            .unwrap()
+            .unwrap();
         assert_eq!(
             heart_bounds.maxs.x.clone() - heart_bounds.mins.x,
             Real::from(4_u8)
@@ -3557,7 +3558,8 @@ mod tests {
             ),
         ] {
             let bounds = try_bounding_box(&rack)
-                .unwrap_or_else(|error| panic!("{name} bounds failed: {error}"));
+                .unwrap_or_else(|error| panic!("{name} bounds failed: {error}"))
+                .expect("nonempty rack bounds");
             assert!(
                 bounds.mins.y < -Real::one(),
                 "{name} must include backing below its tooth-root line"
