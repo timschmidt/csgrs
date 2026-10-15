@@ -224,7 +224,7 @@ impl Model {
                 if candidates.len() > 1 {
                     let midpoint = ((curve.domain().start() + curve.domain().end())
                         / Real::from(2))
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    .map_err(GeometryError::Numeric)?;
                     let parameter = segment.pcurve(operand).point_at(&midpoint)?;
                     let witness = CurvePoint2::new(parameter.x, parameter.y);
                     let mut interior_candidates = Vec::with_capacity(candidates.len());

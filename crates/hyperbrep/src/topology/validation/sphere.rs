@@ -478,7 +478,7 @@ impl ModelBuilder {
         let expected_center = center.clone() + axis.clone() * &height;
         let expected_radius = (radius * radius - &height * &height)
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
         if !points_equal(&first_circle.center, &expected_center)? {
             return Ok(None);
         }

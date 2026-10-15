@@ -175,7 +175,7 @@ impl ModelBuilder {
 
         let pcurve_span = pcurve.domain_end()? - pcurve.domain_start()?;
         let du = line.end().x() - line.start().x();
-        let du_dt = (du / pcurve_span).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let du_dt = (du / pcurve_span).map_err(GeometryError::Numeric)?;
         let surface_parameter = Point2::new(line.start().x().clone(), line.start().y().clone());
         let surface_tangent = surface.partials_at(&surface_parameter)?.u().clone() * du_dt;
         let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
@@ -280,8 +280,7 @@ impl ModelBuilder {
         } else {
             line.end().y() - line.start().y()
         };
-        let parameter_rate =
-            (parameter_delta / pcurve_span).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let parameter_rate = (parameter_delta / pcurve_span).map_err(GeometryError::Numeric)?;
         let partials = surface.partials_at(&surface_parameter)?;
         let surface_tangent = if varying_u {
             partials.u().clone()
@@ -513,8 +512,8 @@ impl ModelBuilder {
         )?;
 
         let pcurve_span = pcurve.domain_end()? - pcurve.domain_start()?;
-        let du_dt = ((line.end().x() - line.start().x()) / &pcurve_span)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let du_dt =
+            ((line.end().x() - line.start().x()) / &pcurve_span).map_err(GeometryError::Numeric)?;
         let surface_parameter = Point2::new(line.start().x().clone(), line.start().y().clone());
         let surface_tangent = surface.partials_at(&surface_parameter)?.u().clone() * du_dt;
         let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
@@ -613,10 +612,10 @@ impl ModelBuilder {
             )?;
             let actual_parameter = actual.domain().start()
                 + ((&edge_parameter - edge.domain.start()) * &actual_span / &edge_domain_span)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    .map_err(GeometryError::Numeric)?;
             let expected_parameter = expected.domain().start()
                 + ((surface_parameter - profile_start) * &expected_span / &profile_span)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    .map_err(GeometryError::Numeric)?;
             require_real_equal(
                 &actual_parameter,
                 &expected_parameter,
@@ -678,10 +677,10 @@ impl ModelBuilder {
             )?;
             let actual_parameter = actual.domain().start()
                 + ((&edge_parameter - edge.domain.start()) * &actual_span / &edge_domain_span)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    .map_err(GeometryError::Numeric)?;
             let expected_parameter = expected.domain().start()
                 + ((surface_parameter - profile_start) * &expected_span / &profile_span)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    .map_err(GeometryError::Numeric)?;
             require_real_equal(
                 &actual_parameter,
                 &expected_parameter,

@@ -5,7 +5,7 @@ use crate::{Rational, Real};
 /// Problems when either parsing or attempting Arithmetic with [`Real`] numbers
 /// or when trying to make or convert to a [`Rational`].
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum Problem {
     /// Unspecified problem while parsing an expression

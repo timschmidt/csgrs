@@ -141,7 +141,7 @@ impl ModelBuilder {
         for vertex in sorted_vertices {
             let height = (normal.dot(&(self.vertex_ref(vertex)?.point() - &reference_point))
                 / &height_denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
             if decided_model_order(compare_reals(
                 &height,
                 &Real::zero(),
@@ -402,10 +402,8 @@ impl ModelBuilder {
             let du = displacement.dot(&lower_u);
             let dv = displacement.dot(&lower_v);
             Ok(CurvePoint2::new(
-                ((&du * &vv - &dv * &uv) / &determinant)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?,
-                ((&dv * &uu - &du * &uv) / &determinant)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?,
+                ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?,
+                ((&dv * &uu - &du * &uv) / &determinant).map_err(GeometryError::Numeric)?,
             ))
         };
         let mut profiles = Vec::with_capacity(layers.len());
@@ -670,10 +668,8 @@ impl ModelBuilder {
             let du = displacement.dot(&lower_u);
             let dv = displacement.dot(&lower_v);
             Ok(CurvePoint2::new(
-                ((&du * &vv - &dv * &uv) / &determinant)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?,
-                ((&dv * &uu - &du * &uv) / &determinant)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?,
+                ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?,
+                ((&dv * &uu - &du * &uv) / &determinant).map_err(GeometryError::Numeric)?,
             ))
         };
         let mut ordered_vertices = lower_wire

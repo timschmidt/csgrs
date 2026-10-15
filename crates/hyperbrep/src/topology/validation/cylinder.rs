@@ -81,8 +81,7 @@ impl ModelBuilder {
         if u_values.len() != 5 || v_values.len() < 2 {
             return Ok(None);
         }
-        let quarter =
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
         for pair in u_values.windows(2) {
             if !real_values_equal(&(&pair[1] - &pair[0]), &quarter)? {
                 return Ok(None);

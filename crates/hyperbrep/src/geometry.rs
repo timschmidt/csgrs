@@ -223,7 +223,7 @@ impl Pcurve {
                 let dy = line.end().y() - line.start().y();
                 let numerator =
                     (point.x() - line.start().x()) * &dx + (point.y() - line.start().y()) * &dy;
-                (numerator / (&dx * &dx + &dy * &dy)).map_err(|_| GeometryError::ProjectiveDivision)
+                (numerator / (&dx * &dx + &dy * &dy)).map_err(GeometryError::Numeric)
             }
             Some(CurveGeometry2::CircularArc(arc)) => {
                 match crate::error::classified(arc.sweep_fraction(&point))? {
@@ -608,7 +608,7 @@ impl Curve3 {
                 }
                 for (index, point) in curve.control_points.iter().enumerate() {
                     let parameter = (Real::from(index as u64) / Real::from(degree as u64))
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
                     if !points_equal(point, &start.lerp(end, &parameter))? {
                         return Ok(None);
                     }
@@ -645,9 +645,9 @@ impl Curve3 {
                         .cloned()
                         .fold(Real::zero(), |sum, knot| sum + knot);
                     let greville = (greville / Real::from(curve.degree as u64))
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
                     let parameter = ((greville - domain_start) / &domain_span)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
                     if !points_equal(point, &start.lerp(end, &parameter))? {
                         return Ok(None);
                     }
@@ -711,9 +711,8 @@ impl Curve3 {
         let witness_length = start_radial
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        let witness =
-            (start_radial / witness_length).map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
+        let witness = (start_radial / witness_length).map_err(GeometryError::Numeric)?;
 
         // Positive-weight rational bases stay in their affine control hull.
         // A strict axis-containing separating plane is therefore a complete,
@@ -1128,8 +1127,8 @@ impl Curve3 {
                     split_homogeneous_bezier(curve.homogeneous_controls(), end).0
                 } else {
                     let (_, right) = split_homogeneous_bezier(curve.homogeneous_controls(), start);
-                    let relative_end = ((end - start) / (Real::one() - start))
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    let relative_end =
+                        ((end - start) / (Real::one() - start)).map_err(GeometryError::Numeric)?;
                     split_homogeneous_bezier(&right, &relative_end).0
                 };
                 rational_bezier_from_homogeneous(controls, Some(&curve.constant_coordinates))
@@ -1284,9 +1283,9 @@ impl HomogeneousPoint3 {
 
     fn project(&self) -> GeometryResult<Point3> {
         Ok(Point3::new(
-            (&self.x / &self.w).map_err(|_| GeometryError::ProjectiveDivision)?,
-            (&self.y / &self.w).map_err(|_| GeometryError::ProjectiveDivision)?,
-            (&self.z / &self.w).map_err(|_| GeometryError::ProjectiveDivision)?,
+            (&self.x / &self.w).map_err(GeometryError::Numeric)?,
+            (&self.y / &self.w).map_err(GeometryError::Numeric)?,
+            (&self.z / &self.w).map_err(GeometryError::Numeric)?,
         ))
     }
 }
@@ -2106,7 +2105,7 @@ impl SurfaceIntersectionPcurve {
                 let profile_point = profile.point_at(&source_parameter)?;
                 let normalized_coefficient = (plane_normal.dot(&(plane_origin - &profile_point))
                     / denominator)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    .map_err(GeometryError::Numeric)?;
                 let coefficient = coefficient_offset + coefficient_scale * normalized_coefficient;
                 Ok(match profile_axis {
                     TensorAxis::U => Point2::new(source_parameter, coefficient),
@@ -2287,9 +2286,9 @@ impl SurfaceIntersectionPcurve {
                     }
                     let start = ((&overlap_start - &carrier.spatial_offset)
                         / &carrier.spatial_scale)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
                     let end = ((&overlap_end - &carrier.spatial_offset) / &carrier.spatial_scale)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
                     let domain = carrier.curve.parameter_domain();
                     let curve = if decided_order(compare_reals(
                         &start,
@@ -2360,8 +2359,8 @@ impl SurfaceIntersectionPcurve {
         let source_start = &self.source_scale * start + &self.source_offset;
         let source_end = &self.source_scale * end + &self.source_offset;
         let target_span = target_domain.end() - target_domain.start();
-        let source_scale = ((&source_end - &source_start) / target_span)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let source_scale =
+            ((&source_end - &source_start) / target_span).map_err(GeometryError::Numeric)?;
         let source_offset = source_start - &source_scale * target_domain.start();
         Ok(Self {
             domain: target_domain.clone(),
@@ -2416,7 +2415,7 @@ impl SurfaceIntersectionPcurve {
                 let curve_span = curve_domain_end - curve_domain_start;
                 let spatial_span = self.domain.end() - self.domain.start();
                 let spatial_scale =
-                    (&spatial_span / &curve_span).map_err(|_| GeometryError::ProjectiveDivision)?;
+                    (&spatial_span / &curve_span).map_err(GeometryError::Numeric)?;
                 let spatial_offset = self.domain.start() - &spatial_scale * curve_domain_start;
                 Ok(Some(vec![SurfacePcurveClipCarrier {
                     curve,
@@ -2520,8 +2519,7 @@ fn materialized_surface_pcurve_from_matching_domains(
     let curve_start = curve_domain_start.clone();
     let curve_span = curve_domain_end - &curve_start;
     let target_span = target_domain.end() - target_domain.start();
-    let spatial_scale =
-        (target_span / curve_span).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let spatial_scale = (target_span / curve_span).map_err(GeometryError::Numeric)?;
     let spatial_offset = target_domain.start() - &spatial_scale * curve_start;
     Ok(MaterializedSurfacePcurve {
         curve,
@@ -2780,8 +2778,7 @@ impl Surface {
     ) -> GeometryResult<Self> {
         let frame = validate_orthonormal_frame(x, y, axis)?;
         require_positive(&radius, GeometryError::InvalidRadius)?;
-        let half_pi =
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let half_pi = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
         Ok(Self::from_parts(
             SurfaceGeometry::Sphere(SphereSurface {
                 center,
@@ -2804,8 +2801,7 @@ impl Surface {
         semi_angle: Real,
     ) -> GeometryResult<Self> {
         let frame = validate_orthonormal_frame(x, y, axis)?;
-        let half_pi =
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let half_pi = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
         if decided_order(compare_reals(
             &semi_angle,
             &Real::zero(),
@@ -3099,7 +3095,7 @@ impl Surface {
                             (Real::from(
                                 u128::try_from(index).expect("usize is representable as u128"),
                             ) / denominator)
-                                .map_err(|_| GeometryError::ProjectiveDivision)
+                                .map_err(GeometryError::Numeric)
                         })
                         .collect()
                 };
@@ -3363,8 +3359,8 @@ impl Surface {
             .zip(&common_weights)
             .map(|((u, v), weight)| {
                 Ok(CurvePoint2::new(
-                    (u / weight).map_err(|_| GeometryError::ProjectiveDivision)?,
-                    (v / weight).map_err(|_| GeometryError::ProjectiveDivision)?,
+                    (u / weight).map_err(GeometryError::Numeric)?,
+                    (v / weight).map_err(GeometryError::Numeric)?,
                 ))
             })
             .collect::<GeometryResult<Vec<_>>>()?;
@@ -3683,9 +3679,7 @@ impl Surface {
         {
             return Err(GeometryError::SingularSurfaceParameter);
         }
-        normal
-            .normalize()
-            .map_err(|_| GeometryError::ElementaryFunction)
+        normal.normalize().map_err(GeometryError::Numeric)
     }
 
     /// Splits a supported finite tensor-product surface along interior `u`.
@@ -3896,8 +3890,8 @@ impl Surface {
         let radius = radial
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        let x = (radial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
+        let x = (radial / &radius).map_err(GeometryError::Numeric)?;
         let y = surface.axis.cross(&x);
         Curve3::circle_arc(
             surface.axis_origin.clone() + axial,
@@ -4037,8 +4031,8 @@ impl Surface {
                         }
                     }
                     Ordering::Less | Ordering::Greater => {
-                        let parameter = ((-start_value) / denominator)
-                            .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        let parameter =
+                            ((-start_value) / denominator).map_err(GeometryError::Numeric)?;
                         isolated_line_parameters(
                             curve,
                             [(parameter, IntersectionMultiplicity::Simple)],
@@ -4400,7 +4394,7 @@ fn intersect_transverse_circle_arc_cone(
             .semi_angle
             .clone()
             .tan()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
     intersect_transverse_circle_arc_radius(curve, arc, &cone.apex, &cone.frame.z, &cone_radius)
 }
 
@@ -4432,7 +4426,7 @@ fn intersect_transverse_circle_arc_torus(
     }
     let radial_delta = (minor_squared - height_squared)
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let mut radii = vec![&torus.major_radius + &radial_delta];
     if decided_order(compare_reals(
         &radial_delta,
@@ -4543,9 +4537,7 @@ fn intersect_axial_circle_arc_torus(
             torus.center.clone() - radial,
         )
     } else {
-        let radial = radial
-            .normalize()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let radial = radial.normalize().map_err(GeometryError::Numeric)?;
         (
             torus.center.clone() + radial.clone() * &torus.major_radius,
             torus.center.clone() - radial * &torus.major_radius,
@@ -4660,14 +4652,10 @@ fn intersect_ellipse_arc_scalar_equation(
     if relation == Ordering::Greater {
         return Ok(CurveSurfaceIntersection::None);
     }
-    let amplitude = amplitude_squared
-        .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let amplitude = amplitude_squared.sqrt().map_err(GeometryError::Numeric)?;
     let phase = certified_atan2(sine_coefficient, cosine_coefficient)?;
-    let ratio = ((-center_value) / amplitude).map_err(|_| GeometryError::ProjectiveDivision)?;
-    let offset = ratio
-        .acos()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let ratio = ((-center_value) / amplitude).map_err(GeometryError::Numeric)?;
+    let offset = ratio.acos().map_err(GeometryError::Numeric)?;
     let angles = if relation == Ordering::Equal {
         vec![phase + offset]
     } else {
@@ -4884,13 +4872,13 @@ pub(crate) fn affine_transform_orientation(transform: &Matrix4) -> GeometryResul
 fn transform_point(transform: &Matrix4, point: &Point3) -> GeometryResult<Point3> {
     transform
         .transform_point3(point)
-        .map_err(|_| GeometryError::TransformFailure)
+        .map_err(GeometryError::Numeric)
 }
 
 fn transform_points(transform: &Matrix4, points: &[Point3]) -> GeometryResult<Vec<Point3>> {
     transform
         .transform_point3_batch(points)
-        .map_err(|_| GeometryError::TransformFailure)
+        .map_err(GeometryError::Numeric)
 }
 
 fn transform_surface_control_points(
@@ -4962,8 +4950,8 @@ fn project_point_to_plane_frame(
     let dv = displacement.dot(v);
     let determinant = &uu * &vv - &uv * &uv;
     Ok(Point2::new(
-        ((&du * &vv - &dv * &uv) / &determinant).map_err(|_| GeometryError::ProjectiveDivision)?,
-        ((&dv * &uu - &du * &uv) / determinant).map_err(|_| GeometryError::ProjectiveDivision)?,
+        ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?,
+        ((&dv * &uu - &du * &uv) / determinant).map_err(GeometryError::Numeric)?,
     ))
 }
 
@@ -5175,7 +5163,7 @@ fn linear_section_pcurve_carriers(
 ) -> GeometryResult<Option<Vec<SurfacePcurveClipCarrier>>> {
     let coefficient = |point: &Point3| {
         let normalized = (plane_normal.dot(&(plane_origin - point)) / denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         Ok(coefficient_offset + coefficient_scale * normalized)
     };
     let span = profile.domain().end() - profile.domain().start();
@@ -5271,7 +5259,7 @@ pub(crate) fn concatenate_rational_bezier_spans_as_nurbs(
             .expect("first rational span has weights")
             .clone()
             / &curve.weights()[0])
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         control_points.extend(
             curve
                 .affine_control_points()
@@ -5379,7 +5367,7 @@ fn rational_linear_section_carrier(
     for index in 0..=degree_plus_one {
         let alpha = (Real::from(i64::try_from(index).map_err(|_| GeometryError::InvalidDegree)?)
             / &denominator_degree)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let one_minus_alpha = Real::one() - &alpha;
         let previous_weight = (index > 0).then(|| curve.weights[index - 1].clone());
         let next_weight = (index < degree_plus_one).then(|| curve.weights[index].clone());
@@ -5406,8 +5394,8 @@ fn rational_linear_section_carrier(
         };
         let y_homogeneous = previous_y + next_y;
         elevated_points.push(section_parameter_point(
-            (x_homogeneous / &elevated_weight).map_err(|_| GeometryError::ProjectiveDivision)?,
-            (y_homogeneous / &elevated_weight).map_err(|_| GeometryError::ProjectiveDivision)?,
+            (x_homogeneous / &elevated_weight).map_err(GeometryError::Numeric)?,
+            (y_homogeneous / &elevated_weight).map_err(GeometryError::Numeric)?,
             profile_axis,
         ));
         elevated_weights.push(elevated_weight);
@@ -5452,12 +5440,9 @@ fn intersect_planes(
         - first_normal.clone() * second_constant)
         .cross(&direction);
     let point = Point3::from(Vector3::from_xyz(
-        (numerator.0[0].clone() / &direction_squared)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
-        (numerator.0[1].clone() / &direction_squared)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
-        (numerator.0[2].clone() / direction_squared)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+        (numerator.0[0].clone() / &direction_squared).map_err(GeometryError::Numeric)?,
+        (numerator.0[1].clone() / &direction_squared).map_err(GeometryError::Numeric)?,
+        (numerator.0[2].clone() / direction_squared).map_err(GeometryError::Numeric)?,
     ));
     Ok(SurfaceSurfaceIntersection::Line(Box::new(
         SurfaceIntersectionLine { point, direction },
@@ -5795,19 +5780,17 @@ fn bilinear_parameter_graph_from_endpoints(
         _ => return Ok(None),
     };
     let denominator_sum = &first_denominator + &second_denominator;
-    let middle_denominator =
-        (&denominator_sum / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let middle_denominator = (&denominator_sum / Real::from(2)).map_err(GeometryError::Numeric)?;
     let numerators = [-first_offset, -second_offset];
     let solved_controls = [
-        (&numerators[0] / &first_denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
-        ((&numerators[0] + &numerators[1]) / &denominator_sum)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
-        (&numerators[1] / &second_denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
+        (&numerators[0] / &first_denominator).map_err(GeometryError::Numeric)?,
+        ((&numerators[0] + &numerators[1]) / &denominator_sum).map_err(GeometryError::Numeric)?,
+        (&numerators[1] / &second_denominator).map_err(GeometryError::Numeric)?,
     ];
     let middle_parameter = ((first_parameter * &second_denominator
         + second_parameter * &first_denominator)
         / &denominator_sum)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
     let controls = match parameter_axis {
         TensorAxis::V => vec![
             CurvePoint2::new(solved_controls[0].clone(), first_parameter.clone()),
@@ -5893,8 +5876,7 @@ fn intersect_plane_bilinear_pole_branches(
             {
                 continue;
             }
-            let midpoint =
-                ((start + end) / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+            let midpoint = ((start + end) / Real::from(2)).map_err(GeometryError::Numeric)?;
             let midpoint_denominator =
                 linear_value(first_denominator, second_denominator, &midpoint);
             if decided_order(compare_reals(
@@ -5907,7 +5889,7 @@ fn intersect_plane_bilinear_pole_branches(
             }
             let midpoint_solved = (-linear_value(first_offset, second_offset, &midpoint)
                 / midpoint_denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
             if decided_order(compare_reals(
                 &midpoint_solved,
                 &Real::zero(),
@@ -5991,7 +5973,7 @@ fn factorized_bilinear_sections(
             &coefficients.second_offset,
             &sample,
         ) / sample_denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         if decided_order(compare_reals(
             &solved,
             &Real::zero(),
@@ -6059,7 +6041,7 @@ fn linear_root_in_unit_interval(first: &Real, second: &Real) -> GeometryResult<O
     {
         return Ok(None);
     }
-    let root = (-first / delta).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let root = (-first / delta).map_err(GeometryError::Numeric)?;
     if decided_order(compare_reals(
         &root,
         &Real::zero(),
@@ -6182,12 +6164,9 @@ pub(crate) fn rational_bilinear_parameter_curve(
             },
         );
         controls.push(Point3::new(
-            (&numerator.0[0] / &curve_weights[index])
-                .map_err(|_| GeometryError::ProjectiveDivision)?,
-            (&numerator.0[1] / &curve_weights[index])
-                .map_err(|_| GeometryError::ProjectiveDivision)?,
-            (&numerator.0[2] / &curve_weights[index])
-                .map_err(|_| GeometryError::ProjectiveDivision)?,
+            (&numerator.0[0] / &curve_weights[index]).map_err(GeometryError::Numeric)?,
+            (&numerator.0[1] / &curve_weights[index]).map_err(GeometryError::Numeric)?,
+            (&numerator.0[2] / &curve_weights[index]).map_err(GeometryError::Numeric)?,
         ));
     }
     Ok(Some(Curve3::rational_bezier(
@@ -6200,14 +6179,14 @@ fn quadratic_bernstein_product(first: &[Real; 3], second: &[Real; 3]) -> Geometr
     Ok([
         &first[0] * &second[0],
         ((&first[0] * &second[1] + &first[1] * &second[0]) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
         ((&first[0] * &second[2]
             + Real::from(4) * &first[1] * &second[1]
             + &first[2] * &second[0])
             / Real::from(6))
-        .map_err(|_| GeometryError::ProjectiveDivision)?,
+        .map_err(GeometryError::Numeric)?,
         ((&first[1] * &second[2] + &first[2] * &second[1]) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
         &first[2] * &second[2],
     ])
 }
@@ -6235,7 +6214,7 @@ fn bernstein_product(first: &[Real], second: &[Real]) -> GeometryResult<Vec<Real
             let numerator = binomial_real(first_degree, first_index)?
                 * binomial_real(second_degree, second_index)?;
             coefficient += (numerator * first_value * &second[second_index] / &denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
         }
         product.push(coefficient);
     }
@@ -6347,9 +6326,7 @@ fn intersect_plane_revolution(
             }
             continue;
         }
-        let radius = radius_squared
-            .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let radius = radius_squared.sqrt().map_err(GeometryError::Numeric)?;
         for existing in &radii {
             if decided_order(compare_reals(existing, &radius, crate::STRICT_PREDICATES))?
                 == Ordering::Equal
@@ -6358,7 +6335,7 @@ fn intersect_plane_revolution(
             }
         }
         radii.push(radius.clone());
-        let radial_direction = (radial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let radial_direction = (radial / &radius).map_err(GeometryError::Numeric)?;
         let curve = Curve3::circle_arc(
             center,
             radial_direction.clone(),
@@ -6430,9 +6407,8 @@ fn project_revolution_meridian(
     let radial_length = radial
         .norm_squared()
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
-    let radial_direction =
-        (radial.clone() / &radial_length).map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
+    let radial_direction = (radial.clone() / &radial_length).map_err(GeometryError::Numeric)?;
     for radial in &radials {
         if decided_order(compare_reals(
             &radial.cross(&radial_direction).norm_squared(),
@@ -6915,7 +6891,7 @@ fn intersect_plane_linear_tensor_graph(
 
     let coefficients = values
         .into_iter()
-        .map(|value| ((-value) / &denominator).map_err(|_| GeometryError::ProjectiveDivision))
+        .map(|value| ((-value) / &denominator).map_err(GeometryError::Numeric))
         .collect::<GeometryResult<Vec<_>>>()?;
     let coefficient_orders = coefficients
         .iter()
@@ -7118,12 +7094,10 @@ fn project_curve_onto_plane_along_direction(
     let normal = plane.u.cross(&plane.v);
     let constant = normal.dot(&Vector3::from(plane.origin.clone()));
     let ratio = |row: usize, column: usize| {
-        ((&direction.0[row] * &normal.0[column]) / denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)
+        ((&direction.0[row] * &normal.0[column]) / denominator).map_err(GeometryError::Numeric)
     };
     let translation = |row: usize| {
-        ((&direction.0[row] * &constant) / denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)
+        ((&direction.0[row] * &constant) / denominator).map_err(GeometryError::Numeric)
     };
     let projection = Matrix4::from_row_major([
         Real::one() - ratio(0, 0)?,
@@ -7193,8 +7167,7 @@ fn intersect_plane_v_linear_tensor_iso(
             Ok(SurfaceSurfaceIntersection::None)
         };
     }
-    let normalized_fraction =
-        ((-offset) / denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let normalized_fraction = ((-offset) / denominator).map_err(GeometryError::Numeric)?;
     if decided_order(compare_reals(
         &normalized_fraction,
         &Real::zero(),
@@ -7235,8 +7208,8 @@ fn intersect_plane_sphere(
         crate::STRICT_PREDICATES,
     ))? == Ordering::Equal;
     let separation = normal.dot(&(&sphere.center - &plane.origin));
-    let distance_squared = ((&separation * &separation) / &normal_squared)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let distance_squared =
+        ((&separation * &separation) / &normal_squared).map_err(GeometryError::Numeric)?;
     let radius_squared = &sphere.radius * &sphere.radius;
     match decided_order(compare_reals(
         &distance_squared,
@@ -7246,7 +7219,7 @@ fn intersect_plane_sphere(
         Ordering::Greater => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal | Ordering::Less => {
             let projection_scale =
-                (&separation / &normal_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
+                (&separation / &normal_squared).map_err(GeometryError::Numeric)?;
             let center = sphere.center.clone() - normal.clone() * projection_scale;
             if decided_order(compare_reals(
                 &distance_squared,
@@ -7258,10 +7231,10 @@ fn intersect_plane_sphere(
             }
             let radius = (radius_squared - distance_squared)
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             if axial {
                 let height = ((-&separation) / normal.dot(&sphere.frame.z))
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    .map_err(GeometryError::Numeric)?;
                 let center = sphere.center.clone() + sphere.frame.z.clone() * &height;
                 let curve = Curve3::circle_arc(
                     center,
@@ -7272,9 +7245,9 @@ fn intersect_plane_sphere(
                     Real::tau(),
                 )?;
                 let latitude = (height / &sphere.radius)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?
+                    .map_err(GeometryError::Numeric)?
                     .asin()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                    .map_err(GeometryError::Numeric)?;
                 let domain = curve.domain().clone();
                 return Ok(SurfaceSurfaceIntersection::Curve(Box::new(
                     SurfaceIntersectionCurve::new(
@@ -7284,13 +7257,8 @@ fn intersect_plane_sphere(
                     ),
                 )));
             }
-            let unit_normal = normal
-                .normalize()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
-            let x = plane
-                .u
-                .normalize()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let unit_normal = normal.normalize().map_err(GeometryError::Numeric)?;
+            let x = plane.u.normalize().map_err(GeometryError::Numeric)?;
             let y = unit_normal.cross(&x);
             Ok(SurfaceSurfaceIntersection::Circle(Curve3::circle_arc(
                 center,
@@ -7319,8 +7287,7 @@ fn intersect_plane_cylinder(
     {
         let denominator = normal.dot(&cylinder.frame.z);
         let numerator = normal.dot(&(&plane.origin - &cylinder.origin));
-        let axial_parameter =
-            (numerator / denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let axial_parameter = (numerator / denominator).map_err(GeometryError::Numeric)?;
         let center = cylinder.origin.clone() + cylinder.frame.z.clone() * axial_parameter.clone();
         let curve = Curve3::circle_arc(
             center,
@@ -7348,26 +7315,23 @@ fn intersect_plane_cylinder(
     ))? != Ordering::Equal
     {
         let separation = normal.dot(&(&plane.origin - &cylinder.origin));
-        let axial_center =
-            (separation / &axis_dot_normal).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let axial_center = (separation / &axis_dot_normal).map_err(GeometryError::Numeric)?;
         let center = cylinder.origin.clone() + cylinder.frame.z.clone() * axial_center;
         let radial_normal = normal.clone() - cylinder.frame.z.clone() * axis_dot_normal.clone();
         let radial_normal_length = radial_normal
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        let radial_parallel = (radial_normal / &radial_normal_length)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
+        let radial_parallel =
+            (radial_normal / &radial_normal_length).map_err(GeometryError::Numeric)?;
         let radial_perpendicular = cylinder.frame.z.cross(&radial_parallel);
-        let slope = (&radial_normal_length / &axis_dot_normal)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let slope = (&radial_normal_length / &axis_dot_normal).map_err(GeometryError::Numeric)?;
         let sloped_axis = radial_parallel - cylinder.frame.z.clone() * slope;
         let sloped_length = sloped_axis
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        let sloped_direction =
-            (sloped_axis / &sloped_length).map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
+        let sloped_direction = (sloped_axis / &sloped_length).map_err(GeometryError::Numeric)?;
         return Ok(SurfaceSurfaceIntersection::Ellipse(Curve3::ellipse_arc(
             center,
             radial_perpendicular,
@@ -7379,8 +7343,8 @@ fn intersect_plane_cylinder(
         )?));
     }
     let separation = normal.dot(&(&plane.origin - &cylinder.origin));
-    let distance_squared = ((&separation * &separation) / &normal_squared)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let distance_squared =
+        ((&separation * &separation) / &normal_squared).map_err(GeometryError::Numeric)?;
     let radius_squared = &cylinder.radius * &cylinder.radius;
     match decided_order(compare_reals(
         &distance_squared,
@@ -7390,7 +7354,7 @@ fn intersect_plane_cylinder(
         Ordering::Greater => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal | Ordering::Less => {
             let projection_scale =
-                (separation / &normal_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
+                (separation / &normal_squared).map_err(GeometryError::Numeric)?;
             let radial_projection = normal.clone() * projection_scale;
             let line_offset_squared = &radius_squared - &distance_squared;
             let tangent = cylinder
@@ -7398,7 +7362,7 @@ fn intersect_plane_cylinder(
                 .z
                 .cross(&normal)
                 .normalize()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             if decided_order(compare_reals(
                 &line_offset_squared,
                 &Real::zero(),
@@ -7412,9 +7376,7 @@ fn intersect_plane_cylinder(
                     },
                 )));
             }
-            let line_offset = line_offset_squared
-                .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let line_offset = line_offset_squared.sqrt().map_err(GeometryError::Numeric)?;
             Ok(SurfaceSurfaceIntersection::Lines(vec![
                 SurfaceIntersectionLine {
                     point: cylinder.origin.clone()
@@ -7460,7 +7422,7 @@ fn intersect_plane_cone(
         let radial = normal
             .cross(&cone.frame.z)
             .normalize()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
         let sine = cone.semi_angle.clone().sin();
         let cosine = cone.semi_angle.clone().cos();
         let ray = |radial: Vector3| -> GeometryResult<SurfaceIntersectionRay> {
@@ -7499,7 +7461,7 @@ fn intersect_plane_cone(
         ]));
     }
     let axial_height = (normal.dot(&(&plane.origin - &cone.apex)) / normal.dot(&cone.frame.z))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
     match decided_order(compare_reals(
         &axial_height,
         &Real::zero(),
@@ -7515,7 +7477,7 @@ fn intersect_plane_cone(
                     .semi_angle
                     .clone()
                     .tan()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                    .map_err(GeometryError::Numeric)?;
             let center = cone.apex.clone() + cone.frame.z.clone() * axial_height.clone();
             let curve = Curve3::circle_arc(
                 center,
@@ -7525,8 +7487,8 @@ fn intersect_plane_cone(
                 Real::zero(),
                 Real::from(2) * Real::pi(),
             )?;
-            let v = (axial_height / cone.semi_angle.clone().cos())
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let v =
+                (axial_height / cone.semi_angle.clone().cos()).map_err(GeometryError::Numeric)?;
             let domain = curve.domain().clone();
             Ok(SurfaceSurfaceIntersection::Curve(Box::new(
                 SurfaceIntersectionCurve::new(
@@ -7568,7 +7530,7 @@ fn intersect_plane_torus(
         {
             let distance_squared = ((&center_separation * &center_separation)
                 / normal.norm_squared())
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
             let outer_radius = &torus.major_radius + &torus.minor_radius;
             match decided_order(compare_reals(
                 &distance_squared,
@@ -7578,7 +7540,7 @@ fn intersect_plane_torus(
                 Ordering::Greater => return Ok(SurfaceSurfaceIntersection::None),
                 Ordering::Equal => {
                     let projection_scale = (center_separation / normal.norm_squared())
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
                     return Ok(SurfaceSurfaceIntersection::Point(Box::new(
                         torus.center.clone() - normal.clone() * projection_scale,
                     )));
@@ -7591,7 +7553,7 @@ fn intersect_plane_torus(
         let radial = normal
             .cross(&torus.frame.z)
             .normalize()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
         let normalize_angle = |angle: Real| -> GeometryResult<Real> {
             Ok(
                 if decided_order(compare_reals(
@@ -7638,7 +7600,7 @@ fn intersect_plane_torus(
         ]));
     }
     let axial_height = (normal.dot(&(&plane.origin - &torus.center)) / normal.dot(&torus.frame.z))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
     let axial_squared = &axial_height * &axial_height;
     let minor_squared = &torus.minor_radius * &torus.minor_radius;
     match decided_order(compare_reals(
@@ -7650,7 +7612,7 @@ fn intersect_plane_torus(
         Ordering::Equal | Ordering::Less => {
             let radial_offset = (minor_squared - axial_squared)
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             let center = torus.center.clone() + torus.frame.z.clone() * axial_height.clone();
             let normalize_angle = |angle: Real| -> GeometryResult<Real> {
                 Ok(
@@ -7743,7 +7705,7 @@ fn intersect_parallel_cylinders(
     let distance = distance_squared
         .clone()
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let radius_sum = &first.radius + &second.radius;
     let radius_difference = match decided_order(compare_reals(
         &first.radius,
@@ -7769,9 +7731,8 @@ fn intersect_parallel_cylinders(
     let along = ((&first.radius * &first.radius - &second.radius * &second.radius
         + &distance_squared)
         / (Real::from(2) * &distance))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let unit_displacement =
-        (radial_displacement / &distance).map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
+    let unit_displacement = (radial_displacement / &distance).map_err(GeometryError::Numeric)?;
     let base = first.origin.clone() + unit_displacement.clone() * &along;
     let height_squared = &first.radius * &first.radius - &along * &along;
     if decided_order(compare_reals(
@@ -7787,9 +7748,7 @@ fn intersect_parallel_cylinders(
             },
         )));
     }
-    let height = height_squared
-        .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let height = height_squared.sqrt().map_err(GeometryError::Numeric)?;
     let transverse = first.frame.z.cross(&unit_displacement);
     Ok(SurfaceSurfaceIntersection::Lines(vec![
         SurfaceIntersectionLine {
@@ -7835,9 +7794,9 @@ fn intersect_coaxial_sphere_cylinder(
         )?;
         let sphere_height = (&center - &sphere.center).dot(&sphere.frame.z);
         let latitude = (sphere_height / &sphere.radius)
-            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .map_err(GeometryError::Numeric)?
             .asin()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
         let cylinder_height = &axial_offset + height;
         let domain = curve.domain().clone();
         Ok(SurfaceIntersectionCurve::new(
@@ -7871,7 +7830,7 @@ fn intersect_coaxial_sphere_cylinder(
         Ordering::Greater => {
             let axial_distance = (sphere_radius_squared - cylinder_radius_squared)
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             if retain_pcurves {
                 return Ok(SurfaceSurfaceIntersection::Curves(vec![
                     retained_circle(axial_distance.clone())?,
@@ -7932,9 +7891,7 @@ fn intersect_coaxial_sphere_cone(
     let root_parameters = if discriminant_order == Ordering::Equal {
         vec![root_center]
     } else {
-        let root_offset = discriminant
-            .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let root_offset = discriminant.sqrt().map_err(GeometryError::Numeric)?;
         vec![&root_center - &root_offset, root_center + root_offset]
     };
     let mut has_apex = false;
@@ -7981,9 +7938,9 @@ fn intersect_coaxial_sphere_cone(
         if retain_pcurves {
             let sphere_height = (&center - &sphere.center).dot(&sphere.frame.z);
             let latitude = (sphere_height / &sphere.radius)
-                .map_err(|_| GeometryError::ProjectiveDivision)?
+                .map_err(GeometryError::Numeric)?
                 .asin()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             let domain = curve.domain().clone();
             retained.push(SurfaceIntersectionCurve::new(
                 curve,
@@ -8039,8 +7996,7 @@ fn intersect_coaxial_cylinder_cone(
 
     let sine = cone.semi_angle.clone().sin();
     let cosine = cone.semi_angle.clone().cos();
-    let slant_parameter =
-        (&cylinder.radius / &sine).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let slant_parameter = (&cylinder.radius / &sine).map_err(GeometryError::Numeric)?;
     let axial_height = &slant_parameter * cosine;
     let center = cone.apex.clone() + cone.frame.z.clone() * axial_height;
     let curve = Curve3::circle_arc(
@@ -8123,10 +8079,10 @@ fn intersect_coaxial_cones(
     let second_sine = second.semi_angle.clone().sin();
     let second_cosine = second.semi_angle.clone().cos();
     let determinant = &first_cosine * &second_sine - &first_sine * &second_cosine;
-    let first_slant = (&axial_offset * &second_sine / &determinant)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let second_slant = (&axial_offset * &first_sine / determinant)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let first_slant =
+        (&axial_offset * &second_sine / &determinant).map_err(GeometryError::Numeric)?;
+    let second_slant =
+        (&axial_offset * &first_sine / determinant).map_err(GeometryError::Numeric)?;
     let first_order = decided_order(compare_reals(
         &first_slant,
         &Real::zero(),
@@ -8194,10 +8150,10 @@ fn intersect_counteroriented_coaxial_cones(
     let second_sine = second.semi_angle.clone().sin();
     let second_cosine = second.semi_angle.clone().cos();
     let denominator = &first_cosine * &second_sine + &first_sine * &second_cosine;
-    let first_slant = (&axial_offset * &second_sine / &denominator)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let second_slant = (&axial_offset * &first_sine / denominator)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let first_slant =
+        (&axial_offset * &second_sine / &denominator).map_err(GeometryError::Numeric)?;
+    let second_slant =
+        (&axial_offset * &first_sine / denominator).map_err(GeometryError::Numeric)?;
     let axial_height = &first_slant * &first_cosine;
     let radius = &first_slant * &first_sine;
     let center = first.apex.clone() + first.frame.z.clone() * axial_height;
@@ -8320,7 +8276,7 @@ fn intersect_meridian_circles(
     let distance = distance_squared
         .clone()
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let radius_sum = first_radius + second_radius;
     let radius_difference = match decided_order(compare_reals(
         first_radius,
@@ -8346,9 +8302,8 @@ fn intersect_meridian_circles(
 
     let along = ((first_radius * first_radius - second_radius * second_radius + &distance_squared)
         / (Real::from(2) * &distance))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let inverse_distance =
-        (Real::one() / distance).map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
+    let inverse_distance = (Real::one() / distance).map_err(GeometryError::Numeric)?;
     let unit_x = displacement_x * &inverse_distance;
     let unit_y = displacement_y * inverse_distance;
     let base_x = first_center_x + &unit_x * &along;
@@ -8362,9 +8317,7 @@ fn intersect_meridian_circles(
         Ordering::Less => Vec::new(),
         Ordering::Equal => vec![(base_x, base_y)],
         Ordering::Greater => {
-            let transverse = transverse_squared
-                .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let transverse = transverse_squared.sqrt().map_err(GeometryError::Numeric)?;
             vec![
                 (
                     &base_x + &unit_y * &transverse,
@@ -8512,9 +8465,7 @@ fn intersect_coaxial_cylinder_torus(
         Ordering::Less => return Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => vec![torus_height],
         Ordering::Greater => {
-            let height_offset = height_squared
-                .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let height_offset = height_squared.sqrt().map_err(GeometryError::Numeric)?;
             vec![&torus_height - &height_offset, torus_height + height_offset]
         }
     };
@@ -8619,9 +8570,7 @@ fn intersect_coaxial_cone_torus(
         Ordering::Less => return Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => vec![projected_center],
         Ordering::Greater => {
-            let offset = discriminant
-                .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let offset = discriminant.sqrt().map_err(GeometryError::Numeric)?;
             vec![&projected_center - &offset, projected_center + offset]
         }
     };
@@ -8837,7 +8786,7 @@ fn intersect_spheres(
     let distance = distance_squared
         .clone()
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let radius_sum = &first.radius + &second.radius;
     let radius_difference = match decided_order(compare_reals(
         &first.radius,
@@ -8865,9 +8814,8 @@ fn intersect_spheres(
     let center_distance = ((&first.radius * &first.radius - &second.radius * &second.radius
         + &distance_squared)
         / denominator)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let inverse_distance =
-        (Real::one() / distance).map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
+    let inverse_distance = (Real::one() / distance).map_err(GeometryError::Numeric)?;
     let normal = displacement * inverse_distance;
     let center = first.center.clone() + normal.clone() * &center_distance;
     let circle_radius_squared = &first.radius * &first.radius - &center_distance * &center_distance;
@@ -8881,7 +8829,7 @@ fn intersect_spheres(
         Ordering::Greater => {
             let radius = circle_radius_squared
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             let first_axial = decided_order(compare_reals(
                 &normal.cross(&first.frame.z).norm_squared(),
                 &Real::zero(),
@@ -8907,13 +8855,13 @@ fn intersect_spheres(
                     let first_height = (&center - &first.center).dot(&first.frame.z);
                     let second_height = (&center - &second.center).dot(&second.frame.z);
                     let first_latitude = (first_height / &first.radius)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?
+                        .map_err(GeometryError::Numeric)?
                         .asin()
-                        .map_err(|_| GeometryError::ElementaryFunction)?;
+                        .map_err(GeometryError::Numeric)?;
                     let second_latitude = (second_height / &second.radius)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?
+                        .map_err(GeometryError::Numeric)?
                         .asin()
-                        .map_err(|_| GeometryError::ElementaryFunction)?;
+                        .map_err(GeometryError::Numeric)?;
                     let domain = curve.domain().clone();
                     let second_pcurve = if frames_equal {
                         SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), second_latitude)
@@ -8938,7 +8886,7 @@ fn intersect_spheres(
             }
             let (x, y) = normal
                 .orthonormal_basis_checked()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             Ok(SurfaceSurfaceIntersection::Circle(Curve3::circle_arc(
                 center,
                 x,
@@ -8971,7 +8919,7 @@ fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> 
                 Ok(QuadraticRoots::None)
             };
         }
-        let parameter = ((-c) / b).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let parameter = ((-c) / b).map_err(GeometryError::Numeric)?;
         return Ok(QuadraticRoots::Isolated(vec![(
             parameter,
             IntersectionMultiplicity::Simple,
@@ -8985,22 +8933,17 @@ fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> 
     ))? {
         Ordering::Less => Ok(QuadraticRoots::None),
         Ordering::Equal => {
-            let parameter =
-                ((-b) / (Real::from(2) * a)).map_err(|_| GeometryError::ProjectiveDivision)?;
+            let parameter = ((-b) / (Real::from(2) * a)).map_err(GeometryError::Numeric)?;
             Ok(QuadraticRoots::Isolated(vec![(
                 parameter,
                 IntersectionMultiplicity::Tangent,
             )]))
         }
         Ordering::Greater => {
-            let root = discriminant
-                .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let root = discriminant.sqrt().map_err(GeometryError::Numeric)?;
             let denominator = Real::from(2) * a;
-            let first =
-                ((-&b - &root) / &denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
-            let second =
-                ((-&b + root) / denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
+            let first = ((-&b - &root) / &denominator).map_err(GeometryError::Numeric)?;
+            let second = ((-&b + root) / denominator).map_err(GeometryError::Numeric)?;
             Ok(QuadraticRoots::Isolated(vec![
                 (first, IntersectionMultiplicity::Simple),
                 (second, IntersectionMultiplicity::Simple),
@@ -9158,8 +9101,7 @@ fn intersect_line_cone(
             if start_order == Ordering::Less && end_order == Ordering::Less {
                 return Ok(CurveSurfaceIntersection::None);
             }
-            let boundary = ((-&axial_start) / &axial_direction)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let boundary = ((-&axial_start) / &axial_direction).map_err(GeometryError::Numeric)?;
             if start_order == Ordering::Equal || end_order == Ordering::Equal {
                 return isolated_line_parameters(
                     curve,
@@ -9240,10 +9182,8 @@ fn locate_line_parameter(
         ))? {
             Ordering::Equal => {}
             Ordering::Less | Ordering::Greater => {
-                parameter = Some(
-                    (&offset.0[axis] / &direction.0[axis])
-                        .map_err(|_| GeometryError::ProjectiveDivision)?,
-                );
+                parameter =
+                    Some((&offset.0[axis] / &direction.0[axis]).map_err(GeometryError::Numeric)?);
                 parameter_axis = Some(axis);
                 break;
             }
@@ -9535,10 +9475,8 @@ fn locate_ellipse_arc_parameters(
             return Err(GeometryError::PredicateUnresolved { needed, stage });
         }
     }
-    let normalized_x =
-        (x_coordinate / &arc.x_radius).map_err(|_| GeometryError::ProjectiveDivision)?;
-    let normalized_y =
-        (y_coordinate / &arc.y_radius).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let normalized_x = (x_coordinate / &arc.x_radius).map_err(GeometryError::Numeric)?;
+    let normalized_y = (y_coordinate / &arc.y_radius).map_err(GeometryError::Numeric)?;
     let normalized_radius_squared = &normalized_x * &normalized_x + &normalized_y * &normalized_y;
     match compare_reals(
         &normalized_radius_squared,
@@ -9610,9 +9548,9 @@ fn atan2_replay_candidate(y: &Real, x: &Real) -> GeometryResult<Real> {
     }
     if x_approx == 0.0 {
         return if y_approx > 0.0 {
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
+            (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)
         } else if y_approx < 0.0 {
-            (-Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
+            (-Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)
         } else {
             Err(GeometryError::PredicateUnresolved {
                 needed: hyperlimit::RefinementNeed::RealRefinement,
@@ -9621,9 +9559,9 @@ fn atan2_replay_candidate(y: &Real, x: &Real) -> GeometryResult<Real> {
         };
     }
     let principal = (y / x)
-        .map_err(|_| GeometryError::ProjectiveDivision)?
+        .map_err(GeometryError::Numeric)?
         .atan()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     Ok(if x_approx > 0.0 {
         principal
     } else if y_approx >= 0.0 {
@@ -9759,24 +9697,24 @@ pub(crate) fn certified_atan2(y: Real, x: Real) -> GeometryResult<Real> {
         (Ordering::Equal, Ordering::Equal | Ordering::Greater) => Ok(Real::zero()),
         (Ordering::Equal, Ordering::Less) => Ok(Real::pi()),
         (Ordering::Greater, Ordering::Equal) => {
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
+            (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)
         }
         (Ordering::Less, Ordering::Equal) => {
-            (-Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
+            (-Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)
         }
         (_, Ordering::Greater) => (y / x)
-            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .map_err(GeometryError::Numeric)?
             .atan()
-            .map_err(|_| GeometryError::ElementaryFunction),
+            .map_err(GeometryError::Numeric),
         (Ordering::Greater, Ordering::Less) => Ok((y / x)
-            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .map_err(GeometryError::Numeric)?
             .atan()
-            .map_err(|_| GeometryError::ElementaryFunction)?
+            .map_err(GeometryError::Numeric)?
             + Real::pi()),
         (Ordering::Less, Ordering::Less) => Ok((y / x)
-            .map_err(|_| GeometryError::ProjectiveDivision)?
+            .map_err(GeometryError::Numeric)?
             .atan()
-            .map_err(|_| GeometryError::ElementaryFunction)?
+            .map_err(GeometryError::Numeric)?
             - Real::pi()),
     }
 }
@@ -9954,9 +9892,7 @@ fn revolution_bounds(surface: &RevolutionSurface) -> GeometryResult<Aabb> {
             }
         }
     }
-    let radius = radius_squared
-        .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let radius = radius_squared.sqrt().map_err(GeometryError::Numeric)?;
     let coordinate_bounds =
         |origin: &Real, axis_component: &Real| -> GeometryResult<(Real, Real)> {
             let first_axial = axis_component * &axial_min;
@@ -9973,7 +9909,7 @@ fn revolution_bounds(surface: &RevolutionSurface) -> GeometryResult<Aabb> {
             };
             let radial_factor = (Real::one() - axis_component * axis_component)
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             let radial_extent = &radius * radial_factor;
             Ok((
                 origin + axial_low - &radial_extent,
@@ -10353,9 +10289,8 @@ fn evaluate_homogeneous_de_boor_jets(
             let knot_index = span - degree + local;
             let denominator = &knots[knot_index + degree - stage + 1] - &knots[knot_index];
             let alpha = ((parameter - &knots[knot_index]) / &denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
-            let alpha_derivative =
-                (Real::one() / &denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
+            let alpha_derivative = (Real::one() / &denominator).map_err(GeometryError::Numeric)?;
             let left = level[local - 1].clone();
             let right = level[local].clone();
             let mut jets = Vec::with_capacity(order + 1);
@@ -10437,9 +10372,9 @@ fn project_homogeneous_derivative_order(
 
 fn divide_vector_by_real(vector: Vector3, denominator: &Real) -> GeometryResult<Vector3> {
     Ok(Vector3::from_xyz(
-        (vector.0[0].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
-        (vector.0[1].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
-        (vector.0[2].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
+        (vector.0[0].clone() / denominator).map_err(GeometryError::Numeric)?,
+        (vector.0[1].clone() / denominator).map_err(GeometryError::Numeric)?,
+        (vector.0[2].clone() / denominator).map_err(GeometryError::Numeric)?,
     ))
 }
 
@@ -10456,8 +10391,8 @@ fn normalized_greville_coordinates(
             let sum = knots[index + 1..=index + degree]
                 .iter()
                 .fold(Real::zero(), |sum, knot| sum + knot);
-            let greville = (sum / &degree_scalar).map_err(|_| GeometryError::ProjectiveDivision)?;
-            ((greville - domain_start) / domain_span).map_err(|_| GeometryError::ProjectiveDivision)
+            let greville = (sum / &degree_scalar).map_err(GeometryError::Numeric)?;
+            ((greville - domain_start) / domain_span).map_err(GeometryError::Numeric)
         })
         .collect()
 }
@@ -10467,7 +10402,7 @@ fn binomial_real(n: usize, k: usize) -> GeometryResult<Real> {
     let mut result = Real::one();
     for index in 1..=k {
         result = (result * Real::from((n + 1 - index) as u64) / Real::from(index as u64))
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
     }
     Ok(result)
 }
@@ -10479,11 +10414,11 @@ fn project_homogeneous_derivative(
     let denominator = &value.w * &value.w;
     Ok(Vector3::from_xyz(
         ((&derivative.x * &value.w - &value.x * &derivative.w) / &denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
         ((&derivative.y * &value.w - &value.y * &derivative.w) / &denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
         ((&derivative.z * &value.w - &value.z * &derivative.w) / denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
     ))
 }
 
@@ -10789,8 +10724,8 @@ fn insert_nurbs_knot_once(
             controls[index - 1].clone()
         } else {
             let denominator = &knots[index + degree] - &knots[index];
-            let alpha = ((parameter - &knots[index]) / denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let alpha =
+                ((parameter - &knots[index]) / denominator).map_err(GeometryError::Numeric)?;
             controls[index - 1].lerp(&controls[index], &alpha)
         };
         next.push(value);
@@ -10839,6 +10774,42 @@ mod tests {
             point3_equal(left, right, crate::TEST_ORACLE_PREDICATES).value(),
             Some(true)
         );
+    }
+
+    #[test]
+    fn homogeneous_projection_retains_numeric_failure_causes() {
+        use hyperreal::Problem;
+        use std::error::Error;
+
+        // This positive difference is below the scalar zero-test budget. Its
+        // opaque exponentials prevent structural affine cancellation. It must
+        // stay distinct from a denominator proven to be exactly zero.
+        let tiny: Real = "1e-2000".parse().unwrap();
+        let first = (Real::pi() + &tiny + &tiny).exp().unwrap();
+        let second = (Real::pi() + tiny).exp().unwrap();
+        let unresolved = first - second;
+
+        for (denominator, expected) in [
+            (Real::zero(), Problem::DivideByZero),
+            (unresolved, Problem::UnknownZero),
+        ] {
+            let point = HomogeneousPoint3 {
+                x: r(1),
+                y: r(2),
+                z: r(3),
+                w: denominator.clone(),
+            };
+            let error = point.project().unwrap_err();
+            assert_eq!(error, GeometryError::Numeric(expected));
+            assert_eq!(
+                error.source().unwrap().downcast_ref::<Problem>(),
+                Some(&expected)
+            );
+            assert_eq!(
+                divide_vector_by_real(Vector3::from_xyz(r(1), r(2), r(3)), &denominator),
+                Err(GeometryError::Numeric(expected))
+            );
+        }
     }
 
     #[test]

@@ -146,7 +146,7 @@ impl Model {
             return Err(TopologyEditError::DegenerateFaceSplit);
         }
         let midpoint = ((curve.domain().start() + curve.domain().end()) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let midpoint_point = curve.point_at(&midpoint)?;
         if exact_point_order(&start, &midpoint_point)? == std::cmp::Ordering::Equal {
             return Err(TopologyEditError::DegenerateFaceSplit);
@@ -169,8 +169,8 @@ impl Model {
                 SurfacePcurveCorrespondence::Affine { scale, offset } => {
                     let source_span = range_end - range_start;
                     let spatial_span = spatial.domain().end() - spatial.domain().start();
-                    let domain_scale = (spatial_span / source_span)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    let domain_scale =
+                        (spatial_span / source_span).map_err(GeometryError::Numeric)?;
                     let edge_scale = &domain_scale * scale;
                     let edge_offset =
                         spatial.domain().start() + &domain_scale * (offset - range_start);
@@ -431,7 +431,7 @@ impl Model {
 
         let start = curve.start()?;
         let midpoint = ((curve.domain().start() + curve.domain().end()) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let midpoint_point = curve.point_at(&midpoint)?;
         let ranges = [
             (curve.domain().start(), &midpoint),
@@ -450,8 +450,8 @@ impl Model {
                 SurfacePcurveCorrespondence::Affine { scale, offset } => {
                     let source_span = range_end - range_start;
                     let spatial_span = spatial.domain().end() - spatial.domain().start();
-                    let domain_scale = (spatial_span / source_span)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    let domain_scale =
+                        (spatial_span / source_span).map_err(GeometryError::Numeric)?;
                     let edge_scale = &domain_scale * scale;
                     let edge_offset =
                         spatial.domain().start() + &domain_scale * (offset - range_start);
@@ -641,7 +641,7 @@ impl Model {
             return Err(TopologyEditError::DegenerateFaceSplit);
         }
         let midpoint = ((curve.domain().start() + curve.domain().end()) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let midpoint_point = curve.point_at(&midpoint)?;
         if exact_point_order(&start, &midpoint_point)? == std::cmp::Ordering::Equal {
             return Err(TopologyEditError::DegenerateFaceSplit);
@@ -714,8 +714,8 @@ impl Model {
                 SurfacePcurveCorrespondence::Affine { scale, offset } => {
                     let source_span = range_end - range_start;
                     let spatial_span = spatial.domain().end() - spatial.domain().start();
-                    let domain_scale = (spatial_span / source_span)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    let domain_scale =
+                        (spatial_span / source_span).map_err(GeometryError::Numeric)?;
                     let edge_scale = &domain_scale * scale;
                     let edge_offset =
                         spatial.domain().start() + &domain_scale * (offset - range_start);

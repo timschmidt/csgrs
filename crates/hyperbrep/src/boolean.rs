@@ -482,7 +482,18 @@ impl fmt::Display for BooleanError {
     }
 }
 
-impl std::error::Error for BooleanError {}
+impl std::error::Error for BooleanError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Geometry(error) => Some(error),
+            Self::Construction(error) => Some(error),
+            Self::Topology(error) => Some(error),
+            Self::Query(error) => Some(error),
+            // FallbackFailed retains both causes in its public fields.
+            _ => None,
+        }
+    }
+}
 
 impl From<GeometryError> for BooleanError {
     fn from(value: GeometryError) -> Self {
@@ -1199,7 +1210,7 @@ fn planar_trace_crosses_face_interior(
     trace: &Curve3,
 ) -> Result<bool, GeometryError> {
     let middle = ((trace.domain().start() + trace.domain().end()) / Real::from(2))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
     let point = trace.point_at(&middle)?;
     let surface = face_surface(model, face);
     let parameter = project_to_plane(surface, &point)?;
@@ -1492,8 +1503,7 @@ fn face_interior_witnesses(model: &Model, face: FaceId) -> Result<Vec<Point3>, B
                 .start()
                 .y()
                 .clone();
-            ((line.start().y() + upper) / Real::from(2))
-                .map_err(|_| GeometryError::ProjectiveDivision)?
+            ((line.start().y() + upper) / Real::from(2)).map_err(GeometryError::Numeric)?
         } else {
             let increasing = exact_order(line.start().x(), line.end().x())? == Ordering::Less;
             let upper = match face_record.orientation() {
@@ -1501,15 +1511,13 @@ fn face_interior_witnesses(model: &Model, face: FaceId) -> Result<Vec<Point3>, B
                 crate::Orientation::Reversed => !increasing,
             };
             let pole = if upper {
-                (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?
+                (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?
             } else {
-                -(Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?
+                -(Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?
             };
-            ((line.start().y() + pole) / Real::from(2))
-                .map_err(|_| GeometryError::ProjectiveDivision)?
+            ((line.start().y() + pole) / Real::from(2)).map_err(GeometryError::Numeric)?
         };
-        let quarter =
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
         return (0..4)
             .map(|index| {
                 surface
@@ -1596,10 +1604,10 @@ fn face_interior_witnesses(model: &Model, face: FaceId) -> Result<Vec<Point3>, B
             let denominator = Real::from(denominator_value);
             for u_index in 1..denominator_value {
                 for v_index in 1..denominator_value {
-                    let u_fraction = (Real::from(u_index) / &denominator)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
-                    let v_fraction = (Real::from(v_index) / &denominator)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    let u_fraction =
+                        (Real::from(u_index) / &denominator).map_err(GeometryError::Numeric)?;
+                    let v_fraction =
+                        (Real::from(v_index) / &denominator).map_err(GeometryError::Numeric)?;
                     candidates.push(hypercurve::Point2::new(
                         &min_x + (&max_x - &min_x) * u_fraction,
                         &min_y + (&max_y - &min_y) * v_fraction,
@@ -1644,7 +1652,7 @@ fn append_curved_boundary_witness_candidates(
     vertex_average: &Option<hypercurve::Point2>,
     candidates: &mut Vec<hypercurve::Point2>,
 ) -> Result<(), GeometryError> {
-    let half = (Real::one() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let half = (Real::one() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let mut outer_boundary_probes = vertices.to_vec();
     for curve in outer.curves() {
         let midpoint = curve
@@ -1727,11 +1735,11 @@ fn surface_parameter_witness(
 ) -> Result<Real, GeometryError> {
     match domain {
         crate::SurfaceParameterDomain::Unbounded => Ok(Real::zero()),
-        crate::SurfaceParameterDomain::Closed(domain) => ((domain.start() + domain.end())
-            / Real::from(2))
-        .map_err(|_| GeometryError::ProjectiveDivision),
+        crate::SurfaceParameterDomain::Closed(domain) => {
+            ((domain.start() + domain.end()) / Real::from(2)).map_err(GeometryError::Numeric)
+        }
         crate::SurfaceParameterDomain::Periodic { start, period } => {
-            Ok(start + (period / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?)
+            Ok(start + (period / Real::from(2)).map_err(GeometryError::Numeric)?)
         }
         crate::SurfaceParameterDomain::LowerBounded { start } => Ok(start + Real::one()),
     }
@@ -1763,8 +1771,8 @@ fn average_planar_points(
         });
     let count = Real::from(points.len() as u64);
     Ok(Some(hypercurve::Point2::new(
-        (x / &count).map_err(|_| GeometryError::ProjectiveDivision)?,
-        (y / count).map_err(|_| GeometryError::ProjectiveDivision)?,
+        (x / &count).map_err(GeometryError::Numeric)?,
+        (y / count).map_err(GeometryError::Numeric)?,
     )))
 }
 
@@ -2400,7 +2408,7 @@ fn copy_selected_wire(
                 crate::Direction::Reversed => (mapped_domain.end(), mapped_domain.start()),
             };
             let scale = ((edge_end - edge_start) / (pcurve_end - pcurve_start))
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
             let offset = edge_start - &scale * pcurve_start;
             (
                 pcurve,
@@ -3557,7 +3565,7 @@ fn push_contained_face_curve_fragments(
             );
         let midpoint = ((fragment.curve().domain().start() + fragment.curve().domain().end())
             / Real::from(2))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
         let parameter = fragment.first_pcurve().point_at(&midpoint)?;
         let parameter = hypercurve::Point2::new(parameter.x, parameter.y);
         match contained_model.classify_surface_parameter_on_face(contained_face, &parameter)? {
@@ -4014,7 +4022,7 @@ fn canonical_surface_edge_parameter(
     }
     for index in 0..parameters.len() - 1 {
         let midpoint = ((&parameters[index] + &parameters[index + 1]) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         if exact_order(observed, &midpoint)? == Ordering::Less {
             return Ok(Some(parameters[index].clone()));
         }
@@ -4341,7 +4349,7 @@ fn surface_parameter_lines(
     };
     let direction_squared = extrusion_direction.norm_squared();
     let factor = (line.direction.dot(extrusion_direction) / &direction_squared)
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
     let replay = extrusion_direction.clone() * &factor;
     for (actual, expected) in line.direction.0.iter().zip(replay.0.iter()) {
         if exact_order(actual, expected)? != Ordering::Equal {
@@ -4380,8 +4388,7 @@ fn spanning_parameter_line_interval(
             continue;
         }
         for bound in [lower, upper] {
-            let parameter =
-                ((bound - coordinate) / delta).map_err(|_| GeometryError::ProjectiveDivision)?;
+            let parameter = ((bound - coordinate) / delta).map_err(GeometryError::Numeric)?;
             minimum = Some(match minimum {
                 Some(current) => exact_min(&parameter, &current)?,
                 None => parameter.clone(),
@@ -4415,12 +4422,10 @@ fn parameter_on_parameter_line(
     point: &hypercurve::Point2,
 ) -> Result<Real, GeometryError> {
     if exact_order(direction.x(), &Real::zero())? != Ordering::Equal {
-        return ((point.x() - origin.x()) / direction.x())
-            .map_err(|_| GeometryError::ProjectiveDivision);
+        return ((point.x() - origin.x()) / direction.x()).map_err(GeometryError::Numeric);
     }
     if exact_order(direction.y(), &Real::zero())? != Ordering::Equal {
-        return ((point.y() - origin.y()) / direction.y())
-            .map_err(|_| GeometryError::ProjectiveDivision);
+        return ((point.y() - origin.y()) / direction.y()).map_err(GeometryError::Numeric);
     }
     Err(GeometryError::DegenerateLine)
 }
@@ -4618,7 +4623,7 @@ fn coplanar_boundary_split_traces(
                 let end = fragment.point_at(fragment.domain().end())?;
                 let middle_parameter = ((fragment.domain().start() + fragment.domain().end())
                     / Real::from(2))
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
                 let middle = fragment.point_at(&middle_parameter)?;
                 let classify = |point: &Point3| {
                     let parameter = project_to_plane(target_surface, point)?;
@@ -4740,9 +4745,9 @@ fn surface_parameters_of_point(
         } => {
             let offset = point - &center;
             let latitude = (offset.dot(&axis) / radius)
-                .map_err(|_| GeometryError::ProjectiveDivision)?
+                .map_err(GeometryError::Numeric)?
                 .asin()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             periodic_parameters(certified_atan2(offset.dot(&y), offset.dot(&x))?, latitude)?
         }
         SurfaceExactData::Cone {
@@ -4753,8 +4758,8 @@ fn surface_parameters_of_point(
             semi_angle,
         } => {
             let offset = point - &apex;
-            let parameter = (offset.dot(&axis) / semi_angle.cos())
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let parameter =
+                (offset.dot(&axis) / semi_angle.cos()).map_err(GeometryError::Numeric)?;
             periodic_parameters(certified_atan2(offset.dot(&y), offset.dot(&x))?, parameter)?
         }
         SurfaceExactData::Torus {
@@ -4770,7 +4775,7 @@ fn surface_parameters_of_point(
             let y_coordinate = offset.dot(&y);
             let radial = (&x_coordinate * &x_coordinate + &y_coordinate * &y_coordinate)
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             let longitude = certified_atan2(y_coordinate, x_coordinate)?;
             let latitude = certified_atan2(offset.dot(&axis), radial - major_radius)?;
             periodic_parameter_pairs(longitude, latitude)?
@@ -4886,8 +4891,7 @@ fn spanning_segment_on_planar_face(
             continue;
         }
         for bound in [lower, upper] {
-            let parameter =
-                ((bound - coordinate) / delta).map_err(|_| GeometryError::ProjectiveDivision)?;
+            let parameter = ((bound - coordinate) / delta).map_err(GeometryError::Numeric)?;
             let replaces_minimum = match &minimum {
                 Some(current) => exact_order(&parameter, current)? == Ordering::Less,
                 None => true,
@@ -4967,8 +4971,8 @@ fn trim_segment_to_planar_face(
         if exact_order(&interval[0], &interval[1])? != Ordering::Less {
             continue;
         }
-        let midpoint = ((&interval[0] + &interval[1]) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let midpoint =
+            ((&interval[0] + &interval[1]) / Real::from(2)).map_err(GeometryError::Numeric)?;
         match crate::error::classified(region.classify_point(&source.point_at(midpoint).into()))? {
             Classification::Decided(RegionPointLocation::Inside) => {
                 let start = source.point_at(interval[0].clone());
@@ -5112,8 +5116,8 @@ fn project_to_plane(
     let dv = displacement.dot(v);
     let determinant = &uu * &vv - &uv * &uv;
     Ok(hypercurve::Point2::new(
-        ((&du * &vv - &dv * &uv) / &determinant).map_err(|_| GeometryError::ProjectiveDivision)?,
-        ((&dv * &uu - &du * &uv) / determinant).map_err(|_| GeometryError::ProjectiveDivision)?,
+        ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?,
+        ((&dv * &uu - &du * &uv) / determinant).map_err(GeometryError::Numeric)?,
     ))
 }
 
@@ -5643,7 +5647,7 @@ fn oriented_revolution_region(
     let (model, solid) = crate::builder::revolve_region(outer, holes)?;
     let (x, y) = axis
         .orthonormal_basis_checked()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let transform = Matrix4::affine_orthonormal(
         orthonormal_linear(&x, &y, axis),
         [origin.x.clone(), origin.y.clone(), origin.z.clone()],
@@ -5798,7 +5802,7 @@ fn oriented_cylinder_boolean(
     let (x, y) = first
         .axis
         .orthonormal_basis_checked()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let linear = orthonormal_linear(&x, &y, &first.axis);
     let translation = [
         first.origin.x.clone(),
@@ -5904,7 +5908,7 @@ fn oriented_cylinder_segment(
     let (x, y) = profile
         .axis
         .orthonormal_basis_checked()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let transform = Matrix4::affine_orthonormal(
         orthonormal_linear(&x, &y, &profile.axis),
         [base.x, base.y, base.z],
@@ -6053,7 +6057,7 @@ fn oriented_cone_frustum_segment(
     let local_z = -profile.axis.clone();
     let (x, y) = local_z
         .orthonormal_basis_checked()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let base = profile.apex.clone() + profile.axis.clone() * (maximum * cosine);
     let transform = Matrix4::affine_orthonormal(
         orthonormal_linear(&x, &y, &local_z),
@@ -6380,8 +6384,8 @@ fn trim_conic_to_planar_face(
     }
     let surface = face_surface(model, face);
     let region = planar_face_region(model, face)?;
-    let quarter = (Real::tau() / Real::from(4)).map_err(|_| GeometryError::ProjectiveDivision)?;
-    let half_quarter = (&quarter / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let quarter = (Real::tau() / Real::from(4)).map_err(GeometryError::Numeric)?;
+    let half_quarter = (&quarter / Real::from(2)).map_err(GeometryError::Numeric)?;
     let weight = half_quarter.cos();
     let direction = Real::from(data.direction);
     let mut retained_fragments = Vec::new();
@@ -6389,7 +6393,7 @@ fn trim_conic_to_planar_face(
         let start_angle = &data.angle_at_start + &direction * (&quarter * Real::from(index));
         let end_angle = &start_angle + &direction * &quarter;
         let middle_angle = (&start_angle + &end_angle) / Real::from(2);
-        let middle_angle = middle_angle.map_err(|_| GeometryError::ProjectiveDivision)?;
+        let middle_angle = middle_angle.map_err(GeometryError::Numeric)?;
         let start = ellipse_arc_point(&data, &start_angle, None)?;
         let control = ellipse_arc_point(&data, &middle_angle, Some(&weight))?;
         let end = ellipse_arc_point(&data, &end_angle, None)?;
@@ -6555,8 +6559,8 @@ fn concatenate_spatial_rational_beziers(curves: &[Curve3]) -> Result<Curve3, Geo
                 .last()
                 .expect("preceding span has an endpoint weight");
             if exact_order(preceding_weight, &curve_weights[0])? != Ordering::Equal {
-                let scale = (preceding_weight / &curve_weights[0])
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                let scale =
+                    (preceding_weight / &curve_weights[0]).map_err(GeometryError::Numeric)?;
                 for weight in &mut curve_weights {
                     *weight = &*weight * &scale;
                 }
@@ -6590,8 +6594,8 @@ fn ellipse_arc_point(
     let mut x_scale = &data.x_radius * angle.clone().cos();
     let mut y_scale = &data.y_radius * angle.clone().sin();
     if let Some(weight) = weight {
-        x_scale = (x_scale / weight).map_err(|_| GeometryError::ProjectiveDivision)?;
-        y_scale = (y_scale / weight).map_err(|_| GeometryError::ProjectiveDivision)?;
+        x_scale = (x_scale / weight).map_err(GeometryError::Numeric)?;
+        y_scale = (y_scale / weight).map_err(GeometryError::Numeric)?;
     }
     Ok(data.center.clone() + data.x.clone() * x_scale + data.y.clone() * y_scale)
 }

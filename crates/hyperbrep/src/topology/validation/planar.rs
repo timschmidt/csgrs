@@ -527,8 +527,8 @@ impl ModelBuilder {
             {
                 continue;
             }
-            let midpoint = ((&interval[0] + &interval[1]) / Real::from(2))
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let midpoint =
+                ((&interval[0] + &interval[1]) / Real::from(2)).map_err(GeometryError::Numeric)?;
             let midpoint = point.clone() + direction.clone() * midpoint;
             let midpoint = project_point_to_surface_plane(&midpoint, surface)?;
             match crate::error::classified(region.classify_point(&midpoint.clone().into()))
@@ -637,7 +637,7 @@ impl ModelBuilder {
                 continue;
             }
             let parameter = ((-planar_surface_value(surface, point)) / denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
             if decided_model_order(compare_reals(
                 &parameter,
                 &Real::zero(),

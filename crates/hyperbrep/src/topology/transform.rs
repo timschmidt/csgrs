@@ -19,7 +19,7 @@ impl Model {
                 transform
                     .transform_point3(&vertex.point)
                     .map(|point| Vertex { point })
-                    .map_err(|_| GeometryError::TransformFailure)
+                    .map_err(GeometryError::Numeric)
             })
             .collect::<Result<Vec<_>, _>>()?;
         let curves = self
@@ -107,7 +107,7 @@ impl Model {
                         Ok(CertifiedCylinderShell {
                             origin: transform
                                 .transform_point3(&certificate.origin)
-                                .map_err(|_| GeometryError::TransformFailure)?,
+                                .map_err(GeometryError::Numeric)?,
                             axis: transform.transform_direction3(&certificate.axis),
                             radius: certificate.radius.clone(),
                             v_min: certificate.v_min.clone(),
@@ -123,7 +123,7 @@ impl Model {
                                         } => CertifiedCylinderSphereSubtraction::Void {
                                             center: transform
                                                 .transform_point3(center)
-                                                .map_err(|_| GeometryError::TransformFailure)?,
+                                                .map_err(GeometryError::Numeric)?,
                                             radius: radius.clone(),
                                         },
                                         CertifiedCylinderSphereSubtraction::Component {
@@ -133,7 +133,7 @@ impl Model {
                                         } => CertifiedCylinderSphereSubtraction::Component {
                                             center: transform
                                                 .transform_point3(center)
-                                                .map_err(|_| GeometryError::TransformFailure)?,
+                                                .map_err(GeometryError::Numeric)?,
                                             radius: radius.clone(),
                                             side: *side,
                                         },
@@ -156,7 +156,7 @@ impl Model {
                         Ok(CertifiedSphereShell {
                             center: transform
                                 .transform_point3(&certificate.center)
-                                .map_err(|_| GeometryError::TransformFailure)?,
+                                .map_err(GeometryError::Numeric)?,
                             radius: certificate.radius.clone(),
                             region: match &certificate.region {
                                 CertifiedSphereRegion::Whole => CertifiedSphereRegion::Whole,
@@ -179,7 +179,7 @@ impl Model {
                                         CertifiedSphereFiniteCylinderRegion {
                                             origin: transform
                                                 .transform_point3(&region.origin)
-                                                .map_err(|_| GeometryError::TransformFailure)?,
+                                                .map_err(GeometryError::Numeric)?,
                                             axis: transform.transform_direction3(&region.axis),
                                             radius: region.radius.clone(),
                                             v_min: region.v_min.clone(),
@@ -198,7 +198,7 @@ impl Model {
                                             CertifiedSphereVoid::Sphere {
                                                 center: transform
                                                     .transform_point3(center)
-                                                    .map_err(|_| GeometryError::TransformFailure)?,
+                                                    .map_err(GeometryError::Numeric)?,
                                                 radius: radius.clone(),
                                             }
                                         }
@@ -207,9 +207,7 @@ impl Model {
                                                 CertifiedSphereCylinderVoid {
                                                     origin: transform
                                                         .transform_point3(&cylinder.origin)
-                                                        .map_err(|_| {
-                                                            GeometryError::TransformFailure
-                                                        })?,
+                                                        .map_err(GeometryError::Numeric)?,
                                                     axis: transform
                                                         .transform_direction3(&cylinder.axis),
                                                     radius: cylinder.radius.clone(),
@@ -237,11 +235,11 @@ impl Model {
                         Ok(CertifiedSpherePairShell {
                             first_center: transform
                                 .transform_point3(&certificate.first_center)
-                                .map_err(|_| GeometryError::TransformFailure)?,
+                                .map_err(GeometryError::Numeric)?,
                             first_radius: certificate.first_radius.clone(),
                             second_center: transform
                                 .transform_point3(&certificate.second_center)
-                                .map_err(|_| GeometryError::TransformFailure)?,
+                                .map_err(GeometryError::Numeric)?,
                             second_radius: certificate.second_radius.clone(),
                             kind: certificate.kind,
                         })
@@ -260,7 +258,7 @@ impl Model {
                         Ok(CertifiedTorusShell {
                             center: transform
                                 .transform_point3(&certificate.center)
-                                .map_err(|_| GeometryError::TransformFailure)?,
+                                .map_err(GeometryError::Numeric)?,
                             axis: transform.transform_direction3(&certificate.axis),
                             major_radius: certificate.major_radius.clone(),
                             minor_radius: certificate.minor_radius.clone(),
@@ -295,7 +293,7 @@ impl Model {
                         Ok(CertifiedRevolutionShell {
                             axis_origin: transform
                                 .transform_point3(&certificate.axis_origin)
-                                .map_err(|_| GeometryError::TransformFailure)?,
+                                .map_err(GeometryError::Numeric)?,
                             axis: transform.transform_direction3(&certificate.axis),
                             profile: certificate.profile.clone(),
                             voids: certificate.voids.clone(),
@@ -315,7 +313,7 @@ impl Model {
                         Ok(CertifiedLoftShell {
                             origin: transform
                                 .transform_point3(&certificate.origin)
-                                .map_err(|_| GeometryError::TransformFailure)?,
+                                .map_err(GeometryError::Numeric)?,
                             u: transform.transform_direction3(&certificate.u),
                             v: transform.transform_direction3(&certificate.v),
                             height_axis: transform.transform_direction3(&certificate.height_axis),
@@ -357,7 +355,7 @@ impl Model {
                         Ok(CertifiedConeFrustumShell {
                             apex: transform
                                 .transform_point3(&certificate.apex)
-                                .map_err(|_| GeometryError::TransformFailure)?,
+                                .map_err(GeometryError::Numeric)?,
                             axis: transform.transform_direction3(&certificate.axis),
                             semi_angle: certificate.semi_angle.clone(),
                             v_min: certificate.v_min.clone(),
@@ -390,7 +388,7 @@ impl Model {
                             profile: certificate.profile.clone(),
                             origin: transform
                                 .transform_point3(&certificate.origin)
-                                .map_err(|_| GeometryError::TransformFailure)?,
+                                .map_err(GeometryError::Numeric)?,
                             u: transform.transform_direction3(&certificate.u),
                             v: transform.transform_direction3(&certificate.v),
                             extrusion: transform.transform_direction3(&certificate.extrusion),

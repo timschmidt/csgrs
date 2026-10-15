@@ -3,6 +3,7 @@
 use std::fmt;
 
 use hyperlimit::{Escalation, RefinementNeed};
+use hyperreal::Problem;
 
 /// Failure while constructing or evaluating exact geometry.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -31,18 +32,19 @@ pub enum GeometryError {
     UnclampedNurbs,
     /// A NURBS knot multiplicity exceeds the supported degree contract.
     InvalidKnotMultiplicity,
-    /// A projective evaluation required division by an uncertified denominator.
-    ProjectiveDivision,
-    /// An exact elementary function rejected a value or exhausted its budget.
-    ElementaryFunction,
+    /// Exact scalar arithmetic failed with its original, queryable cause.
+    ///
+    /// In particular, [`Problem::DivideByZero`] proves a zero denominator,
+    /// [`Problem::UnknownZero`] cannot certify a nonzero denominator, and
+    /// [`Problem::Exhausted`] reports a resource or refinement limit. Callers
+    /// must not interpret the latter two as geometric degeneracy.
+    Numeric(Problem),
     /// A model transform was not certified affine.
     NonAffineTransform,
     /// An affine model transform was not certified invertible.
     SingularTransform,
     /// A geometry family cannot yet be retained by the requested transform.
     UnsupportedTransform,
-    /// Exact homogeneous point transformation failed.
-    TransformFailure,
     /// A line's endpoints denote the same mathematical point.
     DegenerateLine,
     /// Circular or elliptic arc angle bounds do not define a supported sweep.
@@ -129,16 +131,12 @@ impl fmt::Display for GeometryError {
             }
             Self::UnclampedNurbs => formatter.write_str("NURBS knot vector is not clamped"),
             Self::InvalidKnotMultiplicity => formatter.write_str("invalid NURBS knot multiplicity"),
-            Self::ProjectiveDivision => {
-                formatter.write_str("projective evaluation denominator is not certified nonzero")
-            }
-            Self::ElementaryFunction => {
-                formatter.write_str("exact elementary function evaluation failed")
+            Self::Numeric(problem) => {
+                write!(formatter, "exact scalar arithmetic failed: {problem}")
             }
             Self::NonAffineTransform => formatter.write_str("model transform is not affine"),
             Self::SingularTransform => formatter.write_str("model transform is singular"),
             Self::UnsupportedTransform => formatter.write_str("geometry transform is unsupported"),
-            Self::TransformFailure => formatter.write_str("exact point transformation failed"),
             Self::DegenerateLine => formatter.write_str("line endpoints are mathematically equal"),
             Self::InvalidArcSweep => formatter.write_str("invalid arc sweep"),
             Self::InvalidEllipseRadii => formatter.write_str("invalid ellipse radii"),
@@ -202,7 +200,22 @@ impl fmt::Display for GeometryError {
     }
 }
 
-impl std::error::Error for GeometryError {}
+impl std::error::Error for GeometryError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Numeric(problem) => Some(problem),
+            Self::PlanarCurve(error) => Some(error),
+            Self::PlanarCurveConstruction(error) => Some(error),
+            _ => None,
+        }
+    }
+}
+
+impl From<Problem> for GeometryError {
+    fn from(value: Problem) -> Self {
+        Self::Numeric(value)
+    }
+}
 
 impl From<hypercurve::ExactCurveError> for GeometryError {
     fn from(value: hypercurve::ExactCurveError) -> Self {

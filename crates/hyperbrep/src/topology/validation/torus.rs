@@ -31,8 +31,7 @@ impl ModelBuilder {
 
         let mut surface_id = None;
         let mut u_values = Vec::new();
-        let quarter =
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
         let mut v_values = (0..=4)
             .map(|index| &quarter * Real::from(index))
             .collect::<Vec<_>>();
@@ -403,7 +402,7 @@ impl ModelBuilder {
                 Orientation::Reversed => -normal,
             }
             .normalize()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
             if let Some(expected) = &outward {
                 if !vectors_equal(expected, &oriented)? {
                     return Ok(None);
@@ -458,7 +457,7 @@ impl ModelBuilder {
         }
         let radial_offset = (minor_radius * minor_radius - &axial * &axial)
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
         let expected_radii = [major_radius - &radial_offset, major_radius + &radial_offset];
         let mut matched_radii = [false; 2];
         for boundary in &boundaries {

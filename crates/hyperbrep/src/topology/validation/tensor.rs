@@ -545,8 +545,8 @@ impl ModelBuilder {
         {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
-        let weight_scale = (&curve_weights[0] / &surface_weights[0][0])
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let weight_scale =
+            (&curve_weights[0] / &surface_weights[0][0]).map_err(GeometryError::Numeric)?;
         let mut coefficients = Vec::with_capacity(curve_points.len());
         for ((curve_point, curve_weight), (surface_row, surface_row_weights)) in curve_points
             .iter()
@@ -559,7 +559,7 @@ impl ModelBuilder {
             let coefficient = ((point3_component(curve_point, direction_axis)
                 - point3_component(&surface_row[0], direction_axis))
                 / &direction.0[direction_axis])
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
             if !points_equal(
                 &(surface_row[0].clone() + direction.clone() * &coefficient),
                 curve_point,

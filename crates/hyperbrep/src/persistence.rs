@@ -59,7 +59,15 @@ impl fmt::Display for PersistenceError {
     }
 }
 
-impl std::error::Error for PersistenceError {}
+impl std::error::Error for PersistenceError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Build(error) => Some(error),
+            Self::Validation(report) => Some(report),
+            _ => None,
+        }
+    }
+}
 
 impl From<BuildError> for PersistenceError {
     fn from(value: BuildError) -> Self {
@@ -715,10 +723,8 @@ fn project_raw_plane_point(
     let du = displacement.dot(u);
     let dv = displacement.dot(v);
     let determinant = &uu * &vv - &uv * &uv;
-    let first =
-        ((&du * &vv - &dv * &uv) / &determinant).map_err(|_| GeometryError::ProjectiveDivision)?;
-    let second =
-        ((dv * uu - du * uv) / determinant).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let first = ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?;
+    let second = ((dv * uu - du * uv) / determinant).map_err(GeometryError::Numeric)?;
     Ok([first, second])
 }
 

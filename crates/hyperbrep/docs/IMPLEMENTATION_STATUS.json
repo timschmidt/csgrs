@@ -24,22 +24,80 @@
   "increments": [
     {
       "id": "topology-module-split",
-      "work_packages": ["WP00", "WP01", "WP23"],
-      "properties": ["P6", "P36", "P37", "P39", "T13"],
+      "work_packages": [
+        "WP00",
+        "WP01",
+        "WP23"
+      ],
+      "properties": [
+        "P6",
+        "P36",
+        "P37",
+        "P39",
+        "T13"
+      ],
       "change": "Replace the 21,613-line model module with 37 topology modules grouped by ownership and operation. Preserve algorithm bodies and public crate-root exports; update internal callers directly.",
       "source": "../src/topology/mod.rs",
       "validation": [
-        {"command": "cargo test --offline --locked -p hyperbrep --all-features --quiet", "result": "233 passed; 0 failed; 0 ignored; 0 doctests"},
-        {"command": "cargo test --offline --locked -p hyperbrep --quiet", "result": "226 passed; 0 failed; 0 ignored; 0 doctests"},
-        {"command": "cargo check --offline --locked -p hyperbrep --all-targets --all-features", "result": "passed"},
-        {"command": "cargo clippy --offline --locked -p hyperbrep --all-targets --all-features -- -D warnings", "result": "passed after the Hypercurve closure-borrow cleanup in 26835aa38"},
-        {"command": "cargo build --offline --locked -p hyperbrep --all-features --lib --target wasm32-unknown-unknown", "result": "passed"},
-        {"command": "RUSTDOCFLAGS='-D warnings' cargo doc --offline --locked -p hyperbrep --all-features --no-deps", "result": "passed"},
-        {"command": "cargo fmt --all -- --check", "result": "passed"},
-        {"command": "local documentation and ledger check", "result": "104 relative file links resolve; both JSON ledgers parse; 28 unique work packages retained"}
+        {
+          "command": "cargo test --offline --locked -p hyperbrep --all-features --quiet",
+          "result": "233 passed; 0 failed; 0 ignored; 0 doctests"
+        },
+        {
+          "command": "cargo test --offline --locked -p hyperbrep --quiet",
+          "result": "226 passed; 0 failed; 0 ignored; 0 doctests"
+        },
+        {
+          "command": "cargo check --offline --locked -p hyperbrep --all-targets --all-features",
+          "result": "passed"
+        },
+        {
+          "command": "cargo clippy --offline --locked -p hyperbrep --all-targets --all-features -- -D warnings",
+          "result": "passed after the Hypercurve closure-borrow cleanup in 26835aa38"
+        },
+        {
+          "command": "cargo build --offline --locked -p hyperbrep --all-features --lib --target wasm32-unknown-unknown",
+          "result": "passed"
+        },
+        {
+          "command": "RUSTDOCFLAGS='-D warnings' cargo doc --offline --locked -p hyperbrep --all-features --no-deps",
+          "result": "passed"
+        },
+        {
+          "command": "cargo fmt --all -- --check",
+          "result": "passed"
+        },
+        {
+          "command": "local documentation and ledger check",
+          "result": "104 relative file links resolve; both JSON ledgers parse; 28 unique work packages retained"
+        }
       ],
       "cost_evidence": "Mechanical source organization only: arithmetic and predicate algorithms retained. Native all-feature test runtime was 19.37s before and 19.87s after in single debug runs. These are smoke measurements, not a matched benchmark or a performance claim.",
       "limits": "This is partial WP01/T13 progress. Scoped identity, operation contexts, numeric cause preservation, general validation and the remaining large modules are unfinished. WASM compilation is not WASM runtime qualification. Full workspace/pre-push checks have not been run."
+    },
+    {
+      "id": "numeric-error-causes",
+      "work_packages": [
+        "WP00",
+        "WP01"
+      ],
+      "properties": [
+        "P6",
+        "P11",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Preserve hyperreal::Problem at 383 scalar arithmetic call sites; remove the three generic numeric error variants; expose single-cause error chains; report degree overflow as OutOfRange. Add Eq to the unit-variant scalar Problem enum.",
+      "source": "../src/error.rs",
+      "evidence": "evidence/2026-10-14-numeric-causes/manifest.json",
+      "regressions": [
+        "homogeneous_projection_retains_numeric_failure_causes",
+        "construction_error_chain_retains_numeric_failure",
+        "bernstein_degree_overflow_is_a_range_error"
+      ],
+      "validation": "236 all-feature tests passed; strict Clippy, warning-denied rustdoc, WASM build, formatting and all 65 release benchmark rows passed.",
+      "limits": "Partial WP01/P6 progress. No global panic-freedom or work-budget claim; unchecked derivative-order allocation and remaining operation scopes still require work."
     }
   ],
   "work_packages": [
@@ -213,7 +271,7 @@
     }
   ],
   "next_actions": [
-    "Complete model revision identity and borrowed references, explicit operation contexts, budget propagation, typed numeric failures and required provenance in WP01.",
+    "Complete model revision identity and borrowed references, explicit strict operation contexts, budget propagation, numeric-domain/allocation auditing, required certainty receipts and provenance in WP01.",
     "Implement the WP02/G1 retained-parameter contact-to-split/persist/reload/composition vertical slice without requiring Real materialization.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."

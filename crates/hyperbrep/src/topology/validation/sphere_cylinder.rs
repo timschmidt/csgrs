@@ -158,7 +158,7 @@ impl ModelBuilder {
                 let half_height = (&sphere_cap.radius * &sphere_cap.radius
                     - &cylinder_radius * &cylinder_radius)
                     .sqrt()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                    .map_err(GeometryError::Numeric)?;
                 if decided_model_order(compare_reals(
                     &relative_cap,
                     &-half_height.clone(),

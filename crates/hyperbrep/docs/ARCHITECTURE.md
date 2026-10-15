@@ -152,8 +152,15 @@ All kernel quadrant construction uses one checked `certified_atan2` path. It
 decides both coordinate signs through the exact comparison policy, returns
 axis angles structurally, and applies the exact single-argument arctangent
 only after the quadrant is certified. Symbolic cancellation therefore becomes
-an exact axis result or a typed predicate/elementary-function error; it cannot
+an exact axis result or a typed predicate/scalar error; it cannot
 panic through `Real::atan2`'s convenience refinement floor.
+
+Fallible scalar division, elementary functions and homogeneous transforms
+retain their `hyperreal::Problem` in `GeometryError::Numeric`. Domain errors,
+unresolved zero tests and exhausted refinement remain distinguishable through
+the public error variants and standard error cause chains. The exact meaning
+of these outcomes is specified in
+[ADR 0001](architecture/0001-exact-decision-contract.md#outcomes).
 
 ## Solid certificates
 

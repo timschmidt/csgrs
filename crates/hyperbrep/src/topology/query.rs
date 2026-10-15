@@ -159,7 +159,7 @@ impl Model {
         let radius = radial
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
         let profile_point = CurvePoint2::new(radius, axial);
         let location = match revolution.profile.classify_point(&profile_point)? {
             Classification::Decided(location) => location,
@@ -197,11 +197,11 @@ impl Model {
         let displacement = point - &loft.origin;
         let determinant = loft.u.dot(&loft.v.cross(&loft.height_axis));
         let parameter_u = (displacement.dot(&loft.v.cross(&loft.height_axis)) / &determinant)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let parameter_v = (loft.u.dot(&displacement.cross(&loft.height_axis)) / &determinant)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let parameter_t = (loft.u.dot(&loft.v.cross(&displacement)) / determinant)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let t_order_min = decided_model_order(compare_reals(
             &parameter_t,
             &Real::zero(),
@@ -234,8 +234,8 @@ impl Model {
         }
         let span = selected_span.ok_or(GeometryError::InvalidParameterDomain)?;
         let span_width = &span.end - &span.start;
-        let local_parameter = ((&parameter_t - &span.start) / span_width)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let local_parameter =
+            ((&parameter_t - &span.start) / span_width).map_err(GeometryError::Numeric)?;
         let profile_point = CurvePoint2::new(parameter_u, parameter_v);
         let profile_location = match &span.interpolation {
             CertifiedLoftInterpolation::Homothetic {
@@ -246,9 +246,9 @@ impl Model {
                 let factor = Real::one() + &local_parameter * (scale - Real::one());
                 let normalized = CurvePoint2::new(
                     ((profile_point.x() - &local_parameter * translation.x()) / &factor)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?,
+                        .map_err(GeometryError::Numeric)?,
                     ((profile_point.y() - &local_parameter * translation.y()) / factor)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?,
+                        .map_err(GeometryError::Numeric)?,
                 );
                 match crate::error::classified(profile.classify_point(&normalized))
                     .map_err(GeometryError::from)?
@@ -288,7 +288,7 @@ impl Model {
         let normal = start_u.cross(&start_v);
         let progress = normal.dot(&(end - &start));
         let parameter = (normal.dot(&(point - &start)) / &progress)
-            .map_err(|_| QueryError::from(GeometryError::ProjectiveDivision))?;
+            .map_err(|problem| QueryError::from(GeometryError::Numeric(problem)))?;
         let lower_order = decided_model_order(compare_reals(
             &parameter,
             &Real::zero(),
@@ -667,11 +667,11 @@ impl Model {
         let displacement = point - &prism.origin;
         let determinant = prism.u.dot(&prism.v.cross(&prism.extrusion));
         let planar_u = (displacement.dot(&prism.v.cross(&prism.extrusion)) / &determinant)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let planar_v = (prism.u.dot(&displacement.cross(&prism.extrusion)) / &determinant)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let extrusion_parameter = (prism.u.dot(&prism.v.cross(&displacement)) / determinant)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let min_order = decided_model_order(compare_reals(
             &extrusion_parameter,
             &prism.parameter_min,
@@ -840,8 +840,7 @@ impl Model {
                 continue;
             }
             let plane_value = self.face_plane_value(*face_id, point)?;
-            let parameter =
-                ((-plane_value) / denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
+            let parameter = ((-plane_value) / denominator).map_err(GeometryError::Numeric)?;
             match decided_model_order(compare_reals(
                 &parameter,
                 &Real::zero(),
@@ -900,7 +899,7 @@ impl Model {
         let offset = point - &frustum.apex;
         let axial = offset.dot(&frustum.axis);
         let cosine = frustum.semi_angle.clone().cos();
-        let v = (&axial / cosine).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let v = (&axial / cosine).map_err(GeometryError::Numeric)?;
         let min_order =
             decided_model_order(compare_reals(&v, &frustum.v_min, crate::STRICT_PREDICATES))?;
         let max_order =
@@ -981,10 +980,10 @@ impl Model {
         let du = displacement.dot(u);
         let dv = displacement.dot(v);
         let determinant = &uu * &vv - &uv * &uv;
-        let parameter_u = ((&du * &vv - &dv * &uv) / &determinant)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
-        let parameter_v = ((&dv * &uu - &du * &uv) / determinant)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let parameter_u =
+            ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?;
+        let parameter_v =
+            ((&dv * &uu - &du * &uv) / determinant).map_err(GeometryError::Numeric)?;
         let point = CurvePoint2::new(parameter_u, parameter_v);
         self.classify_surface_parameter_on_face(face, &point)
     }

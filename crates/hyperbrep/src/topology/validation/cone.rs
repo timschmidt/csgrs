@@ -223,7 +223,7 @@ impl ModelBuilder {
                     Orientation::Reversed => -normal,
                 }
                 .normalize()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
                 if let Some(expected) = &group_normal {
                     if !vectors_equal(expected, &oriented)? {
                         return Ok(None);
@@ -238,8 +238,8 @@ impl ModelBuilder {
             };
             let outward = group_normal.expect("nonempty planar group");
             if real_values_equal(&outward.cross(axis).norm_squared(), &Real::zero())? {
-                let parameter = ((&origin - apex).dot(axis) / &cosine)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                let parameter =
+                    ((&origin - apex).dot(axis) / &cosine).map_err(GeometryError::Numeric)?;
                 let direction = decided_model_order(compare_reals(
                     &outward.dot(axis),
                     &Real::zero(),

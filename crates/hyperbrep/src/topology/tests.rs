@@ -35,6 +35,38 @@ fn uv(x: i32, y: i32) -> CurvePoint2 {
     CurvePoint2::new(r(x), r(y))
 }
 
+#[test]
+fn construction_error_chain_retains_numeric_failure() {
+    use hyperreal::Problem;
+    use std::error::Error;
+
+    let build = divide_vector_by_real(Vector3::x(), &Real::zero()).unwrap_err();
+    assert_eq!(
+        build,
+        BuildError::Geometry(GeometryError::Numeric(Problem::DivideByZero))
+    );
+    let construction = crate::builder::ConstructionError::from(build);
+    let boolean = crate::boolean::BooleanError::from(construction);
+    let mut cause: &(dyn Error + 'static) = &boolean;
+    while let Some(source) = cause.source() {
+        cause = source;
+    }
+    assert_eq!(
+        cause.downcast_ref::<Problem>(),
+        Some(&Problem::DivideByZero)
+    );
+}
+
+#[test]
+fn bernstein_degree_overflow_is_a_range_error() {
+    assert_eq!(
+        model_bernstein_product_coefficient(usize::MAX, 0, 0),
+        Err(BuildError::Geometry(GeometryError::Numeric(
+            hyperreal::Problem::OutOfRange
+        )))
+    );
+}
+
 fn add_planar_triangle(builder: &mut ModelBuilder) -> (FaceId, [EdgeId; 3]) {
     let vertices = [
         builder.vertex(p(0, 0, 0)).unwrap(),

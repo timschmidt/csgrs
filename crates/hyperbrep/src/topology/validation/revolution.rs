@@ -62,8 +62,7 @@ impl ModelBuilder {
             return Ok(None);
         }
 
-        let quarter =
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
         let mut axis_origin = None;
         let mut axis = None;
         let mut meridian_ray: Option<Vector3> = None;
@@ -131,12 +130,9 @@ impl ModelBuilder {
                         Ok(Some(CurvePoint2::new(Real::zero(), axial)))
                     };
                 }
-                let radius = radial_squared
-                    .sqrt()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                let radius = radial_squared.sqrt().map_err(GeometryError::Numeric)?;
                 if require_positive {
-                    meridian_ray =
-                        Some((radial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?);
+                    meridian_ray = Some((radial / &radius).map_err(GeometryError::Numeric)?);
                 } else {
                     return Ok(None);
                 }

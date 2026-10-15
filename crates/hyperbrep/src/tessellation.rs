@@ -197,7 +197,15 @@ impl fmt::Display for TessellationError {
     }
 }
 
-impl std::error::Error for TessellationError {}
+impl std::error::Error for TessellationError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Geometry(error) => Some(error),
+            Self::Triangulation(error) => Some(error),
+            _ => None,
+        }
+    }
+}
 
 impl From<GeometryError> for TessellationError {
     fn from(value: GeometryError) -> Self {
@@ -341,7 +349,7 @@ fn approximate_complete_sphere_chordally(
 
     let pi = Real::pi();
     let two_pi = &pi * Real::from(2);
-    let half_pi = (pi.clone() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let half_pi = (pi.clone() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let longitude_denominator = Real::from(
         u128::try_from(longitude_count).map_err(|_| TessellationError::RefinementOverflow)?,
     );
@@ -354,14 +362,14 @@ fn approximate_complete_sphere_chordally(
         let latitude_fraction = (Real::from(
             u128::try_from(latitude_index).map_err(|_| TessellationError::RefinementOverflow)?,
         ) / &latitude_denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let latitude = -half_pi.clone() + &pi * latitude_fraction;
         for longitude_index in 0..longitude_count {
             let longitude_fraction = (Real::from(
                 u128::try_from(longitude_index)
                     .map_err(|_| TessellationError::RefinementOverflow)?,
             ) / &longitude_denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
             parameters.push(Point2::new(&two_pi * longitude_fraction, latitude.clone()));
         }
     }
@@ -453,8 +461,7 @@ fn sampled_boundaries(
                 let numerator = Real::from(
                     u128::try_from(segment).map_err(|_| TessellationError::RefinementOverflow)?,
                 );
-                let fraction =
-                    (numerator / &denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
+                let fraction = (numerator / &denominator).map_err(GeometryError::Numeric)?;
                 let parameter = pcurve.domain_start()? + &span * fraction;
                 parameters.push(pcurve.point_at(&parameter)?);
             }
@@ -600,9 +607,9 @@ fn exact_midpoint_index(
     }
     let midpoint = Point2::new(
         ((&parameters[first].x + &parameters[second].x) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
         ((&parameters[first].y + &parameters[second].y) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?,
+            .map_err(GeometryError::Numeric)?,
     );
     let index = parameters.len();
     parameters

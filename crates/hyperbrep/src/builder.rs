@@ -256,7 +256,15 @@ impl fmt::Display for ConstructionError {
     }
 }
 
-impl std::error::Error for ConstructionError {}
+impl std::error::Error for ConstructionError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Build(error) => Some(error),
+            Self::Validation(report) => Some(report),
+            _ => None,
+        }
+    }
+}
 
 impl From<BuildError> for ConstructionError {
     fn from(value: BuildError) -> Self {
@@ -874,8 +882,7 @@ fn exact_tensor_boundary_equal(
             }
         }
     }
-    let scale = (&candidate_weights[0] / &existing_weights[0])
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let scale = (&candidate_weights[0] / &existing_weights[0]).map_err(GeometryError::Numeric)?;
     for (candidate, existing) in candidate_weights.iter().zip(&existing_weights) {
         if !exact_real_equal(candidate, &(existing * &scale))? {
             return Ok(false);
@@ -1003,7 +1010,7 @@ pub fn cylinder(radius: Real, height: Real) -> Result<(Model, SolidId), Construc
         .cloned()
         .map(|point| builder.vertex(point))
         .collect::<Result<Vec<_>, _>>()?;
-    let half_pi = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let half_pi = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let mut bottom_edges = Vec::with_capacity(4);
     let mut top_edges = Vec::with_capacity(4);
     for index in 0..4 {
@@ -1225,31 +1232,30 @@ pub(crate) fn sphere_pair_boolean(
     let distance = distance_squared
         .clone()
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
-    let inverse_distance =
-        (Real::one() / &distance).map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
+    let inverse_distance = (Real::one() / &distance).map_err(GeometryError::Numeric)?;
     let axis = displacement * inverse_distance;
     let (x, y) = axis
         .orthonormal_basis_checked()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let first_plane_distance = ((&first_radius * &first_radius - &second_radius * &second_radius
         + &distance_squared)
         / (Real::from(2) * &distance))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
     let second_plane_distance = &distance - &first_plane_distance;
     let circle_radius = (&first_radius * &first_radius
         - &first_plane_distance * &first_plane_distance)
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let circle_center = first_center.clone() + axis.clone() * &first_plane_distance;
     let first_latitude = (first_plane_distance.clone() / &first_radius)
-        .map_err(|_| GeometryError::ProjectiveDivision)?
+        .map_err(GeometryError::Numeric)?
         .asin()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let second_latitude = (second_plane_distance / &second_radius)
-        .map_err(|_| GeometryError::ProjectiveDivision)?
+        .map_err(GeometryError::Numeric)?
         .asin()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
 
     let mut builder = ModelBuilder::new();
     let full_circle = Curve3::circle_arc(
@@ -1260,7 +1266,7 @@ pub(crate) fn sphere_pair_boolean(
         Real::zero(),
         Real::tau(),
     )?;
-    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let vertices = (0..4)
         .map(|index| full_circle.point_at(&(&quarter * Real::from(index))))
         .collect::<Result<Vec<_>, GeometryError>>()?
@@ -1397,13 +1403,12 @@ pub fn cone_frustum(
     require_increasing(&Real::zero(), &height, Axis::Z)?;
     require_frustum_radii(&base_radius, &top_radius)?;
     let radial_drop = &base_radius - &top_radius;
-    let apex_height =
-        (&height * &base_radius / &radial_drop).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let apex_height = (&height * &base_radius / &radial_drop).map_err(GeometryError::Numeric)?;
     let semi_angle = crate::geometry::certified_atan2(radial_drop.clone(), height.clone())?;
     let sine = semi_angle.clone().sin();
     let cosine = semi_angle.clone().cos();
-    let v_bottom = (&base_radius / &sine).map_err(|_| GeometryError::ProjectiveDivision)?;
-    let v_top = (&top_radius / &sine).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let v_bottom = (&base_radius / &sine).map_err(GeometryError::Numeric)?;
+    let v_top = (&top_radius / &sine).map_err(GeometryError::Numeric)?;
     let bottom_radius = &v_bottom * &sine;
     let top_radius_on_cone = &v_top * &sine;
     let bottom_center = Point3::new(
@@ -1412,7 +1417,7 @@ pub fn cone_frustum(
         &apex_height - &v_bottom * &cosine,
     );
     let top_center = Point3::new(Real::zero(), Real::zero(), &apex_height - &v_top * &cosine);
-    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let angles = (0..4)
         .map(|index| &quarter * Real::from(index))
         .collect::<Vec<_>>();
@@ -1620,7 +1625,7 @@ pub fn torus(
         major_radius.clone(),
         minor_radius.clone(),
     )?;
-    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let angles = (0..4)
         .map(|index| &quarter * Real::from(index))
         .collect::<Vec<_>>();
@@ -2281,12 +2286,12 @@ fn spatial_segment_curve(
             let radius = arc
                 .radius_squared()
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             let radial_x = arc.start().x() - arc.center().x();
             let radial_y = arc.start().y() - arc.center().y();
             let x = Vector3::from_xyz(
-                (radial_x.clone() / &radius).map_err(|_| GeometryError::ProjectiveDivision)?,
-                (radial_y.clone() / &radius).map_err(|_| GeometryError::ProjectiveDivision)?,
+                (radial_x.clone() / &radius).map_err(GeometryError::Numeric)?,
+                (radial_y.clone() / &radius).map_err(GeometryError::Numeric)?,
                 Real::zero(),
             );
             let (tangent_x, tangent_y) = if arc.is_clockwise() {
@@ -2295,8 +2300,8 @@ fn spatial_segment_curve(
                 (-radial_y, radial_x)
             };
             let y = Vector3::from_xyz(
-                (tangent_x / &radius).map_err(|_| GeometryError::ProjectiveDivision)?,
-                (tangent_y / &radius).map_err(|_| GeometryError::ProjectiveDivision)?,
+                (tangent_x / &radius).map_err(GeometryError::Numeric)?,
+                (tangent_y / &radius).map_err(GeometryError::Numeric)?,
                 Real::zero(),
             );
             let sweep = match crate::error::classified(arc.directed_sweep_angle())
@@ -2879,8 +2884,8 @@ fn certify_sweep_frame(
             }
         }
         constant_area &= this_constant;
-        let determinant_numerator = (cross_coefficient.dot(&normal) / &normal_squared)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let determinant_numerator =
+            (cross_coefficient.dot(&normal) / &normal_squared).map_err(GeometryError::Numeric)?;
         let parallel = normal.clone() * &determinant_numerator;
         for component in 0..3 {
             if decided_construction_order(compare_reals(
@@ -2907,8 +2912,7 @@ fn certify_sweep_frame(
     let weight_squared = &weights[0] * &weights[0];
     let mut integral = Real::zero();
     for numerator in determinant_numerators {
-        let coefficient =
-            (numerator / &weight_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let coefficient = (numerator / &weight_squared).map_err(GeometryError::Numeric)?;
         if decided_construction_order(compare_reals(
             &coefficient,
             &Real::zero(),
@@ -2923,7 +2927,7 @@ fn certify_sweep_frame(
         Real::from(u128::try_from(product_degree + 1).expect("usize is representable as u128"));
     Ok((
         normal,
-        (integral / basis_count).map_err(|_| GeometryError::ProjectiveDivision)?,
+        (integral / basis_count).map_err(GeometryError::Numeric)?,
     ))
 }
 
@@ -2940,7 +2944,7 @@ fn bernstein_product_coefficient(
                 .ok_or(ConstructionError::InvalidSweepFrame)?,
             first + second,
         )?)
-    .map_err(|_| GeometryError::ProjectiveDivision.into())
+    .map_err(|problem| GeometryError::Numeric(problem).into())
 }
 
 fn binomial_real(n: usize, k: usize) -> Result<Real, ConstructionError> {
@@ -2950,7 +2954,7 @@ fn binomial_real(n: usize, k: usize) -> Result<Real, ConstructionError> {
         result = (result
             * Real::from(u128::try_from(n + 1 - index).expect("usize is representable as u128"))
             / Real::from(u128::try_from(index).expect("usize is representable as u128")))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
     }
     Ok(result)
 }
@@ -3006,10 +3010,8 @@ fn certify_sweep_path_progress(
         } else {
             Real::zero()
         };
-        let difference = (elevated_numerator / &denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?
-            - (affine_times_weight / &denominator)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let difference = (elevated_numerator / &denominator).map_err(GeometryError::Numeric)?
+            - (affine_times_weight / &denominator).map_err(GeometryError::Numeric)?;
         if decided_construction_order(compare_reals(
             &difference,
             &Real::zero(),
@@ -3309,9 +3311,9 @@ fn certified_loft_scale(lower: &[Point2], upper: &[Point2]) -> Result<Real, Cons
             }
         };
     let scale = if lower_x_is_zero {
-        (&upper_delta.0[1] / &lower_delta.0[1]).map_err(|_| GeometryError::ProjectiveDivision)?
+        (&upper_delta.0[1] / &lower_delta.0[1]).map_err(GeometryError::Numeric)?
     } else {
-        (&upper_delta.0[0] / &lower_delta.0[0]).map_err(|_| GeometryError::ProjectiveDivision)?
+        (&upper_delta.0[0] / &lower_delta.0[0]).map_err(GeometryError::Numeric)?
     };
     match compare_reals(&scale, &Real::zero(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
@@ -4093,24 +4095,21 @@ fn spatial_revolution_segment(
             let radius = arc
                 .radius_squared()
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
+                .map_err(GeometryError::Numeric)?;
             let start_radial = arc.start().x() - arc.center().x();
             let start_axial = arc.start().y() - arc.center().y();
             let x = radial.clone()
-                * ((start_radial.clone() / &radius)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?)
+                * ((start_radial.clone() / &radius).map_err(GeometryError::Numeric)?)
                 + Vector3::z()
-                    * ((start_axial.clone() / &radius)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?);
+                    * ((start_axial.clone() / &radius).map_err(GeometryError::Numeric)?);
             let (tangent_radial, tangent_axial) = if arc.is_clockwise() {
                 (start_axial, -start_radial)
             } else {
                 (-start_axial, start_radial)
             };
             let y = radial.clone()
-                * ((tangent_radial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?)
-                + Vector3::z()
-                    * ((tangent_axial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?);
+                * ((tangent_radial / &radius).map_err(GeometryError::Numeric)?)
+                + Vector3::z() * ((tangent_axial / &radius).map_err(GeometryError::Numeric)?);
             let sweep = match crate::error::classified(arc.directed_sweep_angle())
                 .map_err(GeometryError::from)?
             {
@@ -4148,7 +4147,7 @@ fn add_normalized_curve_path_revolution_shell(
     direction: ShellDirection,
 ) -> Result<crate::ShellId, ConstructionError> {
     let curves = profile.curves();
-    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let angles = (0..4)
         .map(|index| &quarter * Real::from(index))
         .collect::<Vec<_>>();
@@ -4325,7 +4324,7 @@ fn add_normalized_contour_revolution_shell(
     direction: ShellDirection,
 ) -> Result<crate::ShellId, ConstructionError> {
     let segments = profile.segments();
-    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let angles = (0..4)
         .map(|index| &quarter * Real::from(index))
         .collect::<Vec<_>>();
@@ -4477,7 +4476,7 @@ fn add_normalized_revolution_shell(
     profile: &[Point2],
     direction: ShellDirection,
 ) -> Result<crate::ShellId, ConstructionError> {
-    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let angles = (0..4)
         .map(|index| &quarter * Real::from(index))
         .collect::<Vec<_>>();

@@ -52,7 +52,14 @@ impl fmt::Display for QueryError {
     }
 }
 
-impl std::error::Error for QueryError {}
+impl std::error::Error for QueryError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Geometry(error) => Some(error),
+            _ => None,
+        }
+    }
+}
 
 impl From<GeometryError> for QueryError {
     fn from(value: GeometryError) -> Self {
@@ -88,7 +95,15 @@ impl fmt::Display for EditError {
     }
 }
 
-impl std::error::Error for EditError {}
+impl std::error::Error for EditError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Geometry(error) => Some(error),
+            Self::Validation(report) => Some(report),
+            _ => None,
+        }
+    }
+}
 
 impl From<GeometryError> for EditError {
     fn from(value: GeometryError) -> Self {
@@ -274,7 +289,16 @@ impl fmt::Display for TopologyEditError {
     }
 }
 
-impl std::error::Error for TopologyEditError {}
+impl std::error::Error for TopologyEditError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Geometry(error) => Some(error),
+            Self::Build(error) => Some(error),
+            Self::Validation(report) => Some(report),
+            _ => None,
+        }
+    }
+}
 
 impl From<GeometryError> for TopologyEditError {
     fn from(value: GeometryError) -> Self {
@@ -446,7 +470,14 @@ impl fmt::Display for BuildError {
     }
 }
 
-impl std::error::Error for BuildError {}
+impl std::error::Error for BuildError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Geometry(error) => Some(error),
+            _ => None,
+        }
+    }
+}
 
 impl From<GeometryError> for BuildError {
     fn from(value: GeometryError) -> Self {

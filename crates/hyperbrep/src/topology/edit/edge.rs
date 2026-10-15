@@ -96,7 +96,7 @@ impl Model {
                             Direction::Reversed => (edge.domain.end(), edge.domain.start()),
                         };
                         let fraction = ((&parameter - start) / (end - start))
-                            .map_err(|_| GeometryError::ProjectiveDivision)?;
+                            .map_err(GeometryError::Numeric)?;
                         let (first, second) = match crate::error::classified(
                             arc.split_at_retained_sweep_point(&fraction, retained_point.clone()),
                         )
@@ -122,7 +122,7 @@ impl Model {
                             Direction::Reversed => (edge.domain.end(), edge.domain.start()),
                         };
                         let fraction = ((&parameter - start) / (end - start))
-                            .map_err(|_| GeometryError::ProjectiveDivision)?;
+                            .map_err(GeometryError::Numeric)?;
                         let (first, second) =
                             match crate::error::classified(arc.split_at_sweep_fraction(&fraction))
                                 .map_err(GeometryError::from)?

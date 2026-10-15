@@ -491,7 +491,7 @@ impl CertifiedSphereProfile {
         let radial_distance = radial
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
         let maximum_radial = radial_distance + &cylinder.radius;
         let lower_height = (&cylinder.v_min - &center_parameter).abs();
         let upper_height = (&cylinder.v_max - center_parameter).abs();
@@ -524,7 +524,7 @@ impl CertifiedCylinderProfile {
         let radial_distance = radial
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
+            .map_err(GeometryError::Numeric)?;
         Ok(decided_model_order(compare_reals(
             &(&radial_distance + &sphere.radius),
             &self.radius,

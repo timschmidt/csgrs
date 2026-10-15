@@ -295,8 +295,7 @@ impl ModelBuilder {
             previous_u = Some(line.end().x().clone());
         }
         let latitude = latitude.ok_or(BuildError::UnsupportedSphericalTrim(wire))?;
-        let half_pi =
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let half_pi = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
         if decided_model_order(compare_reals(
             &latitude,
             &-half_pi.clone(),

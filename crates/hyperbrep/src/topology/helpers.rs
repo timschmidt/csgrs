@@ -19,9 +19,9 @@ pub(super) fn certified_homothetic_loft_scale(
         crate::STRICT_PREDICATES,
     ))? != std::cmp::Ordering::Equal
     {
-        (upper_dx / &lower_dx).map_err(|_| GeometryError::ProjectiveDivision)?
+        (upper_dx / &lower_dx).map_err(GeometryError::Numeric)?
     } else {
-        (upper_dy / &lower_dy).map_err(|_| GeometryError::ProjectiveDivision)?
+        (upper_dy / &lower_dy).map_err(GeometryError::Numeric)?
     };
     if decided_model_order(compare_reals(
         &scale,
@@ -115,7 +115,7 @@ pub(super) fn loft_parameter_area_integral(
         mixed += cross(&lower[index], &upper[next]) + cross(&upper[index], &lower[next]);
     }
     ((Real::from(2) * lower_twice_area + mixed + Real::from(2) * upper_twice_area) / Real::from(12))
-        .map_err(|_| GeometryError::ProjectiveDivision)
+        .map_err(GeometryError::Numeric)
 }
 
 pub(super) fn classify_convex_loft_section(
@@ -180,8 +180,8 @@ pub(super) fn project_point_to_plane_frame(
     let dv = displacement.dot(v);
     let determinant = &uu * &vv - &uv * &uv;
     Ok(CurvePoint2::new(
-        ((&du * &vv - &dv * &uv) / &determinant).map_err(|_| GeometryError::ProjectiveDivision)?,
-        ((&dv * &uu - &du * &uv) / determinant).map_err(|_| GeometryError::ProjectiveDivision)?,
+        ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?,
+        ((&dv * &uu - &du * &uv) / determinant).map_err(GeometryError::Numeric)?,
     ))
 }
 
@@ -262,8 +262,8 @@ pub(super) fn translated_rational_bezier_data_equal(
     {
         return Ok(false);
     }
-    let weight_scale = (&actual_weights[0] / &expected_weights[0])
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let weight_scale =
+        (&actual_weights[0] / &expected_weights[0]).map_err(GeometryError::Numeric)?;
     for ((actual_point, actual_weight), (expected_point, expected_weight)) in actual_points
         .iter()
         .zip(actual_weights)
@@ -285,7 +285,7 @@ pub(super) fn rational_bezier_weights_proportional(
     if actual.len() != expected.len() || actual.is_empty() {
         return Ok(false);
     }
-    let scale = (&actual[0] / &expected[0]).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let scale = (&actual[0] / &expected[0]).map_err(GeometryError::Numeric)?;
     for (actual, expected) in actual.iter().zip(expected) {
         if !real_values_equal(actual, &(expected * &scale))? {
             return Ok(false);
@@ -350,7 +350,7 @@ pub(super) fn extrusion_constant_area_scale(
             .cross(direction)
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?,
+            .map_err(GeometryError::Numeric)?,
     ))
 }
 
@@ -507,9 +507,9 @@ pub(super) fn affine_tensor_face_area(
     };
     if image.constant_weights {
         let double_area = (parameter_double_area * image.spatial_area / image.parameter_area)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         return Ok(Some(
-            (double_area / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?,
+            (double_area / Real::from(2)).map_err(GeometryError::Numeric)?,
         ));
     }
     if !image.separable_weights
@@ -541,14 +541,14 @@ pub(super) fn affine_tensor_image(
                 .map(|index| {
                     (Real::from(u128::try_from(index).expect("usize is representable as u128"))
                         / &u_denominator)
-                        .map_err(|_| GeometryError::ProjectiveDivision.into())
+                        .map_err(|problem| GeometryError::Numeric(problem).into())
                 })
                 .collect::<Result<Vec<_>, BuildError>>()?;
             let v_coordinates = (0..v_count)
                 .map(|index| {
                     (Real::from(u128::try_from(index).expect("usize is representable as u128"))
                         / &v_denominator)
-                        .map_err(|_| GeometryError::ProjectiveDivision.into())
+                        .map_err(|problem| GeometryError::Numeric(problem).into())
                 })
                 .collect::<Result<Vec<_>, BuildError>>()?;
             affine_control_net_image(
@@ -642,9 +642,9 @@ pub(super) fn normalized_greville_coordinates(
             let sum = knots[index + 1..=index + degree]
                 .iter()
                 .fold(Real::zero(), |sum, knot| sum + knot);
-            let greville = (sum / &degree_scalar).map_err(|_| GeometryError::ProjectiveDivision)?;
+            let greville = (sum / &degree_scalar).map_err(GeometryError::Numeric)?;
             ((greville - domain_start) / domain_span)
-                .map_err(|_| GeometryError::ProjectiveDivision.into())
+                .map_err(|problem| GeometryError::Numeric(problem).into())
         })
         .collect()
 }
@@ -678,9 +678,7 @@ pub(super) fn affine_control_net_image(
             }
         }
     }
-    let spatial_area = cross_squared
-        .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let spatial_area = cross_squared.sqrt().map_err(GeometryError::Numeric)?;
     Ok(Some(AffineTensorImage {
         spatial_area,
         parameter_area: u_parameter_span * v_parameter_span,
@@ -694,9 +692,9 @@ pub(super) fn divide_vector_by_real(
     denominator: &Real,
 ) -> Result<Vector3, BuildError> {
     Ok(Vector3::from_xyz(
-        (vector.0[0].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
-        (vector.0[1].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
-        (vector.0[2].clone() / denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
+        (vector.0[0].clone() / denominator).map_err(GeometryError::Numeric)?,
+        (vector.0[1].clone() / denominator).map_err(GeometryError::Numeric)?,
+        (vector.0[2].clone() / denominator).map_err(GeometryError::Numeric)?,
     ))
 }
 
@@ -739,8 +737,8 @@ pub(super) fn certified_sweep_frame_area_integral(
         }
         let expected = normal.clone() * weight_coefficient;
         constant_area &= vectors_equal(&cross_coefficient, &expected)?;
-        let determinant_numerator = (cross_coefficient.dot(normal) / &normal_squared)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let determinant_numerator =
+            (cross_coefficient.dot(normal) / &normal_squared).map_err(GeometryError::Numeric)?;
         if !vectors_equal(
             &cross_coefficient,
             &(normal.clone() * &determinant_numerator),
@@ -760,8 +758,7 @@ pub(super) fn certified_sweep_frame_area_integral(
     let weight_squared = &weights[0] * &weights[0];
     let mut integral = Real::zero();
     for numerator in determinant_numerators {
-        let coefficient =
-            (numerator / &weight_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let coefficient = (numerator / &weight_squared).map_err(GeometryError::Numeric)?;
         if decided_model_order(compare_reals(
             &coefficient,
             &Real::zero(),
@@ -777,7 +774,7 @@ pub(super) fn certified_sweep_frame_area_integral(
             / Real::from(
                 u128::try_from(product_degree + 1).expect("usize is representable as u128"),
             ))
-        .map_err(|_| GeometryError::ProjectiveDivision)?,
+        .map_err(GeometryError::Numeric)?,
     ))
 }
 
@@ -786,15 +783,12 @@ pub(super) fn model_bernstein_product_coefficient(
     first: usize,
     second: usize,
 ) -> Result<Real, BuildError> {
+    let product_degree = degree
+        .checked_mul(2)
+        .ok_or(GeometryError::Numeric(hyperreal::Problem::OutOfRange))?;
     let numerator = model_binomial_real(degree, first)? * model_binomial_real(degree, second)?;
-    (numerator
-        / model_binomial_real(
-            degree
-                .checked_mul(2)
-                .ok_or(GeometryError::ProjectiveDivision)?,
-            first + second,
-        )?)
-    .map_err(|_| GeometryError::ProjectiveDivision.into())
+    (numerator / model_binomial_real(product_degree, first + second)?)
+        .map_err(|problem| GeometryError::Numeric(problem).into())
 }
 
 pub(super) fn model_binomial_real(n: usize, k: usize) -> Result<Real, BuildError> {
@@ -804,7 +798,7 @@ pub(super) fn model_binomial_real(n: usize, k: usize) -> Result<Real, BuildError
         result = (result
             * Real::from(u128::try_from(n + 1 - index).expect("usize is representable as u128"))
             / Real::from(u128::try_from(index).expect("usize is representable as u128")))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        .map_err(GeometryError::Numeric)?;
     }
     Ok(result)
 }
@@ -873,7 +867,7 @@ pub(super) fn translated_rational_bezier_surface_equal(
             };
             let first_path_index = path_index(0);
             let weight_scale = (&actual_weights[0][0] / &path_weights[first_path_index])
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
             let mut equal = true;
             for row in 0..path_points.len() {
                 let expected_row = path_index(row);
@@ -949,7 +943,7 @@ pub(super) fn framed_rational_bezier_surface_equal(
             };
             let first_path_index = path_index(0);
             let weight_scale = (&actual_weights[0][0] / &path_weights[first_path_index])
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                .map_err(GeometryError::Numeric)?;
             let mut equal = true;
             for row in 0..path_points.len() {
                 let expected_row = path_index(row);
@@ -1013,7 +1007,7 @@ pub(super) fn line_parameter(
     direction: &Vector3,
 ) -> Result<Real, BuildError> {
     ((candidate - point).dot(direction) / direction.norm_squared())
-        .map_err(|_| GeometryError::ProjectiveDivision)
+        .map_err(GeometryError::Numeric)
         .map_err(BuildError::from)
 }
 
@@ -1236,9 +1230,9 @@ pub(super) fn normalize_single_span_nurbs_pcurve(
         .map(|point| {
             Ok(hypercurve::HomogeneousControl2::new(
                 ((point.x() - u_start * point.weight()) / &u_span)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?,
+                    .map_err(GeometryError::Numeric)?,
                 ((point.y() - v_start * point.weight()) / &v_span)
-                    .map_err(|_| GeometryError::ProjectiveDivision)?,
+                    .map_err(GeometryError::Numeric)?,
                 point.weight().clone(),
             ))
         })
@@ -1368,7 +1362,7 @@ pub(super) fn rational_tensor_graph_controls(
     for index in 0..=control_count {
         let alpha = (Real::from(u128::try_from(index).map_err(|_| GeometryError::InvalidDegree)?)
             / &denominator)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let one_minus_alpha = Real::one() - &alpha;
         let previous_weight = (index > 0).then(|| weights[index - 1].clone());
         let next_weight = (index < control_count).then(|| weights[index].clone());
@@ -1394,9 +1388,9 @@ pub(super) fn rational_tensor_graph_controls(
             Real::zero()
         };
         let coefficient = ((previous_coefficient + next_coefficient) / &elevated_weight)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
-        let parameter = (parameter_homogeneous / &elevated_weight)
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
+        let parameter =
+            (parameter_homogeneous / &elevated_weight).map_err(GeometryError::Numeric)?;
         elevated_points.push(match profile_axis {
             SurfaceIsoAxis::U => CurvePoint2::new(parameter, coefficient),
             SurfaceIsoAxis::V => CurvePoint2::new(coefficient, parameter),
@@ -1481,8 +1475,8 @@ pub(super) fn tensor_curve_images_equal(
             return Ok(false);
         }
     }
-    let weight_scale = (&actual_weights[0] / &expected_weights[0])
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let weight_scale =
+        (&actual_weights[0] / &expected_weights[0]).map_err(GeometryError::Numeric)?;
     for (actual, expected) in actual_weights.iter().zip(&expected_weights) {
         if !real_values_equal(actual, &(expected * &weight_scale))? {
             return Ok(false);
@@ -1626,8 +1620,7 @@ pub(super) fn split_parameter_correspondence(
                 Direction::Reversed => (edge_domain.end(), edge_domain.start()),
             };
             let pcurve_width = pcurve.domain_end()? - pcurve.domain_start()?;
-            let scale = ((edge_end - edge_start) / pcurve_width)
-                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let scale = ((edge_end - edge_start) / pcurve_width).map_err(GeometryError::Numeric)?;
             let offset = edge_start - &scale * pcurve.domain_start()?;
             Ok(ParameterCorrespondence::affine(scale, offset)?)
         }
@@ -1756,7 +1749,7 @@ pub(super) fn certified_periodic_longitudinal_half_coverage(
         return Ok(false);
     }
 
-    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let signed_radial = |angle: &Real| {
         let radial = x.clone() * angle.clone().cos() + y.clone() * angle.clone().sin();
         radial.dot(interior_normal)
@@ -1778,7 +1771,7 @@ pub(super) fn certified_periodic_longitudinal_half_coverage(
             return Ok(false);
         }
         let midpoint = ((&u_values[u_cell] + &u_values[u_cell + 1]) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         let start_order = decided_model_order(compare_reals(
             &signed_radial(&u_values[u_cell]),
             &Real::zero(),
@@ -1828,7 +1821,7 @@ pub(super) fn certified_periodic_longitudinal_half_coverage(
         let complement_start = u_values.last().expect("nonempty torus u grid");
         let complement_end = &u_values[0] + Real::tau();
         let midpoint = ((complement_start + &complement_end) / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            .map_err(GeometryError::Numeric)?;
         if decided_model_order(compare_reals(
             &signed_radial(complement_start),
             &Real::zero(),
@@ -1956,7 +1949,7 @@ pub(super) fn require_curve_point_at_parameter(
 
 pub(super) fn sphere_volume(radius: &Real) -> Result<Real, GeometryError> {
     (Real::from(4) * Real::pi() * radius * radius * radius / Real::from(3))
-        .map_err(|_| GeometryError::ProjectiveDivision)
+        .map_err(GeometryError::Numeric)
 }
 
 pub(super) fn sphere_finite_cylinder_overlap_volume(
@@ -1997,10 +1990,9 @@ pub(super) fn sphere_finite_cylinder_overlap_volume(
     }
     let half_height = (&sphere.radius * &sphere.radius - &cylinder.radius * &cylinder.radius)
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let sphere_primitive = |height: &Real| -> Result<Real, GeometryError> {
-        let cubic = (height * height * height / Real::from(3))
-            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let cubic = (height * height * height / Real::from(3)).map_err(GeometryError::Numeric)?;
         Ok(Real::pi() * (&sphere.radius * &sphere.radius * height - cubic))
     };
     let cylinder_primitive =
@@ -2043,14 +2035,14 @@ pub(super) fn sphere_pair_intersection_volume(
     let distance = (&pair.second_center - &pair.first_center)
         .norm_squared()
         .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
+        .map_err(GeometryError::Numeric)?;
     let radius_sum = &pair.first_radius + &pair.second_radius;
     let radius_difference = &pair.first_radius - &pair.second_radius;
     let overlap_depth = &radius_sum - &distance;
     let bracket = &distance * &distance + Real::from(2) * &distance * &radius_sum
         - Real::from(3) * &radius_difference * &radius_difference;
     (Real::pi() * &overlap_depth * overlap_depth * bracket / (Real::from(12) * distance))
-        .map_err(|_| GeometryError::ProjectiveDivision)
+        .map_err(GeometryError::Numeric)
 }
 
 pub(super) fn compute_bounds(
@@ -2356,10 +2348,8 @@ pub(super) fn projected_face_split_line(
         let dv = displacement.dot(v);
         let determinant = &uu * &vv - &uv * &uv;
         Ok::<_, GeometryError>(CurvePoint2::new(
-            ((&du * &vv - &dv * &uv) / &determinant)
-                .map_err(|_| GeometryError::ProjectiveDivision)?,
-            ((&dv * &uu - &du * &uv) / determinant)
-                .map_err(|_| GeometryError::ProjectiveDivision)?,
+            ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?,
+            ((&dv * &uu - &du * &uv) / determinant).map_err(GeometryError::Numeric)?,
         ))
     };
     LineSeg2::try_new(project(&trace.lower)?, project(&trace.upper)?)

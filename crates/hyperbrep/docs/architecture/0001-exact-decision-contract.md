@@ -91,6 +91,21 @@ At an operation boundary, outcomes are translated without conflation:
 Resource exhaustion is not mathematical ambiguity. Unsupported is not
 inequality. Unknown is not false.
 
+Scalar failures cross the geometry boundary as
+`GeometryError::Numeric(hyperreal::Problem)`. Keep the original `Problem`:
+`DivideByZero` proves a zero denominator; `UnknownZero` does not certify a
+nonzero denominator; `Exhausted` reports an arithmetic resource/refinement
+limit. Do not replace these with a generic projective, elementary-function,
+or transform failure, or infer a degenerate geometric result from them.
+An overflowing degree/index calculation reports `OutOfRange`.
+
+Single-cause geometry, construction, query, edit, Boolean, persistence and
+tessellation errors expose their wrapped cause through `std::error::Error`.
+Multi-cause validation reports retain their complete `errors()` collection;
+Boolean fallback failures retain both public branch errors. Consumers must
+inspect those collections rather than treating one arbitrary cause as the
+complete diagnostic.
+
 ### Resource policy
 
 Ordinary APIs have no tolerance argument. Operations that can require unbounded

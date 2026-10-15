@@ -695,7 +695,7 @@ impl ModelBuilder {
         {
             return Ok(selected);
         }
-        let relative = (start / end).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let relative = (start / end).map_err(GeometryError::Numeric)?;
         Ok(selected.split_v_at(&relative)?.1)
     }
 

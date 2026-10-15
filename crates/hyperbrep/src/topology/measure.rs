@@ -191,18 +191,18 @@ impl Model {
                 let start_radius = start_radial
                     .norm_squared()
                     .sqrt()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                    .map_err(GeometryError::Numeric)?;
                 let end_radius = end_radial
                     .norm_squared()
                     .sqrt()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                    .map_err(GeometryError::Numeric)?;
                 let profile_length = (&end - &start)
                     .norm_squared()
                     .sqrt()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                    .map_err(GeometryError::Numeric)?;
                 (angular_span.clone() * profile_length * (start_radius + end_radius)
                     / Real::from(2))
-                .map_err(|_| GeometryError::ProjectiveDivision)
+                .map_err(GeometryError::Numeric)
                 .map_err(QueryError::from)
             };
             return match profile.exact_data() {
@@ -219,9 +219,9 @@ impl Model {
                     let start_radius = start_radial
                         .norm_squared()
                         .sqrt()
-                        .map_err(|_| GeometryError::ElementaryFunction)?;
-                    let radial_unit = (start_radial / &start_radius)
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
+                    let radial_unit =
+                        (start_radial / &start_radius).map_err(GeometryError::Numeric)?;
                     let center_radial = radial_unit.dot(&radial_at(&data.center));
                     let x_radial = radial_unit.dot(&data.x);
                     let y_radial = radial_unit.dot(&data.y);
@@ -253,7 +253,7 @@ impl Model {
                 .cross(&v)
                 .norm_squared()
                 .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?,
+                .map_err(GeometryError::Numeric)?,
             SurfaceExactData::Cylinder { radius, .. } => radius,
             SurfaceExactData::Extrusion { profile, direction } => {
                 let profile = Curve3::from_exact_data(*profile)?;
@@ -275,7 +275,7 @@ impl Model {
         };
         let double_area = parameter_area * surface_scale;
         (double_area / Real::from(2))
-            .map_err(|_| GeometryError::ProjectiveDivision)
+            .map_err(GeometryError::Numeric)
             .map_err(QueryError::from)
     }
 
@@ -291,7 +291,7 @@ impl Model {
             extrusion_constant_area_scale(profile, direction).map_err(build_error_geometry)?
         {
             return (parameter_double_area * scale / Real::from(2))
-                .map_err(|_| GeometryError::ProjectiveDivision)
+                .map_err(GeometryError::Numeric)
                 .map_err(QueryError::from);
         }
         if !face.inner().is_empty()
@@ -320,7 +320,7 @@ impl Model {
             .cross(direction)
             .norm_squared()
             .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?
+            .map_err(GeometryError::Numeric)?
             * (v_max - v_min);
         Ok(swept_area)
     }
@@ -410,7 +410,7 @@ impl Model {
                     let center_parameter = (center - &cylinder.origin).dot(&cylinder.axis);
                     let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
                         let cubic = (height * height * height / Real::from(3))
-                            .map_err(|_| GeometryError::ProjectiveDivision)?;
+                            .map_err(GeometryError::Numeric)?;
                         Ok(Real::pi() * (radius * radius * height - cubic))
                     };
                     match side {
@@ -431,7 +431,7 @@ impl Model {
             if let CertifiedSphereRegion::Axial(clip) = &sphere.region {
                 let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
                     let cubic = (height * height * height / Real::from(3))
-                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        .map_err(GeometryError::Numeric)?;
                     Ok(Real::pi() * (&sphere.radius * &sphere.radius * height - cubic))
                 };
                 return Ok(antiderivative(&clip.max)? - antiderivative(&clip.min)?);
@@ -440,7 +440,7 @@ impl Model {
                 let axial_half_height = (&sphere.radius * &sphere.radius
                     - &clip.radius * &clip.radius)
                     .sqrt()
-                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                    .map_err(GeometryError::Numeric)?;
                 let axial_cubic = &axial_half_height * &axial_half_height * axial_half_height;
                 let retained_cubic = match clip.side {
                     CertifiedSphereRadialSide::Inside => {
@@ -449,7 +449,7 @@ impl Model {
                     CertifiedSphereRadialSide::Outside => axial_cubic,
                 };
                 return (Real::from(4) * Real::pi() * retained_cubic / Real::from(3))
-                    .map_err(|_| GeometryError::ProjectiveDivision)
+                    .map_err(GeometryError::Numeric)
                     .map_err(QueryError::from);
             }
             if let CertifiedSphereRegion::FiniteCylinder(region) = &sphere.region {
@@ -501,11 +501,11 @@ impl Model {
                     let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
                         let radial = (&torus.minor_radius * &torus.minor_radius - height * height)
                             .sqrt()
-                            .map_err(|_| GeometryError::ElementaryFunction)?;
+                            .map_err(GeometryError::Numeric)?;
                         let angle = (height / &torus.minor_radius)
-                            .map_err(|_| GeometryError::ProjectiveDivision)?
+                            .map_err(GeometryError::Numeric)?
                             .asin()
-                            .map_err(|_| GeometryError::ElementaryFunction)?;
+                            .map_err(GeometryError::Numeric)?;
                         Ok(Real::from(2)
                             * Real::pi()
                             * &torus.major_radius
@@ -532,12 +532,12 @@ impl Model {
                     + &min_radius * &max_radius
                     + &max_radius * &max_radius)
                 / Real::from(3))
-            .map_err(|_| GeometryError::ProjectiveDivision)
+            .map_err(GeometryError::Numeric)
             .map_err(QueryError::from)?;
             return match &frustum.region {
                 CertifiedConeFrustumRegion::Whole => Ok(volume),
                 CertifiedConeFrustumRegion::LongitudinalHalf { .. } => (volume / Real::from(2))
-                    .map_err(|_| GeometryError::ProjectiveDivision)
+                    .map_err(GeometryError::Numeric)
                     .map_err(QueryError::from),
             };
         }
@@ -597,7 +597,7 @@ impl Model {
             .map(|shell| self.signed_shell_six_volume(*shell))
             .fold(Real::zero(), |sum, volume| sum + volume);
         (signed_six_volume / Real::from(6))
-            .map_err(|_| GeometryError::ProjectiveDivision)
+            .map_err(GeometryError::Numeric)
             .map_err(QueryError::from)
     }
 
@@ -698,7 +698,7 @@ impl Model {
                     * (line.end().y() * line.end().y() - line.start().y() * line.start().y());
             }
         }
-        (doubled_area / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)
+        (doubled_area / Real::from(2)).map_err(GeometryError::Numeric)
     }
 
     pub(in crate::topology) fn signed_shell_six_volume(&self, shell: ShellId) -> Real {

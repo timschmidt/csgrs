@@ -161,7 +161,7 @@ impl ParameterCorrespondence {
         }
         match self {
             Self::Affine { scale, offset, .. } => {
-                ((edge_parameter - offset) / scale).map_err(|_| GeometryError::ProjectiveDivision)
+                ((edge_parameter - offset) / scale).map_err(GeometryError::Numeric)
             }
             Self::AngularSweep => {
                 let arc = pcurve
@@ -169,7 +169,7 @@ impl ParameterCorrespondence {
                     .ok_or(GeometryError::UnsupportedPcurveContour)?;
                 let fraction = ((edge_parameter - directed_start)
                     / (directed_end - directed_start))
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    .map_err(GeometryError::Numeric)?;
                 match crate::error::classified(arc.parameter_at_sweep_fraction(&fraction))? {
                     Classification::Decided(parameter) => Ok(parameter),
                     Classification::Uncertain(reason) => {
@@ -199,7 +199,7 @@ impl ParameterCorrespondence {
         match self {
             Self::Affine { scale, offset } => {
                 let factor = ((target.end() - target.start()) / (source.end() - source.start()))
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    .map_err(GeometryError::Numeric)?;
                 Ok(if reversed {
                     Self::Affine {
                         scale: -(&factor * scale),
