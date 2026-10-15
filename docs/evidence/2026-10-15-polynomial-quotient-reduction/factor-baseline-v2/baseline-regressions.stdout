@@ -1,0 +1,62 @@
+{"started": "units", "command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-baseline-v1/units", "ring_quotient_reduction_tests", "--test-threads=2"]}
+
+running 4 tests
+test computable::node::ring_quotient_reduction_tests::exact_polynomial_quotients_survive_repeated_squaring ... FAILED
+test computable::node::ring_quotient_reduction_tests::factor_reduction_keeps_degree_limits_and_cached_depth_checks ... ok
+test computable::node::ring_quotient_reduction_tests::factor_reduction_preserves_exhaustion_cancellation_and_recovery ... FAILED
+test computable::node::ring_quotient_reduction_tests::factor_reduction_requires_the_retained_nonzero_witness ... FAILED
+
+failures:
+
+---- computable::node::ring_quotient_reduction_tests::exact_polynomial_quotients_survive_repeated_squaring stdout ----
+
+thread 'computable::node::ring_quotient_reduction_tests::exact_polynomial_quotients_survive_repeated_squaring' (122) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/computable/node/ring_quotient_reduction_tests.rs:85:13:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- computable::node::ring_quotient_reduction_tests::factor_reduction_preserves_exhaustion_cancellation_and_recovery stdout ----
+
+thread 'computable::node::ring_quotient_reduction_tests::factor_reduction_preserves_exhaustion_cancellation_and_recovery' (124) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/computable/node/ring_quotient_reduction_tests.rs:144:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+
+---- computable::node::ring_quotient_reduction_tests::factor_reduction_requires_the_retained_nonzero_witness stdout ----
+
+thread 'computable::node::ring_quotient_reduction_tests::factor_reduction_requires_the_retained_nonzero_witness' (125) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/computable/node/ring_quotient_reduction_tests.rs:98:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+
+
+failures:
+    computable::node::ring_quotient_reduction_tests::exact_polynomial_quotients_survive_repeated_squaring
+    computable::node::ring_quotient_reduction_tests::factor_reduction_preserves_exhaustion_cancellation_and_recovery
+    computable::node::ring_quotient_reduction_tests::factor_reduction_requires_the_retained_nonzero_witness
+
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 795 filtered out; finished in 0.00s
+
+{"started": "public", "command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-baseline-v2/public", "--test-threads=2"]}
+
+running 2 tests
+test polynomial_quotients_compose_without_expanding_unused_factors ... FAILED
+test a_nonzero_polynomial_remainder_is_never_cancelled ... ok
+
+failures:
+
+---- polynomial_quotients_compose_without_expanding_unused_factors stdout ----
+
+thread 'polynomial_quotients_compose_without_expanding_unused_factors' (128) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/quotient_factor_reduction.rs:34:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    polynomial_quotients_compose_without_expanding_unused_factors
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

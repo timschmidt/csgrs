@@ -1,0 +1,8 @@
+{
+  "status": "failed provisional recovery inventory; no artifact recovery attempted",
+  "failure": "Repeating all candidate paths for identical content produced an oversized draft; writing failed with ENOSPC. Its incomplete raw bytes are retained losslessly as xz. The gzip copy was valid but exceeded the selected 100 MiB memory-load guard; no source deletion occurred in that attempt.",
+  "raw_bytes": 2589982720,
+  "raw_sha256": "972d5a21f5bbb79bf6bdae46aa6a687f605e10f0a070c3c9d0b7e2ea6c53b365",
+  "xz_sha256": "a48a6996984894e9938084642c65283b202f72afc8132429bcd5a2bb07737b47",
+  "xz_bytes": 1167596
+}

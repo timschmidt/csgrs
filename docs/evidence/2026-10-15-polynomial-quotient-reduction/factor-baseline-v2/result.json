@@ -1,0 +1,45 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.8283800911158323,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "a96c7b009a89703dfac7091df785acb914c053c7ee5f97d62985714abce8c3b0"
+    },
+    {
+      "name": "workspace-fmt",
+      "exit_code": 0,
+      "seconds": 12.314858797006309,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "1ff15ab301cad4e0b36a3b7fad3d7bedcc7e8781e3b41cfb29ffda9e3038aafe"
+    },
+    {
+      "name": "public-build",
+      "exit_code": 0,
+      "seconds": 2.33030062681064,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "2ddc3c5bc1d4afbe42458fdf0dc61802f99afa4fe4ace7826e354563cac841ef"
+    },
+    {
+      "name": "baseline-regressions",
+      "exit_code": 1,
+      "seconds": 1.9003602601587772,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "af58318c7942842680c87994e1bc1226911966ec949d0c6912ba3ce1c2b28187",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "0c9163235998ce5fb80d8f680eeaa6924e54415f092922c628caa250182d6a37"
+    }
+  ],
+  "passed": false
+}

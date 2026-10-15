@@ -1,0 +1,15 @@
+{
+  "commands": [
+    {
+      "name": "current-algebra",
+      "exit_code": 0,
+      "seconds": 2.357114925980568,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "53ecfc57290039957ebc2d5a57e82efc79c6bb9ab7828bdb5421c13dab2edcce",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "d2f0b0c706fed469ce425e42db9b6dee5349bb742002cf4d65940d0c87ea88bd"
+    }
+  ],
+  "passed": true
+}

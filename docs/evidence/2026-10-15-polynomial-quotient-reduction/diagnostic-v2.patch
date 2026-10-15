@@ -1,0 +1,167 @@
+--- crates/hyperreal/src/computable/node/ring_polynomial.rs
++++ diagnostic-v2-source/hyperreal/src/computable/node/ring_polynomial.rs
+@@ -11,6 +11,7 @@
+ 
+ struct RingRecognition<'a> {
+     atoms: Vec<&'a Computable>,
++    diagnose: bool,
+     // Used only by quotient recognition. The borrowed root keeps these node
+     // identities alive for the attempt; no entry survives the query.
+     quotients: std::collections::HashMap<*const Node, RingQuotient>,
+@@ -31,6 +32,7 @@
+     fn new(value: &'a Computable) -> Self {
+         Self {
+             atoms: Vec::new(),
++            diagnose: false,
+             quotients: std::collections::HashMap::new(),
+             nodes_left: Self::MAX_NODES,
+             operations_left: Self::MAX_OPERATIONS,
+@@ -44,6 +46,7 @@
+         if should_stop(self.signal) {
+             return None;
+         }
++        if self.operations_left == 0 && self.diagnose { eprintln!("quotient_decline=work"); }
+         self.operations_left = self.operations_left.checked_sub(1)?;
+         Some(())
+     }
+@@ -80,6 +83,7 @@
+     ) -> Option<()> {
+         self.charge()?;
+         if !Self::coefficient_fits(&coefficient) || monomial.len() > Self::MAX_DEGREE {
++            if self.diagnose { eprintln!("quotient_decline=insert-coefficient-or-degree degree={}", monomial.len()); }
+             return None;
+         }
+         if coefficient.is_zero() {
+@@ -93,6 +97,7 @@
+                 self.charge()?;
+                 let sum = &result.terms[index].1 + coefficient;
+                 if !Self::coefficient_fits(&sum) {
++                    if self.diagnose { eprintln!("quotient_decline=coefficient-sum"); }
+                     return None;
+                 }
+                 if sum.is_zero() {
+@@ -103,6 +108,7 @@
+             }
+             Err(index) => {
+                 if result.terms.len() == Self::MAX_TERMS {
++                    if self.diagnose { eprintln!("quotient_decline=terms"); }
+                     return None;
+                 }
+                 result.terms.insert(index, (monomial, coefficient));
+@@ -128,6 +134,7 @@
+             for (b, y) in &right.terms {
+                 self.charge()?;
+                 if a.len() + b.len() > Self::MAX_DEGREE {
++                    if self.diagnose { eprintln!("quotient_decline=product-degree left={} right={}", a.len(), b.len()); }
+                     return None;
+                 }
+                 let mut monomial = Vec::with_capacity(a.len() + b.len());
+@@ -157,6 +164,7 @@
+             }
+         }
+         if self.atoms.len() == Self::MAX_ATOMS {
++            if self.diagnose { eprintln!("quotient_decline=atoms"); }
+             return None;
+         }
+         let index = self.atoms.len() as u8;
+@@ -169,8 +177,10 @@
+     fn expand(&mut self, value: &'a Computable, depth: usize) -> Option<RingPolynomial> {
+         self.charge()?;
+         if depth == 0 {
+-            return None;
+-        }
++            if self.diagnose { eprintln!("quotient_decline=depth"); }
++            return None;
++        }
++        if self.nodes_left == 0 && self.diagnose { eprintln!("quotient_decline=nodes"); }
+         self.nodes_left = self.nodes_left.checked_sub(1)?;
+         match &value.internal.approximation {
+             Approximation::One => Self::constant(Rational::one()),
+@@ -201,6 +211,7 @@
+             }
+             Approximation::Offset(child, shift) => {
+                 if u64::from(shift.unsigned_abs()) >= Self::MAX_COEFFICIENT_BITS {
++                    if self.diagnose { eprintln!("quotient_decline=shift"); }
+                     return None;
+                 }
+                 let child = self.expand(child, depth - 1)?;
+--- crates/hyperreal/src/computable/node/ring_quotient.rs
++++ diagnostic-v2-source/hyperreal/src/computable/node/ring_quotient.rs
+@@ -135,6 +135,7 @@
+ 
+     fn expand_quotient(&mut self, value: &'a Computable, depth: usize) -> Option<RingQuotient> {
+         if depth == 0 {
++            if self.diagnose { eprintln!("quotient_decline=depth"); }
+             return None;
+         }
+         let identity = Arc::as_ptr(&value.internal);
+@@ -173,8 +174,10 @@
+         }
+         self.charge()?;
+         if depth == 0 {
+-            return None;
+-        }
++            if self.diagnose { eprintln!("quotient_decline=depth"); }
++            return None;
++        }
++        if self.nodes_left == 0 && self.diagnose { eprintln!("quotient_decline=nodes"); }
+         self.nodes_left = self.nodes_left.checked_sub(1)?;
+         match &value.internal.approximation {
+             Approximation::Add(a, b) => {
+@@ -197,6 +200,7 @@
+             }
+             Approximation::Offset(child, shift) => {
+                 if u64::from(shift.unsigned_abs()) >= Self::MAX_COEFFICIENT_BITS {
++                    if self.diagnose { eprintln!("quotient_decline=shift"); }
+                     return None;
+                 }
+                 let child = self.expand_quotient(child, depth - 1)?;
+@@ -253,3 +257,15 @@
+         Some(rational)
+     }
+ }
++
++impl Computable {
++    pub(crate) fn diagnostic_quotient_limits(&self) {
++        let mut recognition = RingRecognition::new(self);
++        recognition.diagnose = true;
++        let expanded = recognition.expand_quotient(self, RingRecognition::MAX_DEPTH);
++        let rational = expanded.as_ref().and_then(|q| recognition.project_quotient(q));
++        eprintln!("quotient_diagnostic expanded={} rational={rational:?} nodes_left={} work_left={} atoms={} cached={}",
++            expanded.is_some(), recognition.nodes_left, recognition.operations_left,
++            recognition.atoms.len(), recognition.quotients.len());
++    }
++}
+--- crates/hyperreal/src/real/arithmetic/facts.rs
++++ diagnostic-v2-source/hyperreal/src/real/arithmetic/facts.rs
+@@ -1697,3 +1697,11 @@
+         Real::new(self.materialize_parameter(1))
+     }
+ }
++
++impl Real {
++    /// Diagnostic-only copied-source query; it does not publish a root proof.
++    #[doc(hidden)]
++    pub fn diagnostic_quotient_limits(&self) {
++        self.computable_ref().diagnostic_quotient_limits();
++    }
++}
+--- crates/hypermesh/src/predicate.rs
++++ diagnostic-v2-source/hypermesh/src/predicate.rs
+@@ -645,7 +645,15 @@
+     crate::trace_dispatch!("classify-real", "hyperlimit");
+     decisions
+         .decide(
+-            classify_real_sign(value, decisions.policy()),
++            {
++                let outcome = classify_real_sign(value, decisions.policy());
++                if matches!(outcome, hyperlimit::PredicateOutcome::Unknown { .. }) {
++                    eprintln!("unresolved_composition_scalar={value:?}");
++                    value.diagnostic_quotient_limits();
++                    eprintln!("{}", std::backtrace::Backtrace::force_capture());
++                }
++                outcome
++            },
+             "Real sign classification",
+         )
+         .map(|sign| match sign {

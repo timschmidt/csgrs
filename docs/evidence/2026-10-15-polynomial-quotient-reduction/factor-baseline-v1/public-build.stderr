@@ -1,0 +1,60 @@
+error[E0308]: mismatched types
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/quotient_factor_reduction.rs:28:32
+    |
+ 28 |         Rational::fraction(-1, 1_000_000_000_000_i64).unwrap(),
+    |         ------------------     ^^^^^^^^^^^^^^^^^^^^^ expected `u64`, found `i64`
+    |         |
+    |         arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/rational/arithmetic/construction.rs:321:12
+    |
+321 |     pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
+    |            ^^^^^^^^
+help: change the type of the numeric literal from `i64` to `u64`
+    |
+ 28 -         Rational::fraction(-1, 1_000_000_000_000_i64).unwrap(),
+ 28 +         Rational::fraction(-1, 1_000_000_000_000_u64).unwrap(),
+    |
+
+error[E0308]: mismatched types
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/quotient_factor_reduction.rs:39:62
+    |
+ 39 |             let displacement = Rational::fraction(numerator, 1_000_000_000_000_i64).unwrap();
+    |                                ------------------            ^^^^^^^^^^^^^^^^^^^^^ expected `u64`, found `i64`
+    |                                |
+    |                                arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/rational/arithmetic/construction.rs:321:12
+    |
+321 |     pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
+    |            ^^^^^^^^
+help: change the type of the numeric literal from `i64` to `u64`
+    |
+ 39 -             let displacement = Rational::fraction(numerator, 1_000_000_000_000_i64).unwrap();
+ 39 +             let displacement = Rational::fraction(numerator, 1_000_000_000_000_u64).unwrap();
+    |
+
+error[E0308]: mismatched types
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/quotient_factor_reduction.rs:51:55
+    |
+ 51 |         let remainder = Rational::fraction(numerator, 1_000_000_000_000_i64).unwrap();
+    |                         ------------------            ^^^^^^^^^^^^^^^^^^^^^ expected `u64`, found `i64`
+    |                         |
+    |                         arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/rational/arithmetic/construction.rs:321:12
+    |
+321 |     pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
+    |            ^^^^^^^^
+help: change the type of the numeric literal from `i64` to `u64`
+    |
+ 51 -         let remainder = Rational::fraction(numerator, 1_000_000_000_000_i64).unwrap();
+ 51 +         let remainder = Rational::fraction(numerator, 1_000_000_000_000_u64).unwrap();
+    |
+
+error: aborting due to 3 previous errors
+
+For more information about this error, try `rustc --explain E0308`.

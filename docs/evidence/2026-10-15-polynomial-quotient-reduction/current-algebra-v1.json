@@ -1,0 +1,1094 @@
+{
+  "scope": "Conditional rational-function identities only; inverse operands need native nonzero proofs. Structural memoization and diagnostic operation counts are not production Arc identity or budget evidence.",
+  "records": [
+    {
+      "segments": 16,
+      "mode": "chain",
+      "capture_index": 0,
+      "trials": [
+        {
+          "kind": "zero-normalization",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 28,
+            "coefficient_products": 448,
+            "maximum_product_degree": 9
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 1,
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "-144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "eager-exact-division",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 14,
+            "coefficient_products": 147,
+            "maximum_product_degree": 4,
+            "division_attempts": 2,
+            "division_steps": 3,
+            "division_successes": 1
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 1,
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "-144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "division-only-after-degree-decline",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 28,
+            "coefficient_products": 414,
+            "maximum_product_degree": 7,
+            "degree_declines": 1,
+            "division_attempts": 2,
+            "division_steps": 12,
+            "division_successes": 2,
+            "retries": 1
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 1,
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "-144"
+              }
+            ]
+          ]
+        }
+      ],
+      "source_sha256": "eaf659fb08078bc3e240914a17501f7d9511f197b0f82a92eb2466b476857798"
+    },
+    {
+      "segments": 16,
+      "mode": "chain",
+      "capture_index": 1,
+      "trials": [
+        {
+          "kind": "zero-normalization",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 28,
+            "coefficient_products": 448,
+            "maximum_product_degree": 9
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "eager-exact-division",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 14,
+            "coefficient_products": 147,
+            "maximum_product_degree": 4,
+            "division_attempts": 2,
+            "division_steps": 3,
+            "division_successes": 1
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "division-only-after-degree-decline",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 28,
+            "coefficient_products": 414,
+            "maximum_product_degree": 7,
+            "degree_declines": 1,
+            "division_attempts": 2,
+            "division_steps": 12,
+            "division_successes": 2,
+            "retries": 1
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        }
+      ],
+      "source_sha256": "eaf659fb08078bc3e240914a17501f7d9511f197b0f82a92eb2466b476857798"
+    },
+    {
+      "segments": 16,
+      "mode": "chain",
+      "capture_index": 2,
+      "trials": [
+        {
+          "kind": "zero-normalization",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 20,
+            "coefficient_products": 435,
+            "maximum_product_degree": 10
+          },
+          "unique_structural_expansions": 61,
+          "calls": 88,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "eager-exact-division",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 4,
+            "coefficient_products": 88,
+            "maximum_product_degree": 2,
+            "division_attempts": 2,
+            "division_steps": 3,
+            "division_successes": 1
+          },
+          "unique_structural_expansions": 61,
+          "calls": 88,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "division-only-after-degree-decline",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 16,
+            "coefficient_products": 371,
+            "maximum_product_degree": 8,
+            "degree_declines": 1,
+            "division_attempts": 2,
+            "division_steps": 8,
+            "division_successes": 2,
+            "retries": 1
+          },
+          "unique_structural_expansions": 61,
+          "calls": 88,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        }
+      ],
+      "source_sha256": "eaf659fb08078bc3e240914a17501f7d9511f197b0f82a92eb2466b476857798"
+    },
+    {
+      "segments": 32,
+      "mode": "chain",
+      "capture_index": 0,
+      "trials": [
+        {
+          "kind": "zero-normalization",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 28,
+            "coefficient_products": 448,
+            "maximum_product_degree": 9
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "-144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "eager-exact-division",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 14,
+            "coefficient_products": 147,
+            "maximum_product_degree": 4,
+            "division_attempts": 2,
+            "division_steps": 3,
+            "division_successes": 1
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "-144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "division-only-after-degree-decline",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 28,
+            "coefficient_products": 414,
+            "maximum_product_degree": 7,
+            "degree_declines": 1,
+            "division_attempts": 2,
+            "division_steps": 12,
+            "division_successes": 2,
+            "retries": 1
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "-144"
+              }
+            ]
+          ]
+        }
+      ],
+      "source_sha256": "a35601c83835aa9f6b58c5dc9020989b6aa18af7d54f41f9f0dc2177a9f195d5"
+    },
+    {
+      "segments": 32,
+      "mode": "chain",
+      "capture_index": 1,
+      "trials": [
+        {
+          "kind": "zero-normalization",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 28,
+            "coefficient_products": 448,
+            "maximum_product_degree": 9
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "eager-exact-division",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 14,
+            "coefficient_products": 147,
+            "maximum_product_degree": 4,
+            "division_attempts": 2,
+            "division_steps": 3,
+            "division_successes": 1
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "division-only-after-degree-decline",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 28,
+            "coefficient_products": 414,
+            "maximum_product_degree": 7,
+            "degree_declines": 1,
+            "division_attempts": 2,
+            "division_steps": 12,
+            "division_successes": 2,
+            "retries": 1
+          },
+          "unique_structural_expansions": 65,
+          "calls": 96,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        }
+      ],
+      "source_sha256": "a35601c83835aa9f6b58c5dc9020989b6aa18af7d54f41f9f0dc2177a9f195d5"
+    },
+    {
+      "segments": 32,
+      "mode": "chain",
+      "capture_index": 2,
+      "trials": [
+        {
+          "kind": "zero-normalization",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 20,
+            "coefficient_products": 435,
+            "maximum_product_degree": 10
+          },
+          "unique_structural_expansions": 61,
+          "calls": 88,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "eager-exact-division",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 4,
+            "coefficient_products": 88,
+            "maximum_product_degree": 2,
+            "division_attempts": 2,
+            "division_steps": 3,
+            "division_successes": 1
+          },
+          "unique_structural_expansions": 61,
+          "calls": 88,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "division-only-after-degree-decline",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 16,
+            "coefficient_products": 371,
+            "maximum_product_degree": 8,
+            "degree_declines": 1,
+            "division_attempts": 2,
+            "division_steps": 8,
+            "division_successes": 2,
+            "retries": 1
+          },
+          "unique_structural_expansions": 61,
+          "calls": 88,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        }
+      ],
+      "source_sha256": "a35601c83835aa9f6b58c5dc9020989b6aa18af7d54f41f9f0dc2177a9f195d5"
+    },
+    {
+      "segments": 16,
+      "mode": "direct",
+      "capture_index": 0,
+      "trials": [
+        {
+          "kind": "zero-normalization",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "coefficient_products": 435,
+            "maximum_product_degree": 10,
+            "maximum_terms": 20
+          },
+          "unique_structural_expansions": 65,
+          "calls": 94,
+          "opaque_atoms": {
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 0,
+            "[\"Constant\",[\"Sqrt2\"]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  0
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "eager-exact-division",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "coefficient_products": 88,
+            "maximum_product_degree": 2,
+            "maximum_terms": 4,
+            "division_attempts": 2,
+            "division_steps": 3,
+            "division_successes": 1
+          },
+          "unique_structural_expansions": 65,
+          "calls": 94,
+          "opaque_atoms": {
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 0,
+            "[\"Constant\",[\"Sqrt2\"]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  0
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "division-only-after-degree-decline",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "coefficient_products": 371,
+            "maximum_product_degree": 8,
+            "maximum_terms": 16,
+            "degree_declines": 1,
+            "division_attempts": 2,
+            "division_steps": 8,
+            "division_successes": 2,
+            "retries": 1
+          },
+          "unique_structural_expansions": 65,
+          "calls": 94,
+          "opaque_atoms": {
+            "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 0,
+            "[\"Constant\",[\"Sqrt2\"]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  0
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        }
+      ],
+      "source_sha256": "646bbe9676461ea0ca3f0224f0ce66a22e78cc0e6750c757598e007efb05a246"
+    },
+    {
+      "segments": 32,
+      "mode": "direct",
+      "capture_index": 0,
+      "trials": [
+        {
+          "kind": "zero-normalization",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 20,
+            "coefficient_products": 435,
+            "maximum_product_degree": 10
+          },
+          "unique_structural_expansions": 61,
+          "calls": 88,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "eager-exact-division",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 4,
+            "coefficient_products": 88,
+            "maximum_product_degree": 2,
+            "division_attempts": 2,
+            "division_steps": 3,
+            "division_successes": 1
+          },
+          "unique_structural_expansions": 61,
+          "calls": 88,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        },
+        {
+          "kind": "division-only-after-degree-decline",
+          "expanded": true,
+          "zero_numerator": true,
+          "numerator": [],
+          "denominator": [
+            {
+              "powers_as_atom_ids": [],
+              "coefficient": "1"
+            }
+          ],
+          "metrics": {
+            "maximum_terms": 16,
+            "coefficient_products": 371,
+            "maximum_product_degree": 8,
+            "degree_declines": 1,
+            "division_attempts": 2,
+            "division_steps": 8,
+            "division_successes": 2,
+            "retries": 1
+          },
+          "unique_structural_expansions": 61,
+          "calls": 88,
+          "opaque_atoms": {
+            "[\"Constant\",[\"Sqrt2\"]]": 0,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 1,
+            "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 2
+          },
+          "nonzero_denominator_obligations": [
+            [
+              {
+                "powers_as_atom_ids": [
+                  1
+                ],
+                "coefficient": "-144"
+              },
+              {
+                "powers_as_atom_ids": [
+                  2
+                ],
+                "coefficient": "144"
+              }
+            ]
+          ]
+        }
+      ],
+      "source_sha256": "8cdfafb795d5561bb0a7993297241b2569b5f77b7839854aa6ddb6fee273ce88"
+    }
+  ],
+  "script_sha256": "78f04c0338d71f7820ee43a322c3ca05cea395e7eb6c53b0e70a4e4a76a450d1"
+}

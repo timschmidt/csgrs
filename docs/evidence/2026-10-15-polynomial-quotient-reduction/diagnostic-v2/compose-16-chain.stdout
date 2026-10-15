@@ -1,0 +1,3 @@
+segments=16 mode=chain initial=Certified
+empty_union=Certified membership=true
+difference_body=PredicateUndecided { predicate: "Real sign classification" }

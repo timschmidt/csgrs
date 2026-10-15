@@ -1,0 +1,560 @@
+{
+  "hyperlimit:1286121115990307312": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhyperlimit-6781fa9073ad42e6.rlib",
+    "sha256": "ea2f334ed6faeb1be996f4b741050c8a3da8c6481a6bde89ffda42ff692e226d",
+    "cargo_fingerprint": 1286121115990307312,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hyperlimit-6781fa9073ad42e6/lib-hyperlimit.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[\"default\", \"std\"]",
+      "declared_features": "[\"default\", \"dispatch-trace\", \"parallel\", \"serde\", \"std\"]",
+      "target": 1931032375221060682,
+      "profile": 2040997289075261528,
+      "path": 7186429826546533413,
+      "deps": [
+        [
+          2538394439553624815,
+          "hyperlattice",
+          false,
+          12504825391106515845
+        ],
+        [
+          2551482934563074397,
+          "hyperreal",
+          false,
+          3136259652572598114
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/hyperlimit-6781fa9073ad42e6/dep-lib-hyperlimit",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  },
+  "hyperlattice:12504825391106515845": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhyperlattice-5ffa110827bfce9d.rlib",
+    "sha256": "7c68be85c2fd79d853bb5f225d1783d83cd1350992cdf5751c3c01b0c78fb67d",
+    "cargo_fingerprint": 12504825391106515845,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hyperlattice-5ffa110827bfce9d/lib-hyperlattice.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[\"default\"]",
+      "declared_features": "[\"arbitrary\", \"default\", \"hyperreal-dispatch-trace\", \"serde\"]",
+      "target": 5089722407375537357,
+      "profile": 2040997289075261528,
+      "path": 8517019290902466894,
+      "deps": [
+        [
+          2551482934563074397,
+          "hyperreal",
+          false,
+          3136259652572598114
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/hyperlattice-5ffa110827bfce9d/dep-lib-hyperlattice",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  },
+  "hyperreal:3136259652572598114": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+    "sha256": "90afa148485a5e1334c83dcd0b53d442b0cc95c665fe7b1c126db547fdbc7c65",
+    "cargo_fingerprint": 3136259652572598114,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hyperreal-bd1ab828184ac69a/lib-hyperreal.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[\"cached-f64-approx\", \"default\"]",
+      "declared_features": "[\"cached-f32-approx\", \"cached-f64-approx\", \"default\", \"dispatch-trace\", \"serde\", \"simple\"]",
+      "target": 11038293903651374506,
+      "profile": 14247865834374330005,
+      "path": 846433130786328259,
+      "deps": [
+        [
+          12905226474294026438,
+          "num",
+          false,
+          18330591081923292959
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/hyperreal-bd1ab828184ac69a/dep-lib-hyperreal",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  },
+  "num:18330591081923292959": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libnum-dbc9a5d22d09e40c.rlib",
+    "sha256": "d52cad8784dce50e926e33d0a08326ecce3c172cd4b545a72fbca79c43b05695",
+    "cargo_fingerprint": 18330591081923292959,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/num-dbc9a5d22d09e40c/lib-num.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[\"default\", \"num-bigint\", \"std\"]",
+      "declared_features": "[\"alloc\", \"default\", \"libm\", \"num-bigint\", \"rand\", \"serde\", \"std\"]",
+      "target": 10053607161131906775,
+      "profile": 2040997289075261528,
+      "path": 17165274266610014164,
+      "deps": [
+        [
+          2819946551904607991,
+          "num_rational",
+          false,
+          5393879537609729672
+        ],
+        [
+          5157631553186200874,
+          "num_traits",
+          false,
+          1882042649955438079
+        ],
+        [
+          5666221976914082401,
+          "num_iter",
+          false,
+          15756939624172363887
+        ],
+        [
+          12319020793864570031,
+          "num_complex",
+          false,
+          16261617176815511593
+        ],
+        [
+          12528732512569713347,
+          "num_bigint",
+          false,
+          5316232697925554891
+        ],
+        [
+          16795989132585092538,
+          "num_integer",
+          false,
+          8127284588138510933
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/num-dbc9a5d22d09e40c/dep-lib-num",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  },
+  "hypercurve:7834463048767811618": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhypercurve-ddc651da5358133b.rlib",
+    "sha256": "372f97f8071b2cbc26891ae6d5f5a704487e4b33828a66f3352c452471e7f8cf",
+    "cargo_fingerprint": 7834463048767811618,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hypercurve-ddc651da5358133b/lib-hypercurve.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[\"default\", \"triangulation\"]",
+      "declared_features": "[\"comparative-benchmarks\", \"default\", \"dispatch-trace\", \"hershey\", \"svg\", \"triangulation\"]",
+      "target": 3345148719104923378,
+      "profile": 2040997289075261528,
+      "path": 2721369630910105826,
+      "deps": [
+        [
+          899433757904706369,
+          "hyperlimit",
+          false,
+          1286121115990307312
+        ],
+        [
+          2551482934563074397,
+          "hyperreal",
+          false,
+          3136259652572598114
+        ],
+        [
+          3834647165408873544,
+          "hypersolve",
+          false,
+          535290879437999810
+        ],
+        [
+          9740168411151160745,
+          "hypertri",
+          false,
+          4864871657189394175
+        ],
+        [
+          12905226474294026438,
+          "num",
+          false,
+          18330591081923292959
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/hypercurve-ddc651da5358133b/dep-lib-hypercurve",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  },
+  "hypersolve:535290879437999810": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhypersolve-6a859fb6248d7ef3.rlib",
+    "sha256": "589e1b357cbd562c07818ea59965e03edba8aa9aa651fec565b5fc52be85cf12",
+    "cargo_fingerprint": 535290879437999810,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hypersolve-6a859fb6248d7ef3/lib-hypersolve.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[\"default\"]",
+      "declared_features": "[\"default\", \"dispatch-trace\"]",
+      "target": 4324063073060707417,
+      "profile": 2040997289075261528,
+      "path": 13156922523048906830,
+      "deps": [
+        [
+          899433757904706369,
+          "hyperlimit",
+          false,
+          1286121115990307312
+        ],
+        [
+          2538394439553624815,
+          "hyperlattice",
+          false,
+          12504825391106515845
+        ],
+        [
+          2551482934563074397,
+          "hyperreal",
+          false,
+          3136259652572598114
+        ],
+        [
+          12905226474294026438,
+          "num",
+          false,
+          18330591081923292959
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/hypersolve-6a859fb6248d7ef3/dep-lib-hypersolve",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  },
+  "hypertri:4864871657189394175": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhypertri-2f991b7c287fd1c7.rlib",
+    "sha256": "786034e9aed2bf2c19e9352394d5995ff9140a489439412a6845c577f29c7d0e",
+    "cargo_fingerprint": 4864871657189394175,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hypertri-2f991b7c287fd1c7/lib-hypertri.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[\"cdt\", \"earcut\"]",
+      "declared_features": "[\"all-algorithms\", \"cdt\", \"default\", \"dispatch-trace\", \"earcut\", \"f64-interop\", \"nd\", \"runtime-select\", \"serde\"]",
+      "target": 7662348871377441171,
+      "profile": 2040997289075261528,
+      "path": 1733294266626228633,
+      "deps": [
+        [
+          899433757904706369,
+          "hyperlimit",
+          false,
+          1286121115990307312
+        ],
+        [
+          2551482934563074397,
+          "hyperreal",
+          false,
+          3136259652572598114
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/hypertri-2f991b7c287fd1c7/dep-lib-hypertri",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  },
+  "thiserror:5710547343531768766": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libthiserror-5e8fef11be9f720a.rlib",
+    "sha256": "510fe3bc63de93d77ea01da7decb9d8fe294edbf9a872b8e5f2a0513872f5942",
+    "cargo_fingerprint": 5710547343531768766,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/thiserror-5e8fef11be9f720a/lib-thiserror.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[\"default\", \"std\"]",
+      "declared_features": "[\"default\", \"std\"]",
+      "target": 13586076721141200315,
+      "profile": 2040997289075261528,
+      "path": 2305173122702080495,
+      "deps": [
+        [
+          1957009224993739128,
+          "build_script_build",
+          false,
+          3240293116033303492
+        ],
+        [
+          7717134694032034306,
+          "thiserror_impl",
+          false,
+          10326086622432787556
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/thiserror-5e8fef11be9f720a/dep-lib-thiserror",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  },
+  "hashbrown:14460217631529237279": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhashbrown-d185ea42c13f671f.rlib",
+    "sha256": "5ac5b34e2b48f02bed76b5c848f749be95802009eb5117297b88a988cc192917",
+    "cargo_fingerprint": 14460217631529237279,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hashbrown-d185ea42c13f671f/lib-hashbrown.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[\"allocator-api2\", \"default\", \"default-hasher\", \"equivalent\", \"inline-more\", \"raw-entry\"]",
+      "declared_features": "[\"alloc\", \"allocator-api2\", \"core\", \"default\", \"default-hasher\", \"equivalent\", \"inline-more\", \"nightly\", \"raw-entry\", \"rayon\", \"rustc-dep-of-std\", \"rustc-internal-api\", \"serde\"]",
+      "target": 13796197676120832388,
+      "profile": 2040997289075261528,
+      "path": 13734577314039658001,
+      "deps": [
+        [
+          5230392855116717286,
+          "equivalent",
+          false,
+          15107021288840824611
+        ],
+        [
+          9150530836556604396,
+          "allocator_api2",
+          false,
+          1543804407855988035
+        ],
+        [
+          10842263908529601448,
+          "foldhash",
+          false,
+          16949359053160097990
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/hashbrown-d185ea42c13f671f/dep-lib-hashbrown",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  },
+  "hyperphysics:7840547903255617490": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhyperphysics-0af5d41bb0516a81.rlib",
+    "sha256": "db6a42ba5e32b8ca93aaf18cf7f317bdbec6704d20e233a6d9a6ab2e819de051",
+    "cargo_fingerprint": 7840547903255617490,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hyperphysics-0af5d41bb0516a81/lib-hyperphysics.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[\"default\"]",
+      "declared_features": "[\"default\", \"dispatch-trace\"]",
+      "target": 17776273538252085204,
+      "profile": 2040997289075261528,
+      "path": 8055844206550245794,
+      "deps": [
+        [
+          899433757904706369,
+          "hyperlimit",
+          false,
+          1286121115990307312
+        ],
+        [
+          2538394439553624815,
+          "hyperlattice",
+          false,
+          12504825391106515845
+        ],
+        [
+          2551482934563074397,
+          "hyperreal",
+          false,
+          3136259652572598114
+        ],
+        [
+          3834647165408873544,
+          "hypersolve",
+          false,
+          535290879437999810
+        ],
+        [
+          16127592465096470790,
+          "hypermesh",
+          false,
+          8683456851855411132
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/hyperphysics-0af5d41bb0516a81/dep-lib-hyperphysics",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  },
+  "hypermesh:8683456851855411132": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+    "sha256": "c2ff63457817a027482aefb6abd1e4ac2f37d992e72dde4b8e8b5a79b77fa513",
+    "cargo_fingerprint": 8683456851855411132,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hypermesh-ae6470a5143cc580/lib-hypermesh.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[\"default\"]",
+      "declared_features": "[\"default\", \"dispatch-trace\", \"fuzz-bounded-campaign\"]",
+      "target": 10898001196705267233,
+      "profile": 2040997289075261528,
+      "path": 17037361589110580123,
+      "deps": [
+        [
+          899433757904706369,
+          "hyperlimit",
+          false,
+          1286121115990307312
+        ],
+        [
+          2538394439553624815,
+          "hyperlattice",
+          false,
+          12504825391106515845
+        ],
+        [
+          2551482934563074397,
+          "hyperreal",
+          false,
+          3136259652572598114
+        ],
+        [
+          9740168411151160745,
+          "hypertri",
+          false,
+          4864871657189394175
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/hypermesh-ae6470a5143cc580/dep-lib-hypermesh",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  },
+  "doc_image_embed:8577259296197983122": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libdoc_image_embed-655c39199a1a3493.so",
+    "sha256": "a793a842922f88f4b34a819055e5a620b3b45d0da0ba957e09decf73aa1a71a3",
+    "cargo_fingerprint": 8577259296197983122,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/doc-image-embed-655c39199a1a3493/lib-doc_image_embed.json",
+    "metadata": {
+      "rustc": 1625334936438085654,
+      "features": "[]",
+      "declared_features": "[]",
+      "target": 11792135825577285237,
+      "profile": 1369601567987815722,
+      "path": 5733203550866545199,
+      "deps": [
+        [
+          4289358735036141001,
+          "proc_macro2",
+          false,
+          1229299436457155131
+        ],
+        [
+          10420560437213941093,
+          "syn",
+          false,
+          2791366392367636692
+        ],
+        [
+          13077212702700853852,
+          "base64",
+          false,
+          2437032130055951449
+        ],
+        [
+          13111758008314797071,
+          "quote",
+          false,
+          16170661925520068535
+        ]
+      ],
+      "local": [
+        {
+          "CheckDepInfo": {
+            "dep_info": "release/.fingerprint/doc-image-embed-655c39199a1a3493/dep-lib-doc_image_embed",
+            "checksum": false
+          }
+        }
+      ],
+      "rustflags": [],
+      "config": 9396254390672932401,
+      "compile_kind": 0
+    }
+  }
+}

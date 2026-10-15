@@ -1,0 +1,81 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/analyze_current_v1.py": "78f04c0338d71f7820ee43a322c3ca05cea395e7eb6c53b0e70a4e4a76a450d1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-quotient-factor-proofs/analyze_zero_reduction_v1.py": "618ba9391d46c8f1b6c2e9fa3be473a55f5df8e95960eeef93348de39a75aa19",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-quotient-factor-proofs/analyze_factor_reduction_v1.py": "9d19e6d842cae60a5ec087a261f8c4a922264e090c869f610bea6beaf5705604",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/diagnostic-v2/compose-16-chain.stderr": "eaf659fb08078bc3e240914a17501f7d9511f197b0f82a92eb2466b476857798",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/diagnostic-v2/compose-32-chain.stderr": "a35601c83835aa9f6b58c5dc9020989b6aa18af7d54f41f9f0dc2177a9f195d5",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/diagnostic-v2/compose-16-direct.stderr": "646bbe9676461ea0ca3f0224f0ce66a22e78cc0e6750c757598e007efb05a246",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/diagnostic-v2/compose-24-chain.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/diagnostic-v2/compose-32-direct.stderr": "8cdfafb795d5561bb0a7993297241b2569b5f77b7839854aa6ddb6fee273ce88",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/diagnostic-v2/compose-8-chain.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "base_commit": "12b3319dd94aa78827dd89bdbdd975bd75ac056e",
+  "runner_sha256": "f91cdaec932c12dd679149e1e27fe700b1a73e3c0181875601dc1eb2995733fc",
+  "phase": "analysis-v1",
+  "commands": [
+    [
+      "current-algebra",
+      [
+        "python3",
+        "docs/evidence/2026-10-15-polynomial-quotient-reduction/analyze_current_v1.py"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/analysis-v1",
+    "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/analysis-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P7",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P20",
+    "P21",
+    "P24",
+    "P25",
+    "P27",
+    "P35",
+    "P36",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "Hyperreal rational polynomial identities over opaque atoms",
+    "Hypermesh plane predicates and Boolean topology",
+    "CSGRS modeling composition and certainty"
+  ],
+  "domain": "Proved zero quotients discard unused denominators only after both operands and strict inverse guards are admitted. Existing proof, depth, degree, term and work limits remain unchanged. Preserve shared projection reuse, exact source expressions and previous successful proofs. Downstream acceptance retains the original 8/16/24/32 polygonal drills and their full composition chains; no analytic-cylinder claim.",
+  "consumers": [
+    "Real::exact_rational_normal_form",
+    "Hyperlimit shared sign resolvers",
+    "Hypermesh planes and Boolean arrangement",
+    "CSGRS strict drilled-body workflow"
+  ],
+  "missing_acceptance_test": [
+    "Original strict_drilled_workflows 16/32 full composition tests remain failing at subtraction; retain all original assertions",
+    "Add exact polynomial quotient regressions and invalid-domain/resource controls after reproducing the current decline"
+  ],
+  "semantic_oracle": "Independent quotient and distributive identities with nonzero-denominator obligations, exact nonzero displacements and typed unresolved-denominator controls. Downstream acceptance additionally needs independent point membership, polygonal volume and a separate topology check; program exit zero alone is not certified completion.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison. Historical /tmp artifact loss is recorded in external-artifact-loss-v1.json; this phase guards its available pinned inputs but cannot claim complete historical artifact preservation.",
+  "previous_goal_turn": "Progress: 12b3319dd certifies original strict drills and empty accumulation at every original resolution. Full 16/32 subtraction chains remain failing. Reproduce current predicates and preserve all acceptance limits; full admission and the 35 native files remain open."
+}

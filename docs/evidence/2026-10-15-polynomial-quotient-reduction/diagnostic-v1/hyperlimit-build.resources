@@ -1,0 +1,23 @@
+	Command being timed: "env TMPDIR=/tmp/csgrs-polynomial-quotient-reduction/diagnostic-v1 CARGO_PKG_NAME=hyperlimit CARGO_PKG_VERSION=0.4.1 CARGO_MANIFEST_DIR=/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit rustc --crate-name hyperlimit --crate-type rlib --edition=2024 -C opt-level=3 -C debuginfo=1 -C force-frame-pointers=yes -D warnings /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit/src/lib.rs -L dependency=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v3/external -L dependency=/tmp/csgrs-polynomial-quotient-reduction/diagnostic-v1 -o /tmp/csgrs-polynomial-quotient-reduction/diagnostic-v1/libhyperlimit.rlib --cfg feature="default" --cfg feature="std" --extern hyperlattice=/tmp/csgrs-polynomial-quotient-reduction/diagnostic-v1/libhyperlattice.rlib --extern hyperreal=/tmp/csgrs-polynomial-quotient-reduction/diagnostic-v1/libhyperreal.rlib"
+	User time (seconds): 9.27
+	System time (seconds): 0.41
+	Percent of CPU this job got: 377%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.57
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 420096
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 150559
+	Voluntary context switches: 164
+	Involuntary context switches: 1392
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
