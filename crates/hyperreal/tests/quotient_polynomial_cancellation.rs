@@ -60,7 +60,11 @@ fn a_proved_zero_quotient_composes_with_high_degree_reciprocals() {
         reciprocal = &reciprocal * &reciprocal;
     }
     let value = (left - right) * reciprocal;
+    #[cfg(feature = "serde")]
+    let before = serde_json::to_string(&value).unwrap();
     assert_eq!(value.exact_rational_normal_form(), Some(Rational::zero()));
+    #[cfg(feature = "serde")]
+    assert_eq!(serde_json::to_string(&value).unwrap(), before);
     for numerator in [-1, 1] {
         let displacement = Rational::fraction(numerator, 1_000_000_000_000).unwrap();
         assert_eq!(

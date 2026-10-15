@@ -10,6 +10,20 @@ struct RingQuotient {
 }
 
 impl RingQuotient {
+    fn new(numerator: RingPolynomial, denominator: Option<RingPolynomial>) -> Self {
+        // The denominator already has a nonzero witness. Once the numerator
+        // cancels, retaining its denominator only creates irrelevant work.
+        let denominator = if numerator.terms.is_empty() {
+            None
+        } else {
+            denominator
+        };
+        Self {
+            numerator,
+            denominator,
+        }
+    }
+
     fn polynomial(numerator: RingPolynomial) -> Self {
         Self {
             numerator,
@@ -33,6 +47,13 @@ impl<'a> RingRecognition<'a> {
     }
 
     fn quotient_add(&mut self, a: RingQuotient, b: RingQuotient) -> Option<RingQuotient> {
+        // Both operands have been expanded, including all inverse guards.
+        if a.numerator.terms.is_empty() {
+            return Some(b);
+        }
+        if b.numerator.terms.is_empty() {
+            return Some(a);
+        }
         let (numerator, denominator) = match (a.denominator, b.denominator) {
             (None, None) => (self.add(a.numerator, b.numerator)?, None),
             (Some(d), None) => {
@@ -49,34 +70,35 @@ impl<'a> RingRecognition<'a> {
                 } else {
                     let left = self.multiply(&a.numerator, &e)?;
                     let right = self.multiply(&b.numerator, &d)?;
-                    (self.add(left, right)?, Some(self.multiply(&d, &e)?))
+                    let numerator = self.add(left, right)?;
+                    if numerator.terms.is_empty() {
+                        return Some(RingQuotient::polynomial(numerator));
+                    }
+                    (numerator, Some(self.multiply(&d, &e)?))
                 }
             }
         };
-        Some(RingQuotient {
-            numerator,
-            denominator,
-        })
+        Some(RingQuotient::new(numerator, denominator))
     }
 
     fn quotient_multiply(&mut self, a: &RingQuotient, b: &RingQuotient) -> Option<RingQuotient> {
         let numerator = self.multiply(&a.numerator, &b.numerator)?;
+        if numerator.terms.is_empty() {
+            return Some(RingQuotient::polynomial(numerator));
+        }
         let denominator = match (&a.denominator, &b.denominator) {
             (None, None) => None,
             (Some(d), None) | (None, Some(d)) => Some(d.clone()),
             (Some(d), Some(e)) => Some(self.multiply(d, e)?),
         };
-        Some(RingQuotient {
-            numerator,
-            denominator,
-        })
+        Some(RingQuotient::new(numerator, denominator))
     }
 
     fn quotient_scale(&mut self, value: RingQuotient, scale: Rational) -> Option<RingQuotient> {
-        Some(RingQuotient {
-            numerator: self.scale(value.numerator, scale)?,
-            denominator: value.denominator,
-        })
+        Some(RingQuotient::new(
+            self.scale(value.numerator, scale)?,
+            value.denominator,
+        ))
     }
 
     fn project_quotient(&mut self, value: &RingQuotient) -> Option<Rational> {
