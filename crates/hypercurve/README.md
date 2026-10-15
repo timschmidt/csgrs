@@ -367,8 +367,22 @@ exact signatures.
   `project_to_finite_profiles`, and `project_to_finite_region` provide explicit
   finite approximations. `FiniteProjectionOptions` makes the curve chord-error
   budget visible at the boundary.
+- `CurveRegionProfile2::linear_contours` retains exact certified line images,
+  including authored lines stored as Bézier curves, with material/hole ownership.
+  Missing line support returns `None`; unresolved evidence remains a typed error.
+  With `triangulation`, `triangulate_linear_contours` delegates to Hypertri and
+  returns exact native points with predicate certainty, without finite projection.
 - With `triangulation`, `FiniteRegionProfile2::triangulate` and
   `triangulate_finite_rings` produce finite triangles through Hypertri.
+- `marching_squares` consumes `MarchingSquaresGrid` with increasing exact axes,
+  x-fast scalar samples, and a strictly exterior boundary. Edge crossings remain
+  exact; ambiguous cells use the center-sample-sum sign rule, treating zero as
+  inside. Chords define a polygonal proposal, not the bilinear level curve or a
+  continuous-field fidelity bound. Existing native arrangement supplies material,
+  holes and disconnected components. Invalid grids, unknown decisions, allocation
+  failures and unsupported topology return `MarchingSquaresError`. Use
+  `evaluate_under` to retain certainty under an explicit policy. Primary buffers
+  are checked; secondary allocations, total work and cancellation remain unbounded.
 - With `svg`, `SvgGeometry2::{from_svg, from_svg_with_options, to_svg,
   to_svg_with_options}`, `parse_svg_path_data`, `import_svg_document`, and
   `export_svg_document` provide SVG exchange. Native `L`, `A`, `Q`, and `C`
@@ -437,7 +451,7 @@ uncertainty as empty geometry.
 | Feature | Default | Purpose |
 | --- | --- | --- |
 | `dispatch-trace` | no | Hyperreal/Hyperlimit dispatch instrumentation |
-| `triangulation` | no | Finite-region triangulation through Hypertri |
+| `triangulation` | no | Exact linear and finite-region triangulation through Hypertri |
 | `svg` | no | SVG import/export and exact round-trip extension |
 | `hershey` | no | Compiled Hershey stroke fonts and native curve-string text |
 | `comparative-benchmarks` | no | Third-party benchmark adapters only |

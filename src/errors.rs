@@ -23,6 +23,9 @@ pub enum ValidationError {
     /// A scale or period that must be strictly positive is zero or negative.
     #[error("{name} must be positive")]
     NonPositiveParameter { name: &'static str },
+    /// An operation requires a nonzero component or parameter.
+    #[error("{name} must be nonzero")]
+    ZeroParameter { name: &'static str },
     /// Extraction encountered a degenerate output triangle and published no mesh.
     #[error("output triangle {triangle_index} is degenerate")]
     DegenerateOutputTriangle { triangle_index: usize },
@@ -60,6 +63,12 @@ pub enum ValidationError {
     /// Native sampled-field extraction failed, retaining its typed diagnostic.
     #[error("{0}")]
     SurfaceNets(#[from] hypermesh::SurfaceNetsError),
+    /// Native planar sampled-field extraction failed, retaining its typed cause.
+    #[error("{0}")]
+    MarchingSquares(#[from] hypercurve::MarchingSquaresError),
+    /// Native triangulation failed before a modeling surface was published.
+    #[error("{0}")]
+    Triangulation(#[from] hypertri::Error),
     /// A retained implicit-field construction failed before grid sampling.
     #[cfg(any(feature = "sdf", feature = "metaballs"))]
     #[error("{0}")]
@@ -118,6 +127,44 @@ impl ValidationErrorKind {
 impl ValidationError {
     pub const fn kind(&self) -> ValidationErrorKind {
         match self {
+            Self::Triangulation(source) => match source {
+                hypertri::Error::PredicateUndecided { .. } => ValidationErrorKind::Undecided,
+                hypertri::Error::InvalidInput { .. } => ValidationErrorKind::InvalidInput,
+                hypertri::Error::UnsupportedFeature { .. } => ValidationErrorKind::Unsupported,
+                hypertri::Error::NoEarFound => ValidationErrorKind::Geometry,
+            },
+            Self::MarchingSquares(source) => match source {
+                hypercurve::MarchingSquaresError::GridTooSmall { .. }
+                | hypercurve::MarchingSquaresError::SampleCountMismatch { .. }
+                | hypercurve::MarchingSquaresError::AxisNotIncreasing { .. }
+                | hypercurve::MarchingSquaresError::BoundaryNotExterior { .. } => {
+                    ValidationErrorKind::InvalidInput
+                },
+                hypercurve::MarchingSquaresError::CapacityOverflow
+                | hypercurve::MarchingSquaresError::AllocationFailed { .. }
+                | hypercurve::MarchingSquaresError::Scalar(hyperreal::Problem::Exhausted) => {
+                    ValidationErrorKind::ResourceExhausted
+                },
+                hypercurve::MarchingSquaresError::PredicateUndecided { .. }
+                | hypercurve::MarchingSquaresError::Scalar(hyperreal::Problem::UnknownZero) => {
+                    ValidationErrorKind::Undecided
+                },
+                hypercurve::MarchingSquaresError::Region(ExactCurveError::Blocked(
+                    blocker,
+                )) => match blocker.reason() {
+                    hypercurve::UncertaintyReason::Unsupported => {
+                        ValidationErrorKind::Unsupported
+                    },
+                    hypercurve::UncertaintyReason::BudgetExhausted => {
+                        ValidationErrorKind::ResourceExhausted
+                    },
+                    hypercurve::UncertaintyReason::Boundary => {
+                        ValidationErrorKind::InvalidInput
+                    },
+                    _ => ValidationErrorKind::Undecided,
+                },
+                _ => ValidationErrorKind::Geometry,
+            },
             #[cfg(any(feature = "sdf", feature = "metaballs"))]
             Self::SdfSample { source, .. } | Self::SdfEvaluation(source) => match source {
                 hypersdf::SdfEvaluationError::InvalidDomain { .. } => {

@@ -644,7 +644,8 @@ fn main() {
             (Point2::new(Real::from(2), Real::zero()), Real::from(2)),
         ];
         curve_measurement(
-            &curve::metaballs(&balls, (48, 48), Real::one(), Real::one()),
+            &curve::metaballs(&balls, (48, 48), Real::one(), Real::one())
+                .expect("valid planar metaball fixture"),
             48 * 48,
         )
     });

@@ -203,25 +203,17 @@ fn real_cmp(left: &Real, right: &Real) -> Option<Ordering> {
     crate::hyper_math::hreal_try_cmp(left, right)
 }
 
-fn finite_ring_sign(
-    ring: &FinitePolyline2,
+fn contour_ring_sign(
+    ring: &Contour2,
     decisions: &GeometryDecisions,
 ) -> Result<hyperlimit::Sign, ValidationError> {
     let points = ring
-        .points()
+        .segments()
         .iter()
-        .map(|[x, y]| {
-            Some(hyperlimit::Point2::new(
-                Real::try_from(*x).ok()?,
-                Real::try_from(*y).ok()?,
-            ))
+        .map(|segment| {
+            hyperlimit::Point2::new(segment.start().x().clone(), segment.start().y().clone())
         })
-        .collect::<Option<Vec<_>>>()
-        .ok_or_else(|| {
-            ValidationError::Geometry(
-                "finite side ring contains a non-finite projected coordinate".into(),
-            )
-        })?;
+        .collect::<Vec<_>>();
     decisions.decide(
         hyperlimit::ring_area_sign(&points, decisions.predicate_policy()),
         "extrusion side-ring signed area",
@@ -1961,6 +1953,10 @@ pub fn hilbert_strings_with_context(
 }
 
 /// Triangulates a filled region as a flat native triangle surface.
+///
+/// Certified linear profiles retain exact coordinates and hole ownership.
+/// Other representations retain the existing finite sampled-profile path;
+/// its predicate certainty does not certify fidelity to the source curves.
 pub fn try_triangulate(
     input: &CurveRegion2,
     context: &GeometryContext,
@@ -1976,36 +1972,65 @@ fn try_triangulate_with(
 ) -> Result<TriangleMesh, ValidationError> {
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
-    for profile in try_finite_profiles_with(input, decisions)? {
-        let faces = decisions
-            .exact_curve(|| profile.triangulate())
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+    for (material, holes) in try_modeling_profiles_with(input, decisions)? {
+        let faces = decisions.consume_triangulation(hypercurve::triangulate_linear_contours(
+            &decisions.triangulation_context(),
+            &material,
+            &holes,
+        )?);
         for face in faces {
-            let Some(points) = face
-                .into_iter()
-                .map(|[x, y]| {
-                    Some(Point3::new(
-                        Real::try_from(x).ok()?,
-                        Real::try_from(y).ok()?,
-                        Real::zero(),
-                    ))
-                })
-                .collect::<Option<Vec<_>>>()
-            else {
-                return Err(ValidationError::InvalidArguments);
-            };
-            // Hypertri certifies the exact finite-profile triangulation.
-            if !emit_certified_triangle(
-                &mut positions,
-                &mut triangles,
-                points.try_into().expect("triangulation emits triangles"),
-                false,
-            ) {
+            let points = face.map(|p| Point3::new(p.x().clone(), p.y().clone(), Real::zero()));
+            if !emit_certified_triangle(&mut positions, &mut triangles, points, false) {
                 return Err(ValidationError::InvalidArguments);
             }
         }
     }
     validate_surface_mesh(TriangleMesh::new(positions, triangles), decisions)
+}
+
+/// Prefer the authoritative exact linear boundary before any finite projection.
+/// Other representations retain the existing sampled-profile contract; the separate
+/// finite projection remains a fidelity boundary, not proof of the source curve.
+fn try_modeling_profiles_with(
+    input: &CurveRegion2,
+    decisions: &GeometryDecisions,
+) -> Result<Vec<(Contour2, Vec<Contour2>)>, ValidationError> {
+    let exact = decisions.exact_curve(|| {
+        input
+            .boundary_profiles()?
+            .iter()
+            .map(|profile| profile.linear_contours())
+            .collect::<hypercurve::ExactCurveResult<Option<Vec<_>>>>()
+    })?;
+    if let Some(profiles) = exact {
+        return Ok(profiles);
+    }
+    let quantized_contour = |ring: &FinitePolyline2| -> Result<Contour2, ValidationError> {
+        let coordinates = ring
+            .points()
+            .iter()
+            .map(|[x, y]| Ok([Real::try_from(*x)?, Real::try_from(*y)?]))
+            .collect::<Result<Vec<_>, hyperreal::Problem>>()?;
+        Contour2::from_real_ring(&coordinates).map_err(|cause| {
+            ValidationError::ExactCurve(hypercurve::ExactCurveError::Invalid {
+                operation: hypercurve::CurveOperation2::NativeTopology,
+                family: Some(hypercurve::CurveFamily2::Line),
+                cause,
+            })
+        })
+    };
+    try_finite_profiles_with(input, decisions)?
+        .iter()
+        .map(|profile| {
+            let material = quantized_contour(profile.material())?;
+            let holes = profile
+                .holes()
+                .iter()
+                .map(quantized_contour)
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok((material, holes))
+        })
+        .collect()
 }
 
 /// Finite polygon-with-holes boundary view for rendering and interchange.
@@ -2024,13 +2049,16 @@ fn try_finite_profiles_with(
 ) -> Result<Vec<FiniteRegionProfile2>, ValidationError> {
     let options = FiniteProjectionOptions::try_new(1.0e-3)
         .expect("positive finite projection tolerance");
-    let profiles = decisions
-        .exact_curve(|| input.project_to_finite_profiles_exact(&options))
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+    let profiles =
+        decisions.exact_curve(|| input.project_to_finite_profiles_exact(&options))?;
     Ok(profiles)
 }
 
 /// Linear extrusion that reports invalid or uncertain geometry.
+///
+/// Certified linear profiles keep their exact boundary coordinates. Other
+/// representations use the existing finite sampled-profile path, with no
+/// claim that predicate certainty certifies source-curve fidelity.
 pub fn try_extrude(
     region: &CurveRegion2,
     height: Real,
@@ -2044,6 +2072,9 @@ pub fn try_extrude(
 }
 
 /// Vector extrusion of a native filled region.
+///
+/// The direction must have a nonzero Z component. Profile fidelity has the
+/// same contract as [`try_extrude`].
 pub fn try_extrude_vector(
     region: &CurveRegion2,
     direction: Vector3,
@@ -2064,31 +2095,23 @@ fn try_extrude_vector_with(
         "extrusion direction Z sign",
     )?;
     if direction_sign == hyperlimit::Sign::Zero {
-        return Err(ValidationError::Geometry(
-            "extrusion direction has zero Z component".into(),
-        ));
+        return Err(ValidationError::ZeroParameter {
+            name: "extrusion direction Z component",
+        });
     }
     let flip = direction_sign == hyperlimit::Sign::Negative;
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
-    let point = |[x, y]: [f64; 2]| -> Option<Point3> {
-        Some(Point3::new(
-            Real::try_from(x).ok()?,
-            Real::try_from(y).ok()?,
-            Real::zero(),
-        ))
-    };
-
-    for profile in try_finite_profiles_with(region, decisions)? {
-        let cap_faces = decisions
-            .exact_curve(|| profile.triangulate())
-            .map_err(|error| ValidationError::Geometry(format!("extrusion cap: {error}")))?;
+    let point = |p: &Point2| Point3::new(p.x().clone(), p.y().clone(), Real::zero());
+    for (material, holes) in try_modeling_profiles_with(region, decisions)? {
+        let cap_faces =
+            decisions.consume_triangulation(hypercurve::triangulate_linear_contours(
+                &decisions.triangulation_context(),
+                &material,
+                &holes,
+            )?);
         for face in cap_faces {
-            let [Some(a), Some(b), Some(c)] = face.map(point) else {
-                return Err(ValidationError::Geometry(
-                    "extrusion cap contains a non-finite projected coordinate".into(),
-                ));
-            };
+            let [a, b, c] = face.map(|p| point(&p));
             if !emit_certified_triangle(
                 &mut positions,
                 &mut triangles,
@@ -2103,14 +2126,14 @@ fn try_extrude_vector_with(
                 return Err(ValidationError::InvalidArguments);
             }
         }
-        for (ring, is_hole) in std::iter::once((profile.material(), false))
-            .chain(profile.holes().iter().map(|ring| (ring, true)))
+        for (ring, is_hole) in
+            std::iter::once((&material, false)).chain(holes.iter().map(|ring| (ring, true)))
         {
             // Hypertri emits caps with a normalized positive outer winding and
             // negative hole winding. Exact curve-region projection preserves
             // authored loop orientation, so align each side ring with the cap
             // role instead of assuming every material loop arrived CCW.
-            let reverse_ring = match finite_ring_sign(ring, decisions)? {
+            let reverse_ring = match contour_ring_sign(ring, decisions)? {
                 hyperlimit::Sign::Positive => is_hole,
                 hyperlimit::Sign::Negative => !is_hole,
                 hyperlimit::Sign::Zero => {
@@ -2119,14 +2142,9 @@ fn try_extrude_vector_with(
                     ));
                 },
             };
-            for edge in ring.points().windows(2) {
-                let (Some(mut bottom_a), Some(mut bottom_b)) =
-                    (point(edge[0]), point(edge[1]))
-                else {
-                    return Err(ValidationError::Geometry(
-                        "extrusion side contains a non-finite projected coordinate".into(),
-                    ));
-                };
+            for edge in ring.segments() {
+                let mut bottom_a = point(edge.start());
+                let mut bottom_b = point(edge.end());
                 if reverse_ring {
                     std::mem::swap(&mut bottom_a, &mut bottom_b);
                 }
@@ -2726,15 +2744,40 @@ pub fn extrude_twisted(
     Ok(decisions.finish(mesh))
 }
 
-/// Filled contour generated from a two-dimensional metaball field.
+/// Filled contours sampled from Hypersdf's normalized inverse-square field.
+///
+/// Positive radii/iso, nonnegative padding and dimensions of at least two are
+/// required, including for empty inputs. Errors remain typed. The exact chord
+/// proposal uses native marching squares and nesting-aware region admission;
+/// its numerical certainty does not certify fidelity to the continuous field.
 #[cfg(feature = "metaballs")]
 pub fn metaballs(
     balls: &[(Point2, Real)],
     resolution: (usize, usize),
     iso_value: Real,
     padding: Real,
-) -> CurveRegion2 {
-    super::metaballs::metaballs(balls, resolution, iso_value, padding)
+) -> Result<CurveRegion2, ValidationError> {
+    metaballs_with_context(
+        balls,
+        resolution,
+        iso_value,
+        padding,
+        &GeometryContext::STRICT,
+    )
+    .map(GeometryOutcome::into_value)
+}
+
+/// Planar metaball sampling with the selected extraction policy and certainty.
+/// Field construction and conservative bounds remain strict.
+#[cfg(feature = "metaballs")]
+pub fn metaballs_with_context(
+    balls: &[(Point2, Real)],
+    resolution: (usize, usize),
+    iso_value: Real,
+    padding: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
+    super::metaballs::sample(balls, resolution, iso_value, padding, context)
 }
 
 /// Filled contours traced from a grayscale image.

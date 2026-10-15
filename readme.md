@@ -139,7 +139,7 @@ Rendered filled constructors:
 | <img src="docs/cycloidal_rack.png" width="144" alt="Filled cycloidal rack profile with visible edges and vertices"/> | `curve::cycloidal_rack(module: Real, teeth: usize, clearance: Real, segments_per_flank: usize) -> CurveRegion2` |
 | <img src="docs/airfoil_naca4.png" width="144" alt="Filled NACA four-digit airfoil with visible edges and vertices"/> | `curve::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize) -> CurveRegion2` |
 | <img src="docs/bezier.png" width="144" alt="Filled exact Bezier boundary with visible edge and vertex"/> | `curve::bezier_region(control: &[[Real; 2]], display_segments: usize) -> CurveRegion2` |
-| <img src="docs/metaballs_2d.png" width="144" alt="Filled planar metaball contours with visible edges and vertices"/> | `curve::metaballs(balls: &[(Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real) -> CurveRegion2` |
+| <img src="docs/metaballs_2d.png" width="144" alt="Filled planar metaball contours with visible edges and vertices"/> | `curve::metaballs(balls: &[(Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/from_image.png" width="144" alt="Filled raster-traced region with visible edges and vertices"/> | `curve::from_image(image: &GrayImage, threshold: u8) -> Result<CurveRegion2, RasterTraceError>` |
 | <img src="docs/truetype.png" width="144" alt="Filled TrueType glyph regions with visible exact edges and vertices"/> | `curve::truetype_text(text: &str, font_data: &[u8], scale: Real) -> CurveRegion2` |
 
@@ -262,9 +262,28 @@ counts and extrema describe F, with negative meaning inside. Output coordinates
 and serialized artifacts change; this is not a performance-only change or an
 analytic-surface fidelity guarantee.
 
-The separate 2D `curve::metaballs` field and contour migration remains open; its
-existing cutoff, singularity and failure behavior is not qualified by the 3D
-migration.
+The 2D `curve::metaballs` now returns `Result` and samples the same normalized
+native field, removing its cutoff, center sentinel, and empty-on-error fallback.
+`curve::metaballs_with_context` also retains predicate certainty. It preserves
+the existing core grid within the conservative bounds, without the 3D exterior
+border. Hypercurve owns exact marching-squares edge crossings and material/hole
+arrangement. Ambiguous cells retain the center-sample-sum sign rule (zero is
+inside). Chords define a deterministic polygonal proposal, not an exact bilinear
+level curve or certified approximation of the continuous field. Boundary samples
+must be strictly exterior; unresolved decisions and unsupported arrangements
+remain typed failures. This migration changes 2D coordinates and serialized
+artifacts as well. Primary grid buffers are checked; total work, secondary
+allocations, coefficient growth and cancellation remain internally unbounded.
+
+Triangulation and linear extrusion now use native certified line profiles and
+Hypertri without finite-coordinate projection, including line-image Bézier
+boundaries, holes, rational coordinates, and coordinates beyond `f64` range.
+Their exact vertices and output artifacts can therefore differ from the former
+quantized output. Other profile representations retain the existing sampled
+finite path; source-curve fidelity and end-to-end provenance for that path remain
+open targets. Rust extrusion adapters retain native errors, C-family bindings
+retain status categories, and WASM extrusion/triangulation expose `GeometryError`
+codes. Required topology is checked separately from numerical certainty.
 
 Sampling arguments such as segments, stacks, slices, and resolution are
 explicit tessellation choices; CSGRS has no global tolerance setting.

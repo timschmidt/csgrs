@@ -240,7 +240,7 @@ where
     ) -> AdapterResult<GeometryOutcome<ScalarMesh<A>>> {
         curve::try_extrude(&self.inner, A::into_real(height)?, context)
             .map(|outcome| outcome.map(ScalarMesh::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn extrude_vector(
@@ -251,7 +251,7 @@ where
         let [x, y, z] = scalar3_to_real::<A>(direction)?;
         curve::try_extrude_vector(&self.inner, Vector3::from_xyz(x, y, z), context)
             .map(|outcome| outcome.map(ScalarMesh::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn revolve(

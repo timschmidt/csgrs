@@ -143,8 +143,10 @@ factor preserves this field.
 nonnegative padding. Construction predicates remain strict. The field is
 sign-equivalent, not a distance; a mesh sampled from it needs separate topology
 validation and carries no analytic-fidelity bound. Scalar work and memory are
-not internally bounded. CSGRS uses this carrier for its 3D metaball modeling;
-its separate 2D contour migration remains open.
+not internally bounded. CSGRS uses this carrier for both 3D metaball modeling
+and 2D metaball sampling. Hypermesh owns the sampled surface extraction and
+Hypercurve owns the sampled planar contour arrangement; neither establishes
+continuous-field fidelity merely by certifying its numerical decisions.
 
 ### Exact and conservative queries
 
