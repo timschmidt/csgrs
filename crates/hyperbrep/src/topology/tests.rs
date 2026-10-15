@@ -229,7 +229,7 @@ fn angular_sweep_correspondence_certifies_a_complete_planar_circle() {
 
     let json = model.to_json().unwrap();
     assert!(json.contains("\"AngularSweep\""));
-    let decoded = crate::ImportedModel::from_json(&json)
+    let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
         .unwrap()
         .validate()
         .unwrap();
@@ -618,10 +618,13 @@ fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_sp
             compare_reals(&area, &r(6), crate::STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
-        let replayed = crate::ImportedModel::from_json(&model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        let replayed = crate::ImportedModel::from_json(
+            &model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
         assert_eq!(
             compare_reals(
                 &replayed.face_area(face).unwrap(),
@@ -661,10 +664,13 @@ fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_sp
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        let replayed = crate::ImportedModel::from_json(&model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        let replayed = crate::ImportedModel::from_json(
+            &model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
         assert_eq!(
             compare_reals(
                 &replayed.face_area(face).unwrap(),

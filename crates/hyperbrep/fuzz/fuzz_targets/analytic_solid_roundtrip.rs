@@ -424,7 +424,7 @@ fuzz_target!(|bytes: &[u8]| {
     let Ok(json) = transformed.to_json() else {
         return;
     };
-    let Ok(raw) = RawModel::from_json(&json) else {
+    let Ok(raw) = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default()) else {
         return;
     };
     let Ok(decoded) = raw.validate() else {
@@ -488,7 +488,10 @@ fuzz_target!(|bytes: &[u8]| {
             json.len() < 100_000,
             "axial frustum result retained noncanonical pcurve expressions"
         );
-        let replayed = RawModel::from_json(&json).unwrap().validate().unwrap();
+        let replayed = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
         assert_eq!(replayed.to_json().unwrap(), json);
     }
 
@@ -592,7 +595,7 @@ fuzz_target!(|bytes: &[u8]| {
     let Ok(json) = skew_model.to_json() else {
         return;
     };
-    let Ok(raw) = RawModel::from_json(&json) else {
+    let Ok(raw) = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default()) else {
         return;
     };
     if raw.validate().is_err() {
@@ -638,7 +641,7 @@ fuzz_target!(|bytes: &[u8]| {
         let Ok(json) = model.to_json() else {
             return;
         };
-        let Ok(raw) = RawModel::from_json(&json) else {
+        let Ok(raw) = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default()) else {
             return;
         };
         if raw.validate().is_err() {
@@ -795,7 +798,9 @@ fuzz_target!(|bytes: &[u8]| {
                 let Ok(json) = split.to_json() else {
                     return;
                 };
-                let Ok(replayed) = RawModel::from_json(&json).and_then(RawModel::validate) else {
+                let Ok(replayed) = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
+                    .and_then(RawModel::validate)
+                else {
                     panic!("validated weighted bilinear split failed persistence replay");
                 };
                 if replayed.to_json().ok().as_deref() != Some(json.as_str()) {
@@ -894,7 +899,9 @@ fuzz_target!(|bytes: &[u8]| {
             let Ok(json) = split.to_json() else {
                 return;
             };
-            let Ok(replayed) = RawModel::from_json(&json).and_then(RawModel::validate) else {
+            let Ok(replayed) = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
+                .and_then(RawModel::validate)
+            else {
                 panic!("validated pole-branch bilinear split failed persistence replay");
             };
             if replayed.to_json().ok().as_deref() != Some(json.as_str()) {
@@ -1014,7 +1021,7 @@ fuzz_target!(|bytes: &[u8]| {
             let Ok(json) = split.to_json() else {
                 return;
             };
-            let Ok(raw) = RawModel::from_json(&json) else {
+            let Ok(raw) = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default()) else {
                 return;
             };
             if raw.validate().is_err() {
@@ -1070,7 +1077,7 @@ fuzz_target!(|bytes: &[u8]| {
             let Ok(json) = split.to_json() else {
                 return;
             };
-            let Ok(raw) = RawModel::from_json(&json) else {
+            let Ok(raw) = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default()) else {
                 return;
             };
             if raw.validate().is_err() {
@@ -1126,7 +1133,7 @@ fuzz_target!(|bytes: &[u8]| {
             let Ok(json) = split.to_json() else {
                 return;
             };
-            let Ok(raw) = RawModel::from_json(&json) else {
+            let Ok(raw) = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default()) else {
                 return;
             };
             if raw.validate().is_err() {
@@ -1189,7 +1196,7 @@ fuzz_target!(|bytes: &[u8]| {
             let Ok(json) = partitioned.to_json() else {
                 return;
             };
-            let Ok(raw) = RawModel::from_json(&json) else {
+            let Ok(raw) = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default()) else {
                 return;
             };
             if raw.validate().is_err() {
@@ -1244,7 +1251,7 @@ fuzz_target!(|bytes: &[u8]| {
     let affine_json = affine_patch
         .to_json()
         .expect("separable affine patch serializes");
-    let replayed_affine = RawModel::from_json(&affine_json)
+    let replayed_affine = RawModel::from_json(&affine_json, &hyperbrep::ArchiveLimits::default())
         .expect("separable affine patch JSON parses")
         .validate()
         .expect("separable affine patch JSON revalidates");
@@ -1341,7 +1348,7 @@ fuzz_target!(|bytes: &[u8]| {
     let planar_json = planar_model
         .to_json()
         .expect("planar spline region serializes");
-    let replayed_planar = RawModel::from_json(&planar_json)
+    let replayed_planar = RawModel::from_json(&planar_json, &hyperbrep::ArchiveLimits::default())
         .expect("planar spline region JSON parses")
         .validate()
         .expect("planar spline region JSON revalidates");
@@ -1380,10 +1387,11 @@ fuzz_target!(|bytes: &[u8]| {
         Some(std::cmp::Ordering::Equal)
     );
     let path_extrusion_json = path_extrusion.to_json().expect("path extrusion serializes");
-    let replayed_path_extrusion = RawModel::from_json(&path_extrusion_json)
-        .expect("path extrusion JSON parses")
-        .validate()
-        .expect("path extrusion JSON revalidates");
+    let replayed_path_extrusion =
+        RawModel::from_json(&path_extrusion_json, &hyperbrep::ArchiveLimits::default())
+            .expect("path extrusion JSON parses")
+            .validate()
+            .expect("path extrusion JSON revalidates");
     assert_eq!(
         hyperlimit::compare_reals(
             &first_solid(&replayed_path_extrusion)
@@ -1452,10 +1460,11 @@ fuzz_target!(|bytes: &[u8]| {
     let extrusion_json = extrusion_patch
         .to_json()
         .expect("spline extrusion patch serializes");
-    let replayed_extrusion = RawModel::from_json(&extrusion_json)
-        .expect("spline extrusion patch JSON parses")
-        .validate()
-        .expect("spline extrusion patch JSON revalidates");
+    let replayed_extrusion =
+        RawModel::from_json(&extrusion_json, &hyperbrep::ArchiveLimits::default())
+            .expect("spline extrusion patch JSON parses")
+            .validate()
+            .expect("spline extrusion patch JSON revalidates");
     assert_eq!(
         hyperlimit::compare_reals(
             &replayed_extrusion
@@ -1543,10 +1552,11 @@ fuzz_target!(|bytes: &[u8]| {
     let revolution_json = revolution_patch
         .to_json()
         .expect("spline revolution patch serializes");
-    let replayed_revolution = RawModel::from_json(&revolution_json)
-        .expect("spline revolution patch JSON parses")
-        .validate()
-        .expect("spline revolution patch JSON revalidates");
+    let replayed_revolution =
+        RawModel::from_json(&revolution_json, &hyperbrep::ArchiveLimits::default())
+            .expect("spline revolution patch JSON parses")
+            .validate()
+            .expect("spline revolution patch JSON revalidates");
     assert_eq!(
         hyperlimit::compare_reals(
             &replayed_revolution
@@ -1625,7 +1635,7 @@ fuzz_target!(|bytes: &[u8]| {
     let Ok(crossing_json) = crossing_partitioned.to_json() else {
         return;
     };
-    if RawModel::from_json(&crossing_json)
+    if RawModel::from_json(&crossing_json, &hyperbrep::ArchiveLimits::default())
         .and_then(RawModel::validate)
         .is_err()
     {
@@ -1725,7 +1735,7 @@ fuzz_target!(|bytes: &[u8]| {
         let Ok(json) = patch_shell.to_json() else {
             return;
         };
-        let Ok(raw) = RawModel::from_json(&json) else {
+        let Ok(raw) = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default()) else {
             return;
         };
         if raw.validate().is_err() {

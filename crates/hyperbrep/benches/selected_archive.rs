@@ -139,16 +139,17 @@ fn main() {
             encoded.len()
         });
         measure(replay_name, || {
-            let loaded = RawModel::from_json(black_box(&json))
-                .unwrap()
-                .validate()
-                .unwrap();
+            let loaded =
+                RawModel::from_json(black_box(&json), &hyperbrep::ArchiveLimits::default())
+                    .unwrap()
+                    .validate()
+                    .unwrap();
             check(&loaded, edges, retained)
         });
     }
     let json = selected.to_json().unwrap();
     measure("selected_archive/replay_split_measure:", || {
-        let loaded = RawModel::from_json(black_box(&json))
+        let loaded = RawModel::from_json(black_box(&json), &hyperbrep::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();

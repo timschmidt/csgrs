@@ -13,7 +13,10 @@ fn cuboid_json_is_deterministic_and_revalidates_exactly() {
     let (model, solid) = builder::cuboid(p(-2, -3, -5), p(7, 11, 13)).unwrap();
     let json = model.to_json().unwrap();
     assert_eq!(json, model.to_json().unwrap());
-    let rebuilt = ImportedModel::from_json(&json).unwrap().validate().unwrap();
+    let rebuilt = ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
     assert_eq!(rebuilt.counts(), model.counts());
     assert_eq!(
         compare_reals(
@@ -45,7 +48,10 @@ fn rational_pcurve_persistence_retains_infinite_homogeneous_controls() {
         .unwrap();
     let model = builder.finish().unwrap();
     let json = model.to_json().unwrap();
-    let rebuilt = ImportedModel::from_json(&json).unwrap().validate().unwrap();
+    let rebuilt = ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
     let Some(CurveGeometry2::RationalBezier(restored)) =
         rebuilt.pcurve(id).unwrap().curve().geometry()
     else {
@@ -101,7 +107,10 @@ fn homogeneous_nurbs_pcurve_persistence_retains_controls_and_periodicity() {
             .unwrap();
         let model = builder.finish().unwrap();
         let json = model.to_json().unwrap();
-        let rebuilt = ImportedModel::from_json(&json).unwrap().validate().unwrap();
+        let rebuilt = ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
         let Some(CurveGeometry2::Nurbs(restored)) = rebuilt.pcurve(id).unwrap().curve().geometry()
         else {
             panic!("persistence must retain the NURBS carrier");
@@ -130,7 +139,9 @@ fn raw_import_rejects_invalid_references_during_validation() {
     raw["edges"][0]["start"] = serde_json::Value::from(999_u64);
     let json = serde_json::to_string(&raw).unwrap();
     assert!(matches!(
-        ImportedModel::from_json(&json).unwrap().validate(),
+        ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
+            .unwrap()
+            .validate(),
         Err(PersistenceError::Build(BuildError::InvalidReference { .. }))
     ));
 }
@@ -148,7 +159,7 @@ fn raw_import_handles_deep_untrusted_json_on_a_growing_stack() {
         json.push(']');
     }
     json.push('}');
-    ImportedModel::from_json(&json)
+    ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
         .expect("deep untrusted JSON must use the growing stack adapter");
 }
 
@@ -173,7 +184,10 @@ fn void_shells_round_trip_through_untrusted_exact_persistence() {
     let (model, solid) =
         builder::extrude_with_voids(&outer, Real::zero(), Real::from(5), &[cavity]).unwrap();
     let json = model.to_json().unwrap();
-    let rebuilt = ImportedModel::from_json(&json).unwrap().validate().unwrap();
+    let rebuilt = ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
     assert_eq!(rebuilt.solid(solid).unwrap().voids().len(), 1);
     assert_eq!(
         compare_reals(
@@ -299,7 +313,10 @@ fn every_current_exact_curve_and_surface_carrier_round_trips() {
 
     let model = builder.finish().unwrap();
     let json = model.to_json().unwrap();
-    let rebuilt = ImportedModel::from_json(&json).unwrap().validate().unwrap();
+    let rebuilt = ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
     assert_eq!(rebuilt.counts(), model.counts());
     assert_eq!(
         rebuilt
@@ -356,7 +373,9 @@ fn raw_import_revalidates_nonplanar_geometry_fields() {
     raw["curves"][0]["EllipseArc"]["direction"] = serde_json::Value::from(0);
     let json = serde_json::to_string(&raw).unwrap();
     assert!(matches!(
-        ImportedModel::from_json(&json).unwrap().validate(),
+        ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
+            .unwrap()
+            .validate(),
         Err(PersistenceError::Build(BuildError::Geometry(
             GeometryError::InvalidParameterDomain
         )))
@@ -366,7 +385,7 @@ fn raw_import_revalidates_nonplanar_geometry_fields() {
 #[test]
 fn format_envelope_rejects_old_versions_before_decoding_their_schema() {
     assert!(matches!(
-        ImportedModel::from_json(r#"{"version":8}"#),
+        ImportedModel::from_json(r#"{"version":8}"#, &crate::ArchiveLimits::default()),
         Err(PersistenceError::UnsupportedVersion(8))
     ));
 }

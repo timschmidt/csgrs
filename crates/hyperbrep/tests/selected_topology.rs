@@ -555,7 +555,7 @@ fn selected_planar_archive_reconstructs_evidence_and_splits_again() {
         .split(root())
         .unwrap();
     let json = split.model().to_json().unwrap();
-    let loaded = hyperbrep::RawModel::from_json(&json)
+    let loaded = hyperbrep::RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
         .unwrap()
         .validate()
         .unwrap();
@@ -582,10 +582,13 @@ fn selected_planar_archive_reconstructs_evidence_and_splits_again() {
         .unwrap()
         .split(rational(1, 2).into())
         .unwrap();
-    let repeated = hyperbrep::RawModel::from_json(&repeated.model().to_json().unwrap())
-        .unwrap()
-        .validate()
-        .unwrap();
+    let repeated = hyperbrep::RawModel::from_json(
+        &repeated.model().to_json().unwrap(),
+        &hyperbrep::ArchiveLimits::default(),
+    )
+    .unwrap()
+    .validate()
+    .unwrap();
     check_correspondences(&repeated);
     let detached = Curve3::line(point(0, 0, 0), point(2, 0, 0))
         .unwrap()
@@ -617,7 +620,7 @@ fn selected_planar_archive_reconstructs_evidence_and_splits_again() {
 
 fn reload(model: &Model) -> Model {
     let json = model.to_json().unwrap();
-    let loaded = hyperbrep::RawModel::from_json(&json)
+    let loaded = hyperbrep::RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
         .unwrap()
         .validate()
         .unwrap();
@@ -726,7 +729,7 @@ fn selected_archive_rejects_forged_roots_sources_charts_and_incidence() {
     for (name, value) in mutants {
         let json = serde_json::to_string(&value).unwrap();
         assert!(
-            hyperbrep::RawModel::from_json(&json)
+            hyperbrep::RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .is_err(),
@@ -734,5 +737,8 @@ fn selected_archive_rejects_forged_roots_sources_charts_and_incidence() {
         );
     }
     let json = split.model().to_json().unwrap();
-    assert!(hyperbrep::RawModel::from_json(&(json + " false")).is_err());
+    assert!(
+        hyperbrep::RawModel::from_json(&(json + " false"), &hyperbrep::ArchiveLimits::default())
+            .is_err()
+    );
 }

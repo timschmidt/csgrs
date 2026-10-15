@@ -58,7 +58,7 @@ fuzz_target!(|bytes: &[u8]| {
             Some(std::cmp::Ordering::Equal)
         );
         let json = edited.to_json().expect("partitioned model serializes");
-        let decoded = RawModel::from_json(&json)
+        let decoded = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
             .expect("partitioned JSON decodes")
             .validate()
             .expect("partitioned JSON fully revalidates");
@@ -172,7 +172,7 @@ fuzz_target!(|bytes: &[u8]| {
             Some(std::cmp::Ordering::Equal)
         );
         let json = edited.to_json().expect("paired bridge model serializes");
-        let decoded = RawModel::from_json(&json)
+        let decoded = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
             .expect("paired bridge JSON decodes")
             .validate()
             .expect("paired bridge JSON fully revalidates");
@@ -316,7 +316,7 @@ fuzz_target!(|bytes: &[u8]| {
         );
         let json = edited.to_json().expect("bridge-cycle model serializes");
         assert_eq!(
-            RawModel::from_json(&json)
+            RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
                 .expect("bridge-cycle JSON decodes")
                 .validate()
                 .expect("bridge-cycle JSON fully revalidates")
@@ -398,7 +398,7 @@ fuzz_target!(|bytes: &[u8]| {
         assert_eq!(partition.faces().len(), 2);
         let json = edited.to_json().expect("mixed spline split serializes");
         assert_eq!(
-            RawModel::from_json(&json)
+            RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
                 .expect("mixed spline JSON decodes")
                 .validate()
                 .expect("mixed spline JSON fully revalidates")
@@ -501,7 +501,7 @@ fuzz_target!(|bytes: &[u8]| {
         assert_eq!(partition.faces().len(), 2);
         let json = edited.to_json().expect("curved tensor split serializes");
         assert_eq!(
-            RawModel::from_json(&json)
+            RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
                 .expect("curved tensor JSON decodes")
                 .validate()
                 .expect("curved tensor JSON fully revalidates")
@@ -643,7 +643,7 @@ fuzz_target!(|bytes: &[u8]| {
         .volume()
         .expect("certificate survives edit");
     let json = edited.to_json().expect("edited model serializes");
-    let decoded = RawModel::from_json(&json)
+    let decoded = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
         .expect("edited JSON decodes")
         .validate()
         .expect("edited JSON fully revalidates");

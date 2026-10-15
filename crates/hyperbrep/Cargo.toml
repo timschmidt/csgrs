@@ -59,3 +59,7 @@ harness = false
 [[bench]]
 name = "spline_replay_cost"
 harness = false
+
+[[bench]]
+name = "archive_limits"
+harness = false

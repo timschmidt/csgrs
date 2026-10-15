@@ -56,7 +56,10 @@ fn split_all(source: &Model) -> Model {
 }
 
 fn replay(json: &str) -> Model {
-    RawModel::from_json(json).unwrap().validate().unwrap()
+    RawModel::from_json(json, &hyperbrep::ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap()
 }
 
 fn check(model: &Model, vertices: usize, edges: usize, volume: &Real) -> usize {

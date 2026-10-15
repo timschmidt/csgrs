@@ -97,7 +97,10 @@ fn sheet(family: usize) -> Model {
 
 fn reload(model: &Model) -> Model {
     let json = model.to_json().unwrap();
-    let loaded = RawModel::from_json(&json).unwrap().validate().unwrap();
+    let loaded = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
     assert_eq!(loaded.counts(), model.counts());
     assert_eq!(loaded.to_json().unwrap(), json);
     for edge in loaded.edges() {
@@ -209,7 +212,7 @@ fn matching_trim_endpoints_do_not_certify_a_changed_spline_interior() {
         let value: Real = serde_json::from_value(controls[1][1].clone()).unwrap();
         controls[1][1] = serde_json::to_value(value - Real::one()).unwrap();
         assert!(
-            RawModel::from_json(&raw.to_string())
+            RawModel::from_json(&raw.to_string(), &hyperbrep::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .is_err()
@@ -264,7 +267,7 @@ fn affine_nurbs_pcurve_charts_replay_with_both_spatial_directions() {
             "scale": serde_json::to_value(Real::from(if reversed { -3 } else { 3 })).unwrap(),
             "offset": serde_json::to_value(Real::from(if reversed { 5 } else { 2 })).unwrap(),
         }});
-        let loaded = RawModel::from_json(&raw.to_string())
+        let loaded = RawModel::from_json(&raw.to_string(), &hyperbrep::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();

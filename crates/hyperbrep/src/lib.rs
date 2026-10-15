@@ -58,7 +58,7 @@ pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};
 pub use parameter::{Parameter, ParameterRange};
 pub(crate) use persistence::ImportedModel;
-pub use persistence::PersistenceError;
+pub use persistence::{ArchiveLimitExceeded, ArchiveLimits, ArchiveResource, PersistenceError};
 pub use topology::{
     BuildError, Direction, EditError, Endpoint, EntityKind, GeometryReferenceError, ModelCounts,
     Orientation, ParameterCorrespondence, QueryError, SolidPointLocation, TopologyEditError,

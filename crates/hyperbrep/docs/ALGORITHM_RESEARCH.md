@@ -710,3 +710,23 @@ sufficient condition, not a complete self-intersection algorithm. The
 [qualification](evidence/2026-10-15-spline-replay/README.md) records the initial
 failures, regressions, deliberate faults and measured costs. The cited teaching
 material supports the parameter-domain reasoning; it is not a test oracle.
+
+## Archive syntax admission (2026-10-15)
+
+The [serde_stacker documentation](https://docs.rs/serde_stacker/0.1.14/serde_stacker/)
+explains dynamic stack growth and separately warns about recursive operations
+such as dropping decoded values. The locally pinned serde_json 1.0.149 source
+likewise assigns stack protection to the caller when its recursion limit is
+disabled. Stack growth does not supply a byte, entity or arithmetic budget.
+
+HyperBRep therefore admits borrowed input before deserialization: byte length
+first, then an iterative string-aware scan for container depth and lexical
+tokens. For valid JSON, structural delimiters cannot occur outside this count
+except inside quoted strings; escape handling prevents an escaped quote from
+ending the string. The scan needs constant auxiliary storage and at most one
+pass over the supplied bytes. It is not a replacement JSON parser and does
+not bound scalar reconstruction or later replay. The
+[qualification](evidence/2026-10-15-archive-admission/README.md) checks limits
+against an independently parsed JSON tree, records rejected faults and measures
+scan overhead and early-rejection allocations. Full iterative coefficient and
+record decoding remains open; no external implementation was copied.

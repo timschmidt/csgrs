@@ -96,7 +96,10 @@ fn sheet(family: usize) -> Model {
 }
 
 fn replay(json: &str, vertices: usize, selected: usize) -> usize {
-    let loaded = RawModel::from_json(json).unwrap().validate().unwrap();
+    let loaded = RawModel::from_json(json, &hyperbrep::ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
     assert_eq!(loaded.counts().vertices, vertices);
     assert_eq!(loaded.counts().edges, vertices);
     assert_eq!(

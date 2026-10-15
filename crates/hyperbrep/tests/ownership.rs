@@ -234,10 +234,13 @@ fn cloned_models_share_identity_but_transformed_decoded_and_committed_models_do_
     let clone = model.clone();
     assert_eq!(clone.vertex(&staged.vertices[0]).unwrap(), vertex);
     let transformed = model.transformed(&Matrix4::identity()).unwrap();
-    let decoded = RawModel::from_json(&model.to_json().unwrap())
-        .unwrap()
-        .validate()
-        .unwrap();
+    let decoded = RawModel::from_json(
+        &model.to_json().unwrap(),
+        &hyperbrep::ArchiveLimits::default(),
+    )
+    .unwrap()
+    .validate()
+    .unwrap();
     let committed = model.edit().commit().unwrap();
     for independent in [&transformed, &decoded, &committed] {
         assert!(!independent.same_revision(&model));

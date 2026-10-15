@@ -12086,7 +12086,7 @@ mod tests {
         );
         let partitioned_json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&partitioned_json)
+            crate::ImportedModel::from_json(&partitioned_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12128,7 +12128,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12210,7 +12210,7 @@ mod tests {
         let json = partitioned.to_json().unwrap();
         assert_eq!(reversed.to_json().unwrap(), json);
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12298,7 +12298,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12421,7 +12421,7 @@ mod tests {
         let json = partitioned.to_json().unwrap();
         assert_eq!(reversed.to_json().unwrap(), json);
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12526,7 +12526,7 @@ mod tests {
         let json = partitioned.to_json().unwrap();
         assert_eq!(reversed.to_json().unwrap(), json);
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12620,7 +12620,7 @@ mod tests {
         assert_eq!(rational_split.counts().faces, 2);
         let rational_json = rational_split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&rational_json)
+            crate::ImportedModel::from_json(&rational_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12656,7 +12656,7 @@ mod tests {
         assert_eq!(nurbs_split.counts().faces, 2);
         let nurbs_json = nurbs_split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&nurbs_json)
+            crate::ImportedModel::from_json(&nurbs_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12714,7 +12714,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12951,7 +12951,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12971,7 +12971,7 @@ mod tests {
         assert_eq!(partial_split.counts().faces, 2);
         let partial_json = partial_split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&partial_json)
+            crate::ImportedModel::from_json(&partial_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13251,7 +13251,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13271,7 +13271,7 @@ mod tests {
         assert_eq!(partial_split.counts().faces, 2);
         let partial_json = partial_split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&partial_json)
+            crate::ImportedModel::from_json(&partial_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13336,7 +13336,7 @@ mod tests {
         );
         let json = native_split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13490,7 +13490,7 @@ mod tests {
         assert_eq!(factorized_partition.counts().faces, 4);
         let factorized_json = factorized_partition.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&factorized_json)
+            crate::ImportedModel::from_json(&factorized_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13837,7 +13837,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13898,7 +13898,7 @@ mod tests {
         assert_eq!(split.counts().faces, 2);
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -14001,7 +14001,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -14042,7 +14042,7 @@ mod tests {
         assert_eq!(v_split.counts().faces, 2);
         let v_json = v_split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&v_json)
+            crate::ImportedModel::from_json(&v_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()

@@ -153,6 +153,13 @@ defines Hypercurve's complete-image injectivity gate for boundary reassembly;
 connected multi-span NURBS with one common strict monotone coordinate can pass.
 See [composition evidence](evidence/2026-10-15-spline-replay/README.md).
 
+Archive decoding requires explicit `ArchiveLimits` for input bytes, JSON depth
+and tokens. A constant-storage scan precedes version and scalar decoding;
+resource exhaustion remains distinct from malformed JSON and invalid geometry.
+The [archive contract](SELECTED_ARCHIVE.md#input-admission) defines exact units
+and retry behavior. Entity/degree/allocation limits and an iterative record
+decoder remain separate work; syntax admission is not a total resource bound.
+
 ## Source organization
 
 The private [topology module](../src/topology/mod.rs) owns arena storage and

@@ -2828,7 +2828,7 @@ fn main() {
             json.len() < 100_000,
             "mixed-shell planar pcurves must remain canonical"
         );
-        let decoded = RawModel::from_json(&json)
+        let decoded = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
             .expect("parse half-frustum JSON")
             .validate()
             .expect("revalidate half-frustum JSON");

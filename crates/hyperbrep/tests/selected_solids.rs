@@ -34,7 +34,10 @@ fn root() -> Parameter {
 
 fn reload(model: &Model) -> Model {
     let json = model.to_json().unwrap();
-    let loaded = RawModel::from_json(&json).unwrap().validate().unwrap();
+    let loaded = RawModel::from_json(&json, &hyperbrep::ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
     assert_eq!(loaded.counts(), model.counts());
     assert_eq!(loaded.to_json().unwrap(), json);
     assert_eq!(
@@ -207,7 +210,7 @@ fn selected_solid_import_rejects_broken_shell_incidence_orientation_and_geometry
     let mut broken = value.clone();
     broken["shells"][0].as_array_mut().unwrap().pop();
     assert!(
-        RawModel::from_json(&broken.to_string())
+        RawModel::from_json(&broken.to_string(), &hyperbrep::ArchiveLimits::default())
             .unwrap()
             .validate()
             .is_err()
@@ -220,7 +223,7 @@ fn selected_solid_import_rejects_broken_shell_incidence_orientation_and_geometry
         json!("Forward")
     };
     assert!(
-        RawModel::from_json(&broken.to_string())
+        RawModel::from_json(&broken.to_string(), &hyperbrep::ArchiveLimits::default())
             .unwrap()
             .validate()
             .is_err()
@@ -235,7 +238,7 @@ fn selected_solid_import_rejects_broken_shell_incidence_orientation_and_geometry
     vertex["CurveImage"]["parameter"] =
         json!({"Scalar": serde_json::to_value(Real::zero()).unwrap()});
     assert!(
-        RawModel::from_json(&broken.to_string())
+        RawModel::from_json(&broken.to_string(), &hyperbrep::ArchiveLimits::default())
             .unwrap()
             .validate()
             .is_err()

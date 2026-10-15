@@ -1,5 +1,41 @@
 # HyperBREP Performance Contract
 
+## 2026-10-15: explicit archive input admission
+
+Kept as a WP13 resource-contract extension with an architectural cost
+exception. **Pooled native timing qualification remains unresolved.** The
+[qualification and decision](docs/evidence/2026-10-15-archive-admission/README.md)
+retain every sample and explain why an iterative pre-deserialization guard is
+required. No optimization or full regression-budget pass is claimed.
+
+Against `11078836b`, six alternating pinned pairs preserve all 66 native
+receipts. First-three-pair median/largest pooled case ratios are
+1.001281/1.265185; repeat-three-pair ratios are 1.003303/1.127975. Combining all
+six yields 1.243534/1.340618, exceeding the default 10% gate. A diagnostic median
+of each case's six within-pair ratios yields 1.003536/1.050614; it does not
+replace the failed pooled gate. Pairs 3 and 5 show roughly 26% harness-wide
+median differences, whose cause has not been established. Controlled-host
+requalification and investigation of stable failures remain required before
+release performance admission.
+
+Three additional paired runs preserve eight existing spline replay receipts.
+The seven replay/encode cohorts grow 2.04–4.01%; the short prepared injectivity
+query has equal 86 ns medians. The kernel executable grows 1,872 bytes to
+24,773,112. Median process peak RSS across all six native trials is 22,046 KiB
+for baseline and 21,748 KiB for candidate. No significance or general memory
+bound is inferred.
+
+The new `archive_limits` bench records 256 native cuboid decode/encode
+iterations and 100,000 iterations per rejection cohort in each of three
+processes. Native decode/encode has median 470.637 µs, 695 Rust allocator calls
+and 216,464 requested bytes per iteration. Byte, depth and token rejection
+medians are 25, 117 and 213 ns; all have zero Rust allocation calls and requested
+bytes. Instrumentation counts Rust allocation/reallocation requests, not foreign
+allocations or retained/peak storage. Sources are prepared outside timing.
+Input syntax limits do not bound scalar reconstruction or geometric replay.
+The new guarded executable is retained as the next feature baseline while the
+frozen unguarded baseline and failed pooled timing evidence remain available.
+
 ## 2026-10-15: trimmed spline replay and complete-image injectivity
 
 Kept for exact native/selected spline trim replay. The

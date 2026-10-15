@@ -214,9 +214,13 @@ pub struct RawModel {
 }
 
 impl RawModel {
-    /// Parses JSON without asserting topology validity.
-    pub fn from_json(json: &str) -> Result<Self, PersistenceError> {
-        ImportedModel::from_json(json).map(|inner| Self { inner })
+    /// Parses JSON under explicit input limits without asserting topology validity.
+    ///
+    /// Byte, nesting and token admission happens before deserialization and
+    /// returns [`PersistenceError::ResourceLimit`] on exhaustion. These limits
+    /// do not bound scalar reconstruction or subsequent geometric validation.
+    pub fn from_json(json: &str, limits: &crate::ArchiveLimits) -> Result<Self, PersistenceError> {
+        ImportedModel::from_json(json, limits).map(|inner| Self { inner })
     }
 
     /// Encodes the untrusted archive deterministically.

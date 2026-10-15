@@ -1,10 +1,38 @@
 # Selected geometry in archive version 9
 
 Version 9 retains authored coordinates and selected curve images in the same
-model. It replaces version 8; there is no migration reader. `RawModel::from_json`
-checks the format envelope before decoding records and rejects trailing input.
+model. It replaces version 8; there is no migration reader.
+`RawModel::from_json(json, &limits)` admits input syntax under explicit
+`ArchiveLimits`, checks the format envelope before decoding records and rejects
+trailing input.
 `RawModel::validate` is the trust boundary. Parsing alone grants no geometry,
 measurement or topology authority.
+
+## Input admission
+
+`ArchiveLimits` sets `input_bytes`, `nesting_depth` and `tokens`. Defaults are
+16 MiB, 1,024 nested containers and 1,000,000 tokens; the caller explicitly
+passes a configuration. Byte admission runs first. An iterative scan of the
+borrowed UTF-8 input then counts open objects/arrays and syntax tokens without
+allocating or recursing. A token is an opening container, quoted string
+(including a key), or primitive lexeme. Closing delimiters, punctuation and
+whitespace do not count as tokens; all bytes, including whitespace and ignored
+fields, count toward the byte limit. Brackets and escaped quotes inside strings
+do not contribute structural depth.
+
+Exhaustion returns `PersistenceError::ResourceLimit(ArchiveLimitExceeded)` with
+the resource, allowance and observed length or first disallowed count. It
+occurs before either version parsing or exact-scalar deserialization. Retrying
+with larger limits preserves the original input and exact result. Malformed
+input that passes admission still goes through the existing JSON validator.
+No part is silently omitted to fit a limit. The one-argument API is removed;
+callers select their limits directly.
+
+These are syntax limits, not bounds on coefficient reconstruction, geometry
+work, aggregate allocations, elapsed time or native stack use. A small scalar
+expression can demand substantial work. Native `serde_stacker` remains in the
+decoder, and configurable depth alone does not prove a safe WASM call stack.
+See [admission evidence](evidence/2026-10-15-archive-admission/README.md).
 
 ## Records and deterministic ordering
 
@@ -126,8 +154,8 @@ boundary image, void-shell nesting, surface/contact/fiber graphs, non-authored
 Hypercurve support fragments, general Boolean transfer, and selected angular
 conic images remain open. A typed failure is not a successful round trip.
 
-This format is not the completed WP13 resource-boundary design. Byte/entity,
-degree and aggregate allocation limits, an iterative WASM-safe decoder,
+This format is not the completed WP13 resource-boundary design. Entity,
+degree and aggregate allocation limits, an iterative WASM-safe record decoder,
 independently versioned coefficient/certificate envelopes, semantic provenance
 and the optional serialization feature still need implementation. Native
 `serde_stacker` handling is retained; WASM compilation does not establish a

@@ -16,6 +16,8 @@ use crate::{
     PcurveId, ShellId, Surface, SurfaceId, SurfaceKind, ValidationReport, VertexId, WireId,
 };
 
+mod limits;
+pub use limits::{ArchiveLimitExceeded, ArchiveLimits, ArchiveResource};
 mod selection;
 use selection::{GraphEncoder, RawParameter, RawSelectionGraph, RawVertex, SelectionGraph};
 
@@ -24,6 +26,8 @@ const FORMAT_VERSION: u32 = 9;
 /// Failure while encoding, decoding, or validating an exact model.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PersistenceError {
+    /// Input exceeds an explicit archive admission limit.
+    ResourceLimit(ArchiveLimitExceeded),
     /// JSON syntax or exact-scalar decoding failed.
     Json(String),
     /// The encoded format version is not supported.
@@ -50,6 +54,7 @@ pub enum PersistenceError {
 impl fmt::Display for PersistenceError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::ResourceLimit(error) => error.fmt(formatter),
             Self::Json(error) => write!(formatter, "model JSON failed: {error}"),
             Self::UnsupportedVersion(version) => {
                 write!(formatter, "unsupported model format version {version}")
@@ -75,6 +80,7 @@ impl fmt::Display for PersistenceError {
 impl std::error::Error for PersistenceError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
+            Self::ResourceLimit(error) => Some(error),
             Self::Build(error) => Some(error),
             Self::Validation(report) => Some(report),
             _ => None,
@@ -111,8 +117,9 @@ pub struct ImportedModel {
 }
 
 impl ImportedModel {
-    /// Parses exact JSON without claiming that the encoded topology is valid.
-    pub fn from_json(json: &str) -> Result<Self, PersistenceError> {
+    /// Admits bounded JSON syntax, then parses without claiming topology validity.
+    pub fn from_json(json: &str, limits: &ArchiveLimits) -> Result<Self, PersistenceError> {
+        limits.admit_json(json)?;
         crate::context::strict(|| {
             // Read the format envelope before attempting the version-specific
             // record schema. This diagnoses old formats without a migration path.

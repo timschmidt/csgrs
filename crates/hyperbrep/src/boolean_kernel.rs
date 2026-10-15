@@ -6986,7 +6986,7 @@ mod tests {
         );
         let json = first_split.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7239,7 +7239,7 @@ mod tests {
         );
         let json = first.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7359,7 +7359,7 @@ mod tests {
         assert_eq!(partition.faces.len(), 2);
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7443,7 +7443,7 @@ mod tests {
         assert_eq!(contained_nurbs_partition.faces.len(), 2);
         let json = partitioned_nurbs.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7549,7 +7549,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7621,7 +7621,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7713,7 +7713,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7802,7 +7802,7 @@ mod tests {
         );
         let json = first.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7890,7 +7890,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -8011,7 +8011,7 @@ mod tests {
         );
         let json = first.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -8250,7 +8250,7 @@ mod tests {
         );
         let sphere_json = partitioned_sphere.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&sphere_json)
+            crate::ImportedModel::from_json(&sphere_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -8277,7 +8277,7 @@ mod tests {
         );
         let cylinder_json = partitioned_cylinder.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&cylinder_json)
+            crate::ImportedModel::from_json(&cylinder_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -8346,7 +8346,7 @@ mod tests {
             assert_eq!(model.classify_point(solid, &point).unwrap(), location);
         }
         let json = model.to_json().unwrap();
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -8539,7 +8539,7 @@ mod tests {
             Some(Ordering::Equal)
         );
         let json = standard.to_json().unwrap();
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -8744,7 +8744,7 @@ mod tests {
             Some(Ordering::Equal)
         );
         let json = standard.to_json().unwrap();
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -8931,7 +8931,7 @@ mod tests {
             unreachable!("standard union was checked above");
         };
         let json = standard.to_json().unwrap();
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -9258,7 +9258,7 @@ mod tests {
             ),
         ] {
             let json = result_model.to_json().unwrap();
-            let decoded = crate::ImportedModel::from_json(&json)
+            let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -9471,7 +9471,7 @@ mod tests {
             json.len() < 100_000,
             "canonical mixed-shell pcurves must not retain arrangement-expression history"
         );
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -9660,7 +9660,7 @@ mod tests {
         ));
 
         let json = model.to_json().unwrap();
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -9816,7 +9816,7 @@ mod tests {
                 .is_none()
         );
         let json = bored_sphere.to_json().unwrap();
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -9951,10 +9951,11 @@ mod tests {
                 .is_none()
         );
         let hollow_json = hollow_cylinder.to_json().unwrap();
-        let decoded_hollow = crate::ImportedModel::from_json(&hollow_json)
-            .unwrap()
-            .validate()
-            .unwrap();
+        let decoded_hollow =
+            crate::ImportedModel::from_json(&hollow_json, &crate::ArchiveLimits::default())
+                .unwrap()
+                .validate()
+                .unwrap();
         assert_eq!(decoded_hollow.to_json().unwrap(), hollow_json);
         assert_eq!(
             compare_reals(
@@ -10108,7 +10109,7 @@ mod tests {
             assert_eq!(model.classify_point(solid, &point).unwrap(), location);
         }
         let json = model.to_json().unwrap();
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -10267,7 +10268,7 @@ mod tests {
             assert_eq!(model.classify_point(solid, &point).unwrap(), location);
         }
         let json = model.to_json().unwrap();
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -10605,10 +10606,13 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        crate::ImportedModel::from_json(&caps_partitioned.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &caps_partitioned.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
 
         let (all_partitioned, all_partitions) = graph.partition_first_faces().unwrap();
         assert!(all_partitions.len() > cap_partitions.len());
@@ -10623,7 +10627,7 @@ mod tests {
         );
         let all_json = all_partitioned.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&all_json)
+            crate::ImportedModel::from_json(&all_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -10674,7 +10678,7 @@ mod tests {
         );
         let selected_json = selected.model.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&selected_json)
+            crate::ImportedModel::from_json(&selected_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -10709,7 +10713,7 @@ mod tests {
         );
         let stitched_json = stitched.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&stitched_json)
+            crate::ImportedModel::from_json(&stitched_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -10769,7 +10773,7 @@ mod tests {
         );
         let transverse_json = transverse_stitched.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&transverse_json)
+            crate::ImportedModel::from_json(&transverse_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -10876,7 +10880,7 @@ mod tests {
         }
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -10968,10 +10972,13 @@ mod tests {
                 .kind(),
             crate::Curve3Kind::RationalBezier
         );
-        crate::ImportedModel::from_json(&split_patch.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &split_patch.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
 
         let reverse = intersect_faces(&plane_model, plane_face, &patch, patch_face)
             .unwrap()
@@ -11092,10 +11099,13 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        crate::ImportedModel::from_json(&split_model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &split_model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
     }
 
     #[test]
@@ -11171,7 +11181,7 @@ mod tests {
         );
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -11311,7 +11321,7 @@ mod tests {
         );
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -11498,7 +11508,7 @@ mod tests {
         }
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -11586,7 +11596,7 @@ mod tests {
         );
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -11696,7 +11706,7 @@ mod tests {
         }
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -11854,7 +11864,7 @@ mod tests {
         }
 
         let json = model.to_json().unwrap();
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -11933,10 +11943,11 @@ mod tests {
                 standard_json.len() < 100_000,
                 "operation {index} must retain canonical mixed-shell pcurves"
             );
-            let standard_decoded = crate::ImportedModel::from_json(&standard_json)
-                .unwrap()
-                .validate()
-                .unwrap();
+            let standard_decoded =
+                crate::ImportedModel::from_json(&standard_json, &crate::ArchiveLimits::default())
+                    .unwrap()
+                    .validate()
+                    .unwrap();
             assert_eq!(
                 standard_decoded.to_json().unwrap(),
                 standard_json,
@@ -11965,7 +11976,7 @@ mod tests {
             "reflection must retain canonical mixed-shell pcurves"
         );
         assert_eq!(
-            crate::ImportedModel::from_json(&reflected_json)
+            crate::ImportedModel::from_json(&reflected_json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12047,7 +12058,7 @@ mod tests {
             Some(Ordering::Equal),
         );
         let json = model.to_json().unwrap();
-        let replayed = crate::ImportedModel::from_json(&json)
+        let replayed = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -12198,7 +12209,7 @@ mod tests {
         );
         for model in [&partitioned_first, &partitioned_second] {
             let json = model.to_json().unwrap();
-            let decoded = crate::ImportedModel::from_json(&json)
+            let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -12329,7 +12340,7 @@ mod tests {
         );
         for model in [&partitioned_sphere, &partitioned_torus] {
             let json = model.to_json().unwrap();
-            let decoded = crate::ImportedModel::from_json(&json)
+            let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -12476,7 +12487,7 @@ mod tests {
         );
         for model in [&partitioned_cylinder, &partitioned_torus] {
             let json = model.to_json().unwrap();
-            let decoded = crate::ImportedModel::from_json(&json)
+            let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -12656,7 +12667,7 @@ mod tests {
         );
         for model in [&partitioned_frustum, &partitioned_torus] {
             let json = model.to_json().unwrap();
-            let decoded = crate::ImportedModel::from_json(&json)
+            let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -12842,7 +12853,7 @@ mod tests {
         }
 
         let json = model.to_json().unwrap();
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -12915,10 +12926,11 @@ mod tests {
                 "operation {index}"
             );
             let standard_json = standard.to_json().unwrap();
-            let standard_decoded = crate::ImportedModel::from_json(&standard_json)
-                .unwrap()
-                .validate()
-                .unwrap();
+            let standard_decoded =
+                crate::ImportedModel::from_json(&standard_json, &crate::ArchiveLimits::default())
+                    .unwrap()
+                    .validate()
+                    .unwrap();
             assert_eq!(
                 standard_decoded.to_json().unwrap(),
                 standard_json,
@@ -12959,10 +12971,11 @@ mod tests {
             SolidPointLocation::Inside
         );
         let reflected_json = reflected.to_json().unwrap();
-        let reflected_decoded = crate::ImportedModel::from_json(&reflected_json)
-            .unwrap()
-            .validate()
-            .unwrap();
+        let reflected_decoded =
+            crate::ImportedModel::from_json(&reflected_json, &crate::ArchiveLimits::default())
+                .unwrap()
+                .validate()
+                .unwrap();
         assert_eq!(reflected_decoded.to_json().unwrap(), reflected_json);
         assert_eq!(
             compare_reals(
@@ -13070,7 +13083,7 @@ mod tests {
             assert_eq!(model.classify_point(solid, &point).unwrap(), location);
         }
         let json = model.to_json().unwrap();
-        let decoded = crate::ImportedModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
             .unwrap()
             .validate()
             .unwrap();
@@ -13195,10 +13208,13 @@ mod tests {
             Some(Ordering::Equal)
         );
         for model in [first_partitioned, second_partitioned] {
-            crate::ImportedModel::from_json(&model.to_json().unwrap())
-                .unwrap()
-                .validate()
-                .unwrap();
+            crate::ImportedModel::from_json(
+                &model.to_json().unwrap(),
+                &crate::ArchiveLimits::default(),
+            )
+            .unwrap()
+            .validate()
+            .unwrap();
         }
     }
 
@@ -13310,10 +13326,13 @@ mod tests {
                     .all(|face| face.action == FaceSelectionAction::Discard)
             );
         }
-        crate::ImportedModel::from_json(&selected.model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &selected.model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
 
         assert_eq!(
             face_selection_action(
@@ -13403,7 +13422,7 @@ mod tests {
             );
             let json = model.to_json().unwrap();
             assert_eq!(
-                crate::ImportedModel::from_json(&json)
+                crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                     .unwrap()
                     .validate()
                     .unwrap()
@@ -13452,7 +13471,7 @@ mod tests {
         );
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::ImportedModel::from_json(&json)
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13545,10 +13564,13 @@ mod tests {
                 .value(),
                 Some(Ordering::Equal)
             );
-            crate::ImportedModel::from_json(&model.to_json().unwrap())
-                .unwrap()
-                .validate()
-                .unwrap();
+            crate::ImportedModel::from_json(
+                &model.to_json().unwrap(),
+                &crate::ArchiveLimits::default(),
+            )
+            .unwrap()
+            .validate()
+            .unwrap();
         }
 
         let (disjoint, disjoint_solid) =
@@ -13624,10 +13646,13 @@ mod tests {
                     SolidPointLocation::Inside
                 );
             }
-            crate::ImportedModel::from_json(&model.to_json().unwrap())
-                .unwrap()
-                .validate()
-                .unwrap();
+            crate::ImportedModel::from_json(
+                &model.to_json().unwrap(),
+                &crate::ArchiveLimits::default(),
+            )
+            .unwrap()
+            .validate()
+            .unwrap();
         }
     }
 
@@ -13747,10 +13772,13 @@ mod tests {
             Ordering::Greater
         );
         let intersection_volume = model.solid_volume(solid).unwrap();
-        crate::ImportedModel::from_json(&model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
 
         for (result, expected_volume) in [
             (
@@ -13769,10 +13797,13 @@ mod tests {
                 exact_order(&model.solid_volume(solid).unwrap(), &expected_volume).unwrap(),
                 Ordering::Equal
             );
-            crate::ImportedModel::from_json(&model.to_json().unwrap())
-                .unwrap()
-                .validate()
-                .unwrap();
+            crate::ImportedModel::from_json(
+                &model.to_json().unwrap(),
+                &crate::ArchiveLimits::default(),
+            )
+            .unwrap()
+            .validate()
+            .unwrap();
         }
     }
 
@@ -13831,10 +13862,13 @@ mod tests {
             model.classify_point(solid, &inner_center).unwrap(),
             SolidPointLocation::Outside
         );
-        crate::ImportedModel::from_json(&model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
     }
 
     #[test]
@@ -14500,10 +14534,13 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        crate::ImportedModel::from_json(&model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
 
         let touching = crate::construction::sphere(Real::one())
             .unwrap()
@@ -14598,10 +14635,13 @@ mod tests {
             model.classify_point(solid, &p(6, 0, 0)).unwrap(),
             crate::SolidPointLocation::Inside
         );
-        crate::ImportedModel::from_json(&model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
 
         assert!(matches!(
             difference(&inner, inner_solid, &outer, outer_solid).unwrap(),
@@ -14728,10 +14768,13 @@ mod tests {
                 model.classify_point(solid, &circle_point).unwrap(),
                 crate::SolidPointLocation::Boundary
             );
-            let decoded = crate::ImportedModel::from_json(&model.to_json().unwrap())
-                .unwrap()
-                .validate()
-                .unwrap();
+            let decoded = crate::ImportedModel::from_json(
+                &model.to_json().unwrap(),
+                &crate::ArchiveLimits::default(),
+            )
+            .unwrap()
+            .validate()
+            .unwrap();
             assert_eq!(
                 compare_reals(
                     &decoded.solid_volume(solid).unwrap(),
@@ -14771,10 +14814,13 @@ mod tests {
                     Real::one(),
                 ]))
                 .unwrap();
-            let reflected = crate::ImportedModel::from_json(&reflected.to_json().unwrap())
-                .unwrap()
-                .validate()
-                .unwrap();
+            let reflected = crate::ImportedModel::from_json(
+                &reflected.to_json().unwrap(),
+                &crate::ArchiveLimits::default(),
+            )
+            .unwrap()
+            .validate()
+            .unwrap();
             assert_eq!(
                 compare_reals(
                     &reflected.solid_volume(solid).unwrap(),
@@ -14890,10 +14936,13 @@ mod tests {
             model.classify_point(solid, &p(-2, 0, 1)).unwrap(),
             crate::SolidPointLocation::Outside
         );
-        crate::ImportedModel::from_json(&model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
     }
 
     #[test]
@@ -14941,10 +14990,13 @@ mod tests {
                 .value(),
                 Some(Ordering::Equal)
             );
-            crate::ImportedModel::from_json(&model.to_json().unwrap())
-                .unwrap()
-                .validate()
-                .unwrap();
+            crate::ImportedModel::from_json(
+                &model.to_json().unwrap(),
+                &crate::ArchiveLimits::default(),
+            )
+            .unwrap()
+            .validate()
+            .unwrap();
         }
 
         let (reversed, reversed_solid) =
@@ -15003,10 +15055,13 @@ mod tests {
             model.classify_point(solids[1], &p(13, 0, 0)).unwrap(),
             crate::SolidPointLocation::Inside
         );
-        crate::ImportedModel::from_json(&model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
 
         let (separate, separate_solid) =
             crate::construction::cylinder(Real::from(2), Real::one()).unwrap();
@@ -15092,10 +15147,13 @@ mod tests {
             model.classify_point(solid, &p(11, 1, 0)).unwrap(),
             crate::SolidPointLocation::Inside
         );
-        crate::ImportedModel::from_json(&model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
     }
 
     #[test]
@@ -15157,10 +15215,13 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        crate::ImportedModel::from_json(&model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        crate::ImportedModel::from_json(
+            &model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
 
         let ArenaBooleanResult::Solid { model, solid } =
             union(&outer, outer_solid, &cut, cut_solid).unwrap()
@@ -15204,10 +15265,13 @@ mod tests {
                 .value(),
                 Some(Ordering::Equal)
             );
-            crate::ImportedModel::from_json(&model.to_json().unwrap())
-                .unwrap()
-                .validate()
-                .unwrap();
+            crate::ImportedModel::from_json(
+                &model.to_json().unwrap(),
+                &crate::ArchiveLimits::default(),
+            )
+            .unwrap()
+            .validate()
+            .unwrap();
         }
         assert!(matches!(
             difference(&first, solid, &second, solid).unwrap(),
@@ -15264,10 +15328,13 @@ mod tests {
                 compare_reals(&volume, &expected, crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
-            let rebuilt = crate::ImportedModel::from_json(&model.to_json().unwrap())
-                .unwrap()
-                .validate()
-                .unwrap();
+            let rebuilt = crate::ImportedModel::from_json(
+                &model.to_json().unwrap(),
+                &crate::ArchiveLimits::default(),
+            )
+            .unwrap()
+            .validate()
+            .unwrap();
             let rebuilt_volume = solids
                 .iter()
                 .map(|solid| rebuilt.solid_volume(*solid).unwrap())
@@ -15369,10 +15436,13 @@ mod tests {
             ring_model.classify_point(ring_solid, &p(2, 0, 1)).unwrap(),
             crate::SolidPointLocation::Inside
         );
-        let decoded_ring = crate::ImportedModel::from_json(&ring_model.to_json().unwrap())
-            .unwrap()
-            .validate()
-            .unwrap();
+        let decoded_ring = crate::ImportedModel::from_json(
+            &ring_model.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
         assert_eq!(
             compare_reals(
                 &decoded_ring.solid_volume(ring_solid).unwrap(),
