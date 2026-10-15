@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.863621262833476,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "795238373130df21e654a80091540b03d90abddeb82e6c3e55817de50299dd82"
+    },
+    {
+      "name": "test-build",
+      "exit_code": 1,
+      "seconds": 1.9617485417984426,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "2c5b5f3b6d6e7b0c48349f22f63d413e83c2ee64ba77496d9af0cb842abb3847",
+      "resources_sha256": "c8e7da48420b33fdb62c694d0ed8f00863239098884e80e471b5901ef62d6686"
+    }
+  ],
+  "passed": false
+}

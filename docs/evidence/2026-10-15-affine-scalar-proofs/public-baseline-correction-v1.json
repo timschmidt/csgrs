@@ -1,0 +1,5 @@
+{
+  "preserved_trial": "public-baseline-v1",
+  "retry": "public-baseline-v2",
+  "correction": "The new test passed an i64 denominator to Rational::fraction, whose declared denominator type is u64. Correct the literal type without changing its exact value, assertion, production source, policy or limits."
+}

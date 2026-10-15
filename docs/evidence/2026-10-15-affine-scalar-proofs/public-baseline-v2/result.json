@@ -1,0 +1,35 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.825270403176546,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "7ac32243917d467523895dd5525409cf871b2fd711749d80c5c774623b5ac781"
+    },
+    {
+      "name": "test-build",
+      "exit_code": 0,
+      "seconds": 2.4377682209014893,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "14cb3dceca2700d111fc787a2ef56779b9b4a7f4c11cc60f8543b5e629a0db3a"
+    },
+    {
+      "name": "public-regressions",
+      "exit_code": 101,
+      "seconds": 1.8342338791117072,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "a6de100e329a67217feb27ec2bbd8bfccac0fcd5d592c5663d049248e24292be",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "f5bd943394151da9b9b6f9c45624fbb14635a16ed82852fb03bd58a269fe8167"
+    }
+  ],
+  "passed": false
+}

@@ -1,0 +1,35 @@
+[
+  [
+    "prepare-target",
+    [
+      "mkdir",
+      "/tmp/csgrs-affine-scalar-proofs/public-baseline-v2"
+    ]
+  ],
+  [
+    "test-build",
+    [
+      "rustc",
+      "--test",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-D",
+      "warnings",
+      "--extern",
+      "hyperreal=/tmp/csgrs-strict-drilled-workflows/cost-v2/libhyperreal_candidate.rlib",
+      "-L",
+      "dependency=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps",
+      "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/affine_polynomial_cancellation.rs",
+      "-o",
+      "/tmp/csgrs-affine-scalar-proofs/public-baseline-v2/regressions"
+    ]
+  ],
+  [
+    "public-regressions",
+    [
+      "/tmp/csgrs-affine-scalar-proofs/public-baseline-v2/regressions",
+      "--test-threads=2"
+    ]
+  ]
+]

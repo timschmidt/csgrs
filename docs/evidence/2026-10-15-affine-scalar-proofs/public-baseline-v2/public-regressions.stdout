@@ -1,0 +1,48 @@
+
+running 5 tests
+test affine_plane_identity_has_an_exact_rational_proof ... FAILED
+test a_proved_identity_survives_precision_changes_and_concurrent_queries ... FAILED
+test exact_displacements_survive_affine_cancellation ... FAILED
+test independently_rebuilt_atoms_obey_distributivity ... FAILED
+test an_unproved_trigonometric_relation_is_not_a_ring_proof ... ok
+
+failures:
+
+---- affine_plane_identity_has_an_exact_rational_proof stdout ----
+
+thread 'affine_plane_identity_has_an_exact_rational_proof' (99) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/affine_polynomial_cancellation.rs:22:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- a_proved_identity_survives_precision_changes_and_concurrent_queries stdout ----
+
+thread 'a_proved_identity_survives_precision_changes_and_concurrent_queries' (98) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/affine_polynomial_cancellation.rs:73:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+
+---- exact_displacements_survive_affine_cancellation stdout ----
+
+thread 'exact_displacements_survive_affine_cancellation' (101) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/affine_polynomial_cancellation.rs:31:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: Minus, numerator: 1, denominator: 1000000000000 })
+
+---- independently_rebuilt_atoms_obey_distributivity stdout ----
+
+thread 'independently_rebuilt_atoms_obey_distributivity' (102) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/affine_polynomial_cancellation.rs:57:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+
+
+failures:
+    a_proved_identity_survives_precision_changes_and_concurrent_queries
+    affine_plane_identity_has_an_exact_rational_proof
+    exact_displacements_survive_affine_cancellation
+    independently_rebuilt_atoms_obey_distributivity
+
+test result: FAILED. 1 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
