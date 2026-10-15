@@ -1,0 +1,7 @@
+{
+  "target/curve-constructor-failures/bindings-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "ee152efca0bd7394c38807aca243d8c7c005679b6b9a88cb4937874ea7d44e15",
+  "target/curve-constructor-failures/bindings-v1/wasm-bindings-node/csgrs.js": "918a84960af66b3868615031173ed5f53e032e8810faa43b262357363e29ffc7",
+  "target/curve-constructor-failures/bindings-v1/wasm-bindings-node/csgrs.d.ts": "135cffc6a39504451a853e44610525b370e120e1349ac3021d8b0caa539b837d",
+  "target/curve-constructor-failures/bindings-v1/wasm-bindings-node/csgrs_bg.wasm": "6373bea5c3d98580d860022687e34a0083112db7f52908c0d0a10adec6dec9eb",
+  "target/curve-constructor-failures/bindings-v1/wasm-bindings-node/geometry_certainty.ts": "f44fd09aecdab7626ed12762f341082d98fcb38f36b85384032504a2e8e54021"
+}

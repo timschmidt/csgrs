@@ -1,0 +1,18 @@
+{
+  "target/sampled-profile-failures/cost-v2/baseline": {
+    "sha256": "31ed939501b0c473e6dbcc50a45f810710e614d457928a5b5535be5ccddac380",
+    "bytes": 35365056
+  },
+  "target/sampled-profile-failures/cost-v2/candidate": {
+    "sha256": "6bd9f0ae5644186e377e2621cb4cb549dd57bbd9236ffeb0f49b012c6e8a15c6",
+    "bytes": 35344888
+  },
+  "target/sampled-profile-failures/baseline-v1/release/deps/libcsgrs.rlib": {
+    "sha256": "f91a7e36f52900f514a300e911e5472010a6a98e426c2aefd338dce962a6591f",
+    "bytes": 10020198
+  },
+  "target/sampled-profile-failures/native-v1/release/deps/libcsgrs.rlib": {
+    "sha256": "f512811f19fcce806bf190a715ea4da850c3f398084e2d949c74df6be942fe61",
+    "bytes": 9869558
+  }
+}

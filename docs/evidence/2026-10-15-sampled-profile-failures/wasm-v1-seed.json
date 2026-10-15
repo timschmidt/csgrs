@@ -1,0 +1,5 @@
+{
+  "target": "target/curve-constructor-failures/bindings-v1",
+  "record": "docs/evidence/2026-10-15-curve-constructor-failures/bindings-v1/result.json",
+  "release_only": false
+}

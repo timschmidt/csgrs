@@ -1,0 +1,13 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--reflink=auto",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/candidate-v2/release",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/native-v1/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "80cc0e8db993409487e87a47ccf55d209c189ebde4d0ea7eab28b299e0df9d36",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,1 @@
+{"shape":"trapezoid","cache":"warm","iterations":128,"completed":128,"policy":"strict","certainty":"Certified","oracle":"independent exact area","nanos":896599,"allocations":6144,"requested_bytes":947456,"retained_byte_delta":0,"peak_live_bytes_above_start":4558,"output_bytes":92928,"checksum":16099767055607388501}

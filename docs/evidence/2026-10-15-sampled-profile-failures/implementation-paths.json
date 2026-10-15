@@ -1,0 +1,15 @@
+[
+  "src/curve/native.rs",
+  "src/solid.rs",
+  "src/wasm/curve_js.rs",
+  "readme.md",
+  "examples/extrude.rs",
+  "examples/readme_renders.rs",
+  "benchmarks/rust/feature_pipeline.rs",
+  "benchmarks/rust/profile_primitives.rs",
+  "fuzz/fuzz_targets/fuzz_curve_shape_catalog.rs",
+  "tests/adversarial_stress.rs",
+  "tests/sampled_profile_failures.rs",
+  "tests/wasm/geometry_certainty.cjs",
+  "tests/wasm/geometry_certainty.ts"
+]

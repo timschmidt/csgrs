@@ -1,0 +1,9 @@
+{
+  "/home/tim/Documents/GitHub/workspace/csgrs/examples/readme_renders.rs": {
+    "original_sha256": "96a4a6220d03b69bfa0bc7e3b00fe81bb7d76f503ce4de0cd09dd7079ab5ead3",
+    "archive": "docs/evidence/2026-10-15-sampled-profile-failures/prior-inputs/examples/readme_renders.rs",
+    "current_sha256": "aa4ac4d8945add9c239859c116cc5df0db817e8563c5098c0bf24e64889b9e64",
+    "source_revision": "2271ad6c5",
+    "reason": "The prior render evidence hashed a live production example as an input. This API migration adds Result handling without changing fixture values. Retain its prior bytes as an immutable source snapshot; do not freeze the live example or overwrite earlier records."
+  }
+}

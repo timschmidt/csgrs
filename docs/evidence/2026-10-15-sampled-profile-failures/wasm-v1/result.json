@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "name": "wasm-clippy",
+      "exit_code": 0,
+      "seconds": 4.504676966927946,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "a57e3c6a9730da3297eed8912bdf1ad06c827bd326d66a3f18d1a2d183b988fc",
+      "resources_sha256": "cc202e132c857b422f8ff0fd0065e56938eb764925bcc97a0024a21c11674756"
+    },
+    {
+      "name": "wasm",
+      "exit_code": 0,
+      "seconds": 15.740976301953197,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "70870ab9accd685edf7fc42949a7fa04f2536afa268ad1cf0bf230fbbd0a13fe",
+      "stderr_sha256": "cfb01fdaa2f85de3345e23e51eb1c2730f841f66a4d72a08f4e6f38d89381aa5",
+      "resources_sha256": "d8d8bb3672f26108bbdb4e200eb1b4153149edec13465dd0f97f6ae8ce5c32f6"
+    }
+  ],
+  "passed": true
+}

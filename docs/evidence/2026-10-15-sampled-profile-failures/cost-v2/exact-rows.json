@@ -1,0 +1,47 @@
+{
+  "arrow": {
+    "rows": 128,
+    "bytes": 164209,
+    "sha256": "235473a0dcf1c5756a006922eb273428d837ff6c2f92f23390d5d9d2dda8b8b0"
+  },
+  "trapezoid": {
+    "rows": 128,
+    "bytes": 93343,
+    "sha256": "efc0462fbb55fb9754b15fcd02885781e6433e7340d44fc155b34847d3c5542c"
+  },
+  "star": {
+    "rows": 128,
+    "bytes": 266457,
+    "sha256": "6215975cc68b17bcfc118e5a8505ea988e239a1a792edfaa32c041c2d9156ceb"
+  },
+  "teardrop": {
+    "rows": 128,
+    "bytes": 93765,
+    "sha256": "b3eceb0d2fab193a2abf5ac608a327b62ac22e94f1b690419b6871944009651d"
+  },
+  "egg": {
+    "rows": 128,
+    "bytes": 94085,
+    "sha256": "7ffe405e3cd18d149c22e9b390b5a23ce05f1d9bd934a08454eb22a6b9315227"
+  },
+  "squircle": {
+    "rows": 128,
+    "bytes": 93579,
+    "sha256": "b5efd640ffe68a860587359218de91973bd83d6a7ed6111d37e1f689ef8b151e"
+  },
+  "sector": {
+    "rows": 128,
+    "bytes": 70057,
+    "sha256": "bc29dcb000d423813a88f98f60fe8efe6beaa017d8c40bc88096f6dfe7a3ba25"
+  },
+  "heart": {
+    "rows": 128,
+    "bytes": 581867,
+    "sha256": "2572faac55872b9b7b9629faa42d7dfc72b1a27383005e6bdca4c940d1086620"
+  },
+  "supershape": {
+    "rows": 128,
+    "bytes": 93905,
+    "sha256": "c641762bc3753bc0c7c1e8c284ea0d21aa18fe4a8aea42320a721f2c86a12f02"
+  }
+}

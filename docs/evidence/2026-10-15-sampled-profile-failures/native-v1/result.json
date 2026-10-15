@@ -1,0 +1,180 @@
+{
+  "commands": [
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.502472239080817,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "3a27c64a2a5531a341aa66050298bf8d0ac5d93cfa5804729265323836d8bbdc"
+    },
+    {
+      "name": "fuzz-fmt",
+      "exit_code": 0,
+      "seconds": 2.0899270228110254,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "5d367fbe1d576b5d6f96d358721f4e719dde1ab0845ca6506e1b720072f9de2e"
+    },
+    {
+      "name": "strict-clippy",
+      "exit_code": 0,
+      "seconds": 7.233662368729711,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "99d646fe3e5193c9adb6e2ca5c6b5870d95f901d690fe87c2428e569f3b19ee2",
+      "resources_sha256": "888487287ff5126157057538875a1958b0a28e461a4d55b5a5dfc04aca74b985"
+    },
+    {
+      "name": "all-feature-tests",
+      "exit_code": 0,
+      "seconds": 129.13833749806508,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sampled-profile-failures/native-v1/release/deps/csgrs-7cb2efc2751cd581": "c70e6ff51c1ecc97ac0bc7b86a5857ea02203cc56c7323537f5598306005fa65",
+        "target/sampled-profile-failures/native-v1/release/deps/adversarial-aa8f7eb900ff711d": "1035d7d2207707d22ce8d27be97fb731bfa5bf4f77d369dadf91673bfafaa915",
+        "target/sampled-profile-failures/native-v1/release/deps/adversarial_deep-5118e0b6d7de3ea6": "621fc938695c549ca07a38f4b36b6913733f10ae6426aca7c6c416e777c44783",
+        "target/sampled-profile-failures/native-v1/release/deps/adversarial_extrusions-aa8048fe0de3f594": "b61f4d6153bf8b4be90fdf906c7e935964fe2a3002bf06851f50c1fc0ebd5626",
+        "target/sampled-profile-failures/native-v1/release/deps/adversarial_fixtures-cf11e31630975ad0": "c400bcbea9d9b820e96cfb3968b34ec99629883b9a902ebf794273e6f628cc3e",
+        "target/sampled-profile-failures/native-v1/release/deps/adversarial_stress-d6d56cc4aa09a158": "43a77369be27b6c5107d3c9d0871022aa48876783342179cd8bef08c40fb1d34",
+        "target/sampled-profile-failures/native-v1/release/deps/bounds_failures-1de96205ff2a5e07": "136045dc208a1388a6c86f2844242b050b3191460fc7c996a716981f3c334449",
+        "target/sampled-profile-failures/native-v1/release/deps/competitive-0b8b38c506725d57": "beb781dece65d9eba9d83b41afe3d16c5a25aa08502b887b5316b24231ce23c4",
+        "target/sampled-profile-failures/native-v1/release/deps/curve_constructor_failures-e22c3b5ab72457a8": "ac06a1170c222372abb18349e8994763bd06ff24599e11492d1b437fb06a7786",
+        "target/sampled-profile-failures/native-v1/release/deps/curve_metaball_failures-cdc5511c980183da": "1179d1c7d4158d44b0007dee61bdace03fbf0e2a582374cdf15c3a0b2e4c82e9",
+        "target/sampled-profile-failures/native-v1/release/deps/curve_metaball_workloads-37ab722afd06f275": "ac694005625325559ed24275ddb493d1ba616223a582177eb2169192c2f20782",
+        "target/sampled-profile-failures/native-v1/release/deps/empty_composition-3a7164c2b9d5044a": "d609087bdde147527b116b2ab9c71580aaf19432615810a34e150cb17277ffd3",
+        "target/sampled-profile-failures/native-v1/release/deps/exact_linear_modeling-26d44c8491c2f7a7": "05e4b6dc0fc3c2922990ffddfaef4bd4cbab8b625a72c5d563bf2dd713927092",
+        "target/sampled-profile-failures/native-v1/release/deps/generated_benchmark_corpus-b45922908131dfbd": "aa9c4fdd3cb47cf30017b797af8db1109a7e69c8c2a18330d7e27a17a5b8fb89",
+        "target/sampled-profile-failures/native-v1/release/deps/geometry_context-e14123ad7d9b5126": "9cae9065393cf3d8efbd434ae89b9575c0734165b4e7c873af0d9e32f8c9062c",
+        "target/sampled-profile-failures/native-v1/release/deps/mesh_boolean_context-9d9c68938c3691af": "271a97b1aa0a5c3c33a8022a758239adf1272d6110991c558166867e35d95164",
+        "target/sampled-profile-failures/native-v1/release/deps/metaball_failures-043b72a00404a6ff": "9460ba47a9b64c4a10743aaa04443c4958cec59ce0e396599c7d57fce715c1e2",
+        "target/sampled-profile-failures/native-v1/release/deps/metaball_workloads-4d7fe7b802e9560f": "3bf25caed0d77f8165dfd0d87e24e31f403a768af097cbfa04b580839119ff9f",
+        "target/sampled-profile-failures/native-v1/release/deps/metaballs_diagnostics-8dfd6522763c319c": "a98eacc5d9f38ff6c9a1eaf35307f96718f8336ad75a7220d914cdefdbd09302",
+        "target/sampled-profile-failures/native-v1/release/deps/native_queries-f108d89258947ff9": "d5f5abd3a4d8ed906fd68605b029b1700576251d04ea8fb6ef7baaa9c1f69a5e",
+        "target/sampled-profile-failures/native-v1/release/deps/primitive_failures-aadd0e4e093d5243": "60d323819a8ec9309ace3b861db84c147177f89907c8a5816e460a58d43afdb0",
+        "target/sampled-profile-failures/native-v1/release/deps/readme-14ff37358f039d13": "2616e93435265f47ddc53096ecf95093793d902af46a9f1593616f30a7d02d85",
+        "target/sampled-profile-failures/native-v1/release/deps/readme_render_regression-c73ca6dc64fc3820": "db16bd93c8b2d221c5bb2e52ef2d683e66aff6e9d62ebbbfec13bab3802a820a",
+        "target/sampled-profile-failures/native-v1/release/deps/rounded_rectangle_fidelity-ec164e77ee6b2ff4": "46e671b25c46ef3fb220ac214886d4a68352e495a055d2f81efa4a4af26e4422",
+        "target/sampled-profile-failures/native-v1/release/deps/sampled_profile_failures-41fee3c75c404f62": "d643c0955bd126610bd2a9cec6981c80e92bc28c4533ab032bd69a2d32c5b8e2",
+        "target/sampled-profile-failures/native-v1/release/deps/sdf_failures-0e01156f99592da3": "220a6715add5b3080caa3e94f1616f32551642b3ace65555023db930dfe58534",
+        "target/sampled-profile-failures/native-v1/release/deps/sdf_tpms_diagnostics-5aa3ece71b49182c": "fea282ff828b67c8f24069c221826540014fc8d5bbde49ebfdde478f0a940c6c",
+        "target/sampled-profile-failures/native-v1/release/deps/solid_cache-d34731e0e95db92a": "2cb48f64b0001a87ec9120a909c31edbd1eff29070163b3cc8948973d9fad13c",
+        "target/sampled-profile-failures/native-v1/release/deps/transform_failures-74f1159cb89f11ba": "e1d3ca386512bd2fdbae80133a2680f543d1ca967908b38c4b976b318399a0de",
+        "target/sampled-profile-failures/native-v1/release/deps/wasm_certainty-d7c6e3b405f88647": "7f28879a6b8da7c742fb4a9ddbf521bed9c291e50157c0c6a5e0838ceec96e14"
+      },
+      "stdout_sha256": "d4df2a95b4620ea77d9fe40ecb2b913da5dc8f3e614aa5163a87368aec491411",
+      "stderr_sha256": "d9f4fcf29ea7e7d555df48dcca925810da496988d5a72ce82e97edb294b369dd",
+      "resources_sha256": "5126e5135fd19650c572a50fe2fad2d006089fbecf3413ab4a3d04596c7ec77e"
+    },
+    {
+      "name": "minimal-clippy",
+      "exit_code": 0,
+      "seconds": 3.558957233093679,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "a41ccca1b63f07b8155d85711d7bace73a33746a98b56774e3bb4f546ed469e9",
+      "resources_sha256": "6513da735897bf2fe626df78b40352717839c8bd06eabeda88a95139ac3e0084"
+    },
+    {
+      "name": "minimal-tests",
+      "exit_code": 0,
+      "seconds": 9.17576180677861,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sampled-profile-failures/native-v1/release/deps/csgrs-12b72f0ccdd38706": "58fe85adb811ca3b1d3115343c6efa2970505e64c5b1f411112fb58aa8c4fba7",
+        "target/sampled-profile-failures/native-v1/release/deps/bounds_failures-c661a92a5b4c7962": "cdf803b81a062bba2f2a9e5a1bc1f8b936bc93575a56dbb3a7fe6177ab71e88e",
+        "target/sampled-profile-failures/native-v1/release/deps/curve_constructor_failures-fd8f13d67d2561c4": "6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd",
+        "target/sampled-profile-failures/native-v1/release/deps/rounded_rectangle_fidelity-1435e79a4c8f8808": "0326a0c9f5da56b219cf3c0db28ed85672d53d140696d7927b40ea9590d6844a",
+        "target/sampled-profile-failures/native-v1/release/deps/sampled_profile_failures-59ed42fadf98b620": "40dce8f51aed77737a19b16a5aedcb200ac4d619a9285c55f73bf25c7eb41ae4"
+      },
+      "stdout_sha256": "1224b7b4a4ab681bd945692dbc9c6b72caed761f56544364aa7f9ee4b3cee192",
+      "stderr_sha256": "e99fbd5f73750fef16b8d4f5e64ac52f7f74cdfb37c76ec1759805be2eac7332",
+      "resources_sha256": "3a10ca137dadb95b4a42f7066025f5a6204bf96c7f322e248eccf06c93cf949d"
+    },
+    {
+      "name": "curve-clippy",
+      "exit_code": 0,
+      "seconds": 3.9831238202750683,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "5be65865ddd9fefa3bc6468399692baf25aa0686c9456ad29a5905a337493377",
+      "resources_sha256": "97323dfd3c59f21a418daca00b23ac713ca5609e01a57f873ead8b3c187bcb9e"
+    },
+    {
+      "name": "curve-tests",
+      "exit_code": 0,
+      "seconds": 17.68806309811771,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sampled-profile-failures/native-v1/release/deps/csgrs-fbfb4e9daf55c3e5": "04dbd5a8ee25282731644646676ac33ca33aca39624177ed7c9b6f5280ef123d",
+        "target/sampled-profile-failures/native-v1/release/deps/bounds_failures-1388f390547a412c": "8ee534d5656252a1a2b185d6ba509e1641b6533e3195bbf436fe25c0e83892ca",
+        "target/sampled-profile-failures/native-v1/release/deps/curve_constructor_failures-526a2455ed7f2aed": "dd601d4a383bde12e15cd6f2a89ea3237ba267e31ef4696236c420c3626ad2d9",
+        "target/sampled-profile-failures/native-v1/release/deps/rounded_rectangle_fidelity-fedfafd26a0fcb2d": "59e15786df24a578188550131392304882a13d81c220f1b5f177d089b6246537",
+        "target/sampled-profile-failures/native-v1/release/deps/sampled_profile_failures-6a6a901356d0e649": "206cf0f848cfa191513e8548b48b8c4c9d7af02e4e7e4ccbd124213453bc762a"
+      },
+      "stdout_sha256": "ae1570bfe58ef7514fd057dff5430e1e8f92ef63215dea43d8298716d1af3bb1",
+      "stderr_sha256": "dcfba1e7fdf11657bb891965a987f4564375b7791ba97be07f781fb9a4d857c8",
+      "resources_sha256": "55d5bd5baef0c9d73178ab87a221bc17910c71fed096d2cfbbaf06a7abaa7ede"
+    },
+    {
+      "name": "fuzz-clippy",
+      "exit_code": 0,
+      "seconds": 4.413947882130742,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "f35b8b8d4b7ddb96ac4fec7396a2a262f56097711370840d783ba5bff338c09c",
+      "resources_sha256": "8a547ac418f6958041d8c73b113d9881150b40f679b3150d358943b20649c963"
+    },
+    {
+      "name": "docs",
+      "exit_code": 0,
+      "seconds": 181.05856478586793,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "336e48c2c8f6f1ae0bdc6b0a67f82ade4b049e6fb1738409b240a6025126c494",
+      "resources_sha256": "01b2430844054fa073de4dd28029e8e0cb3ef4653c9979fb08306ed0f0f372d1"
+    },
+    {
+      "name": "doctests",
+      "exit_code": 0,
+      "seconds": 16.60786112397909,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e2e428ad64c081d4629a6ca35ffe5710fa9ff8ba6b873b1b11d7f93cf1157153",
+      "stderr_sha256": "499f5164f0b5707b97a1367583f024e72f37ae4c5578f3fd8866ce26c2893e87",
+      "resources_sha256": "4d0a8a9250ce2f87b279c684f50419c3dbad49faf0fba310d87f51acdd2db263"
+    },
+    {
+      "name": "benchmark-consumer",
+      "exit_code": 0,
+      "seconds": 3.3710146569646895,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/sampled-profile-failures/native-v1/release/deps/profile_primitives-a860b8425128ee3e": "6062ff248a9afc22721e66b698d1119b8195df2270350f761bbd0b127970fedd"
+      },
+      "stdout_sha256": "7c08abedb3d55cdd5d00ef45317a2d9ef5ae0c4b5a019b65c3180031a10fa4fd",
+      "stderr_sha256": "3034787973722c9d5444f09ebc580adb8394c90f40407fa8a120320fba4493e3",
+      "resources_sha256": "ae80e2b5e22e278d9690da60968b2d7e06ae54c5e3c6197c96468f876624386b"
+    },
+    {
+      "name": "renderer-build",
+      "exit_code": 0,
+      "seconds": 7.007627961225808,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "7d4d65c1f73bcd0b08c404d26ec8d84ce3221561ea952ee26370d58aa1fff7b7",
+      "stderr_sha256": "d993b69bb349aea092f0542c32cc1a82adb255cdedb053372fdf283beeb3575b",
+      "resources_sha256": "485f9a62d272fa229774c6c4f4b3f495172fc324c01d8a210853e0ca8ca111e0"
+    }
+  ],
+  "passed": true
+}

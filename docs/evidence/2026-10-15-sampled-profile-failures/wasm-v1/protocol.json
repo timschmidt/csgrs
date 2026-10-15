@@ -1,0 +1,96 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/curve-constructor-failures/bindings-v1",
+  "preserved_prior_executables_sha256": {
+    "target/curve-constructor-failures/bindings-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "ee152efca0bd7394c38807aca243d8c7c005679b6b9a88cb4937874ea7d44e15",
+    "target/curve-constructor-failures/bindings-v1/wasm-bindings-node/csgrs.js": "918a84960af66b3868615031173ed5f53e032e8810faa43b262357363e29ffc7",
+    "target/curve-constructor-failures/bindings-v1/wasm-bindings-node/csgrs.d.ts": "135cffc6a39504451a853e44610525b370e120e1349ac3021d8b0caa539b837d",
+    "target/curve-constructor-failures/bindings-v1/wasm-bindings-node/csgrs_bg.wasm": "6373bea5c3d98580d860022687e34a0083112db7f52908c0d0a10adec6dec9eb",
+    "target/curve-constructor-failures/bindings-v1/wasm-bindings-node/geometry_certainty.ts": "f44fd09aecdab7626ed12762f341082d98fcb38f36b85384032504a2e8e54021"
+  },
+  "base_commit": "1916037c7bf6bfa7da3415f5952d04c0865d16a2",
+  "runner_sha256": "80cc0e8db993409487e87a47ccf55d209c189ebde4d0ea7eab28b299e0df9d36",
+  "phase": "wasm-v1",
+  "commands": [
+    [
+      "wasm-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--profile",
+        "wasm",
+        "--target",
+        "wasm32-unknown-unknown",
+        "--no-default-features",
+        "--features",
+        "wasm",
+        "--lib",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "wasm",
+      [
+        "env",
+        "WASM_BINDGEN=/tmp/csgrs-properties-tools/bin/wasm-bindgen",
+        "TSC=tests/wasm/node_modules/.bin/tsc",
+        "bash",
+        "scripts/test-wasm-bindings.sh"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/wasm-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P1",
+    "P3",
+    "P4",
+    "P6",
+    "P8",
+    "P9",
+    "P13",
+    "P17",
+    "P18",
+    "P20",
+    "P25",
+    "P28",
+    "P30",
+    "P35",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "CSGRS sampled-profile parameter validation and sample construction",
+    "Hypercurve contour/topology ownership",
+    "Teardrop solid composition and WASM boundaries"
+  ],
+  "prior_rounded_domain": "Nonnegative width, height and radius, clamped to half the smaller positive dimension. Zero dimensions remain canonical empty after argument validation. Zero radius or zero corner-segment count selects the sharp rectangle. For n>=1 and positive radius, the intended polygon contains n uniform chords per quarter-circle and every nonzero tangent straight side. Coincident endpoints may be omitted only with evidence. Capacity checks cover the complete point count; internal scalar/work/heap/cancellation bounds remain open.",
+  "domain": "Retain positive dimensional/range preconditions and existing sample formulas for arrow, trapezoid, star, teardrop, egg, squircle, pie_slice, heart and supershape. Errors become typed; successful strict cases remain successful. Equal-width positive arrows must omit only proven duplicate shoulders and represent the shaft plus triangular head. Failed construction cannot become certified empty extrusion. No internal total-work, scalar-growth, heap-byte or cancellation bound.",
+  "consumers": [
+    "Public Rust constructors and new context variants",
+    "Teardrop cylinder",
+    "WASM star/teardrop/egg/heart",
+    "README, benchmark, test and fuzz fixtures"
+  ],
+  "missing_acceptance_test": [
+    "tests/sampled_profile_failures.rs"
+  ],
+  "semantic_oracle": "Typed invalid, undecided, scalar, native and capacity errors through constructors and consumers. Independent small rational/algebraic areas and volumes; original README and benchmark resolutions and exact expression rows supplement semantic assertions. Exact scalar serialization omits accelerator caches and does not demote to floats.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: d41fc3601, 573bdcb8f and 2271ad6c5 commit corrected rounded-rectangle geometry, regressions, preview and acceptance evidence. The full properties goal remains active."
+}

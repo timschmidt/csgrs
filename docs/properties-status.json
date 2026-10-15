@@ -7295,6 +7295,508 @@
       "implementation_commit": "573bdcb8f9f558f4c64001c1d03f7c0525ae48dd",
       "evidence": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/closure-v1.json",
       "plan_complete": false
+    },
+    "sampled_profile_failures": {
+      "updated_on": "2026-10-15",
+      "decision": "kept: typed-failure and certainty migration with an equal-width-arrow completeness correction; not a performance-only change or supported-corpus speedup claim",
+      "status": "Nine sampled-profile APIs and their teardrop-solid/WASM consumers locally qualified; old successful fixtures retained exactly.",
+      "properties": [
+        "P1",
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P28",
+        "P29",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "owners": [
+        "CSGRS profile parameter validation and sampling",
+        "Hypercurve topology",
+        "CSGRS teardrop-solid certainty composition",
+        "WASM diagnostic boundary"
+      ],
+      "domain": "Arrow/trapezoid positive dimensions; star n>=3 and outer>inner>0; teardrop n>=2 and length>width/2>0; egg/squircle positive dimensions and n>=3; heart positive dimensions and n>=8; sector positive radius, n>=1, nonzero signed sweep with magnitude<=360; supershape positive axes, n>=3, nonzero n1 and defined scalar powers. Original sample formulas/resolutions retained. Full-turn sector preserves max(n,3) circle sampling; valid zero-area samples may regularize to canonical empty. No analytic-fidelity bound.",
+      "migration": "arrow, trapezoid, star, teardrop, egg, squircle, pie_slice, heart and supershape now return Result<CurveRegion2, ValidationError>. Their _with_context variants return GeometryOutcome. Adapt callers with typed Result handling. Equal-width positive arrows omit only proven duplicate shoulders and now retain shaft plus triangular head. teardrop_cylinder joins profile/extrusion certainty. WASM star/teardrop/egg/heart retain signatures and throw GeometryError with code instead of publishing failed geometry.",
+      "semantic_evidence": [
+        "Baseline 9 pass/15 fail: fourteen reproduced error/completeness defects and one incorrect zero-area-sector oracle. Candidate-v1 23 pass/1 fail. That oracle was corrected after establishing successful native regularization, without changing production behavior. Candidate-v2 has 30 passing regressions; all failed trials retained.",
+        "Independent rational/algebraic areas for all nine families under strict and approximate policies remain Certified when only proofs are consumed. Empty union/self-subtraction and downstream extrusion compose. Equal-width arrow area is 5/2; one-chord semicircle is Certified empty with downstream union/extrusion checks.",
+        "Arrow with an interior hole has exact area 9/4 and volume 9 at height 4; sampled teardrop also has volume 9. Independent signed-volume computation and a separate closed-manifold check pass. Dyadic OBJ round-trip preserves positions exactly; this is a format-specific claim.",
+        "Approximate arrow-shoulder equality remains qualified even with an identical strictly proved ring cached. Strict/approximate/strict does not promote the qualified comparison. Capacity failures remain typed and recovery succeeds. This does not establish end-to-end source provenance.",
+        "Nine original full README fixtures retain all 729 exact coordinate pairs across baseline, both candidates and final native phase. Original benchmark fixtures and iteration counts remain. Cost samples additionally preserve all 128 exact coordinate-row variants per family. These artifact checks supplement semantic oracles."
+      ],
+      "test_totals": {
+        "fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "all-feature-tests": {
+          "passed": 293,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-tests": {
+          "passed": 108,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "benchmark-consumer": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "renderer-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "validation": "All 13 native commands passed: root/fuzz formatting; all-target -D warnings Clippy for all features, minimal and curve-only; all-feature library/integration tests (293 pass, one existing full image-corpus test ignored); minimal 38 pass; curve-only 108 pass; fuzz-target Clippy; warning-free docs; one doctest; nine original benchmark consumers; full renderer build. 440 passing test executions across overlapping configurations. WASM-target Clippy and actual Node/TypeScript binding consumers passed, including 13 new rejection cases and four successful recovery/classification/extrusion fixtures. No C/C++/Python/Go surface exposes these constructors.",
+      "cost_probe": {
+        "kind": "focused matched successful-output measurement, not a broad performance claim",
+        "evidence": "docs/evidence/2026-10-15-sampled-profile-failures/cost-v2",
+        "failed_trial": "cost-v1 retained: rustc E0505 in the independent sector-area harness. cost-v2 borrows both factors; production source, inputs and timing boundary unchanged.",
+        "commands": 128,
+        "fresh_process_samples": 108,
+        "operations_per_sample": 128,
+        "timed_completed_operations": 13824,
+        "exact_variants_per_revision": 1152,
+        "median_samples": {
+          "arrow-warm": {
+            "baseline": {
+              "nanos": 1638107,
+              "allocations": 11136,
+              "requested_bytes": 1705344,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7377
+            },
+            "candidate": {
+              "nanos": 1549474,
+              "allocations": 11264,
+              "requested_bytes": 1791360,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7377
+            }
+          },
+          "arrow-miss": {
+            "baseline": {
+              "nanos": 15002432,
+              "allocations": 105256,
+              "requested_bytes": 14049128,
+              "retained_byte_delta": 1056,
+              "peak_live_bytes_above_start": 41090
+            },
+            "candidate": {
+              "nanos": 15003551,
+              "allocations": 105384,
+              "requested_bytes": 14135144,
+              "retained_byte_delta": 1056,
+              "peak_live_bytes_above_start": 41762
+            }
+          },
+          "trapezoid-warm": {
+            "baseline": {
+              "nanos": 867190,
+              "allocations": 6144,
+              "requested_bytes": 947456,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4558
+            },
+            "candidate": {
+              "nanos": 868880,
+              "allocations": 6144,
+              "requested_bytes": 947456,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4558
+            }
+          },
+          "trapezoid-miss": {
+            "baseline": {
+              "nanos": 11113348,
+              "allocations": 65613,
+              "requested_bytes": 7824346,
+              "retained_byte_delta": 1768,
+              "peak_live_bytes_above_start": 24728
+            },
+            "candidate": {
+              "nanos": 10316793,
+              "allocations": 65613,
+              "requested_bytes": 7824346,
+              "retained_byte_delta": 1768,
+              "peak_live_bytes_above_start": 24728
+            }
+          },
+          "star-warm": {
+            "baseline": {
+              "nanos": 13711620,
+              "allocations": 241408,
+              "requested_bytes": 15531520,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 11704
+            },
+            "candidate": {
+              "nanos": 12831280,
+              "allocations": 241280,
+              "requested_bytes": 15482368,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 11704
+            }
+          },
+          "star-miss": {
+            "baseline": {
+              "nanos": 84170642,
+              "allocations": 1459281,
+              "requested_bytes": 93162860,
+              "retained_byte_delta": 9608,
+              "peak_live_bytes_above_start": 95265
+            },
+            "candidate": {
+              "nanos": 85027734,
+              "allocations": 1459153,
+              "requested_bytes": 93113708,
+              "retained_byte_delta": 9608,
+              "peak_live_bytes_above_start": 95265
+            }
+          },
+          "teardrop-warm": {
+            "baseline": {
+              "nanos": 1242185,
+              "allocations": 11776,
+              "requested_bytes": 1249536,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4319
+            },
+            "candidate": {
+              "nanos": 1132493,
+              "allocations": 11776,
+              "requested_bytes": 1249536,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4319
+            }
+          },
+          "teardrop-miss": {
+            "baseline": {
+              "nanos": 9483351,
+              "allocations": 68232,
+              "requested_bytes": 9133568,
+              "retained_byte_delta": 17408,
+              "peak_live_bytes_above_start": 52016
+            },
+            "candidate": {
+              "nanos": 10128776,
+              "allocations": 68232,
+              "requested_bytes": 9133568,
+              "retained_byte_delta": 17408,
+              "peak_live_bytes_above_start": 52016
+            }
+          },
+          "egg-warm": {
+            "baseline": {
+              "nanos": 1622729,
+              "allocations": 19456,
+              "requested_bytes": 1711872,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4633
+            },
+            "candidate": {
+              "nanos": 1872011,
+              "allocations": 19456,
+              "requested_bytes": 1711872,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4633
+            }
+          },
+          "egg-miss": {
+            "baseline": {
+              "nanos": 11397859,
+              "allocations": 81651,
+              "requested_bytes": 9852112,
+              "retained_byte_delta": 25264,
+              "peak_live_bytes_above_start": 59760
+            },
+            "candidate": {
+              "nanos": 10661869,
+              "allocations": 81651,
+              "requested_bytes": 9852112,
+              "retained_byte_delta": 25264,
+              "peak_live_bytes_above_start": 59760
+            }
+          },
+          "squircle-warm": {
+            "baseline": {
+              "nanos": 1479129,
+              "allocations": 15232,
+              "requested_bytes": 1391872,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4259
+            },
+            "candidate": {
+              "nanos": 1513217,
+              "allocations": 15232,
+              "requested_bytes": 1391872,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4259
+            }
+          },
+          "squircle-miss": {
+            "baseline": {
+              "nanos": 9741252,
+              "allocations": 77584,
+              "requested_bytes": 9525806,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 34008
+            },
+            "candidate": {
+              "nanos": 10823218,
+              "allocations": 77584,
+              "requested_bytes": 9525806,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 34008
+            }
+          },
+          "sector-warm": {
+            "baseline": {
+              "nanos": 1118864,
+              "allocations": 11520,
+              "requested_bytes": 1059200,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 3333
+            },
+            "candidate": {
+              "nanos": 904098,
+              "allocations": 11392,
+              "requested_bytes": 1034624,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 3333
+            }
+          },
+          "sector-miss": {
+            "baseline": {
+              "nanos": 7555792,
+              "allocations": 59926,
+              "requested_bytes": 6213908,
+              "retained_byte_delta": 17264,
+              "peak_live_bytes_above_start": 33054
+            },
+            "candidate": {
+              "nanos": 8237015,
+              "allocations": 59798,
+              "requested_bytes": 6189332,
+              "retained_byte_delta": 17264,
+              "peak_live_bytes_above_start": 32958
+            }
+          },
+          "heart-warm": {
+            "baseline": {
+              "nanos": 44917462,
+              "allocations": 749184,
+              "requested_bytes": 49766912,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 38176
+            },
+            "candidate": {
+              "nanos": 43288544,
+              "allocations": 748544,
+              "requested_bytes": 49697280,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 38176
+            }
+          },
+          "heart-miss": {
+            "baseline": {
+              "nanos": 231429181,
+              "allocations": 3592596,
+              "requested_bytes": 228834462,
+              "retained_byte_delta": 162584,
+              "peak_live_bytes_above_start": 298929
+            },
+            "candidate": {
+              "nanos": 228560838,
+              "allocations": 3591956,
+              "requested_bytes": 228764830,
+              "retained_byte_delta": 162584,
+              "peak_live_bytes_above_start": 298929
+            }
+          },
+          "supershape-warm": {
+            "baseline": {
+              "nanos": 2176881,
+              "allocations": 30464,
+              "requested_bytes": 1992960,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4139
+            },
+            "candidate": {
+              "nanos": 2344489,
+              "allocations": 30464,
+              "requested_bytes": 1992960,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4139
+            }
+          },
+          "supershape-miss": {
+            "baseline": {
+              "nanos": 12460777,
+              "allocations": 122687,
+              "requested_bytes": 12062184,
+              "retained_byte_delta": 34744,
+              "peak_live_bytes_above_start": 66080
+            },
+            "candidate": {
+              "nanos": 12056533,
+              "allocations": 122687,
+              "requested_bytes": 12062184,
+              "retained_byte_delta": 34744,
+              "peak_live_bytes_above_start": 66080
+            }
+          }
+        },
+        "candidate_to_baseline_latency_ratios": {
+          "arrow-warm": 0.9458930338494372,
+          "arrow-miss": 1.000074587906814,
+          "trapezoid-warm": 1.0019488232105997,
+          "trapezoid-miss": 0.9283244797157436,
+          "star-warm": 0.935796062026223,
+          "star-miss": 1.0101827903368017,
+          "teardrop-warm": 0.9116943128439,
+          "teardrop-miss": 1.068058748431857,
+          "egg-warm": 1.1536189961478471,
+          "egg-miss": 0.9354273464867393,
+          "squircle-warm": 1.023045995312106,
+          "squircle-miss": 1.1110705276898698,
+          "sector-warm": 0.8080499506642451,
+          "sector-miss": 1.09015904619926,
+          "heart-warm": 0.9637353063269692,
+          "heart-miss": 0.9876059579539367,
+          "supershape-warm": 1.0769945624037327,
+          "supershape-miss": 0.9675586843420759
+        },
+        "library_sizes": {
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/baseline-v1/release/deps/libcsgrs.rlib": 10020198,
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/native-v1/release/deps/libcsgrs.rlib": 9869558
+        },
+        "binary_artifacts": {
+          "target/sampled-profile-failures/cost-v2/baseline": {
+            "sha256": "31ed939501b0c473e6dbcc50a45f810710e614d457928a5b5535be5ccddac380",
+            "bytes": 35365056
+          },
+          "target/sampled-profile-failures/cost-v2/candidate": {
+            "sha256": "6bd9f0ae5644186e377e2621cb4cb549dd57bbd9236ffeb0f49b012c6e8a15c6",
+            "bytes": 35344888
+          },
+          "target/sampled-profile-failures/baseline-v1/release/deps/libcsgrs.rlib": {
+            "sha256": "f91a7e36f52900f514a300e911e5472010a6a98e426c2aefd338dce962a6591f",
+            "bytes": 10020198
+          },
+          "target/sampled-profile-failures/native-v1/release/deps/libcsgrs.rlib": {
+            "sha256": "f512811f19fcce806bf190a715ea4da850c3f398084e2d949c74df6be942fe61",
+            "bytes": 9869558
+          }
+        },
+        "claim": "Same successful strict workload with independent exact-area proof, boundary materialization, exact-expression serialization, checksum and drop in timing. All outputs and paired checksums agree. Three samples per case on a shared unpinned host with allocator instrumentation; noisy latency is mixed. Warm egg median is about 15.4% higher, FIFO-miss squircle about 11.1% higher. Arrow adds one allocation and 672 requested bytes per operation; star removes one allocation/384 bytes, sector one/192, heart five/544. Other measured allocation counts match. Ring FIFO misses do not imply globally cold scalar caches."
+      },
+      "source_sizes": {
+        "src/curve/native.rs": {
+          "baseline_bytes": 145202,
+          "candidate_bytes": 151147
+        },
+        "src/solid.rs": {
+          "baseline_bytes": 104009,
+          "candidate_bytes": 104244
+        },
+        "src/wasm/curve_js.rs": {
+          "baseline_bytes": 21956,
+          "candidate_bytes": 22348
+        }
+      },
+      "resources": "Checked primary-buffer counts and fallible reservations; no internal bound on total work, scalar growth, secondary allocations, heap retention or cancellation. Serial offline Cargo trials with two jobs and external 1800-second wall/per-process 8-GiB address-space containment. Actual WASM/Node command has wall containment without address-space cap because of V8/WASM reservations. Allocation probe covers the Rust global allocator, not all native allocations or RSS.",
+      "limitations": [
+        "Gear, rack, airfoil, text and other legacy convenience paths still require failure migration. Operation-local certainty is separate from source provenance, topology and analytic fidelity.",
+        "Original 35 pending native files remain byte-identical and uncommitted, awaiting separate admission. This is worktree qualification, not clean external-package or release qualification.",
+        "Full workflow/pre-push matrix, MSRV/release/external-package checks, full image corpus, directed fuzz/sanitizers and remaining properties-plan requirements stay open. No push or CI edits."
+      ],
+      "implementation_commit": "fcb269765fdc3b7622fcd70f1baee24a6ad0232e",
+      "evidence": "docs/evidence/2026-10-15-sampled-profile-failures/closure-v1.json",
+      "turn_outcome": "progress",
+      "plan_complete": false
     }
   },
   "status_meanings": {
