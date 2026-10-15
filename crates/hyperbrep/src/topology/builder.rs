@@ -10,35 +10,43 @@ impl ModelBuilder {
 
     /// Adds an exact model-space vertex.
     pub fn vertex(&mut self, point: Point3) -> Result<VertexId, BuildError> {
-        let id = VertexId::from_index(self.vertices.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
-        self.vertices.push(Vertex { point });
-        self.vertex_edges.push(Vec::new());
-        Ok(id)
+        crate::context::strict(|| {
+            let id = VertexId::from_index(self.vertices.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
+            self.vertices.push(Vertex { point });
+            self.vertex_edges.push(Vec::new());
+            Ok(id)
+        })
     }
 
     /// Adds an immutable spatial curve.
     pub fn curve(&mut self, curve: Curve3) -> Result<Curve3Id, BuildError> {
-        let id = Curve3Id::from_index(self.curves.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Curve3))?;
-        self.curves.push(curve);
-        Ok(id)
+        crate::context::strict(|| {
+            let id = Curve3Id::from_index(self.curves.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Curve3))?;
+            self.curves.push(curve);
+            Ok(id)
+        })
     }
 
     /// Adds an immutable face-local pcurve.
     pub fn pcurve(&mut self, pcurve: Pcurve) -> Result<PcurveId, BuildError> {
-        let id = PcurveId::from_index(self.pcurves.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Pcurve))?;
-        self.pcurves.push(pcurve);
-        Ok(id)
+        crate::context::strict(|| {
+            let id = PcurveId::from_index(self.pcurves.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Pcurve))?;
+            self.pcurves.push(pcurve);
+            Ok(id)
+        })
     }
 
     /// Adds an immutable parameterized surface.
     pub fn surface(&mut self, surface: Surface) -> Result<SurfaceId, BuildError> {
-        let id = SurfaceId::from_index(self.surfaces.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Surface))?;
-        self.surfaces.push(surface);
-        Ok(id)
+        crate::context::strict(|| {
+            let id = SurfaceId::from_index(self.surfaces.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Surface))?;
+            self.surfaces.push(surface);
+            Ok(id)
+        })
     }
 
     /// Adds a topological edge with exact geometry and a retained subdomain.
@@ -49,7 +57,9 @@ impl ModelBuilder {
         curve: Curve3Id,
         domain: ParameterDomain,
     ) -> Result<EdgeId, BuildError> {
-        self.edge_with_endpoint_certificate(start, end, curve, domain, false)
+        crate::context::strict(|| {
+            self.edge_with_endpoint_certificate(start, end, curve, domain, false)
+        })
     }
 
     pub(crate) fn edge_with_endpoint_certificate(
@@ -108,13 +118,15 @@ impl ModelBuilder {
         pcurve: PcurveId,
         parameter_correspondence: ParameterCorrespondence,
     ) -> Result<EdgeUseId, BuildError> {
-        self.edge_use_with_image_certificate(
-            edge,
-            direction,
-            pcurve,
-            parameter_correspondence,
-            false,
-        )
+        crate::context::strict(|| {
+            self.edge_use_with_image_certificate(
+                edge,
+                direction,
+                pcurve,
+                parameter_correspondence,
+                false,
+            )
+        })
     }
 
     pub(crate) fn edge_use_with_image_certificate(
@@ -143,7 +155,7 @@ impl ModelBuilder {
 
     /// Adds an ordered, connected, closed wire.
     pub fn wire(&mut self, edge_uses: Vec<EdgeUseId>) -> Result<WireId, BuildError> {
-        self.wire_with_simplicity_certificate(edge_uses, false)
+        crate::context::strict(|| self.wire_with_simplicity_certificate(edge_uses, false))
     }
 
     pub(crate) fn wire_with_simplicity_certificate(
@@ -229,88 +241,91 @@ impl ModelBuilder {
         outer: WireId,
         inner: Vec<WireId>,
     ) -> Result<FaceId, BuildError> {
-        let spherical = self.surface_ref(surface)?.kind() == SurfaceKind::Sphere;
-        self.wire_ref(outer)?;
-        let mut wires = Vec::with_capacity(inner.len() + 1);
-        wires.push(outer);
-        wires.extend(inner.iter().copied());
-        let mut unique = HashSet::with_capacity(wires.len());
-        for wire in &wires {
-            self.wire_ref(*wire)?;
-            if !unique.insert(*wire) {
-                return Err(BuildError::DuplicateWire(*wire));
+        crate::context::strict(|| {
+            let spherical = self.surface_ref(surface)?.kind() == SurfaceKind::Sphere;
+            self.wire_ref(outer)?;
+            let mut wires = Vec::with_capacity(inner.len() + 1);
+            wires.push(outer);
+            wires.extend(inner.iter().copied());
+            let mut unique = HashSet::with_capacity(wires.len());
+            for wire in &wires {
+                self.wire_ref(*wire)?;
+                if !unique.insert(*wire) {
+                    return Err(BuildError::DuplicateWire(*wire));
+                }
+                if self.wire_face[wire.index()].is_some() {
+                    return Err(BuildError::WireAlreadyOwned(*wire));
+                }
+                self.validate_wire_image(*wire, surface)?;
             }
-            if self.wire_face[wire.index()].is_some() {
-                return Err(BuildError::WireAlreadyOwned(*wire));
-            }
-            self.validate_wire_image(*wire, surface)?;
-        }
-        if spherical {
-            if inner.len() > 1 {
-                return Err(BuildError::UnsupportedSphericalTrim(outer));
-            }
-            if let Some(upper_wire) = inner.first() {
-                self.validate_spherical_trim(outer, orientation)?;
-                self.validate_spherical_trim(*upper_wire, orientation)?;
-                let (lower_latitude, lower_direction) = self.spherical_trim_coordinates(outer)?;
-                let (upper_latitude, upper_direction) =
-                    self.spherical_trim_coordinates(*upper_wire)?;
-                let expected_lower = match orientation {
-                    Orientation::Forward => std::cmp::Ordering::Greater,
-                    Orientation::Reversed => std::cmp::Ordering::Less,
-                };
-                if decided_model_order(compare_reals(
-                    &lower_latitude,
-                    &upper_latitude,
-                    crate::STRICT_PREDICATES,
-                ))? != std::cmp::Ordering::Less
-                    || lower_direction != expected_lower
-                    || upper_direction == expected_lower
-                {
-                    return Err(BuildError::InvalidSphericalTrim(outer));
+            if spherical {
+                if inner.len() > 1 {
+                    return Err(BuildError::UnsupportedSphericalTrim(outer));
+                }
+                if let Some(upper_wire) = inner.first() {
+                    self.validate_spherical_trim(outer, orientation)?;
+                    self.validate_spherical_trim(*upper_wire, orientation)?;
+                    let (lower_latitude, lower_direction) =
+                        self.spherical_trim_coordinates(outer)?;
+                    let (upper_latitude, upper_direction) =
+                        self.spherical_trim_coordinates(*upper_wire)?;
+                    let expected_lower = match orientation {
+                        Orientation::Forward => std::cmp::Ordering::Greater,
+                        Orientation::Reversed => std::cmp::Ordering::Less,
+                    };
+                    if decided_model_order(compare_reals(
+                        &lower_latitude,
+                        &upper_latitude,
+                        crate::STRICT_PREDICATES,
+                    ))? != std::cmp::Ordering::Less
+                        || lower_direction != expected_lower
+                        || upper_direction == expected_lower
+                    {
+                        return Err(BuildError::InvalidSphericalTrim(outer));
+                    }
+                } else {
+                    match self.validate_spherical_trim(outer, orientation) {
+                        Ok(()) => {}
+                        Err(BuildError::UnsupportedSphericalTrim(_)) => {
+                            self.validate_wire_simplicity(outer)?;
+                            self.validate_wire_orientation(outer, orientation, true, surface)?;
+                        }
+                        Err(error) => return Err(error),
+                    }
                 }
             } else {
-                match self.validate_spherical_trim(outer, orientation) {
-                    Ok(()) => {}
-                    Err(BuildError::UnsupportedSphericalTrim(_)) => {
-                        self.validate_wire_simplicity(outer)?;
-                        self.validate_wire_orientation(outer, orientation, true, surface)?;
+                for wire in &wires {
+                    if !self.wire_ref(*wire)?.simplicity_certificate {
+                        self.validate_wire_simplicity(*wire)?;
                     }
-                    Err(error) => return Err(error),
+                }
+                let outer_certified = self.wire_ref(outer)?.simplicity_certificate;
+                if !outer_certified {
+                    self.validate_wire_orientation(outer, orientation, true, surface)?;
+                }
+                for wire in &inner {
+                    if !self.wire_ref(*wire)?.simplicity_certificate {
+                        self.validate_wire_orientation(*wire, orientation, false, surface)?;
+                    }
+                }
+                if !outer_certified {
+                    self.validate_wire_nesting(outer, &inner)?;
                 }
             }
-        } else {
-            for wire in &wires {
-                if !self.wire_ref(*wire)?.simplicity_certificate {
-                    self.validate_wire_simplicity(*wire)?;
-                }
-            }
-            let outer_certified = self.wire_ref(outer)?.simplicity_certificate;
-            if !outer_certified {
-                self.validate_wire_orientation(outer, orientation, true, surface)?;
-            }
-            for wire in &inner {
-                if !self.wire_ref(*wire)?.simplicity_certificate {
-                    self.validate_wire_orientation(*wire, orientation, false, surface)?;
-                }
-            }
-            if !outer_certified {
-                self.validate_wire_nesting(outer, &inner)?;
-            }
-        }
 
-        let id = FaceId::from_index(self.faces.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Face))?;
-        self.faces.push(Face {
-            surface,
-            orientation,
-            boundary: FaceBoundary::Trimmed { outer, inner },
-        });
-        self.face_shell.push(None);
-        for wire in wires {
-            self.wire_face[wire.index()] = Some(id);
-        }
-        Ok(id)
+            let id = FaceId::from_index(self.faces.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Face))?;
+            self.faces.push(Face {
+                surface,
+                orientation,
+                boundary: FaceBoundary::Trimmed { outer, inner },
+            });
+            self.face_shell.push(None);
+            for wire in wires {
+                self.wire_face[wire.index()] = Some(id);
+            }
+            Ok(id)
+        })
     }
 
     /// Adds the complete closed support surface as one boundaryless face.
@@ -323,188 +338,195 @@ impl ModelBuilder {
         surface: SurfaceId,
         orientation: Orientation,
     ) -> Result<FaceId, BuildError> {
-        let support = self.surface_ref(surface)?;
-        if support.kind() != SurfaceKind::Sphere {
-            return Err(BuildError::UnsupportedWholeSurface(support.kind()));
-        }
-        let id = FaceId::from_index(self.faces.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Face))?;
-        self.faces.push(Face {
-            surface,
-            orientation,
-            boundary: FaceBoundary::WholeSurface,
-        });
-        self.face_shell.push(None);
-        Ok(id)
+        crate::context::strict(|| {
+            let support = self.surface_ref(surface)?;
+            if support.kind() != SurfaceKind::Sphere {
+                return Err(BuildError::UnsupportedWholeSurface(support.kind()));
+            }
+            let id = FaceId::from_index(self.faces.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Face))?;
+            self.faces.push(Face {
+                surface,
+                orientation,
+                boundary: FaceBoundary::WholeSurface,
+            });
+            self.face_shell.push(None);
+            Ok(id)
+        })
     }
 
     /// Adds one edge-connected shell.
     pub fn shell(&mut self, faces: Vec<FaceId>) -> Result<ShellId, BuildError> {
-        if faces.is_empty() {
-            return Err(BuildError::EmptyShell);
-        }
-        let mut unique = HashSet::with_capacity(faces.len());
-        for face in &faces {
-            self.face_ref(*face)?;
-            if !unique.insert(*face) {
-                return Err(BuildError::DuplicateFace(*face));
+        crate::context::strict(|| {
+            if faces.is_empty() {
+                return Err(BuildError::EmptyShell);
             }
-            if self.face_shell[face.index()].is_some() {
-                return Err(BuildError::FaceAlreadyOwned(*face));
+            let mut unique = HashSet::with_capacity(faces.len());
+            for face in &faces {
+                self.face_ref(*face)?;
+                if !unique.insert(*face) {
+                    return Err(BuildError::DuplicateFace(*face));
+                }
+                if self.face_shell[face.index()].is_some() {
+                    return Err(BuildError::FaceAlreadyOwned(*face));
+                }
             }
-        }
-        if !self.faces_connected(&faces)? {
-            return Err(BuildError::DisconnectedShell);
-        }
+            if !self.faces_connected(&faces)? {
+                return Err(BuildError::DisconnectedShell);
+            }
 
-        let id = ShellId::from_index(self.shells.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Shell))?;
-        self.shells.push(Shell {
-            faces: faces.clone(),
-        });
-        self.shell_solid.push(None);
-        for face in faces {
-            self.face_shell[face.index()] = Some(id);
-        }
-        Ok(id)
+            let id = ShellId::from_index(self.shells.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Shell))?;
+            self.shells.push(Shell {
+                faces: faces.clone(),
+            });
+            self.shell_solid.push(None);
+            for face in faces {
+                self.face_shell[face.index()] = Some(id);
+            }
+            Ok(id)
+        })
     }
 
     /// Adds a regular solid bounded by one certified closed shell.
     pub fn solid(&mut self, outer: ShellId, voids: Vec<ShellId>) -> Result<SolidId, BuildError> {
-        self.shell_ref(outer)?;
-        let mut shells = Vec::with_capacity(voids.len() + 1);
-        shells.push(outer);
-        shells.extend(voids.iter().copied());
-        let mut unique = HashSet::with_capacity(shells.len());
-        for shell in &shells {
-            self.shell_ref(*shell)?;
-            if !unique.insert(*shell) {
-                return Err(BuildError::DuplicateShell(*shell));
+        crate::context::strict(|| {
+            self.shell_ref(outer)?;
+            let mut shells = Vec::with_capacity(voids.len() + 1);
+            shells.push(outer);
+            shells.extend(voids.iter().copied());
+            let mut unique = HashSet::with_capacity(shells.len());
+            for shell in &shells {
+                self.shell_ref(*shell)?;
+                if !unique.insert(*shell) {
+                    return Err(BuildError::DuplicateShell(*shell));
+                }
+                if self.shell_solid[shell.index()].is_some() {
+                    return Err(BuildError::ShellAlreadyOwned(*shell));
+                }
+                self.validate_closed_shell(*shell)?;
             }
-            if self.shell_solid[shell.index()].is_some() {
-                return Err(BuildError::ShellAlreadyOwned(*shell));
-            }
-            self.validate_closed_shell(*shell)?;
-        }
-        let candidate = Solid {
-            outer,
-            voids: voids.clone(),
-        };
-        let sphere = self.certified_sphere_solid(&candidate)?;
-        let sphere_pair = self.certified_sphere_pair_shell(outer)?;
-        let revolution = self.certified_revolution_shell(outer)?;
-        let cylinder = self.certified_cylinder_solid(&candidate)?;
-        let cone_frustum = self.certified_cone_frustum_shell(outer)?;
-        let torus = self.certified_torus_shell(outer)?;
-        let analytic_closed = sphere.is_some()
-            || sphere_pair.is_some()
-            || revolution.is_some()
-            || cylinder.is_some()
-            || cone_frustum.is_some()
-            || torus.is_some();
-        let simple_prism = if analytic_closed {
-            false
-        } else {
-            self.certify_simple_prism_shell(outer)?
-                || self.certify_internally_partitioned_prism_shell(outer)?
-        };
-        let line_arc_prism = if analytic_closed || simple_prism {
-            false
-        } else {
-            self.certify_extrusion_prism_shell(outer)?
-        };
-        let curve_sweep = if analytic_closed || simple_prism || line_arc_prism {
-            None
-        } else {
-            self.certified_curve_sweep_shell(outer)?
-        };
-        let loft = if analytic_closed || simple_prism || line_arc_prism || curve_sweep.is_some() {
-            None
-        } else {
-            self.certified_loft_shell(outer)?
-        };
-        let convex_planar = if analytic_closed
-            || simple_prism
-            || line_arc_prism
-            || curve_sweep.is_some()
-            || loft.is_some()
-        {
-            false
-        } else {
-            self.certify_convex_planar_shell(outer)?
-        };
-        let general_planar = if analytic_closed
-            || simple_prism
-            || line_arc_prism
-            || curve_sweep.is_some()
-            || loft.is_some()
-            || convex_planar
-        {
-            false
-        } else {
-            self.certify_planar_shell_non_self_intersection(outer)?
-        };
-        if !analytic_closed {
-            self.validate_outer_shell_orientation(outer)?;
-        }
-        if !analytic_closed
-            && !simple_prism
-            && !line_arc_prism
-            && cone_frustum.is_none()
-            && torus.is_none()
-            && curve_sweep.is_none()
-            && loft.is_none()
-            && !convex_planar
-            && !general_planar
-        {
-            return Err(BuildError::UnsupportedSolidShell(outer));
-        }
-        for void_shell in &voids {
-            let sphere_void = self
-                .certified_oriented_sphere_shell(*void_shell, Orientation::Reversed)?
-                .is_some();
-            let revolution_void = self
-                .certified_oriented_revolution_shell(*void_shell, Orientation::Reversed)?
-                .is_some();
-            let cylinder_void = self
-                .certified_oriented_cylinder_shell(*void_shell, Orientation::Reversed)?
-                .is_some();
-            if !sphere_void && !revolution_void && !cylinder_void {
-                self.validate_void_shell_orientation(*void_shell)?;
-            }
-            let simple_prism_void = if sphere_void || revolution_void || cylinder_void {
+            let candidate = Solid {
+                outer,
+                voids: voids.clone(),
+            };
+            let sphere = self.certified_sphere_solid(&candidate)?;
+            let sphere_pair = self.certified_sphere_pair_shell(outer)?;
+            let revolution = self.certified_revolution_shell(outer)?;
+            let cylinder = self.certified_cylinder_solid(&candidate)?;
+            let cone_frustum = self.certified_cone_frustum_shell(outer)?;
+            let torus = self.certified_torus_shell(outer)?;
+            let analytic_closed = sphere.is_some()
+                || sphere_pair.is_some()
+                || revolution.is_some()
+                || cylinder.is_some()
+                || cone_frustum.is_some()
+                || torus.is_some();
+            let simple_prism = if analytic_closed {
                 false
             } else {
-                self.certify_simple_prism_shell(*void_shell)?
+                self.certify_simple_prism_shell(outer)?
+                    || self.certify_internally_partitioned_prism_shell(outer)?
             };
-            let general_planar_void =
-                if sphere_void || revolution_void || cylinder_void || simple_prism_void {
+            let line_arc_prism = if analytic_closed || simple_prism {
+                false
+            } else {
+                self.certify_extrusion_prism_shell(outer)?
+            };
+            let curve_sweep = if analytic_closed || simple_prism || line_arc_prism {
+                None
+            } else {
+                self.certified_curve_sweep_shell(outer)?
+            };
+            let loft = if analytic_closed || simple_prism || line_arc_prism || curve_sweep.is_some()
+            {
+                None
+            } else {
+                self.certified_loft_shell(outer)?
+            };
+            let convex_planar = if analytic_closed
+                || simple_prism
+                || line_arc_prism
+                || curve_sweep.is_some()
+                || loft.is_some()
+            {
+                false
+            } else {
+                self.certify_convex_planar_shell(outer)?
+            };
+            let general_planar = if analytic_closed
+                || simple_prism
+                || line_arc_prism
+                || curve_sweep.is_some()
+                || loft.is_some()
+                || convex_planar
+            {
+                false
+            } else {
+                self.certify_planar_shell_non_self_intersection(outer)?
+            };
+            if !analytic_closed {
+                self.validate_outer_shell_orientation(outer)?;
+            }
+            if !analytic_closed
+                && !simple_prism
+                && !line_arc_prism
+                && cone_frustum.is_none()
+                && torus.is_none()
+                && curve_sweep.is_none()
+                && loft.is_none()
+                && !convex_planar
+                && !general_planar
+            {
+                return Err(BuildError::UnsupportedSolidShell(outer));
+            }
+            for void_shell in &voids {
+                let sphere_void = self
+                    .certified_oriented_sphere_shell(*void_shell, Orientation::Reversed)?
+                    .is_some();
+                let revolution_void = self
+                    .certified_oriented_revolution_shell(*void_shell, Orientation::Reversed)?
+                    .is_some();
+                let cylinder_void = self
+                    .certified_oriented_cylinder_shell(*void_shell, Orientation::Reversed)?
+                    .is_some();
+                if !sphere_void && !revolution_void && !cylinder_void {
+                    self.validate_void_shell_orientation(*void_shell)?;
+                }
+                let simple_prism_void = if sphere_void || revolution_void || cylinder_void {
                     false
                 } else {
-                    self.certify_planar_shell_non_self_intersection(*void_shell)?
+                    self.certify_simple_prism_shell(*void_shell)?
                 };
-            if !sphere_void
-                && !revolution_void
-                && !cylinder_void
-                && !simple_prism_void
-                && !general_planar_void
-            {
-                return Err(BuildError::UnsupportedSolidShell(*void_shell));
+                let general_planar_void =
+                    if sphere_void || revolution_void || cylinder_void || simple_prism_void {
+                        false
+                    } else {
+                        self.certify_planar_shell_non_self_intersection(*void_shell)?
+                    };
+                if !sphere_void
+                    && !revolution_void
+                    && !cylinder_void
+                    && !simple_prism_void
+                    && !general_planar_void
+                {
+                    return Err(BuildError::UnsupportedSolidShell(*void_shell));
+                }
             }
-        }
-        self.validate_void_shell_nesting(outer, &voids)?;
+            self.validate_void_shell_nesting(outer, &voids)?;
 
-        let id = SolidId::from_index(self.solids.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Solid))?;
-        self.solids.push(Solid {
-            outer,
-            voids: voids.clone(),
-        });
-        self.retained_solid_certificates.push(None);
-        for shell in shells {
-            self.shell_solid[shell.index()] = Some(id);
-        }
-        Ok(id)
+            let id = SolidId::from_index(self.solids.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Solid))?;
+            self.solids.push(Solid {
+                outer,
+                voids: voids.clone(),
+            });
+            self.retained_solid_certificates.push(None);
+            for shell in shells {
+                self.shell_solid[shell.index()] = Some(id);
+            }
+            Ok(id)
+        })
     }
 
     pub(in crate::topology) fn solid_with_retained_certificate(
@@ -580,207 +602,209 @@ impl ModelBuilder {
 
     /// Validates global ownership and commits an immutable model.
     pub fn finish(mut self) -> Result<Model, ValidationReport> {
-        let mut errors = Vec::new();
-        for (index, owner) in self.edge_use_wire.iter().enumerate() {
-            if owner.is_none() {
-                errors.push(BuildError::OrphanEdgeUse(EdgeUseId(index as u32)));
+        crate::context::strict(|| {
+            let mut errors = Vec::new();
+            for (index, owner) in self.edge_use_wire.iter().enumerate() {
+                if owner.is_none() {
+                    errors.push(BuildError::OrphanEdgeUse(EdgeUseId(index as u32)));
+                }
             }
-        }
-        for (index, owner) in self.wire_face.iter().enumerate() {
-            if owner.is_none() {
-                errors.push(BuildError::OrphanWire(WireId(index as u32)));
+            for (index, owner) in self.wire_face.iter().enumerate() {
+                if owner.is_none() {
+                    errors.push(BuildError::OrphanWire(WireId(index as u32)));
+                }
             }
-        }
-        for (index, owner) in self.face_shell.iter().enumerate() {
-            if owner.is_none() {
-                errors.push(BuildError::OrphanFace(FaceId(index as u32)));
+            for (index, owner) in self.face_shell.iter().enumerate() {
+                if owner.is_none() {
+                    errors.push(BuildError::OrphanFace(FaceId(index as u32)));
+                }
             }
-        }
-        if !errors.is_empty() {
-            return Err(ValidationReport { errors });
-        }
-        for edge_use in &mut self.edge_uses {
-            edge_use.image_certificate = true;
-        }
-        let face_count = self.faces.len();
-        let certified_prisms = self
-            .solids
-            .iter()
-            .enumerate()
-            .map(|(index, solid)| {
-                if let Some(certificate) = &self.retained_solid_certificates[index] {
-                    Ok(certificate.prism.clone())
-                } else if solid.voids.is_empty() {
-                    self.certified_prism_shell(solid.outer)
-                } else {
-                    Ok(None)
-                }
+            if !errors.is_empty() {
+                return Err(ValidationReport { errors });
+            }
+            for edge_use in &mut self.edge_uses {
+                edge_use.image_certificate = true;
+            }
+            let face_count = self.faces.len();
+            let certified_prisms = self
+                .solids
+                .iter()
+                .enumerate()
+                .map(|(index, solid)| {
+                    if let Some(certificate) = &self.retained_solid_certificates[index] {
+                        Ok(certificate.prism.clone())
+                    } else if solid.voids.is_empty() {
+                        self.certified_prism_shell(solid.outer)
+                    } else {
+                        Ok(None)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| ValidationReport {
+                    errors: vec![error],
+                })?;
+            let certified_cylinders = self
+                .solids
+                .iter()
+                .enumerate()
+                .map(|(index, solid)| {
+                    if let Some(certificate) = &self.retained_solid_certificates[index] {
+                        Ok(certificate.cylinder.clone())
+                    } else {
+                        self.certified_cylinder_solid(solid)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| ValidationReport {
+                    errors: vec![error],
+                })?;
+            let certified_lofts = self
+                .solids
+                .iter()
+                .enumerate()
+                .map(|(index, solid)| {
+                    if let Some(certificate) = &self.retained_solid_certificates[index] {
+                        Ok(certificate.loft.clone())
+                    } else if solid.voids.is_empty() && certified_prisms[index].is_none() {
+                        self.certified_loft_shell(solid.outer)
+                    } else {
+                        Ok(None)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| ValidationReport {
+                    errors: vec![error],
+                })?;
+            let certified_curve_sweeps = self
+                .solids
+                .iter()
+                .enumerate()
+                .map(|(index, solid)| {
+                    if let Some(certificate) = &self.retained_solid_certificates[index] {
+                        Ok(certificate.curve_sweep.clone())
+                    } else if solid.voids.is_empty() {
+                        self.certified_curve_sweep_shell(solid.outer)
+                    } else {
+                        Ok(None)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| ValidationReport {
+                    errors: vec![error],
+                })?;
+            let certified_spheres = self
+                .solids
+                .iter()
+                .enumerate()
+                .map(|(index, solid)| {
+                    if let Some(certificate) = &self.retained_solid_certificates[index] {
+                        Ok(certificate.sphere.clone())
+                    } else {
+                        self.certified_sphere_solid(solid)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| ValidationReport {
+                    errors: vec![error],
+                })?;
+            let certified_sphere_pairs = self
+                .solids
+                .iter()
+                .enumerate()
+                .map(|(index, solid)| {
+                    if let Some(certificate) = &self.retained_solid_certificates[index] {
+                        Ok(certificate.sphere_pair.clone())
+                    } else if solid.voids.is_empty() {
+                        self.certified_sphere_pair_shell(solid.outer)
+                    } else {
+                        Ok(None)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| ValidationReport {
+                    errors: vec![error],
+                })?;
+            let certified_cone_frustums = self
+                .solids
+                .iter()
+                .enumerate()
+                .map(|(index, solid)| {
+                    if let Some(certificate) = &self.retained_solid_certificates[index] {
+                        Ok(certificate.cone_frustum.clone())
+                    } else if solid.voids.is_empty() {
+                        self.certified_cone_frustum_shell(solid.outer)
+                    } else {
+                        Ok(None)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| ValidationReport {
+                    errors: vec![error],
+                })?;
+            let certified_tori = self
+                .solids
+                .iter()
+                .enumerate()
+                .map(|(index, solid)| {
+                    if let Some(certificate) = &self.retained_solid_certificates[index] {
+                        Ok(certificate.torus.clone())
+                    } else if solid.voids.is_empty() {
+                        self.certified_torus_shell(solid.outer)
+                    } else {
+                        Ok(None)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| ValidationReport {
+                    errors: vec![error],
+                })?;
+            let certified_revolutions = self
+                .solids
+                .iter()
+                .enumerate()
+                .map(|(index, solid)| {
+                    if let Some(certificate) = &self.retained_solid_certificates[index] {
+                        Ok(certificate.revolution.clone())
+                    } else {
+                        self.certified_revolution_solid(solid)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| ValidationReport {
+                    errors: vec![error],
+                })?;
+            Ok(Model {
+                data: Arc::new(ModelData {
+                    vertices: self.vertices,
+                    curves: self.curves,
+                    pcurves: self.pcurves,
+                    surfaces: self.surfaces,
+                    edges: self.edges,
+                    edge_uses: self.edge_uses,
+                    wires: self.wires,
+                    faces: self.faces,
+                    shells: self.shells,
+                    solids: self.solids,
+                    vertex_edges: self.vertex_edges,
+                    edge_uses_by_edge: self.edge_uses_by_edge,
+                    edge_use_wire: self.edge_use_wire.into_iter().flatten().collect(),
+                    wire_face: self.wire_face.into_iter().flatten().collect(),
+                    face_shell: self.face_shell.into_iter().flatten().collect(),
+                    shell_solid: self.shell_solid,
+                    solid_certificates_valid: vec![true; certified_cylinders.len()],
+                    certified_cylinders,
+                    certified_spheres,
+                    certified_sphere_pairs,
+                    certified_cone_frustums,
+                    certified_tori,
+                    certified_revolutions,
+                    certified_lofts,
+                    certified_curve_sweeps,
+                    certified_prisms,
+                    bounds: OnceLock::new(),
+                    face_contours: (0..face_count).map(|_| OnceLock::new()).collect(),
+                }),
             })
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|error| ValidationReport {
-                errors: vec![error],
-            })?;
-        let certified_cylinders = self
-            .solids
-            .iter()
-            .enumerate()
-            .map(|(index, solid)| {
-                if let Some(certificate) = &self.retained_solid_certificates[index] {
-                    Ok(certificate.cylinder.clone())
-                } else {
-                    self.certified_cylinder_solid(solid)
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|error| ValidationReport {
-                errors: vec![error],
-            })?;
-        let certified_lofts = self
-            .solids
-            .iter()
-            .enumerate()
-            .map(|(index, solid)| {
-                if let Some(certificate) = &self.retained_solid_certificates[index] {
-                    Ok(certificate.loft.clone())
-                } else if solid.voids.is_empty() && certified_prisms[index].is_none() {
-                    self.certified_loft_shell(solid.outer)
-                } else {
-                    Ok(None)
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|error| ValidationReport {
-                errors: vec![error],
-            })?;
-        let certified_curve_sweeps = self
-            .solids
-            .iter()
-            .enumerate()
-            .map(|(index, solid)| {
-                if let Some(certificate) = &self.retained_solid_certificates[index] {
-                    Ok(certificate.curve_sweep.clone())
-                } else if solid.voids.is_empty() {
-                    self.certified_curve_sweep_shell(solid.outer)
-                } else {
-                    Ok(None)
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|error| ValidationReport {
-                errors: vec![error],
-            })?;
-        let certified_spheres = self
-            .solids
-            .iter()
-            .enumerate()
-            .map(|(index, solid)| {
-                if let Some(certificate) = &self.retained_solid_certificates[index] {
-                    Ok(certificate.sphere.clone())
-                } else {
-                    self.certified_sphere_solid(solid)
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|error| ValidationReport {
-                errors: vec![error],
-            })?;
-        let certified_sphere_pairs = self
-            .solids
-            .iter()
-            .enumerate()
-            .map(|(index, solid)| {
-                if let Some(certificate) = &self.retained_solid_certificates[index] {
-                    Ok(certificate.sphere_pair.clone())
-                } else if solid.voids.is_empty() {
-                    self.certified_sphere_pair_shell(solid.outer)
-                } else {
-                    Ok(None)
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|error| ValidationReport {
-                errors: vec![error],
-            })?;
-        let certified_cone_frustums = self
-            .solids
-            .iter()
-            .enumerate()
-            .map(|(index, solid)| {
-                if let Some(certificate) = &self.retained_solid_certificates[index] {
-                    Ok(certificate.cone_frustum.clone())
-                } else if solid.voids.is_empty() {
-                    self.certified_cone_frustum_shell(solid.outer)
-                } else {
-                    Ok(None)
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|error| ValidationReport {
-                errors: vec![error],
-            })?;
-        let certified_tori = self
-            .solids
-            .iter()
-            .enumerate()
-            .map(|(index, solid)| {
-                if let Some(certificate) = &self.retained_solid_certificates[index] {
-                    Ok(certificate.torus.clone())
-                } else if solid.voids.is_empty() {
-                    self.certified_torus_shell(solid.outer)
-                } else {
-                    Ok(None)
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|error| ValidationReport {
-                errors: vec![error],
-            })?;
-        let certified_revolutions = self
-            .solids
-            .iter()
-            .enumerate()
-            .map(|(index, solid)| {
-                if let Some(certificate) = &self.retained_solid_certificates[index] {
-                    Ok(certificate.revolution.clone())
-                } else {
-                    self.certified_revolution_solid(solid)
-                }
-            })
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|error| ValidationReport {
-                errors: vec![error],
-            })?;
-        Ok(Model {
-            data: Arc::new(ModelData {
-                vertices: self.vertices,
-                curves: self.curves,
-                pcurves: self.pcurves,
-                surfaces: self.surfaces,
-                edges: self.edges,
-                edge_uses: self.edge_uses,
-                wires: self.wires,
-                faces: self.faces,
-                shells: self.shells,
-                solids: self.solids,
-                vertex_edges: self.vertex_edges,
-                edge_uses_by_edge: self.edge_uses_by_edge,
-                edge_use_wire: self.edge_use_wire.into_iter().flatten().collect(),
-                wire_face: self.wire_face.into_iter().flatten().collect(),
-                face_shell: self.face_shell.into_iter().flatten().collect(),
-                shell_solid: self.shell_solid,
-                solid_certificates_valid: vec![true; certified_cylinders.len()],
-                certified_cylinders,
-                certified_spheres,
-                certified_sphere_pairs,
-                certified_cone_frustums,
-                certified_tori,
-                certified_revolutions,
-                certified_lofts,
-                certified_curve_sweeps,
-                certified_prisms,
-                bounds: OnceLock::new(),
-                face_contours: (0..face_count).map(|_| OnceLock::new()).collect(),
-            }),
         })
     }
 

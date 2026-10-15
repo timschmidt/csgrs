@@ -18,103 +18,115 @@ impl Model {
         intersection: &SurfaceIntersectionCurve,
         operand: SurfaceIntersectionOperand,
     ) -> Result<(Self, SurfaceCurveFaceSplit), TopologyEditError> {
-        let curve = intersection.curve();
-        let pcurve = intersection.pcurve(operand);
-        let image_certificate = intersection.has_image_certificate(operand);
-        let face = self
-            .face(face_id)
-            .ok_or(TopologyEditError::InvalidReference {
-                kind: EntityKind::Face,
-                index: face_id.index(),
-            })?;
-        let start = curve.start()?;
-        let end = curve.end()?;
-        if self.retained_surface_curve_endpoints_equal(
-            face_id,
-            intersection,
-            operand,
-            &start,
-            &end,
-        )? {
-            let (canonical_curve, canonical_pcurve);
-            let reversed = curve.reversed()?;
-            let (curve, pcurve) =
-                if compare_curve3_exact_data(&curve.exact_data(), &reversed.exact_data())?
-                    == std::cmp::Ordering::Greater
-                {
-                    canonical_curve = curve.reversed()?;
-                    canonical_pcurve = pcurve.reversed()?;
-                    (&canonical_curve, &canonical_pcurve)
-                } else {
-                    (curve, pcurve)
-                };
-            let (model, split) = if face.outer().is_none() {
-                self.split_whole_sphere_by_surface_curve(face_id, curve, pcurve, image_certificate)?
-            } else if self
-                .surface(face.surface)
-                .expect("validated face surface")
-                .kind()
-                == SurfaceKind::Sphere
-                && (face.inner().is_empty()
-                    && self.is_spherical_latitude_wire(
-                        face.outer().expect("trimmed face carries outer wire"),
+        crate::context::strict(|| {
+            let curve = intersection.curve();
+            let pcurve = intersection.pcurve(operand);
+            let image_certificate = intersection.has_image_certificate(operand);
+            let face = self
+                .face(face_id)
+                .ok_or(TopologyEditError::InvalidReference {
+                    kind: EntityKind::Face,
+                    index: face_id.index(),
+                })?;
+            let start = curve.start()?;
+            let end = curve.end()?;
+            if self.retained_surface_curve_endpoints_equal(
+                face_id,
+                intersection,
+                operand,
+                &start,
+                &end,
+            )? {
+                let (canonical_curve, canonical_pcurve);
+                let reversed = curve.reversed()?;
+                let (curve, pcurve) =
+                    if compare_curve3_exact_data(&curve.exact_data(), &reversed.exact_data())?
+                        == std::cmp::Ordering::Greater
+                    {
+                        canonical_curve = curve.reversed()?;
+                        canonical_pcurve = pcurve.reversed()?;
+                        (&canonical_curve, &canonical_pcurve)
+                    } else {
+                        (curve, pcurve)
+                    };
+                let (model, split) = if face.outer().is_none() {
+                    self.split_whole_sphere_by_surface_curve(
+                        face_id,
+                        curve,
+                        pcurve,
+                        image_certificate,
                     )?
-                    || !face.inner().is_empty())
-            {
-                self.split_spherical_cap_by_surface_curve(
-                    face_id,
-                    curve,
-                    pcurve,
-                    image_certificate,
-                )?
-            } else {
-                self.split_face_by_closed_surface_curve(face_id, curve, pcurve, image_certificate)?
+                } else if self
+                    .surface(face.surface)
+                    .expect("validated face surface")
+                    .kind()
+                    == SurfaceKind::Sphere
+                    && (face.inner().is_empty()
+                        && self.is_spherical_latitude_wire(
+                            face.outer().expect("trimmed face carries outer wire"),
+                        )?
+                        || !face.inner().is_empty())
+                {
+                    self.split_spherical_cap_by_surface_curve(
+                        face_id,
+                        curve,
+                        pcurve,
+                        image_certificate,
+                    )?
+                } else {
+                    self.split_face_by_closed_surface_curve(
+                        face_id,
+                        curve,
+                        pcurve,
+                        image_certificate,
+                    )?
+                };
+                return Ok((model, SurfaceCurveFaceSplit::Closed(split)));
+            }
+            let Some(_) = face.outer() else {
+                return Err(TopologyEditError::WholeSurfaceFace(face_id));
             };
-            return Ok((model, SurfaceCurveFaceSplit::Closed(split)));
-        }
-        let Some(_) = face.outer() else {
-            return Err(TopologyEditError::WholeSurfaceFace(face_id));
-        };
-        let materialized = pcurve.materialize()?;
-        let correspondence = match materialized.correspondence() {
-            SurfacePcurveCorrespondence::Affine { scale, offset } => {
-                ParameterCorrespondence::affine(scale.clone(), offset.clone())?
-            }
-            SurfacePcurveCorrespondence::AngularSweep { .. } => {
-                ParameterCorrespondence::angular_sweep()
-            }
-        };
-        let (staged, start_vertex, start_edge) = self.attach_surface_curve_split_endpoint(
-            face_id,
-            Endpoint::Start,
-            &start,
-            intersection.start_boundary_contacts(operand),
-        )?;
-        let (staged, end_vertex, end_edge) = staged.attach_surface_curve_split_endpoint(
-            face_id,
-            Endpoint::End,
-            &end,
-            intersection.end_boundary_contacts(operand),
-        )?;
-        let (staged, face) = staged.split_face_with_geometry(
-            face_id,
-            start_vertex,
-            end_vertex,
-            Some((
-                curve.clone(),
-                Pcurve::new(materialized.curve().clone()),
-                correspondence,
-                image_certificate,
-            )),
-        )?;
-        Ok((
-            staged,
-            SurfaceCurveFaceSplit::Open(CurveFaceSplit {
-                start_edge,
-                end_edge,
-                face,
-            }),
-        ))
+            let materialized = pcurve.materialize()?;
+            let correspondence = match materialized.correspondence() {
+                SurfacePcurveCorrespondence::Affine { scale, offset } => {
+                    ParameterCorrespondence::affine(scale.clone(), offset.clone())?
+                }
+                SurfacePcurveCorrespondence::AngularSweep { .. } => {
+                    ParameterCorrespondence::angular_sweep()
+                }
+            };
+            let (staged, start_vertex, start_edge) = self.attach_surface_curve_split_endpoint(
+                face_id,
+                Endpoint::Start,
+                &start,
+                intersection.start_boundary_contacts(operand),
+            )?;
+            let (staged, end_vertex, end_edge) = staged.attach_surface_curve_split_endpoint(
+                face_id,
+                Endpoint::End,
+                &end,
+                intersection.end_boundary_contacts(operand),
+            )?;
+            let (staged, face) = staged.split_face_with_geometry(
+                face_id,
+                start_vertex,
+                end_vertex,
+                Some((
+                    curve.clone(),
+                    Pcurve::new(materialized.curve().clone()),
+                    correspondence,
+                    image_certificate,
+                )),
+            )?;
+            Ok((
+                staged,
+                SurfaceCurveFaceSplit::Open(CurveFaceSplit {
+                    start_edge,
+                    end_edge,
+                    face,
+                }),
+            ))
+        })
     }
 
     pub(in crate::topology) fn split_whole_sphere_by_surface_curve(

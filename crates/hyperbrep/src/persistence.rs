@@ -100,173 +100,180 @@ pub struct RawModel {
 impl RawModel {
     /// Parses exact JSON without claiming that the encoded topology is valid.
     pub fn from_json(json: &str) -> Result<Self, PersistenceError> {
-        let mut deserializer = serde_json::Deserializer::from_str(json);
-        deserializer.disable_recursion_limit();
-        let deserializer = serde_stacker::Deserializer::new(&mut deserializer);
-        let data = RawModelData::deserialize(deserializer)
-            .map_err(|error| PersistenceError::Json(error.to_string()))?;
-        Ok(Self { data })
+        crate::context::strict(|| {
+            let mut deserializer = serde_json::Deserializer::from_str(json);
+            deserializer.disable_recursion_limit();
+            let deserializer = serde_stacker::Deserializer::new(&mut deserializer);
+            let data = RawModelData::deserialize(deserializer)
+                .map_err(|error| PersistenceError::Json(error.to_string()))?;
+            Ok(Self { data })
+        })
     }
 
     /// Encodes this raw carrier deterministically as compact JSON.
     pub fn to_json(&self) -> Result<String, PersistenceError> {
-        serde_json::to_string(&self.data).map_err(|error| PersistenceError::Json(error.to_string()))
+        crate::context::strict(|| {
+            serde_json::to_string(&self.data)
+                .map_err(|error| PersistenceError::Json(error.to_string()))
+        })
     }
 
     /// Validates every local and global invariant and publishes a trusted model.
     pub fn validate(self) -> Result<Model, PersistenceError> {
-        if self.data.version != FORMAT_VERSION {
-            return Err(PersistenceError::UnsupportedVersion(self.data.version));
-        }
-        let mut builder = ModelBuilder::new();
-        for point in self.data.vertices {
-            builder.vertex(point3(point))?;
-        }
-        for curve in self.data.curves {
-            builder.curve(curve3(curve)?)?;
-        }
-        for pcurve in self.data.pcurves {
-            match pcurve {
-                RawPcurve::Line { start, end } => {
-                    let line = LineSeg2::try_new(curve_point2(start), curve_point2(end))
+        crate::context::strict(|| {
+            if self.data.version != FORMAT_VERSION {
+                return Err(PersistenceError::UnsupportedVersion(self.data.version));
+            }
+            let mut builder = ModelBuilder::new();
+            for point in self.data.vertices {
+                builder.vertex(point3(point))?;
+            }
+            for curve in self.data.curves {
+                builder.curve(curve3(curve)?)?;
+            }
+            for pcurve in self.data.pcurves {
+                match pcurve {
+                    RawPcurve::Line { start, end } => {
+                        let line = LineSeg2::try_new(curve_point2(start), curve_point2(end))
+                            .map_err(GeometryError::from)
+                            .map_err(BuildError::from)?;
+                        builder.pcurve(Pcurve::new(Curve2::from(line)))?;
+                    }
+                    RawPcurve::CircularArc {
+                        start,
+                        end,
+                        center,
+                        clockwise,
+                    } => {
+                        let arc = CircularArc2::try_from_center(
+                            curve_point2(start),
+                            curve_point2(end),
+                            curve_point2(center),
+                            clockwise,
+                        )
                         .map_err(GeometryError::from)
                         .map_err(BuildError::from)?;
-                    builder.pcurve(Pcurve::new(Curve2::from(line)))?;
-                }
-                RawPcurve::CircularArc {
-                    start,
-                    end,
-                    center,
-                    clockwise,
-                } => {
-                    let arc = CircularArc2::try_from_center(
-                        curve_point2(start),
-                        curve_point2(end),
-                        curve_point2(center),
-                        clockwise,
-                    )
-                    .map_err(GeometryError::from)
-                    .map_err(BuildError::from)?;
-                    builder.pcurve(Pcurve::new(Curve2::from(arc)))?;
-                }
-                RawPcurve::RationalBezier {
-                    homogeneous_controls,
-                } => {
-                    let curve =
-                        crate::error::classified(RationalBezier2::from_homogeneous_controls(
+                        builder.pcurve(Pcurve::new(Curve2::from(arc)))?;
+                    }
+                    RawPcurve::RationalBezier {
+                        homogeneous_controls,
+                    } => {
+                        let curve =
+                            crate::error::classified(RationalBezier2::from_homogeneous_controls(
+                                homogeneous_controls
+                                    .into_iter()
+                                    .map(|[x, y, w]| hypercurve::HomogeneousControl2::new(x, y, w))
+                                    .collect(),
+                            ))
+                            .map_err(GeometryError::from)?;
+                        let hypercurve::Classification::Decided(curve) = curve else {
+                            return Err(GeometryError::UnsupportedPcurveContour.into());
+                        };
+                        builder.pcurve(Pcurve::new(Curve2::from(curve)))?;
+                    }
+                    RawPcurve::RationalQuadraticBezier {
+                        control_points,
+                        weights,
+                    } => {
+                        let [start, control, end] = control_points.map(curve_point2);
+                        let [start_weight, control_weight, end_weight] = weights;
+                        let curve = RationalQuadraticBezier2::try_new(
+                            start,
+                            control,
+                            end,
+                            start_weight,
+                            control_weight,
+                            end_weight,
+                        )
+                        .map_err(GeometryError::from)
+                        .map_err(BuildError::from)?;
+                        builder.pcurve(Pcurve::new(Curve2::from(curve)))?;
+                    }
+                    RawPcurve::Nurbs {
+                        degree,
+                        homogeneous_controls,
+                        knots,
+                        period,
+                    } => {
+                        let curve = hypercurve::NurbsCurve2::from_homogeneous_controls(
+                            degree,
                             homogeneous_controls
                                 .into_iter()
-                                .map(|[x, y, w]| hypercurve::HomogeneousControl2::new(x, y, w))
+                                .map(|[x, y, weight]| {
+                                    hypercurve::HomogeneousControl2::new(x, y, weight)
+                                })
                                 .collect(),
-                        ))
-                        .map_err(GeometryError::from)?;
-                    let hypercurve::Classification::Decided(curve) = curve else {
-                        return Err(GeometryError::UnsupportedPcurveContour.into());
-                    };
-                    builder.pcurve(Pcurve::new(Curve2::from(curve)))?;
-                }
-                RawPcurve::RationalQuadraticBezier {
-                    control_points,
-                    weights,
-                } => {
-                    let [start, control, end] = control_points.map(curve_point2);
-                    let [start_weight, control_weight, end_weight] = weights;
-                    let curve = RationalQuadraticBezier2::try_new(
-                        start,
-                        control,
-                        end,
-                        start_weight,
-                        control_weight,
-                        end_weight,
-                    )
-                    .map_err(GeometryError::from)
-                    .map_err(BuildError::from)?;
-                    builder.pcurve(Pcurve::new(Curve2::from(curve)))?;
-                }
-                RawPcurve::Nurbs {
-                    degree,
-                    homogeneous_controls,
-                    knots,
-                    period,
-                } => {
-                    let curve = hypercurve::NurbsCurve2::from_homogeneous_controls(
-                        degree,
-                        homogeneous_controls
-                            .into_iter()
-                            .map(|[x, y, weight]| {
-                                hypercurve::HomogeneousControl2::new(x, y, weight)
-                            })
-                            .collect(),
-                        knots,
-                        match period {
-                            Some(period) => hypercurve::SplinePeriodicity2::Periodic { period },
-                            None => hypercurve::SplinePeriodicity2::NonPeriodic,
-                        },
-                    )
-                    .map_err(GeometryError::from)
-                    .map_err(BuildError::from)?;
-                    builder.pcurve(Pcurve::new(Curve2::from(curve)))?;
+                            knots,
+                            match period {
+                                Some(period) => hypercurve::SplinePeriodicity2::Periodic { period },
+                                None => hypercurve::SplinePeriodicity2::NonPeriodic,
+                            },
+                        )
+                        .map_err(GeometryError::from)
+                        .map_err(BuildError::from)?;
+                        builder.pcurve(Pcurve::new(Curve2::from(curve)))?;
+                    }
                 }
             }
-        }
-        for surface in self.data.surfaces {
-            builder.surface(surface3(surface)?)?;
-        }
-        for edge in self.data.edges {
-            let domain = ParameterDomain::new(edge.domain[0].clone(), edge.domain[1].clone())?;
-            builder.edge(
-                vertex_id(edge.start),
-                vertex_id(edge.end),
-                curve_id(edge.curve),
-                domain,
-            )?;
-        }
-        for edge_use in self.data.edge_uses {
-            builder.edge_use(
-                edge_id(edge_use.edge),
-                edge_use.direction.into(),
-                pcurve_id(edge_use.pcurve),
-                match edge_use.parameter_correspondence {
-                    RawParameterCorrespondence::Affine { scale, offset } => {
-                        ParameterCorrespondence::affine(scale, offset)?
+            for surface in self.data.surfaces {
+                builder.surface(surface3(surface)?)?;
+            }
+            for edge in self.data.edges {
+                let domain = ParameterDomain::new(edge.domain[0].clone(), edge.domain[1].clone())?;
+                builder.edge(
+                    vertex_id(edge.start),
+                    vertex_id(edge.end),
+                    curve_id(edge.curve),
+                    domain,
+                )?;
+            }
+            for edge_use in self.data.edge_uses {
+                builder.edge_use(
+                    edge_id(edge_use.edge),
+                    edge_use.direction.into(),
+                    pcurve_id(edge_use.pcurve),
+                    match edge_use.parameter_correspondence {
+                        RawParameterCorrespondence::Affine { scale, offset } => {
+                            ParameterCorrespondence::affine(scale, offset)?
+                        }
+                        RawParameterCorrespondence::AngularSweep => {
+                            ParameterCorrespondence::angular_sweep()
+                        }
+                    },
+                )?;
+            }
+            for wire in self.data.wires {
+                builder.wire(wire.edge_uses.into_iter().map(edge_use_id).collect())?;
+            }
+            for face in self.data.faces {
+                match face.outer {
+                    Some(outer) => {
+                        builder.face(
+                            surface_id(face.surface),
+                            face.orientation.into(),
+                            wire_id(outer),
+                            face.inner.into_iter().map(wire_id).collect(),
+                        )?;
                     }
-                    RawParameterCorrespondence::AngularSweep => {
-                        ParameterCorrespondence::angular_sweep()
+                    None => {
+                        if !face.inner.is_empty() {
+                            return Err(BuildError::WholeSurfaceHasInnerBoundaries.into());
+                        }
+                        builder.whole_face(surface_id(face.surface), face.orientation.into())?;
                     }
-                },
-            )?;
-        }
-        for wire in self.data.wires {
-            builder.wire(wire.edge_uses.into_iter().map(edge_use_id).collect())?;
-        }
-        for face in self.data.faces {
-            match face.outer {
-                Some(outer) => {
-                    builder.face(
-                        surface_id(face.surface),
-                        face.orientation.into(),
-                        wire_id(outer),
-                        face.inner.into_iter().map(wire_id).collect(),
-                    )?;
-                }
-                None => {
-                    if !face.inner.is_empty() {
-                        return Err(BuildError::WholeSurfaceHasInnerBoundaries.into());
-                    }
-                    builder.whole_face(surface_id(face.surface), face.orientation.into())?;
                 }
             }
-        }
-        for shell in self.data.shells {
-            builder.shell(shell.into_iter().map(face_id).collect())?;
-        }
-        for solid in self.data.solids {
-            builder.solid(
-                shell_id(solid.outer),
-                solid.voids.into_iter().map(shell_id).collect(),
-            )?;
-        }
-        Ok(builder.finish()?)
+            for shell in self.data.shells {
+                builder.shell(shell.into_iter().map(face_id).collect())?;
+            }
+            for solid in self.data.solids {
+                builder.solid(
+                    shell_id(solid.outer),
+                    solid.voids.into_iter().map(shell_id).collect(),
+                )?;
+            }
+            Ok(builder.finish()?)
+        })
     }
 }
 
@@ -278,316 +285,320 @@ impl Model {
     /// general rational Béziers, and NURBS; other Hypercurve families return
     /// an explicit unsupported-family error.
     pub fn to_raw(&self) -> Result<RawModel, PersistenceError> {
-        let mut vertices = self
-            .vertices()
-            .map(|(_, vertex)| point_array(vertex.point()))
-            .collect::<Vec<_>>();
-        let mut curves = self
-            .curves()
-            .map(|(_, curve)| raw_curve3(curve.exact_data()))
-            .collect::<Vec<_>>();
-        // Split analytic arcs may retain an exact endpoint-incidence proof
-        // whose two independently serialized expressions do not replay as a
-        // scalar equality. Publish the trusted curve evaluation as the
-        // canonical vertex representation; raw import still reconstructs the
-        // curve independently and verifies every endpoint.
-        for (_, edge) in self.edges() {
-            let curve = self
-                .curve(edge.curve())
-                .expect("trusted edge references a validated curve");
-            if !matches!(curve.kind(), Curve3Kind::CircleArc | Curve3Kind::EllipseArc) {
-                continue;
-            }
-            vertices[edge.start().index()] = point_array(&curve.point_at(edge.domain().start())?);
-            vertices[edge.end().index()] = point_array(&curve.point_at(edge.domain().end())?);
-        }
-        let mut pcurves = self
-            .pcurves()
-            .map(|(_, pcurve)| match pcurve.curve().geometry() {
-                Some(CurveGeometry2::Line(_)) => {
-                    let (start, end) = pcurve.endpoints().map_err(BuildError::from)?;
-                    Ok(RawPcurve::Line {
-                        start: [start.x, start.y],
-                        end: [end.x, end.y],
-                    })
+        crate::context::strict(|| {
+            let mut vertices = self
+                .vertices()
+                .map(|(_, vertex)| point_array(vertex.point()))
+                .collect::<Vec<_>>();
+            let mut curves = self
+                .curves()
+                .map(|(_, curve)| raw_curve3(curve.exact_data()))
+                .collect::<Vec<_>>();
+            // Split analytic arcs may retain an exact endpoint-incidence proof
+            // whose two independently serialized expressions do not replay as a
+            // scalar equality. Publish the trusted curve evaluation as the
+            // canonical vertex representation; raw import still reconstructs the
+            // curve independently and verifies every endpoint.
+            for (_, edge) in self.edges() {
+                let curve = self
+                    .curve(edge.curve())
+                    .expect("trusted edge references a validated curve");
+                if !matches!(curve.kind(), Curve3Kind::CircleArc | Curve3Kind::EllipseArc) {
+                    continue;
                 }
-                Some(CurveGeometry2::CircularArc(arc)) => Ok(RawPcurve::CircularArc {
-                    start: curve_point_array(arc.start()),
-                    end: curve_point_array(arc.end()),
-                    center: curve_point_array(arc.center()),
-                    clockwise: arc.is_clockwise(),
-                }),
-                Some(CurveGeometry2::RationalBezier(curve)) => Ok(RawPcurve::RationalBezier {
-                    homogeneous_controls: curve
-                        .homogeneous_controls()
-                        .iter()
-                        .map(|control| {
-                            [
-                                control.x().clone(),
-                                control.y().clone(),
-                                control.weight().clone(),
-                            ]
-                        })
-                        .collect(),
-                }),
-                Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
-                    Ok(RawPcurve::RationalQuadraticBezier {
-                        control_points: curve.control_points().map(curve_point_array),
-                        weights: curve.weights().map(Clone::clone),
-                    })
-                }
-                Some(CurveGeometry2::Nurbs(curve)) => Ok(RawPcurve::Nurbs {
-                    degree: curve.degree(),
-                    homogeneous_controls: curve
-                        .homogeneous_controls()
-                        .iter()
-                        .map(|control| {
-                            [
-                                control.x().clone(),
-                                control.y().clone(),
-                                control.weight().clone(),
-                            ]
-                        })
-                        .collect(),
-                    knots: curve.knots().to_vec(),
-                    period: curve.periodicity().period().cloned(),
-                }),
-                _ => Err(PersistenceError::UnsupportedPcurve(pcurve.kind())),
-            })
-            .collect::<Result<Vec<_>, PersistenceError>>()?;
-        let mut pcurve_use_counts = vec![0_usize; pcurves.len()];
-        for (_, edge_use) in self.edge_uses() {
-            pcurve_use_counts[edge_use.pcurve().index()] += 1;
-        }
-        for (edge_use_id, edge_use) in self.edge_uses() {
-            let pcurve_index = edge_use.pcurve().index();
-            if pcurve_use_counts[pcurve_index] != 1 {
-                continue;
+                vertices[edge.start().index()] =
+                    point_array(&curve.point_at(edge.domain().start())?);
+                vertices[edge.end().index()] = point_array(&curve.point_at(edge.domain().end())?);
             }
-            let wire = self
-                .wire_of_edge_use(edge_use_id)
-                .expect("trusted edge use belongs to a validated wire");
-            let face = self
-                .face_of_wire(wire)
-                .and_then(|face| self.face(face))
-                .expect("trusted wire belongs to a validated face");
-            let surface = self
-                .surface(face.surface())
-                .expect("trusted face references a validated surface");
-            let (Some(origin), Some((u, v))) = (surface.plane_origin(), surface.plane_directions())
-            else {
-                continue;
-            };
-            let edge = self
-                .edge(edge_use.edge())
-                .expect("trusted edge use references a validated edge");
-            let (start, end) = match edge_use.direction() {
-                Direction::Forward => (edge.start(), edge.end()),
-                Direction::Reversed => (edge.end(), edge.start()),
-            };
-            let start = project_raw_plane_point(
-                self.vertex(start)
-                    .expect("trusted edge references a validated start vertex")
-                    .point(),
-                origin,
-                u,
-                v,
-            )?;
-            let end = project_raw_plane_point(
-                self.vertex(end)
-                    .expect("trusted edge references a validated end vertex")
-                    .point(),
-                origin,
-                u,
-                v,
-            )?;
-            set_raw_pcurve_start(&mut pcurves[pcurve_index], start);
-            set_raw_pcurve_end(&mut pcurves[pcurve_index], end);
-        }
-        let mut surfaces = self
-            .surfaces()
-            .map(|(_, surface)| raw_surface(surface.exact_data()))
-            .collect::<Vec<_>>();
-        let edges = self
-            .edges()
-            .map(|(_, edge)| RawEdge {
-                start: edge.start().index(),
-                end: edge.end().index(),
-                curve: edge.curve().index(),
-                domain: [edge.domain().start().clone(), edge.domain().end().clone()],
-            })
-            .collect::<Vec<_>>();
-        // A trusted model may retain a stronger endpoint-connectivity proof
-        // than two independently represented algebraic coordinates can replay
-        // after JSON decoding. Canonicalize full-domain rational endpoints to
-        // their already-certified topological vertices before crossing the
-        // untrusted persistence boundary. Raw validation still checks those
-        // explicit coordinates normally; no certificate is accepted from JSON.
-        for (_, edge) in self.edges() {
-            let curve = self
-                .curve(edge.curve())
-                .expect("trusted edge references a validated curve");
-            if edge.domain().start() != curve.domain().start()
-                || edge.domain().end() != curve.domain().end()
-            {
-                continue;
-            }
-            let RawCurve3::RationalBezier { control_points, .. } =
-                &mut curves[edge.curve().index()]
-            else {
-                continue;
-            };
-            let start = self
-                .vertex(edge.start())
-                .expect("trusted edge references a validated start vertex");
-            let end = self
-                .vertex(edge.end())
-                .expect("trusted edge references a validated end vertex");
-            control_points[0] = point_array(start.point());
-            *control_points
-                .last_mut()
-                .expect("validated rational Bezier has controls") = point_array(end.point());
-        }
-        // Extrusion surfaces clone their profile curve rather than referring
-        // to the edge arena. Canonicalize a full-profile rational carrier to
-        // the same already-certified bottom vertices as its matching edge so
-        // independent JSON expression trees replay endpoint incidence.
-        for (surface_id, surface) in self.surfaces() {
-            let Some((profile, _)) = surface.extrusion_profile_and_direction() else {
-                continue;
-            };
-            let RawSurface::Extrusion {
-                profile: raw_profile,
-                ..
-            } = &mut surfaces[surface_id.index()]
-            else {
-                unreachable!("extrusion surface maps to extrusion persistence data");
-            };
-            let RawCurve3::RationalBezier { control_points, .. } = raw_profile.as_mut() else {
-                continue;
-            };
-            let Some((edge_use, line)) = self
-                .faces()
-                .filter(|(_, face)| face.surface() == surface_id)
-                .filter_map(|(_, face)| face.outer())
-                .filter_map(|wire| self.wire(wire))
-                .flat_map(|wire| wire.edge_uses())
-                .filter_map(|edge_use| {
-                    let edge_use_record = self.edge_use(*edge_use)?;
-                    let pcurve = self.pcurve(edge_use_record.pcurve())?;
-                    let line = pcurve.line_segment()?;
-                    ((line.start().y() - Real::zero()).zero_status()
-                        == hyperreal::ZeroKnowledge::Zero
-                        && (line.end().y() - Real::zero()).zero_status()
-                            == hyperreal::ZeroKnowledge::Zero)
-                        .then_some((edge_use_record, line))
+            let mut pcurves = self
+                .pcurves()
+                .map(|(_, pcurve)| match pcurve.curve().geometry() {
+                    Some(CurveGeometry2::Line(_)) => {
+                        let (start, end) = pcurve.endpoints().map_err(BuildError::from)?;
+                        Ok(RawPcurve::Line {
+                            start: [start.x, start.y],
+                            end: [end.x, end.y],
+                        })
+                    }
+                    Some(CurveGeometry2::CircularArc(arc)) => Ok(RawPcurve::CircularArc {
+                        start: curve_point_array(arc.start()),
+                        end: curve_point_array(arc.end()),
+                        center: curve_point_array(arc.center()),
+                        clockwise: arc.is_clockwise(),
+                    }),
+                    Some(CurveGeometry2::RationalBezier(curve)) => Ok(RawPcurve::RationalBezier {
+                        homogeneous_controls: curve
+                            .homogeneous_controls()
+                            .iter()
+                            .map(|control| {
+                                [
+                                    control.x().clone(),
+                                    control.y().clone(),
+                                    control.weight().clone(),
+                                ]
+                            })
+                            .collect(),
+                    }),
+                    Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
+                        Ok(RawPcurve::RationalQuadraticBezier {
+                            control_points: curve.control_points().map(curve_point_array),
+                            weights: curve.weights().map(Clone::clone),
+                        })
+                    }
+                    Some(CurveGeometry2::Nurbs(curve)) => Ok(RawPcurve::Nurbs {
+                        degree: curve.degree(),
+                        homogeneous_controls: curve
+                            .homogeneous_controls()
+                            .iter()
+                            .map(|control| {
+                                [
+                                    control.x().clone(),
+                                    control.y().clone(),
+                                    control.weight().clone(),
+                                ]
+                            })
+                            .collect(),
+                        knots: curve.knots().to_vec(),
+                        period: curve.periodicity().period().cloned(),
+                    }),
+                    _ => Err(PersistenceError::UnsupportedPcurve(pcurve.kind())),
                 })
-                .find(|(_, line)| {
-                    ((line.start().x() - profile.domain().start()).zero_status()
-                        == hyperreal::ZeroKnowledge::Zero
-                        && (line.end().x() - profile.domain().end()).zero_status()
-                            == hyperreal::ZeroKnowledge::Zero)
-                        || ((line.start().x() - profile.domain().end()).zero_status()
+                .collect::<Result<Vec<_>, PersistenceError>>()?;
+            let mut pcurve_use_counts = vec![0_usize; pcurves.len()];
+            for (_, edge_use) in self.edge_uses() {
+                pcurve_use_counts[edge_use.pcurve().index()] += 1;
+            }
+            for (edge_use_id, edge_use) in self.edge_uses() {
+                let pcurve_index = edge_use.pcurve().index();
+                if pcurve_use_counts[pcurve_index] != 1 {
+                    continue;
+                }
+                let wire = self
+                    .wire_of_edge_use(edge_use_id)
+                    .expect("trusted edge use belongs to a validated wire");
+                let face = self
+                    .face_of_wire(wire)
+                    .and_then(|face| self.face(face))
+                    .expect("trusted wire belongs to a validated face");
+                let surface = self
+                    .surface(face.surface())
+                    .expect("trusted face references a validated surface");
+                let (Some(origin), Some((u, v))) =
+                    (surface.plane_origin(), surface.plane_directions())
+                else {
+                    continue;
+                };
+                let edge = self
+                    .edge(edge_use.edge())
+                    .expect("trusted edge use references a validated edge");
+                let (start, end) = match edge_use.direction() {
+                    Direction::Forward => (edge.start(), edge.end()),
+                    Direction::Reversed => (edge.end(), edge.start()),
+                };
+                let start = project_raw_plane_point(
+                    self.vertex(start)
+                        .expect("trusted edge references a validated start vertex")
+                        .point(),
+                    origin,
+                    u,
+                    v,
+                )?;
+                let end = project_raw_plane_point(
+                    self.vertex(end)
+                        .expect("trusted edge references a validated end vertex")
+                        .point(),
+                    origin,
+                    u,
+                    v,
+                )?;
+                set_raw_pcurve_start(&mut pcurves[pcurve_index], start);
+                set_raw_pcurve_end(&mut pcurves[pcurve_index], end);
+            }
+            let mut surfaces = self
+                .surfaces()
+                .map(|(_, surface)| raw_surface(surface.exact_data()))
+                .collect::<Vec<_>>();
+            let edges = self
+                .edges()
+                .map(|(_, edge)| RawEdge {
+                    start: edge.start().index(),
+                    end: edge.end().index(),
+                    curve: edge.curve().index(),
+                    domain: [edge.domain().start().clone(), edge.domain().end().clone()],
+                })
+                .collect::<Vec<_>>();
+            // A trusted model may retain a stronger endpoint-connectivity proof
+            // than two independently represented algebraic coordinates can replay
+            // after JSON decoding. Canonicalize full-domain rational endpoints to
+            // their already-certified topological vertices before crossing the
+            // untrusted persistence boundary. Raw validation still checks those
+            // explicit coordinates normally; no certificate is accepted from JSON.
+            for (_, edge) in self.edges() {
+                let curve = self
+                    .curve(edge.curve())
+                    .expect("trusted edge references a validated curve");
+                if edge.domain().start() != curve.domain().start()
+                    || edge.domain().end() != curve.domain().end()
+                {
+                    continue;
+                }
+                let RawCurve3::RationalBezier { control_points, .. } =
+                    &mut curves[edge.curve().index()]
+                else {
+                    continue;
+                };
+                let start = self
+                    .vertex(edge.start())
+                    .expect("trusted edge references a validated start vertex");
+                let end = self
+                    .vertex(edge.end())
+                    .expect("trusted edge references a validated end vertex");
+                control_points[0] = point_array(start.point());
+                *control_points
+                    .last_mut()
+                    .expect("validated rational Bezier has controls") = point_array(end.point());
+            }
+            // Extrusion surfaces clone their profile curve rather than referring
+            // to the edge arena. Canonicalize a full-profile rational carrier to
+            // the same already-certified bottom vertices as its matching edge so
+            // independent JSON expression trees replay endpoint incidence.
+            for (surface_id, surface) in self.surfaces() {
+                let Some((profile, _)) = surface.extrusion_profile_and_direction() else {
+                    continue;
+                };
+                let RawSurface::Extrusion {
+                    profile: raw_profile,
+                    ..
+                } = &mut surfaces[surface_id.index()]
+                else {
+                    unreachable!("extrusion surface maps to extrusion persistence data");
+                };
+                let RawCurve3::RationalBezier { control_points, .. } = raw_profile.as_mut() else {
+                    continue;
+                };
+                let Some((edge_use, line)) = self
+                    .faces()
+                    .filter(|(_, face)| face.surface() == surface_id)
+                    .filter_map(|(_, face)| face.outer())
+                    .filter_map(|wire| self.wire(wire))
+                    .flat_map(|wire| wire.edge_uses())
+                    .filter_map(|edge_use| {
+                        let edge_use_record = self.edge_use(*edge_use)?;
+                        let pcurve = self.pcurve(edge_use_record.pcurve())?;
+                        let line = pcurve.line_segment()?;
+                        ((line.start().y() - Real::zero()).zero_status()
                             == hyperreal::ZeroKnowledge::Zero
-                            && (line.end().x() - profile.domain().start()).zero_status()
+                            && (line.end().y() - Real::zero()).zero_status()
                                 == hyperreal::ZeroKnowledge::Zero)
-                })
-            else {
-                continue;
-            };
-            let edge = self
-                .edge(edge_use.edge())
-                .expect("trusted edge use references a validated edge");
-            let (directed_start, directed_end) = match edge_use.direction() {
-                Direction::Forward => (edge.start(), edge.end()),
-                Direction::Reversed => (edge.end(), edge.start()),
-            };
-            let starts_at_profile_start = (line.start().x() - profile.domain().start())
-                .zero_status()
-                == hyperreal::ZeroKnowledge::Zero;
-            let (profile_start, profile_end) = if starts_at_profile_start {
-                (directed_start, directed_end)
-            } else {
-                (directed_end, directed_start)
-            };
-            control_points[0] = point_array(
-                self.vertex(profile_start)
-                    .expect("trusted edge references a validated start vertex")
-                    .point(),
-            );
-            *control_points
-                .last_mut()
-                .expect("validated rational Bezier profile has controls") = point_array(
-                self.vertex(profile_end)
-                    .expect("trusted edge references a validated end vertex")
-                    .point(),
-            );
-        }
-        let edge_uses = self
-            .edge_uses()
-            .map(|(_, edge_use)| RawEdgeUse {
-                edge: edge_use.edge().index(),
-                direction: edge_use.direction().into(),
-                pcurve: edge_use.pcurve().index(),
-                parameter_correspondence: match edge_use.parameter_correspondence() {
-                    ParameterCorrespondence::Affine { scale, offset, .. } => {
-                        RawParameterCorrespondence::Affine {
-                            scale: scale.clone(),
-                            offset: offset.clone(),
+                            .then_some((edge_use_record, line))
+                    })
+                    .find(|(_, line)| {
+                        ((line.start().x() - profile.domain().start()).zero_status()
+                            == hyperreal::ZeroKnowledge::Zero
+                            && (line.end().x() - profile.domain().end()).zero_status()
+                                == hyperreal::ZeroKnowledge::Zero)
+                            || ((line.start().x() - profile.domain().end()).zero_status()
+                                == hyperreal::ZeroKnowledge::Zero
+                                && (line.end().x() - profile.domain().start()).zero_status()
+                                    == hyperreal::ZeroKnowledge::Zero)
+                    })
+                else {
+                    continue;
+                };
+                let edge = self
+                    .edge(edge_use.edge())
+                    .expect("trusted edge use references a validated edge");
+                let (directed_start, directed_end) = match edge_use.direction() {
+                    Direction::Forward => (edge.start(), edge.end()),
+                    Direction::Reversed => (edge.end(), edge.start()),
+                };
+                let starts_at_profile_start = (line.start().x() - profile.domain().start())
+                    .zero_status()
+                    == hyperreal::ZeroKnowledge::Zero;
+                let (profile_start, profile_end) = if starts_at_profile_start {
+                    (directed_start, directed_end)
+                } else {
+                    (directed_end, directed_start)
+                };
+                control_points[0] = point_array(
+                    self.vertex(profile_start)
+                        .expect("trusted edge references a validated start vertex")
+                        .point(),
+                );
+                *control_points
+                    .last_mut()
+                    .expect("validated rational Bezier profile has controls") = point_array(
+                    self.vertex(profile_end)
+                        .expect("trusted edge references a validated end vertex")
+                        .point(),
+                );
+            }
+            let edge_uses = self
+                .edge_uses()
+                .map(|(_, edge_use)| RawEdgeUse {
+                    edge: edge_use.edge().index(),
+                    direction: edge_use.direction().into(),
+                    pcurve: edge_use.pcurve().index(),
+                    parameter_correspondence: match edge_use.parameter_correspondence() {
+                        ParameterCorrespondence::Affine { scale, offset, .. } => {
+                            RawParameterCorrespondence::Affine {
+                                scale: scale.clone(),
+                                offset: offset.clone(),
+                            }
                         }
-                    }
-                    ParameterCorrespondence::AngularSweep => {
-                        RawParameterCorrespondence::AngularSweep
-                    }
+                        ParameterCorrespondence::AngularSweep => {
+                            RawParameterCorrespondence::AngularSweep
+                        }
+                    },
+                })
+                .collect();
+            let wires = self
+                .wires()
+                .map(|(_, wire)| RawWire {
+                    edge_uses: wire.edge_uses().iter().map(|id| id.index()).collect(),
+                })
+                .collect();
+            let faces = self
+                .faces()
+                .map(|(_, face)| RawFace {
+                    surface: face.surface().index(),
+                    orientation: face.orientation().into(),
+                    outer: face.outer().map(WireId::index),
+                    inner: face.inner().iter().map(|id| id.index()).collect(),
+                })
+                .collect();
+            let shells = self
+                .shells()
+                .map(|(_, shell)| shell.faces().iter().map(|id| id.index()).collect())
+                .collect();
+            let solids = self
+                .solids()
+                .map(|(_, solid)| RawSolid {
+                    outer: solid.outer().index(),
+                    voids: solid.voids().iter().map(|id| id.index()).collect(),
+                })
+                .collect();
+            Ok(RawModel {
+                data: RawModelData {
+                    version: FORMAT_VERSION,
+                    vertices,
+                    curves,
+                    pcurves,
+                    surfaces,
+                    edges,
+                    edge_uses,
+                    wires,
+                    faces,
+                    shells,
+                    solids,
                 },
             })
-            .collect();
-        let wires = self
-            .wires()
-            .map(|(_, wire)| RawWire {
-                edge_uses: wire.edge_uses().iter().map(|id| id.index()).collect(),
-            })
-            .collect();
-        let faces = self
-            .faces()
-            .map(|(_, face)| RawFace {
-                surface: face.surface().index(),
-                orientation: face.orientation().into(),
-                outer: face.outer().map(WireId::index),
-                inner: face.inner().iter().map(|id| id.index()).collect(),
-            })
-            .collect();
-        let shells = self
-            .shells()
-            .map(|(_, shell)| shell.faces().iter().map(|id| id.index()).collect())
-            .collect();
-        let solids = self
-            .solids()
-            .map(|(_, solid)| RawSolid {
-                outer: solid.outer().index(),
-                voids: solid.voids().iter().map(|id| id.index()).collect(),
-            })
-            .collect();
-        Ok(RawModel {
-            data: RawModelData {
-                version: FORMAT_VERSION,
-                vertices,
-                curves,
-                pcurves,
-                surfaces,
-                edges,
-                edge_uses,
-                wires,
-                faces,
-                shells,
-                solids,
-            },
         })
     }
 
     /// Encodes the trusted model as deterministic exact JSON.
     pub fn to_json(&self) -> Result<String, PersistenceError> {
-        self.to_raw()?.to_json()
+        crate::context::strict(|| self.to_raw()?.to_json())
     }
 }
 

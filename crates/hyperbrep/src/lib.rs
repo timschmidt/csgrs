@@ -11,6 +11,7 @@
 
 #![warn(missing_docs)]
 
+mod context;
 mod error;
 mod geometry;
 mod persistence;

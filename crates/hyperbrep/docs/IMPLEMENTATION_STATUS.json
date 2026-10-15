@@ -115,6 +115,28 @@
       "evidence": "evidence/2026-10-14-derivative-storage/manifest.json",
       "validation": "Baseline panic reproduced with a replayable negative-control patch. 237 debug tests and the release regression passed; strict Clippy, rustdoc, formatting and WASM build passed. All 65 release benchmark rows preserve iteration counts and checksums.",
       "limits": "Derivative buffers only; no full-operation memory/time bound or global P6 completion."
+    },
+    {
+      "id": "strict-operation-scopes",
+      "work_packages": [
+        "WP01"
+      ],
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P11",
+        "P14",
+        "P29",
+        "P35",
+        "P36",
+        "P37"
+      ],
+      "change": "Enter a strict Hypercurve evaluation scope at all 140 fallible public BREP entry points. Preserve existing operation bodies; suppress ambient provisional and preview authority and restore caller scopes on exit.",
+      "source": "../src/context.rs",
+      "evidence": "evidence/2026-10-14-strict-scopes/manifest.json",
+      "validation": "The baseline consumes an approximate terminal in a BREP pcurve query. The regression and all 238 tests now pass; strict Clippy, rustdoc, formatting and WASM build pass. All 65 benchmark rows preserve iteration counts and checksums.",
+      "limits": "Scope enforcement only. Explicit budgets, detailed receipts and remaining model/API work are still open. Single-run median benchmark cost rose about 10%; exactness takes priority and scope-overhead optimization remains to evaluate."
     }
   ],
   "work_packages": [

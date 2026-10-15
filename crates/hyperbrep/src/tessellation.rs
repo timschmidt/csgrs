@@ -228,37 +228,39 @@ pub fn triangulate_planar_face(
     model: &Model,
     face_id: FaceId,
 ) -> Result<ExactPlanarFaceTriangulation, TessellationError> {
-    let face = model
-        .face(face_id)
-        .ok_or(TessellationError::InvalidFace(face_id))?;
-    let surface = model
-        .surface(face.surface())
-        .expect("validated face surface ID");
-    if surface.kind() != SurfaceKind::Plane {
-        return Err(TessellationError::UnsupportedSurface(surface.kind()));
-    }
+    crate::context::strict(|| {
+        let face = model
+            .face(face_id)
+            .ok_or(TessellationError::InvalidFace(face_id))?;
+        let surface = model
+            .surface(face.surface())
+            .expect("validated face surface ID");
+        if surface.kind() != SurfaceKind::Plane {
+            return Err(TessellationError::UnsupportedSurface(surface.kind()));
+        }
 
-    let (parameters, hole_indices) = sampled_boundaries(model, face_id, 1, true)?;
+        let (parameters, hole_indices) = sampled_boundaries(model, face_id, 1, true)?;
 
-    let hypertri_points = parameters
-        .iter()
-        .map(|point| hypertri::Point2::new(point.x.clone(), point.y.clone()))
-        .collect::<Vec<_>>();
-    let flat_triangles =
-        hypertri::earcut(&TRIANGULATION_CONTEXT, &hypertri_points, &hole_indices)?.value;
-    let mut triangles = flat_triangles.as_chunks::<3>().0.to_vec();
-    retain_all_boundary_samples(&parameters, &mut triangles)?;
-    for triangle in &mut triangles {
-        orient_triangle(&parameters, triangle, face.orientation())?;
-    }
-    let points = parameters
-        .iter()
-        .map(|parameter| surface.point_at(parameter))
-        .collect::<Result<Vec<_>, _>>()?;
-    Ok(ExactPlanarFaceTriangulation {
-        parameters,
-        points,
-        triangles,
+        let hypertri_points = parameters
+            .iter()
+            .map(|point| hypertri::Point2::new(point.x.clone(), point.y.clone()))
+            .collect::<Vec<_>>();
+        let flat_triangles =
+            hypertri::earcut(&TRIANGULATION_CONTEXT, &hypertri_points, &hole_indices)?.value;
+        let mut triangles = flat_triangles.as_chunks::<3>().0.to_vec();
+        retain_all_boundary_samples(&parameters, &mut triangles)?;
+        for triangle in &mut triangles {
+            orient_triangle(&parameters, triangle, face.orientation())?;
+        }
+        let points = parameters
+            .iter()
+            .map(|parameter| surface.point_at(parameter))
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(ExactPlanarFaceTriangulation {
+            parameters,
+            points,
+            triangles,
+        })
     })
 }
 
@@ -278,44 +280,51 @@ pub fn approximate_face_chordally(
     face_id: FaceId,
     policy: ChordalApproximationPolicy,
 ) -> Result<ChordalFaceApproximation, TessellationError> {
-    let face = model
-        .face(face_id)
-        .ok_or(TessellationError::InvalidFace(face_id))?;
-    let surface = model
-        .surface(face.surface())
-        .expect("validated face surface ID");
-    if face.outer().is_none() && surface.kind() == SurfaceKind::Sphere {
-        return approximate_complete_sphere_chordally(face_id, surface, face.orientation(), policy);
-    }
-    let (mut parameters, hole_indices) =
-        sampled_boundaries(model, face_id, policy.boundary_segments.get(), false)?;
-    let hypertri_points = parameters
-        .iter()
-        .map(|point| hypertri::Point2::new(point.x.clone(), point.y.clone()))
-        .collect::<Vec<_>>();
-    let flat_triangles =
-        hypertri::earcut(&TRIANGULATION_CONTEXT, &hypertri_points, &hole_indices)?.value;
-    let mut triangles = flat_triangles.as_chunks::<3>().0.to_vec();
-    retain_all_boundary_samples(&parameters, &mut triangles)?;
-    for triangle in &mut triangles {
-        orient_triangle(&parameters, triangle, face.orientation())?;
-    }
+    crate::context::strict(|| {
+        let face = model
+            .face(face_id)
+            .ok_or(TessellationError::InvalidFace(face_id))?;
+        let surface = model
+            .surface(face.surface())
+            .expect("validated face surface ID");
+        if face.outer().is_none() && surface.kind() == SurfaceKind::Sphere {
+            return approximate_complete_sphere_chordally(
+                face_id,
+                surface,
+                face.orientation(),
+                policy,
+            );
+        }
+        let (mut parameters, hole_indices) =
+            sampled_boundaries(model, face_id, policy.boundary_segments.get(), false)?;
+        let hypertri_points = parameters
+            .iter()
+            .map(|point| hypertri::Point2::new(point.x.clone(), point.y.clone()))
+            .collect::<Vec<_>>();
+        let flat_triangles =
+            hypertri::earcut(&TRIANGULATION_CONTEXT, &hypertri_points, &hole_indices)?.value;
+        let mut triangles = flat_triangles.as_chunks::<3>().0.to_vec();
+        retain_all_boundary_samples(&parameters, &mut triangles)?;
+        for triangle in &mut triangles {
+            orient_triangle(&parameters, triangle, face.orientation())?;
+        }
 
-    for _ in 0..policy.interior_refinement_levels {
-        refine_triangles_at_exact_midpoints(&mut parameters, &mut triangles)?;
-    }
-    let points = parameters
-        .iter()
-        .map(|parameter| surface.point_at(parameter))
-        .collect::<Result<Vec<_>, _>>()?;
+        for _ in 0..policy.interior_refinement_levels {
+            refine_triangles_at_exact_midpoints(&mut parameters, &mut triangles)?;
+        }
+        let points = parameters
+            .iter()
+            .map(|parameter| surface.point_at(parameter))
+            .collect::<Result<Vec<_>, _>>()?;
 
-    Ok(ChordalFaceApproximation {
-        source_face: face_id,
-        source_surface_kind: surface.kind(),
-        policy,
-        parameters,
-        points,
-        triangles,
+        Ok(ChordalFaceApproximation {
+            source_face: face_id,
+            source_surface_kind: surface.kind(),
+            policy,
+            parameters,
+            points,
+            triangles,
+        })
     })
 }
 

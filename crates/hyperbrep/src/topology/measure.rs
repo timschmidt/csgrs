@@ -9,274 +9,279 @@ impl Model {
     /// Other active carriers integrate their exact parameter-space boundary
     /// and Jacobian without tessellation.
     pub fn face_area(&self, id: FaceId) -> Result<Real, QueryError> {
-        let face = self.face(id).ok_or(QueryError::InvalidReference {
-            kind: EntityKind::Face,
-            index: id.index(),
-        })?;
-        let surface = self
-            .surface(face.surface)
-            .expect("validated face surface ID");
-        if let SurfaceExactData::Sphere { radius, .. } = surface.exact_data() {
-            if face.is_whole_surface() {
-                return Ok(Real::from(4) * Real::pi() * &radius * radius);
-            }
-            let outer = face.outer().ok_or(GeometryError::UnsupportedMeasurement)?;
-            if let [upper_wire] = face.inner() {
-                let lower = self
-                    .pcurve(
-                        self.edge_use(self.wire(outer).expect("validated wire").edge_uses[0])
-                            .expect("validated use")
-                            .pcurve,
-                    )
-                    .expect("validated pcurve")
-                    .line_segment()
-                    .expect("validated spherical latitude")
-                    .start()
-                    .y()
-                    .clone();
-                let upper = self
-                    .pcurve(
-                        self.edge_use(self.wire(*upper_wire).expect("validated wire").edge_uses[0])
-                            .expect("validated use")
-                            .pcurve,
-                    )
-                    .expect("validated pcurve")
-                    .line_segment()
-                    .expect("validated spherical latitude")
-                    .start()
-                    .y()
-                    .clone();
-                return Ok(Real::tau() * &radius * radius * (upper.sin() - lower.sin()));
-            }
-            let wire = self.wire(outer).expect("validated spherical face wire");
-            let mut latitude_cap = true;
-            for edge_use in &wire.edge_uses {
-                let edge_use = self.edge_use(*edge_use).expect("validated spherical use");
-                let line = self
-                    .pcurve(edge_use.pcurve)
-                    .expect("validated spherical pcurve")
-                    .line_segment()
-                    .expect("validated spherical line pcurve");
-                if !real_values_equal(line.start().y(), line.end().y())
-                    .map_err(build_error_geometry)?
-                {
-                    latitude_cap = false;
-                    break;
+        crate::context::strict(|| {
+            let face = self.face(id).ok_or(QueryError::InvalidReference {
+                kind: EntityKind::Face,
+                index: id.index(),
+            })?;
+            let surface = self
+                .surface(face.surface)
+                .expect("validated face surface ID");
+            if let SurfaceExactData::Sphere { radius, .. } = surface.exact_data() {
+                if face.is_whole_surface() {
+                    return Ok(Real::from(4) * Real::pi() * &radius * radius);
                 }
-            }
-            if !latitude_cap {
-                return Ok(self.signed_sphere_wire_area(outer, &radius)?.abs());
-            }
-            let first_use = self
-                .edge_use(wire.edge_uses[0])
-                .expect("validated spherical edge use");
-            let pcurve = self
-                .pcurve(first_use.pcurve)
-                .expect("validated spherical pcurve");
-            let line = pcurve
-                .line_segment()
-                .ok_or(GeometryError::UnsupportedMeasurement)?;
-            let increasing = decided_model_order(compare_reals(
-                line.end().x(),
-                line.start().x(),
-                crate::STRICT_PREDICATES,
-            ))? == std::cmp::Ordering::Greater;
-            let upper = match face.orientation {
-                Orientation::Forward => increasing,
-                Orientation::Reversed => !increasing,
-            };
-            let sine = line.start().y().clone().sin();
-            let height_factor = if upper {
-                Real::one() - sine
-            } else {
-                Real::one() + sine
-            };
-            return Ok(Real::from(2) * Real::pi() * &radius * radius * height_factor);
-        }
-        let outer = face.outer().ok_or(GeometryError::UnsupportedMeasurement)?;
-        if let SurfaceExactData::Torus {
-            major_radius,
-            minor_radius,
-            ..
-        } = surface.exact_data()
-        {
-            let mut area = self
-                .signed_torus_wire_area(outer, &major_radius, &minor_radius)?
-                .abs();
-            for inner in face.inner() {
-                area -= self
-                    .signed_torus_wire_area(*inner, &major_radius, &minor_radius)?
-                    .abs();
-            }
-            return Ok(area);
-        }
-        if let SurfaceExactData::Cone { semi_angle, .. } = surface.exact_data() {
-            let mut area = self.signed_cone_wire_area(outer, &semi_angle)?.abs();
-            for inner in face.inner() {
-                area -= self.signed_cone_wire_area(*inner, &semi_angle)?.abs();
-            }
-            return Ok(area);
-        }
-        if let SurfaceExactData::Revolution {
-            profile,
-            axis_origin,
-            axis,
-        } = surface.exact_data()
-        {
-            if !face.inner().is_empty() {
-                return Err(GeometryError::UnsupportedMeasurement.into());
-            }
-            let profile = Curve3::from_exact_data(*profile)?;
-            let wire = self.wire(outer).expect("validated revolution face wire");
-            if wire.edge_uses.len() != 4 {
-                return Err(GeometryError::UnsupportedMeasurement.into());
-            }
-            let mut u_values = Vec::with_capacity(2);
-            let mut v_values = Vec::with_capacity(2);
-            for use_id in &wire.edge_uses {
-                let pcurve = self
-                    .pcurve(
-                        self.edge_use(*use_id)
-                            .expect("validated revolution edge use")
+                let outer = face.outer().ok_or(GeometryError::UnsupportedMeasurement)?;
+                if let [upper_wire] = face.inner() {
+                    let lower = self
+                        .pcurve(
+                            self.edge_use(self.wire(outer).expect("validated wire").edge_uses[0])
+                                .expect("validated use")
+                                .pcurve,
+                        )
+                        .expect("validated pcurve")
+                        .line_segment()
+                        .expect("validated spherical latitude")
+                        .start()
+                        .y()
+                        .clone();
+                    let upper = self
+                        .pcurve(
+                            self.edge_use(
+                                self.wire(*upper_wire).expect("validated wire").edge_uses[0],
+                            )
+                            .expect("validated use")
                             .pcurve,
-                    )
-                    .expect("validated revolution pcurve");
-                let segment = pcurve
+                        )
+                        .expect("validated pcurve")
+                        .line_segment()
+                        .expect("validated spherical latitude")
+                        .start()
+                        .y()
+                        .clone();
+                    return Ok(Real::tau() * &radius * radius * (upper.sin() - lower.sin()));
+                }
+                let wire = self.wire(outer).expect("validated spherical face wire");
+                let mut latitude_cap = true;
+                for edge_use in &wire.edge_uses {
+                    let edge_use = self.edge_use(*edge_use).expect("validated spherical use");
+                    let line = self
+                        .pcurve(edge_use.pcurve)
+                        .expect("validated spherical pcurve")
+                        .line_segment()
+                        .expect("validated spherical line pcurve");
+                    if !real_values_equal(line.start().y(), line.end().y())
+                        .map_err(build_error_geometry)?
+                    {
+                        latitude_cap = false;
+                        break;
+                    }
+                }
+                if !latitude_cap {
+                    return Ok(self.signed_sphere_wire_area(outer, &radius)?.abs());
+                }
+                let first_use = self
+                    .edge_use(wire.edge_uses[0])
+                    .expect("validated spherical edge use");
+                let pcurve = self
+                    .pcurve(first_use.pcurve)
+                    .expect("validated spherical pcurve");
+                let line = pcurve
                     .line_segment()
                     .ok_or(GeometryError::UnsupportedMeasurement)?;
-                if !real_values_equal(segment.start().x(), segment.end().x())
-                    .map_err(build_error_geometry)?
-                    && !real_values_equal(segment.start().y(), segment.end().y())
-                        .map_err(build_error_geometry)?
-                {
+                let increasing = decided_model_order(compare_reals(
+                    line.end().x(),
+                    line.start().x(),
+                    crate::STRICT_PREDICATES,
+                ))? == std::cmp::Ordering::Greater;
+                let upper = match face.orientation {
+                    Orientation::Forward => increasing,
+                    Orientation::Reversed => !increasing,
+                };
+                let sine = line.start().y().clone().sin();
+                let height_factor = if upper {
+                    Real::one() - sine
+                } else {
+                    Real::one() + sine
+                };
+                return Ok(Real::from(2) * Real::pi() * &radius * radius * height_factor);
+            }
+            let outer = face.outer().ok_or(GeometryError::UnsupportedMeasurement)?;
+            if let SurfaceExactData::Torus {
+                major_radius,
+                minor_radius,
+                ..
+            } = surface.exact_data()
+            {
+                let mut area = self
+                    .signed_torus_wire_area(outer, &major_radius, &minor_radius)?
+                    .abs();
+                for inner in face.inner() {
+                    area -= self
+                        .signed_torus_wire_area(*inner, &major_radius, &minor_radius)?
+                        .abs();
+                }
+                return Ok(area);
+            }
+            if let SurfaceExactData::Cone { semi_angle, .. } = surface.exact_data() {
+                let mut area = self.signed_cone_wire_area(outer, &semi_angle)?.abs();
+                for inner in face.inner() {
+                    area -= self.signed_cone_wire_area(*inner, &semi_angle)?.abs();
+                }
+                return Ok(area);
+            }
+            if let SurfaceExactData::Revolution {
+                profile,
+                axis_origin,
+                axis,
+            } = surface.exact_data()
+            {
+                if !face.inner().is_empty() {
                     return Err(GeometryError::UnsupportedMeasurement.into());
                 }
-                insert_sorted_real(&mut u_values, segment.start().x())
-                    .map_err(build_error_geometry)?;
-                insert_sorted_real(&mut u_values, segment.end().x())
-                    .map_err(build_error_geometry)?;
-                insert_sorted_real(&mut v_values, segment.start().y())
-                    .map_err(build_error_geometry)?;
-                insert_sorted_real(&mut v_values, segment.end().y())
-                    .map_err(build_error_geometry)?;
-            }
-            if u_values.len() != 2 || v_values.len() != 2 {
-                return Err(GeometryError::UnsupportedMeasurement.into());
-            }
-            let profile = profile.subcurve(&v_values[0], &v_values[1])?;
-            let radial_at = |point: &Point3| {
-                let relative = point - &axis_origin;
-                let axial = axis.dot(&relative);
-                relative - axis.clone() * axial
-            };
-            let angular_span = &u_values[1] - &u_values[0];
-            let line_image_area = || -> Result<Real, QueryError> {
-                let start = profile.point_at(profile.domain().start())?;
-                let end = profile.point_at(profile.domain().end())?;
-                let start_radial = radial_at(&start);
-                let end_radial = radial_at(&end);
-                if decided_model_order(compare_reals(
-                    &start_radial.cross(&end_radial).norm_squared(),
-                    &Real::zero(),
-                    crate::STRICT_PREDICATES,
-                ))? != std::cmp::Ordering::Equal
-                    || decided_model_order(compare_reals(
-                        &start_radial.dot(&end_radial),
+                let profile = Curve3::from_exact_data(*profile)?;
+                let wire = self.wire(outer).expect("validated revolution face wire");
+                if wire.edge_uses.len() != 4 {
+                    return Err(GeometryError::UnsupportedMeasurement.into());
+                }
+                let mut u_values = Vec::with_capacity(2);
+                let mut v_values = Vec::with_capacity(2);
+                for use_id in &wire.edge_uses {
+                    let pcurve = self
+                        .pcurve(
+                            self.edge_use(*use_id)
+                                .expect("validated revolution edge use")
+                                .pcurve,
+                        )
+                        .expect("validated revolution pcurve");
+                    let segment = pcurve
+                        .line_segment()
+                        .ok_or(GeometryError::UnsupportedMeasurement)?;
+                    if !real_values_equal(segment.start().x(), segment.end().x())
+                        .map_err(build_error_geometry)?
+                        && !real_values_equal(segment.start().y(), segment.end().y())
+                            .map_err(build_error_geometry)?
+                    {
+                        return Err(GeometryError::UnsupportedMeasurement.into());
+                    }
+                    insert_sorted_real(&mut u_values, segment.start().x())
+                        .map_err(build_error_geometry)?;
+                    insert_sorted_real(&mut u_values, segment.end().x())
+                        .map_err(build_error_geometry)?;
+                    insert_sorted_real(&mut v_values, segment.start().y())
+                        .map_err(build_error_geometry)?;
+                    insert_sorted_real(&mut v_values, segment.end().y())
+                        .map_err(build_error_geometry)?;
+                }
+                if u_values.len() != 2 || v_values.len() != 2 {
+                    return Err(GeometryError::UnsupportedMeasurement.into());
+                }
+                let profile = profile.subcurve(&v_values[0], &v_values[1])?;
+                let radial_at = |point: &Point3| {
+                    let relative = point - &axis_origin;
+                    let axial = axis.dot(&relative);
+                    relative - axis.clone() * axial
+                };
+                let angular_span = &u_values[1] - &u_values[0];
+                let line_image_area = || -> Result<Real, QueryError> {
+                    let start = profile.point_at(profile.domain().start())?;
+                    let end = profile.point_at(profile.domain().end())?;
+                    let start_radial = radial_at(&start);
+                    let end_radial = radial_at(&end);
+                    if decided_model_order(compare_reals(
+                        &start_radial.cross(&end_radial).norm_squared(),
                         &Real::zero(),
                         crate::STRICT_PREDICATES,
-                    ))? != std::cmp::Ordering::Greater
-                {
-                    return Err(GeometryError::UnsupportedMeasurement.into());
-                }
-                let start_radius = start_radial
-                    .norm_squared()
-                    .sqrt()
-                    .map_err(GeometryError::Numeric)?;
-                let end_radius = end_radial
-                    .norm_squared()
-                    .sqrt()
-                    .map_err(GeometryError::Numeric)?;
-                let profile_length = (&end - &start)
-                    .norm_squared()
-                    .sqrt()
-                    .map_err(GeometryError::Numeric)?;
-                (angular_span.clone() * profile_length * (start_radius + end_radius)
-                    / Real::from(2))
-                .map_err(GeometryError::Numeric)
-                .map_err(QueryError::from)
-            };
-            return match profile.exact_data() {
-                Curve3ExactData::Line(_) => line_image_area(),
-                Curve3ExactData::RationalBezier { .. } | Curve3ExactData::Nurbs { .. }
-                    if certified_monotone_line_curve_image(&profile)
-                        .map_err(build_error_geometry)? =>
-                {
-                    line_image_area()
-                }
-                Curve3ExactData::EllipseArc(data) if data.circle => {
-                    let start_point = profile.point_at(profile.domain().start())?;
-                    let start_radial = radial_at(&start_point);
+                    ))? != std::cmp::Ordering::Equal
+                        || decided_model_order(compare_reals(
+                            &start_radial.dot(&end_radial),
+                            &Real::zero(),
+                            crate::STRICT_PREDICATES,
+                        ))? != std::cmp::Ordering::Greater
+                    {
+                        return Err(GeometryError::UnsupportedMeasurement.into());
+                    }
                     let start_radius = start_radial
                         .norm_squared()
                         .sqrt()
                         .map_err(GeometryError::Numeric)?;
-                    let radial_unit =
-                        (start_radial / &start_radius).map_err(GeometryError::Numeric)?;
-                    let center_radial = radial_unit.dot(&radial_at(&data.center));
-                    let x_radial = radial_unit.dot(&data.x);
-                    let y_radial = radial_unit.dot(&data.y);
-                    let start_angle = &data.angle_at_start
-                        + Real::from(data.direction)
-                            * (profile.domain().start() - &data.domain_start);
-                    let end_angle = &data.angle_at_start
-                        + Real::from(data.direction)
-                            * (profile.domain().end() - &data.domain_start);
-                    let direction = Real::from(data.direction);
-                    let integral_cos =
-                        &direction * (end_angle.clone().sin() - start_angle.clone().sin());
-                    let integral_sin =
-                        direction * (start_angle.clone().cos() - end_angle.clone().cos());
-                    let parameter_span = profile.domain().end() - profile.domain().start();
-                    let radial_integral = center_radial * parameter_span
-                        + &data.x_radius * (x_radial * integral_cos + y_radial * integral_sin);
-                    Ok(angular_span * data.x_radius * radial_integral)
+                    let end_radius = end_radial
+                        .norm_squared()
+                        .sqrt()
+                        .map_err(GeometryError::Numeric)?;
+                    let profile_length = (&end - &start)
+                        .norm_squared()
+                        .sqrt()
+                        .map_err(GeometryError::Numeric)?;
+                    (angular_span.clone() * profile_length * (start_radius + end_radius)
+                        / Real::from(2))
+                    .map_err(GeometryError::Numeric)
+                    .map_err(QueryError::from)
+                };
+                return match profile.exact_data() {
+                    Curve3ExactData::Line(_) => line_image_area(),
+                    Curve3ExactData::RationalBezier { .. } | Curve3ExactData::Nurbs { .. }
+                        if certified_monotone_line_curve_image(&profile)
+                            .map_err(build_error_geometry)? =>
+                    {
+                        line_image_area()
+                    }
+                    Curve3ExactData::EllipseArc(data) if data.circle => {
+                        let start_point = profile.point_at(profile.domain().start())?;
+                        let start_radial = radial_at(&start_point);
+                        let start_radius = start_radial
+                            .norm_squared()
+                            .sqrt()
+                            .map_err(GeometryError::Numeric)?;
+                        let radial_unit =
+                            (start_radial / &start_radius).map_err(GeometryError::Numeric)?;
+                        let center_radial = radial_unit.dot(&radial_at(&data.center));
+                        let x_radial = radial_unit.dot(&data.x);
+                        let y_radial = radial_unit.dot(&data.y);
+                        let start_angle = &data.angle_at_start
+                            + Real::from(data.direction)
+                                * (profile.domain().start() - &data.domain_start);
+                        let end_angle = &data.angle_at_start
+                            + Real::from(data.direction)
+                                * (profile.domain().end() - &data.domain_start);
+                        let direction = Real::from(data.direction);
+                        let integral_cos =
+                            &direction * (end_angle.clone().sin() - start_angle.clone().sin());
+                        let integral_sin =
+                            direction * (start_angle.clone().cos() - end_angle.clone().cos());
+                        let parameter_span = profile.domain().end() - profile.domain().start();
+                        let radial_integral = center_radial * parameter_span
+                            + &data.x_radius * (x_radial * integral_cos + y_radial * integral_sin);
+                        Ok(angular_span * data.x_radius * radial_integral)
+                    }
+                    _ => Err(GeometryError::UnsupportedMeasurement.into()),
+                };
+            }
+            let mut parameter_area = self.signed_model_wire_double_area(outer)?.abs();
+            for inner in face.inner() {
+                parameter_area -= self.signed_model_wire_double_area(*inner)?.abs();
+            }
+            let surface_scale = match surface.exact_data() {
+                SurfaceExactData::Plane { u, v, .. } => u
+                    .cross(&v)
+                    .norm_squared()
+                    .sqrt()
+                    .map_err(GeometryError::Numeric)?,
+                SurfaceExactData::Cylinder { radius, .. } => radius,
+                SurfaceExactData::Extrusion { profile, direction } => {
+                    let profile = Curve3::from_exact_data(*profile)?;
+                    return self.extrusion_face_area(
+                        face,
+                        outer,
+                        &profile,
+                        &direction,
+                        &parameter_area,
+                    );
                 }
-                _ => Err(GeometryError::UnsupportedMeasurement.into()),
+                data @ (SurfaceExactData::RationalBezier { .. }
+                | SurfaceExactData::Nurbs { .. }) => {
+                    return affine_tensor_face_area(&data, &parameter_area)
+                        .map_err(build_error_geometry)?
+                        .ok_or(GeometryError::UnsupportedMeasurement)
+                        .map_err(QueryError::from);
+                }
+                _ => return Err(GeometryError::UnsupportedMeasurement.into()),
             };
-        }
-        let mut parameter_area = self.signed_model_wire_double_area(outer)?.abs();
-        for inner in face.inner() {
-            parameter_area -= self.signed_model_wire_double_area(*inner)?.abs();
-        }
-        let surface_scale = match surface.exact_data() {
-            SurfaceExactData::Plane { u, v, .. } => u
-                .cross(&v)
-                .norm_squared()
-                .sqrt()
-                .map_err(GeometryError::Numeric)?,
-            SurfaceExactData::Cylinder { radius, .. } => radius,
-            SurfaceExactData::Extrusion { profile, direction } => {
-                let profile = Curve3::from_exact_data(*profile)?;
-                return self.extrusion_face_area(
-                    face,
-                    outer,
-                    &profile,
-                    &direction,
-                    &parameter_area,
-                );
-            }
-            data @ (SurfaceExactData::RationalBezier { .. } | SurfaceExactData::Nurbs { .. }) => {
-                return affine_tensor_face_area(&data, &parameter_area)
-                    .map_err(build_error_geometry)?
-                    .ok_or(GeometryError::UnsupportedMeasurement)
-                    .map_err(QueryError::from);
-            }
-            _ => return Err(GeometryError::UnsupportedMeasurement.into()),
-        };
-        let double_area = parameter_area * surface_scale;
-        (double_area / Real::from(2))
-            .map_err(GeometryError::Numeric)
-            .map_err(QueryError::from)
+            let double_area = parameter_area * surface_scale;
+            (double_area / Real::from(2))
+                .map_err(GeometryError::Numeric)
+                .map_err(QueryError::from)
+        })
     }
 
     pub(in crate::topology) fn extrusion_face_area(
@@ -388,217 +393,227 @@ impl Model {
 
     /// Returns the exact volume of a validated solid.
     pub fn solid_volume(&self, id: SolidId) -> Result<Real, QueryError> {
-        let solid = self.solid(id).ok_or(QueryError::InvalidReference {
-            kind: EntityKind::Solid,
-            index: id.index(),
-        })?;
-        if let Some(cylinder) = &self.data.certified_cylinders[id.index()] {
-            let volume = Real::pi()
-                * &cylinder.radius
-                * &cylinder.radius
-                * (&cylinder.v_max - &cylinder.v_min);
-            let Some(subtraction) = &cylinder.sphere_subtraction else {
-                return Ok(volume);
-            };
-            let excluded = match subtraction {
-                CertifiedCylinderSphereSubtraction::Void { radius, .. } => sphere_volume(radius)?,
-                CertifiedCylinderSphereSubtraction::Component {
-                    center,
-                    radius,
-                    side,
-                } => {
-                    let center_parameter = (center - &cylinder.origin).dot(&cylinder.axis);
+        crate::context::strict(|| {
+            let solid = self.solid(id).ok_or(QueryError::InvalidReference {
+                kind: EntityKind::Solid,
+                index: id.index(),
+            })?;
+            if let Some(cylinder) = &self.data.certified_cylinders[id.index()] {
+                let volume = Real::pi()
+                    * &cylinder.radius
+                    * &cylinder.radius
+                    * (&cylinder.v_max - &cylinder.v_min);
+                let Some(subtraction) = &cylinder.sphere_subtraction else {
+                    return Ok(volume);
+                };
+                let excluded = match subtraction {
+                    CertifiedCylinderSphereSubtraction::Void { radius, .. } => {
+                        sphere_volume(radius)?
+                    }
+                    CertifiedCylinderSphereSubtraction::Component {
+                        center,
+                        radius,
+                        side,
+                    } => {
+                        let center_parameter = (center - &cylinder.origin).dot(&cylinder.axis);
+                        let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
+                            let cubic = (height * height * height / Real::from(3))
+                                .map_err(GeometryError::Numeric)?;
+                            Ok(Real::pi() * (radius * radius * height - cubic))
+                        };
+                        match side {
+                            CertifiedCylinderSphereComponentSide::Lower => {
+                                let upper = &cylinder.v_max - &center_parameter;
+                                antiderivative(&upper)? - antiderivative(&-radius.clone())?
+                            }
+                            CertifiedCylinderSphereComponentSide::Upper => {
+                                let lower = &cylinder.v_min - &center_parameter;
+                                antiderivative(radius)? - antiderivative(&lower)?
+                            }
+                        }
+                    }
+                };
+                return Ok(volume - excluded);
+            }
+            if let Some(sphere) = &self.data.certified_spheres[id.index()] {
+                if let CertifiedSphereRegion::Axial(clip) = &sphere.region {
                     let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
                         let cubic = (height * height * height / Real::from(3))
                             .map_err(GeometryError::Numeric)?;
-                        Ok(Real::pi() * (radius * radius * height - cubic))
+                        Ok(Real::pi() * (&sphere.radius * &sphere.radius * height - cubic))
                     };
-                    match side {
-                        CertifiedCylinderSphereComponentSide::Lower => {
-                            let upper = &cylinder.v_max - &center_parameter;
-                            antiderivative(&upper)? - antiderivative(&-radius.clone())?
-                        }
-                        CertifiedCylinderSphereComponentSide::Upper => {
-                            let lower = &cylinder.v_min - &center_parameter;
-                            antiderivative(radius)? - antiderivative(&lower)?
-                        }
-                    }
+                    return Ok(antiderivative(&clip.max)? - antiderivative(&clip.min)?);
                 }
-            };
-            return Ok(volume - excluded);
-        }
-        if let Some(sphere) = &self.data.certified_spheres[id.index()] {
-            if let CertifiedSphereRegion::Axial(clip) = &sphere.region {
-                let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
-                    let cubic = (height * height * height / Real::from(3))
+                if let CertifiedSphereRegion::Radial(clip) = &sphere.region {
+                    let axial_half_height = (&sphere.radius * &sphere.radius
+                        - &clip.radius * &clip.radius)
+                        .sqrt()
                         .map_err(GeometryError::Numeric)?;
-                    Ok(Real::pi() * (&sphere.radius * &sphere.radius * height - cubic))
-                };
-                return Ok(antiderivative(&clip.max)? - antiderivative(&clip.min)?);
+                    let axial_cubic = &axial_half_height * &axial_half_height * axial_half_height;
+                    let retained_cubic = match clip.side {
+                        CertifiedSphereRadialSide::Inside => {
+                            &sphere.radius * &sphere.radius * &sphere.radius - axial_cubic
+                        }
+                        CertifiedSphereRadialSide::Outside => axial_cubic,
+                    };
+                    return (Real::from(4) * Real::pi() * retained_cubic / Real::from(3))
+                        .map_err(GeometryError::Numeric)
+                        .map_err(QueryError::from);
+                }
+                if let CertifiedSphereRegion::FiniteCylinder(region) = &sphere.region {
+                    let cylinder_volume = Real::pi()
+                        * &region.radius
+                        * &region.radius
+                        * (&region.v_max - &region.v_min);
+                    let sphere_volume = sphere_volume(&sphere.radius)?;
+                    let overlap = sphere_finite_cylinder_overlap_volume(sphere, region)?;
+                    return Ok(match region.operation {
+                        CertifiedSphereFiniteCylinderOperation::Union => {
+                            sphere_volume + cylinder_volume - overlap
+                        }
+                        CertifiedSphereFiniteCylinderOperation::Intersection => overlap,
+                        CertifiedSphereFiniteCylinderOperation::Difference => {
+                            sphere_volume - overlap
+                        }
+                    });
+                }
+                let mut volume = sphere_volume(&sphere.radius)?;
+                for void in &sphere.voids {
+                    volume -= match void {
+                        CertifiedSphereVoid::Sphere { radius, .. } => sphere_volume(radius)?,
+                        CertifiedSphereVoid::Cylinder(cylinder) => {
+                            Real::pi()
+                                * &cylinder.radius
+                                * &cylinder.radius
+                                * (&cylinder.v_max - &cylinder.v_min)
+                        }
+                    };
+                }
+                return Ok(volume);
             }
-            if let CertifiedSphereRegion::Radial(clip) = &sphere.region {
-                let axial_half_height = (&sphere.radius * &sphere.radius
-                    - &clip.radius * &clip.radius)
-                    .sqrt()
-                    .map_err(GeometryError::Numeric)?;
-                let axial_cubic = &axial_half_height * &axial_half_height * axial_half_height;
-                let retained_cubic = match clip.side {
-                    CertifiedSphereRadialSide::Inside => {
-                        &sphere.radius * &sphere.radius * &sphere.radius - axial_cubic
-                    }
-                    CertifiedSphereRadialSide::Outside => axial_cubic,
-                };
-                return (Real::from(4) * Real::pi() * retained_cubic / Real::from(3))
-                    .map_err(GeometryError::Numeric)
-                    .map_err(QueryError::from);
-            }
-            if let CertifiedSphereRegion::FiniteCylinder(region) = &sphere.region {
-                let cylinder_volume =
-                    Real::pi() * &region.radius * &region.radius * (&region.v_max - &region.v_min);
-                let sphere_volume = sphere_volume(&sphere.radius)?;
-                let overlap = sphere_finite_cylinder_overlap_volume(sphere, region)?;
-                return Ok(match region.operation {
-                    CertifiedSphereFiniteCylinderOperation::Union => {
-                        sphere_volume + cylinder_volume - overlap
-                    }
-                    CertifiedSphereFiniteCylinderOperation::Intersection => overlap,
-                    CertifiedSphereFiniteCylinderOperation::Difference => sphere_volume - overlap,
+            if let Some(pair) = &self.data.certified_sphere_pairs[id.index()] {
+                let first_volume = sphere_volume(&pair.first_radius)?;
+                let second_volume = sphere_volume(&pair.second_radius)?;
+                let overlap = sphere_pair_intersection_volume(pair)?;
+                return Ok(match pair.kind {
+                    CertifiedSpherePairKind::Union => first_volume + second_volume - overlap,
+                    CertifiedSpherePairKind::Intersection => overlap,
+                    CertifiedSpherePairKind::Difference => first_volume - overlap,
                 });
             }
-            let mut volume = sphere_volume(&sphere.radius)?;
-            for void in &sphere.voids {
-                volume -= match void {
-                    CertifiedSphereVoid::Sphere { radius, .. } => sphere_volume(radius)?,
-                    CertifiedSphereVoid::Cylinder(cylinder) => {
-                        Real::pi()
-                            * &cylinder.radius
-                            * &cylinder.radius
-                            * (&cylinder.v_max - &cylinder.v_min)
+            if let Some(torus) = &self.data.certified_tori[id.index()] {
+                return match &torus.region {
+                    CertifiedTorusRegion::Whole => Ok(Real::from(2)
+                        * Real::pi()
+                        * Real::pi()
+                        * &torus.major_radius
+                        * &torus.minor_radius
+                        * &torus.minor_radius),
+                    CertifiedTorusRegion::Axial { min, max } => {
+                        let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
+                            let radial = (&torus.minor_radius * &torus.minor_radius
+                                - height * height)
+                                .sqrt()
+                                .map_err(GeometryError::Numeric)?;
+                            let angle = (height / &torus.minor_radius)
+                                .map_err(GeometryError::Numeric)?
+                                .asin()
+                                .map_err(GeometryError::Numeric)?;
+                            Ok(Real::from(2)
+                                * Real::pi()
+                                * &torus.major_radius
+                                * (height * radial
+                                    + &torus.minor_radius * &torus.minor_radius * angle))
+                        };
+                        Ok(antiderivative(max)? - antiderivative(min)?)
                     }
+                    CertifiedTorusRegion::LongitudinalHalf { .. } => Ok(Real::pi()
+                        * Real::pi()
+                        * &torus.major_radius
+                        * &torus.minor_radius
+                        * &torus.minor_radius),
                 };
             }
-            return Ok(volume);
-        }
-        if let Some(pair) = &self.data.certified_sphere_pairs[id.index()] {
-            let first_volume = sphere_volume(&pair.first_radius)?;
-            let second_volume = sphere_volume(&pair.second_radius)?;
-            let overlap = sphere_pair_intersection_volume(pair)?;
-            return Ok(match pair.kind {
-                CertifiedSpherePairKind::Union => first_volume + second_volume - overlap,
-                CertifiedSpherePairKind::Intersection => overlap,
-                CertifiedSpherePairKind::Difference => first_volume - overlap,
-            });
-        }
-        if let Some(torus) = &self.data.certified_tori[id.index()] {
-            return match &torus.region {
-                CertifiedTorusRegion::Whole => Ok(Real::from(2)
-                    * Real::pi()
-                    * Real::pi()
-                    * &torus.major_radius
-                    * &torus.minor_radius
-                    * &torus.minor_radius),
-                CertifiedTorusRegion::Axial { min, max } => {
-                    let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
-                        let radial = (&torus.minor_radius * &torus.minor_radius - height * height)
-                            .sqrt()
-                            .map_err(GeometryError::Numeric)?;
-                        let angle = (height / &torus.minor_radius)
-                            .map_err(GeometryError::Numeric)?
-                            .asin()
-                            .map_err(GeometryError::Numeric)?;
-                        Ok(Real::from(2)
-                            * Real::pi()
-                            * &torus.major_radius
-                            * (height * radial + &torus.minor_radius * &torus.minor_radius * angle))
-                    };
-                    Ok(antiderivative(max)? - antiderivative(min)?)
-                }
-                CertifiedTorusRegion::LongitudinalHalf { .. } => Ok(Real::pi()
-                    * Real::pi()
-                    * &torus.major_radius
-                    * &torus.minor_radius
-                    * &torus.minor_radius),
-            };
-        }
-        if let Some(frustum) = &self.data.certified_cone_frustums[id.index()] {
-            let sine = frustum.semi_angle.clone().sin();
-            let cosine = frustum.semi_angle.clone().cos();
-            let min_radius = &frustum.v_min * &sine;
-            let max_radius = &frustum.v_max * sine;
-            let height = (&frustum.v_max - &frustum.v_min) * cosine;
-            let volume = (Real::pi()
-                * height
-                * (&min_radius * &min_radius
-                    + &min_radius * &max_radius
-                    + &max_radius * &max_radius)
-                / Real::from(3))
-            .map_err(GeometryError::Numeric)
-            .map_err(QueryError::from)?;
-            return match &frustum.region {
-                CertifiedConeFrustumRegion::Whole => Ok(volume),
-                CertifiedConeFrustumRegion::LongitudinalHalf { .. } => (volume / Real::from(2))
-                    .map_err(GeometryError::Numeric)
-                    .map_err(QueryError::from),
-            };
-        }
-        if let Some(revolution) = &self.data.certified_revolutions[id.index()] {
-            let mut first_moment = revolution
-                .profile
-                .signed_x_first_moment()?
-                .ok_or(GeometryError::UnsupportedMeasurement)?;
-            for void in &revolution.voids {
-                first_moment -= void
+            if let Some(frustum) = &self.data.certified_cone_frustums[id.index()] {
+                let sine = frustum.semi_angle.clone().sin();
+                let cosine = frustum.semi_angle.clone().cos();
+                let min_radius = &frustum.v_min * &sine;
+                let max_radius = &frustum.v_max * sine;
+                let height = (&frustum.v_max - &frustum.v_min) * cosine;
+                let volume = (Real::pi()
+                    * height
+                    * (&min_radius * &min_radius
+                        + &min_radius * &max_radius
+                        + &max_radius * &max_radius)
+                    / Real::from(3))
+                .map_err(GeometryError::Numeric)
+                .map_err(QueryError::from)?;
+                return match &frustum.region {
+                    CertifiedConeFrustumRegion::Whole => Ok(volume),
+                    CertifiedConeFrustumRegion::LongitudinalHalf { .. } => (volume / Real::from(2))
+                        .map_err(GeometryError::Numeric)
+                        .map_err(QueryError::from),
+                };
+            }
+            if let Some(revolution) = &self.data.certified_revolutions[id.index()] {
+                let mut first_moment = revolution
+                    .profile
                     .signed_x_first_moment()?
                     .ok_or(GeometryError::UnsupportedMeasurement)?;
+                for void in &revolution.voids {
+                    first_moment -= void
+                        .signed_x_first_moment()?
+                        .ok_or(GeometryError::UnsupportedMeasurement)?;
+                }
+                return Ok(Real::from(2) * Real::pi() * first_moment);
             }
-            return Ok(Real::from(2) * Real::pi() * first_moment);
-        }
-        if let Some(loft) = &self.data.certified_lofts[id.index()] {
-            let jacobian = loft.u.dot(&loft.v.cross(&loft.height_axis)).abs();
-            return Ok(jacobian * &loft.parameter_volume);
-        }
-        if let Some(sweep) = &self.data.certified_curve_sweeps[id.index()] {
-            let mut area = sweep
-                .profile
-                .signed_area()
-                .map_err(GeometryError::from)?
-                .ok_or(GeometryError::UnsupportedMeasurement)?
-                .abs();
-            for hole in &sweep.holes {
-                area -= hole
+            if let Some(loft) = &self.data.certified_lofts[id.index()] {
+                let jacobian = loft.u.dot(&loft.v.cross(&loft.height_axis)).abs();
+                return Ok(jacobian * &loft.parameter_volume);
+            }
+            if let Some(sweep) = &self.data.certified_curve_sweeps[id.index()] {
+                let mut area = sweep
+                    .profile
                     .signed_area()
                     .map_err(GeometryError::from)?
                     .ok_or(GeometryError::UnsupportedMeasurement)?
                     .abs();
-            }
-            let path_start = sweep.path.point_at(sweep.path.domain().start())?;
-            let path_end = sweep.path.point_at(sweep.path.domain().end())?;
-            let u = Vector3::from(sweep.u_path.point_at(sweep.u_path.domain().start())?);
-            let v = Vector3::from(sweep.v_path.point_at(sweep.v_path.domain().start())?);
-            let progress = u.cross(&v).dot(&(path_end - path_start)).abs();
-            return Ok(area * progress * &sweep.area_scale_integral);
-        }
-        if let Some(prism) = &self.data.certified_prisms[id.index()] {
-            let area = match &prism.profile {
-                CertifiedPrismProfile::Paths { outer, holes } => {
-                    let mut area = curve_path_signed_area(outer)?.abs();
-                    for hole in holes {
-                        area -= curve_path_signed_area(hole)?.abs();
-                    }
-                    area
+                for hole in &sweep.holes {
+                    area -= hole
+                        .signed_area()
+                        .map_err(GeometryError::from)?
+                        .ok_or(GeometryError::UnsupportedMeasurement)?
+                        .abs();
                 }
-                CertifiedPrismProfile::CurveRegion { area, .. } => area.clone(),
-            };
-            let jacobian = prism.u.dot(&prism.v.cross(&prism.extrusion)).abs();
-            return Ok(area * jacobian * (&prism.parameter_max - &prism.parameter_min));
-        }
-        let signed_six_volume = std::iter::once(&solid.outer)
-            .chain(solid.voids.iter())
-            .map(|shell| self.signed_shell_six_volume(*shell))
-            .fold(Real::zero(), |sum, volume| sum + volume);
-        (signed_six_volume / Real::from(6))
-            .map_err(GeometryError::Numeric)
-            .map_err(QueryError::from)
+                let path_start = sweep.path.point_at(sweep.path.domain().start())?;
+                let path_end = sweep.path.point_at(sweep.path.domain().end())?;
+                let u = Vector3::from(sweep.u_path.point_at(sweep.u_path.domain().start())?);
+                let v = Vector3::from(sweep.v_path.point_at(sweep.v_path.domain().start())?);
+                let progress = u.cross(&v).dot(&(path_end - path_start)).abs();
+                return Ok(area * progress * &sweep.area_scale_integral);
+            }
+            if let Some(prism) = &self.data.certified_prisms[id.index()] {
+                let area = match &prism.profile {
+                    CertifiedPrismProfile::Paths { outer, holes } => {
+                        let mut area = curve_path_signed_area(outer)?.abs();
+                        for hole in holes {
+                            area -= curve_path_signed_area(hole)?.abs();
+                        }
+                        area
+                    }
+                    CertifiedPrismProfile::CurveRegion { area, .. } => area.clone(),
+                };
+                let jacobian = prism.u.dot(&prism.v.cross(&prism.extrusion)).abs();
+                return Ok(area * jacobian * (&prism.parameter_max - &prism.parameter_min));
+            }
+            let signed_six_volume = std::iter::once(&solid.outer)
+                .chain(solid.voids.iter())
+                .map(|shell| self.signed_shell_six_volume(*shell))
+                .fold(Real::zero(), |sum, volume| sum + volume);
+            (signed_six_volume / Real::from(6))
+                .map_err(GeometryError::Numeric)
+                .map_err(QueryError::from)
+        })
     }
 
     pub(in crate::topology) fn signed_wire_double_area(

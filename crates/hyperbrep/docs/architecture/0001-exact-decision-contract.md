@@ -61,6 +61,18 @@ The only allowed structural-fact use in HyperBREP is conservative scheduling:
 selecting a certified fast path, eliminating work already proved irrelevant, or
 choosing an arithmetic kernel. Missing structural facts cannot decide geometry.
 
+Fallible public BREP entry points enter the crate's strict operation scope.
+It calls `hypercurve::evaluate_under(PredicatePolicy::STRICT, ...)` so an
+enclosing Hypercurve provisional or display-preview scope cannot authorize a
+BREP decision. The caller's scope is restored on return and unwinding. Scalar
+and spatial predicates continue to receive Hyperlimit's explicit strict policy.
+New predicate-bearing entry points must establish this authority before any
+principal Hypercurve call. Reading immutable records and metadata requires no
+predicate scope.
+
+This authority guard does not supply the planned caller-visible work budgets,
+cancellation or full operation receipts; those remain separate requirements.
+
 ### Outcomes
 
 At the predicate boundary, HyperBREP consumes `PredicateOutcome<T>` without

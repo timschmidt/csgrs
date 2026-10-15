@@ -136,12 +136,14 @@ impl RationalBezierSweepFrame {
         v_axes: Vec<Vector3>,
         weights: Vec<Real>,
     ) -> Result<Self, ConstructionError> {
-        certify_sweep_frame(&origins, &u_axes, &v_axes, &weights)?;
-        Ok(Self {
-            origins,
-            u_axes,
-            v_axes,
-            weights,
+        crate::context::strict(|| {
+            certify_sweep_frame(&origins, &u_axes, &v_axes, &weights)?;
+            Ok(Self {
+                origins,
+                u_axes,
+                v_axes,
+                weights,
+            })
         })
     }
 
@@ -290,15 +292,17 @@ impl From<ValidationReport> for ConstructionError {
 /// Its twelve topological edges are shared by twenty-four independent face-local
 /// pcurves.
 pub fn cuboid(min: Point3, max: Point3) -> Result<(Model, SolidId), ConstructionError> {
-    require_increasing(&min.x, &max.x, Axis::X)?;
-    require_increasing(&min.y, &max.y, Axis::Y)?;
-    let profile = [
-        Point2::new(min.x.clone(), min.y.clone()),
-        Point2::new(max.x.clone(), min.y.clone()),
-        Point2::new(max.x, max.y.clone()),
-        Point2::new(min.x, max.y),
-    ];
-    extrude(&profile, min.z, max.z)
+    crate::context::strict(|| {
+        require_increasing(&min.x, &max.x, Axis::X)?;
+        require_increasing(&min.y, &max.y, Axis::Y)?;
+        let profile = [
+            Point2::new(min.x.clone(), min.y.clone()),
+            Point2::new(max.x.clone(), min.y.clone()),
+            Point2::new(max.x, max.y.clone()),
+            Point2::new(min.x, max.y),
+        ];
+        extrude(&profile, min.z, max.z)
+    })
 }
 
 /// Constructs one exact trimmed planar face in an authored parameter frame.
@@ -318,24 +322,26 @@ pub fn planar_face(
     u: Vector3,
     v: Vector3,
 ) -> Result<(Model, FaceId), ConstructionError> {
-    let outer = normalize_planar_path(outer, true)?;
-    let holes = holes
-        .iter()
-        .map(|hole| normalize_planar_path(hole, false))
-        .collect::<Result<Vec<_>, _>>()?;
-    validate_planar_path_nesting(&outer, &holes)?;
+    crate::context::strict(|| {
+        let outer = normalize_planar_path(outer, true)?;
+        let holes = holes
+            .iter()
+            .map(|hole| normalize_planar_path(hole, false))
+            .collect::<Result<Vec<_>, _>>()?;
+        validate_planar_path_nesting(&outer, &holes)?;
 
-    let surface = Surface::plane(origin, u, v)?;
-    let mut builder = ModelBuilder::new();
-    let surface_id = builder.surface(surface.clone())?;
-    let outer_wire = add_planar_path_wire(&mut builder, &outer, &surface)?;
-    let inner_wires = holes
-        .iter()
-        .map(|hole| add_planar_path_wire(&mut builder, hole, &surface))
-        .collect::<Result<Vec<_>, _>>()?;
-    let face = builder.face(surface_id, Orientation::Forward, outer_wire, inner_wires)?;
-    builder.shell(vec![face])?;
-    Ok((builder.finish()?, face))
+        let surface = Surface::plane(origin, u, v)?;
+        let mut builder = ModelBuilder::new();
+        let surface_id = builder.surface(surface.clone())?;
+        let outer_wire = add_planar_path_wire(&mut builder, &outer, &surface)?;
+        let inner_wires = holes
+            .iter()
+            .map(|hole| add_planar_path_wire(&mut builder, hole, &surface))
+            .collect::<Result<Vec<_>, _>>()?;
+        let face = builder.face(surface_id, Orientation::Forward, outer_wire, inner_wires)?;
+        builder.shell(vec![face])?;
+        Ok((builder.finish()?, face))
+    })
 }
 
 /// Constructs one finite rectangular patch of an exact extrusion surface.
@@ -351,32 +357,34 @@ pub fn extrusion_patch(
     v_start: Real,
     v_end: Real,
 ) -> Result<(Model, FaceId), ConstructionError> {
-    let v_domain = ParameterDomain::new(v_start, v_end)?;
-    let u_start = profile.domain().start().clone();
-    let u_end = profile.domain().end().clone();
-    let surface = Surface::extrusion(profile.clone(), direction.clone())?;
-    let lower_offset = direction.clone() * v_domain.start();
-    let upper_offset = direction * v_domain.end();
-    let lower_profile = translated_curve(&profile, &lower_offset)?;
-    let upper_profile = translated_curve(&profile, &upper_offset)?;
-    let lower_start = lower_profile.point_at(lower_profile.domain().start())?;
-    let lower_end = lower_profile.point_at(lower_profile.domain().end())?;
-    let upper_start = upper_profile.point_at(upper_profile.domain().start())?;
-    let upper_end = upper_profile.point_at(upper_profile.domain().end())?;
-    let boundaries = [
-        lower_profile,
-        Curve3::line(lower_end, upper_end)?,
-        upper_profile,
-        Curve3::line(lower_start, upper_start)?,
-    ];
-    build_rectangular_face_patch(
-        surface,
-        boundaries,
-        u_start,
-        u_end,
-        v_domain.start().clone(),
-        v_domain.end().clone(),
-    )
+    crate::context::strict(|| {
+        let v_domain = ParameterDomain::new(v_start, v_end)?;
+        let u_start = profile.domain().start().clone();
+        let u_end = profile.domain().end().clone();
+        let surface = Surface::extrusion(profile.clone(), direction.clone())?;
+        let lower_offset = direction.clone() * v_domain.start();
+        let upper_offset = direction * v_domain.end();
+        let lower_profile = translated_curve(&profile, &lower_offset)?;
+        let upper_profile = translated_curve(&profile, &upper_offset)?;
+        let lower_start = lower_profile.point_at(lower_profile.domain().start())?;
+        let lower_end = lower_profile.point_at(lower_profile.domain().end())?;
+        let upper_start = upper_profile.point_at(upper_profile.domain().start())?;
+        let upper_end = upper_profile.point_at(upper_profile.domain().end())?;
+        let boundaries = [
+            lower_profile,
+            Curve3::line(lower_end, upper_end)?,
+            upper_profile,
+            Curve3::line(lower_start, upper_start)?,
+        ];
+        build_rectangular_face_patch(
+            surface,
+            boundaries,
+            u_start,
+            u_end,
+            v_domain.start().clone(),
+            v_domain.end().clone(),
+        )
+    })
 }
 
 /// Constructs one finite rectangular patch of an exact revolution surface.
@@ -395,56 +403,58 @@ pub fn revolution_patch(
     angle_start: Real,
     angle_end: Real,
 ) -> Result<(Model, FaceId), ConstructionError> {
-    let angle_domain = ParameterDomain::new(angle_start, angle_end)?;
-    let angle_span = angle_domain.end() - angle_domain.start();
-    match compare_reals(&angle_span, &Real::tau(), crate::STRICT_PREDICATES) {
-        PredicateOutcome::Decided {
-            value: std::cmp::Ordering::Less,
-            ..
-        } => {}
-        PredicateOutcome::Decided { .. } => {
-            return Err(ConstructionError::RevolutionPatchSweepTooLarge);
+    crate::context::strict(|| {
+        let angle_domain = ParameterDomain::new(angle_start, angle_end)?;
+        let angle_span = angle_domain.end() - angle_domain.start();
+        match compare_reals(&angle_span, &Real::tau(), crate::STRICT_PREDICATES) {
+            PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Less,
+                ..
+            } => {}
+            PredicateOutcome::Decided { .. } => {
+                return Err(ConstructionError::RevolutionPatchSweepTooLarge);
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                return Err(GeometryError::PredicateUnresolved { needed, stage }.into());
+            }
         }
-        PredicateOutcome::Unknown { needed, stage } => {
-            return Err(GeometryError::PredicateUnresolved { needed, stage }.into());
+        let profile_domain = profile.domain().clone();
+        let surface = Surface::revolution(profile, axis_origin, axis)?;
+        if !surface
+            .revolution_profile_is_strictly_off_axis()
+            .map_err(revolution_patch_geometry_error)?
+        {
+            return Err(ConstructionError::ProfileCrossesRevolutionAxis);
         }
-    }
-    let profile_domain = profile.domain().clone();
-    let surface = Surface::revolution(profile, axis_origin, axis)?;
-    if !surface
-        .revolution_profile_is_strictly_off_axis()
-        .map_err(revolution_patch_geometry_error)?
-    {
-        return Err(ConstructionError::ProfileCrossesRevolutionAxis);
-    }
-    let lower_latitude = surface
-        .revolution_latitude_curve(
-            profile_domain.start(),
+        let lower_latitude = surface
+            .revolution_latitude_curve(
+                profile_domain.start(),
+                angle_domain.start().clone(),
+                angle_domain.end().clone(),
+            )
+            .map_err(revolution_patch_geometry_error)?;
+        let upper_latitude = surface
+            .revolution_latitude_curve(
+                profile_domain.end(),
+                angle_domain.start().clone(),
+                angle_domain.end().clone(),
+            )
+            .map_err(revolution_patch_geometry_error)?;
+        let boundaries = [
+            lower_latitude,
+            surface.revolution_meridian_curve(angle_domain.end())?,
+            upper_latitude,
+            surface.revolution_meridian_curve(angle_domain.start())?,
+        ];
+        build_rectangular_face_patch(
+            surface,
+            boundaries,
             angle_domain.start().clone(),
             angle_domain.end().clone(),
+            profile_domain.start().clone(),
+            profile_domain.end().clone(),
         )
-        .map_err(revolution_patch_geometry_error)?;
-    let upper_latitude = surface
-        .revolution_latitude_curve(
-            profile_domain.end(),
-            angle_domain.start().clone(),
-            angle_domain.end().clone(),
-        )
-        .map_err(revolution_patch_geometry_error)?;
-    let boundaries = [
-        lower_latitude,
-        surface.revolution_meridian_curve(angle_domain.end())?,
-        upper_latitude,
-        surface.revolution_meridian_curve(angle_domain.start())?,
-    ];
-    build_rectangular_face_patch(
-        surface,
-        boundaries,
-        angle_domain.start().clone(),
-        angle_domain.end().clone(),
-        profile_domain.start().clone(),
-        profile_domain.end().clone(),
-    )
+    })
 }
 
 fn revolution_patch_geometry_error(error: GeometryError) -> ConstructionError {
@@ -464,32 +474,34 @@ pub fn rational_bezier_patch(
     control_points: Vec<Vec<Point3>>,
     weights: Vec<Vec<Real>>,
 ) -> Result<(Model, crate::FaceId), ConstructionError> {
-    let surface = Surface::rational_bezier(control_points.clone(), weights.clone())?;
-    let u_last = control_points[0].len() - 1;
-    let v_last = control_points.len() - 1;
-    let boundaries = [
-        Curve3::rational_bezier(control_points[0].clone(), weights[0].clone())?,
-        Curve3::rational_bezier(
-            control_points
-                .iter()
-                .map(|row| row[u_last].clone())
-                .collect(),
-            weights.iter().map(|row| row[u_last].clone()).collect(),
-        )?,
-        Curve3::rational_bezier(control_points[v_last].clone(), weights[v_last].clone())?,
-        Curve3::rational_bezier(
-            control_points.iter().map(|row| row[0].clone()).collect(),
-            weights.iter().map(|row| row[0].clone()).collect(),
-        )?,
-    ];
-    build_rectangular_face_patch(
-        surface,
-        boundaries,
-        Real::zero(),
-        Real::one(),
-        Real::zero(),
-        Real::one(),
-    )
+    crate::context::strict(|| {
+        let surface = Surface::rational_bezier(control_points.clone(), weights.clone())?;
+        let u_last = control_points[0].len() - 1;
+        let v_last = control_points.len() - 1;
+        let boundaries = [
+            Curve3::rational_bezier(control_points[0].clone(), weights[0].clone())?,
+            Curve3::rational_bezier(
+                control_points
+                    .iter()
+                    .map(|row| row[u_last].clone())
+                    .collect(),
+                weights.iter().map(|row| row[u_last].clone()).collect(),
+            )?,
+            Curve3::rational_bezier(control_points[v_last].clone(), weights[v_last].clone())?,
+            Curve3::rational_bezier(
+                control_points.iter().map(|row| row[0].clone()).collect(),
+                weights.iter().map(|row| row[0].clone()).collect(),
+            )?,
+        ];
+        build_rectangular_face_patch(
+            surface,
+            boundaries,
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::one(),
+        )
+    })
 }
 
 /// Constructs one validated trimmed finite tensor-product NURBS patch.
@@ -506,55 +518,57 @@ pub fn nurbs_patch(
     u_knots: Vec<Real>,
     v_knots: Vec<Real>,
 ) -> Result<(Model, crate::FaceId), ConstructionError> {
-    let u_count = control_points.first().map_or(0, Vec::len);
-    let v_count = control_points.len();
-    let surface = Surface::nurbs(
-        u_degree,
-        v_degree,
-        control_points.clone(),
-        weights.clone(),
-        u_knots.clone(),
-        v_knots.clone(),
-    )?;
-    let u_last = u_count - 1;
-    let v_last = v_count - 1;
-    let boundaries = [
-        Curve3::nurbs(
+    crate::context::strict(|| {
+        let u_count = control_points.first().map_or(0, Vec::len);
+        let v_count = control_points.len();
+        let surface = Surface::nurbs(
             u_degree,
-            control_points[0].clone(),
-            weights[0].clone(),
-            u_knots.clone(),
-        )?,
-        Curve3::nurbs(
             v_degree,
-            control_points
-                .iter()
-                .map(|row| row[u_last].clone())
-                .collect(),
-            weights.iter().map(|row| row[u_last].clone()).collect(),
-            v_knots.clone(),
-        )?,
-        Curve3::nurbs(
-            u_degree,
-            control_points[v_last].clone(),
-            weights[v_last].clone(),
+            control_points.clone(),
+            weights.clone(),
             u_knots.clone(),
-        )?,
-        Curve3::nurbs(
-            v_degree,
-            control_points.iter().map(|row| row[0].clone()).collect(),
-            weights.iter().map(|row| row[0].clone()).collect(),
             v_knots.clone(),
-        )?,
-    ];
-    build_rectangular_face_patch(
-        surface,
-        boundaries,
-        u_knots[u_degree].clone(),
-        u_knots[u_count].clone(),
-        v_knots[v_degree].clone(),
-        v_knots[v_count].clone(),
-    )
+        )?;
+        let u_last = u_count - 1;
+        let v_last = v_count - 1;
+        let boundaries = [
+            Curve3::nurbs(
+                u_degree,
+                control_points[0].clone(),
+                weights[0].clone(),
+                u_knots.clone(),
+            )?,
+            Curve3::nurbs(
+                v_degree,
+                control_points
+                    .iter()
+                    .map(|row| row[u_last].clone())
+                    .collect(),
+                weights.iter().map(|row| row[u_last].clone()).collect(),
+                v_knots.clone(),
+            )?,
+            Curve3::nurbs(
+                u_degree,
+                control_points[v_last].clone(),
+                weights[v_last].clone(),
+                u_knots.clone(),
+            )?,
+            Curve3::nurbs(
+                v_degree,
+                control_points.iter().map(|row| row[0].clone()).collect(),
+                weights.iter().map(|row| row[0].clone()).collect(),
+                v_knots.clone(),
+            )?,
+        ];
+        build_rectangular_face_patch(
+            surface,
+            boundaries,
+            u_knots[u_degree].clone(),
+            u_knots[u_count].clone(),
+            v_knots[v_degree].clone(),
+            v_knots[v_count].clone(),
+        )
+    })
 }
 
 /// Builds one validated open shell from exact tensor patches.
@@ -568,106 +582,108 @@ pub fn nurbs_patch(
 pub fn tensor_patch_shell(
     patches: Vec<TensorPatch>,
 ) -> Result<(Model, Vec<FaceId>), ConstructionError> {
-    if patches.is_empty() {
-        return Err(ConstructionError::EmptyPatchShell);
-    }
-    let patches = patches
-        .into_iter()
-        .map(tensor_patch_build_data)
-        .collect::<Result<Vec<_>, _>>()?;
-    let mut builder = ModelBuilder::new();
-    let mut vertices = Vec::<(Point3, VertexId)>::new();
-    let mut shared_edges = Vec::<StitchedTensorEdge>::new();
-    let mut faces = Vec::with_capacity(patches.len());
-    for patch in patches {
-        let patch_vertices = patch
-            .points
-            .iter()
-            .map(|point| exact_patch_vertex(&mut builder, &mut vertices, point))
+    crate::context::strict(|| {
+        if patches.is_empty() {
+            return Err(ConstructionError::EmptyPatchShell);
+        }
+        let patches = patches
+            .into_iter()
+            .map(tensor_patch_build_data)
             .collect::<Result<Vec<_>, _>>()?;
-        let surface = builder.surface(patch.surface)?;
-        let natural_endpoints = [(0, 1), (1, 2), (3, 2), (0, 3)];
-        let face_endpoints = [(0, 1), (1, 2), (2, 3), (3, 0)];
-        let mut edges = Vec::with_capacity(4);
-        for (index, curve) in patch.boundaries.into_iter().enumerate() {
-            let (natural_start, natural_end) = natural_endpoints[index];
-            let start = patch_vertices[natural_start];
-            let end = patch_vertices[natural_end];
-            let mut stitched = None;
-            for existing in &shared_edges {
-                let reversed = if existing.start == start && existing.end == end {
-                    false
-                } else if existing.start == end && existing.end == start {
-                    true
-                } else {
-                    continue;
-                };
-                if exact_tensor_boundary_equal(&curve, &existing.curve, reversed)? {
-                    stitched = Some((existing.edge, existing.domain.clone()));
-                    break;
-                }
-            }
-            let (edge, domain) = match stitched {
-                Some(stitched) => stitched,
-                None => {
-                    let domain = curve.domain().clone();
-                    let curve_id = builder.curve(curve.clone())?;
-                    let edge = builder.edge(start, end, curve_id, domain.clone())?;
-                    shared_edges.push(StitchedTensorEdge {
-                        start,
-                        end,
-                        curve,
-                        edge,
-                        domain: domain.clone(),
-                    });
-                    (edge, domain)
-                }
-            };
-            edges.push((edge, domain));
-        }
-
-        let mut uses = Vec::with_capacity(4);
-        for index in 0..4 {
-            let (face_start, face_end) = face_endpoints[index];
-            let desired_start = patch_vertices[face_start];
-            let desired_end = patch_vertices[face_end];
-            let (edge, domain) = &edges[index];
-            let edge_record = shared_edges
+        let mut builder = ModelBuilder::new();
+        let mut vertices = Vec::<(Point3, VertexId)>::new();
+        let mut shared_edges = Vec::<StitchedTensorEdge>::new();
+        let mut faces = Vec::with_capacity(patches.len());
+        for patch in patches {
+            let patch_vertices = patch
+                .points
                 .iter()
-                .find(|candidate| candidate.edge == *edge)
-                .expect("every stitched edge has one canonical record");
-            let direction = if edge_record.start == desired_start && edge_record.end == desired_end
-            {
-                Direction::Forward
-            } else if edge_record.start == desired_end && edge_record.end == desired_start {
-                Direction::Reversed
-            } else {
-                unreachable!("patch edge endpoints were resolved from the same corners");
-            };
-            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-                LineSeg2::try_new(
-                    patch.parameters[face_start].clone(),
-                    patch.parameters[face_end].clone(),
-                )
-                .map_err(GeometryError::from)?,
-            )))?;
-            let correspondence = match direction {
-                Direction::Forward => ParameterCorrespondence::affine(
-                    domain.end() - domain.start(),
-                    domain.start().clone(),
-                )?,
-                Direction::Reversed => ParameterCorrespondence::affine(
-                    domain.start() - domain.end(),
-                    domain.end().clone(),
-                )?,
-            };
-            uses.push(builder.edge_use(*edge, direction, pcurve, correspondence)?);
+                .map(|point| exact_patch_vertex(&mut builder, &mut vertices, point))
+                .collect::<Result<Vec<_>, _>>()?;
+            let surface = builder.surface(patch.surface)?;
+            let natural_endpoints = [(0, 1), (1, 2), (3, 2), (0, 3)];
+            let face_endpoints = [(0, 1), (1, 2), (2, 3), (3, 0)];
+            let mut edges = Vec::with_capacity(4);
+            for (index, curve) in patch.boundaries.into_iter().enumerate() {
+                let (natural_start, natural_end) = natural_endpoints[index];
+                let start = patch_vertices[natural_start];
+                let end = patch_vertices[natural_end];
+                let mut stitched = None;
+                for existing in &shared_edges {
+                    let reversed = if existing.start == start && existing.end == end {
+                        false
+                    } else if existing.start == end && existing.end == start {
+                        true
+                    } else {
+                        continue;
+                    };
+                    if exact_tensor_boundary_equal(&curve, &existing.curve, reversed)? {
+                        stitched = Some((existing.edge, existing.domain.clone()));
+                        break;
+                    }
+                }
+                let (edge, domain) = match stitched {
+                    Some(stitched) => stitched,
+                    None => {
+                        let domain = curve.domain().clone();
+                        let curve_id = builder.curve(curve.clone())?;
+                        let edge = builder.edge(start, end, curve_id, domain.clone())?;
+                        shared_edges.push(StitchedTensorEdge {
+                            start,
+                            end,
+                            curve,
+                            edge,
+                            domain: domain.clone(),
+                        });
+                        (edge, domain)
+                    }
+                };
+                edges.push((edge, domain));
+            }
+
+            let mut uses = Vec::with_capacity(4);
+            for index in 0..4 {
+                let (face_start, face_end) = face_endpoints[index];
+                let desired_start = patch_vertices[face_start];
+                let desired_end = patch_vertices[face_end];
+                let (edge, domain) = &edges[index];
+                let edge_record = shared_edges
+                    .iter()
+                    .find(|candidate| candidate.edge == *edge)
+                    .expect("every stitched edge has one canonical record");
+                let direction =
+                    if edge_record.start == desired_start && edge_record.end == desired_end {
+                        Direction::Forward
+                    } else if edge_record.start == desired_end && edge_record.end == desired_start {
+                        Direction::Reversed
+                    } else {
+                        unreachable!("patch edge endpoints were resolved from the same corners");
+                    };
+                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(
+                        patch.parameters[face_start].clone(),
+                        patch.parameters[face_end].clone(),
+                    )
+                    .map_err(GeometryError::from)?,
+                )))?;
+                let correspondence = match direction {
+                    Direction::Forward => ParameterCorrespondence::affine(
+                        domain.end() - domain.start(),
+                        domain.start().clone(),
+                    )?,
+                    Direction::Reversed => ParameterCorrespondence::affine(
+                        domain.start() - domain.end(),
+                        domain.end().clone(),
+                    )?,
+                };
+                uses.push(builder.edge_use(*edge, direction, pcurve, correspondence)?);
+            }
+            let wire = builder.wire(uses)?;
+            faces.push(builder.face(surface, Orientation::Forward, wire, Vec::new())?);
         }
-        let wire = builder.wire(uses)?;
-        faces.push(builder.face(surface, Orientation::Forward, wire, Vec::new())?);
-    }
-    builder.shell(faces.clone())?;
-    Ok((builder.finish()?, faces))
+        builder.shell(faces.clone())?;
+        Ok((builder.finish()?, faces))
+    })
 }
 
 struct TensorPatchBuildData {
@@ -985,195 +1001,207 @@ fn build_rectangular_face_patch(
 /// each cap, four axial edges, two planar caps, and four trimmed faces sharing
 /// one native cylindrical surface. No polygonal approximation is introduced.
 pub fn cylinder(radius: Real, height: Real) -> Result<(Model, SolidId), ConstructionError> {
-    require_increasing(&Real::zero(), &height, Axis::Z)?;
-    let mut builder = ModelBuilder::new();
-    let zero = Real::zero();
-    let points_2d = [
-        CurvePoint2::new(radius.clone(), zero.clone()),
-        CurvePoint2::new(zero.clone(), radius.clone()),
-        CurvePoint2::new(-radius.clone(), zero.clone()),
-        CurvePoint2::new(zero.clone(), -radius.clone()),
-    ];
-    let mut points = Vec::with_capacity(8);
-    points.extend(
-        points_2d
+    crate::context::strict(|| {
+        require_increasing(&Real::zero(), &height, Axis::Z)?;
+        let mut builder = ModelBuilder::new();
+        let zero = Real::zero();
+        let points_2d = [
+            CurvePoint2::new(radius.clone(), zero.clone()),
+            CurvePoint2::new(zero.clone(), radius.clone()),
+            CurvePoint2::new(-radius.clone(), zero.clone()),
+            CurvePoint2::new(zero.clone(), -radius.clone()),
+        ];
+        let mut points = Vec::with_capacity(8);
+        points.extend(
+            points_2d
+                .iter()
+                .map(|point| Point3::new(point.x().clone(), point.y().clone(), Real::zero())),
+        );
+        points.extend(
+            points_2d
+                .iter()
+                .map(|point| Point3::new(point.x().clone(), point.y().clone(), height.clone())),
+        );
+        let vertices = points
             .iter()
-            .map(|point| Point3::new(point.x().clone(), point.y().clone(), Real::zero())),
-    );
-    points.extend(
-        points_2d
-            .iter()
-            .map(|point| Point3::new(point.x().clone(), point.y().clone(), height.clone())),
-    );
-    let vertices = points
-        .iter()
-        .cloned()
-        .map(|point| builder.vertex(point))
-        .collect::<Result<Vec<_>, _>>()?;
-    let half_pi = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
-    let mut bottom_edges = Vec::with_capacity(4);
-    let mut top_edges = Vec::with_capacity(4);
-    for index in 0..4 {
-        let next = (index + 1) % 4;
-        let start_angle = &half_pi * Real::from(index as i32);
-        let end_angle = &half_pi * Real::from(index as i32 + 1);
-        let domain = ParameterDomain::new(start_angle.clone(), end_angle.clone())?;
-        let bottom_curve = builder.curve(Curve3::circle_arc(
+            .cloned()
+            .map(|point| builder.vertex(point))
+            .collect::<Result<Vec<_>, _>>()?;
+        let half_pi = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
+        let mut bottom_edges = Vec::with_capacity(4);
+        let mut top_edges = Vec::with_capacity(4);
+        for index in 0..4 {
+            let next = (index + 1) % 4;
+            let start_angle = &half_pi * Real::from(index as i32);
+            let end_angle = &half_pi * Real::from(index as i32 + 1);
+            let domain = ParameterDomain::new(start_angle.clone(), end_angle.clone())?;
+            let bottom_curve = builder.curve(Curve3::circle_arc(
+                Point3::origin(),
+                Vector3::x(),
+                Vector3::y(),
+                radius.clone(),
+                start_angle.clone(),
+                end_angle.clone(),
+            )?)?;
+            bottom_edges.push(builder.edge(
+                vertices[index],
+                vertices[next],
+                bottom_curve,
+                domain.clone(),
+            )?);
+            let top_curve = builder.curve(Curve3::circle_arc(
+                Point3::new(Real::zero(), Real::zero(), height.clone()),
+                Vector3::x(),
+                Vector3::y(),
+                radius.clone(),
+                start_angle,
+                end_angle,
+            )?)?;
+            top_edges.push(builder.edge(
+                vertices[index + 4],
+                vertices[next + 4],
+                top_curve,
+                domain,
+            )?);
+        }
+        let mut axial_edges = Vec::with_capacity(4);
+        for index in 0..4 {
+            let curve = builder.curve(Curve3::line(
+                points[index].clone(),
+                points[index + 4].clone(),
+            )?)?;
+            axial_edges.push(builder.edge(
+                vertices[index],
+                vertices[index + 4],
+                curve,
+                ParameterDomain::unit(),
+            )?);
+        }
+
+        let bottom_surface = builder.surface(Surface::plane(
             Point3::origin(),
             Vector3::x(),
             Vector3::y(),
-            radius.clone(),
-            start_angle.clone(),
-            end_angle.clone(),
         )?)?;
-        bottom_edges.push(builder.edge(
-            vertices[index],
-            vertices[next],
-            bottom_curve,
-            domain.clone(),
-        )?);
-        let top_curve = builder.curve(Curve3::circle_arc(
+        let mut bottom_uses = Vec::with_capacity(4);
+        for index in (0..4).rev() {
+            let next = (index + 1) % 4;
+            let arc = CircularArc2::try_from_center(
+                points_2d[next].clone(),
+                points_2d[index].clone(),
+                CurvePoint2::new(Real::zero(), Real::zero()),
+                true,
+            )
+            .map_err(GeometryError::from)?;
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(arc)))?;
+            bottom_uses.push(builder.edge_use(
+                bottom_edges[index],
+                Direction::Reversed,
+                pcurve,
+                ParameterCorrespondence::angular_sweep(),
+            )?);
+        }
+        let bottom_wire = builder.wire(bottom_uses)?;
+        let bottom_face = builder.face(
+            bottom_surface,
+            Orientation::Reversed,
+            bottom_wire,
+            Vec::new(),
+        )?;
+
+        let top_surface = builder.surface(Surface::plane(
             Point3::new(Real::zero(), Real::zero(), height.clone()),
             Vector3::x(),
             Vector3::y(),
-            radius.clone(),
-            start_angle,
-            end_angle,
         )?)?;
-        top_edges.push(builder.edge(vertices[index + 4], vertices[next + 4], top_curve, domain)?);
-    }
-    let mut axial_edges = Vec::with_capacity(4);
-    for index in 0..4 {
-        let curve = builder.curve(Curve3::line(
-            points[index].clone(),
-            points[index + 4].clone(),
-        )?)?;
-        axial_edges.push(builder.edge(
-            vertices[index],
-            vertices[index + 4],
-            curve,
-            ParameterDomain::unit(),
-        )?);
-    }
-
-    let bottom_surface = builder.surface(Surface::plane(
-        Point3::origin(),
-        Vector3::x(),
-        Vector3::y(),
-    )?)?;
-    let mut bottom_uses = Vec::with_capacity(4);
-    for index in (0..4).rev() {
-        let next = (index + 1) % 4;
-        let arc = CircularArc2::try_from_center(
-            points_2d[next].clone(),
-            points_2d[index].clone(),
-            CurvePoint2::new(Real::zero(), Real::zero()),
-            true,
-        )
-        .map_err(GeometryError::from)?;
-        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(arc)))?;
-        bottom_uses.push(builder.edge_use(
-            bottom_edges[index],
-            Direction::Reversed,
-            pcurve,
-            ParameterCorrespondence::angular_sweep(),
-        )?);
-    }
-    let bottom_wire = builder.wire(bottom_uses)?;
-    let bottom_face = builder.face(
-        bottom_surface,
-        Orientation::Reversed,
-        bottom_wire,
-        Vec::new(),
-    )?;
-
-    let top_surface = builder.surface(Surface::plane(
-        Point3::new(Real::zero(), Real::zero(), height.clone()),
-        Vector3::x(),
-        Vector3::y(),
-    )?)?;
-    let mut top_uses = Vec::with_capacity(4);
-    for index in 0..4 {
-        let next = (index + 1) % 4;
-        let arc = CircularArc2::try_from_center(
-            points_2d[index].clone(),
-            points_2d[next].clone(),
-            CurvePoint2::new(Real::zero(), Real::zero()),
-            false,
-        )
-        .map_err(GeometryError::from)?;
-        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(arc)))?;
-        top_uses.push(builder.edge_use(
-            top_edges[index],
-            Direction::Forward,
-            pcurve,
-            ParameterCorrespondence::angular_sweep(),
-        )?);
-    }
-    let top_wire = builder.wire(top_uses)?;
-    let top_face = builder.face(top_surface, Orientation::Forward, top_wire, Vec::new())?;
-
-    let cylinder_surface = builder.surface(Surface::cylinder(
-        Point3::origin(),
-        Vector3::x(),
-        Vector3::y(),
-        Vector3::z(),
-        radius,
-    )?)?;
-    let mut side_faces = Vec::with_capacity(4);
-    for index in 0..4 {
-        let next = (index + 1) % 4;
-        let start_angle = &half_pi * Real::from(index as i32);
-        let end_angle = &half_pi * Real::from(index as i32 + 1);
-        let span = &end_angle - &start_angle;
-        let specs = [
-            (
-                bottom_edges[index],
-                Direction::Forward,
-                CurvePoint2::new(start_angle.clone(), Real::zero()),
-                CurvePoint2::new(end_angle.clone(), Real::zero()),
-                ParameterCorrespondence::affine(span.clone(), start_angle.clone())?,
-            ),
-            (
-                axial_edges[next],
-                Direction::Forward,
-                CurvePoint2::new(end_angle.clone(), Real::zero()),
-                CurvePoint2::new(end_angle.clone(), height.clone()),
-                ParameterCorrespondence::identity(),
-            ),
-            (
+        let mut top_uses = Vec::with_capacity(4);
+        for index in 0..4 {
+            let next = (index + 1) % 4;
+            let arc = CircularArc2::try_from_center(
+                points_2d[index].clone(),
+                points_2d[next].clone(),
+                CurvePoint2::new(Real::zero(), Real::zero()),
+                false,
+            )
+            .map_err(GeometryError::from)?;
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(arc)))?;
+            top_uses.push(builder.edge_use(
                 top_edges[index],
-                Direction::Reversed,
-                CurvePoint2::new(end_angle.clone(), height.clone()),
-                CurvePoint2::new(start_angle.clone(), height.clone()),
-                ParameterCorrespondence::affine(-span.clone(), end_angle.clone())?,
-            ),
-            (
-                axial_edges[index],
-                Direction::Reversed,
-                CurvePoint2::new(start_angle.clone(), height.clone()),
-                CurvePoint2::new(start_angle, Real::zero()),
-                ParameterCorrespondence::affine(-Real::one(), Real::one())?,
-            ),
-        ];
-        let mut uses = Vec::with_capacity(4);
-        for (edge, direction, start, end, correspondence) in specs {
-            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-                LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
-            )))?;
-            uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+                Direction::Forward,
+                pcurve,
+                ParameterCorrespondence::angular_sweep(),
+            )?);
         }
-        let wire = builder.wire(uses)?;
-        side_faces.push(builder.face(cylinder_surface, Orientation::Forward, wire, Vec::new())?);
-    }
+        let top_wire = builder.wire(top_uses)?;
+        let top_face = builder.face(top_surface, Orientation::Forward, top_wire, Vec::new())?;
 
-    let mut faces = Vec::with_capacity(6);
-    faces.push(bottom_face);
-    faces.push(top_face);
-    faces.extend(side_faces);
-    let shell = builder.shell(faces)?;
-    let solid = builder.solid(shell, Vec::new())?;
-    Ok((builder.finish()?, solid))
+        let cylinder_surface = builder.surface(Surface::cylinder(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            radius,
+        )?)?;
+        let mut side_faces = Vec::with_capacity(4);
+        for index in 0..4 {
+            let next = (index + 1) % 4;
+            let start_angle = &half_pi * Real::from(index as i32);
+            let end_angle = &half_pi * Real::from(index as i32 + 1);
+            let span = &end_angle - &start_angle;
+            let specs = [
+                (
+                    bottom_edges[index],
+                    Direction::Forward,
+                    CurvePoint2::new(start_angle.clone(), Real::zero()),
+                    CurvePoint2::new(end_angle.clone(), Real::zero()),
+                    ParameterCorrespondence::affine(span.clone(), start_angle.clone())?,
+                ),
+                (
+                    axial_edges[next],
+                    Direction::Forward,
+                    CurvePoint2::new(end_angle.clone(), Real::zero()),
+                    CurvePoint2::new(end_angle.clone(), height.clone()),
+                    ParameterCorrespondence::identity(),
+                ),
+                (
+                    top_edges[index],
+                    Direction::Reversed,
+                    CurvePoint2::new(end_angle.clone(), height.clone()),
+                    CurvePoint2::new(start_angle.clone(), height.clone()),
+                    ParameterCorrespondence::affine(-span.clone(), end_angle.clone())?,
+                ),
+                (
+                    axial_edges[index],
+                    Direction::Reversed,
+                    CurvePoint2::new(start_angle.clone(), height.clone()),
+                    CurvePoint2::new(start_angle, Real::zero()),
+                    ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+                ),
+            ];
+            let mut uses = Vec::with_capacity(4);
+            for (edge, direction, start, end, correspondence) in specs {
+                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+                )))?;
+                uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+            }
+            let wire = builder.wire(uses)?;
+            side_faces.push(builder.face(
+                cylinder_surface,
+                Orientation::Forward,
+                wire,
+                Vec::new(),
+            )?);
+        }
+
+        let mut faces = Vec::with_capacity(6);
+        faces.push(bottom_face);
+        faces.push(top_face);
+        faces.extend(side_faces);
+        let shell = builder.shell(faces)?;
+        let solid = builder.solid(shell, Vec::new())?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 /// Constructs one exact sphere centered at the model origin.
@@ -1182,7 +1210,7 @@ pub fn cylinder(radius: Real, height: Real) -> Result<(Model, SolidId), Construc
 /// artificial longitude seam, collapsed pole edge, or tolerance sewing is
 /// introduced.
 pub fn sphere(radius: Real) -> Result<(Model, SolidId), ConstructionError> {
-    sphere_with_voids(radius, &[])
+    crate::context::strict(|| sphere_with_voids(radius, &[]))
 }
 
 /// Constructs one exact origin-centered sphere with disjoint spherical voids.
@@ -1193,31 +1221,33 @@ pub fn sphere_with_voids(
     radius: Real,
     voids: &[SphereVoid],
 ) -> Result<(Model, SolidId), ConstructionError> {
-    let surface = Surface::sphere(
-        Point3::origin(),
-        Vector3::x(),
-        Vector3::y(),
-        Vector3::z(),
-        radius,
-    )?;
-    let mut builder = ModelBuilder::new();
-    let surface = builder.surface(surface)?;
-    let face = builder.whole_face(surface, Orientation::Forward)?;
-    let shell = builder.shell(vec![face])?;
-    let mut void_shells = Vec::with_capacity(voids.len());
-    for void in voids {
-        let surface = builder.surface(Surface::sphere(
-            void.center.clone(),
+    crate::context::strict(|| {
+        let surface = Surface::sphere(
+            Point3::origin(),
             Vector3::x(),
             Vector3::y(),
             Vector3::z(),
-            void.radius.clone(),
-        )?)?;
-        let face = builder.whole_face(surface, Orientation::Reversed)?;
-        void_shells.push(builder.shell(vec![face])?);
-    }
-    let solid = builder.solid(shell, void_shells)?;
-    Ok((builder.finish()?, solid))
+            radius,
+        )?;
+        let mut builder = ModelBuilder::new();
+        let surface = builder.surface(surface)?;
+        let face = builder.whole_face(surface, Orientation::Forward)?;
+        let shell = builder.shell(vec![face])?;
+        let mut void_shells = Vec::with_capacity(voids.len());
+        for void in voids {
+            let surface = builder.surface(Surface::sphere(
+                void.center.clone(),
+                Vector3::x(),
+                Vector3::y(),
+                Vector3::z(),
+                void.radius.clone(),
+            )?)?;
+            let face = builder.whole_face(surface, Orientation::Reversed)?;
+            void_shells.push(builder.shell(vec![face])?);
+        }
+        let solid = builder.solid(shell, void_shells)?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 pub(crate) fn sphere_pair_boolean(
@@ -1400,212 +1430,216 @@ pub fn cone_frustum(
     top_radius: Real,
     height: Real,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    require_increasing(&Real::zero(), &height, Axis::Z)?;
-    require_frustum_radii(&base_radius, &top_radius)?;
-    let radial_drop = &base_radius - &top_radius;
-    let apex_height = (&height * &base_radius / &radial_drop).map_err(GeometryError::Numeric)?;
-    let semi_angle = crate::geometry::certified_atan2(radial_drop.clone(), height.clone())?;
-    let sine = semi_angle.clone().sin();
-    let cosine = semi_angle.clone().cos();
-    let v_bottom = (&base_radius / &sine).map_err(GeometryError::Numeric)?;
-    let v_top = (&top_radius / &sine).map_err(GeometryError::Numeric)?;
-    let bottom_radius = &v_bottom * &sine;
-    let top_radius_on_cone = &v_top * &sine;
-    let bottom_center = Point3::new(
-        Real::zero(),
-        Real::zero(),
-        &apex_height - &v_bottom * &cosine,
-    );
-    let top_center = Point3::new(Real::zero(), Real::zero(), &apex_height - &v_top * &cosine);
-    let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
-    let angles = (0..4)
-        .map(|index| &quarter * Real::from(index))
-        .collect::<Vec<_>>();
-    let cone = Surface::cone(
-        Point3::new(Real::zero(), Real::zero(), apex_height),
-        Vector3::x(),
-        -Vector3::y(),
-        -Vector3::z(),
-        semi_angle,
-    )?;
-    let mut builder = ModelBuilder::new();
-    let cone_surface = builder.surface(cone.clone())?;
-    // Author every incidence in the cone's retained meridian frame. Rebuilding
-    // the cap centers and radii from the nominal inputs asks a general Real
-    // equality predicate to rediscover inverse-trigonometric identities.
-    // Sharing these exact expressions lets topology validate by identity while
-    // preserving the mathematically identical requested dimensions.
-    let mut points = Vec::with_capacity(8);
-    for u in &angles {
-        points.push(
-            bottom_center.clone() + Vector3::x() * (&bottom_radius * u.clone().cos())
-                - Vector3::y() * (&bottom_radius * u.clone().sin()),
+    crate::context::strict(|| {
+        require_increasing(&Real::zero(), &height, Axis::Z)?;
+        require_frustum_radii(&base_radius, &top_radius)?;
+        let radial_drop = &base_radius - &top_radius;
+        let apex_height =
+            (&height * &base_radius / &radial_drop).map_err(GeometryError::Numeric)?;
+        let semi_angle = crate::geometry::certified_atan2(radial_drop.clone(), height.clone())?;
+        let sine = semi_angle.clone().sin();
+        let cosine = semi_angle.clone().cos();
+        let v_bottom = (&base_radius / &sine).map_err(GeometryError::Numeric)?;
+        let v_top = (&top_radius / &sine).map_err(GeometryError::Numeric)?;
+        let bottom_radius = &v_bottom * &sine;
+        let top_radius_on_cone = &v_top * &sine;
+        let bottom_center = Point3::new(
+            Real::zero(),
+            Real::zero(),
+            &apex_height - &v_bottom * &cosine,
         );
-    }
-    for u in &angles {
-        points.push(
-            top_center.clone() + Vector3::x() * (&top_radius_on_cone * u.clone().cos())
-                - Vector3::y() * (&top_radius_on_cone * u.clone().sin()),
-        );
-    }
-    let vertices = points
-        .iter()
-        .cloned()
-        .map(|point| builder.vertex(point))
-        .collect::<Result<Vec<_>, _>>()?;
-
-    let mut bottom_edges = Vec::with_capacity(4);
-    let mut top_edges = Vec::with_capacity(4);
-    for index in 0..4 {
-        let next = (index + 1) % 4;
-        let start = angles[index].clone();
-        let end = &quarter * Real::from((index + 1) as i32);
-        let bottom_curve = builder.curve(Curve3::circle_arc(
-            bottom_center.clone(),
+        let top_center = Point3::new(Real::zero(), Real::zero(), &apex_height - &v_top * &cosine);
+        let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
+        let angles = (0..4)
+            .map(|index| &quarter * Real::from(index))
+            .collect::<Vec<_>>();
+        let cone = Surface::cone(
+            Point3::new(Real::zero(), Real::zero(), apex_height),
             Vector3::x(),
             -Vector3::y(),
-            bottom_radius.clone(),
-            start.clone(),
-            end.clone(),
-        )?)?;
-        bottom_edges.push(builder.edge(
-            vertices[index],
-            vertices[next],
-            bottom_curve,
-            ParameterDomain::new(start.clone(), end.clone())?,
-        )?);
-        let top_curve = builder.curve(Curve3::circle_arc(
-            top_center.clone(),
-            Vector3::x(),
-            -Vector3::y(),
-            top_radius_on_cone.clone(),
-            start.clone(),
-            end.clone(),
-        )?)?;
-        top_edges.push(builder.edge(
-            vertices[index + 4],
-            vertices[next + 4],
-            top_curve,
-            ParameterDomain::new(start, end)?,
-        )?);
-    }
-    let mut generators = Vec::with_capacity(4);
-    for index in 0..4 {
-        let curve = builder.curve(Curve3::line(
-            points[index].clone(),
-            points[index + 4].clone(),
-        )?)?;
-        generators.push(builder.edge(
-            vertices[index],
-            vertices[index + 4],
-            curve,
-            ParameterDomain::unit(),
-        )?);
-    }
-
-    let center = CurvePoint2::new(Real::zero(), Real::zero());
-    let bottom_surface =
-        builder.surface(Surface::plane(bottom_center, Vector3::x(), Vector3::y())?)?;
-    let mut bottom_uses = Vec::with_capacity(4);
-    for index in 0..4 {
-        let next = (index + 1) % 4;
-        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-            CircularArc2::try_from_center(
-                CurvePoint2::new(points[index].x.clone(), points[index].y.clone()),
-                CurvePoint2::new(points[next].x.clone(), points[next].y.clone()),
-                center.clone(),
-                true,
-            )
-            .map_err(GeometryError::from)?,
-        )))?;
-        bottom_uses.push(builder.edge_use(
-            bottom_edges[index],
-            Direction::Forward,
-            pcurve,
-            ParameterCorrespondence::angular_sweep(),
-        )?);
-    }
-    let bottom_wire = builder.wire(bottom_uses)?;
-    let bottom_face = builder.face(
-        bottom_surface,
-        Orientation::Reversed,
-        bottom_wire,
-        Vec::new(),
-    )?;
-
-    let top_surface = builder.surface(Surface::plane(top_center, Vector3::x(), Vector3::y())?)?;
-    let mut top_uses = Vec::with_capacity(4);
-    for index in (0..4).rev() {
-        let next = (index + 1) % 4;
-        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-            CircularArc2::try_from_center(
-                CurvePoint2::new(points[next + 4].x.clone(), points[next + 4].y.clone()),
-                CurvePoint2::new(points[index + 4].x.clone(), points[index + 4].y.clone()),
-                center.clone(),
-                false,
-            )
-            .map_err(GeometryError::from)?,
-        )))?;
-        top_uses.push(builder.edge_use(
-            top_edges[index],
-            Direction::Reversed,
-            pcurve,
-            ParameterCorrespondence::angular_sweep(),
-        )?);
-    }
-    let top_wire = builder.wire(top_uses)?;
-    let top_face = builder.face(top_surface, Orientation::Forward, top_wire, Vec::new())?;
-
-    let mut side_faces = Vec::with_capacity(4);
-    for index in 0..4 {
-        let next = (index + 1) % 4;
-        let u_start = angles[index].clone();
-        let u_end = &quarter * Real::from((index + 1) as i32);
-        let specs = [
-            (
-                top_edges[index],
-                Direction::Forward,
-                CurvePoint2::new(u_start.clone(), v_top.clone()),
-                CurvePoint2::new(u_end.clone(), v_top.clone()),
-                ParameterCorrespondence::affine(quarter.clone(), u_start.clone())?,
-            ),
-            (
-                generators[next],
-                Direction::Reversed,
-                CurvePoint2::new(u_end.clone(), v_top.clone()),
-                CurvePoint2::new(u_end.clone(), v_bottom.clone()),
-                ParameterCorrespondence::affine(-Real::one(), Real::one())?,
-            ),
-            (
-                bottom_edges[index],
-                Direction::Reversed,
-                CurvePoint2::new(u_end.clone(), v_bottom.clone()),
-                CurvePoint2::new(u_start.clone(), v_bottom.clone()),
-                ParameterCorrespondence::affine(-quarter.clone(), u_end)?,
-            ),
-            (
-                generators[index],
-                Direction::Forward,
-                CurvePoint2::new(u_start.clone(), v_bottom.clone()),
-                CurvePoint2::new(u_start, v_top.clone()),
-                ParameterCorrespondence::identity(),
-            ),
-        ];
-        let mut uses = Vec::with_capacity(4);
-        for (edge, direction, start, end, correspondence) in specs {
-            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-                LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
-            )))?;
-            uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+            -Vector3::z(),
+            semi_angle,
+        )?;
+        let mut builder = ModelBuilder::new();
+        let cone_surface = builder.surface(cone.clone())?;
+        // Author every incidence in the cone's retained meridian frame. Rebuilding
+        // the cap centers and radii from the nominal inputs asks a general Real
+        // equality predicate to rediscover inverse-trigonometric identities.
+        // Sharing these exact expressions lets topology validate by identity while
+        // preserving the mathematically identical requested dimensions.
+        let mut points = Vec::with_capacity(8);
+        for u in &angles {
+            points.push(
+                bottom_center.clone() + Vector3::x() * (&bottom_radius * u.clone().cos())
+                    - Vector3::y() * (&bottom_radius * u.clone().sin()),
+            );
         }
-        let wire = builder.wire(uses)?;
-        side_faces.push(builder.face(cone_surface, Orientation::Forward, wire, Vec::new())?);
-    }
-    let mut faces = vec![bottom_face, top_face];
-    faces.extend(side_faces);
-    let shell = builder.shell(faces)?;
-    let solid = builder.solid(shell, Vec::new())?;
-    Ok((builder.finish()?, solid))
+        for u in &angles {
+            points.push(
+                top_center.clone() + Vector3::x() * (&top_radius_on_cone * u.clone().cos())
+                    - Vector3::y() * (&top_radius_on_cone * u.clone().sin()),
+            );
+        }
+        let vertices = points
+            .iter()
+            .cloned()
+            .map(|point| builder.vertex(point))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let mut bottom_edges = Vec::with_capacity(4);
+        let mut top_edges = Vec::with_capacity(4);
+        for index in 0..4 {
+            let next = (index + 1) % 4;
+            let start = angles[index].clone();
+            let end = &quarter * Real::from((index + 1) as i32);
+            let bottom_curve = builder.curve(Curve3::circle_arc(
+                bottom_center.clone(),
+                Vector3::x(),
+                -Vector3::y(),
+                bottom_radius.clone(),
+                start.clone(),
+                end.clone(),
+            )?)?;
+            bottom_edges.push(builder.edge(
+                vertices[index],
+                vertices[next],
+                bottom_curve,
+                ParameterDomain::new(start.clone(), end.clone())?,
+            )?);
+            let top_curve = builder.curve(Curve3::circle_arc(
+                top_center.clone(),
+                Vector3::x(),
+                -Vector3::y(),
+                top_radius_on_cone.clone(),
+                start.clone(),
+                end.clone(),
+            )?)?;
+            top_edges.push(builder.edge(
+                vertices[index + 4],
+                vertices[next + 4],
+                top_curve,
+                ParameterDomain::new(start, end)?,
+            )?);
+        }
+        let mut generators = Vec::with_capacity(4);
+        for index in 0..4 {
+            let curve = builder.curve(Curve3::line(
+                points[index].clone(),
+                points[index + 4].clone(),
+            )?)?;
+            generators.push(builder.edge(
+                vertices[index],
+                vertices[index + 4],
+                curve,
+                ParameterDomain::unit(),
+            )?);
+        }
+
+        let center = CurvePoint2::new(Real::zero(), Real::zero());
+        let bottom_surface =
+            builder.surface(Surface::plane(bottom_center, Vector3::x(), Vector3::y())?)?;
+        let mut bottom_uses = Vec::with_capacity(4);
+        for index in 0..4 {
+            let next = (index + 1) % 4;
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                CircularArc2::try_from_center(
+                    CurvePoint2::new(points[index].x.clone(), points[index].y.clone()),
+                    CurvePoint2::new(points[next].x.clone(), points[next].y.clone()),
+                    center.clone(),
+                    true,
+                )
+                .map_err(GeometryError::from)?,
+            )))?;
+            bottom_uses.push(builder.edge_use(
+                bottom_edges[index],
+                Direction::Forward,
+                pcurve,
+                ParameterCorrespondence::angular_sweep(),
+            )?);
+        }
+        let bottom_wire = builder.wire(bottom_uses)?;
+        let bottom_face = builder.face(
+            bottom_surface,
+            Orientation::Reversed,
+            bottom_wire,
+            Vec::new(),
+        )?;
+
+        let top_surface =
+            builder.surface(Surface::plane(top_center, Vector3::x(), Vector3::y())?)?;
+        let mut top_uses = Vec::with_capacity(4);
+        for index in (0..4).rev() {
+            let next = (index + 1) % 4;
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                CircularArc2::try_from_center(
+                    CurvePoint2::new(points[next + 4].x.clone(), points[next + 4].y.clone()),
+                    CurvePoint2::new(points[index + 4].x.clone(), points[index + 4].y.clone()),
+                    center.clone(),
+                    false,
+                )
+                .map_err(GeometryError::from)?,
+            )))?;
+            top_uses.push(builder.edge_use(
+                top_edges[index],
+                Direction::Reversed,
+                pcurve,
+                ParameterCorrespondence::angular_sweep(),
+            )?);
+        }
+        let top_wire = builder.wire(top_uses)?;
+        let top_face = builder.face(top_surface, Orientation::Forward, top_wire, Vec::new())?;
+
+        let mut side_faces = Vec::with_capacity(4);
+        for index in 0..4 {
+            let next = (index + 1) % 4;
+            let u_start = angles[index].clone();
+            let u_end = &quarter * Real::from((index + 1) as i32);
+            let specs = [
+                (
+                    top_edges[index],
+                    Direction::Forward,
+                    CurvePoint2::new(u_start.clone(), v_top.clone()),
+                    CurvePoint2::new(u_end.clone(), v_top.clone()),
+                    ParameterCorrespondence::affine(quarter.clone(), u_start.clone())?,
+                ),
+                (
+                    generators[next],
+                    Direction::Reversed,
+                    CurvePoint2::new(u_end.clone(), v_top.clone()),
+                    CurvePoint2::new(u_end.clone(), v_bottom.clone()),
+                    ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+                ),
+                (
+                    bottom_edges[index],
+                    Direction::Reversed,
+                    CurvePoint2::new(u_end.clone(), v_bottom.clone()),
+                    CurvePoint2::new(u_start.clone(), v_bottom.clone()),
+                    ParameterCorrespondence::affine(-quarter.clone(), u_end)?,
+                ),
+                (
+                    generators[index],
+                    Direction::Forward,
+                    CurvePoint2::new(u_start.clone(), v_bottom.clone()),
+                    CurvePoint2::new(u_start, v_top.clone()),
+                    ParameterCorrespondence::identity(),
+                ),
+            ];
+            let mut uses = Vec::with_capacity(4);
+            for (edge, direction, start, end, correspondence) in specs {
+                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+                )))?;
+                uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+            }
+            let wire = builder.wire(uses)?;
+            side_faces.push(builder.face(cone_surface, Orientation::Forward, wire, Vec::new())?);
+        }
+        let mut faces = vec![bottom_face, top_face];
+        faces.extend(side_faces);
+        let shell = builder.shell(faces)?;
+        let solid = builder.solid(shell, Vec::new())?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 /// Builds a standard z-axis ring torus centered at the origin.
@@ -1617,136 +1651,138 @@ pub fn torus(
     major_radius: Real,
     minor_radius: Real,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    let surface = Surface::torus(
-        Point3::origin(),
-        Vector3::x(),
-        Vector3::y(),
-        Vector3::z(),
-        major_radius.clone(),
-        minor_radius.clone(),
-    )?;
-    let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
-    let angles = (0..4)
-        .map(|index| &quarter * Real::from(index))
-        .collect::<Vec<_>>();
-    let mut builder = ModelBuilder::new();
-    let surface_id = builder.surface(surface.clone())?;
-    let mut points = Vec::with_capacity(16);
-    for u in &angles {
-        for v in &angles {
-            points.push(surface.point_at(&Point2::new(u.clone(), v.clone()))?);
-        }
-    }
-    let vertices = points
-        .iter()
-        .cloned()
-        .map(|point| builder.vertex(point))
-        .collect::<Result<Vec<_>, _>>()?;
-    let index = |u: usize, v: usize| u * 4 + v;
-
-    let mut u_edges = Vec::with_capacity(16);
-    for u_index in 0..4 {
-        let next_u = (u_index + 1) % 4;
-        let u_start = angles[u_index].clone();
-        let u_end = &quarter * Real::from((u_index + 1) as i32);
-        for (v_index, v) in angles.iter().enumerate() {
-            let center = Point3::origin() + Vector3::z() * (&minor_radius * v.clone().sin());
-            let radius = &major_radius + &minor_radius * v.clone().cos();
-            let curve = builder.curve(Curve3::circle_arc(
-                center,
-                Vector3::x(),
-                Vector3::y(),
-                radius,
-                u_start.clone(),
-                u_end.clone(),
-            )?)?;
-            u_edges.push(builder.edge(
-                vertices[index(u_index, v_index)],
-                vertices[index(next_u, v_index)],
-                curve,
-                ParameterDomain::new(u_start.clone(), u_end.clone())?,
-            )?);
-        }
-    }
-
-    let mut v_edges = Vec::with_capacity(16);
-    for (u_index, u) in angles.iter().enumerate() {
-        let radial = Vector3::x() * u.clone().cos() + Vector3::y() * u.clone().sin();
-        let center = Point3::origin() + radial.clone() * &major_radius;
-        for v_index in 0..4 {
-            let next_v = (v_index + 1) % 4;
-            let v_start = angles[v_index].clone();
-            let v_end = &quarter * Real::from((v_index + 1) as i32);
-            let curve = builder.curve(Curve3::circle_arc(
-                center.clone(),
-                radial.clone(),
-                Vector3::z(),
-                minor_radius.clone(),
-                v_start.clone(),
-                v_end.clone(),
-            )?)?;
-            v_edges.push(builder.edge(
-                vertices[index(u_index, v_index)],
-                vertices[index(u_index, next_v)],
-                curve,
-                ParameterDomain::new(v_start, v_end)?,
-            )?);
-        }
-    }
-
-    let mut faces = Vec::with_capacity(16);
-    for u_index in 0..4 {
-        let next_u = (u_index + 1) % 4;
-        let u_start = angles[u_index].clone();
-        let u_end = &quarter * Real::from((u_index + 1) as i32);
-        for v_index in 0..4 {
-            let next_v = (v_index + 1) % 4;
-            let v_start = angles[v_index].clone();
-            let v_end = &quarter * Real::from((v_index + 1) as i32);
-            let specs = [
-                (
-                    u_edges[index(u_index, v_index)],
-                    Direction::Forward,
-                    CurvePoint2::new(u_start.clone(), v_start.clone()),
-                    CurvePoint2::new(u_end.clone(), v_start.clone()),
-                    ParameterCorrespondence::affine(quarter.clone(), u_start.clone())?,
-                ),
-                (
-                    v_edges[index(next_u, v_index)],
-                    Direction::Forward,
-                    CurvePoint2::new(u_end.clone(), v_start.clone()),
-                    CurvePoint2::new(u_end.clone(), v_end.clone()),
-                    ParameterCorrespondence::affine(quarter.clone(), v_start.clone())?,
-                ),
-                (
-                    u_edges[index(u_index, next_v)],
-                    Direction::Reversed,
-                    CurvePoint2::new(u_end.clone(), v_end.clone()),
-                    CurvePoint2::new(u_start.clone(), v_end.clone()),
-                    ParameterCorrespondence::affine(-quarter.clone(), u_end.clone())?,
-                ),
-                (
-                    v_edges[index(u_index, v_index)],
-                    Direction::Reversed,
-                    CurvePoint2::new(u_start.clone(), v_end.clone()),
-                    CurvePoint2::new(u_start.clone(), v_start.clone()),
-                    ParameterCorrespondence::affine(-quarter.clone(), v_end.clone())?,
-                ),
-            ];
-            let mut uses = Vec::with_capacity(4);
-            for (edge, direction, start, end, correspondence) in specs {
-                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-                    LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
-                )))?;
-                uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+    crate::context::strict(|| {
+        let surface = Surface::torus(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            major_radius.clone(),
+            minor_radius.clone(),
+        )?;
+        let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
+        let angles = (0..4)
+            .map(|index| &quarter * Real::from(index))
+            .collect::<Vec<_>>();
+        let mut builder = ModelBuilder::new();
+        let surface_id = builder.surface(surface.clone())?;
+        let mut points = Vec::with_capacity(16);
+        for u in &angles {
+            for v in &angles {
+                points.push(surface.point_at(&Point2::new(u.clone(), v.clone()))?);
             }
-            let wire = builder.wire(uses)?;
-            faces.push(builder.face(surface_id, Orientation::Forward, wire, Vec::new())?);
         }
-    }
-    let shell = builder.shell(faces)?;
-    let solid = builder.solid(shell, Vec::new())?;
-    Ok((builder.finish()?, solid))
+        let vertices = points
+            .iter()
+            .cloned()
+            .map(|point| builder.vertex(point))
+            .collect::<Result<Vec<_>, _>>()?;
+        let index = |u: usize, v: usize| u * 4 + v;
+
+        let mut u_edges = Vec::with_capacity(16);
+        for u_index in 0..4 {
+            let next_u = (u_index + 1) % 4;
+            let u_start = angles[u_index].clone();
+            let u_end = &quarter * Real::from((u_index + 1) as i32);
+            for (v_index, v) in angles.iter().enumerate() {
+                let center = Point3::origin() + Vector3::z() * (&minor_radius * v.clone().sin());
+                let radius = &major_radius + &minor_radius * v.clone().cos();
+                let curve = builder.curve(Curve3::circle_arc(
+                    center,
+                    Vector3::x(),
+                    Vector3::y(),
+                    radius,
+                    u_start.clone(),
+                    u_end.clone(),
+                )?)?;
+                u_edges.push(builder.edge(
+                    vertices[index(u_index, v_index)],
+                    vertices[index(next_u, v_index)],
+                    curve,
+                    ParameterDomain::new(u_start.clone(), u_end.clone())?,
+                )?);
+            }
+        }
+
+        let mut v_edges = Vec::with_capacity(16);
+        for (u_index, u) in angles.iter().enumerate() {
+            let radial = Vector3::x() * u.clone().cos() + Vector3::y() * u.clone().sin();
+            let center = Point3::origin() + radial.clone() * &major_radius;
+            for v_index in 0..4 {
+                let next_v = (v_index + 1) % 4;
+                let v_start = angles[v_index].clone();
+                let v_end = &quarter * Real::from((v_index + 1) as i32);
+                let curve = builder.curve(Curve3::circle_arc(
+                    center.clone(),
+                    radial.clone(),
+                    Vector3::z(),
+                    minor_radius.clone(),
+                    v_start.clone(),
+                    v_end.clone(),
+                )?)?;
+                v_edges.push(builder.edge(
+                    vertices[index(u_index, v_index)],
+                    vertices[index(u_index, next_v)],
+                    curve,
+                    ParameterDomain::new(v_start, v_end)?,
+                )?);
+            }
+        }
+
+        let mut faces = Vec::with_capacity(16);
+        for u_index in 0..4 {
+            let next_u = (u_index + 1) % 4;
+            let u_start = angles[u_index].clone();
+            let u_end = &quarter * Real::from((u_index + 1) as i32);
+            for v_index in 0..4 {
+                let next_v = (v_index + 1) % 4;
+                let v_start = angles[v_index].clone();
+                let v_end = &quarter * Real::from((v_index + 1) as i32);
+                let specs = [
+                    (
+                        u_edges[index(u_index, v_index)],
+                        Direction::Forward,
+                        CurvePoint2::new(u_start.clone(), v_start.clone()),
+                        CurvePoint2::new(u_end.clone(), v_start.clone()),
+                        ParameterCorrespondence::affine(quarter.clone(), u_start.clone())?,
+                    ),
+                    (
+                        v_edges[index(next_u, v_index)],
+                        Direction::Forward,
+                        CurvePoint2::new(u_end.clone(), v_start.clone()),
+                        CurvePoint2::new(u_end.clone(), v_end.clone()),
+                        ParameterCorrespondence::affine(quarter.clone(), v_start.clone())?,
+                    ),
+                    (
+                        u_edges[index(u_index, next_v)],
+                        Direction::Reversed,
+                        CurvePoint2::new(u_end.clone(), v_end.clone()),
+                        CurvePoint2::new(u_start.clone(), v_end.clone()),
+                        ParameterCorrespondence::affine(-quarter.clone(), u_end.clone())?,
+                    ),
+                    (
+                        v_edges[index(u_index, v_index)],
+                        Direction::Reversed,
+                        CurvePoint2::new(u_start.clone(), v_end.clone()),
+                        CurvePoint2::new(u_start.clone(), v_start.clone()),
+                        ParameterCorrespondence::affine(-quarter.clone(), v_end.clone())?,
+                    ),
+                ];
+                let mut uses = Vec::with_capacity(4);
+                for (edge, direction, start, end, correspondence) in specs {
+                    let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                        LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+                    )))?;
+                    uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+                }
+                let wire = builder.wire(uses)?;
+                faces.push(builder.face(surface_id, Orientation::Forward, wire, Vec::new())?);
+            }
+        }
+        let shell = builder.shell(faces)?;
+        let solid = builder.solid(shell, Vec::new())?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 /// Extrudes one exact simple line/arc contour between two z coordinates.
@@ -1760,8 +1796,11 @@ pub fn extrude_contour(
     z_min: Real,
     z_max: Real,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    let (model, solids) = extrude_contour_regions(&[(contour.clone(), Vec::new())], z_min, z_max)?;
-    Ok((model, solids[0]))
+    crate::context::strict(|| {
+        let (model, solids) =
+            extrude_contour_regions(&[(contour.clone(), Vec::new())], z_min, z_max)?;
+        Ok((model, solids[0]))
+    })
 }
 
 /// Extrudes disjoint exact line/arc regions into one validated model.
@@ -1774,38 +1813,40 @@ pub fn extrude_contour_regions(
     z_min: Real,
     z_max: Real,
 ) -> Result<(Model, Vec<SolidId>), ConstructionError> {
-    require_increasing(&z_min, &z_max, Axis::Z)?;
-    let normalized = regions
-        .iter()
-        .map(|(outer, holes)| {
-            let outer = normalize_contour(outer, true)?;
-            let holes = holes
-                .iter()
-                .map(|hole| normalize_contour(hole, false))
-                .collect::<Result<Vec<_>, _>>()?;
-            validate_contour_nesting(&outer, &holes)?;
-            Ok((outer, holes))
-        })
-        .collect::<Result<Vec<_>, ConstructionError>>()?;
-    let mut builder = ModelBuilder::new();
-    let mut solids = Vec::with_capacity(normalized.len());
-    for (outer, holes) in normalized {
-        let mut loops = Vec::with_capacity(holes.len() + 1);
-        loops.push(curve_path_from_contour(&outer)?);
-        loops.extend(
-            holes
-                .iter()
-                .map(curve_path_from_contour)
-                .collect::<Result<Vec<_>, _>>()?,
-        );
-        solids.push(add_curve_path_region(
-            &mut builder,
-            &loops,
-            z_min.clone(),
-            z_max.clone(),
-        )?);
-    }
-    Ok((builder.finish()?, solids))
+    crate::context::strict(|| {
+        require_increasing(&z_min, &z_max, Axis::Z)?;
+        let normalized = regions
+            .iter()
+            .map(|(outer, holes)| {
+                let outer = normalize_contour(outer, true)?;
+                let holes = holes
+                    .iter()
+                    .map(|hole| normalize_contour(hole, false))
+                    .collect::<Result<Vec<_>, _>>()?;
+                validate_contour_nesting(&outer, &holes)?;
+                Ok((outer, holes))
+            })
+            .collect::<Result<Vec<_>, ConstructionError>>()?;
+        let mut builder = ModelBuilder::new();
+        let mut solids = Vec::with_capacity(normalized.len());
+        for (outer, holes) in normalized {
+            let mut loops = Vec::with_capacity(holes.len() + 1);
+            loops.push(curve_path_from_contour(&outer)?);
+            loops.extend(
+                holes
+                    .iter()
+                    .map(curve_path_from_contour)
+                    .collect::<Result<Vec<_>, _>>()?,
+            );
+            solids.push(add_curve_path_region(
+                &mut builder,
+                &loops,
+                z_min.clone(),
+                z_max.clone(),
+            )?);
+        }
+        Ok((builder.finish()?, solids))
+    })
 }
 
 /// Extrudes one exact simple [`CurvePath2`] between two z coordinates.
@@ -1819,7 +1860,7 @@ pub fn extrude_path(
     z_min: Real,
     z_max: Real,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    extrude_path_region(path, &[], z_min, z_max)
+    crate::context::strict(|| extrude_path_region(path, &[], z_min, z_max))
 }
 
 /// Extrudes one exact [`CurvePath2`] material region with disjoint holes.
@@ -1829,8 +1870,11 @@ pub fn extrude_path_region(
     z_min: Real,
     z_max: Real,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    let (model, solids) = extrude_path_regions(&[(outer.clone(), holes.to_vec())], z_min, z_max)?;
-    Ok((model, solids[0]))
+    crate::context::strict(|| {
+        let (model, solids) =
+            extrude_path_regions(&[(outer.clone(), holes.to_vec())], z_min, z_max)?;
+        Ok((model, solids[0]))
+    })
 }
 
 /// Extrudes disjoint exact [`CurvePath2`] regions into one validated model.
@@ -1844,33 +1888,35 @@ pub fn extrude_path_regions(
     z_min: Real,
     z_max: Real,
 ) -> Result<(Model, Vec<SolidId>), ConstructionError> {
-    require_increasing(&z_min, &z_max, Axis::Z)?;
-    let normalized = regions
-        .iter()
-        .map(|(outer, holes)| {
-            let outer = normalize_planar_path(outer, true)?;
-            let holes = holes
-                .iter()
-                .map(|hole| normalize_planar_path(hole, false))
-                .collect::<Result<Vec<_>, _>>()?;
-            validate_planar_path_nesting(&outer, &holes)?;
-            Ok((outer, holes))
-        })
-        .collect::<Result<Vec<_>, ConstructionError>>()?;
-    let mut builder = ModelBuilder::new();
-    let mut solids = Vec::with_capacity(normalized.len());
-    for (outer, holes) in normalized {
-        let mut loops = Vec::with_capacity(holes.len() + 1);
-        loops.push(outer);
-        loops.extend(holes);
-        solids.push(add_curve_path_region(
-            &mut builder,
-            &loops,
-            z_min.clone(),
-            z_max.clone(),
-        )?);
-    }
-    Ok((builder.finish()?, solids))
+    crate::context::strict(|| {
+        require_increasing(&z_min, &z_max, Axis::Z)?;
+        let normalized = regions
+            .iter()
+            .map(|(outer, holes)| {
+                let outer = normalize_planar_path(outer, true)?;
+                let holes = holes
+                    .iter()
+                    .map(|hole| normalize_planar_path(hole, false))
+                    .collect::<Result<Vec<_>, _>>()?;
+                validate_planar_path_nesting(&outer, &holes)?;
+                Ok((outer, holes))
+            })
+            .collect::<Result<Vec<_>, ConstructionError>>()?;
+        let mut builder = ModelBuilder::new();
+        let mut solids = Vec::with_capacity(normalized.len());
+        for (outer, holes) in normalized {
+            let mut loops = Vec::with_capacity(holes.len() + 1);
+            loops.push(outer);
+            loops.extend(holes);
+            solids.push(add_curve_path_region(
+                &mut builder,
+                &loops,
+                z_min.clone(),
+                z_max.clone(),
+            )?);
+        }
+        Ok((builder.finish()?, solids))
+    })
 }
 
 /// Extrudes the normalized material components of an exact curve region.
@@ -2349,12 +2395,15 @@ fn curve2_from_segment(segment: &Segment2) -> Curve2 {
 /// revolution carrier split into four exact angular faces. The periodic seam
 /// shares meridian edges by identity rather than tolerance sewing.
 pub fn revolve(profile: &[Point2]) -> Result<(Model, SolidId), ConstructionError> {
-    let profile = normalize_profile(profile, true)?;
-    validate_revolution_profile_radius(&profile)?;
-    let mut builder = ModelBuilder::new();
-    let shell = add_normalized_revolution_shell(&mut builder, &profile, ShellDirection::Outward)?;
-    let solid = builder.solid(shell, Vec::new())?;
-    Ok((builder.finish()?, solid))
+    crate::context::strict(|| {
+        let profile = normalize_profile(profile, true)?;
+        validate_revolution_profile_radius(&profile)?;
+        let mut builder = ModelBuilder::new();
+        let shell =
+            add_normalized_revolution_shell(&mut builder, &profile, ShellDirection::Outward)?;
+        let solid = builder.solid(shell, Vec::new())?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 /// Revolves one exact simple radial/axial region around the z axis.
@@ -2366,25 +2415,27 @@ pub fn revolve_region(
     outer: &[Point2],
     holes: &[Vec<Point2>],
 ) -> Result<(Model, SolidId), ConstructionError> {
-    let outer = normalize_profile(outer, true)?;
-    let holes = holes
-        .iter()
-        .map(|hole| normalize_profile(hole, true))
-        .collect::<Result<Vec<_>, _>>()?;
-    validate_revolution_profile_radius(&outer)?;
-    for hole in &holes {
-        validate_revolution_profile_radius(hole)?;
-    }
-    validate_profile_nesting(&outer, &holes)?;
-    let mut builder = ModelBuilder::new();
-    let outer_shell =
-        add_normalized_revolution_shell(&mut builder, &outer, ShellDirection::Outward)?;
-    let voids = holes
-        .iter()
-        .map(|hole| add_normalized_revolution_shell(&mut builder, hole, ShellDirection::Inward))
-        .collect::<Result<Vec<_>, _>>()?;
-    let solid = builder.solid(outer_shell, voids)?;
-    Ok((builder.finish()?, solid))
+    crate::context::strict(|| {
+        let outer = normalize_profile(outer, true)?;
+        let holes = holes
+            .iter()
+            .map(|hole| normalize_profile(hole, true))
+            .collect::<Result<Vec<_>, _>>()?;
+        validate_revolution_profile_radius(&outer)?;
+        for hole in &holes {
+            validate_revolution_profile_radius(hole)?;
+        }
+        validate_profile_nesting(&outer, &holes)?;
+        let mut builder = ModelBuilder::new();
+        let outer_shell =
+            add_normalized_revolution_shell(&mut builder, &outer, ShellDirection::Outward)?;
+        let voids = holes
+            .iter()
+            .map(|hole| add_normalized_revolution_shell(&mut builder, hole, ShellDirection::Inward))
+            .collect::<Result<Vec<_>, _>>()?;
+        let solid = builder.solid(outer_shell, voids)?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 /// Revolves one exact simple line/arc contour around the z axis.
@@ -2394,12 +2445,17 @@ pub fn revolve_region(
 /// revolution faces. Curved meridians remain native circles; no flattening or
 /// tolerance sewing enters construction.
 pub fn revolve_contour(profile: &Contour2) -> Result<(Model, SolidId), ConstructionError> {
-    let profile = normalize_revolution_contour(profile)?;
-    let mut builder = ModelBuilder::new();
-    let shell =
-        add_normalized_contour_revolution_shell(&mut builder, &profile, ShellDirection::Outward)?;
-    let solid = builder.solid(shell, Vec::new())?;
-    Ok((builder.finish()?, solid))
+    crate::context::strict(|| {
+        let profile = normalize_revolution_contour(profile)?;
+        let mut builder = ModelBuilder::new();
+        let shell = add_normalized_contour_revolution_shell(
+            &mut builder,
+            &profile,
+            ShellDirection::Outward,
+        )?;
+        let solid = builder.solid(shell, Vec::new())?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 /// Revolves one exact closed curved path around the z axis.
@@ -2410,15 +2466,17 @@ pub fn revolve_contour(profile: &Contour2) -> Result<(Model, SolidId), Construct
 /// requires a complete exact simple-loop and orientation certificate; it never
 /// flattens the path to manufacture one.
 pub fn revolve_path(profile: &CurvePath2) -> Result<(Model, SolidId), ConstructionError> {
-    let profile = normalize_revolution_path(profile)?;
-    let mut builder = ModelBuilder::new();
-    let shell = add_normalized_curve_path_revolution_shell(
-        &mut builder,
-        &profile,
-        ShellDirection::Outward,
-    )?;
-    let solid = builder.solid(shell, Vec::new())?;
-    Ok((builder.finish()?, solid))
+    crate::context::strict(|| {
+        let profile = normalize_revolution_path(profile)?;
+        let mut builder = ModelBuilder::new();
+        let shell = add_normalized_curve_path_revolution_shell(
+            &mut builder,
+            &profile,
+            ShellDirection::Outward,
+        )?;
+        let solid = builder.solid(shell, Vec::new())?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 /// Revolves one exact curved-path region with inward profile cavities.
@@ -2430,22 +2488,31 @@ pub fn revolve_path_region(
     outer: &CurvePath2,
     holes: &[CurvePath2],
 ) -> Result<(Model, SolidId), ConstructionError> {
-    let outer = normalize_revolution_path(outer)?;
-    let holes = holes
-        .iter()
-        .map(normalize_revolution_path)
-        .collect::<Result<Vec<_>, _>>()?;
-    let mut builder = ModelBuilder::new();
-    let outer_shell =
-        add_normalized_curve_path_revolution_shell(&mut builder, &outer, ShellDirection::Outward)?;
-    let voids = holes
-        .iter()
-        .map(|hole| {
-            add_normalized_curve_path_revolution_shell(&mut builder, hole, ShellDirection::Inward)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    let solid = builder.solid(outer_shell, voids)?;
-    Ok((builder.finish()?, solid))
+    crate::context::strict(|| {
+        let outer = normalize_revolution_path(outer)?;
+        let holes = holes
+            .iter()
+            .map(normalize_revolution_path)
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut builder = ModelBuilder::new();
+        let outer_shell = add_normalized_curve_path_revolution_shell(
+            &mut builder,
+            &outer,
+            ShellDirection::Outward,
+        )?;
+        let voids = holes
+            .iter()
+            .map(|hole| {
+                add_normalized_curve_path_revolution_shell(
+                    &mut builder,
+                    hole,
+                    ShellDirection::Inward,
+                )
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        let solid = builder.solid(outer_shell, voids)?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 /// Revolves one exact line/arc region with inward profile cavities.
@@ -2453,23 +2520,25 @@ pub fn revolve_contour_region(
     outer: &Contour2,
     holes: &[Contour2],
 ) -> Result<(Model, SolidId), ConstructionError> {
-    let outer = normalize_revolution_contour(outer)?;
-    let holes = holes
-        .iter()
-        .map(normalize_revolution_contour)
-        .collect::<Result<Vec<_>, _>>()?;
-    validate_contour_nesting(&outer, &holes)?;
-    let mut builder = ModelBuilder::new();
-    let outer_shell =
-        add_normalized_contour_revolution_shell(&mut builder, &outer, ShellDirection::Outward)?;
-    let voids = holes
-        .iter()
-        .map(|hole| {
-            add_normalized_contour_revolution_shell(&mut builder, hole, ShellDirection::Inward)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    let solid = builder.solid(outer_shell, voids)?;
-    Ok((builder.finish()?, solid))
+    crate::context::strict(|| {
+        let outer = normalize_revolution_contour(outer)?;
+        let holes = holes
+            .iter()
+            .map(normalize_revolution_contour)
+            .collect::<Result<Vec<_>, _>>()?;
+        validate_contour_nesting(&outer, &holes)?;
+        let mut builder = ModelBuilder::new();
+        let outer_shell =
+            add_normalized_contour_revolution_shell(&mut builder, &outer, ShellDirection::Outward)?;
+        let voids = holes
+            .iter()
+            .map(|hole| {
+                add_normalized_contour_revolution_shell(&mut builder, hole, ShellDirection::Inward)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        let solid = builder.solid(outer_shell, voids)?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 /// Sweeps one exact simple planar polygon along one exact linear path.
@@ -2486,8 +2555,10 @@ pub fn sweep(
     v: Vector3,
     path: Vector3,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    let (model, solid) = extrude(profile, Real::zero(), Real::one())?;
-    place_linear_sweep(model, solid, origin, u, v, path)
+    crate::context::strict(|| {
+        let (model, solid) = extrude(profile, Real::zero(), Real::one())?;
+        place_linear_sweep(model, solid, origin, u, v, path)
+    })
 }
 
 /// Sweeps one exact planar polygonal region with through-holes along a line.
@@ -2503,8 +2574,10 @@ pub fn sweep_region(
     v: Vector3,
     path: Vector3,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    let (model, solid) = extrude_region(outer, holes, Real::zero(), Real::one())?;
-    place_linear_sweep(model, solid, origin, u, v, path)
+    crate::context::strict(|| {
+        let (model, solid) = extrude_region(outer, holes, Real::zero(), Real::one())?;
+        place_linear_sweep(model, solid, origin, u, v, path)
+    })
 }
 
 /// Sweeps one exact polygon along a rational Bézier path in a fixed frame.
@@ -2521,7 +2594,7 @@ pub fn sweep_curve(
     v: Vector3,
     path: Curve3,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    sweep_curve_region(profile, &[], u, v, path)
+    crate::context::strict(|| sweep_curve_region(profile, &[], u, v, path))
 }
 
 /// Sweeps one exact polygonal region with through-holes along a rational
@@ -2539,16 +2612,18 @@ pub fn sweep_curve_region(
     v: Vector3,
     path: Curve3,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    let Curve3ExactData::RationalBezier {
-        control_points: origins,
-        weights,
-    } = path.exact_data()
-    else {
-        return Err(ConstructionError::UnsupportedSweepPath);
-    };
-    let u_axes = vec![u; origins.len()];
-    let v_axes = vec![v; origins.len()];
-    sweep_rational_bezier_frame_region(outer, holes, origins, u_axes, v_axes, weights)
+    crate::context::strict(|| {
+        let Curve3ExactData::RationalBezier {
+            control_points: origins,
+            weights,
+        } = path.exact_data()
+        else {
+            return Err(ConstructionError::UnsupportedSweepPath);
+        };
+        let u_axes = vec![u; origins.len()];
+        let v_axes = vec![v; origins.len()];
+        sweep_rational_bezier_frame_region(outer, holes, origins, u_axes, v_axes, weights)
+    })
 }
 
 /// Sweeps one exact polygon through an explicitly authored rational Bézier
@@ -2560,7 +2635,7 @@ pub fn sweep_moving_frame(
     profile: &[Point2],
     frame: RationalBezierSweepFrame,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    sweep_moving_frame_region(profile, &[], frame)
+    crate::context::strict(|| sweep_moving_frame_region(profile, &[], frame))
 }
 
 /// Sweeps one exact polygonal region with through-holes through an explicitly
@@ -2576,14 +2651,16 @@ pub fn sweep_moving_frame_region(
     holes: &[Vec<Point2>],
     frame: RationalBezierSweepFrame,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    sweep_rational_bezier_frame_region(
-        outer,
-        holes,
-        frame.origins,
-        frame.u_axes,
-        frame.v_axes,
-        frame.weights,
-    )
+    crate::context::strict(|| {
+        sweep_rational_bezier_frame_region(
+            outer,
+            holes,
+            frame.origins,
+            frame.u_axes,
+            frame.v_axes,
+            frame.weights,
+        )
+    })
 }
 
 fn sweep_rational_bezier_frame_region(
@@ -3066,231 +3143,233 @@ fn place_linear_sweep(
 /// Exact solid volume and classification cover every span; exact area of a
 /// general bilinear side remains unsupported.
 pub fn loft(sections: &[LoftSection]) -> Result<(Model, SolidId), ConstructionError> {
-    if sections.len() < 2 {
-        return Err(ConstructionError::LoftNeedsAtLeastTwoSections);
-    }
-    for pair in sections.windows(2) {
-        require_increasing(&pair[0].z, &pair[1].z, Axis::Z)?;
-    }
-    let profiles = sections
-        .iter()
-        .map(|section| normalize_profile(&section.profile, true))
-        .collect::<Result<Vec<_>, _>>()?;
-    let count = profiles[0].len();
-    if profiles.iter().any(|profile| profile.len() != count) {
-        return Err(ConstructionError::IncompatibleLoftSections);
-    }
-    let span_scales = profiles
-        .windows(2)
-        .map(|pair| match certified_loft_scale(&pair[0], &pair[1]) {
-            Ok(scale) => Ok(Some(scale)),
-            Err(ConstructionError::IncompatibleLoftSections) => {
-                certify_convex_loft_correspondence(&pair[0], &pair[1])?;
-                Ok(None)
+    crate::context::strict(|| {
+        if sections.len() < 2 {
+            return Err(ConstructionError::LoftNeedsAtLeastTwoSections);
+        }
+        for pair in sections.windows(2) {
+            require_increasing(&pair[0].z, &pair[1].z, Axis::Z)?;
+        }
+        let profiles = sections
+            .iter()
+            .map(|section| normalize_profile(&section.profile, true))
+            .collect::<Result<Vec<_>, _>>()?;
+        let count = profiles[0].len();
+        if profiles.iter().any(|profile| profile.len() != count) {
+            return Err(ConstructionError::IncompatibleLoftSections);
+        }
+        let span_scales = profiles
+            .windows(2)
+            .map(|pair| match certified_loft_scale(&pair[0], &pair[1]) {
+                Ok(scale) => Ok(Some(scale)),
+                Err(ConstructionError::IncompatibleLoftSections) => {
+                    certify_convex_loft_correspondence(&pair[0], &pair[1])?;
+                    Ok(None)
+                }
+                Err(error) => Err(error),
+            })
+            .collect::<Result<Vec<_>, ConstructionError>>()?;
+
+        let mut builder = ModelBuilder::new();
+        let mut vertices = Vec::with_capacity(sections.len());
+        for (section, profile) in sections.iter().zip(&profiles) {
+            let mut ring = Vec::with_capacity(count);
+            for point in profile {
+                ring.push(builder.vertex(Point3::new(
+                    point.x.clone(),
+                    point.y.clone(),
+                    section.z.clone(),
+                ))?);
             }
-            Err(error) => Err(error),
-        })
-        .collect::<Result<Vec<_>, ConstructionError>>()?;
-
-    let mut builder = ModelBuilder::new();
-    let mut vertices = Vec::with_capacity(sections.len());
-    for (section, profile) in sections.iter().zip(&profiles) {
-        let mut ring = Vec::with_capacity(count);
-        for point in profile {
-            ring.push(builder.vertex(Point3::new(
-                point.x.clone(),
-                point.y.clone(),
-                section.z.clone(),
-            ))?);
+            vertices.push(ring);
         }
-        vertices.push(ring);
-    }
 
-    let mut rings = Vec::with_capacity(sections.len());
-    for (section_index, profile) in profiles.iter().enumerate() {
-        let mut ring = Vec::with_capacity(count);
-        for index in 0..count {
-            let next = (index + 1) % count;
-            let curve = builder.curve(Curve3::line(
-                Point3::new(
-                    profile[index].x.clone(),
-                    profile[index].y.clone(),
-                    sections[section_index].z.clone(),
-                ),
-                Point3::new(
-                    profile[next].x.clone(),
-                    profile[next].y.clone(),
-                    sections[section_index].z.clone(),
-                ),
-            )?)?;
-            ring.push(builder.edge(
-                vertices[section_index][index],
-                vertices[section_index][next],
-                curve,
-                ParameterDomain::unit(),
-            )?);
-        }
-        rings.push(ring);
-    }
-
-    let mut connectors = Vec::with_capacity(sections.len() - 1);
-    for span in 0..sections.len() - 1 {
-        let mut span_connectors = Vec::with_capacity(count);
-        for index in 0..count {
-            let curve = builder.curve(Curve3::line(
-                Point3::new(
-                    profiles[span][index].x.clone(),
-                    profiles[span][index].y.clone(),
-                    sections[span].z.clone(),
-                ),
-                Point3::new(
-                    profiles[span + 1][index].x.clone(),
-                    profiles[span + 1][index].y.clone(),
-                    sections[span + 1].z.clone(),
-                ),
-            )?)?;
-            span_connectors.push(builder.edge(
-                vertices[span][index],
-                vertices[span + 1][index],
-                curve,
-                ParameterDomain::unit(),
-            )?);
-        }
-        connectors.push(span_connectors);
-    }
-
-    let cap_surface = |builder: &mut ModelBuilder, z: &Real| {
-        builder.surface(Surface::plane(
-            Point3::new(Real::zero(), Real::zero(), z.clone()),
-            Vector3::x(),
-            Vector3::y(),
-        )?)
-    };
-    let bottom_surface = cap_surface(&mut builder, &sections[0].z)?;
-    let top_surface = cap_surface(&mut builder, &sections[sections.len() - 1].z)?;
-    let mut bottom_uses = Vec::with_capacity(count);
-    for index in (0..count).rev() {
-        let next = (index + 1) % count;
-        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-            LineSeg2::try_new(
-                curve_point(&profiles[0][next]),
-                curve_point(&profiles[0][index]),
-            )
-            .map_err(GeometryError::from)?,
-        )))?;
-        bottom_uses.push(builder.edge_use(
-            rings[0][index],
-            Direction::Reversed,
-            pcurve,
-            ParameterCorrespondence::affine(-Real::one(), Real::one())?,
-        )?);
-    }
-    let bottom_wire = builder.wire(bottom_uses)?;
-    let bottom_face = builder.face(
-        bottom_surface,
-        Orientation::Reversed,
-        bottom_wire,
-        Vec::new(),
-    )?;
-    let mut top_uses = Vec::with_capacity(count);
-    let top = profiles.len() - 1;
-    for index in 0..count {
-        let next = (index + 1) % count;
-        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-            LineSeg2::try_new(
-                curve_point(&profiles[top][index]),
-                curve_point(&profiles[top][next]),
-            )
-            .map_err(GeometryError::from)?,
-        )))?;
-        top_uses.push(builder.edge_use(
-            rings[top][index],
-            Direction::Forward,
-            pcurve,
-            ParameterCorrespondence::identity(),
-        )?);
-    }
-    let top_wire = builder.wire(top_uses)?;
-    let top_face = builder.face(top_surface, Orientation::Forward, top_wire, Vec::new())?;
-
-    let mut faces = vec![bottom_face, top_face];
-    for span in 0..sections.len() - 1 {
-        for index in 0..count {
-            let next = (index + 1) % count;
-            let point = |section: usize, vertex: usize| {
-                Point3::new(
-                    profiles[section][vertex].x.clone(),
-                    profiles[section][vertex].y.clone(),
-                    sections[section].z.clone(),
-                )
-            };
-            let lower_start = point(span, index);
-            let lower_end = point(span, next);
-            let upper_start = point(span + 1, index);
-            let upper_end = point(span + 1, next);
-            let (side_surface, parameter_points) = if let Some(scale) = &span_scales[span] {
-                (
-                    Surface::plane(
-                        lower_start.clone(),
-                        &lower_end - &lower_start,
-                        &upper_start - &lower_start,
-                    )?,
-                    [
-                        CurvePoint2::new(Real::zero(), Real::zero()),
-                        CurvePoint2::new(Real::one(), Real::zero()),
-                        CurvePoint2::new(scale.clone(), Real::one()),
-                        CurvePoint2::new(Real::zero(), Real::one()),
-                    ],
-                )
-            } else {
-                (
-                    Surface::rational_bezier(
-                        vec![vec![lower_start, lower_end], vec![upper_start, upper_end]],
-                        vec![vec![Real::one(), Real::one()]; 2],
-                    )?,
-                    [
-                        CurvePoint2::new(Real::zero(), Real::zero()),
-                        CurvePoint2::new(Real::one(), Real::zero()),
-                        CurvePoint2::new(Real::one(), Real::one()),
-                        CurvePoint2::new(Real::zero(), Real::one()),
-                    ],
-                )
-            };
-            let side_surface = builder.surface(side_surface)?;
-            let side_specs = [
-                (rings[span][index], Direction::Forward, 0, 1),
-                (connectors[span][next], Direction::Forward, 1, 2),
-                (rings[span + 1][index], Direction::Reversed, 2, 3),
-                (connectors[span][index], Direction::Reversed, 3, 0),
-            ];
-            let mut uses = Vec::with_capacity(4);
-            for (edge, direction, start, end) in side_specs {
-                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-                    LineSeg2::try_new(
-                        parameter_points[start].clone(),
-                        parameter_points[end].clone(),
-                    )
-                    .map_err(GeometryError::from)?,
-                )))?;
-                uses.push(builder.edge_use(
-                    edge,
-                    direction,
-                    pcurve,
-                    match direction {
-                        Direction::Forward => ParameterCorrespondence::identity(),
-                        Direction::Reversed => {
-                            ParameterCorrespondence::affine(-Real::one(), Real::one())?
-                        }
-                    },
+        let mut rings = Vec::with_capacity(sections.len());
+        for (section_index, profile) in profiles.iter().enumerate() {
+            let mut ring = Vec::with_capacity(count);
+            for index in 0..count {
+                let next = (index + 1) % count;
+                let curve = builder.curve(Curve3::line(
+                    Point3::new(
+                        profile[index].x.clone(),
+                        profile[index].y.clone(),
+                        sections[section_index].z.clone(),
+                    ),
+                    Point3::new(
+                        profile[next].x.clone(),
+                        profile[next].y.clone(),
+                        sections[section_index].z.clone(),
+                    ),
+                )?)?;
+                ring.push(builder.edge(
+                    vertices[section_index][index],
+                    vertices[section_index][next],
+                    curve,
+                    ParameterDomain::unit(),
                 )?);
             }
-            let wire = builder.wire(uses)?;
-            faces.push(builder.face(side_surface, Orientation::Forward, wire, Vec::new())?);
+            rings.push(ring);
         }
-    }
-    let shell = builder.shell(faces)?;
-    let solid = builder.solid(shell, Vec::new())?;
-    Ok((builder.finish()?, solid))
+
+        let mut connectors = Vec::with_capacity(sections.len() - 1);
+        for span in 0..sections.len() - 1 {
+            let mut span_connectors = Vec::with_capacity(count);
+            for index in 0..count {
+                let curve = builder.curve(Curve3::line(
+                    Point3::new(
+                        profiles[span][index].x.clone(),
+                        profiles[span][index].y.clone(),
+                        sections[span].z.clone(),
+                    ),
+                    Point3::new(
+                        profiles[span + 1][index].x.clone(),
+                        profiles[span + 1][index].y.clone(),
+                        sections[span + 1].z.clone(),
+                    ),
+                )?)?;
+                span_connectors.push(builder.edge(
+                    vertices[span][index],
+                    vertices[span + 1][index],
+                    curve,
+                    ParameterDomain::unit(),
+                )?);
+            }
+            connectors.push(span_connectors);
+        }
+
+        let cap_surface = |builder: &mut ModelBuilder, z: &Real| {
+            builder.surface(Surface::plane(
+                Point3::new(Real::zero(), Real::zero(), z.clone()),
+                Vector3::x(),
+                Vector3::y(),
+            )?)
+        };
+        let bottom_surface = cap_surface(&mut builder, &sections[0].z)?;
+        let top_surface = cap_surface(&mut builder, &sections[sections.len() - 1].z)?;
+        let mut bottom_uses = Vec::with_capacity(count);
+        for index in (0..count).rev() {
+            let next = (index + 1) % count;
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                LineSeg2::try_new(
+                    curve_point(&profiles[0][next]),
+                    curve_point(&profiles[0][index]),
+                )
+                .map_err(GeometryError::from)?,
+            )))?;
+            bottom_uses.push(builder.edge_use(
+                rings[0][index],
+                Direction::Reversed,
+                pcurve,
+                ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+            )?);
+        }
+        let bottom_wire = builder.wire(bottom_uses)?;
+        let bottom_face = builder.face(
+            bottom_surface,
+            Orientation::Reversed,
+            bottom_wire,
+            Vec::new(),
+        )?;
+        let mut top_uses = Vec::with_capacity(count);
+        let top = profiles.len() - 1;
+        for index in 0..count {
+            let next = (index + 1) % count;
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                LineSeg2::try_new(
+                    curve_point(&profiles[top][index]),
+                    curve_point(&profiles[top][next]),
+                )
+                .map_err(GeometryError::from)?,
+            )))?;
+            top_uses.push(builder.edge_use(
+                rings[top][index],
+                Direction::Forward,
+                pcurve,
+                ParameterCorrespondence::identity(),
+            )?);
+        }
+        let top_wire = builder.wire(top_uses)?;
+        let top_face = builder.face(top_surface, Orientation::Forward, top_wire, Vec::new())?;
+
+        let mut faces = vec![bottom_face, top_face];
+        for span in 0..sections.len() - 1 {
+            for index in 0..count {
+                let next = (index + 1) % count;
+                let point = |section: usize, vertex: usize| {
+                    Point3::new(
+                        profiles[section][vertex].x.clone(),
+                        profiles[section][vertex].y.clone(),
+                        sections[section].z.clone(),
+                    )
+                };
+                let lower_start = point(span, index);
+                let lower_end = point(span, next);
+                let upper_start = point(span + 1, index);
+                let upper_end = point(span + 1, next);
+                let (side_surface, parameter_points) = if let Some(scale) = &span_scales[span] {
+                    (
+                        Surface::plane(
+                            lower_start.clone(),
+                            &lower_end - &lower_start,
+                            &upper_start - &lower_start,
+                        )?,
+                        [
+                            CurvePoint2::new(Real::zero(), Real::zero()),
+                            CurvePoint2::new(Real::one(), Real::zero()),
+                            CurvePoint2::new(scale.clone(), Real::one()),
+                            CurvePoint2::new(Real::zero(), Real::one()),
+                        ],
+                    )
+                } else {
+                    (
+                        Surface::rational_bezier(
+                            vec![vec![lower_start, lower_end], vec![upper_start, upper_end]],
+                            vec![vec![Real::one(), Real::one()]; 2],
+                        )?,
+                        [
+                            CurvePoint2::new(Real::zero(), Real::zero()),
+                            CurvePoint2::new(Real::one(), Real::zero()),
+                            CurvePoint2::new(Real::one(), Real::one()),
+                            CurvePoint2::new(Real::zero(), Real::one()),
+                        ],
+                    )
+                };
+                let side_surface = builder.surface(side_surface)?;
+                let side_specs = [
+                    (rings[span][index], Direction::Forward, 0, 1),
+                    (connectors[span][next], Direction::Forward, 1, 2),
+                    (rings[span + 1][index], Direction::Reversed, 2, 3),
+                    (connectors[span][index], Direction::Reversed, 3, 0),
+                ];
+                let mut uses = Vec::with_capacity(4);
+                for (edge, direction, start, end) in side_specs {
+                    let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                        LineSeg2::try_new(
+                            parameter_points[start].clone(),
+                            parameter_points[end].clone(),
+                        )
+                        .map_err(GeometryError::from)?,
+                    )))?;
+                    uses.push(builder.edge_use(
+                        edge,
+                        direction,
+                        pcurve,
+                        match direction {
+                            Direction::Forward => ParameterCorrespondence::identity(),
+                            Direction::Reversed => {
+                                ParameterCorrespondence::affine(-Real::one(), Real::one())?
+                            }
+                        },
+                    )?);
+                }
+                let wire = builder.wire(uses)?;
+                faces.push(builder.face(side_surface, Orientation::Forward, wire, Vec::new())?);
+            }
+        }
+        let shell = builder.shell(faces)?;
+        let solid = builder.solid(shell, Vec::new())?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 fn certified_loft_scale(lower: &[Point2], upper: &[Point2]) -> Result<Real, ConstructionError> {
@@ -4639,7 +4718,7 @@ pub fn extrude(
     z_min: Real,
     z_max: Real,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    extrude_region(profile, &[], z_min, z_max)
+    crate::context::strict(|| extrude_region(profile, &[], z_min, z_max))
 }
 
 /// Extrudes one simple polygon and subtracts closed prismatic cavities.
@@ -4653,30 +4732,32 @@ pub fn extrude_with_voids(
     z_max: Real,
     voids: &[ExtrusionVoid],
 ) -> Result<(Model, SolidId), ConstructionError> {
-    require_increasing(&z_min, &z_max, Axis::Z)?;
-    let profile = normalize_profile(profile, true)?;
-    let mut builder = ModelBuilder::new();
-    let outer = add_normalized_extrusion_shell(
-        &mut builder,
-        &[profile],
-        z_min,
-        z_max,
-        ShellDirection::Outward,
-    )?;
-    let mut void_shells = Vec::with_capacity(voids.len());
-    for void_region in voids {
-        require_increasing(&void_region.z_min, &void_region.z_max, Axis::Z)?;
-        let profile = normalize_profile(&void_region.profile, true)?;
-        void_shells.push(add_normalized_extrusion_shell(
+    crate::context::strict(|| {
+        require_increasing(&z_min, &z_max, Axis::Z)?;
+        let profile = normalize_profile(profile, true)?;
+        let mut builder = ModelBuilder::new();
+        let outer = add_normalized_extrusion_shell(
             &mut builder,
             &[profile],
-            void_region.z_min.clone(),
-            void_region.z_max.clone(),
-            ShellDirection::Inward,
-        )?);
-    }
-    let solid = builder.solid(outer, void_shells)?;
-    Ok((builder.finish()?, solid))
+            z_min,
+            z_max,
+            ShellDirection::Outward,
+        )?;
+        let mut void_shells = Vec::with_capacity(voids.len());
+        for void_region in voids {
+            require_increasing(&void_region.z_min, &void_region.z_max, Axis::Z)?;
+            let profile = normalize_profile(&void_region.profile, true)?;
+            void_shells.push(add_normalized_extrusion_shell(
+                &mut builder,
+                &[profile],
+                void_region.z_min.clone(),
+                void_region.z_max.clone(),
+                ShellDirection::Inward,
+            )?);
+        }
+        let solid = builder.solid(outer, void_shells)?;
+        Ok((builder.finish()?, solid))
+    })
 }
 
 /// Extrudes one exact planar region with an outer loop and disjoint holes.
@@ -4686,17 +4767,19 @@ pub fn extrude_region(
     z_min: Real,
     z_max: Real,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    require_increasing(&z_min, &z_max, Axis::Z)?;
-    let profile = normalize_profile(outer, true)?;
-    let holes = holes
-        .iter()
-        .map(|hole| normalize_profile(hole, false))
-        .collect::<Result<Vec<_>, _>>()?;
-    validate_profile_nesting(&profile, &holes)?;
-    let mut loops = Vec::with_capacity(holes.len() + 1);
-    loops.push(profile);
-    loops.extend(holes);
-    extrude_normalized_loops(&loops, z_min, z_max)
+    crate::context::strict(|| {
+        require_increasing(&z_min, &z_max, Axis::Z)?;
+        let profile = normalize_profile(outer, true)?;
+        let holes = holes
+            .iter()
+            .map(|hole| normalize_profile(hole, false))
+            .collect::<Result<Vec<_>, _>>()?;
+        validate_profile_nesting(&profile, &holes)?;
+        let mut loops = Vec::with_capacity(holes.len() + 1);
+        loops.push(profile);
+        loops.extend(holes);
+        extrude_normalized_loops(&loops, z_min, z_max)
+    })
 }
 
 /// Extrudes multiple disjoint exact planar regions into one validated model.
@@ -4708,27 +4791,29 @@ pub fn extrude_regions(
     z_min: Real,
     z_max: Real,
 ) -> Result<(Model, Vec<SolidId>), ConstructionError> {
-    require_increasing(&z_min, &z_max, Axis::Z)?;
-    let mut builder = ModelBuilder::new();
-    let mut solids = Vec::with_capacity(regions.len());
-    for (outer, holes) in regions {
-        let outer = normalize_profile(outer, true)?;
-        let holes = holes
-            .iter()
-            .map(|hole| normalize_profile(hole, false))
-            .collect::<Result<Vec<_>, _>>()?;
-        validate_profile_nesting(&outer, &holes)?;
-        let mut loops = Vec::with_capacity(holes.len() + 1);
-        loops.push(outer);
-        loops.extend(holes);
-        solids.push(add_normalized_extrusion(
-            &mut builder,
-            &loops,
-            z_min.clone(),
-            z_max.clone(),
-        )?);
-    }
-    Ok((builder.finish()?, solids))
+    crate::context::strict(|| {
+        require_increasing(&z_min, &z_max, Axis::Z)?;
+        let mut builder = ModelBuilder::new();
+        let mut solids = Vec::with_capacity(regions.len());
+        for (outer, holes) in regions {
+            let outer = normalize_profile(outer, true)?;
+            let holes = holes
+                .iter()
+                .map(|hole| normalize_profile(hole, false))
+                .collect::<Result<Vec<_>, _>>()?;
+            validate_profile_nesting(&outer, &holes)?;
+            let mut loops = Vec::with_capacity(holes.len() + 1);
+            loops.push(outer);
+            loops.extend(holes);
+            solids.push(add_normalized_extrusion(
+                &mut builder,
+                &loops,
+                z_min.clone(),
+                z_max.clone(),
+            )?);
+        }
+        Ok((builder.finish()?, solids))
+    })
 }
 
 fn normalize_profile(

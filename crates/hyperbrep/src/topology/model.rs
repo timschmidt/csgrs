@@ -256,17 +256,19 @@ impl Model {
     /// The empty model has no bounds. The result is retained after the first
     /// certified coordinate-ordering pass.
     pub fn bounds(&self) -> Result<Option<Aabb>, GeometryError> {
-        self.data
-            .bounds
-            .get_or_init(|| {
-                compute_bounds(
-                    &self.data.vertices,
-                    &self.data.curves,
-                    &self.data.certified_spheres,
-                    &self.data.certified_sphere_pairs,
-                )
-            })
-            .clone()
+        crate::context::strict(|| {
+            self.data
+                .bounds
+                .get_or_init(|| {
+                    compute_bounds(
+                        &self.data.vertices,
+                        &self.data.curves,
+                        &self.data.certified_spheres,
+                        &self.data.certified_sphere_pairs,
+                    )
+                })
+                .clone()
+        })
     }
 
     /// Returns a vertex by typed ID.

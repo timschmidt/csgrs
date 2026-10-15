@@ -273,7 +273,7 @@ impl SolidIntersectionGraph {
     pub fn partition_first_planar_faces(
         &self,
     ) -> Result<(Model, Vec<FacePartition>), BooleanError> {
-        partition_graph_planar_faces(&self.first_model, self, true)
+        crate::context::strict(|| partition_graph_planar_faces(&self.first_model, self, true))
     }
 
     /// Partitions every planar second-model face that has retained curve
@@ -284,7 +284,7 @@ impl SolidIntersectionGraph {
     pub fn partition_second_planar_faces(
         &self,
     ) -> Result<(Model, Vec<FacePartition>), BooleanError> {
-        partition_graph_planar_faces(&self.second_model, self, false)
+        crate::context::strict(|| partition_graph_planar_faces(&self.second_model, self, false))
     }
 
     /// Partitions every first-model face carrying a transferable exact curve.
@@ -293,7 +293,7 @@ impl SolidIntersectionGraph {
     /// exact arrangement. A positive-length carrier without a transferable
     /// pcurve is an explicit error rather than a silently skipped face.
     pub fn partition_first_faces(&self) -> Result<(Model, Vec<FacePartition>), BooleanError> {
-        partition_graph_faces(&self.first_model, self, true)
+        crate::context::strict(|| partition_graph_faces(&self.first_model, self, true))
     }
 
     /// Partitions every second-model face carrying a transferable exact curve.
@@ -302,7 +302,7 @@ impl SolidIntersectionGraph {
     /// exact arrangement. A positive-length carrier without a transferable
     /// pcurve is an explicit error rather than a silently skipped face.
     pub fn partition_second_faces(&self) -> Result<(Model, Vec<FacePartition>), BooleanError> {
-        partition_graph_faces(&self.second_model, self, false)
+        crate::context::strict(|| partition_graph_faces(&self.second_model, self, false))
     }
 
     /// Partitions and exactly selects every first-operand face.
@@ -310,7 +310,7 @@ impl SolidIntersectionGraph {
         &self,
         operation: BooleanOperation,
     ) -> Result<FaceSelection, BooleanError> {
-        select_graph_faces(self, operation, true)
+        crate::context::strict(|| select_graph_faces(self, operation, true))
     }
 
     /// Partitions and exactly selects every second-operand face.
@@ -318,7 +318,7 @@ impl SolidIntersectionGraph {
         &self,
         operation: BooleanOperation,
     ) -> Result<FaceSelection, BooleanError> {
-        select_graph_faces(self, operation, false)
+        crate::context::strict(|| select_graph_faces(self, operation, false))
     }
 
     /// Partitions, selects, and identity-stitches all transferable result
@@ -327,7 +327,7 @@ impl SolidIntersectionGraph {
         &self,
         operation: BooleanOperation,
     ) -> Result<BooleanResult, BooleanError> {
-        stitch_graph_faces(self, operation)
+        crate::context::strict(|| stitch_graph_faces(self, operation))
     }
 }
 
@@ -2635,87 +2635,90 @@ pub fn intersection_graph(
     second_model: &Model,
     second_solid: SolidId,
 ) -> Result<SolidIntersectionGraph, BooleanError> {
-    let first_faces = solid_faces(first_model, first_solid)?
-        .into_iter()
-        .map(|face| Ok((face, certified_face_bounds(first_model, face)?)))
-        .collect::<Result<Vec<_>, GeometryError>>()?;
-    let second_faces = solid_faces(second_model, second_solid)?
-        .into_iter()
-        .map(|face| Ok((face, certified_face_bounds(second_model, face)?)))
-        .collect::<Result<Vec<_>, GeometryError>>()?;
-    let candidate_pairs = first_faces.len() * second_faces.len();
-    let mut broad_phase_rejections = 0;
-    let mut exact_disjoint_pairs = 0;
-    let mut exact_intersection_pairs = 0;
-    let mut unsupported_pairs = 0;
-    let mut trimmed_curve_fragments = 0;
-    let mut unresolved_trim_pairs = 0;
-    let mut intersections = Vec::new();
-    for (first_face, first_bounds) in &first_faces {
-        for (second_face, second_bounds) in &second_faces {
-            if let (Some(first), Some(second)) = (first_bounds, second_bounds)
-                && aabbs_strictly_separated(first, second)?
-            {
-                broad_phase_rejections += 1;
-                continue;
-            }
-            match intersect_face_carriers(first_model, *first_face, second_model, *second_face)? {
-                None => exact_disjoint_pairs += 1,
-                Some(pair) => match &pair.relation {
-                    FacePairRelation::Exact(_) => {
-                        exact_intersection_pairs += 1;
-                        match &pair.trim {
-                            FacePairTrim::CurveFragments(fragments) => {
-                                trimmed_curve_fragments += fragments.len();
+    crate::context::strict(|| {
+        let first_faces = solid_faces(first_model, first_solid)?
+            .into_iter()
+            .map(|face| Ok((face, certified_face_bounds(first_model, face)?)))
+            .collect::<Result<Vec<_>, GeometryError>>()?;
+        let second_faces = solid_faces(second_model, second_solid)?
+            .into_iter()
+            .map(|face| Ok((face, certified_face_bounds(second_model, face)?)))
+            .collect::<Result<Vec<_>, GeometryError>>()?;
+        let candidate_pairs = first_faces.len() * second_faces.len();
+        let mut broad_phase_rejections = 0;
+        let mut exact_disjoint_pairs = 0;
+        let mut exact_intersection_pairs = 0;
+        let mut unsupported_pairs = 0;
+        let mut trimmed_curve_fragments = 0;
+        let mut unresolved_trim_pairs = 0;
+        let mut intersections = Vec::new();
+        for (first_face, first_bounds) in &first_faces {
+            for (second_face, second_bounds) in &second_faces {
+                if let (Some(first), Some(second)) = (first_bounds, second_bounds)
+                    && aabbs_strictly_separated(first, second)?
+                {
+                    broad_phase_rejections += 1;
+                    continue;
+                }
+                match intersect_face_carriers(first_model, *first_face, second_model, *second_face)?
+                {
+                    None => exact_disjoint_pairs += 1,
+                    Some(pair) => match &pair.relation {
+                        FacePairRelation::Exact(_) => {
+                            exact_intersection_pairs += 1;
+                            match &pair.trim {
+                                FacePairTrim::CurveFragments(fragments) => {
+                                    trimmed_curve_fragments += fragments.len();
+                                }
+                                FacePairTrim::SurfaceCurveFragments(fragments) => {
+                                    trimmed_curve_fragments += fragments.len();
+                                }
+                                FacePairTrim::Components {
+                                    surface_curve_fragments,
+                                    ..
+                                } => {
+                                    trimmed_curve_fragments += surface_curve_fragments.len();
+                                }
+                                FacePairTrim::Unresolved(_) => unresolved_trim_pairs += 1,
+                                FacePairTrim::NotAvailable
+                                | FacePairTrim::CompleteCarrier
+                                | FacePairTrim::CoincidentPlanar { .. }
+                                | FacePairTrim::SurfaceRegion { .. }
+                                | FacePairTrim::PointContact(_)
+                                | FacePairTrim::NoContact
+                                | FacePairTrim::NoCurveInterior => {}
                             }
-                            FacePairTrim::SurfaceCurveFragments(fragments) => {
-                                trimmed_curve_fragments += fragments.len();
-                            }
-                            FacePairTrim::Components {
-                                surface_curve_fragments,
-                                ..
-                            } => {
-                                trimmed_curve_fragments += surface_curve_fragments.len();
-                            }
-                            FacePairTrim::Unresolved(_) => unresolved_trim_pairs += 1,
-                            FacePairTrim::NotAvailable
-                            | FacePairTrim::CompleteCarrier
-                            | FacePairTrim::CoincidentPlanar { .. }
-                            | FacePairTrim::SurfaceRegion { .. }
-                            | FacePairTrim::PointContact(_)
-                            | FacePairTrim::NoContact
-                            | FacePairTrim::NoCurveInterior => {}
+                            intersections.push(pair);
                         }
-                        intersections.push(pair);
-                    }
-                    FacePairRelation::Unsupported => {
-                        unsupported_pairs += 1;
-                        intersections.push(pair);
-                    }
-                },
+                        FacePairRelation::Unsupported => {
+                            unsupported_pairs += 1;
+                            intersections.push(pair);
+                        }
+                    },
+                }
             }
         }
-    }
-    debug_assert_eq!(
-        candidate_pairs,
-        broad_phase_rejections
-            + exact_disjoint_pairs
-            + exact_intersection_pairs
-            + unsupported_pairs
-    );
-    Ok(SolidIntersectionGraph {
-        first_model: first_model.clone(),
-        first_solid,
-        second_model: second_model.clone(),
-        second_solid,
-        candidate_pairs,
-        broad_phase_rejections,
-        exact_disjoint_pairs,
-        exact_intersection_pairs,
-        unsupported_pairs,
-        trimmed_curve_fragments,
-        unresolved_trim_pairs,
-        intersections,
+        debug_assert_eq!(
+            candidate_pairs,
+            broad_phase_rejections
+                + exact_disjoint_pairs
+                + exact_intersection_pairs
+                + unsupported_pairs
+        );
+        Ok(SolidIntersectionGraph {
+            first_model: first_model.clone(),
+            first_solid,
+            second_model: second_model.clone(),
+            second_solid,
+            candidate_pairs,
+            broad_phase_rejections,
+            exact_disjoint_pairs,
+            exact_intersection_pairs,
+            unsupported_pairs,
+            trimmed_curve_fragments,
+            unresolved_trim_pairs,
+            intersections,
+        })
     })
 }
 
@@ -2730,28 +2733,30 @@ pub fn intersect_faces(
     second_model: &Model,
     second_face: FaceId,
 ) -> Result<Option<FacePairIntersection>, BooleanError> {
-    if first_model.face(first_face).is_none() {
-        return Err(QueryError::InvalidReference {
-            kind: crate::EntityKind::Face,
-            index: first_face.index(),
+    crate::context::strict(|| {
+        if first_model.face(first_face).is_none() {
+            return Err(QueryError::InvalidReference {
+                kind: crate::EntityKind::Face,
+                index: first_face.index(),
+            }
+            .into());
         }
-        .into());
-    }
-    if second_model.face(second_face).is_none() {
-        return Err(QueryError::InvalidReference {
-            kind: crate::EntityKind::Face,
-            index: second_face.index(),
+        if second_model.face(second_face).is_none() {
+            return Err(QueryError::InvalidReference {
+                kind: crate::EntityKind::Face,
+                index: second_face.index(),
+            }
+            .into());
         }
-        .into());
-    }
-    let first_bounds = certified_face_bounds(first_model, first_face)?;
-    let second_bounds = certified_face_bounds(second_model, second_face)?;
-    if let (Some(first), Some(second)) = (&first_bounds, &second_bounds)
-        && aabbs_strictly_separated(first, second)?
-    {
-        return Ok(None);
-    }
-    intersect_face_carriers(first_model, first_face, second_model, second_face)
+        let first_bounds = certified_face_bounds(first_model, first_face)?;
+        let second_bounds = certified_face_bounds(second_model, second_face)?;
+        if let (Some(first), Some(second)) = (&first_bounds, &second_bounds)
+            && aabbs_strictly_separated(first, second)?
+        {
+            return Ok(None);
+        }
+        intersect_face_carriers(first_model, first_face, second_model, second_face)
+    })
 }
 
 /// Partitions one rational Bézier or NURBS face by the exact boundary of a
@@ -2766,36 +2771,42 @@ pub fn partition_contained_face_by_plane_region(
     plane_model: &Model,
     plane_face: FaceId,
 ) -> Result<Option<(Model, FacePartition)>, BooleanError> {
-    if contained_model.face(contained_face).is_none() {
-        return Err(QueryError::InvalidReference {
-            kind: crate::EntityKind::Face,
-            index: contained_face.index(),
+    crate::context::strict(|| {
+        if contained_model.face(contained_face).is_none() {
+            return Err(QueryError::InvalidReference {
+                kind: crate::EntityKind::Face,
+                index: contained_face.index(),
+            }
+            .into());
         }
-        .into());
-    }
-    if plane_model.face(plane_face).is_none() {
-        return Err(QueryError::InvalidReference {
-            kind: crate::EntityKind::Face,
-            index: plane_face.index(),
+        if plane_model.face(plane_face).is_none() {
+            return Err(QueryError::InvalidReference {
+                kind: crate::EntityKind::Face,
+                index: plane_face.index(),
+            }
+            .into());
         }
-        .into());
-    }
-    let Some(traces) = contained_face_boundary_traces_from_plane(
-        contained_model,
-        contained_face,
-        plane_model,
-        plane_face,
-    )?
-    else {
-        return Ok(None);
-    };
-    if traces.is_empty() {
-        return Ok(None);
-    }
-    contained_model
-        .split_face_by_surface_curves(contained_face, &traces, SurfaceIntersectionOperand::First)
-        .map(Some)
-        .map_err(BooleanError::from)
+        let Some(traces) = contained_face_boundary_traces_from_plane(
+            contained_model,
+            contained_face,
+            plane_model,
+            plane_face,
+        )?
+        else {
+            return Ok(None);
+        };
+        if traces.is_empty() {
+            return Ok(None);
+        }
+        contained_model
+            .split_face_by_surface_curves(
+                contained_face,
+                &traces,
+                SurfaceIntersectionOperand::First,
+            )
+            .map(Some)
+            .map_err(BooleanError::from)
+    })
 }
 
 fn intersect_face_carriers(
@@ -5234,13 +5245,15 @@ pub fn union(
     second_model: &Model,
     second_solid: SolidId,
 ) -> Result<BooleanResult, BooleanError> {
-    boolean(
-        first_model,
-        first_solid,
-        second_model,
-        second_solid,
-        BooleanOp::Union,
-    )
+    crate::context::strict(|| {
+        boolean(
+            first_model,
+            first_solid,
+            second_model,
+            second_solid,
+            BooleanOp::Union,
+        )
+    })
 }
 
 /// Returns the regularized intersection of two supported exact solids.
@@ -5250,13 +5263,15 @@ pub fn intersection(
     second_model: &Model,
     second_solid: SolidId,
 ) -> Result<BooleanResult, BooleanError> {
-    boolean(
-        first_model,
-        first_solid,
-        second_model,
-        second_solid,
-        BooleanOp::Intersection,
-    )
+    crate::context::strict(|| {
+        boolean(
+            first_model,
+            first_solid,
+            second_model,
+            second_solid,
+            BooleanOp::Intersection,
+        )
+    })
 }
 
 /// Returns the regularized difference of two supported exact solids.
@@ -5266,13 +5281,15 @@ pub fn difference(
     second_model: &Model,
     second_solid: SolidId,
 ) -> Result<BooleanResult, BooleanError> {
-    boolean(
-        first_model,
-        first_solid,
-        second_model,
-        second_solid,
-        BooleanOp::Difference,
-    )
+    crate::context::strict(|| {
+        boolean(
+            first_model,
+            first_solid,
+            second_model,
+            second_solid,
+            BooleanOp::Difference,
+        )
+    })
 }
 
 fn boolean(

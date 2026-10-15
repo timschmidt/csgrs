@@ -15,7 +15,7 @@ impl Model {
         edge_id: EdgeId,
         parameter: Real,
     ) -> Result<(Self, EdgeSplit), TopologyEditError> {
-        self.split_edge_with_pcurve_parameter(edge_id, parameter, None)
+        crate::context::strict(|| self.split_edge_with_pcurve_parameter(edge_id, parameter, None))
     }
 
     pub(in crate::topology) fn split_edge_with_pcurve_parameter(

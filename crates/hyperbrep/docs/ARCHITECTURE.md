@@ -38,6 +38,7 @@ there is no parallel legacy model API.
 
 | Module | Responsibility |
 | --- | --- |
+| `context.rs` | Strict curve-policy scope at fallible public operation boundaries, including calls nested inside provisional or display-preview scopes |
 | `topology/ids.rs`, `records.rs`, `correspondence.rs` | Typed identifiers, immutable topology records and exact parameter relations |
 | `topology/model.rs`, `builder.rs`, `error.rs` | Arena access, adjacency, staged construction/publication and typed failures |
 | `topology/edit/` | Edge/face/surface splitting, multi-trace partitioning, endpoint attachment, transactions and edit results |

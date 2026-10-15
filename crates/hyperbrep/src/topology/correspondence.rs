@@ -29,19 +29,21 @@ pub enum ParameterCorrespondence {
 impl ParameterCorrespondence {
     /// Constructs `edge_parameter = scale * pcurve_parameter + offset`.
     pub fn affine(scale: Real, offset: Real) -> Result<Self, BuildError> {
-        match compare_reals(&scale, &Real::zero(), crate::STRICT_PREDICATES) {
-            PredicateOutcome::Decided {
-                value: std::cmp::Ordering::Equal,
-                ..
-            } => Err(BuildError::DegenerateParameterCorrespondence),
-            PredicateOutcome::Decided { .. } => Ok(Self::Affine { scale, offset }),
-            PredicateOutcome::Unknown { needed, stage } => {
-                Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
-                    needed,
-                    stage,
-                }))
+        crate::context::strict(|| {
+            match compare_reals(&scale, &Real::zero(), crate::STRICT_PREDICATES) {
+                PredicateOutcome::Decided {
+                    value: std::cmp::Ordering::Equal,
+                    ..
+                } => Err(BuildError::DegenerateParameterCorrespondence),
+                PredicateOutcome::Decided { .. } => Ok(Self::Affine { scale, offset }),
+                PredicateOutcome::Unknown { needed, stage } => {
+                    Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
+                        needed,
+                        stage,
+                    }))
+                }
             }
-        }
+        })
     }
 
     /// Returns the identity parameter correspondence.

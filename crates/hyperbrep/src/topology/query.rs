@@ -14,73 +14,77 @@ impl Model {
         solid: SolidId,
         point: &Point3,
     ) -> Result<SolidPointLocation, QueryError> {
-        let solid_id = solid;
-        let solid = self.solid(solid_id).ok_or(QueryError::InvalidReference {
-            kind: EntityKind::Solid,
-            index: solid_id.index(),
-        })?;
-        if let Some(cylinder) = &self.data.certified_cylinders[solid_id.index()] {
-            return self.classify_point_against_cylinder(cylinder, point);
-        }
-        if let Some(sphere) = &self.data.certified_spheres[solid_id.index()] {
-            return self.classify_point_against_sphere(sphere, point);
-        }
-        if let Some(pair) = &self.data.certified_sphere_pairs[solid_id.index()] {
-            return self.classify_point_against_sphere_pair(pair, point);
-        }
-        if let Some(torus) = &self.data.certified_tori[solid_id.index()] {
-            return self.classify_point_against_torus(torus, point);
-        }
-        if let Some(frustum) = &self.data.certified_cone_frustums[solid_id.index()] {
-            return self.classify_point_against_cone_frustum(frustum, point);
-        }
-        if let Some(revolution) = &self.data.certified_revolutions[solid_id.index()] {
-            return self.classify_point_against_revolution(revolution, point);
-        }
-        if let Some(loft) = &self.data.certified_lofts[solid_id.index()] {
-            return self.classify_point_against_loft(loft, point);
-        }
-        if let Some(sweep) = &self.data.certified_curve_sweeps[solid_id.index()] {
-            return self.classify_point_against_curve_sweep(sweep, point);
-        }
-        if let Some(prism) = &self.data.certified_prisms[solid_id.index()] {
-            return self.classify_point_against_prism(prism, point);
-        }
-        for shell in std::iter::once(&solid.outer).chain(solid.voids.iter()) {
-            for face in &self.shell(*shell).expect("validated shell ID").faces {
-                let signed = self.face_plane_value(*face, point)?;
-                if decided_model_order(compare_reals(
-                    &signed,
-                    &Real::zero(),
-                    crate::STRICT_PREDICATES,
-                ))? == std::cmp::Ordering::Equal
-                {
-                    match self.classify_point_on_face(*face, point)? {
-                        Classification::Decided(ContourPointLocation::Inside)
-                        | Classification::Decided(ContourPointLocation::Boundary) => {
-                            return Ok(SolidPointLocation::Boundary);
-                        }
-                        Classification::Decided(ContourPointLocation::Outside) => {}
-                        Classification::Uncertain(reason) => {
-                            return Err(
-                                GeometryError::PlanarClassificationUnresolved(reason).into()
-                            );
+        crate::context::strict(|| {
+            let solid_id = solid;
+            let solid = self.solid(solid_id).ok_or(QueryError::InvalidReference {
+                kind: EntityKind::Solid,
+                index: solid_id.index(),
+            })?;
+            if let Some(cylinder) = &self.data.certified_cylinders[solid_id.index()] {
+                return self.classify_point_against_cylinder(cylinder, point);
+            }
+            if let Some(sphere) = &self.data.certified_spheres[solid_id.index()] {
+                return self.classify_point_against_sphere(sphere, point);
+            }
+            if let Some(pair) = &self.data.certified_sphere_pairs[solid_id.index()] {
+                return self.classify_point_against_sphere_pair(pair, point);
+            }
+            if let Some(torus) = &self.data.certified_tori[solid_id.index()] {
+                return self.classify_point_against_torus(torus, point);
+            }
+            if let Some(frustum) = &self.data.certified_cone_frustums[solid_id.index()] {
+                return self.classify_point_against_cone_frustum(frustum, point);
+            }
+            if let Some(revolution) = &self.data.certified_revolutions[solid_id.index()] {
+                return self.classify_point_against_revolution(revolution, point);
+            }
+            if let Some(loft) = &self.data.certified_lofts[solid_id.index()] {
+                return self.classify_point_against_loft(loft, point);
+            }
+            if let Some(sweep) = &self.data.certified_curve_sweeps[solid_id.index()] {
+                return self.classify_point_against_curve_sweep(sweep, point);
+            }
+            if let Some(prism) = &self.data.certified_prisms[solid_id.index()] {
+                return self.classify_point_against_prism(prism, point);
+            }
+            for shell in std::iter::once(&solid.outer).chain(solid.voids.iter()) {
+                for face in &self.shell(*shell).expect("validated shell ID").faces {
+                    let signed = self.face_plane_value(*face, point)?;
+                    if decided_model_order(compare_reals(
+                        &signed,
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    ))? == std::cmp::Ordering::Equal
+                    {
+                        match self.classify_point_on_face(*face, point)? {
+                            Classification::Decided(ContourPointLocation::Inside)
+                            | Classification::Decided(ContourPointLocation::Boundary) => {
+                                return Ok(SolidPointLocation::Boundary);
+                            }
+                            Classification::Decided(ContourPointLocation::Outside) => {}
+                            Classification::Uncertain(reason) => {
+                                return Err(
+                                    GeometryError::PlanarClassificationUnresolved(reason).into()
+                                );
+                            }
                         }
                     }
                 }
             }
-        }
 
-        if self.classify_point_against_shell(solid.outer, point)? == SolidPointLocation::Outside {
-            return Ok(SolidPointLocation::Outside);
-        }
-        for void_shell in &solid.voids {
-            if self.classify_point_against_shell(*void_shell, point)? == SolidPointLocation::Inside
+            if self.classify_point_against_shell(solid.outer, point)? == SolidPointLocation::Outside
             {
                 return Ok(SolidPointLocation::Outside);
             }
-        }
-        Ok(SolidPointLocation::Inside)
+            for void_shell in &solid.voids {
+                if self.classify_point_against_shell(*void_shell, point)?
+                    == SolidPointLocation::Inside
+                {
+                    return Ok(SolidPointLocation::Outside);
+                }
+            }
+            Ok(SolidPointLocation::Inside)
+        })
     }
 
     pub(in crate::topology) fn classify_point_against_cylinder(
@@ -761,27 +765,29 @@ impl Model {
         edge_use: EdgeUseId,
         pcurve_parameter: &Real,
     ) -> Result<Real, QueryError> {
-        let edge_use_record = self
-            .edge_use(edge_use)
-            .ok_or(QueryError::InvalidReference {
-                kind: EntityKind::EdgeUse,
-                index: edge_use.index(),
-            })?;
-        let edge = self
-            .edge(edge_use_record.edge)
-            .expect("validated edge-use edge ID");
-        let pcurve = self
-            .pcurve(edge_use_record.pcurve)
-            .expect("validated edge-use pcurve ID");
-        edge_use_record
-            .parameter_correspondence
-            .edge_parameter(
-                pcurve,
-                &edge.domain,
-                edge_use_record.direction,
-                pcurve_parameter,
-            )
-            .map_err(QueryError::from)
+        crate::context::strict(|| {
+            let edge_use_record = self
+                .edge_use(edge_use)
+                .ok_or(QueryError::InvalidReference {
+                    kind: EntityKind::EdgeUse,
+                    index: edge_use.index(),
+                })?;
+            let edge = self
+                .edge(edge_use_record.edge)
+                .expect("validated edge-use edge ID");
+            let pcurve = self
+                .pcurve(edge_use_record.pcurve)
+                .expect("validated edge-use pcurve ID");
+            edge_use_record
+                .parameter_correspondence
+                .edge_parameter(
+                    pcurve,
+                    &edge.domain,
+                    edge_use_record.direction,
+                    pcurve_parameter,
+                )
+                .map_err(QueryError::from)
+        })
     }
 
     /// Maps one shared edge parameter back to a face-local pcurve parameter.
@@ -794,27 +800,29 @@ impl Model {
         edge_use: EdgeUseId,
         edge_parameter: &Real,
     ) -> Result<Real, QueryError> {
-        let edge_use_record = self
-            .edge_use(edge_use)
-            .ok_or(QueryError::InvalidReference {
-                kind: EntityKind::EdgeUse,
-                index: edge_use.index(),
-            })?;
-        let edge = self
-            .edge(edge_use_record.edge)
-            .expect("validated edge-use edge ID");
-        let pcurve = self
-            .pcurve(edge_use_record.pcurve)
-            .expect("validated edge-use pcurve ID");
-        edge_use_record
-            .parameter_correspondence
-            .pcurve_parameter(
-                pcurve,
-                &edge.domain,
-                edge_use_record.direction,
-                edge_parameter,
-            )
-            .map_err(QueryError::from)
+        crate::context::strict(|| {
+            let edge_use_record = self
+                .edge_use(edge_use)
+                .ok_or(QueryError::InvalidReference {
+                    kind: EntityKind::EdgeUse,
+                    index: edge_use.index(),
+                })?;
+            let edge = self
+                .edge(edge_use_record.edge)
+                .expect("validated edge-use edge ID");
+            let pcurve = self
+                .pcurve(edge_use_record.pcurve)
+                .expect("validated edge-use pcurve ID");
+            edge_use_record
+                .parameter_correspondence
+                .pcurve_parameter(
+                    pcurve,
+                    &edge.domain,
+                    edge_use_record.direction,
+                    edge_parameter,
+                )
+                .map_err(QueryError::from)
+        })
     }
 
     pub(in crate::topology) fn classify_point_with_ray(

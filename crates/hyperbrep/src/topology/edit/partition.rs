@@ -19,278 +19,290 @@ impl Model {
         curves: &[SurfaceIntersectionCurve],
         operand: SurfaceIntersectionOperand,
     ) -> Result<(Self, FacePartition), TopologyEditError> {
-        self.face(face_id)
-            .ok_or(TopologyEditError::InvalidReference {
-                kind: EntityKind::Face,
-                index: face_id.index(),
-            })?;
-        let mut ordered = Vec::with_capacity(curves.len());
-        for (source_index, intersection) in curves.iter().enumerate() {
-            let reversed = intersection.reversed()?;
-            let intersection = match compare_curve3_exact_data(
-                &intersection.curve().exact_data(),
-                &reversed.curve().exact_data(),
-            ) {
-                Ok(std::cmp::Ordering::Greater) => reversed,
-                Ok(_) | Err(GeometryError::PredicateUnresolved { .. }) => intersection.clone(),
-                Err(error) => return Err(error.into()),
-            };
-            let trace = OrderedSurfaceCurveTrace {
-                source_index,
-                exact_key: intersection.curve().clone(),
-                intersection,
-            };
-            let mut insertion = ordered.len();
-            while insertion > 0
-                && compare_ordered_surface_curve_traces(&trace, &ordered[insertion - 1])?
-                    == std::cmp::Ordering::Less
-            {
-                insertion -= 1;
-            }
-            if insertion > 0
-                && compare_ordered_surface_curve_traces(&trace, &ordered[insertion - 1])?
-                    == std::cmp::Ordering::Equal
-            {
-                return Err(TopologyEditError::DuplicateFaceSplitTrace {
-                    first: ordered[insertion - 1].source_index,
-                    second: source_index,
-                });
-            }
-            if insertion < ordered.len()
-                && compare_ordered_surface_curve_traces(&trace, &ordered[insertion])?
-                    == std::cmp::Ordering::Equal
-            {
-                return Err(TopologyEditError::DuplicateFaceSplitTrace {
-                    first: ordered[insertion].source_index,
-                    second: source_index,
-                });
-            }
-            ordered.insert(insertion, trace);
-        }
-        let mut split_parameters = ordered
-            .iter()
-            .map(|trace| {
-                vec![
-                    trace.intersection.curve().domain().start().clone(),
-                    trace.intersection.curve().domain().end().clone(),
-                ]
-            })
-            .collect::<Vec<_>>();
-        let materialized = ordered
-            .iter()
-            .map(|trace| trace.intersection.pcurve(operand).materialize())
-            .collect::<Result<Vec<_>, _>>()?;
-        for first_index in 0..ordered.len() {
-            for second_index in (first_index + 1)..ordered.len() {
-                let relation = materialized[first_index]
-                    .curve()
-                    .intersect_curve(materialized[second_index].curve())
-                    .map_err(GeometryError::from)?;
-                if !relation.is_complete() {
-                    return Err(GeometryError::UnsupportedIntersection.into());
+        crate::context::strict(|| {
+            self.face(face_id)
+                .ok_or(TopologyEditError::InvalidReference {
+                    kind: EntityKind::Face,
+                    index: face_id.index(),
+                })?;
+            let mut ordered = Vec::with_capacity(curves.len());
+            for (source_index, intersection) in curves.iter().enumerate() {
+                let reversed = intersection.reversed()?;
+                let intersection = match compare_curve3_exact_data(
+                    &intersection.curve().exact_data(),
+                    &reversed.curve().exact_data(),
+                ) {
+                    Ok(std::cmp::Ordering::Greater) => reversed,
+                    Ok(_) | Err(GeometryError::PredicateUnresolved { .. }) => intersection.clone(),
+                    Err(error) => return Err(error.into()),
+                };
+                let trace = OrderedSurfaceCurveTrace {
+                    source_index,
+                    exact_key: intersection.curve().clone(),
+                    intersection,
+                };
+                let mut insertion = ordered.len();
+                while insertion > 0
+                    && compare_ordered_surface_curve_traces(&trace, &ordered[insertion - 1])?
+                        == std::cmp::Ordering::Less
+                {
+                    insertion -= 1;
                 }
-                if !relation.overlaps().is_empty() {
-                    return Err(TopologyEditError::OverlappingFaceSplitTraces {
-                        first: ordered[first_index].source_index,
-                        second: ordered[second_index].source_index,
+                if insertion > 0
+                    && compare_ordered_surface_curve_traces(&trace, &ordered[insertion - 1])?
+                        == std::cmp::Ordering::Equal
+                {
+                    return Err(TopologyEditError::DuplicateFaceSplitTrace {
+                        first: ordered[insertion - 1].source_index,
+                        second: source_index,
                     });
                 }
-                for contact in relation.contacts() {
-                    let first_parameter = resolve_planar_classification(
-                        crate::error::classified(contact.first().parameter())
-                            .map_err(GeometryError::from)?,
-                    )?;
-                    let second_parameter = resolve_planar_classification(
-                        crate::error::classified(contact.second().parameter())
-                            .map_err(GeometryError::from)?,
-                    )?;
-                    let first_parameter = first_parameter
-                        .scalar()
-                        .ok_or(GeometryError::UnrepresentableParameter)?;
-                    let second_parameter = second_parameter
-                        .scalar()
-                        .ok_or(GeometryError::UnrepresentableParameter)?;
-                    let first_spatial =
-                        materialized[first_index].spatial_parameter_at(first_parameter)?;
-                    if !ordered[first_index]
-                        .intersection
+                if insertion < ordered.len()
+                    && compare_ordered_surface_curve_traces(&trace, &ordered[insertion])?
+                        == std::cmp::Ordering::Equal
+                {
+                    return Err(TopologyEditError::DuplicateFaceSplitTrace {
+                        first: ordered[insertion].source_index,
+                        second: source_index,
+                    });
+                }
+                ordered.insert(insertion, trace);
+            }
+            let mut split_parameters = ordered
+                .iter()
+                .map(|trace| {
+                    vec![
+                        trace.intersection.curve().domain().start().clone(),
+                        trace.intersection.curve().domain().end().clone(),
+                    ]
+                })
+                .collect::<Vec<_>>();
+            let materialized = ordered
+                .iter()
+                .map(|trace| trace.intersection.pcurve(operand).materialize())
+                .collect::<Result<Vec<_>, _>>()?;
+            for first_index in 0..ordered.len() {
+                for second_index in (first_index + 1)..ordered.len() {
+                    let relation = materialized[first_index]
                         .curve()
-                        .domain()
-                        .contains(&first_spatial)?
-                    {
+                        .intersect_curve(materialized[second_index].curve())
+                        .map_err(GeometryError::from)?;
+                    if !relation.is_complete() {
                         return Err(GeometryError::UnsupportedIntersection.into());
                     }
-                    insert_exact_split_parameter(
-                        &mut split_parameters[second_index],
-                        materialized[second_index].spatial_parameter_at(second_parameter)?,
-                    )?;
+                    if !relation.overlaps().is_empty() {
+                        return Err(TopologyEditError::OverlappingFaceSplitTraces {
+                            first: ordered[first_index].source_index,
+                            second: ordered[second_index].source_index,
+                        });
+                    }
+                    for contact in relation.contacts() {
+                        let first_parameter = resolve_planar_classification(
+                            crate::error::classified(contact.first().parameter())
+                                .map_err(GeometryError::from)?,
+                        )?;
+                        let second_parameter = resolve_planar_classification(
+                            crate::error::classified(contact.second().parameter())
+                                .map_err(GeometryError::from)?,
+                        )?;
+                        let first_parameter = first_parameter
+                            .scalar()
+                            .ok_or(GeometryError::UnrepresentableParameter)?;
+                        let second_parameter = second_parameter
+                            .scalar()
+                            .ok_or(GeometryError::UnrepresentableParameter)?;
+                        let first_spatial =
+                            materialized[first_index].spatial_parameter_at(first_parameter)?;
+                        if !ordered[first_index]
+                            .intersection
+                            .curve()
+                            .domain()
+                            .contains(&first_spatial)?
+                        {
+                            return Err(GeometryError::UnsupportedIntersection.into());
+                        }
+                        insert_exact_split_parameter(
+                            &mut split_parameters[second_index],
+                            materialized[second_index].spatial_parameter_at(second_parameter)?,
+                        )?;
+                    }
                 }
             }
-        }
-        if ordered.len() >= 2
-            && split_parameters
-                .iter()
-                .all(|parameters| parameters.len() == 2)
-        {
-            let bridges = ordered
-                .iter()
-                .map(|trace| (trace.source_index, &trace.intersection))
-                .collect::<Vec<_>>();
-            if let Some(result) =
-                self.split_face_by_surface_bridge_cycle(face_id, &bridges, operand)?
+            if ordered.len() >= 2
+                && split_parameters
+                    .iter()
+                    .all(|parameters| parameters.len() == 2)
             {
-                return Ok(result);
-            }
-        }
-        let mut staged = self.clone();
-        let mut faces = vec![face_id];
-        let mut traces = Vec::with_capacity(ordered.len());
-        for (trace, parameters) in ordered.into_iter().zip(split_parameters) {
-            let segments = parameters
-                .windows(2)
-                .map(|range| trace.intersection.subcurve(&range[0], &range[1]))
-                .collect::<Result<Vec<_>, _>>()?;
-            let mut splits = Vec::with_capacity(segments.len());
-            let whole_closed_trace = segments.len() == 1
-                && matches!(
-                    point3_equal(
-                        &segments[0].curve().start()?,
-                        &segments[0].curve().end()?,
-                        crate::STRICT_PREDICATES,
-                    ),
-                    PredicateOutcome::Decided { value: true, .. }
-                );
-            if whole_closed_trace {
-                let segment = &segments[0];
-                let mut candidates = Vec::new();
-                for (index, candidate) in faces.iter().copied().enumerate() {
-                    match staged.split_face_by_surface_curve(candidate, segment, operand) {
-                        Ok(result) => candidates.push((index, result)),
-                        Err(TopologyEditError::ClosedFaceSplitNotInMaterial { .. }) => {}
-                        Err(error) => return Err(error),
-                    }
+                let bridges = ordered
+                    .iter()
+                    .map(|trace| (trace.source_index, &trace.intersection))
+                    .collect::<Vec<_>>();
+                if let Some(result) =
+                    self.split_face_by_surface_bridge_cycle(face_id, &bridges, operand)?
+                {
+                    return Ok(result);
                 }
-                let (face_index, (next, split)) = match candidates.as_slice() {
-                    [(index, result)] => (*index, result.clone()),
-                    [] => {
-                        return Err(TopologyEditError::FaceSplitTraceNotInSingleRegion {
-                            face: face_id,
-                            trace: trace.source_index,
-                            segment: 0,
-                        });
-                    }
-                    _ => {
-                        return Err(TopologyEditError::FaceSplitTraceAmbiguous {
-                            face: face_id,
-                            trace: trace.source_index,
-                            segment: 0,
-                        });
-                    }
-                };
-                staged = next;
-                faces[face_index] = split.first_face();
-                faces.insert(face_index + 1, split.second_face());
-                splits.push(split);
             }
-            for (segment_index, segment) in segments.iter().enumerate() {
+            let mut staged = self.clone();
+            let mut faces = vec![face_id];
+            let mut traces = Vec::with_capacity(ordered.len());
+            for (trace, parameters) in ordered.into_iter().zip(split_parameters) {
+                let segments = parameters
+                    .windows(2)
+                    .map(|range| trace.intersection.subcurve(&range[0], &range[1]))
+                    .collect::<Result<Vec<_>, _>>()?;
+                let mut splits = Vec::with_capacity(segments.len());
+                let whole_closed_trace = segments.len() == 1
+                    && matches!(
+                        point3_equal(
+                            &segments[0].curve().start()?,
+                            &segments[0].curve().end()?,
+                            crate::STRICT_PREDICATES,
+                        ),
+                        PredicateOutcome::Decided { value: true, .. }
+                    );
                 if whole_closed_trace {
-                    break;
-                }
-                let curve = segment.curve();
-                let start = curve.start()?;
-                let end = curve.end()?;
-                let mut candidates = Vec::new();
-                for (index, candidate) in faces.iter().copied().enumerate() {
-                    let start_location = staged.locate_surface_curve_split_endpoint(
-                        candidate,
-                        Endpoint::Start,
-                        &start,
-                        segment.start_boundary_contacts(operand),
-                    );
-                    let end_location = staged.locate_surface_curve_split_endpoint(
-                        candidate,
-                        Endpoint::End,
-                        &end,
-                        segment.end_boundary_contacts(operand),
-                    );
-                    match (start_location, end_location) {
-                        (Ok(_), Ok(_)) => candidates.push((index, candidate)),
-                        (Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary { .. }), _)
-                        | (_, Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary { .. })) =>
-                            {}
-                        (Err(error), _) | (_, Err(error)) => return Err(error),
-                    }
-                }
-                if candidates.len() > 1 {
-                    let midpoint = ((curve.domain().start() + curve.domain().end())
-                        / Real::from(2))
-                    .map_err(GeometryError::Numeric)?;
-                    let parameter = segment.pcurve(operand).point_at(&midpoint)?;
-                    let witness = CurvePoint2::new(parameter.x, parameter.y);
-                    let mut interior_candidates = Vec::with_capacity(candidates.len());
-                    for (index, candidate) in candidates {
-                        match staged.classify_surface_parameter_on_face(candidate, &witness)? {
-                            Classification::Decided(ContourPointLocation::Inside) => {
-                                interior_candidates.push((index, candidate));
-                            }
-                            Classification::Decided(ContourPointLocation::Outside) => {}
-                            Classification::Decided(ContourPointLocation::Boundary) => {
-                                return Err(TopologyEditError::FaceSplitTraceAmbiguous {
-                                    face: face_id,
-                                    trace: trace.source_index,
-                                    segment: segment_index,
-                                });
-                            }
-                            Classification::Uncertain(reason) => {
-                                return Err(
-                                    GeometryError::PlanarClassificationUnresolved(reason).into()
-                                );
-                            }
+                    let segment = &segments[0];
+                    let mut candidates = Vec::new();
+                    for (index, candidate) in faces.iter().copied().enumerate() {
+                        match staged.split_face_by_surface_curve(candidate, segment, operand) {
+                            Ok(result) => candidates.push((index, result)),
+                            Err(TopologyEditError::ClosedFaceSplitNotInMaterial { .. }) => {}
+                            Err(error) => return Err(error),
                         }
                     }
-                    candidates = interior_candidates;
+                    let (face_index, (next, split)) = match candidates.as_slice() {
+                        [(index, result)] => (*index, result.clone()),
+                        [] => {
+                            return Err(TopologyEditError::FaceSplitTraceNotInSingleRegion {
+                                face: face_id,
+                                trace: trace.source_index,
+                                segment: 0,
+                            });
+                        }
+                        _ => {
+                            return Err(TopologyEditError::FaceSplitTraceAmbiguous {
+                                face: face_id,
+                                trace: trace.source_index,
+                                segment: 0,
+                            });
+                        }
+                    };
+                    staged = next;
+                    faces[face_index] = split.first_face();
+                    faces.insert(face_index + 1, split.second_face());
+                    splits.push(split);
                 }
-                let (face_index, candidate) = match candidates.as_slice() {
-                    [(index, candidate)] => (*index, *candidate),
-                    [] => {
-                        return Err(TopologyEditError::FaceSplitTraceNotInSingleRegion {
-                            face: face_id,
-                            trace: trace.source_index,
-                            segment: segment_index,
-                        });
+                for (segment_index, segment) in segments.iter().enumerate() {
+                    if whole_closed_trace {
+                        break;
                     }
-                    _ => {
-                        return Err(TopologyEditError::FaceSplitTraceAmbiguous {
-                            face: face_id,
-                            trace: trace.source_index,
-                            segment: segment_index,
-                        });
+                    let curve = segment.curve();
+                    let start = curve.start()?;
+                    let end = curve.end()?;
+                    let mut candidates = Vec::new();
+                    for (index, candidate) in faces.iter().copied().enumerate() {
+                        let start_location = staged.locate_surface_curve_split_endpoint(
+                            candidate,
+                            Endpoint::Start,
+                            &start,
+                            segment.start_boundary_contacts(operand),
+                        );
+                        let end_location = staged.locate_surface_curve_split_endpoint(
+                            candidate,
+                            Endpoint::End,
+                            &end,
+                            segment.end_boundary_contacts(operand),
+                        );
+                        match (start_location, end_location) {
+                            (Ok(_), Ok(_)) => candidates.push((index, candidate)),
+                            (
+                                Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary {
+                                    ..
+                                }),
+                                _,
+                            )
+                            | (
+                                _,
+                                Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary {
+                                    ..
+                                }),
+                            ) => {}
+                            (Err(error), _) | (_, Err(error)) => return Err(error),
+                        }
                     }
-                };
-                let (next, split) =
-                    staged.split_face_by_surface_curve(candidate, segment, operand)?;
-                staged = next;
-                faces[face_index] = split.first_face();
-                faces.insert(face_index + 1, split.second_face());
-                splits.push(split);
+                    if candidates.len() > 1 {
+                        let midpoint = ((curve.domain().start() + curve.domain().end())
+                            / Real::from(2))
+                        .map_err(GeometryError::Numeric)?;
+                        let parameter = segment.pcurve(operand).point_at(&midpoint)?;
+                        let witness = CurvePoint2::new(parameter.x, parameter.y);
+                        let mut interior_candidates = Vec::with_capacity(candidates.len());
+                        for (index, candidate) in candidates {
+                            match staged.classify_surface_parameter_on_face(candidate, &witness)? {
+                                Classification::Decided(ContourPointLocation::Inside) => {
+                                    interior_candidates.push((index, candidate));
+                                }
+                                Classification::Decided(ContourPointLocation::Outside) => {}
+                                Classification::Decided(ContourPointLocation::Boundary) => {
+                                    return Err(TopologyEditError::FaceSplitTraceAmbiguous {
+                                        face: face_id,
+                                        trace: trace.source_index,
+                                        segment: segment_index,
+                                    });
+                                }
+                                Classification::Uncertain(reason) => {
+                                    return Err(GeometryError::PlanarClassificationUnresolved(
+                                        reason,
+                                    )
+                                    .into());
+                                }
+                            }
+                        }
+                        candidates = interior_candidates;
+                    }
+                    let (face_index, candidate) = match candidates.as_slice() {
+                        [(index, candidate)] => (*index, *candidate),
+                        [] => {
+                            return Err(TopologyEditError::FaceSplitTraceNotInSingleRegion {
+                                face: face_id,
+                                trace: trace.source_index,
+                                segment: segment_index,
+                            });
+                        }
+                        _ => {
+                            return Err(TopologyEditError::FaceSplitTraceAmbiguous {
+                                face: face_id,
+                                trace: trace.source_index,
+                                segment: segment_index,
+                            });
+                        }
+                    };
+                    let (next, split) =
+                        staged.split_face_by_surface_curve(candidate, segment, operand)?;
+                    staged = next;
+                    faces[face_index] = split.first_face();
+                    faces.insert(face_index + 1, split.second_face());
+                    splits.push(split);
+                }
+                traces.push(FaceTracePartition {
+                    source_index: trace.source_index,
+                    segments: segments
+                        .into_iter()
+                        .map(|segment| segment.curve().clone())
+                        .collect(),
+                    splits,
+                });
             }
-            traces.push(FaceTracePartition {
-                source_index: trace.source_index,
-                segments: segments
-                    .into_iter()
-                    .map(|segment| segment.curve().clone())
-                    .collect(),
-                splits,
-            });
-        }
-        Ok((
-            staged,
-            FacePartition {
-                source_face: face_id,
-                faces,
-                traces,
-            },
-        ))
+            Ok((
+                staged,
+                FacePartition {
+                    source_face: face_id,
+                    faces,
+                    traces,
+                },
+            ))
+        })
     }
 
     /// Deterministically partitions one planar face by exact line fragments.
@@ -306,134 +318,145 @@ impl Model {
         face_id: FaceId,
         curves: &[Curve3],
     ) -> Result<(Self, FacePartition), TopologyEditError> {
-        let face = self
-            .face(face_id)
-            .ok_or(TopologyEditError::InvalidReference {
-                kind: EntityKind::Face,
-                index: face_id.index(),
-            })?;
-        let Some(_) = face.outer() else {
-            return Err(TopologyEditError::WholeSurfaceFace(face_id));
-        };
-        let surface = self
-            .surface(face.surface)
-            .expect("validated face surface ID");
-        if surface.kind() != SurfaceKind::Plane {
-            return Err(TopologyEditError::UnsupportedFaceSplitSurface(
-                surface.kind(),
-            ));
-        }
-
-        let mut traces = Vec::with_capacity(curves.len());
-        for (source_index, curve) in curves.iter().enumerate() {
-            if curve.kind() != Curve3Kind::Line {
-                return Err(TopologyEditError::UnsupportedFaceSplitCurve(curve.kind()));
-            }
-            let start = curve.start()?;
-            let end = curve.end()?;
-            let (lower, upper) = if exact_point_order(&start, &end)? == std::cmp::Ordering::Greater
-            {
-                (end, start)
-            } else {
-                (start, end)
+        crate::context::strict(|| {
+            let face = self
+                .face(face_id)
+                .ok_or(TopologyEditError::InvalidReference {
+                    kind: EntityKind::Face,
+                    index: face_id.index(),
+                })?;
+            let Some(_) = face.outer() else {
+                return Err(TopologyEditError::WholeSurfaceFace(face_id));
             };
-            let trace = OrderedFaceSplitTrace {
-                source_index,
-                curve: Curve3::line(lower.clone(), upper.clone())?,
-                lower,
-                upper,
-            };
-            let mut insertion = traces.len();
-            while insertion > 0
-                && compare_ordered_face_split_traces(&trace, &traces[insertion - 1])?
-                    == std::cmp::Ordering::Less
-            {
-                insertion -= 1;
+            let surface = self
+                .surface(face.surface)
+                .expect("validated face surface ID");
+            if surface.kind() != SurfaceKind::Plane {
+                return Err(TopologyEditError::UnsupportedFaceSplitSurface(
+                    surface.kind(),
+                ));
             }
-            if insertion > 0
-                && compare_ordered_face_split_traces(&trace, &traces[insertion - 1])?
-                    == std::cmp::Ordering::Equal
-            {
-                return Err(TopologyEditError::DuplicateFaceSplitTrace {
-                    first: traces[insertion - 1].source_index,
-                    second: source_index,
-                });
-            }
-            if insertion < traces.len()
-                && compare_ordered_face_split_traces(&trace, &traces[insertion])?
-                    == std::cmp::Ordering::Equal
-            {
-                return Err(TopologyEditError::DuplicateFaceSplitTrace {
-                    first: traces[insertion].source_index,
-                    second: source_index,
-                });
-            }
-            traces.insert(insertion, trace);
-        }
 
-        let mut staged = self.clone();
-        let mut faces = vec![face_id];
-        let mut prior_lines = Vec::with_capacity(traces.len());
-        let mut partitioned_traces = Vec::with_capacity(traces.len());
-        for trace in traces {
-            let planar = projected_face_split_line(surface, &trace)?;
-            let segments = arranged_face_split_segments(&trace, &planar, &prior_lines)?;
-            let mut trace_splits = Vec::with_capacity(segments.len());
-            for (segment_index, segment) in segments.iter().enumerate() {
-                let start = segment.start()?;
-                let end = segment.end()?;
-                let mut candidates = Vec::new();
-                for (index, candidate) in faces.iter().copied().enumerate() {
-                    let start_location =
-                        staged.locate_face_split_endpoint(candidate, Endpoint::Start, &start);
-                    let end_location =
-                        staged.locate_face_split_endpoint(candidate, Endpoint::End, &end);
-                    match (start_location, end_location) {
-                        (Ok(_), Ok(_)) => candidates.push((index, candidate)),
-                        (Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary { .. }), _)
-                        | (_, Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary { .. })) =>
-                            {}
-                        (Err(error), _) | (_, Err(error)) => return Err(error),
-                    }
+            let mut traces = Vec::with_capacity(curves.len());
+            for (source_index, curve) in curves.iter().enumerate() {
+                if curve.kind() != Curve3Kind::Line {
+                    return Err(TopologyEditError::UnsupportedFaceSplitCurve(curve.kind()));
                 }
-                let (face_index, candidate) = match candidates.as_slice() {
-                    [(index, candidate)] => (*index, *candidate),
-                    [] => {
-                        return Err(TopologyEditError::FaceSplitTraceNotInSingleRegion {
-                            face: face_id,
-                            trace: trace.source_index,
-                            segment: segment_index,
-                        });
-                    }
-                    _ => {
-                        return Err(TopologyEditError::FaceSplitTraceAmbiguous {
-                            face: face_id,
-                            trace: trace.source_index,
-                            segment: segment_index,
-                        });
-                    }
+                let start = curve.start()?;
+                let end = curve.end()?;
+                let (lower, upper) =
+                    if exact_point_order(&start, &end)? == std::cmp::Ordering::Greater {
+                        (end, start)
+                    } else {
+                        (start, end)
+                    };
+                let trace = OrderedFaceSplitTrace {
+                    source_index,
+                    curve: Curve3::line(lower.clone(), upper.clone())?,
+                    lower,
+                    upper,
                 };
-                let (next, split) = staged.split_face_by_curve(candidate, segment)?;
-                staged = next;
-                faces[face_index] = split.face.first_face;
-                faces.insert(face_index + 1, split.face.second_face);
-                trace_splits.push(SurfaceCurveFaceSplit::Open(split));
+                let mut insertion = traces.len();
+                while insertion > 0
+                    && compare_ordered_face_split_traces(&trace, &traces[insertion - 1])?
+                        == std::cmp::Ordering::Less
+                {
+                    insertion -= 1;
+                }
+                if insertion > 0
+                    && compare_ordered_face_split_traces(&trace, &traces[insertion - 1])?
+                        == std::cmp::Ordering::Equal
+                {
+                    return Err(TopologyEditError::DuplicateFaceSplitTrace {
+                        first: traces[insertion - 1].source_index,
+                        second: source_index,
+                    });
+                }
+                if insertion < traces.len()
+                    && compare_ordered_face_split_traces(&trace, &traces[insertion])?
+                        == std::cmp::Ordering::Equal
+                {
+                    return Err(TopologyEditError::DuplicateFaceSplitTrace {
+                        first: traces[insertion].source_index,
+                        second: source_index,
+                    });
+                }
+                traces.insert(insertion, trace);
             }
-            prior_lines.push((trace.source_index, planar));
-            partitioned_traces.push(FaceTracePartition {
-                source_index: trace.source_index,
-                segments,
-                splits: trace_splits,
-            });
-        }
-        Ok((
-            staged,
-            FacePartition {
-                source_face: face_id,
-                faces,
-                traces: partitioned_traces,
-            },
-        ))
+
+            let mut staged = self.clone();
+            let mut faces = vec![face_id];
+            let mut prior_lines = Vec::with_capacity(traces.len());
+            let mut partitioned_traces = Vec::with_capacity(traces.len());
+            for trace in traces {
+                let planar = projected_face_split_line(surface, &trace)?;
+                let segments = arranged_face_split_segments(&trace, &planar, &prior_lines)?;
+                let mut trace_splits = Vec::with_capacity(segments.len());
+                for (segment_index, segment) in segments.iter().enumerate() {
+                    let start = segment.start()?;
+                    let end = segment.end()?;
+                    let mut candidates = Vec::new();
+                    for (index, candidate) in faces.iter().copied().enumerate() {
+                        let start_location =
+                            staged.locate_face_split_endpoint(candidate, Endpoint::Start, &start);
+                        let end_location =
+                            staged.locate_face_split_endpoint(candidate, Endpoint::End, &end);
+                        match (start_location, end_location) {
+                            (Ok(_), Ok(_)) => candidates.push((index, candidate)),
+                            (
+                                Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary {
+                                    ..
+                                }),
+                                _,
+                            )
+                            | (
+                                _,
+                                Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary {
+                                    ..
+                                }),
+                            ) => {}
+                            (Err(error), _) | (_, Err(error)) => return Err(error),
+                        }
+                    }
+                    let (face_index, candidate) = match candidates.as_slice() {
+                        [(index, candidate)] => (*index, *candidate),
+                        [] => {
+                            return Err(TopologyEditError::FaceSplitTraceNotInSingleRegion {
+                                face: face_id,
+                                trace: trace.source_index,
+                                segment: segment_index,
+                            });
+                        }
+                        _ => {
+                            return Err(TopologyEditError::FaceSplitTraceAmbiguous {
+                                face: face_id,
+                                trace: trace.source_index,
+                                segment: segment_index,
+                            });
+                        }
+                    };
+                    let (next, split) = staged.split_face_by_curve(candidate, segment)?;
+                    staged = next;
+                    faces[face_index] = split.face.first_face;
+                    faces.insert(face_index + 1, split.face.second_face);
+                    trace_splits.push(SurfaceCurveFaceSplit::Open(split));
+                }
+                prior_lines.push((trace.source_index, planar));
+                partitioned_traces.push(FaceTracePartition {
+                    source_index: trace.source_index,
+                    segments,
+                    splits: trace_splits,
+                });
+            }
+            Ok((
+                staged,
+                FacePartition {
+                    source_face: face_id,
+                    faces,
+                    traces: partitioned_traces,
+                },
+            ))
+        })
     }
 
     pub(in crate::topology) fn split_face_by_surface_bridge_cycle(

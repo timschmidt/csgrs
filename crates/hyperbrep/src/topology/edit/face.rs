@@ -16,42 +16,44 @@ impl Model {
         face_id: FaceId,
         curve: &Curve3,
     ) -> Result<(Self, CurveFaceSplit), TopologyEditError> {
-        let face = self
-            .face(face_id)
-            .ok_or(TopologyEditError::InvalidReference {
-                kind: EntityKind::Face,
-                index: face_id.index(),
-            })?;
-        let Some(_) = face.outer() else {
-            return Err(TopologyEditError::WholeSurfaceFace(face_id));
-        };
-        let surface = self
-            .surface(face.surface)
-            .expect("validated face surface ID");
-        if surface.kind() != SurfaceKind::Plane {
-            return Err(TopologyEditError::UnsupportedFaceSplitSurface(
-                surface.kind(),
-            ));
-        }
-        if curve.kind() != Curve3Kind::Line {
-            return Err(TopologyEditError::UnsupportedFaceSplitCurve(curve.kind()));
-        }
+        crate::context::strict(|| {
+            let face = self
+                .face(face_id)
+                .ok_or(TopologyEditError::InvalidReference {
+                    kind: EntityKind::Face,
+                    index: face_id.index(),
+                })?;
+            let Some(_) = face.outer() else {
+                return Err(TopologyEditError::WholeSurfaceFace(face_id));
+            };
+            let surface = self
+                .surface(face.surface)
+                .expect("validated face surface ID");
+            if surface.kind() != SurfaceKind::Plane {
+                return Err(TopologyEditError::UnsupportedFaceSplitSurface(
+                    surface.kind(),
+                ));
+            }
+            if curve.kind() != Curve3Kind::Line {
+                return Err(TopologyEditError::UnsupportedFaceSplitCurve(curve.kind()));
+            }
 
-        let start = curve.start()?;
-        let end = curve.end()?;
-        let (staged, start_vertex, start_edge) =
-            self.attach_face_split_endpoint(face_id, Endpoint::Start, &start)?;
-        let (staged, end_vertex, end_edge) =
-            staged.attach_face_split_endpoint(face_id, Endpoint::End, &end)?;
-        let (staged, face) = staged.split_face(face_id, start_vertex, end_vertex)?;
-        Ok((
-            staged,
-            CurveFaceSplit {
-                start_edge,
-                end_edge,
-                face,
-            },
-        ))
+            let start = curve.start()?;
+            let end = curve.end()?;
+            let (staged, start_vertex, start_edge) =
+                self.attach_face_split_endpoint(face_id, Endpoint::Start, &start)?;
+            let (staged, end_vertex, end_edge) =
+                staged.attach_face_split_endpoint(face_id, Endpoint::End, &end)?;
+            let (staged, face) = staged.split_face(face_id, start_vertex, end_vertex)?;
+            Ok((
+                staged,
+                CurveFaceSplit {
+                    start_edge,
+                    end_edge,
+                    face,
+                },
+            ))
+        })
     }
 
     pub(in crate::topology) fn attach_face_split_endpoint(
@@ -307,7 +309,7 @@ impl Model {
         start: VertexId,
         end: VertexId,
     ) -> Result<(Self, FaceSplit), TopologyEditError> {
-        self.split_face_with_geometry(face_id, start, end, None)
+        crate::context::strict(|| self.split_face_with_geometry(face_id, start, end, None))
     }
 
     pub(in crate::topology) fn split_face_with_geometry(
