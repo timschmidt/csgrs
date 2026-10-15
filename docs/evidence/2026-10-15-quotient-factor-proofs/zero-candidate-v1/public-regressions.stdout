@@ -1,0 +1,12 @@
+
+running 7 tests
+test a_proved_zero_quotient_composes_with_high_degree_reciprocals ... ok
+test differently_expanded_quotients_have_an_exact_equality_proof ... ok
+test distinct_denominators_use_the_exact_common_denominator ... ok
+test polynomial_factor_division_preserves_small_nonzero_denominators ... ok
+test quotient_proofs_preserve_exact_nonzero_displacements ... ok
+test an_unproved_zero_denominator_keeps_its_typed_failure ... ok
+test quotient_proofs_survive_precision_changes_and_concurrent_queries ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

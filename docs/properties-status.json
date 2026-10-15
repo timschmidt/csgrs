@@ -9369,6 +9369,32 @@
       "remaining": "Confirm the next normalization decline and investigate exact factor cancellation or construction-proof retention. Independent conditional expansion encounters degrees 9/10 versus production cap 8. Preserve all limits and failing full-resolution tests; then run broad downstream qualification, matched cost/allocation evidence and release/user-path validation.",
       "runtime_admitted": false,
       "full_plan_complete": false
+    },
+    "zero_quotient_proof_work": {
+      "status": "candidate: all original drills now compose with empty; complete 16/32 subtraction and admission remain open",
+      "baseline_commit": "3eca3cce8",
+      "progress": "docs/evidence/2026-10-15-quotient-factor-proofs/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-quotient-factor-proofs/zero-qualification-v2/result.json",
+      "model_acceptance": "docs/evidence/2026-10-15-quotient-factor-proofs/zero-candidate-v1/result.json",
+      "production_baseline_diagnosis": "docs/evidence/2026-10-15-quotient-factor-proofs/diagnostic-v4/result.json",
+      "conditional_algebra": "docs/evidence/2026-10-15-quotient-factor-proofs/factor-reduction-algebra-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-quotient-factor-proofs/checkpoint-v1.json",
+      "implementation_sha256": {
+        "crates/hyperreal/src/computable/node.rs": "8a90c811535f2962993f8978edd285ae080afe619056e2ef3b898818beeda6b9",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "2780131268cd79e776d117723c3c905aac1ae0b9b164c4e9e2b66b7293c115da",
+        "crates/hyperreal/src/computable/node/ring_quotient.rs": "e2c4888742d9fd8d428bacab12bd59a0a235f3d396e977d872500e54f121f6d9",
+        "crates/hyperreal/src/computable/node/ring_quotient_tests.rs": "f7450a735f03a1d915a5fe0bacc1c49b50f0c4fed8118b68842f97684bab5053",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "0de54f502ec5678bd884155c2d27f9025ccc00c05c3c7c92f90df524ce60e9ae",
+        "crates/hyperreal/tests/quotient_polynomial_cancellation.rs": "8ada040e2e132950be6853038160925aadea99c7e63117293ff7ae73c2f990bc",
+        "tests/mesh_boolean_context.rs": "49d8e88febbe7ed8aa234c3ac58add009008f3680250c8c905d4d9e98cc7a307",
+        "tests/strict_drilled_workflows.rs": "1dd8a22959400ca3f4b78e5c6bbed7afecf83b767b832634ef9b55ae523a4abe"
+      },
+      "qualification": "912 default and 1019 all-feature scalar tests, 28 scalar doctests, scalar all-feature/all-target and root curve/all-target Clippy with warnings denied, and workspace formatting pass. Direct downstream context and independent polygonal membership/volume-enclosure/topology checks pass. Counts overlap.",
+      "workflow": "8/24 still complete empty accumulation, complete subtraction and reunion. 16/32 now pass Certified empty accumulation and subsequent membership, then fail complete subtraction with typed Real sign classification Unknown. The original full-resolution tests remain failing.",
+      "resource_contract": "Discard proved-zero denominators only after both operands pass expansion and inverse-domain guards. No recognition limit or policy change; no persistent cache or authoritative expression rewrite. External containment is not an internal total-work or heap-byte bound.",
+      "remaining": "Reproduce the remaining subtraction decline on this candidate and investigate exact factor cancellation or retained construction proofs without weakening limits. Broad downstream, matched cost/allocation/artifact comparisons, release and external user-path validation remain open.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
     }
   },
   "status_meanings": {

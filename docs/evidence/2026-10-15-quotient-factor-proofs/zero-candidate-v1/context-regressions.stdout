@@ -1,0 +1,9 @@
+
+running 4 tests
+test context_booleans_preserve_input_errors ... ok
+test every_boolean_reports_approximation_without_affecting_later_strict_calls ... ok
+test rational_booleans_stay_certified_with_either_context ... ok
+test drill_cylinder_completes_certifiably_with_either_context ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.87s
+

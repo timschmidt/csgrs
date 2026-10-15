@@ -1,0 +1,3 @@
+    Finished `release` profile [optimized] target(s) in 0.14s
+   Doc-tests hyperreal
+error: doctest failed, to rerun pass `-p hyperreal --doc`

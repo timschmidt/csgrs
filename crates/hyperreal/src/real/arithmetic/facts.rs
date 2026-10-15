@@ -91,6 +91,8 @@ impl Real {
     /// consumes a work charge and checks cancellation, without another node
     /// expansion. At most 512 temporary projections are retained until return;
     /// this entry limit is not a heap-byte bound. No cache survives the query.
+    /// Proved zero quotients discard their unused denominators after both
+    /// operands pass expansion and inverse-domain checks.
     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
         if let Some(rational) = self.exact_rational() {
             return Some(rational);

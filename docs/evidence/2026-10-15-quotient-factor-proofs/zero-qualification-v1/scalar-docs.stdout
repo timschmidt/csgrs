@@ -1,0 +1,154 @@
+
+running 28 tests
+test crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 20) ... FAILED
+test crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::prefer_fraction (line 639) ... FAILED
+test crates/hyperreal/src/rational/arithmetic/construction.rs - rational::arithmetic::Rational::is_integer (line 709) ... FAILED
+test crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::trunc (line 115) ... FAILED
+test crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 14) ... FAILED
+test crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::fract (line 151) ... FAILED
+test crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::fract (line 158) ... FAILED
+test crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::shifted_big_integer (line 666) ... FAILED
+test crates/hyperreal/src/rational/arithmetic/construction.rs - rational::arithmetic::Rational::inverse (line 668) ... FAILED
+test crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 26) ... FAILED
+test crates/hyperreal/src/computable/node/approximation_queries.rs - computable::node::Computable::approx (line 70) ... FAILED
+test crates/hyperreal/src/computable/node/approximation_queries.rs - computable::node::Computable::approx (line 60) ... FAILED
+test crates/hyperreal/src/real/arithmetic/decimal.rs - real::arithmetic::decimal::Real::diagnostic_decimal (line 66) ... FAILED
+test crates/hyperreal/src/real/arithmetic/decimal.rs - real::arithmetic::decimal::Real::try_decimal (line 35) ... FAILED
+test crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 33) ... FAILED
+test crates/hyperreal/src/real/arithmetic/scientific.rs - real::arithmetic::scientific::Real::try_scientific (line 61) ... FAILED
+test crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::trunc (line 125) ... FAILED
+test crates/hyperreal/src/real/arithmetic/format_parse.rs - real::arithmetic::Real::fixed_decimal (line 15) ... FAILED
+test crates/hyperreal/src/real/arithmetic/representation.rs - real::arithmetic::Real (line 37) ... FAILED
+test crates/hyperreal/src/real/arithmetic/representation.rs - real::arithmetic::Real (line 19) ... FAILED
+test crates/hyperreal/src/real/arithmetic/inversion.rs - real::arithmetic::Real::inverse (line 339) ... FAILED
+test crates/hyperreal/src/simple.rs - simple (line 30) ... FAILED
+test crates/hyperreal/src/simple.rs - simple::Simple (line 188) ... FAILED
+test crates/hyperreal/src/simple.rs - simple (line 10) ... FAILED
+test crates/hyperreal/src/serde.rs - serde::Real::to_bytes (line 26) ... FAILED
+test crates/hyperreal/src/simple.rs - simple (line 20) ... FAILED
+test crates/hyperreal/src/real/arithmetic/elementary_functions.rs - real::arithmetic::Real::atan2 (line 3203) ... FAILED
+test crates/hyperreal/src/real/arithmetic/representation.rs - real::arithmetic::Real (line 26) ... FAILED
+
+failures:
+
+---- crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 20) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::prefer_fraction (line 639) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/rational/arithmetic/construction.rs - rational::arithmetic::Rational::is_integer (line 709) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::trunc (line 115) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 14) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::fract (line 151) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::fract (line 158) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::shifted_big_integer (line 666) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/rational/arithmetic/construction.rs - rational::arithmetic::Rational::inverse (line 668) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 26) stdout ----
+error: failed to write /tmp/rustdoctestFa0lnJ/rustcY2idFK/symbols.o: Disk quota exceeded (os error 122)
+
+error: aborting due to 1 previous error
+
+Couldn't compile the test.
+---- crates/hyperreal/src/computable/node/approximation_queries.rs - computable::node::Computable::approx (line 70) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/computable/node/approximation_queries.rs - computable::node::Computable::approx (line 60) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/real/arithmetic/decimal.rs - real::arithmetic::decimal::Real::diagnostic_decimal (line 66) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/real/arithmetic/decimal.rs - real::arithmetic::decimal::Real::try_decimal (line 35) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 33) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/real/arithmetic/scientific.rs - real::arithmetic::scientific::Real::try_scientific (line 61) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::trunc (line 125) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/real/arithmetic/format_parse.rs - real::arithmetic::Real::fixed_decimal (line 15) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/real/arithmetic/representation.rs - real::arithmetic::Real (line 37) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/real/arithmetic/representation.rs - real::arithmetic::Real (line 19) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/real/arithmetic/inversion.rs - real::arithmetic::Real::inverse (line 339) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/simple.rs - simple (line 30) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/simple.rs - simple::Simple (line 188) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/simple.rs - simple (line 10) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/serde.rs - serde::Real::to_bytes (line 26) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/simple.rs - simple (line 20) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/real/arithmetic/elementary_functions.rs - real::arithmetic::Real::atan2 (line 3203) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+---- crates/hyperreal/src/real/arithmetic/representation.rs - real::arithmetic::Real (line 26) stdout ----
+rustc-LLVM ERROR: IO failure on output stream: Disk quota exceeded
+Couldn't compile the test.
+
+failures:
+    crates/hyperreal/src/computable/node/approximation_queries.rs - computable::node::Computable::approx (line 60)
+    crates/hyperreal/src/computable/node/approximation_queries.rs - computable::node::Computable::approx (line 70)
+    crates/hyperreal/src/rational/arithmetic/construction.rs - rational::arithmetic::Rational::inverse (line 668)
+    crates/hyperreal/src/rational/arithmetic/construction.rs - rational::arithmetic::Rational::is_integer (line 709)
+    crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::fract (line 151)
+    crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::fract (line 158)
+    crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::prefer_fraction (line 639)
+    crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::shifted_big_integer (line 666)
+    crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::trunc (line 115)
+    crates/hyperreal/src/rational/arithmetic/queries_conversion.rs - rational::arithmetic::Rational::trunc (line 125)
+    crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 14)
+    crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 20)
+    crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 26)
+    crates/hyperreal/src/rational/arithmetic/representation.rs - rational::arithmetic::Rational (line 33)
+    crates/hyperreal/src/real/arithmetic/decimal.rs - real::arithmetic::decimal::Real::diagnostic_decimal (line 66)
+    crates/hyperreal/src/real/arithmetic/decimal.rs - real::arithmetic::decimal::Real::try_decimal (line 35)
+    crates/hyperreal/src/real/arithmetic/elementary_functions.rs - real::arithmetic::Real::atan2 (line 3203)
+    crates/hyperreal/src/real/arithmetic/format_parse.rs - real::arithmetic::Real::fixed_decimal (line 15)
+    crates/hyperreal/src/real/arithmetic/inversion.rs - real::arithmetic::Real::inverse (line 339)
+    crates/hyperreal/src/real/arithmetic/representation.rs - real::arithmetic::Real (line 19)
+    crates/hyperreal/src/real/arithmetic/representation.rs - real::arithmetic::Real (line 26)
+    crates/hyperreal/src/real/arithmetic/representation.rs - real::arithmetic::Real (line 37)
+    crates/hyperreal/src/real/arithmetic/scientific.rs - real::arithmetic::scientific::Real::try_scientific (line 61)
+    crates/hyperreal/src/serde.rs - serde::Real::to_bytes (line 26)
+    crates/hyperreal/src/simple.rs - simple (line 10)
+    crates/hyperreal/src/simple.rs - simple (line 20)
+    crates/hyperreal/src/simple.rs - simple (line 30)
+    crates/hyperreal/src/simple.rs - simple::Simple (line 188)
+
+test result: FAILED. 0 passed; 28 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+all doctests ran in 0.29s; merged doctests compilation took 0.08s

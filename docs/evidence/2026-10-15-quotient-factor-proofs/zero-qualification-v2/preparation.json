@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--no-preserve=links",
+    "--reflink=auto",
+    "/run/user/1000/csgrs-quotient-factor-proofs/zero-qualification-v1/release",
+    "/run/user/1000/csgrs-quotient-factor-proofs/zero-qualification-v2/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "61cf5a460b9798285f35bab1b8a1d49b70c1985ab88e4b5a2db196ebceb925d6",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,9 @@
+[
+  [
+    "factor-reduction-algebra",
+    [
+      "python3",
+      "docs/evidence/2026-10-15-quotient-factor-proofs/analyze_factor_reduction_v1.py"
+    ]
+  ]
+]

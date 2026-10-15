@@ -1,0 +1,78 @@
+warning: failed to save last-use data
+This may prevent cargo from accurately tracking what is being used in its global cache. This information is used for automatically removing unused data in the cache.
+
+disk I/O error
+
+Caused by:
+  Error code 778: disk I/O error
+   Compiling num-traits v0.2.19
+   Compiling serde_core v1.0.228
+    Checking num-integer v0.1.46
+    Checking num-bigint v0.4.6
+    Checking num-rational v0.4.2
+    Checking num-iter v0.1.45
+    Checking num-complex v0.4.6
+   Compiling serde v1.0.228
+   Compiling libc v0.2.186
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling zmij v1.0.21
+   Compiling version_check v0.9.5
+   Compiling serde_json v1.0.149
+   Compiling bitflags v2.11.1
+   Compiling camino v1.2.4
+   Compiling memchr v2.8.0
+   Compiling error-chain v0.12.4
+   Compiling rustix v1.1.4
+   Compiling getrandom v0.4.2
+   Compiling itoa v1.0.18
+   Compiling cfg-if v1.0.4
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling pulldown-cmark v0.9.6
+   Compiling linux-raw-sys v0.12.1
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling cargo-platform v0.1.9
+   Compiling semver v1.0.28
+   Compiling fastrand v2.4.1
+   Compiling once_cell v1.21.4
+   Compiling same-file v1.0.6
+   Compiling unicase v2.9.0
+   Compiling walkdir v2.5.0
+   Compiling tempfile v3.27.0
+   Compiling cargo_metadata v0.14.2
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling thiserror v1.0.69
+   Compiling bytecount v0.6.9
+   Compiling cgmath v0.18.0
+   Compiling glob v0.3.3
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling skeptic v0.13.7
+    Checking approx v0.4.0
+   Compiling thiserror-impl v1.0.69
+   Compiling peg-runtime v0.6.3
+   Compiling peg-macros v0.6.3
+   Compiling ply-rs v0.1.3
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking half v2.7.1
+    Checking foldhash v0.1.5
+    Checking allocator-api2 v0.2.21
+    Checking equivalent v1.0.2
+   Compiling doc-image-embed v0.2.1
+    Checking hashbrown v0.15.5
+    Checking peg v0.6.3
+    Checking rusty-fork v0.3.1
+    Checking three-d-asset v0.4.0
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Checking thiserror v2.0.21
+    Checking clipper2-rust v1.1.0
+    Checking linked-hash-map v0.5.6
+    Checking glam v0.30.10
+    Checking byteorder v1.5.0
+    Checking proptest v1.11.0
+    Checking boolmesh v0.1.9
+    Checking manifold-rust v0.9.2
+    Checking tri-mesh v0.6.1
+    Checking quick-xml v0.39.4
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 23.87s

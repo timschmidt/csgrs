@@ -1,0 +1,15 @@
+{
+  "commands": [
+    {
+      "name": "factor-reduction-algebra",
+      "exit_code": 0,
+      "seconds": 2.246189665980637,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "2df96d72ea017a52009f904d797e3b01cb3de01d9a1f43dbaa2a7d083eb6250c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "2625201aed4ed275b915cd64e34fc8634a976ef4c658f041352871896d64d963"
+    }
+  ],
+  "passed": true
+}
