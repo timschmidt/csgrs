@@ -222,6 +222,25 @@ analyses. This supports keeping Hyper's selected-fiber identity through
 operations, rather than eliminating each coordinate repeatedly.
 [CGAL algebraic-kernel manual, Implementation](https://doc.cgal.org/latest/Algebraic_kernel_d/index.html).
 
+### Selected spatial evaluation follow-up — 2026-10-15
+
+CGAL's Bézier point interface also constructs a point from a curve and an
+algebraic parameter, and distinguishes available exact coordinates from a
+deferred representation. This is a representation precedent, not evidence
+that its approximation policy matches Hyper's contract.
+[Bézier point reference](https://doc.cgal.org/latest/Arrangement_on_surface_2/classCGAL_1_1Arr__Bezier__curve__traits__2_1_1Point__2.html).
+
+The HyperBRep implementation now retains a spatial curve plus one selector,
+reusing Hypercurve's XY/XZ image predicates. This preserves correlation
+without independent coordinate elimination. Both image preparations are
+demand-driven and share the source's lifetime. This is our implementation
+choice; the literature does not establish its cost. The
+[qualification](evidence/2026-10-15-retained-spatial-points/README.md) measures
+it and keeps the selected edge/pcurve/archive gate open. Generic geometric
+DAG laziness motivates such sharing, but does not justify accumulating a new
+transform wrapper for each edit.
+[Pion/Fabri](https://arxiv.org/abs/cs/0608063).
+
 ## Offsets, shelling, fillets and sweeps
 
 ### Preserve exact relations rather than promising rational closure
@@ -375,12 +394,26 @@ The early rows reduce redundant work before introducing a new solver.
 | E10 | Certified local continuation after a complete event census | Boxes, continuation steps and complete-model latency; no branch jumping, hidden loops or loss at chart transitions; compare parameter and model-space bounds |
 | E11 | Certified injectivity/normal-cone exclusion for self/pair intersections | Exclusions versus certificate cost and pathological fallback cost; failure of a sufficient test remains unknown |
 | E12 | Deterministic parallelism and `fearless_simd` in verified filters, pair proposals and independent algebra work | End-to-end time, scheduling overhead and total memory; serial/native/WASM parity, cancellation and fixed global budgets |
+| E13 | Linear-operation Bézier point evaluation versus de Casteljau in Hypercurve/BREP | Exact scalar/control cohorts, endpoint guards, division cost, expression/coefficient growth and scratch allocations; preserve splitting and derivative certificates |
 
 E01–E06 can begin against existing supported families. E07–E11 should use
 the intersection prototype corpus rather than wait for a large completed
 kernel. E12 follows stable proof sharing and resource accounting. Do not
 hold architectural progress hostage to an asymptotically interesting
 optimization that loses on the actual low-degree workload.
+
+For E13, Woźny/Chudy provide a convex-combination evaluator for positive-weight
+polynomial/rational Béziers with linear arithmetic-operation count and constant
+auxiliary storage. Their theorem requires nonnegative normalized basis
+functions and positive weights; zero basis values need separate handling.
+This fits the current positive-weight native point-evaluation domain as a
+prototype. The stated complexity is not an exact-arithmetic bit-cost bound:
+additional divisions and intermediate expression growth may erase the gain.
+It does not replace subdivision or selected-root sign proofs. Measure native
+degrees 1–32, tiny endpoint parameters and mixed `Real` representations before
+changing either geometric owner; retain de Casteljau where its intermediate
+controls are required.
+[Paper, §§1–2](https://arxiv.org/pdf/1803.06843).
 
 Lazy exact geometric computation supports deferring an exact construction
 until a downstream predicate needs it, with geometric DAG nodes rather than
@@ -484,6 +517,11 @@ roots, certify the remaining coordinate at the same root, and preserve authored
 knot charts. It reuses the existing Hypercurve affine chart implementation.
 Topology transfer still reports unavailable materialization explicitly; this
 does not complete the G1 edge/pcurve/archive composition gate.
+
+The [spatial-point increment](evidence/2026-10-15-retained-spatial-points/README.md)
+adds selected evaluation, exact spatial comparisons, bounds and affine
+composition. Vertices, edge domains, dual-pcurve subdivision and selected
+archive graph replay remain the next G1 obligations.
 
 Small mathematical fixtures should precede large imported examples. The
 following are proposed exact counterexamples and proof obligations, not

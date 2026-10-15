@@ -35,10 +35,14 @@ remains in Hypersolve; Hypercurve owns the reused root/chart evidence. HyperBREP
 composes this authority into spatial incidence without a second solver.
 
 The current retained-parameter API covers spatial inverse queries and
-comparison. Spatial point carriers, edge domains, pcurve correspondence and
-archive replay must be extended before selected roots can pass through a
-complete topology edit. Existing materialization requirements remain explicit
-typed blockers at those consumers. See the
+comparison. `GeometricPoint3` retains selected images of lines, rational
+Béziers and finite NURBS, with exact comparison, bounds and invertible affine
+transforms. Edge domains, vertices, pcurve correspondence and archive replay
+must still be extended before selected roots can pass through a complete
+topology edit. Existing materialization requirements remain explicit typed
+blockers at those consumers. Selected conic angles return
+`UnsupportedSelectedEvaluation`; they are never reinterpreted as rational
+chart coordinates. See the
 [current contract](../ARCHITECTURE.md#retained-inverse-parameters).
 
 Primitive floats may be accepted only by explicitly named boundary adapters.

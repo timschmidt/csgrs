@@ -52,12 +52,41 @@ Bezier-span decomposition and Hypercurve's affine root transport to retain
 authored knot parameters; exact comparison deduplicates shared seams.
 Partly constant preimages remain an explicit unsupported result.
 
-The retained query result does not yet supply retained spatial evaluation,
-edge-domain endpoints, vertices, pcurve correspondence or archive graph nodes.
-Those consumers still require stored `Real` values and must report
-`UnrepresentableParameter` rather than drop a selected contact. This is partial
-WP02 progress, not the G1 split/persistence gate. The
-[qualification record](evidence/2026-10-15-retained-inverse-parameters/manifest.json)
+The [inverse-query qualification record](evidence/2026-10-15-retained-inverse-parameters/manifest.json)
+records that increment's covered cases and limits. The selected spatial
+evaluation added subsequently is described below.
+
+## Retained spatial points
+
+`Curve3::point_at(&Parameter)` returns `GeometricPoint3`. Authored scalar
+parameters use the native evaluator and store `Point3` coordinates. A selected
+line, rational Bézier or finite NURBS image retains its immutable source curve
+and one shared parameter; `try_coordinates` returns `None` without attempting
+materialization. Conic angular parameters still require a scalar view and
+otherwise return `UnsupportedSelectedEvaluation`.
+
+[`geometry/point.rs`](../src/geometry/point.rs) owns the spatial evidence.
+`coincides_with` first checks shared point/source identity, then compares all
+three coordinates through Hypercurve's existing selected-image predicates.
+Different parameters do not prove different points. An unresolved coordinate
+does not prevent a definite separation in another coordinate from proving
+noncoincidence. Both projections use the same selector; independently chosen
+roots cannot establish a spatial point.
+
+The XY and XZ curves and their selected images are prepared independently on
+demand. Successful projection preparation is cached, while failed work remains
+retryable. Cold readers may duplicate preparation before publishing a shared
+success. Source geometry owns no point or model reference, preventing a cycle.
+Bounds are conservative exact enclosures, with no promised width. Affine
+transforms certify invertibility, transform the source controls and reuse the
+selector; they do not add a chain of point-expression wrappers.
+
+Edge-domain endpoints, vertices, pcurve correspondence and archive graph nodes
+still require stored `Real` values and must report `UnrepresentableParameter`
+rather than drop a selected contact. Derivatives and subdivision also retain
+their represented-parameter requirements. This is partial WP02 progress, not
+the G1 split/persistence gate. The
+[qualification record](evidence/2026-10-15-retained-spatial-points/manifest.json)
 records the covered cases and remaining limits.
 
 ## Source organization
@@ -72,6 +101,7 @@ there is no parallel legacy model API.
 | `construction.rs`, `boolean_kernel.rs`, `meshing.rs` | Private constructor, Boolean and derived-output algorithms |
 | `context.rs` | Explicit strict operation configuration and shared Hypersolve budgets; strict authority at fallible public operation boundaries |
 | `cache.rs` | Shared publication of successful immutable certificates; failed queries remain retryable |
+| `parameter.rs`, `geometry/location.rs`, `geometry/point.rs` | Retained parameters, spatial inverse queries and shared selected point images |
 | `topology/ids.rs`, `records.rs`, `correspondence.rs` | Typed identifiers, immutable topology records and exact parameter relations |
 | `topology/model.rs`, `builder.rs`, `error.rs` | Arena access, adjacency, staged construction/publication and typed failures |
 | `topology/edit/` | Edge/face/surface splitting, multi-trace partitioning, endpoint attachment, transactions and edit results |

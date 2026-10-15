@@ -30,12 +30,19 @@ charts and deduplicate seam parameters. Partly constant NURBS preimages remain
 `UnsupportedParameterLocation`; the API does not return a finite subset of an
 interval preimage.
 
-This retention currently covers inverse queries and exact comparison.
-Evaluation, derivatives, subdivision, edge domains, vertices, pcurve transfers
-and archives still use represented parameters/coordinates. Topology transfer
+`Curve3::point_at(&Parameter)` returns `GeometricPoint3`, retaining selected
+images for lines, rational Béziers and finite NURBS. It supports strict
+coincidence/coordinate comparisons, conservative enclosures and certified
+invertible affine transforms. NURBS selectors stay in their authored knot
+chart. Scalar parameters expose stored coordinates; selected conic angular
+evaluation returns `UnsupportedSelectedEvaluation`.
+
+Derivatives, subdivision, edge domains, vertices, pcurve transfers and archives
+still use represented parameters/coordinates. Topology transfer
 requiring an unavailable `Real` returns `UnrepresentableParameter`; retained
 3D split and archive replay remain open. See the
-[parameter contract](ARCHITECTURE.md#retained-inverse-parameters).
+[parameter contract](ARCHITECTURE.md#retained-inverse-parameters) and
+[spatial point contract](ARCHITECTURE.md#retained-spatial-points).
 
 ## Surface carriers
 

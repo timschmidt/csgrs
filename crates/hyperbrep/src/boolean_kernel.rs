@@ -1216,7 +1216,7 @@ fn planar_trace_crosses_face_interior(
 ) -> Result<bool, GeometryError> {
     let middle = ((trace.domain().start() + trace.domain().end()) / Real::from(2))
         .map_err(GeometryError::Numeric)?;
-    let point = trace.point_at(&middle)?;
+    let point = trace.evaluate_real(&middle)?;
     let surface = face_surface(model, face);
     let parameter = project_to_plane(surface, &point)?;
     match crate::error::classified(
@@ -1243,8 +1243,8 @@ fn planar_line_support_split_traces(
             traces.push(fragment.clone());
             continue;
         }
-        let start = fragment.point_at(fragment.domain().start())?;
-        let end = fragment.point_at(fragment.domain().end())?;
+        let start = fragment.evaluate_real(fragment.domain().start())?;
+        let end = fragment.evaluate_real(fragment.domain().end())?;
         let direction = &end - &start;
         let span = match spanning_segment_on_planar_face(model, face, &start, &direction)? {
             Classification::Decided(span) => span,
@@ -1269,11 +1269,11 @@ fn push_unique_planar_trace(
     traces: &mut Vec<Curve3>,
     candidate: Curve3,
 ) -> Result<(), GeometryError> {
-    let start = candidate.point_at(candidate.domain().start())?;
-    let end = candidate.point_at(candidate.domain().end())?;
+    let start = candidate.evaluate_real(candidate.domain().start())?;
+    let end = candidate.evaluate_real(candidate.domain().end())?;
     for trace in traces.iter() {
-        let trace_start = trace.point_at(trace.domain().start())?;
-        let trace_end = trace.point_at(trace.domain().end())?;
+        let trace_start = trace.evaluate_real(trace.domain().start())?;
+        let trace_end = trace.evaluate_real(trace.domain().end())?;
         if (points_exactly_equal(&start, &trace_start)? && points_exactly_equal(&end, &trace_end)?)
             || (points_exactly_equal(&start, &trace_end)?
                 && points_exactly_equal(&end, &trace_start)?)
@@ -3090,8 +3090,8 @@ fn trim_face_pair_intersection(
     }
     let mut common_fragments = Vec::new();
     for fragment in first_fragments {
-        let start = fragment.point_at(fragment.domain().start())?;
-        let end = fragment.point_at(fragment.domain().end())?;
+        let start = fragment.evaluate_real(fragment.domain().start())?;
+        let end = fragment.evaluate_real(fragment.domain().end())?;
         match trim_segment_to_planar_face(second_model, second_face, &start, &end)? {
             Classification::Decided(fragments) => common_fragments.extend(fragments),
             Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
@@ -4649,12 +4649,12 @@ fn coplanar_boundary_split_traces(
                 }
             };
             for fragment in fragments {
-                let start = fragment.point_at(fragment.domain().start())?;
-                let end = fragment.point_at(fragment.domain().end())?;
+                let start = fragment.evaluate_real(fragment.domain().start())?;
+                let end = fragment.evaluate_real(fragment.domain().end())?;
                 let middle_parameter = ((fragment.domain().start() + fragment.domain().end())
                     / Real::from(2))
                 .map_err(GeometryError::Numeric)?;
-                let middle = fragment.point_at(&middle_parameter)?;
+                let middle = fragment.evaluate_real(&middle_parameter)?;
                 let classify = |point: &Point3| {
                     let parameter = project_to_plane(target_surface, point)?;
                     crate::error::classified(
@@ -6758,7 +6758,7 @@ mod tests {
         let parameter = ((fragment.curve().domain().start() + fragment.curve().domain().end())
             / Real::from(2))
         .unwrap();
-        let spatial = fragment.curve().point_at(&parameter).unwrap();
+        let spatial = fragment.curve().evaluate_real(&parameter).unwrap();
         let first = first_surface
             .point_at(&fragment.first_pcurve().point_at(&parameter).unwrap())
             .unwrap();
@@ -10378,7 +10378,7 @@ mod tests {
         for fragment in fragments {
             assert_eq!(fragment.kind(), crate::Curve3Kind::Line);
             for parameter in [fragment.domain().start(), &half, fragment.domain().end()] {
-                let point = fragment.point_at(parameter).unwrap();
+                let point = fragment.evaluate_real(parameter).unwrap();
                 assert_eq!(
                     first.classify_point(first_solid, &point).unwrap(),
                     crate::SolidPointLocation::Boundary
@@ -10455,7 +10455,7 @@ mod tests {
         );
         assert!(fragments.iter().any(|fragment| {
             point3_equal(
-                &fragment.curve().point_at(&half).unwrap(),
+                &fragment.curve().evaluate_real(&half).unwrap(),
                 &expected,
                 crate::STRICT_PREDICATES,
             )
@@ -10463,7 +10463,7 @@ mod tests {
                 == Some(true)
         }));
         for fragment in fragments {
-            let point = fragment.curve().point_at(&half).unwrap();
+            let point = fragment.curve().evaluate_real(&half).unwrap();
             assert_eq!(
                 extruded.classify_point(extruded_solid, &point).unwrap(),
                 crate::SolidPointLocation::Boundary
@@ -10498,7 +10498,7 @@ mod tests {
         );
         assert!(transverse_fragments.iter().any(|fragment| {
             point3_equal(
-                &fragment.curve().point_at(&half).unwrap(),
+                &fragment.curve().evaluate_real(&half).unwrap(),
                 &expected,
                 crate::STRICT_PREDICATES,
             )
@@ -10506,7 +10506,7 @@ mod tests {
                 == Some(true)
         }));
         for fragment in transverse_fragments {
-            let point = fragment.curve().point_at(&half).unwrap();
+            let point = fragment.curve().evaluate_real(&half).unwrap();
             assert_eq!(
                 extruded.classify_point(extruded_solid, &point).unwrap(),
                 crate::SolidPointLocation::Boundary
@@ -10873,7 +10873,7 @@ mod tests {
             face_surface(&plane_model, plane_face),
         );
         let half = (Real::one() / Real::from(2)).unwrap();
-        let point = fragments[0].curve().point_at(&half).unwrap();
+        let point = fragments[0].curve().evaluate_real(&half).unwrap();
         let patch_surface = face_surface(&patch, patch_face);
         let expected = patch_surface
             .point_at(&crate::Point2::new(half.clone(), half.clone()))
@@ -10933,7 +10933,7 @@ mod tests {
         );
         assert_eq!(
             point3_equal(
-                &reverse_fragments[0].curve().point_at(&half).unwrap(),
+                &reverse_fragments[0].curve().evaluate_real(&half).unwrap(),
                 &point,
                 crate::STRICT_PREDICATES
             )
@@ -13894,7 +13894,7 @@ mod tests {
         assert_eq!(top_fragments.len(), 2);
         for fragment in top_fragments {
             let midpoint = fragment
-                .point_at(&(Real::one() / Real::from(2)).unwrap())
+                .evaluate_real(&(Real::one() / Real::from(2)).unwrap())
                 .unwrap();
             assert_eq!(
                 holed.classify_point(holed_solid, &midpoint).unwrap(),
@@ -13949,7 +13949,7 @@ mod tests {
             let middle = ((fragment.curve().domain().start() + fragment.curve().domain().end())
                 / Real::from(2))
             .unwrap();
-            let point = fragment.curve().point_at(&middle).unwrap();
+            let point = fragment.curve().evaluate_real(&middle).unwrap();
             assert_eq!(
                 sphere.classify_point(sphere_solid, &point).unwrap(),
                 crate::SolidPointLocation::Boundary

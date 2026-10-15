@@ -89,7 +89,7 @@ pub(super) fn locate_rational_bezier_parameters(
                 let incident = if let Some(value) = parameter.scalar() {
                     // Preserve the represented-value path without constructing
                     // another projected carrier or a selected point image.
-                    points_equal(&curve.point_at(value)?, point)?
+                    points_equal(&curve.evaluate_real(value)?, point)?
                 } else if let Some(constant) = &rational.constant_coordinates[remaining_axis] {
                     decided_order(compare_reals(
                         constant,

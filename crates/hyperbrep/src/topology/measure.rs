@@ -174,8 +174,8 @@ impl ArenaModel {
                 };
                 let angular_span = &u_values[1] - &u_values[0];
                 let line_image_area = || -> Result<Real, QueryError> {
-                    let start = profile.point_at(profile.domain().start())?;
-                    let end = profile.point_at(profile.domain().end())?;
+                    let start = profile.evaluate_real(profile.domain().start())?;
+                    let end = profile.evaluate_real(profile.domain().end())?;
                     let start_radial = radial_at(&start);
                     let end_radial = radial_at(&end);
                     if decided_model_order(compare_reals(
@@ -217,7 +217,7 @@ impl ArenaModel {
                         line_image_area()
                     }
                     Curve3ExactData::EllipseArc(data) if data.circle => {
-                        let start_point = profile.point_at(profile.domain().start())?;
+                        let start_point = profile.evaluate_real(profile.domain().start())?;
                         let start_radial = radial_at(&start_point);
                         let start_radius = start_radial
                             .norm_squared()
@@ -319,8 +319,8 @@ impl ArenaModel {
             return Err(GeometryError::UnsupportedMeasurement.into());
         }
         let restricted = profile.subcurve(&u_min, &u_max)?;
-        let start = restricted.point_at(restricted.domain().start())?;
-        let end = restricted.point_at(restricted.domain().end())?;
+        let start = restricted.evaluate_real(restricted.domain().start())?;
+        let end = restricted.evaluate_real(restricted.domain().end())?;
         let swept_area = (&end - &start)
             .cross(direction)
             .norm_squared()
@@ -585,10 +585,10 @@ impl ArenaModel {
                         .ok_or(GeometryError::UnsupportedMeasurement)?
                         .abs();
                 }
-                let path_start = sweep.path.point_at(sweep.path.domain().start())?;
-                let path_end = sweep.path.point_at(sweep.path.domain().end())?;
-                let u = Vector3::from(sweep.u_path.point_at(sweep.u_path.domain().start())?);
-                let v = Vector3::from(sweep.v_path.point_at(sweep.v_path.domain().start())?);
+                let path_start = sweep.path.evaluate_real(sweep.path.domain().start())?;
+                let path_end = sweep.path.evaluate_real(sweep.path.domain().end())?;
+                let u = Vector3::from(sweep.u_path.evaluate_real(sweep.u_path.domain().start())?);
+                let v = Vector3::from(sweep.v_path.evaluate_real(sweep.v_path.domain().start())?);
                 let progress = u.cross(&v).dot(&(path_end - path_start)).abs();
                 return Ok(area * progress * &sweep.area_scale_integral);
             }

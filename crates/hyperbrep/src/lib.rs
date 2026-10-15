@@ -42,15 +42,13 @@ pub(crate) use boolean_kernel::{
     ArenaBooleanResult, ArenaClassifiedFace, ArenaFacePairIntersection, ArenaFaceSelection,
     ArenaSolidIntersectionGraph,
 };
-pub use construction::{
-    Axis, ConstructionError, LoftSection, RationalBezierSweepFrame, TensorPatch,
-};
+pub use construction::{ConstructionError, LoftSection, RationalBezierSweepFrame, TensorPatch};
 pub use context::OperationContext;
 pub use error::{GeometryError, GeometryResult};
 pub use geometry::{
-    Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceIntersection,
-    CurveSurfacePoint, IntersectionMultiplicity, MaterializedSurfacePcurve, ParameterDomain,
-    Pcurve, Surface, SurfaceBounds, SurfaceDomain, SurfaceIntersectionComponents,
+    Axis, Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceIntersection,
+    CurveSurfacePoint, GeometricPoint3, IntersectionMultiplicity, MaterializedSurfacePcurve,
+    ParameterDomain, Pcurve, Surface, SurfaceBounds, SurfaceDomain, SurfaceIntersectionComponents,
     SurfaceIntersectionCurve, SurfaceIntersectionLine, SurfaceIntersectionOperand,
     SurfaceIntersectionParameterRay, SurfaceIntersectionPcurve, SurfaceIntersectionRay,
     SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePartials,

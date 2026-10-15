@@ -132,7 +132,7 @@ impl ArenaModelBuilder {
                 edge_use.direction,
                 parameter,
             )?;
-            let edge_point = curve.point_at(&edge_parameter)?;
+            let edge_point = curve.evaluate_real(&edge_parameter)?;
             let axial = (&edge_point - &origin).dot(&axis);
             let surface_parameter = pcurve.point_at(parameter)?;
             require_real_equal(

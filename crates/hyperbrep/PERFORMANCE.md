@@ -49,6 +49,48 @@ The default regression budget is 10% for an established cohort. A deliberate
 regression requires a recorded semantic or architectural reason and a new
 baseline.
 
+## Retained spatial points — 2026-10-15
+
+Kept for exact evaluation and composition of selected line, Bézier and NURBS
+images. A point shares immutable source geometry and one selected parameter.
+XY/XZ carrier and image preparation are independently lazy; identity proofs
+avoid projection work. Affine composition transforms the native controls and
+keeps the selector, without adding point-wrapper depth. The tests cover source
+lifetime, concurrent readers and retry after stronger scalar evidence. This
+is a capability extension, not a claimed optimization.
+
+The [qualification record](docs/evidence/2026-10-15-retained-spatial-points/manifest.json)
+binds sources, commands, four rejected mutants, executables and raw logs.
+The kernel harness has a direct public-API migration at six call sites;
+[the audit](docs/evidence/2026-10-15-retained-spatial-points/migration-audit.json)
+verifies unchanged fixtures, iterations and assertions. It is not byte-identical
+source. All **66 receipts** agree across three alternating process pairs.
+The median of case median ratios is **1.00352**; the largest is **1.07127** for
+`boolean_kernel/disjoint_sphere_union_remap_validate`, within the 10% cohort
+budget. Binary size increases by **25,232 bytes**. Whole-process median peak
+RSS is **21,468 → 21,736 KiB**. These descriptive samples establish neither
+allocation counts nor statistical significance. All samples and rows remain in
+[comparison.json](docs/evidence/2026-10-15-retained-spatial-points/comparison.json).
+
+The new `retained_points` harness runs 1,000 exact-assertion iterations per row.
+Three-run median costs are:
+
+| Scenario | Median per iteration |
+| --- | ---: |
+| Authored scalar line evaluation and stored-coordinate check | 735 ns |
+| Fresh selected line carrier/image and six coordinate order checks | 76.804 µs |
+| Shared point identity | 17 ns |
+| Independent weighted selected images, warm coincidence | 989 ns |
+| Fresh NURBS image on warm carrier, authored knot chart and origin check | 75.174 µs |
+| Warm bounds plus six enclosure checks | 115.144 µs |
+| Affine transform/inverse pair plus exact coincidence | 30.750 µs |
+
+Root isolation is outside these timings; even the cold-carrier row shares a
+prepared selector. These are feature costs, not baseline speedups. The four
+retained-parameter and four migrated work-budget receipts also agree in three
+runs each. See
+[feature-cost.json](docs/evidence/2026-10-15-retained-spatial-points/feature-cost.json).
+
 ## Retained inverse parameters — 2026-10-15
 
 Kept for exact inverse-query completeness. `Parameter` retains admitted roots

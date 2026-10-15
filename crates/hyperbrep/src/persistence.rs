@@ -307,8 +307,9 @@ impl ArenaModel {
                     continue;
                 }
                 vertices[edge.start().index()] =
-                    point_array(&curve.point_at(edge.domain().start())?);
-                vertices[edge.end().index()] = point_array(&curve.point_at(edge.domain().end())?);
+                    point_array(&curve.evaluate_real(edge.domain().start())?);
+                vertices[edge.end().index()] =
+                    point_array(&curve.evaluate_real(edge.domain().end())?);
             }
             let mut pcurves = self
                 .pcurves()
@@ -1599,8 +1600,8 @@ mod tests {
         for ((_, original), (_, decoded)) in model.curves().zip(rebuilt.curves()) {
             assert_eq!(
                 point3_equal(
-                    &original.point_at(original.domain().start()).unwrap(),
-                    &decoded.point_at(decoded.domain().start()).unwrap(),
+                    &original.evaluate_real(original.domain().start()).unwrap(),
+                    &decoded.evaluate_real(decoded.domain().start()).unwrap(),
                     crate::STRICT_PREDICATES
                 )
                 .value(),

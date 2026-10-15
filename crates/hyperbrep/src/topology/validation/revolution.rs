@@ -229,8 +229,10 @@ impl ArenaModelBuilder {
                 &v_values[0],
                 v_values.last().expect("revolution group has v values"),
             )?;
-            let start_point = represented_profile.point_at(represented_profile.domain().start())?;
-            let end_point = represented_profile.point_at(represented_profile.domain().end())?;
+            let start_point =
+                represented_profile.evaluate_real(represented_profile.domain().start())?;
+            let end_point =
+                represented_profile.evaluate_real(represented_profile.domain().end())?;
             let Some(start) = to_profile_point(&start_point, true)? else {
                 return Ok(None);
             };

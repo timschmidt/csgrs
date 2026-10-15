@@ -285,6 +285,38 @@
       "validation": "239 core tests, 23 integration tests and 3 doctests pass; the 8 new BREP regressions also pass in release. Three Hypercurve chart integration tests and 58 existing parameter-module tests pass. Three deliberate mutants fail focused assertions. Both crates pass strict all-target/all-feature Clippy and warning-denied rustdoc; BREP WASM library build, fuzz-bin Clippy, formatting and all three benchmark builds pass.",
       "cost_evidence": "The unchanged 66-row harness preserves every receipt in three paired trials. Median of case median ratios 0.97391; largest ratio 1.05369 for spline_kernel/nurbs_planar_face_build_exact_area; executable +18,096 bytes; median peak RSS 21,712 to 21,784 KiB. Four new feature-cost rows and four migrated scope-cost rows retain exact assertions and receipts in three runs each. Descriptive samples only.",
       "limits": "WP02/G1 remains incomplete: retained spatial point evaluation, selected edge domains, complete edge split/dual-pcurve correspondence, transformations and selected graph archive/reload composition are not implemented. Partly constant NURBS preimages remain a typed blocker. Full solver/resource accounting, independent oracle, new fuzz/ASan/lexicase, WASM execution and full-workspace/pre-push checks remain open."
+    },
+    {
+      "id": "retained-spatial-points",
+      "work_packages": [
+        "WP01",
+        "WP02",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P1",
+        "P4",
+        "P6",
+        "P8",
+        "P11",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P35",
+        "P36",
+        "P37",
+        "P39",
+        "T13"
+      ],
+      "decision": "kept for exact selected evaluation and composition; not an optimization",
+      "change": "Curve3::point_at accepts Parameter and returns GeometricPoint3. Retain selected line/Bezier/NURBS images through exact coordinate/coincidence queries, bounds and invertible affine transforms. Share independently lazy XY/XZ source/image projections using existing Hypercurve authority. Keep the native coefficient evaluator private and directly migrate callers; no compatibility facade.",
+      "source": "../src/geometry/point.rs",
+      "evidence": "evidence/2026-10-15-retained-spatial-points/manifest.json",
+      "validation": "240 all-feature core tests, 35 integration tests and 4 doctests; 233 default core tests, 34 integrations and 4 doctests; 12 release point regressions. Four deliberate mutants rejected. Strict all-target/all-feature Clippy, warning-denied rustdoc, WASM library build, fuzz-bin Clippy, both formatting checks and four release benchmark builds pass. All 66 kernel receipts agree across three alternating pairs; seven new point and eight existing parameter/budget rows agree across three runs each.",
+      "cost_evidence": "Kernel harness migration audited: same fixtures/counts/assertions/checksums; six public API call sites change. Median of case median ratios 1.00352, largest 1.07127; all within the 10% cohort budget. Binary +25,232 bytes; median process peak RSS 21,468 to 21,736 KiB. Feature timings include exact assertions and prepared roots; no allocation-count, asymptotic-growth or statistical claim.",
+      "limits": "WP02/G1 remains open: selected topology vertices/domains, 3D edge split, dual-pcurve correspondence, surface/contact images and selected graph archive/reload composition are unfinished. Angular conics, derivatives and subdivision retain explicit materialization boundaries. Full work budgets, external oracles, fuzz/ASan/lexicase, WASM execution and full-workspace/pre-push qualification remain open."
     }
   ],
   "work_packages": [
@@ -459,7 +491,7 @@
   ],
   "next_actions": [
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
-    "Complete WP02/G1 beyond retained inverse queries: selected spatial point evaluation, edge-domain split with dual-pcurve agreement, persistence/reload and composition without requiring Real materialization.",
+    "Complete WP02/G1 beyond retained parameters and spatial points: selected vertices and edge-domain split with dual-pcurve agreement, persistence/reload and composition without requiring Real materialization. Preserve source/chart identity through reverse and transforms, and validate imported graph evidence before publishing topology.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
   ]

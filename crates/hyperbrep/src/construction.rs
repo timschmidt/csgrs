@@ -13,21 +13,10 @@ use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 use crate::geometry::{Curve3ExactData, resolve_planar_classification};
 use crate::topology::CertifiedSpherePairKind;
 use crate::{
-    ArenaModel, ArenaModelBuilder, BuildError, Curve3, Direction, EdgeId, FaceId, GeometryError,
-    Orientation, ParameterCorrespondence, ParameterDomain, Pcurve, SolidId, Surface,
+    ArenaModel, ArenaModelBuilder, Axis, BuildError, Curve3, Direction, EdgeId, FaceId,
+    GeometryError, Orientation, ParameterCorrespondence, ParameterDomain, Pcurve, SolidId, Surface,
     ValidationReport, VertexId,
 };
-
-/// Coordinate axis involved in a construction error.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum Axis {
-    /// ArenaModel-space x axis.
-    X,
-    /// ArenaModel-space y axis.
-    Y,
-    /// ArenaModel-space z axis.
-    Z,
-}
 
 /// Failure while constructing a conventional solid.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -367,10 +356,10 @@ pub fn extrusion_patch(
         let upper_offset = direction * v_domain.end();
         let lower_profile = translated_curve(&profile, &lower_offset)?;
         let upper_profile = translated_curve(&profile, &upper_offset)?;
-        let lower_start = lower_profile.point_at(lower_profile.domain().start())?;
-        let lower_end = lower_profile.point_at(lower_profile.domain().end())?;
-        let upper_start = upper_profile.point_at(upper_profile.domain().start())?;
-        let upper_end = upper_profile.point_at(upper_profile.domain().end())?;
+        let lower_start = lower_profile.evaluate_real(lower_profile.domain().start())?;
+        let lower_end = lower_profile.evaluate_real(lower_profile.domain().end())?;
+        let upper_start = upper_profile.evaluate_real(upper_profile.domain().start())?;
+        let upper_end = upper_profile.evaluate_real(upper_profile.domain().end())?;
         let boundaries = [
             lower_profile,
             Curve3::line(lower_end, upper_end)?,
@@ -1299,7 +1288,7 @@ pub(crate) fn sphere_pair_boolean(
     )?;
     let quarter = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
     let vertices = (0..4)
-        .map(|index| full_circle.point_at(&(&quarter * Real::from(index))))
+        .map(|index| full_circle.evaluate_real(&(&quarter * Real::from(index))))
         .collect::<Result<Vec<_>, GeometryError>>()?
         .into_iter()
         .map(|point| builder.vertex(point))
@@ -6267,7 +6256,7 @@ mod tests {
             model
                 .curve(edge.curve())
                 .unwrap()
-                .point_at(&parameter.unwrap())
+                .evaluate_real(&parameter.unwrap())
                 .unwrap()
         };
         let start = midpoint(uses[0]);
@@ -6321,7 +6310,7 @@ mod tests {
         assert!(vertex_split.end_edge.is_none());
 
         let half = (Real::one() / r(2)).unwrap();
-        let interior = fragment.point_at(&half).unwrap();
+        let interior = fragment.evaluate_real(&half).unwrap();
         let invalid = Curve3::line(start.clone(), interior).unwrap();
         assert!(matches!(
             model.split_face_by_curve(face, &invalid),
@@ -6333,7 +6322,7 @@ mod tests {
             )
         ));
         let unsupported = Curve3::rational_bezier(
-            vec![start, fragment.point_at(&half).unwrap(), end],
+            vec![start, fragment.evaluate_real(&half).unwrap(), end],
             vec![Real::one(); 3],
         )
         .unwrap();
@@ -6362,7 +6351,7 @@ mod tests {
             model
                 .curve(edge.curve())
                 .unwrap()
-                .point_at(&parameter)
+                .evaluate_real(&parameter)
                 .unwrap()
         };
         let trace_at = |numerator: i32| {
@@ -6651,7 +6640,7 @@ mod tests {
             model
                 .curve(edge.curve())
                 .unwrap()
-                .point_at(&parameter)
+                .evaluate_real(&parameter)
                 .unwrap()
         };
         let opposite = uses[uses.len() / 2];
@@ -9810,7 +9799,7 @@ mod tests {
         )
         .unwrap();
         let half = (Real::one() / r(2)).unwrap();
-        let path_midpoint = path.point_at(&half).unwrap();
+        let path_midpoint = path.evaluate_real(&half).unwrap();
         let (model, solid) =
             sweep_curve_region(&outer, &[hole], Vector3::x(), Vector3::y(), path).unwrap();
         assert_eq!(

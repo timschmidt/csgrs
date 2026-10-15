@@ -578,8 +578,8 @@ impl ArenaModelBuilder {
             }
             let lower_point = self.vertex_ref(lowers[0])?.point();
             let upper_point = self.vertex_ref(uppers[0])?.point();
-            let curve_start = curve.point_at(curve.domain().start())?;
-            let curve_end = curve.point_at(curve.domain().end())?;
+            let curve_start = curve.evaluate_real(curve.domain().start())?;
+            let curve_end = curve.evaluate_real(curve.domain().end())?;
             let curve = if points_equal(&curve_start, lower_point)?
                 && points_equal(&curve_end, upper_point)?
             {

@@ -360,8 +360,8 @@ pub(super) fn certified_monotone_line_curve_image(curve: &Curve3) -> Result<bool
         | Curve3ExactData::Nurbs { control_points, .. } => control_points,
         _ => return Ok(false),
     };
-    let start = curve.point_at(curve.domain().start())?;
-    let end = curve.point_at(curve.domain().end())?;
+    let start = curve.evaluate_real(curve.domain().start())?;
+    let end = curve.evaluate_real(curve.domain().end())?;
     if !points_equal(
         control_points
             .first()
@@ -431,8 +431,8 @@ pub(super) fn certified_monotone_planar_extrusion_image(
         | Curve3ExactData::Nurbs { control_points, .. } => control_points,
         _ => return Ok(false),
     };
-    let start = curve.point_at(curve.domain().start())?;
-    let end = curve.point_at(curve.domain().end())?;
+    let start = curve.evaluate_real(curve.domain().start())?;
+    let end = curve.evaluate_real(curve.domain().end())?;
     if !points_equal(
         control_points
             .first()
@@ -1912,7 +1912,7 @@ pub(super) fn require_curve_point_at_parameter(
     point: &Point3,
     mismatch: BuildError,
 ) -> Result<(), BuildError> {
-    let evaluated = curve.point_at(parameter)?;
+    let evaluated = curve.evaluate_real(parameter)?;
     match point3_equal(&evaluated, point, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value: true, .. } => return Ok(()),
         PredicateOutcome::Decided { value: false, .. } => return Err(mismatch),
@@ -2384,8 +2384,8 @@ pub(super) fn arranged_face_split_segments(
         .windows(2)
         .map(|range| {
             Curve3::line(
-                trace.curve.point_at(&range[0])?,
-                trace.curve.point_at(&range[1])?,
+                trace.curve.evaluate_real(&range[0])?,
+                trace.curve.evaluate_real(&range[1])?,
             )
             .map_err(TopologyEditError::from)
         })

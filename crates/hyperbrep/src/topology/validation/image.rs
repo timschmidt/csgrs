@@ -73,7 +73,7 @@ impl ArenaModelBuilder {
                 if inherited_image {
                     continue;
                 }
-                let edge_point = curve.point_at(&edge_parameter)?;
+                let edge_point = curve.evaluate_real(&edge_parameter)?;
                 let surface_parameter = pcurve.point_at(pcurve_parameter)?;
                 let surface_point = surface.point_at(&surface_parameter)?;
                 if !complete_image_certificate_subsumes_endpoint_sampling {

@@ -675,7 +675,7 @@ fuzz_target!(|bytes: &[u8]| {
     };
     if let Ok(SurfaceSurfaceIntersection::Curve(curve)) = tensor.intersect_surface(&plane) {
         let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
-        let _ = curve.curve().point_at(&parameter);
+        let _ = curve.curve().point_at(&parameter.clone().into());
         let _ = curve.first_pcurve().point_at(&parameter);
         let _ = curve.second_pcurve().point_at(&parameter);
     }
@@ -717,7 +717,7 @@ fuzz_target!(|bytes: &[u8]| {
         curved_translation_tensor.intersect_surface(&oblique_plane)
     {
         let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
-        let _ = curve.curve().point_at(&parameter);
+        let _ = curve.curve().point_at(&parameter.clone().into());
         let _ = curve.first_pcurve().materialize();
         let _ = curve.second_pcurve().materialize();
     }
@@ -763,7 +763,7 @@ fuzz_target!(|bytes: &[u8]| {
         rational_bilinear_tensor.intersect_surface(&bilinear_plane)
     {
         let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
-        let _ = curve.curve().point_at(&parameter);
+        let _ = curve.curve().point_at(&parameter.clone().into());
         let _ = curve.first_pcurve().point_at(&parameter);
         let _ = curve.second_pcurve().point_at(&parameter);
         if matches!(section_offset, 1 | 3) {
@@ -873,7 +873,7 @@ fuzz_target!(|bytes: &[u8]| {
     };
     let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
     for curve in &retained {
-        let _ = curve.curve().point_at(&parameter);
+        let _ = curve.curve().point_at(&parameter.clone().into());
         let _ = curve.first_pcurve().point_at(&parameter);
         let _ = curve.second_pcurve().point_at(&parameter);
     }
@@ -1686,7 +1686,7 @@ fuzz_target!(|bytes: &[u8]| {
             let Ok(parameter) = (domain.start() + domain.end()) / Real::from(2) else {
                 continue;
             };
-            let _ = fragment.curve().point_at(&parameter);
+            let _ = fragment.curve().point_at(&parameter.clone().into());
             let _ = fragment.first_pcurve().point_at(&parameter);
             let _ = fragment.second_pcurve().point_at(&parameter);
             let _ = patch
@@ -1757,7 +1757,7 @@ fuzz_target!(|bytes: &[u8]| {
         extrusion.intersect_surface(&oblique_plane)
     {
         let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
-        let _ = curve.curve().point_at(&parameter);
+        let _ = curve.curve().point_at(&parameter.clone().into());
         let _ = curve.first_pcurve().point_at(&parameter);
         let _ = curve.second_pcurve().point_at(&parameter);
     }

@@ -200,7 +200,7 @@ fn angular_sweep_correspondence_certifies_a_complete_planar_circle() {
     let spatial = model
         .curve(edge.curve())
         .unwrap()
-        .point_at(&first_parameter)
+        .evaluate_real(&first_parameter)
         .unwrap();
     let face = model.faces().next().unwrap().1;
     let surface_parameter = model

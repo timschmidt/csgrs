@@ -554,8 +554,11 @@ fuzz_target!(|bytes: &[u8]| {
                         Direction::Reversed => edge.domain().end() - offset,
                     };
                     edge.curve()
-                        .point_at(&parameter)
+                        .point_at(&parameter.into())
                         .expect("edge fraction evaluates")
+                        .try_coordinates()
+                        .expect("authored fraction has coordinates")
+                        .clone()
                 };
             let opposite = uses[uses.len() / 2];
             if bytes[0] & 8 == 0 {

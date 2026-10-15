@@ -49,7 +49,7 @@ impl ArenaModel {
         } else {
             self.curve(edge.curve)
                 .expect("validated edge curve ID")
-                .point_at(&parameter)?
+                .evaluate_real(&parameter)?
         };
         let vertex = VertexId::from_index(self.data.vertices.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;

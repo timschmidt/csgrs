@@ -16,9 +16,10 @@ use crate::{GeometryError, GeometryResult, Real};
 ///
 /// Mathematical comparison is fallible; structural inequality is not proof
 /// that two parameters differ. Use [`Self::compare`] for exact ordering.
-/// Current spatial evaluation, edge domains and persistence still require
-/// represented values; retaining a query result does not yet admit it into
-/// those operations.
+/// [`crate::Curve3::point_at`] retains selected images for lines and rational
+/// curves. Edge domains, subdivision, angular conic evaluation and persistence
+/// still require represented values; retaining a query result does not yet
+/// admit it into those operations.
 #[derive(Clone, Debug)]
 pub struct Parameter {
     value: BezierParameter2,
@@ -62,6 +63,10 @@ impl Parameter {
 
     pub(crate) fn from_bezier(value: BezierParameter2) -> Self {
         Self { value }
+    }
+
+    pub(crate) fn curve_parameter(&self) -> hypercurve::CurveParameter2 {
+        self.value.clone().into()
     }
 
     pub(crate) fn affine_image(&self, scale: &Real, offset: &Real) -> GeometryResult<Self> {

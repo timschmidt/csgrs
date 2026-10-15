@@ -159,7 +159,7 @@ impl ArenaModel {
         }
         let midpoint = ((curve.domain().start() + curve.domain().end()) / Real::from(2))
             .map_err(GeometryError::Numeric)?;
-        let midpoint_point = curve.point_at(&midpoint)?;
+        let midpoint_point = curve.evaluate_real(&midpoint)?;
         if exact_point_order(&start, &midpoint_point)? == std::cmp::Ordering::Equal {
             return Err(TopologyEditError::DegenerateFaceSplit);
         }
@@ -444,7 +444,7 @@ impl ArenaModel {
         let start = curve.start()?;
         let midpoint = ((curve.domain().start() + curve.domain().end()) / Real::from(2))
             .map_err(GeometryError::Numeric)?;
-        let midpoint_point = curve.point_at(&midpoint)?;
+        let midpoint_point = curve.evaluate_real(&midpoint)?;
         let ranges = [
             (curve.domain().start(), &midpoint),
             (&midpoint, curve.domain().end()),
@@ -654,7 +654,7 @@ impl ArenaModel {
         }
         let midpoint = ((curve.domain().start() + curve.domain().end()) / Real::from(2))
             .map_err(GeometryError::Numeric)?;
-        let midpoint_point = curve.point_at(&midpoint)?;
+        let midpoint_point = curve.evaluate_real(&midpoint)?;
         if exact_point_order(&start, &midpoint_point)? == std::cmp::Ordering::Equal {
             return Err(TopologyEditError::DegenerateFaceSplit);
         }

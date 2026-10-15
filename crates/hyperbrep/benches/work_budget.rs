@@ -45,9 +45,12 @@ fn main() {
     .unwrap();
     let half = rational(1, 2);
     let middle = Point3::new(half.clone(), half.clone(), half.clone());
+    let half_parameter = hyperbrep::Parameter::from_real(half.clone());
     let line_query = || {
-        let point = black_box(&line).point_at(black_box(&half)).unwrap();
-        assert_eq!(black_box(point), middle);
+        let point = black_box(&line)
+            .point_at(black_box(&half_parameter))
+            .unwrap();
+        assert_eq!(black_box(point).try_coordinates(), Some(&middle));
         1
     };
     let zero = OperationContext::strict(WorkBudget::ZERO);

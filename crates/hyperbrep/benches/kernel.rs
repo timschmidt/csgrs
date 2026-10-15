@@ -669,8 +669,11 @@ fn main() {
         let parameter = ((edge.domain().start() + edge.domain().end()) / Real::from(2))
             .expect("two is nonzero");
         edge.curve()
-            .point_at(&parameter)
+            .point_at(&parameter.into())
             .expect("edge midpoint evaluates")
+            .try_coordinates()
+            .expect("authored midpoint has coordinates")
+            .clone()
     };
     let trace =
         Curve3::line(edge_midpoint(uses[0]), edge_midpoint(uses[2])).expect("planar split trace");
@@ -710,8 +713,11 @@ fn main() {
             Direction::Reversed => edge.domain().end() - offset,
         };
         edge.curve()
-            .point_at(&parameter)
+            .point_at(&parameter.into())
             .expect("directed edge fraction evaluates")
+            .try_coordinates()
+            .expect("authored edge fraction has coordinates")
+            .clone()
     };
     let trace_at = |numerator: i32| {
         Curve3::line(
@@ -1266,6 +1272,7 @@ fn main() {
     )
     .expect("benchmark oblique plane");
     let midpoint = (Real::one() / Real::from(2)).expect("exact benchmark midpoint");
+    let midpoint_parameter = hyperbrep::Parameter::from_real(midpoint.clone());
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
@@ -1279,7 +1286,7 @@ fn main() {
             .second_pcurve()
             .materialize()
             .expect("benchmark exact rational graph pcurve");
-        black_box(curve.curve().point_at(black_box(&midpoint)))
+        black_box(curve.curve().point_at(black_box(&midpoint_parameter)))
             .expect("benchmark exact section evaluation");
         checksum += 1;
         black_box(pcurve);
@@ -1316,7 +1323,7 @@ fn main() {
         else {
             panic!("weighted bilinear tensor must retain one exact section");
         };
-        black_box(curve.curve().point_at(black_box(&midpoint)))
+        black_box(curve.curve().point_at(black_box(&midpoint_parameter)))
             .expect("benchmark exact rational-quartic section evaluation");
         black_box(curve.first_pcurve().point_at(black_box(&midpoint)))
             .expect("benchmark exact rational-quadratic graph evaluation");
@@ -1353,7 +1360,7 @@ fn main() {
         else {
             panic!("weighted NURBS bilinear tensor must retain one exact section");
         };
-        black_box(curve.curve().point_at(black_box(&midpoint)))
+        black_box(curve.curve().point_at(black_box(&midpoint_parameter)))
             .expect("benchmark exact native rational-quartic section evaluation");
         black_box(curve.first_pcurve().point_at(black_box(&midpoint)))
             .expect("benchmark exact native rational-quadratic graph evaluation");
@@ -1399,7 +1406,7 @@ fn main() {
         };
         assert_eq!(branches.len(), 2);
         for branch in &branches {
-            black_box(branch.curve().point_at(black_box(&midpoint)))
+            black_box(branch.curve().point_at(black_box(&midpoint_parameter)))
                 .expect("benchmark bounded rational-quartic branch evaluation");
             black_box(branch.first_pcurve().point_at(black_box(&midpoint)))
                 .expect("benchmark bounded rational-quadratic branch evaluation");

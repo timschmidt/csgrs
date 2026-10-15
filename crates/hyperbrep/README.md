@@ -34,6 +34,11 @@ or futures. See [operation scopes](docs/ARCHITECTURE.md#operation-scopes).
 - Authored coordinates, coefficients, domains, weights, knots, and transforms
   use `Real`. Inverse curve queries return opaque `Parameter` values that can
   retain selected algebraic roots without a stored `Real` view.
+- `Curve3::point_at(&Parameter)` returns `GeometricPoint3`. Lines and rational
+  curves retain selected images for exact comparison, conservative bounds and
+  invertible affine transforms. `try_coordinates` borrows stored coordinates;
+  an unavailable view does not make the point approximate. Selected topology
+  edits and archive replay remain open.
 - Geometric equality and ordering use Hyperlimit predicates, not structural
   `PartialEq` or an epsilon.
 - An unresolved predicate is a typed error, never `false`.
@@ -57,6 +62,8 @@ The clean-break implementation currently provides:
 - arbitrary positive-order exact derivatives, certified retained parameter
   location, NURBS knot-insertion subdivision, supported reversal, and
   conservative exact curve bounds;
+- retained spatial curve images with strict coordinate order/coincidence,
+  shared source evidence and explicit unsupported selected angular evaluation;
 - parameterized planes plus sphere, cylinder, cone, and torus carriers with
   exact domains, evaluation, and partial derivatives;
 - exact extrusion, revolution, tensor-product rational Bézier, and

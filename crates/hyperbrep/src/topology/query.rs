@@ -285,10 +285,10 @@ impl ArenaModel {
         sweep: &CertifiedCurveSweepShell,
         point: &Point3,
     ) -> Result<SolidPointLocation, QueryError> {
-        let start = sweep.path.point_at(sweep.path.domain().start())?;
-        let end = sweep.path.point_at(sweep.path.domain().end())?;
-        let start_u = Vector3::from(sweep.u_path.point_at(sweep.u_path.domain().start())?);
-        let start_v = Vector3::from(sweep.v_path.point_at(sweep.v_path.domain().start())?);
+        let start = sweep.path.evaluate_real(sweep.path.domain().start())?;
+        let end = sweep.path.evaluate_real(sweep.path.domain().end())?;
+        let start_u = Vector3::from(sweep.u_path.evaluate_real(sweep.u_path.domain().start())?);
+        let start_v = Vector3::from(sweep.v_path.evaluate_real(sweep.v_path.domain().start())?);
         let normal = start_u.cross(&start_v);
         let progress = normal.dot(&(end - &start));
         let parameter = (normal.dot(&(point - &start)) / &progress)
@@ -306,9 +306,9 @@ impl ArenaModel {
         if lower_order == std::cmp::Ordering::Less || upper_order == std::cmp::Ordering::Greater {
             return Ok(SolidPointLocation::Outside);
         }
-        let path_point = sweep.path.point_at(&parameter)?;
-        let u = Vector3::from(sweep.u_path.point_at(&parameter)?);
-        let v = Vector3::from(sweep.v_path.point_at(&parameter)?);
+        let path_point = sweep.path.evaluate_real(&parameter)?;
+        let u = Vector3::from(sweep.u_path.evaluate_real(&parameter)?);
+        let v = Vector3::from(sweep.v_path.evaluate_real(&parameter)?);
         let profile_point = project_point_to_plane_frame(point, &path_point, &u, &v)
             .map_err(build_error_geometry)?;
         let location = match crate::error::classified(sweep.profile.classify_point(&profile_point))
