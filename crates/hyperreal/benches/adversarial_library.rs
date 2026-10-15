@@ -1118,7 +1118,7 @@ fn promoted_score_section(score: PromotedScore, timed: &[TimedCase]) -> String {
     out.push_str(SCORE_SECTION_BEGIN);
     out.push('\n');
     out.push_str("## `promoted_slow_offender_score`\n\n");
-    out.push_str("Deterministic lexicase score for the current 100 promoted slow offenders. The score is the average current best-of-five wall-clock probe across the promoted set; lower is better. Delta compares with the previous score recorded in this file, and derivative is the change in delta.\n\n");
+    out.push_str("Average timing score for the current 100 promoted slow offenders. The score is the average current best-of-five wall-clock probe across the promoted set; lower is better. Delta compares with the previous score recorded in this file, and derivative is the change in delta.\n\n");
     out.push_str(&format!(
         "{} {} -->\n",
         SCORE_NANOS_PREFIX, score.average_nanos

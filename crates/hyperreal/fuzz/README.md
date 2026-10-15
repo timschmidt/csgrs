@@ -60,6 +60,10 @@ zero-separation fallback together.
 Run `cargo bench --bench adversarial_library --features simple` to refresh the
 deterministic fuzz timing history in `slow_performers.txt`. The run keeps each
 case's worst-ever observation, rotates the worst eligible offender into the
-100-case `promoted_slow_offenders.txt` lexicase set, and updates the score,
+100-case `promoted_slow_offenders.txt` group, and updates the score,
 delta, and delta derivative in `benchmarks.md`. The promoted set is replayed as
 dedicated Criterion rows by `adversarial_transcendentals`.
+
+The promotion ranks cases by recorded elapsed time. P38 still requires
+case-by-case lexicase selection and independent populations for each
+representation type; the current timing group does not satisfy those criteria.
