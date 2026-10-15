@@ -1,0 +1,89 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/transform-failures/baseline-v1",
+  "preserved_prior_executables_sha256": {
+    "target/transform-failures/baseline-v1/release/deps/transform_failures-5b7fe4d21c3ce0bd": "755964220b489b36bcd270f3e55b6121d52e8b9a2098e22043394bcc2b54ac60"
+  },
+  "base_commit": "8850192f2295a3eff7db37f600a4f165c896eb96",
+  "runner_sha256": "797aabeea64425a02453ad0361015b9b3f8449afc174aa0e798b6c472b079e1b",
+  "phase": "candidate-v1",
+  "commands": [
+    [
+      "focused-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--lib",
+        "--test",
+        "transform_failures",
+        "--test",
+        "empty_composition",
+        "--test",
+        "geometry_context",
+        "--test",
+        "mesh_boolean_context",
+        "--test",
+        "primitive_failures",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "clippy-minimal",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/transform-failures/candidate-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "Hypermesh indexed projective transformation",
+    "CSGRS fallible modeling transforms",
+    "scalar and language adapters"
+  ],
+  "domain": "Indexed meshes (including open surfaces, point sets, and canonical empty), invertible modeling transforms whose projective scale stays finite and nonzero on every triangle, explicit predicate policy. Malformed indices, singular transforms, invalid planes, unbounded projective images, and undecided predicates must fail visibly.",
+  "consumers": [
+    "SolidExt",
+    "scalar adapters",
+    "C ABI",
+    "WASM",
+    "hypercircuit materialization"
+  ],
+  "missing_acceptance_test": "tests/transform_failures.rs",
+  "semantic_oracle": "Singular matrices and invalid index errors; exact rational projective pole on an edge despite finite vertices; exact transformed coordinates, oriented volume, topology, and empty composition.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: committed primitive failure migration and native/downstream/binding qualification; overall goal remains active."
+}

@@ -54,7 +54,8 @@ fn main() {
             (Real::from(1) / Real::from(2)).expect("nonzero denominator"),
             (Real::from(1) / Real::from(3)).expect("nonzero denominator"),
             (Real::from(1) / Real::from(5)).expect("nonzero denominator"),
-        );
+        )
+        .expect("valid transform fixture");
     let boolean_iterations = iterations("CSGRS_BOOLEAN_BENCH_ITERS", 8);
     let start = Instant::now();
     let mut polygons = 0_usize;

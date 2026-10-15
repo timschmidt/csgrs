@@ -88,21 +88,27 @@ fuzz_target!(|bytes: &[u8]| {
                 let dx = decode_real(bytes, &mut idx);
                 let dy = decode_real(bytes, &mut idx);
                 let dz = decode_real(bytes, &mut idx);
-                stack.push(mesh.translated(dx, dy, dz));
+                if let Ok(transformed) = mesh.translated(dx, dy, dz) {
+                    stack.push(transformed);
+                }
             },
             3 => {
                 let Some(mesh) = stack.pop() else { continue };
                 let rx = decode_real(bytes, &mut idx);
                 let ry = decode_real(bytes, &mut idx);
                 let rz = decode_real(bytes, &mut idx);
-                stack.push(solid::rotate(&mesh, rx, ry, rz));
+                if let Ok(transformed) = solid::rotate(&mesh, rx, ry, rz) {
+                    stack.push(transformed);
+                }
             },
             4 => {
                 let Some(mesh) = stack.pop() else { continue };
                 let sx = clamp_real(decode_real(bytes, &mut idx), -10.0, 10.0);
                 let sy = clamp_real(decode_real(bytes, &mut idx), -10.0, 10.0);
                 let sz = clamp_real(decode_real(bytes, &mut idx), -10.0, 10.0);
-                stack.push(solid::scale(&mesh, sx, sy, sz));
+                if let Ok(transformed) = solid::scale(&mesh, sx, sy, sz) {
+                    stack.push(transformed);
+                }
             },
             5 => {
                 let Some(mesh) = stack.pop() else { continue };

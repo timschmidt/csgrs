@@ -47,6 +47,7 @@ pub enum CsgrsStatus {
     ResourceExhausted = 6,
     Unsupported = 7,
     GeometryFailed = 8,
+    Unbounded = 9,
     Panic = 255,
 }
 
@@ -1007,6 +1008,7 @@ fn status_for_error(error: &FfiError) -> CsgrsStatus {
             match error.kind() {
                 ValidationErrorKind::InvalidInput => CsgrsStatus::ValidationFailed,
                 ValidationErrorKind::Undecided => CsgrsStatus::PredicateUndecided,
+                ValidationErrorKind::Unbounded => CsgrsStatus::Unbounded,
                 ValidationErrorKind::ResourceExhausted => CsgrsStatus::ResourceExhausted,
                 ValidationErrorKind::Unsupported => CsgrsStatus::Unsupported,
                 _ => CsgrsStatus::GeometryFailed,
@@ -2264,6 +2266,36 @@ pub unsafe extern "C" fn csgrs_region_profiles_real_free(value: CsgrsRegionProfi
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn undecided_transform_does_not_publish_an_ffi_handle() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = CsgrsReal {
+            inner: &sine * &sine + &cosine * &cosine - Real::one(),
+        };
+        let one = CsgrsReal { inner: Real::one() };
+        let mut cube = ptr::null_mut();
+        let mut result = ptr::null_mut();
+        unsafe {
+            assert_eq!(
+                csgrs_triangle_mesh_real_cube(&one, &mut cube),
+                CsgrsStatus::Ok
+            );
+            assert_eq!(
+                csgrs_triangle_mesh_real_scale(cube, &zero, &one, &one, &mut result),
+                CsgrsStatus::PredicateUndecided
+            );
+            assert!(result.is_null());
+            assert!(
+                CStr::from_ptr(csgrs_last_error_message())
+                    .to_str()
+                    .unwrap()
+                    .contains("scale axis is undecided")
+            );
+            csgrs_triangle_mesh_free(cube);
+        }
+    }
 
     #[test]
     fn undecided_native_constructor_does_not_publish_an_ffi_handle() {

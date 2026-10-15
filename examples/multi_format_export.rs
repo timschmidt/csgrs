@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 4. Complex boolean operation: cube with spherical cavity
     let cube_large: TriangleMesh = solid::center(&solid::cube(r(30.0))?);
     let sphere_cavity: TriangleMesh =
-        solid::sphere(r(12.0), 24, 12)?.translated(r(5.0), r(5.0), r(0.0));
+        solid::sphere(r(12.0), 24, 12)?.translated(r(5.0), r(5.0), r(0.0))?;
     let cube_with_cavity = cube_large.try_difference(&sphere_cavity).expect("difference");
     export_to_obj(
         &cube_with_cavity,
@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 5. Union operation: cube + sphere
     let cube_small: TriangleMesh = solid::center(&solid::cube(r(16.0))?);
     let sphere_union: TriangleMesh =
-        solid::sphere(r(10.0), 20, 10)?.translated(r(8.0), r(8.0), r(8.0));
+        solid::sphere(r(10.0), 20, 10)?.translated(r(8.0), r(8.0), r(8.0))?;
     let union_object = cube_small.try_union(&sphere_union).expect("union");
     export_to_obj(
         &union_object,
@@ -53,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 6. Intersection operation
     let cube_intersect: TriangleMesh = solid::center(&solid::cube(r(25.0))?);
     let sphere_intersect: TriangleMesh =
-        solid::sphere(r(15.0), 24, 12)?.translated(r(5.0), r(5.0), r(0.0));
+        solid::sphere(r(15.0), 24, 12)?.translated(r(5.0), r(5.0), r(0.0))?;
     let intersection_object = cube_intersect
         .try_intersection(&sphere_intersect)
         .expect("intersection");
@@ -70,7 +70,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         r(90.0),
         r(0.0),
         r(0.0),
-    );
+    )?;
     let cube_with_hole = cube_base.try_difference(&hole_cylinder).expect("difference");
     export_to_obj(
         &cube_with_hole,

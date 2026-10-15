@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "transform-regressions",
+      "exit_code": 101,
+      "seconds": 2.400282369926572,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/transform-failures/baseline-v1/release/deps/transform_failures-5b7fe4d21c3ce0bd": "755964220b489b36bcd270f3e55b6121d52e8b9a2098e22043394bcc2b54ac60"
+      },
+      "stdout_sha256": "892e0a0c29f8f9ccbb5035b2c58524c35fe71626025f2c05522289137c75509c",
+      "stderr_sha256": "c2cf570e8e1e0b541db5edc50ef3ed5b9937f8ed855e96686a4243d89f34b4d5"
+    }
+  ],
+  "passed": false
+}

@@ -1,0 +1,111 @@
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+error[E0609]: no field `triangles` on type `Result<hypermesh::TriangleMesh, errors::ValidationError>`
+    --> src/solid.rs:2796:18
+     |
+2796 |                 .triangles
+     |                  ^^^^^^^^^ unknown field
+     |
+help: one of the expressions' fields has a field of the same name
+     |
+2796 |                 .unwrap().triangles
+     |                  +++++++++
+
+error[E0599]: no method named `is_closed_manifold` found for enum `Result<T, E>` in the current scope
+    --> src/solid.rs:2800:27
+     |
+2800 |         assert!(reflected.is_closed_manifold());
+     |                           ^^^^^^^^^^^^^^^^^^
+     |
+note: the method `is_closed_manifold` exists on the type `hypermesh::TriangleMesh`
+    --> crates/hypermesh/src/mesh.rs:242:5
+     |
+ 242 |     pub fn is_closed_manifold(&self) -> bool {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: there is a method `is_ok_and` with a similar name, but with different arguments
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:619:5
+     |
+ 619 | /     pub const fn is_ok_and<F>(self, f: F) -> bool
+ 620 | |     where
+ 621 | |         F: [const] FnOnce(T) -> bool + [const] Destruct,
+ 622 | |         T: [const] Destruct,
+ 623 | |         E: [const] Destruct,
+     | |____________________________^
+help: consider using `Result::expect` to unwrap the `hypermesh::TriangleMesh` value, panicking if the value is a `Result::Err`
+     |
+2800 |         assert!(reflected.expect("REASON").is_closed_manifold());
+     |                          +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/solid.rs:2801:31
+     |
+2801 |         assert!(signed_volume(&reflected) > 0.0);
+     |                 ------------- ^^^^^^^^^^ expected `&TriangleMesh`, found `&Result<TriangleMesh, ValidationError>`
+     |                 |
+     |                 arguments to this function are incorrect
+     |
+     = note: expected reference `&hypermesh::TriangleMesh`
+                found reference `&Result<hypermesh::TriangleMesh, errors::ValidationError>`
+note: function defined here
+    --> src/solid.rs:2597:8
+     |
+2597 |     fn signed_volume(mesh: &TriangleMesh) -> f64 {
+     |        ^^^^^^^^^^^^^ -------------------
+
+error[E0609]: no field `triangles` on type `Result<hypermesh::TriangleMesh, errors::ValidationError>`
+    --> src/solid.rs:2803:23
+     |
+2803 |             reflected.triangles[0],
+     |                       ^^^^^^^^^ unknown field
+     |
+help: one of the expressions' fields has a field of the same name
+     |
+2803 |             reflected.unwrap().triangles[0],
+     |                       +++++++++
+
+error[E0599]: no method named `is_closed_manifold` found for enum `Result<T, E>` in the current scope
+    --> src/solid.rs:2812:26
+     |
+2812 |         assert!(mirrored.is_closed_manifold());
+     |                          ^^^^^^^^^^^^^^^^^^
+     |
+note: the method `is_closed_manifold` exists on the type `hypermesh::TriangleMesh`
+    --> crates/hypermesh/src/mesh.rs:242:5
+     |
+ 242 |     pub fn is_closed_manifold(&self) -> bool {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: there is a method `is_ok_and` with a similar name, but with different arguments
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:619:5
+     |
+ 619 | /     pub const fn is_ok_and<F>(self, f: F) -> bool
+ 620 | |     where
+ 621 | |         F: [const] FnOnce(T) -> bool + [const] Destruct,
+ 622 | |         T: [const] Destruct,
+ 623 | |         E: [const] Destruct,
+     | |____________________________^
+help: consider using `Result::expect` to unwrap the `hypermesh::TriangleMesh` value, panicking if the value is a `Result::Err`
+     |
+2812 |         assert!(mirrored.expect("REASON").is_closed_manifold());
+     |                         +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> src/solid.rs:2813:31
+     |
+2813 |         assert!(signed_volume(&mirrored) > 0.0);
+     |                 ------------- ^^^^^^^^^ expected `&TriangleMesh`, found `&Result<TriangleMesh, ValidationError>`
+     |                 |
+     |                 arguments to this function are incorrect
+     |
+     = note: expected reference `&hypermesh::TriangleMesh`
+                found reference `&Result<hypermesh::TriangleMesh, errors::ValidationError>`
+note: function defined here
+    --> src/solid.rs:2597:8
+     |
+2597 |     fn signed_volume(mesh: &TriangleMesh) -> f64 {
+     |        ^^^^^^^^^^^^^ -------------------
+
+Some errors have detailed explanations: E0308, E0599, E0609.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `csgrs` (lib test) due to 6 previous errors
+warning: build failed, waiting for other jobs to finish...

@@ -91,7 +91,9 @@ fn empty_identities_remain_composable_under_both_policies() {
 #[test]
 fn accumulation_and_complete_subtraction_can_continue() {
     let a = solid::cube(Real::from(2)).expect("valid primitive fixture");
-    let b = a.translated(Real::from(2), Real::zero(), Real::zero());
+    let b = a
+        .translated(Real::from(2), Real::zero(), Real::zero())
+        .expect("valid transform fixture");
     let mut accumulated = solid::empty();
     for part in [&a, &b] {
         accumulated = accumulated.try_union(part).unwrap();
@@ -212,7 +214,8 @@ fn identity_regularizes_winding_multiplicity_and_cancellation() {
 fn empty_identity_keeps_symbolic_coordinates() {
     let source = solid::cube(Real::one())
         .expect("valid primitive fixture")
-        .translated(Real::pi(), Real::zero(), Real::zero());
+        .translated(Real::pi(), Real::zero(), Real::zero())
+        .expect("valid transform fixture");
     let result = solid::empty().try_union(&source).unwrap();
     let left = Real::pi();
     let right = Real::pi() + Real::one();
@@ -302,10 +305,13 @@ fn holes_and_disconnected_components_survive_empty_composition() {
     let outer = solid::cube(Real::from(4)).expect("valid primitive fixture");
     let inner = solid::cube(Real::from(2))
         .expect("valid primitive fixture")
-        .translated(Real::one(), Real::one(), Real::one());
+        .translated(Real::one(), Real::one(), Real::one())
+        .expect("valid transform fixture");
     let hollow = outer.try_difference(&inner).unwrap();
     let left = solid::cube(Real::from(2)).expect("valid primitive fixture");
-    let right = left.translated(Real::from(4), Real::zero(), Real::zero());
+    let right = left
+        .translated(Real::from(4), Real::zero(), Real::zero())
+        .expect("valid transform fixture");
     let disconnected = left.try_union(&right).unwrap();
     for (source, volume, samples) in [
         (

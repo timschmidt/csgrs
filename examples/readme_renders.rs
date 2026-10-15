@@ -513,7 +513,8 @@ fn cube_minus_translated_sphere() -> TriangleMesh {
     let cube = solid::cube(r(2.0)).expect("valid primitive fixture");
     let sphere = solid::sphere(r(1.25), 16, 8)
         .expect("valid primitive fixture")
-        .translated(r(1.0), r(1.0), r(1.0));
+        .translated(r(1.0), r(1.0), r(1.0))
+        .expect("valid transform fixture");
     let context = hypermesh::MeshContext::new(hypermesh::PredicatePolicy::APPROXIMATE_512);
     hypermesh::boolean(
         &context,

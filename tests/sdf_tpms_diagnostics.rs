@@ -236,7 +236,8 @@ fn native_real_sdf_mesh_is_hypermesh_boolean_ready() {
 
     let enclosing = solid::cube(r(2.0))
         .expect("valid primitive fixture")
-        .translated(r(-1.0), r(-1.0), r(-1.0));
+        .translated(r(-1.0), r(-1.0), r(-1.0))
+        .expect("valid transform fixture");
     let intersection = mesh
         .try_intersection(&enclosing)
         .expect("native-real SDF mesh should be accepted by Hypermesh Boolean operations");

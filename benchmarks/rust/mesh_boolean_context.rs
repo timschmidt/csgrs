@@ -70,7 +70,8 @@ fn main() {
             let body = TriangleMesh::new(body.positions.to_vec(), body.triangles.to_vec());
             let drill = solid::cylinder(Real::from(2), Real::from(6), segments)
                 .expect("valid primitive fixture")
-                .translated(Real::from(6), Real::from(6), Real::from(-1));
+                .translated(Real::from(6), Real::from(6), Real::from(-1))
+                .expect("valid transform fixture");
             let drill = TriangleMesh::new(drill.positions.to_vec(), drill.triangles.to_vec());
             measure(&body, &drill, segments, context, iterations);
         }

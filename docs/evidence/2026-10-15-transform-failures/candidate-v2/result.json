@@ -1,0 +1,30 @@
+{
+  "commands": [
+    {
+      "name": "focused-tests",
+      "exit_code": 0,
+      "seconds": 12.127581394277513,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/transform-failures/candidate-v2/release/deps/csgrs-12b72f0ccdd38706": "8b0f41d9164b45ce4f1372b2a375c53f745ec301624f212a97f6eeae38512d93",
+        "target/transform-failures/candidate-v2/release/deps/empty_composition-329c8a68d57ad60d": "ef0c5a11b9652ec783ed9a80d6ee099067ef5d2dcf8843ecc61bda85280feee5",
+        "target/transform-failures/candidate-v2/release/deps/geometry_context-673fb3a0a6f0689a": "166eb9dbdbae2574a4412f728be5a2c9e6ce1166a658c563c22804739c35d2be",
+        "target/transform-failures/candidate-v2/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "08b77d75b89522fe1657c50a8514ca838c891d8d4ca13c963fcb9ad7094ef922",
+        "target/transform-failures/candidate-v2/release/deps/primitive_failures-812823cb4c624c0c": "f3a9d1c78f7d632e2fddd62496653c3891a4bf41eb7693e9253735e052603afd",
+        "target/transform-failures/candidate-v2/release/deps/transform_failures-5b7fe4d21c3ce0bd": "0f70f4624ce679d542569479d84d38108f9fb65762bf4d08013c13c713841bac"
+      },
+      "stdout_sha256": "99a3b889e75c87ce34a35e066ce0ba92e1d5ce6c2339b9a682669d6654de9bbb",
+      "stderr_sha256": "2ca245772cfbe2f973a24e1882d8a4374ccf2a076470fea426203b4c3d28bde0"
+    },
+    {
+      "name": "clippy-minimal",
+      "exit_code": 0,
+      "seconds": 4.161308565177023,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "84a1838a5800c0e8b73c940d93a90126d829668698986b69f4dc7f6494f095be"
+    }
+  ],
+  "passed": true
+}

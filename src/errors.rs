@@ -13,7 +13,7 @@ pub enum CurveBooleanError {
     ExactCurve(#[from] ExactCurveError),
 }
 
-/// Validation failure in a CSG feature constructor.
+/// Failure in a CSG construction or modeling operation.
 #[derive(Debug, Clone, thiserror::Error, PartialEq)]
 #[non_exhaustive]
 pub enum ValidationError {
@@ -45,6 +45,9 @@ pub enum ValidationError {
     /// A checked scalar or lattice operation failed, retaining its native cause.
     #[error(transparent)]
     Scalar(#[from] hyperreal::Problem),
+    /// A native mesh operation failed, retaining its typed cause.
+    #[error("{0}")]
+    Mesh(#[from] hypermesh::HypermeshError),
     /// Operation requires corresponding loops with the same number of vertices.
     #[error("operation requires loops with the same number of vertices, {left} != {right}")]
     MismatchedVertexCount { left: usize, right: usize },
@@ -62,7 +65,7 @@ pub enum ValidationError {
     Geometry(String),
 }
 
-/// Stable failure categories exposed by primitive constructors and bindings.
+/// Stable failure categories exposed by modeling operations and bindings.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ValidationErrorKind {
@@ -70,6 +73,7 @@ pub enum ValidationErrorKind {
     Unsupported,
     Undecided,
     ResourceExhausted,
+    Unbounded,
     Geometry,
 }
 
@@ -81,6 +85,7 @@ impl ValidationErrorKind {
             Self::Unsupported => "unsupported",
             Self::Undecided => "undecided",
             Self::ResourceExhausted => "resource_exhausted",
+            Self::Unbounded => "unbounded",
             Self::Geometry => "geometry_failure",
         }
     }
@@ -89,6 +94,27 @@ impl ValidationErrorKind {
 impl ValidationError {
     pub const fn kind(&self) -> ValidationErrorKind {
         match self {
+            Self::Mesh(error) => match error {
+                hypermesh::HypermeshError::PredicateUndecided { .. }
+                | hypermesh::HypermeshError::ConvexHullPredicate { .. }
+                | hypermesh::HypermeshError::UnknownClassification => {
+                    ValidationErrorKind::Undecided
+                },
+                hypermesh::HypermeshError::CapacityOverflow { .. }
+                | hypermesh::HypermeshError::WindingOverflow => {
+                    ValidationErrorKind::ResourceExhausted
+                },
+                hypermesh::HypermeshError::PointAtInfinity
+                | hypermesh::HypermeshError::UnboundedProjectiveTriangle { .. }
+                | hypermesh::HypermeshError::UnboundedBooleanOutput { .. } => {
+                    ValidationErrorKind::Unbounded
+                },
+                hypermesh::HypermeshError::OpenOutput { .. }
+                | hypermesh::HypermeshError::SurfaceArrangementFailed { .. } => {
+                    ValidationErrorKind::Geometry
+                },
+                _ => ValidationErrorKind::InvalidInput,
+            },
             Self::UnsupportedPrimitive { .. } => ValidationErrorKind::Unsupported,
             Self::PredicateUndecided { .. }
             | Self::Scalar(hyperreal::Problem::UnknownZero) => ValidationErrorKind::Undecided,

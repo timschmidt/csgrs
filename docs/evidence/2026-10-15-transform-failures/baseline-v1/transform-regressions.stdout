@@ -1,0 +1,53 @@
+
+running 6 tests
+test adapter_preserves_the_native_validation_payload ... FAILED
+test invalid_plane_does_not_become_empty_geometry ... FAILED
+test modeling_transforms_reject_invalid_indices ... FAILED
+test native_transforms_reject_invalid_indices ... FAILED
+test projective_triangle_cannot_cross_infinity_between_finite_vertices ... FAILED
+test singular_transform_is_a_failure_even_for_empty_input ... FAILED
+
+failures:
+
+---- adapter_preserves_the_native_validation_payload stdout ----
+
+thread 'adapter_preserves_the_native_validation_payload' (97) panicked at tests/transform_failures.rs:111:5:
+assertion failed: matches!(error, AdapterError::Construction(ValidationError::InvalidArguments))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- invalid_plane_does_not_become_empty_geometry stdout ----
+
+thread 'invalid_plane_does_not_become_empty_geometry' (98) panicked at tests/transform_failures.rs:56:5:
+assertion failed: solid::mirror(&solid::cube(Real::one()).unwrap(), &invalid).checked().is_err()
+
+---- modeling_transforms_reject_invalid_indices stdout ----
+
+thread 'modeling_transforms_reject_invalid_indices' (99) panicked at tests/transform_failures.rs:77:5:
+assertion failed: mesh.translated(Real::one(), Real::zero(), Real::zero()).checked().is_err()
+
+---- native_transforms_reject_invalid_indices stdout ----
+
+thread 'native_transforms_reject_invalid_indices' (100) panicked at tests/transform_failures.rs:67:5:
+assertion failed: mesh.try_transformed(&context, &Matrix4::identity()).is_err()
+
+---- projective_triangle_cannot_cross_infinity_between_finite_vertices stdout ----
+
+thread 'projective_triangle_cannot_cross_infinity_between_finite_vertices' (101) panicked at tests/transform_failures.rs:101:5:
+assertion failed: mesh.try_transformed(&context, &reciprocal_x()).is_err()
+
+---- singular_transform_is_a_failure_even_for_empty_input stdout ----
+
+thread 'singular_transform_is_a_failure_even_for_empty_input' (102) panicked at tests/transform_failures.rs:42:9:
+assertion failed: solid::transform(&mesh, &singular).checked().is_err()
+
+
+failures:
+    adapter_preserves_the_native_validation_payload
+    invalid_plane_does_not_become_empty_geometry
+    modeling_transforms_reject_invalid_indices
+    native_transforms_reject_invalid_indices
+    projective_triangle_cannot_cross_infinity_between_finite_vertices
+    singular_transform_is_a_failure_even_for_empty_input
+
+test result: FAILED. 0 passed; 6 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

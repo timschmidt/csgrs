@@ -17,11 +17,14 @@ fn repeated_boolean_and_transform_sequence_stays_nonempty() {
     for i in 0..3 {
         let shift = r(i as f64) * r(0.18);
         let part = solid::rotate(
-            &base.translated(shift, r(0.0), r(0.0)),
+            &base
+                .translated(shift, r(0.0), r(0.0))
+                .expect("valid transform fixture"),
             r(0.0),
             r(90.0) * r(i as f64),
             r(0.0),
-        );
+        )
+        .expect("valid transform fixture");
         acc = acc.try_union(&part).expect("certified union");
     }
 

@@ -40,7 +40,8 @@ fn boolean_pipeline_accepts_hyperreal_transforms() {
     let a = solid::center(&solid::cube(r(2.0)).expect("valid primitive fixture"));
     let b = solid::cube(r(1.1))
         .expect("valid primitive fixture")
-        .translated(r(0.4), r(0.2), r(0.1));
+        .translated(r(0.4), r(0.2), r(0.1))
+        .expect("valid transform fixture");
 
     let batch = hypermesh::boolean(
         &CONTEXT,
@@ -89,10 +90,12 @@ fn boolean_pipeline_accepts_hyperreal_transforms() {
 fn translated_union_does_not_emit_origin_fallback_vertices() {
     let left = solid::cube(r(1.0))
         .expect("valid primitive fixture")
-        .translated(r(10.0), r(0.0), r(0.0));
+        .translated(r(10.0), r(0.0), r(0.0))
+        .expect("valid transform fixture");
     let right = solid::cube(r(1.0))
         .expect("valid primitive fixture")
-        .translated(r(13.0), r(0.0), r(0.0));
+        .translated(r(13.0), r(0.0), r(0.0))
+        .expect("valid transform fixture");
 
     let result = left.try_union(&right).expect("union");
 
@@ -114,7 +117,8 @@ fn exact_near_plane_translation_is_preserved_by_native_geometry() {
     let shift = r(1.0e-12);
     let mesh = solid::cube(r(2.0))
         .expect("valid primitive fixture")
-        .translated(shift.clone(), r(0.0), r(0.0));
+        .translated(shift.clone(), r(0.0), r(0.0))
+        .expect("valid transform fixture");
     assert_eq!(solid::bounding_box(&mesh).mins.x, shift);
 }
 

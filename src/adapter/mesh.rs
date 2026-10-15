@@ -199,7 +199,7 @@ where
     pub fn transform(&self, matrix: &Matrix4) -> AdapterResult<Self> {
         solid::try_transform(&self.inner, matrix)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn translate(&self, x: A::Scalar, y: A::Scalar, z: A::Scalar) -> AdapterResult<Self> {
@@ -207,7 +207,7 @@ where
             A::into_real(x)?,
             A::into_real(y)?,
             A::into_real(z)?,
-        )))
+        )?))
     }
 
     pub fn scale(&self, sx: A::Scalar, sy: A::Scalar, sz: A::Scalar) -> AdapterResult<Self> {
@@ -218,7 +218,7 @@ where
             A::into_real(sz)?,
         )
         .map(Self::from_native)
-        .map_err(|error| AdapterError::Validation(error.to_string()))
+        .map_err(AdapterError::from)
     }
 
     pub fn rotate(
@@ -234,7 +234,7 @@ where
             A::into_real(z_degrees)?,
         )
         .map(Self::from_native)
-        .map_err(|error| AdapterError::Validation(error.to_string()))
+        .map_err(AdapterError::from)
     }
 
     pub fn inverse(&self) -> Self {
@@ -250,18 +250,17 @@ where
     pub fn center(&self) -> AdapterResult<Self> {
         solid::try_center(&self.inner)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn float(&self) -> AdapterResult<Self> {
         solid::try_float(&self.inner)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn bounding_box(&self) -> AdapterResult<Aabb3<A::Scalar>> {
-        let bounds = solid::try_bounding_box(&self.inner)
-            .map_err(|error| AdapterError::Validation(error.to_string()))?;
+        let bounds = solid::try_bounding_box(&self.inner).map_err(AdapterError::from)?;
         Ok(Aabb3 {
             mins: [
                 A::from_real(&bounds.mins.x)?,
@@ -284,7 +283,7 @@ where
     ) -> AdapterResult<GeometryOutcome<Self>> {
         solid::try_transform_with_context(&self.inner, matrix, context)
             .map(|outcome| outcome.map(Self::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     /// Applies the operation with the selected policy and aggregate certainty.
@@ -305,7 +304,7 @@ where
             context,
         )
         .map(|outcome| outcome.map(Self::from_native))
-        .map_err(|error| AdapterError::Validation(error.to_string()))
+        .map_err(AdapterError::from)
     }
 
     /// Applies the operation with the selected policy and aggregate certainty.
@@ -324,7 +323,7 @@ where
             context,
         )
         .map(|outcome| outcome.map(Self::from_native))
-        .map_err(|error| AdapterError::Validation(error.to_string()))
+        .map_err(AdapterError::from)
     }
 
     /// Applies the operation with the selected policy and aggregate certainty.
@@ -343,7 +342,7 @@ where
             context,
         )
         .map(|outcome| outcome.map(Self::from_native))
-        .map_err(|error| AdapterError::Validation(error.to_string()))
+        .map_err(AdapterError::from)
     }
 
     /// Applies the operation with the selected policy and aggregate certainty.
@@ -353,7 +352,7 @@ where
     ) -> AdapterResult<GeometryOutcome<Self>> {
         solid::try_center_with_context(&self.inner, context)
             .map(|outcome| outcome.map(Self::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     /// Applies the operation with the selected policy and aggregate certainty.
@@ -363,7 +362,7 @@ where
     ) -> AdapterResult<GeometryOutcome<Self>> {
         solid::try_float_with_context(&self.inner, context)
             .map(|outcome| outcome.map(Self::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     /// Computes bounds before scalar conversion, retaining predicate certainty.
@@ -372,7 +371,7 @@ where
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Aabb3<A::Scalar>>> {
         solid::try_bounding_box_with_context(&self.inner, context)
-            .map_err(|error| AdapterError::Validation(error.to_string()))?
+            .map_err(AdapterError::from)?
             .try_map(|bounds| {
                 Ok(Aabb3 {
                     mins: [

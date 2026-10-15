@@ -662,6 +662,18 @@ pub enum Pcb3dAssemblyOmission {
         /// Native exact extrusion diagnostic.
         detail: String,
     },
+    /// An extruded layer could not be positioned; no layer solid was published.
+    LayerTransformFailed {
+        layer: String,
+        kind: csgrs::errors::ValidationErrorKind,
+        detail: String,
+    },
+    /// A package body could not be positioned; no body solid was published.
+    ComponentBodyTransformFailed {
+        instance: String,
+        kind: csgrs::errors::ValidationErrorKind,
+        detail: String,
+    },
     /// A declared package body outline could not produce material topology.
     InvalidComponentBody(String),
     /// A valid package body profile could not be extruded without losing geometry.
@@ -711,6 +723,14 @@ pub enum Pcb3dAssemblyOmission {
         /// Stable malformed source URI.
         uri: String,
         /// Native parser diagnostic.
+        detail: String,
+    },
+    /// A parsed model could not be transformed; no placed model was published.
+    ExternalPackageModelTransformFailed {
+        instance: String,
+        model_index: usize,
+        uri: String,
+        kind: csgrs::errors::ValidationErrorKind,
         detail: String,
     },
 }
@@ -2013,10 +2033,20 @@ impl PcbMaterializationReport {
                     &decisions.geometry_context(),
                 )) {
                     Ok(geometry) => {
-                        let geometry =
-                            geometry.translated(Real::zero(), Real::zero(), z_start.clone());
-                        let solid = AttributedMesh::from_uniform(geometry, metadata.clone());
-                        layers.push(Pcb3dLayer { metadata, solid });
+                        match geometry.translated(Real::zero(), Real::zero(), z_start.clone()) {
+                            Ok(geometry) => {
+                                let solid =
+                                    AttributedMesh::from_uniform(geometry, metadata.clone());
+                                layers.push(Pcb3dLayer { metadata, solid });
+                            }
+                            Err(error) => {
+                                omissions.push(Pcb3dAssemblyOmission::LayerTransformFailed {
+                                    layer: layer.name.clone(),
+                                    kind: error.kind(),
+                                    detail: error.to_string(),
+                                })
+                            }
+                        }
                     }
                     Err(error) => {
                         omissions.push(Pcb3dAssemblyOmission::LayerExtrusionFailed {
@@ -2061,11 +2091,23 @@ impl PcbMaterializationReport {
                             &decisions.geometry_context(),
                         )) {
                             Ok(geometry) => {
-                                let geometry =
-                                    geometry.translated(Real::zero(), Real::zero(), body_z);
-                                let solid =
-                                    AttributedMesh::from_uniform(geometry, metadata.clone());
-                                component_bodies.push(Pcb3dComponentBody { metadata, solid });
+                                match geometry.translated(Real::zero(), Real::zero(), body_z) {
+                                    Ok(geometry) => {
+                                        let solid = AttributedMesh::from_uniform(
+                                            geometry,
+                                            metadata.clone(),
+                                        );
+                                        component_bodies
+                                            .push(Pcb3dComponentBody { metadata, solid });
+                                    }
+                                    Err(error) => omissions.push(
+                                        Pcb3dAssemblyOmission::ComponentBodyTransformFailed {
+                                            instance: placement.instance.as_str().into(),
+                                            kind: error.kind(),
+                                            detail: error.to_string(),
+                                        },
+                                    ),
+                                }
                             }
                             Err(error) => omissions.push(
                                 Pcb3dAssemblyOmission::ComponentBodyExtrusionFailed {
@@ -2218,28 +2260,42 @@ fn resolve_component_model(
         });
     }
     let source_triangle_count = source_mesh.triangles.len();
+    let transform_failure = |error: csgrs::errors::ValidationError| {
+        Pcb3dAssemblyOmission::ExternalPackageModelTransformFailed {
+            instance: placement.instance.as_str().into(),
+            model_index,
+            uri: reference.uri.clone(),
+            kind: error.kind(),
+            detail: error.to_string(),
+        }
+    };
     let transform = &reference.transform;
     let mut geometry = solid::scale(
         &source_mesh,
         transform.scale_x.clone(),
         transform.scale_y.clone(),
         transform.scale_z.clone(),
-    );
+    )
+    .map_err(transform_failure)?;
     geometry = solid::rotate(
         &geometry,
         transform.rotate_x_degrees.clone(),
         transform.rotate_y_degrees.clone(),
         transform.rotate_z_degrees.clone(),
-    );
-    geometry = geometry.translated(
-        transform.offset_x.clone(),
-        transform.offset_y.clone(),
-        transform.offset_z.clone(),
-    );
+    )
+    .map_err(transform_failure)?;
+    geometry = geometry
+        .translated(
+            transform.offset_x.clone(),
+            transform.offset_y.clone(),
+            transform.offset_z.clone(),
+        )
+        .map_err(transform_failure)?;
     let mounting_z = match placement.side {
         BoardSide::Front => board_thickness.clone(),
         BoardSide::Back => {
-            geometry = solid::scale(&geometry, -Real::one(), Real::one(), -Real::one());
+            geometry = solid::scale(&geometry, -Real::one(), Real::one(), -Real::one())
+                .map_err(transform_failure)?;
             Real::zero()
         }
     };
@@ -2248,12 +2304,15 @@ fn resolve_component_model(
         Real::zero(),
         Real::zero(),
         placement.rotation_degrees.clone(),
-    );
-    geometry = geometry.translated(
-        placement.position.x.clone(),
-        placement.position.y.clone(),
-        mounting_z,
-    );
+    )
+    .map_err(transform_failure)?;
+    geometry = geometry
+        .translated(
+            placement.position.x.clone(),
+            placement.position.y.clone(),
+            mounting_z,
+        )
+        .map_err(transform_failure)?;
     let mesh = AttributedMesh::from_uniform(geometry, metadata.clone());
     let evidence = Pcb3dModelResolutionEvidence {
         instance: placement.instance.clone(),

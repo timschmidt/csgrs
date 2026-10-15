@@ -57,7 +57,8 @@ fuzz_target!(|bytes: &[u8]| {
         let mesh = AttributedMesh::from_uniform(
             solid::cube(real(size))
                 .expect("valid primitive fixture")
-                .translated(real(x), real(y), real(z)),
+                .translated(real(x), real(y), real(z))
+                .expect("finite rational translation of valid indexed geometry"),
             metadata(format!("p{idx}"), explode, include_install),
         );
         parts.push(mesh);

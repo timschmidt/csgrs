@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &GeometryContext::STRICT,
     )?
     .into_value()
-    .translated(Real::from(4), Real::from(4), Real::from(-2));
+    .translated(Real::from(4), Real::from(4), Real::from(-2))?;
 
     let part = body.try_difference(&opening)?;
     std::fs::write("drilled_cube.stl", to_stl_binary(&part, "drilled_cube")?)?;

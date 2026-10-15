@@ -1,0 +1,8 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 9.62s
+     Running unittests src/lib.rs (target/transform-failures/candidate-v2/release/deps/csgrs-12b72f0ccdd38706)
+     Running tests/empty_composition.rs (target/transform-failures/candidate-v2/release/deps/empty_composition-329c8a68d57ad60d)
+     Running tests/geometry_context.rs (target/transform-failures/candidate-v2/release/deps/geometry_context-673fb3a0a6f0689a)
+     Running tests/mesh_boolean_context.rs (target/transform-failures/candidate-v2/release/deps/mesh_boolean_context-a8ee65205fbdc3d4)
+     Running tests/primitive_failures.rs (target/transform-failures/candidate-v2/release/deps/primitive_failures-812823cb4c624c0c)
+     Running tests/transform_failures.rs (target/transform-failures/candidate-v2/release/deps/transform_failures-5b7fe4d21c3ce0bd)

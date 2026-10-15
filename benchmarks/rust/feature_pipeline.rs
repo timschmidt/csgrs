@@ -377,7 +377,8 @@ fn main() {
     let mesh = solid::sphere(Real::from(8), 24, 12).expect("valid primitive fixture");
     let positioned = solid::cuboid(Real::from(2), Real::from(3), Real::from(5))
         .expect("valid primitive fixture")
-        .translated(Real::from(7), Real::from(-4), Real::from(-9));
+        .translated(Real::from(7), Real::from(-4), Real::from(-9))
+        .expect("valid transform fixture");
     config.run(
         "feature",
         "mesh_positioning",
@@ -387,7 +388,9 @@ fn main() {
             let outputs = [
                 solid::center(&positioned),
                 solid::float(&positioned),
-                positioned.translated(Real::from(3), Real::from(-2), Real::from(5)),
+                positioned
+                    .translated(Real::from(3), Real::from(-2), Real::from(5))
+                    .expect("valid transform fixture"),
             ];
             let triangles = outputs.iter().map(|mesh| mesh.triangles.len()).sum::<usize>();
             Measurement::new(
@@ -401,11 +404,13 @@ fn main() {
         let source = solid::cube(Real::one()).expect("valid primitive fixture");
         let copies = (0..22)
             .map(|index| {
-                source.translated(
-                    Real::from((index % 6) as u64) * Real::from(3),
-                    Real::from((index / 6) as u64) * Real::from(3),
-                    Real::zero(),
-                )
+                source
+                    .translated(
+                        Real::from((index % 6) as u64) * Real::from(3),
+                        Real::from((index / 6) as u64) * Real::from(3),
+                        Real::zero(),
+                    )
+                    .expect("valid transform fixture")
             })
             .collect::<Vec<_>>();
         mesh_measurement(&solid::merge(&copies), 22)
@@ -548,7 +553,8 @@ fn main() {
     let boolean_left = solid::cube(Real::from(4)).expect("valid primitive fixture");
     let boolean_right = solid::cube(Real::from(4))
         .expect("valid primitive fixture")
-        .translated(Real::one(), Real::one(), Real::one());
+        .translated(Real::one(), Real::one(), Real::one())
+        .expect("valid transform fixture");
     config.run("feature", "mesh_boolean", "immediate_four", 1, || {
         boolean_measurement(&boolean_results(&boolean_left, &boolean_right, 4))
     });
@@ -567,7 +573,8 @@ fn main() {
             solid::cube(Real::from(4)).expect("valid primitive fixture"),
             solid::cube(Real::from(4))
                 .expect("valid primitive fixture")
-                .translated(Real::from(10), Real::zero(), Real::zero()),
+                .translated(Real::from(10), Real::zero(), Real::zero())
+                .expect("valid transform fixture"),
         ),
         (
             "identical",
@@ -584,7 +591,8 @@ fn main() {
             solid::cube(Real::from(4)).expect("valid primitive fixture"),
             solid::cube(Real::from(4))
                 .expect("valid primitive fixture")
-                .translated(Real::from(4), Real::zero(), Real::zero()),
+                .translated(Real::from(4), Real::zero(), Real::zero())
+                .expect("valid transform fixture"),
         ),
     ];
     for (name, left, right) in &fixtures {
@@ -696,7 +704,8 @@ fn main() {
                     Real::from(index % 8) * Real::from(3),
                     Real::from(index / 8) * Real::from(3),
                     Real::from(index % 3),
-                );
+                )
+                .expect("valid transform fixture");
             AttributedMesh::from_uniform(geometry, metadata)
         })
         .collect::<Vec<_>>();

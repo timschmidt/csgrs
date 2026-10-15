@@ -19,11 +19,11 @@ fn js_error(error: impl std::fmt::Display) -> JsValue {
     JsValue::from_str(&error.to_string())
 }
 
-fn construction_error(error: crate::errors::ValidationError) -> JsValue {
-    construction_exception(&error.to_string(), error.kind())
+fn geometry_error(error: crate::errors::ValidationError) -> JsValue {
+    geometry_exception(&error.to_string(), error.kind())
 }
 
-fn construction_exception(message: &str, kind: crate::errors::ValidationErrorKind) -> JsValue {
+fn geometry_exception(message: &str, kind: crate::errors::ValidationErrorKind) -> JsValue {
     let exception = js_sys::Error::new(message);
     exception.set_name("GeometryError");
     Reflect::set(
@@ -35,9 +35,9 @@ fn construction_exception(message: &str, kind: crate::errors::ValidationErrorKin
     exception.into()
 }
 
-fn construction_scalar(value: f64, name: &str) -> Result<crate::Real, JsValue> {
+fn geometry_scalar(value: f64, name: &str) -> Result<crate::Real, JsValue> {
     real_from_js(value).ok_or_else(|| {
-        construction_exception(
+        geometry_exception(
             &format!("{name} must be finite"),
             crate::errors::ValidationErrorKind::InvalidInput,
         )
@@ -295,7 +295,7 @@ impl MeshJs {
         let context = geometry_context(approximate_512);
         solid::try_transform_with_context(&self.inner, &matrix.inner, &context)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = translateWithContext)]
@@ -310,14 +310,14 @@ impl MeshJs {
         solid::try_transform_with_context(
             &self.inner,
             &hyperlattice::Matrix4::affine_translation([
-                real_from_js_named(x, "x")?,
-                real_from_js_named(y, "y")?,
-                real_from_js_named(z, "z")?,
+                geometry_scalar(x, "x")?,
+                geometry_scalar(y, "y")?,
+                geometry_scalar(z, "z")?,
             ]),
             &context,
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = rotateWithContext)]
@@ -331,13 +331,13 @@ impl MeshJs {
         let context = geometry_context(approximate_512);
         solid::try_rotate_with_context(
             &self.inner,
-            real_from_js_named(x, "x")?,
-            real_from_js_named(y, "y")?,
-            real_from_js_named(z, "z")?,
+            geometry_scalar(x, "x")?,
+            geometry_scalar(y, "y")?,
+            geometry_scalar(z, "z")?,
             &context,
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = scaleWithContext)]
@@ -351,13 +351,13 @@ impl MeshJs {
         let context = geometry_context(approximate_512);
         solid::try_scale_with_context(
             &self.inner,
-            real_from_js_named(x, "x")?,
-            real_from_js_named(y, "y")?,
-            real_from_js_named(z, "z")?,
+            geometry_scalar(x, "x")?,
+            geometry_scalar(y, "y")?,
+            geometry_scalar(z, "z")?,
             &context,
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = centerWithContext)]
@@ -391,7 +391,7 @@ impl MeshJs {
         let context = geometry_context(approximate_512);
         solid::try_mirror_with_context(&self.inner, &plane.inner, &context)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = convexHullWithContext)]
@@ -453,40 +453,41 @@ impl MeshJs {
     pub fn transform(&self, matrix: &Matrix4Js) -> Result<Self, JsValue> {
         solid::try_transform(&self.inner, &matrix.inner)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(geometry_error)
     }
 
     pub fn translate(&self, x: f64, y: f64, z: f64) -> Result<Self, JsValue> {
         Ok(self
             .inner
             .translated(
-                real_from_js_named(x, "x")?,
-                real_from_js_named(y, "y")?,
-                real_from_js_named(z, "z")?,
+                geometry_scalar(x, "x")?,
+                geometry_scalar(y, "y")?,
+                geometry_scalar(z, "z")?,
             )
+            .map_err(geometry_error)?
             .into())
     }
 
     pub fn rotate(&self, x: f64, y: f64, z: f64) -> Result<Self, JsValue> {
         solid::try_rotate(
             &self.inner,
-            real_from_js_named(x, "x")?,
-            real_from_js_named(y, "y")?,
-            real_from_js_named(z, "z")?,
+            geometry_scalar(x, "x")?,
+            geometry_scalar(y, "y")?,
+            geometry_scalar(z, "z")?,
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(geometry_error)
     }
 
     pub fn scale(&self, x: f64, y: f64, z: f64) -> Result<Self, JsValue> {
         solid::try_scale(
             &self.inner,
-            real_from_js_named(x, "x")?,
-            real_from_js_named(y, "y")?,
-            real_from_js_named(z, "z")?,
+            geometry_scalar(x, "x")?,
+            geometry_scalar(y, "y")?,
+            geometry_scalar(z, "z")?,
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(geometry_error)
     }
 
     pub fn center(&self) -> Result<Self, JsValue> {
@@ -509,7 +510,7 @@ impl MeshJs {
     pub fn mirror(&self, plane: &PlaneJs) -> Result<Self, JsValue> {
         solid::try_mirror(&self.inner, &plane.inner)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = convexHull)]
@@ -564,36 +565,36 @@ impl MeshJs {
     }
 
     pub fn cube(size: f64) -> Result<Self, JsValue> {
-        Ok(solid::cube(construction_scalar(size, "size")?)
-            .map_err(construction_error)?
+        Ok(solid::cube(geometry_scalar(size, "size")?)
+            .map_err(geometry_error)?
             .into())
     }
 
     pub fn cuboid(width: f64, length: f64, height: f64) -> Result<Self, JsValue> {
         Ok(solid::cuboid(
-            construction_scalar(width, "width")?,
-            construction_scalar(length, "length")?,
-            construction_scalar(height, "height")?,
+            geometry_scalar(width, "width")?,
+            geometry_scalar(length, "length")?,
+            geometry_scalar(height, "height")?,
         )
-        .map_err(construction_error)?
+        .map_err(geometry_error)?
         .into())
     }
 
     pub fn sphere(radius: f64, segments: usize, stacks: usize) -> Result<Self, JsValue> {
         Ok(
-            solid::sphere(construction_scalar(radius, "radius")?, segments, stacks)
-                .map_err(construction_error)?
+            solid::sphere(geometry_scalar(radius, "radius")?, segments, stacks)
+                .map_err(geometry_error)?
                 .into(),
         )
     }
 
     pub fn cylinder(radius: f64, height: f64, segments: usize) -> Result<Self, JsValue> {
         Ok(solid::cylinder(
-            construction_scalar(radius, "radius")?,
-            construction_scalar(height, "height")?,
+            geometry_scalar(radius, "radius")?,
+            geometry_scalar(height, "height")?,
             segments,
         )
-        .map_err(construction_error)?
+        .map_err(geometry_error)?
         .into())
     }
 
@@ -604,12 +605,12 @@ impl MeshJs {
         segments: usize,
     ) -> Result<Self, JsValue> {
         Ok(solid::frustum(
-            construction_scalar(bottom_radius, "bottomRadius")?,
-            construction_scalar(top_radius, "topRadius")?,
-            construction_scalar(height, "height")?,
+            geometry_scalar(bottom_radius, "bottomRadius")?,
+            geometry_scalar(top_radius, "topRadius")?,
+            geometry_scalar(height, "height")?,
             segments,
         )
-        .map_err(construction_error)?
+        .map_err(geometry_error)?
         .into())
     }
 
@@ -621,13 +622,13 @@ impl MeshJs {
         stacks: usize,
     ) -> Result<Self, JsValue> {
         Ok(solid::ellipsoid(
-            construction_scalar(rx, "rx")?,
-            construction_scalar(ry, "ry")?,
-            construction_scalar(rz, "rz")?,
+            geometry_scalar(rx, "rx")?,
+            geometry_scalar(ry, "ry")?,
+            geometry_scalar(rz, "rz")?,
             segments,
             stacks,
         )
-        .map_err(construction_error)?
+        .map_err(geometry_error)?
         .into())
     }
 
@@ -638,12 +639,12 @@ impl MeshJs {
         minor_segments: usize,
     ) -> Result<Self, JsValue> {
         Ok(solid::torus(
-            construction_scalar(major_radius, "majorRadius")?,
-            construction_scalar(minor_radius, "minorRadius")?,
+            geometry_scalar(major_radius, "majorRadius")?,
+            geometry_scalar(minor_radius, "minorRadius")?,
             major_segments,
             minor_segments,
         )
-        .map_err(construction_error)?
+        .map_err(geometry_error)?
         .into())
     }
 }
