@@ -161,30 +161,42 @@ impl Pcurve {
         self.curve.family()
     }
 
-    /// Returns the inclusive exact parameter-domain start.
-    pub fn domain_start(&self) -> GeometryResult<&Real> {
+    /// Returns the first parameter in this pcurve's directed retained chart.
+    pub fn domain_start(&self) -> GeometryResult<Parameter> {
+        Parameter::from_curve(self.curve.parameter_endpoints().0)
+    }
+
+    /// Returns the last parameter in this pcurve's directed retained chart.
+    pub fn domain_end(&self) -> GeometryResult<Parameter> {
+        Parameter::from_curve(self.curve.parameter_endpoints().1)
+    }
+
+    pub(crate) fn represented_start(&self) -> GeometryResult<&Real> {
         crate::context::strict(|| {
             self.curve
-                .parameter_domain()
-                .start()
+                .parameter_endpoints()
+                .0
                 .scalar()
                 .ok_or(GeometryError::UnsupportedPcurveContour)
         })
     }
 
-    /// Returns the inclusive exact parameter-domain end.
-    pub fn domain_end(&self) -> GeometryResult<&Real> {
+    pub(crate) fn represented_end(&self) -> GeometryResult<&Real> {
         crate::context::strict(|| {
             self.curve
-                .parameter_domain()
-                .end()
+                .parameter_endpoints()
+                .1
                 .scalar()
                 .ok_or(GeometryError::UnsupportedPcurveContour)
         })
     }
 
-    /// Evaluates an exact point in surface parameter space.
-    pub fn point_at(&self, parameter: &Real) -> GeometryResult<Point2> {
+    /// Evaluates a face-local point without discarding selected image evidence.
+    pub fn point_at(&self, parameter: &Parameter) -> GeometryResult<hypercurve::CurvePoint2> {
+        crate::context::strict(|| Ok(self.curve.point_at(&parameter.curve_parameter())?))
+    }
+
+    pub(crate) fn evaluate_real(&self, parameter: &Real) -> GeometryResult<Point2> {
         crate::context::strict(|| {
             let point = self.curve.point_at(&parameter.clone().into())?;
             let point = point
@@ -195,9 +207,9 @@ impl Pcurve {
     }
 
     /// Splits this pcurve exactly at a strict interior public parameter.
-    pub fn split_at(&self, parameter: &Real) -> GeometryResult<(Self, Self)> {
+    pub fn split_at(&self, parameter: &Parameter) -> GeometryResult<(Self, Self)> {
         crate::context::strict(|| {
-            let (first, second) = self.curve.split_at(parameter.clone().into())?;
+            let (first, second) = self.curve.split_at(parameter.curve_parameter())?;
             Ok((Self::new(first), Self::new(second)))
         })
     }
@@ -209,8 +221,8 @@ impl Pcurve {
 
     pub(crate) fn endpoints(&self) -> GeometryResult<(Point2, Point2)> {
         Ok((
-            self.point_at(self.domain_start()?)?,
-            self.point_at(self.domain_end()?)?,
+            self.evaluate_real(self.represented_start()?)?,
+            self.evaluate_real(self.represented_end()?)?,
         ))
     }
 
@@ -275,7 +287,19 @@ impl Pcurve {
                     arc.is_clockwise(),
                 )?,
             ))),
-            _ => Err(GeometryError::UnsupportedTransform),
+            _ => {
+                let reflection = hypercurve::Similarity2::try_from_real_affine(
+                    -Real::one(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                    reflection_sum,
+                    Real::zero(),
+                )?;
+                Ok(Self::new(
+                    self.curve.transform_similarity(&reflection)?.reversed()?,
+                ))
+            }
         }
     }
 }
@@ -393,6 +417,10 @@ type HomogeneousNurbsSplit = (
 impl Curve3 {
     pub(crate) fn shares_identity(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data)
+    }
+
+    pub(crate) fn identity_address(&self) -> usize {
+        Arc::as_ptr(&self.data) as usize
     }
 
     /// Constructs a finite exact line segment.
@@ -10670,19 +10698,28 @@ mod tests {
         // Strict comparison cannot certify this positive distance outside
         // the endpoint. A surrounding approximation policy must not admit it.
         let parameter = Real::one() + (first - second);
-        let strict_error = curve.point_at(&parameter).unwrap_err();
+        let strict_error = curve
+            .point_at(&crate::Parameter::from_real(parameter.clone()))
+            .unwrap_err();
         assert!(matches!(
             strict_error,
             GeometryError::PlanarCurve(hypercurve::ExactCurveError::Blocked(_))
         ));
-        let attempted = hypercurve::provisional(|| curve.point_at(&parameter));
+        let attempted = hypercurve::provisional(|| {
+            curve.point_at(&crate::Parameter::from_real(parameter.clone()))
+        });
         assert_eq!(attempted.certainty(), hypercurve::CurveCertainty::Certified);
         assert_eq!(attempted.into_unverified().unwrap_err(), strict_error);
 
         // A later direct Hypercurve call still sees its caller's approximate
         // policy. BREP must restore that scope instead of disabling it globally.
         let restored = hypercurve::provisional(|| {
-            assert_eq!(curve.point_at(&parameter).unwrap_err(), strict_error);
+            assert_eq!(
+                curve
+                    .point_at(&crate::Parameter::from_real(parameter.clone()))
+                    .unwrap_err(),
+                strict_error
+            );
             curve.curve().point_at(&parameter.clone().into())
         });
         assert_eq!(
@@ -10694,7 +10731,9 @@ mod tests {
         // A warmed approximate result and explicit display tolerances cannot
         // become authority for the next BREP query either.
         let preview = hypercurve::CurvePreviewOptions::try_approximate_512(1e-6, 0.0).unwrap();
-        let previewed = hypercurve::provisional(|| preview.evaluate(|| curve.point_at(&parameter)));
+        let previewed = hypercurve::provisional(|| {
+            preview.evaluate(|| curve.point_at(&crate::Parameter::from_real(parameter.clone())))
+        });
         assert_eq!(previewed.certainty(), hypercurve::CurveCertainty::Certified);
         assert_eq!(previewed.into_unverified().unwrap_err(), strict_error);
     }
@@ -12139,7 +12178,13 @@ mod tests {
             })
             .filter(|vertex| {
                 let point = partitioned.vertex(*vertex).unwrap().point();
-                point3_equal(point, &p(1, 1, 0), crate::STRICT_PREDICATES).value() == Some(true)
+                point3_equal(
+                    (point).try_coordinates().unwrap(),
+                    &p(1, 1, 0),
+                    crate::STRICT_PREDICATES,
+                )
+                .value()
+                    == Some(true)
             })
             .collect::<std::collections::HashSet<_>>();
         assert_eq!(shared_crossing_vertices.len(), 1);

@@ -31,7 +31,7 @@ struct ConstructionScope;
 /// use hyperbrep::{ModelBuilder, Point3};
 /// let vertex = {
 ///     let mut builder = ModelBuilder::new();
-///     builder.vertex(Point3::origin()).unwrap();
+///     builder.vertex(Point3::origin().into()).unwrap();
 ///     let model = builder.finish().unwrap();
 ///     model.vertices().next().unwrap()
 /// };
@@ -41,7 +41,7 @@ struct ConstructionScope;
 /// ```compile_fail,E0308
 /// use hyperbrep::{ModelBuilder, Point3};
 /// let mut builder = ModelBuilder::new();
-/// builder.vertex(Point3::origin()).unwrap();
+/// builder.vertex(Point3::origin().into()).unwrap();
 /// let model = builder.finish().unwrap();
 /// let index = model.vertices().next().unwrap().index();
 /// let vertex = model.vertex(index); // an arena position is not a construction key

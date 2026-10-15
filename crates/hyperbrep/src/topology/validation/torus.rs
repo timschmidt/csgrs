@@ -358,7 +358,7 @@ impl ArenaModelBuilder {
                 } else {
                     boundary_center = Some(circle.center.clone());
                 }
-                sweep += edge.domain.end() - edge.domain.start();
+                sweep += edge.domain.represented_end()? - edge.domain.represented_start()?;
             }
             if !real_values_equal(&sweep, &Real::tau())? {
                 return Ok(None);
@@ -488,7 +488,7 @@ impl ArenaModelBuilder {
                     return Ok(None);
                 }
                 radius_index = Some(this_radius);
-                sweep += edge.domain.end() - edge.domain.start();
+                sweep += edge.domain.represented_end()? - edge.domain.represented_start()?;
             }
             if !real_values_equal(&sweep, &Real::tau())? {
                 return Ok(None);

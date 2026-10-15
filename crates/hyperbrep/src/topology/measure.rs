@@ -31,7 +31,7 @@ impl ArenaModel {
                         )
                         .expect("validated pcurve")
                         .line_segment()
-                        .expect("validated spherical latitude")
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?
                         .start()
                         .y()
                         .clone();
@@ -45,7 +45,7 @@ impl ArenaModel {
                         )
                         .expect("validated pcurve")
                         .line_segment()
-                        .expect("validated spherical latitude")
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?
                         .start()
                         .y()
                         .clone();
@@ -59,7 +59,7 @@ impl ArenaModel {
                         .pcurve(edge_use.pcurve)
                         .expect("validated spherical pcurve")
                         .line_segment()
-                        .expect("validated spherical line pcurve");
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?;
                     if !real_values_equal(line.start().y(), line.end().y())
                         .map_err(build_error_geometry)?
                     {
@@ -609,7 +609,9 @@ impl ArenaModel {
             let signed_six_volume = std::iter::once(&solid.outer)
                 .chain(solid.voids.iter())
                 .map(|shell| self.signed_shell_six_volume(*shell))
-                .fold(Real::zero(), |sum, volume| sum + volume);
+                .try_fold(Real::zero(), |sum, volume| {
+                    volume.map(|volume| sum + volume)
+                })?;
             (signed_six_volume / Real::from(6))
                 .map_err(GeometryError::Numeric)
                 .map_err(QueryError::from)
@@ -716,7 +718,10 @@ impl ArenaModel {
         (doubled_area / Real::from(2)).map_err(GeometryError::Numeric)
     }
 
-    pub(in crate::topology) fn signed_shell_six_volume(&self, shell: ShellId) -> Real {
+    pub(in crate::topology) fn signed_shell_six_volume(
+        &self,
+        shell: ShellId,
+    ) -> Result<Real, GeometryError> {
         let mut sum = Real::zero();
         for face_id in &self.shell(shell).expect("validated shell ID").faces {
             let face = self.face(*face_id).expect("validated face ID");
@@ -724,17 +729,26 @@ impl ArenaModel {
                 let wire = self.wire(*wire_id).expect("validated wire ID");
                 let first_use = wire.edge_uses[0];
                 let anchor_id = self.directed_vertices(first_use).0;
-                let anchor = self.vertex(anchor_id).expect("validated vertex ID").point();
+                let anchor = self
+                    .vertex(anchor_id)
+                    .expect("validated vertex ID")
+                    .represented_point()?;
                 for pair in wire.edge_uses[1..].windows(2) {
                     let first_id = self.directed_vertices(pair[0]).0;
                     let second_id = self.directed_vertices(pair[1]).0;
-                    let first = self.vertex(first_id).expect("validated vertex ID").point();
-                    let second = self.vertex(second_id).expect("validated vertex ID").point();
+                    let first = self
+                        .vertex(first_id)
+                        .expect("validated vertex ID")
+                        .represented_point()?;
+                    let second = self
+                        .vertex(second_id)
+                        .expect("validated vertex ID")
+                        .represented_point()?;
                     sum += Vector3::from(anchor.clone())
                         .dot(&Vector3::from(first.clone()).cross(&Vector3::from(second.clone())));
                 }
             }
         }
-        sum
+        Ok(sum)
     }
 }

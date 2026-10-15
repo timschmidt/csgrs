@@ -64,9 +64,11 @@ results own `BodySet` or `SheetSet`; their iterators return bound references.
 
 ### Required ownership
 
-- `Vertex` owns a model-space point.
+- `Vertex` owns an exact model-space `GeometricPoint3`, including a retained
+  selected curve image when independent coordinates are unavailable.
 - `Edge` references start/end vertices, a `Curve3`, and an exact parameter
-  domain.
+  trim represented by `ParameterRange`. Increasing trim order is separate
+  from an incident pcurve's traversal order.
 - `EdgeUse` references an edge, direction, face-local `Pcurve`, and exact
   parameter correspondence.
 - `Wire` owns an ordered sequence of edge uses.
@@ -111,6 +113,14 @@ describes its own step, not durable feature naming or a composed history.
 
 The initial implementation may copy full arenas. Copy-on-write and localized
 validation are performance refinements that cannot alter edit semantics.
+
+An exact edge subdivision may inherit the validated source's image, wire and
+solid proofs because it partitions the same boundary. Publication still checks
+connectivity, ownership and the actual parameter correspondence. Replacing a
+vertex, carrier or topology record invalidates those inherited proofs.
+Selected points and ranges remain exact through subdivision and transforms;
+unavailable stored views produce typed blockers in scalar-only consumers.
+Selected graph archives and their untrusted replay are not yet implemented.
 
 ### Invariants
 

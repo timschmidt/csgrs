@@ -70,123 +70,105 @@ impl ParameterCorrespondence {
     pub(in crate::topology) fn edge_parameter(
         &self,
         pcurve: &Pcurve,
-        edge_domain: &ParameterDomain,
+        edge_domain: &ParameterRange,
         direction: Direction,
-        pcurve_parameter: &Real,
-    ) -> Result<Real, GeometryError> {
+        pcurve_parameter: &Parameter,
+    ) -> Result<Parameter, GeometryError> {
+        if let Self::Affine { scale, offset } = self {
+            if let Some(value) = pcurve_parameter.try_real() {
+                return Ok(Parameter::from_real(scale * value + offset));
+            }
+            return pcurve_parameter.affine_image(scale, offset);
+        }
         let (directed_start, directed_end) = match direction {
             Direction::Forward => (edge_domain.start(), edge_domain.end()),
             Direction::Reversed => (edge_domain.end(), edge_domain.start()),
         };
-        if (pcurve_parameter - pcurve.domain_start()?).zero_status()
-            == hyperreal::ZeroKnowledge::Zero
-            || matches!(
-                compare_reals(
-                    pcurve_parameter,
-                    pcurve.domain_start()?,
-                    crate::STRICT_PREDICATES
-                ),
-                PredicateOutcome::Decided {
-                    value: std::cmp::Ordering::Equal,
-                    ..
-                }
-            )
-        {
+        if pcurve_parameter.compare(&pcurve.domain_start()?)? == std::cmp::Ordering::Equal {
             return Ok(directed_start.clone());
         }
-        if (pcurve_parameter - pcurve.domain_end()?).zero_status() == hyperreal::ZeroKnowledge::Zero
-            || matches!(
-                compare_reals(
-                    pcurve_parameter,
-                    pcurve.domain_end()?,
-                    crate::STRICT_PREDICATES
-                ),
-                PredicateOutcome::Decided {
-                    value: std::cmp::Ordering::Equal,
-                    ..
-                }
-            )
-        {
+        if pcurve_parameter.compare(&pcurve.domain_end()?)? == std::cmp::Ordering::Equal {
             return Ok(directed_end.clone());
         }
-        match self {
-            Self::Affine { scale, offset, .. } => Ok(scale * pcurve_parameter + offset),
-            Self::AngularSweep => {
-                let arc = pcurve
-                    .circular_arc()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
-                let point = pcurve.point_at(pcurve_parameter)?;
-                let point = CurvePoint2::new(point.x, point.y);
-                let fraction = match crate::error::classified(arc.sweep_fraction(&point))? {
-                    Classification::Decided(fraction) => fraction,
-                    Classification::Uncertain(reason) => {
-                        return Err(GeometryError::PlanarClassificationUnresolved(reason));
-                    }
-                };
-                Ok(directed_start + &((directed_end - directed_start) * fraction))
+        let arc = pcurve
+            .circular_arc()
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
+        let value = pcurve_parameter
+            .try_real()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        let point = pcurve.evaluate_real(value)?;
+        let point = CurvePoint2::new(point.x, point.y);
+        let fraction = match crate::error::classified(arc.sweep_fraction(&point))? {
+            Classification::Decided(fraction) => fraction,
+            Classification::Uncertain(reason) => {
+                return Err(GeometryError::PlanarClassificationUnresolved(reason));
             }
-        }
+        };
+        let start = directed_start
+            .try_real()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        let end = directed_end
+            .try_real()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        Ok(Parameter::from_real(start + &((end - start) * fraction)))
     }
 
     pub(in crate::topology) fn pcurve_parameter(
         &self,
         pcurve: &Pcurve,
-        edge_domain: &ParameterDomain,
+        edge_domain: &ParameterRange,
         direction: Direction,
-        edge_parameter: &Real,
-    ) -> Result<Real, GeometryError> {
+        edge_parameter: &Parameter,
+    ) -> Result<Parameter, GeometryError> {
+        if let Self::Affine { scale, offset } = self {
+            if let Some(value) = edge_parameter.try_real() {
+                return ((value - offset) / scale)
+                    .map(Parameter::from_real)
+                    .map_err(GeometryError::Numeric);
+            }
+            let inverse = (Real::one() / scale).map_err(GeometryError::Numeric)?;
+            return edge_parameter.affine_image(&inverse, &(-offset * &inverse));
+        }
         let (directed_start, directed_end) = match direction {
             Direction::Forward => (edge_domain.start(), edge_domain.end()),
             Direction::Reversed => (edge_domain.end(), edge_domain.start()),
         };
-        if (edge_parameter - directed_start).zero_status() == hyperreal::ZeroKnowledge::Zero
-            || matches!(
-                compare_reals(edge_parameter, directed_start, crate::STRICT_PREDICATES),
-                PredicateOutcome::Decided {
-                    value: std::cmp::Ordering::Equal,
-                    ..
-                }
-            )
-        {
-            return Ok(pcurve.domain_start()?.clone());
+        if edge_parameter.compare(directed_start)? == std::cmp::Ordering::Equal {
+            return pcurve.domain_start();
         }
-        if (edge_parameter - directed_end).zero_status() == hyperreal::ZeroKnowledge::Zero
-            || matches!(
-                compare_reals(edge_parameter, directed_end, crate::STRICT_PREDICATES),
-                PredicateOutcome::Decided {
-                    value: std::cmp::Ordering::Equal,
-                    ..
-                }
-            )
-        {
-            return Ok(pcurve.domain_end()?.clone());
+        if edge_parameter.compare(directed_end)? == std::cmp::Ordering::Equal {
+            return pcurve.domain_end();
         }
-        match self {
-            Self::Affine { scale, offset, .. } => {
-                ((edge_parameter - offset) / scale).map_err(GeometryError::Numeric)
-            }
-            Self::AngularSweep => {
-                let arc = pcurve
-                    .circular_arc()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
-                let fraction = ((edge_parameter - directed_start)
-                    / (directed_end - directed_start))
-                    .map_err(GeometryError::Numeric)?;
-                match crate::error::classified(arc.parameter_at_sweep_fraction(&fraction))? {
-                    Classification::Decided(parameter) => Ok(parameter),
-                    Classification::Uncertain(reason) => {
-                        Err(GeometryError::PlanarClassificationUnresolved(reason))
-                    }
-                }
+        let arc = pcurve
+            .circular_arc()
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
+        let value = edge_parameter
+            .try_real()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        let start = directed_start
+            .try_real()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        let end = directed_end
+            .try_real()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        let fraction = ((value - start) / (end - start)).map_err(GeometryError::Numeric)?;
+        match crate::error::classified(arc.parameter_at_sweep_fraction(&fraction))? {
+            Classification::Decided(parameter) => Ok(parameter.into()),
+            Classification::Uncertain(reason) => {
+                Err(GeometryError::PlanarClassificationUnresolved(reason))
             }
         }
     }
 
     pub(crate) fn reversed_pcurve(&self, pcurve: &Pcurve) -> Result<Self, GeometryError> {
+        // Generated restrictions reverse traversal in their existing chart.
+        if pcurve.curve().geometry().is_none() {
+            return Ok(self.clone());
+        }
         Ok(match self {
             Self::Affine { scale, offset } => Self::Affine {
                 scale: -scale.clone(),
-                offset: scale * (pcurve.domain_start()? + pcurve.domain_end()?) + offset,
+                offset: scale * (pcurve.represented_start()? + pcurve.represented_end()?) + offset,
             },
             Self::AngularSweep => Self::AngularSweep,
         })

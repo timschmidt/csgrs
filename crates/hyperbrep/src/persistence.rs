@@ -126,7 +126,7 @@ impl ImportedModel {
             }
             let mut builder = ArenaModelBuilder::new();
             for point in self.data.vertices {
-                builder.vertex(point3(point))?;
+                builder.vertex((point3(point)).into())?;
             }
             for curve in self.data.curves {
                 builder.curve(curve3(curve)?)?;
@@ -224,7 +224,7 @@ impl ImportedModel {
                     vertex_id(edge.start),
                     vertex_id(edge.end),
                     curve_id(edge.curve),
-                    domain,
+                    (domain).into(),
                 )?;
             }
             for edge_use in self.data.edge_uses {
@@ -288,8 +288,8 @@ impl ArenaModel {
         crate::context::strict(|| {
             let mut vertices = self
                 .vertices()
-                .map(|(_, vertex)| point_array(vertex.point()))
-                .collect::<Vec<_>>();
+                .map(|(_, vertex)| Ok(point_array(vertex.represented_point()?)))
+                .collect::<Result<Vec<_>, GeometryError>>()?;
             let mut curves = self
                 .curves()
                 .map(|(_, curve)| raw_curve3(curve.exact_data()))
@@ -306,10 +306,20 @@ impl ArenaModel {
                 if !matches!(curve.kind(), Curve3Kind::CircleArc | Curve3Kind::EllipseArc) {
                     continue;
                 }
-                vertices[edge.start().index()] =
-                    point_array(&curve.evaluate_real(edge.domain().start())?);
-                vertices[edge.end().index()] =
-                    point_array(&curve.evaluate_real(edge.domain().end())?);
+                vertices[edge.start().index()] = point_array(
+                    &curve.evaluate_real(
+                        (edge.domain().start())
+                            .try_real()
+                            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                    )?,
+                );
+                vertices[edge.end().index()] = point_array(
+                    &curve.evaluate_real(
+                        (edge.domain().end())
+                            .try_real()
+                            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                    )?,
+                );
             }
             let mut pcurves = self
                 .pcurves()
@@ -399,7 +409,7 @@ impl ArenaModel {
                 let start = project_raw_plane_point(
                     self.vertex(start)
                         .expect("trusted edge references a validated start vertex")
-                        .point(),
+                        .represented_point()?,
                     origin,
                     u,
                     v,
@@ -407,7 +417,7 @@ impl ArenaModel {
                 let end = project_raw_plane_point(
                     self.vertex(end)
                         .expect("trusted edge references a validated end vertex")
-                        .point(),
+                        .represented_point()?,
                     origin,
                     u,
                     v,
@@ -421,13 +431,18 @@ impl ArenaModel {
                 .collect::<Vec<_>>();
             let edges = self
                 .edges()
-                .map(|(_, edge)| RawEdge {
-                    start: edge.start().index(),
-                    end: edge.end().index(),
-                    curve: edge.curve().index(),
-                    domain: [edge.domain().start().clone(), edge.domain().end().clone()],
+                .map(|(_, edge)| {
+                    Ok(RawEdge {
+                        start: edge.start().index(),
+                        end: edge.end().index(),
+                        curve: edge.curve().index(),
+                        domain: [
+                            edge.domain().represented_start()?.clone(),
+                            edge.domain().represented_end()?.clone(),
+                        ],
+                    })
                 })
-                .collect::<Vec<_>>();
+                .collect::<Result<Vec<_>, GeometryError>>()?;
             // A trusted model may retain a stronger endpoint-connectivity proof
             // than two independently represented algebraic coordinates can replay
             // after JSON decoding. Canonicalize full-domain rational endpoints to
@@ -438,8 +453,16 @@ impl ArenaModel {
                 let curve = self
                     .curve(edge.curve())
                     .expect("trusted edge references a validated curve");
-                if edge.domain().start() != curve.domain().start()
-                    || edge.domain().end() != curve.domain().end()
+                if edge
+                    .domain()
+                    .start()
+                    .compare(&curve.domain().start().clone().into())?
+                    != std::cmp::Ordering::Equal
+                    || edge
+                        .domain()
+                        .end()
+                        .compare(&curve.domain().end().clone().into())?
+                        != std::cmp::Ordering::Equal
                 {
                     continue;
                 }
@@ -454,10 +477,11 @@ impl ArenaModel {
                 let end = self
                     .vertex(edge.end())
                     .expect("trusted edge references a validated end vertex");
-                control_points[0] = point_array(start.point());
+                control_points[0] = point_array(start.represented_point()?);
                 *control_points
                     .last_mut()
-                    .expect("validated rational Bezier has controls") = point_array(end.point());
+                    .expect("validated rational Bezier has controls") =
+                    point_array(end.represented_point()?);
             }
             // Extrusion surfaces clone their profile curve rather than referring
             // to the edge arena. Canonicalize a full-profile rational carrier to
@@ -524,14 +548,14 @@ impl ArenaModel {
                 control_points[0] = point_array(
                     self.vertex(profile_start)
                         .expect("trusted edge references a validated start vertex")
-                        .point(),
+                        .represented_point()?,
                 );
                 *control_points
                     .last_mut()
                     .expect("validated rational Bezier profile has controls") = point_array(
                     self.vertex(profile_end)
                         .expect("trusted edge references a validated end vertex")
-                        .point(),
+                        .represented_point()?,
                 );
             }
             let edge_uses = self

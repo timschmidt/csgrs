@@ -80,7 +80,7 @@ impl ModelBuilder {
     }
 
     /// Adds an exact vertex.
-    pub fn vertex(&mut self, point: Point3) -> Result<VertexKey, BuildError> {
+    pub fn vertex(&mut self, point: GeometricPoint3) -> Result<VertexKey, BuildError> {
         self.inner.vertex(point).map(|id| VertexKey {
             scope: self.scope.clone(),
             id,
@@ -113,7 +113,7 @@ impl ModelBuilder {
         start: &VertexKey,
         end: &VertexKey,
         curve: &Curve3Key,
-        domain: ParameterDomain,
+        domain: ParameterRange,
     ) -> Result<EdgeKey, BuildError> {
         let (start, end, curve) = (
             self.resolve(start)?,

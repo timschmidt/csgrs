@@ -15,7 +15,11 @@ impl ArenaEdit {
     }
 
     /// Replaces one exact vertex point while retaining its stable ID.
-    pub fn replace_vertex(&mut self, id: VertexId, point: Point3) -> Result<&mut Self, EditError> {
+    pub fn replace_vertex(
+        &mut self,
+        id: VertexId,
+        point: GeometricPoint3,
+    ) -> Result<&mut Self, EditError> {
         crate::context::strict(|| {
             let data = Arc::make_mut(&mut self.staged.data);
             let Some(vertex) = data.vertices.get_mut(id.index()) else {
@@ -93,7 +97,7 @@ impl ArenaEdit {
         start: VertexId,
         end: VertexId,
         curve: Curve3Id,
-        domain: ParameterDomain,
+        domain: ParameterRange,
     ) -> Result<&mut Self, EditError> {
         crate::context::strict(|| {
             let data = Arc::make_mut(&mut self.staged.data);

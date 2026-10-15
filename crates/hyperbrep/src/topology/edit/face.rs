@@ -67,7 +67,7 @@ impl ArenaModel {
             FaceSplitEndpointLocation::Edge {
                 edge, parameter, ..
             } => {
-                let (staged, split) = self.split_edge(edge, parameter)?;
+                let (staged, split) = self.split_edge(edge, (parameter).into())?;
                 Ok((staged, split.vertex, Some(split)))
             }
         }
@@ -86,7 +86,7 @@ impl ArenaModel {
             FaceSplitEndpointLocation::Edge {
                 edge, parameter, ..
             } => {
-                let (staged, split) = self.split_edge(edge, parameter)?;
+                let (staged, split) = self.split_edge(edge, (parameter).into())?;
                 Ok((staged, wire, split.vertex, Some(split)))
             }
         }
@@ -121,15 +121,13 @@ impl ArenaModel {
         let matching_vertices = boundary_vertices
             .into_iter()
             .filter_map(|(wire, vertex)| {
-                points_equal(
-                    &self
-                        .vertex(vertex)
-                        .expect("validated boundary vertex")
-                        .point,
-                    point,
-                )
-                .map(|equal| equal.then_some((wire, vertex)))
-                .transpose()
+                self.vertex(vertex)
+                    .expect("validated boundary vertex")
+                    .point
+                    .coincides_with(&point.clone().into())
+                    .map_err(BuildError::from)
+                    .map(|equal| equal.then_some((wire, vertex)))
+                    .transpose()
             })
             .collect::<Result<Vec<_>, _>>()
             .map_err(TopologyEditError::Build)?;
@@ -158,15 +156,21 @@ impl ArenaModel {
                     .try_real()
                     .cloned()
                     .ok_or(GeometryError::UnrepresentableParameter)?;
-                if edge.domain.contains(&parameter)?
+                if edge
+                    .domain
+                    .contains(&crate::Parameter::from_real(parameter.clone()))?
                     && decided_model_order(compare_reals(
                         &parameter,
-                        edge.domain.start(),
+                        (edge.domain.start())
+                            .try_real()
+                            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
                         crate::STRICT_PREDICATES,
                     ))? == std::cmp::Ordering::Greater
                     && decided_model_order(compare_reals(
                         &parameter,
-                        edge.domain.end(),
+                        (edge.domain.end())
+                            .try_real()
+                            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
                         crate::STRICT_PREDICATES,
                     ))? == std::cmp::Ordering::Less
                 {
@@ -224,15 +228,11 @@ impl ArenaModel {
         let mut matching_vertices = Vec::new();
         for vertex in boundary_vertices {
             if matches!(
-                point3_equal(
-                    &self
-                        .vertex(vertex)
-                        .expect("validated boundary vertex")
-                        .point,
-                    point,
-                    crate::STRICT_PREDICATES,
-                ),
-                PredicateOutcome::Decided { value: true, .. }
+                self.vertex(vertex)
+                    .expect("validated boundary vertex")
+                    .point
+                    .coincides_with(&point.clone().into()),
+                Ok(true)
             ) {
                 matching_vertices.push(vertex);
             }
@@ -262,10 +262,20 @@ impl ArenaModel {
                     .try_real()
                     .cloned()
                     .ok_or(GeometryError::UnrepresentableParameter)?;
-                let after_start =
-                    compare_reals(&parameter, edge.domain.start(), crate::STRICT_PREDICATES);
-                let before_end =
-                    compare_reals(&parameter, edge.domain.end(), crate::STRICT_PREDICATES);
+                let after_start = compare_reals(
+                    &parameter,
+                    (edge.domain.start())
+                        .try_real()
+                        .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                    crate::STRICT_PREDICATES,
+                );
+                let before_end = compare_reals(
+                    &parameter,
+                    (edge.domain.end())
+                        .try_real()
+                        .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                    crate::STRICT_PREDICATES,
+                );
                 if matches!(
                     after_start,
                     PredicateOutcome::Decided {
@@ -435,12 +445,12 @@ impl ArenaModel {
                     let start_point = self
                         .vertex(start)
                         .expect("outer-boundary vertex resolves")
-                        .point
+                        .represented_point()?
                         .clone();
                     let end_point = self
                         .vertex(end)
                         .expect("outer-boundary vertex resolves")
-                        .point
+                        .represented_point()?
                         .clone();
                     (
                         Curve3::line(start_point, end_point)?,
@@ -472,7 +482,7 @@ impl ArenaModel {
             start,
             end,
             curve,
-            domain: edge_domain,
+            domain: (edge_domain).into(),
             endpoint_certificate: authored_curve,
         });
 

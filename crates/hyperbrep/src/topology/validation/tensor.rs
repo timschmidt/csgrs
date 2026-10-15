@@ -143,7 +143,14 @@ impl ArenaModelBuilder {
         pcurve: &Pcurve,
         surface: &Surface,
     ) -> Result<bool, BuildError> {
-        let restricted = curve.subcurve(edge.domain.start(), edge.domain.end())?;
+        let restricted = curve.subcurve(
+            (edge.domain.start())
+                .try_real()
+                .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+            (edge.domain.end())
+                .try_real()
+                .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+        )?;
         let directed = match edge_use.direction {
             Direction::Forward => restricted,
             Direction::Reversed => restricted.reversed()?,
@@ -581,7 +588,7 @@ impl ArenaModelBuilder {
     ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
-            .expect("matched line pcurve carries line geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         let u_constant = real_values_equal(line.start().x(), line.end().x())?;
         let v_constant = real_values_equal(line.start().y(), line.end().y())?;
         if u_constant == v_constant {
@@ -621,7 +628,14 @@ impl ArenaModelBuilder {
             }
             std::cmp::Ordering::Equal => return Err(BuildError::EdgeUseSupportMismatch),
         };
-        let edge_curve = curve.subcurve(edge.domain.start(), edge.domain.end())?;
+        let edge_curve = curve.subcurve(
+            (edge.domain.start())
+                .try_real()
+                .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+            (edge.domain.end())
+                .try_real()
+                .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+        )?;
         if !tensor_curve_images_equal(&edge_curve, &complete)?
             && !tensor_curve_images_equal(&edge_curve, &segment)?
         {

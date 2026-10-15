@@ -151,7 +151,7 @@ impl ArenaModelBuilder {
                 normal = -normal;
             }
             for vertex in &vertices {
-                let value = normal.dot(&(self.vertex_ref(*vertex)?.point() - origin));
+                let value = normal.dot(&(self.vertex_ref(*vertex)?.represented_point()? - origin));
                 if decided_model_order(compare_reals(
                     &value,
                     &Real::zero(),
@@ -296,8 +296,8 @@ impl ArenaModelBuilder {
         let second_edges = self.face_edge_set(second)?;
         for first_edge_id in &first_edges {
             let first_edge = self.edge_ref(*first_edge_id)?;
-            let first_start = self.vertex_ref(first_edge.start)?.point();
-            let first_end = self.vertex_ref(first_edge.end)?.point();
+            let first_start = self.vertex_ref(first_edge.start)?.represented_point()?;
+            let first_end = self.vertex_ref(first_edge.end)?.represented_point()?;
             let first_segment = LineSeg2::try_new(
                 project_point_to_surface_plane(first_start, common_surface)?,
                 project_point_to_surface_plane(first_end, common_surface)?,
@@ -307,11 +307,11 @@ impl ArenaModelBuilder {
                 let second_edge = self.edge_ref(*second_edge_id)?;
                 let second_segment = LineSeg2::try_new(
                     project_point_to_surface_plane(
-                        self.vertex_ref(second_edge.start)?.point(),
+                        self.vertex_ref(second_edge.start)?.represented_point()?,
                         common_surface,
                     )?,
                     project_point_to_surface_plane(
-                        self.vertex_ref(second_edge.end)?.point(),
+                        self.vertex_ref(second_edge.end)?.represented_point()?,
                         common_surface,
                     )?,
                 )
@@ -374,9 +374,16 @@ impl ArenaModelBuilder {
                 let mut covered = false;
                 for edge_id in &shared {
                     let edge = self.edge_ref(*edge_id)?;
-                    let start =
-                        line_parameter(self.vertex_ref(edge.start)?.point(), point, direction)?;
-                    let end = line_parameter(self.vertex_ref(edge.end)?.point(), point, direction)?;
+                    let start = line_parameter(
+                        self.vertex_ref(edge.start)?.represented_point()?,
+                        point,
+                        direction,
+                    )?;
+                    let end = line_parameter(
+                        self.vertex_ref(edge.end)?.represented_point()?,
+                        point,
+                        direction,
+                    )?;
                     let edge_lower = minimum_real(&start, &end)?;
                     let edge_upper = maximum_real(&start, &end)?;
                     if decided_model_order(compare_reals(
@@ -442,7 +449,13 @@ impl ArenaModelBuilder {
         let vertices = self.face_boundary_vertex_set(face)?;
         let parameters = vertices
             .iter()
-            .map(|vertex| line_parameter(self.vertex_ref(*vertex)?.point(), point, direction))
+            .map(|vertex| {
+                line_parameter(
+                    self.vertex_ref(*vertex)?.represented_point()?,
+                    point,
+                    direction,
+                )
+            })
             .collect::<Result<Vec<_>, _>>()?;
         if parameters.is_empty() {
             return Ok(FaceLineMaterial {
@@ -558,7 +571,7 @@ impl ArenaModelBuilder {
         let first = self.face_boundary_vertex_set(self.face_ref(first)?)?;
         let second = self.face_boundary_vertex_set(self.face_ref(second)?)?;
         for vertex in first.intersection(&second) {
-            if points_equal(self.vertex_ref(*vertex)?.point(), point)? {
+            if points_equal(self.vertex_ref(*vertex)?.represented_point()?, point)? {
                 return Ok(true);
             }
         }
@@ -688,8 +701,14 @@ impl ArenaModelBuilder {
                 .map(|edge_use| {
                     let (start, end) = self.directed_vertices(*edge_use)?;
                     LineSeg2::try_new(
-                        project_point_to_surface_plane(self.vertex_ref(start)?.point(), frame)?,
-                        project_point_to_surface_plane(self.vertex_ref(end)?.point(), frame)?,
+                        project_point_to_surface_plane(
+                            self.vertex_ref(start)?.represented_point()?,
+                            frame,
+                        )?,
+                        project_point_to_surface_plane(
+                            self.vertex_ref(end)?.represented_point()?,
+                            frame,
+                        )?,
                     )
                     .map(Segment2::Line)
                     .map_err(GeometryError::from)

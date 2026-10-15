@@ -317,6 +317,34 @@
       "validation": "240 all-feature core tests, 35 integration tests and 4 doctests; 233 default core tests, 34 integrations and 4 doctests; 12 release point regressions. Four deliberate mutants rejected. Strict all-target/all-feature Clippy, warning-denied rustdoc, WASM library build, fuzz-bin Clippy, both formatting checks and four release benchmark builds pass. All 66 kernel receipts agree across three alternating pairs; seven new point and eight existing parameter/budget rows agree across three runs each.",
       "cost_evidence": "Kernel harness migration audited: same fixtures/counts/assertions/checksums; six public API call sites change. Median of case median ratios 1.00352, largest 1.07127; all within the 10% cohort budget. Binary +25,232 bytes; median process peak RSS 21,468 to 21,736 KiB. Feature timings include exact assertions and prepared roots; no allocation-count, asymptotic-growth or statistical claim.",
       "limits": "WP02/G1 remains open: selected topology vertices/domains, 3D edge split, dual-pcurve correspondence, surface/contact images and selected graph archive/reload composition are unfinished. Angular conics, derivatives and subdivision retain explicit materialization boundaries. Full work budgets, external oracles, fuzz/ASan/lexicase, WASM execution and full-workspace/pre-push qualification remain open."
+    },
+    {
+      "id": "selected-topology",
+      "work_packages": [
+        "WP01",
+        "WP02"
+      ],
+      "properties": [
+        "P1",
+        "P3",
+        "P6",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P27",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Store retained geometric vertices and selected edge trim ranges. Split all incident pcurves with exact affine chart transport, inherit subdivision proofs and validate actual endpoint mappings. Preserve source sharing and traversal through transforms; add Hypercurve directed parameter endpoints and typed scalar-view blockers. Directly migrate callers without compatibility APIs.",
+      "source": "../src/topology/edit/edge.rs",
+      "evidence": "evidence/2026-10-15-selected-topology/manifest.json",
+      "validation": "240 all-feature core tests, 45 integration tests and four doctests; 233 default core tests, 44 integration tests and four doctests; ten release topology regressions; four rejected mutants. Strict Clippy, warning-denied rustdoc, WASM compilation, fuzz-bin Clippy and formatting pass. Five benchmark builds, 66 matched native receipts and all 19 feature/control rows pass in three runs.",
+      "cost_evidence": "Final median of case median ratios 1.011410, largest 1.058066; all within 10%. Binary +67040 bytes; median peak RSS 21472 to 21808 KiB. First prototype exceeded 10% in three editing cohorts and was replaced with direct native scalar mapping. Measurements are descriptive; no allocation or asymptotic-growth claim.",
+      "limits": "WP02/G1 remains open: selected graph persistence, untrusted replay/recertification, general surface/contact images and Boolean transfer are unfinished. Angular conics and native coefficient algorithms retain typed materialization boundaries. No full resource budget, external oracle, new fuzz/ASan/lexicase campaign, WASM execution or full-workspace/pre-push qualification."
     }
   ],
   "work_packages": [
@@ -491,7 +519,7 @@
   ],
   "next_actions": [
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
-    "Complete WP02/G1 beyond retained parameters and spatial points: selected vertices and edge-domain split with dual-pcurve agreement, persistence/reload and composition without requiring Real materialization. Preserve source/chart identity through reverse and transforms, and validate imported graph evidence before publishing topology.",
+    "Complete WP02/G1 beyond retained parameters, spatial points and selected topology splits: persist selected source/root/chart graphs, validate untrusted evidence on load, and compose reload/split/classification without requiring Real materialization. Add general surface/contact images and extend selected Boolean transfer while preserving all existing exact behavior.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
   ]

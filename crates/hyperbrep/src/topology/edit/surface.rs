@@ -191,7 +191,8 @@ impl ArenaModel {
                         ParameterCorrespondence::affine(
                             -edge_scale.clone(),
                             edge_scale
-                                * (forward_pcurve.domain_start()? + forward_pcurve.domain_end()?)
+                                * (forward_pcurve.represented_start()?
+                                    + forward_pcurve.represented_end()?)
                                 + edge_offset,
                         )?,
                     )
@@ -215,12 +216,12 @@ impl ArenaModel {
         let seam_vertex = VertexId::from_index(data.vertices.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
         data.vertices.push(Vertex {
-            point: start.clone(),
+            point: (start.clone()).into(),
         });
         let midpoint_vertex = VertexId::from_index(data.vertices.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
         data.vertices.push(Vertex {
-            point: midpoint_point,
+            point: (midpoint_point).into(),
         });
 
         let mut edges = Vec::with_capacity(2);
@@ -247,7 +248,7 @@ impl ArenaModel {
                     seam_vertex
                 },
                 curve: curve_id,
-                domain,
+                domain: domain.into(),
                 endpoint_certificate: false,
             });
             edges.push(edge);
@@ -396,7 +397,7 @@ impl ArenaModel {
             )
             .expect("validated spherical pcurve")
             .line_segment()
-            .expect("validated spherical latitude");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         let old_latitude = old_line.start().y().clone();
         let increasing = decided_model_order(compare_reals(
             old_line.end().x(),
@@ -472,7 +473,8 @@ impl ArenaModel {
                         ParameterCorrespondence::affine(
                             -edge_scale.clone(),
                             edge_scale
-                                * (forward_pcurve.domain_start()? + forward_pcurve.domain_end()?)
+                                * (forward_pcurve.represented_start()?
+                                    + forward_pcurve.represented_end()?)
                                 + edge_offset,
                         )?,
                     )
@@ -496,12 +498,12 @@ impl ArenaModel {
         let seam_vertex = VertexId::from_index(data.vertices.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
         data.vertices.push(Vertex {
-            point: start.clone(),
+            point: (start.clone()).into(),
         });
         let midpoint_vertex = VertexId::from_index(data.vertices.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
         data.vertices.push(Vertex {
-            point: midpoint_point,
+            point: (midpoint_point).into(),
         });
         let mut edges = Vec::with_capacity(2);
         let mut forward_uses = Vec::with_capacity(2);
@@ -527,7 +529,7 @@ impl ArenaModel {
                     seam_vertex
                 },
                 curve: curve_id,
-                domain,
+                domain: domain.into(),
                 endpoint_certificate: false,
             });
             edges.push(edge);
@@ -736,7 +738,8 @@ impl ArenaModel {
                         ParameterCorrespondence::affine(
                             -edge_scale.clone(),
                             edge_scale
-                                * (forward_pcurve.domain_start()? + forward_pcurve.domain_end()?)
+                                * (forward_pcurve.represented_start()?
+                                    + forward_pcurve.represented_end()?)
                                 + edge_offset,
                         )?,
                     )
@@ -778,12 +781,12 @@ impl ArenaModel {
         let seam_vertex = VertexId::from_index(data.vertices.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
         data.vertices.push(Vertex {
-            point: start.clone(),
+            point: (start.clone()).into(),
         });
         let midpoint_vertex = VertexId::from_index(data.vertices.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
         data.vertices.push(Vertex {
-            point: midpoint_point,
+            point: (midpoint_point).into(),
         });
 
         let mut edges = Vec::with_capacity(2);
@@ -810,7 +813,7 @@ impl ArenaModel {
                     seam_vertex
                 },
                 curve: curve_id,
-                domain,
+                domain: domain.into(),
                 endpoint_certificate: false,
             });
             edges.push(edge);

@@ -81,6 +81,8 @@ pub enum GeometryError {
     UnsupportedParameterLocation,
     /// A certified parameter cannot enter an operation requiring a stored `Real`.
     UnrepresentableParameter,
+    /// A selected point cannot enter an operation requiring stored coordinates.
+    UnrepresentablePoint,
     /// The carrier cannot yet evaluate a retained parameter without a scalar view.
     UnsupportedSelectedEvaluation,
     /// The requested intersection family combination is unsupported.
@@ -174,6 +176,9 @@ impl fmt::Display for GeometryError {
             }
             Self::UnrepresentableParameter => {
                 formatter.write_str("certified curve parameter is not representable by Real")
+            }
+            Self::UnrepresentablePoint => {
+                formatter.write_str("selected point has no stored scalar coordinate view")
             }
             Self::UnsupportedSelectedEvaluation => {
                 formatter.write_str("selected-parameter evaluation is unsupported for this carrier")

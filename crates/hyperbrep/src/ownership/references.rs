@@ -89,7 +89,7 @@ entity_reference!(SolidRef, SolidKey, SolidId, Solid, solid, solids);
 
 impl<'a> VertexRef<'a> {
     /// Returns the exact model-space point.
-    pub fn point(self) -> &'a Point3 {
+    pub fn point(self) -> &'a GeometricPoint3 {
         self.model
             .inner
             .vertex(self.id)
@@ -160,7 +160,7 @@ impl<'a> EdgeRef<'a> {
         }
     }
     /// Returns the retained exact parameter interval.
-    pub fn domain(self) -> &'a ParameterDomain {
+    pub fn domain(self) -> &'a ParameterRange {
         self.record().domain()
     }
     /// Iterates over this edge's uses in insertion order.
@@ -218,11 +218,11 @@ impl<'a> EdgeUseRef<'a> {
         }
     }
     /// Maps a pcurve parameter to the exact shared edge parameter.
-    pub fn edge_parameter_at(self, parameter: &Real) -> Result<Real, QueryError> {
+    pub fn edge_parameter_at(self, parameter: &Parameter) -> Result<Parameter, QueryError> {
         self.model.inner.edge_parameter_at(self.id, parameter)
     }
     /// Maps a shared edge parameter to the exact face-local pcurve parameter.
-    pub fn pcurve_parameter_at(self, parameter: &Real) -> Result<Real, QueryError> {
+    pub fn pcurve_parameter_at(self, parameter: &Parameter) -> Result<Parameter, QueryError> {
         self.model.inner.pcurve_parameter_at(self.id, parameter)
     }
 }

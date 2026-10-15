@@ -22,6 +22,7 @@ use crate::geometry::{
     affine_transform_orientation, materialize_nurbs_parameter_graph,
     rational_bilinear_parameter_curve, resolve_planar_classification,
 };
+use crate::{GeometricPoint3, Parameter, ParameterRange};
 
 mod builder;
 mod correspondence;

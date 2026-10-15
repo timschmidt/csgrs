@@ -2,7 +2,7 @@
 
 Status: Baseline recorded
 Date: 2026-07-29
-Plan: [`../../HYPERBREP_REBUILD_PLAN.md`](../../HYPERBREP_REBUILD_PLAN.md)
+Current plan: [HyperBRep development plan](DEVELOPMENT_PLAN.md)
 
 This inventory defines what the clean-break rebuild must replace or delete. It
 is deliberately not a migration map: no legacy public item survives solely to

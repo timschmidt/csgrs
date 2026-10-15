@@ -547,11 +547,16 @@ fuzz_target!(|bytes: &[u8]| {
                     let edge = edge_use.edge();
                     let fraction = (Real::from(numerator) / Real::from(denominator))
                         .expect("positive denominator is nonzero");
-                    let span = edge.domain().end() - edge.domain().start();
+                    let span = edge.domain().end().try_real().expect("native trim")
+                        - edge.domain().start().try_real().expect("native trim");
                     let offset = span * fraction;
                     let parameter = match edge_use.direction() {
-                        Direction::Forward => edge.domain().start() + offset,
-                        Direction::Reversed => edge.domain().end() - offset,
+                        Direction::Forward => {
+                            edge.domain().start().try_real().expect("native trim") + offset
+                        }
+                        Direction::Reversed => {
+                            edge.domain().end().try_real().expect("native trim") - offset
+                        }
                     };
                     edge.curve()
                         .point_at(&parameter.into())
@@ -576,8 +581,16 @@ fuzz_target!(|bytes: &[u8]| {
                     .into_model()
             } else {
                 let diagonal = |first_use, second_use| {
-                    let first = directed_start(first_use).point().clone();
-                    let second = directed_start(second_use).point().clone();
+                    let first = directed_start(first_use)
+                        .point()
+                        .try_coordinates()
+                        .expect("authored vertex")
+                        .clone();
+                    let second = directed_start(second_use)
+                        .point()
+                        .try_coordinates()
+                        .expect("authored vertex")
+                        .clone();
                     Curve3::line(first, second).expect("opposite vertices differ")
                 };
                 let traces = match bytes[3] & 3 {
@@ -613,13 +626,15 @@ fuzz_target!(|bytes: &[u8]| {
         }
     } else {
         let edge = model.edges().next().expect("primitive has edges");
-        let midpoint = ((edge.domain().start() + edge.domain().end()) / Real::from(2))
-            .expect("two is nonzero");
+        let midpoint = ((edge.domain().start().try_real().expect("native trim")
+            + edge.domain().end().try_real().expect("native trim"))
+            / Real::from(2))
+        .expect("two is nonzero");
         model
             .edges()
             .nth(edge.index())
             .expect("fixture entity survives this edit")
-            .split(midpoint)
+            .split(midpoint.into())
             .expect("primitive edge midpoint is an exact valid split")
             .into_model()
     };

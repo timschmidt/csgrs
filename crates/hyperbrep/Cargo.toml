@@ -43,3 +43,7 @@ harness = false
 [[bench]]
 name = "retained_points"
 harness = false
+
+[[bench]]
+name = "selected_topology"
+harness = false

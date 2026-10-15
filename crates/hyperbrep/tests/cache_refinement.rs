@@ -33,8 +33,8 @@ fn bounds_retry_after_scalar_evidence_strengthens() {
     )
     .unwrap();
     let mut builder = ModelBuilder::new();
-    builder.vertex(start.clone()).unwrap();
-    builder.vertex(end.clone()).unwrap();
+    builder.vertex((start.clone()).into()).unwrap();
+    builder.vertex((end.clone()).into()).unwrap();
     let model = builder.finish().unwrap();
     for error in [
         curve.bounds().unwrap_err(),

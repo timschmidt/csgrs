@@ -350,9 +350,10 @@ impl ArenaModelBuilder {
             }
             let vertices = self.shell_vertex_set(*void_shell)?;
             for vertex in vertices {
-                if self
-                    .classify_point_against_planar_shell(outer, self.vertex_ref(vertex)?.point())?
-                    != SolidPointLocation::Inside
+                if self.classify_point_against_planar_shell(
+                    outer,
+                    self.vertex_ref(vertex)?.represented_point()?,
+                )? != SolidPointLocation::Inside
                 {
                     return Err(BuildError::VoidShellOutside(*void_shell));
                 }
@@ -383,9 +384,9 @@ impl ArenaModelBuilder {
             .into_iter()
             .min()
             .ok_or(BuildError::EmptyShell)?;
-        Ok(
-            self.classify_point_against_planar_shell(container, self.vertex_ref(vertex)?.point())?
-                != SolidPointLocation::Outside,
-        )
+        Ok(self.classify_point_against_planar_shell(
+            container,
+            self.vertex_ref(vertex)?.represented_point()?,
+        )? != SolidPointLocation::Outside)
     }
 }

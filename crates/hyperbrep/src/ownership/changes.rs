@@ -758,7 +758,7 @@ impl<'a> FaceTracePartitionRef<'a> {
 
 impl EdgeRef<'_> {
     /// Splits the exact edge and all its uses into a new validated revision.
-    pub fn split(self, parameter: Real) -> Result<EdgeSplit, TopologyEditError> {
+    pub fn split(self, parameter: Parameter) -> Result<EdgeSplit, TopologyEditError> {
         let (model, data) = self.model.inner.split_edge(self.id, parameter)?;
         Ok(EdgeSplit::from_parts(self.model, model, data))
     }

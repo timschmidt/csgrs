@@ -9,7 +9,7 @@ impl ArenaModelBuilder {
     }
 
     /// Adds an exact model-space vertex.
-    pub fn vertex(&mut self, point: Point3) -> Result<VertexId, BuildError> {
+    pub fn vertex(&mut self, point: GeometricPoint3) -> Result<VertexId, BuildError> {
         crate::context::strict(|| {
             let id = VertexId::from_index(self.vertices.len())
                 .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
@@ -55,7 +55,7 @@ impl ArenaModelBuilder {
         start: VertexId,
         end: VertexId,
         curve: Curve3Id,
-        domain: ParameterDomain,
+        domain: ParameterRange,
     ) -> Result<EdgeId, BuildError> {
         crate::context::strict(|| {
             self.edge_with_endpoint_certificate(start, end, curve, domain, false)
@@ -67,7 +67,7 @@ impl ArenaModelBuilder {
         start: VertexId,
         end: VertexId,
         curve: Curve3Id,
-        domain: ParameterDomain,
+        domain: ParameterRange,
         endpoint_certificate: bool,
     ) -> Result<EdgeId, BuildError> {
         if start == end {

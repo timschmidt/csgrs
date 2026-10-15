@@ -69,9 +69,9 @@ fn bernstein_degree_overflow_is_a_range_error() {
 
 fn add_planar_triangle(builder: &mut ArenaModelBuilder) -> (FaceId, [EdgeId; 3]) {
     let vertices = [
-        builder.vertex(p(0, 0, 0)).unwrap(),
-        builder.vertex(p(2, 0, 0)).unwrap(),
-        builder.vertex(p(0, 3, 0)).unwrap(),
+        builder.vertex((p(0, 0, 0)).into()).unwrap(),
+        builder.vertex((p(2, 0, 0)).into()).unwrap(),
+        builder.vertex((p(0, 3, 0)).into()).unwrap(),
     ];
     let model_points = [p(0, 0, 0), p(2, 0, 0), p(0, 3, 0)];
     let parameter_points = [uv(0, 0), uv(2, 0), uv(0, 3)];
@@ -87,7 +87,7 @@ fn add_planar_triangle(builder: &mut ArenaModelBuilder) -> (FaceId, [EdgeId; 3])
                 vertices[index],
                 vertices[next],
                 curve,
-                ParameterDomain::unit(),
+                (ParameterDomain::unit()).into(),
             )
             .unwrap();
         let pcurve = builder
@@ -127,7 +127,7 @@ fn planar_circle_model() -> (ArenaModel, [EdgeUseId; 4]) {
     let vertices = points
         .iter()
         .cloned()
-        .map(|point| builder.vertex(point).unwrap())
+        .map(|point| builder.vertex((point).into()).unwrap())
         .collect::<Vec<_>>();
     let half_pi = (Real::pi() / r(2)).unwrap();
     let mut uses = Vec::new();
@@ -153,7 +153,7 @@ fn planar_circle_model() -> (ArenaModel, [EdgeUseId; 4]) {
                 vertices[index],
                 vertices[next],
                 curve,
-                ParameterDomain::new(start_angle, end_angle).unwrap(),
+                (ParameterDomain::new(start_angle, end_angle).unwrap()).into(),
             )
             .unwrap();
         let pcurve = builder
@@ -194,24 +194,29 @@ fn planar_circle_model() -> (ArenaModel, [EdgeUseId; 4]) {
 fn angular_sweep_correspondence_certifies_a_complete_planar_circle() {
     let (model, uses) = planar_circle_model();
     let half = (Real::one() / r(2)).unwrap();
-    let first_parameter = model.edge_parameter_at(uses[0], &half).unwrap();
+    let first_parameter = model
+        .edge_parameter_at(uses[0], &crate::Parameter::from_real(half.clone()))
+        .unwrap();
     let first_use = model.edge_use(uses[0]).unwrap();
     let edge = model.edge(first_use.edge()).unwrap();
     let spatial = model
         .curve(edge.curve())
         .unwrap()
-        .evaluate_real(&first_parameter)
+        .evaluate_real(first_parameter.try_real().unwrap())
         .unwrap();
     let face = model.faces().next().unwrap().1;
     let surface_parameter = model
         .pcurve(first_use.pcurve())
         .unwrap()
-        .point_at(&half)
+        .point_at(&crate::Parameter::from_real(half.clone()))
         .unwrap();
     let from_face = model
         .surface(face.surface())
         .unwrap()
-        .point_at(&surface_parameter)
+        .point_at(&Point2::new(
+            surface_parameter.coordinates().unwrap().x().clone(),
+            surface_parameter.coordinates().unwrap().y().clone(),
+        ))
         .unwrap();
     assert_eq!(
         point3_equal(&spatial, &from_face, crate::STRICT_PREDICATES).value(),
@@ -229,13 +234,12 @@ fn angular_sweep_correspondence_certifies_a_complete_planar_circle() {
         .validate()
         .unwrap();
     assert_eq!(
-        compare_reals(
-            &decoded.edge_parameter_at(uses[0], &half).unwrap(),
-            &first_parameter,
-            crate::STRICT_PREDICATES
-        )
-        .value(),
-        Some(std::cmp::Ordering::Equal)
+        decoded
+            .edge_parameter_at(uses[0], &crate::Parameter::from_real(half))
+            .unwrap()
+            .compare(&first_parameter)
+            .unwrap(),
+        std::cmp::Ordering::Equal
     );
 }
 
@@ -258,7 +262,7 @@ fn revolution_patch_certifies_complete_meridian_and_latitude_images() {
     let vertices = points
         .iter()
         .cloned()
-        .map(|point| builder.vertex(point).unwrap())
+        .map(|point| builder.vertex((point).into()).unwrap())
         .collect::<Vec<_>>();
     let curves = [
         Curve3::circle_arc(
@@ -296,7 +300,7 @@ fn revolution_patch_certifies_complete_meridian_and_latitude_images() {
         .map(|((curve, domain), (start, end))| {
             let curve = builder.curve(curve).unwrap();
             builder
-                .edge(vertices[start], vertices[end], curve, domain)
+                .edge(vertices[start], vertices[end], curve, (domain).into())
                 .unwrap()
         })
         .collect::<Vec<_>>();
@@ -359,8 +363,8 @@ fn revolution_patch_certifies_complete_meridian_and_latitude_images() {
 fn analytic_image_certificate_rejects_a_sheared_arc_between_matching_endpoints() {
     let mut builder = ArenaModelBuilder::new();
     let vertices = [
-        builder.vertex(p(1, 0, 0)).unwrap(),
-        builder.vertex(p(-1, 0, 0)).unwrap(),
+        builder.vertex((p(1, 0, 0)).into()).unwrap(),
+        builder.vertex((p(-1, 0, 0)).into()).unwrap(),
     ];
     let angle_domains = [(Real::zero(), Real::pi()), (Real::pi(), Real::tau())];
     let parameter_points = [(uv(1, 0), uv(-1, 0)), (uv(-1, 0), uv(1, 0))];
@@ -385,7 +389,7 @@ fn analytic_image_certificate_rejects_a_sheared_arc_between_matching_endpoints()
                 vertices[index],
                 vertices[(index + 1) % 2],
                 curve,
-                ParameterDomain::new(start_angle.clone(), end_angle.clone()).unwrap(),
+                (ParameterDomain::new(start_angle.clone(), end_angle.clone()).unwrap()).into(),
             )
             .unwrap();
         let pcurve = builder
@@ -430,7 +434,7 @@ fn analytic_image_certificate_rejects_a_sheared_arc_between_matching_endpoints()
 fn add_planar_wire(builder: &mut ArenaModelBuilder, coordinates: &[(i32, i32)]) -> WireId {
     let vertices = coordinates
         .iter()
-        .map(|(x, y)| builder.vertex(p(*x, *y, 0)).unwrap())
+        .map(|(x, y)| builder.vertex((p(*x, *y, 0)).into()).unwrap())
         .collect::<Vec<_>>();
     let mut uses = Vec::with_capacity(coordinates.len());
     for index in 0..coordinates.len() {
@@ -445,7 +449,7 @@ fn add_planar_wire(builder: &mut ArenaModelBuilder, coordinates: &[(i32, i32)]) 
                 vertices[index],
                 vertices[next],
                 curve,
-                ParameterDomain::unit(),
+                (ParameterDomain::unit()).into(),
             )
             .unwrap();
         let pcurve = builder
@@ -504,9 +508,9 @@ fn builder_commits_private_typed_arenas_with_retained_adjacency() {
 fn builder_rejects_topologically_disconnected_wires() {
     let mut builder = ArenaModelBuilder::new();
     let vertices = [
-        builder.vertex(p(0, 0, 0)).unwrap(),
-        builder.vertex(p(1, 0, 0)).unwrap(),
-        builder.vertex(p(2, 0, 0)).unwrap(),
+        builder.vertex((p(0, 0, 0)).into()).unwrap(),
+        builder.vertex((p(1, 0, 0)).into()).unwrap(),
+        builder.vertex((p(2, 0, 0)).into()).unwrap(),
     ];
     let mut uses = Vec::new();
     for (start, end) in [(0, 1), (2, 1)] {
@@ -518,7 +522,7 @@ fn builder_rejects_topologically_disconnected_wires() {
                 vertices[start as usize],
                 vertices[end as usize],
                 curve,
-                ParameterDomain::unit(),
+                (ParameterDomain::unit()).into(),
             )
             .unwrap();
         let pcurve = builder
@@ -546,13 +550,13 @@ fn builder_rejects_topologically_disconnected_wires() {
 #[test]
 fn finish_reports_orphan_topology_instead_of_publishing_invalid_model() {
     let mut builder = ArenaModelBuilder::new();
-    let start = builder.vertex(p(0, 0, 0)).unwrap();
-    let end = builder.vertex(p(1, 0, 0)).unwrap();
+    let start = builder.vertex((p(0, 0, 0)).into()).unwrap();
+    let end = builder.vertex((p(1, 0, 0)).into()).unwrap();
     let curve = builder
         .curve(Curve3::line(p(0, 0, 0), p(1, 0, 0)).unwrap())
         .unwrap();
     let edge = builder
-        .edge(start, end, curve, ParameterDomain::unit())
+        .edge(start, end, curve, (ParameterDomain::unit()).into())
         .unwrap();
     let pcurve = builder
         .pcurve(Pcurve::new(Curve2::from(

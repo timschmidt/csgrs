@@ -617,7 +617,7 @@ pub fn tensor_patch_shell(
                     None => {
                         let domain = curve.domain().clone();
                         let curve_id = builder.curve(curve.clone())?;
-                        let edge = builder.edge(start, end, curve_id, domain.clone())?;
+                        let edge = builder.edge(start, end, curve_id, (domain.clone()).into())?;
                         shared_edges.push(StitchedTensorEdge {
                             start,
                             end,
@@ -819,7 +819,7 @@ fn exact_patch_vertex(
             }
         }
     }
-    let vertex = builder.vertex(point.clone())?;
+    let vertex = builder.vertex((point.clone()).into())?;
     vertices.push((point.clone(), vertex));
     Ok(vertex)
 }
@@ -935,7 +935,7 @@ fn build_rectangular_face_patch(
     let mut builder = ArenaModelBuilder::new();
     let vertices = points
         .into_iter()
-        .map(|point| builder.vertex(point))
+        .map(|point| builder.vertex((point).into()))
         .collect::<Result<Vec<_>, _>>()?;
     let surface = builder.surface(surface)?;
     let mut edges = Vec::with_capacity(4);
@@ -950,7 +950,12 @@ fn build_rectangular_face_patch(
         };
         let domain = curve.domain().clone();
         let curve = builder.curve(curve)?;
-        edges.push(builder.edge(vertices[start], vertices[end], curve, domain.clone())?);
+        edges.push(builder.edge(
+            vertices[start],
+            vertices[end],
+            curve,
+            (domain.clone()).into(),
+        )?);
         edge_domains.push(domain);
     }
     let specs = [
@@ -1015,7 +1020,7 @@ pub fn cylinder(radius: Real, height: Real) -> Result<(ArenaModel, SolidId), Con
         let vertices = points
             .iter()
             .cloned()
-            .map(|point| builder.vertex(point))
+            .map(|point| builder.vertex((point).into()))
             .collect::<Result<Vec<_>, _>>()?;
         let half_pi = (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)?;
         let mut bottom_edges = Vec::with_capacity(4);
@@ -1037,7 +1042,7 @@ pub fn cylinder(radius: Real, height: Real) -> Result<(ArenaModel, SolidId), Con
                 vertices[index],
                 vertices[next],
                 bottom_curve,
-                domain.clone(),
+                (domain.clone()).into(),
             )?);
             let top_curve = builder.curve(Curve3::circle_arc(
                 Point3::new(Real::zero(), Real::zero(), height.clone()),
@@ -1051,7 +1056,7 @@ pub fn cylinder(radius: Real, height: Real) -> Result<(ArenaModel, SolidId), Con
                 vertices[index + 4],
                 vertices[next + 4],
                 top_curve,
-                domain,
+                (domain).into(),
             )?);
         }
         let mut axial_edges = Vec::with_capacity(4);
@@ -1064,7 +1069,7 @@ pub fn cylinder(radius: Real, height: Real) -> Result<(ArenaModel, SolidId), Con
                 vertices[index],
                 vertices[index + 4],
                 curve,
-                ParameterDomain::unit(),
+                (ParameterDomain::unit()).into(),
             )?);
         }
 
@@ -1291,7 +1296,7 @@ pub(crate) fn sphere_pair_boolean(
         .map(|index| full_circle.evaluate_real(&(&quarter * Real::from(index))))
         .collect::<Result<Vec<_>, GeometryError>>()?
         .into_iter()
-        .map(|point| builder.vertex(point))
+        .map(|point| builder.vertex((point).into()))
         .collect::<Result<Vec<_>, BuildError>>()?;
     let curve = builder.curve(full_circle)?;
     let edges = (0..4)
@@ -1302,7 +1307,7 @@ pub(crate) fn sphere_pair_boolean(
                 vertices[index],
                 vertices[(index + 1) % 4],
                 curve,
-                ParameterDomain::new(start, end)?,
+                (ParameterDomain::new(start, end)?).into(),
             )
         })
         .collect::<Result<Vec<_>, BuildError>>()?;
@@ -1473,7 +1478,7 @@ pub fn cone_frustum(
         let vertices = points
             .iter()
             .cloned()
-            .map(|point| builder.vertex(point))
+            .map(|point| builder.vertex((point).into()))
             .collect::<Result<Vec<_>, _>>()?;
 
         let mut bottom_edges = Vec::with_capacity(4);
@@ -1494,7 +1499,7 @@ pub fn cone_frustum(
                 vertices[index],
                 vertices[next],
                 bottom_curve,
-                ParameterDomain::new(start.clone(), end.clone())?,
+                (ParameterDomain::new(start.clone(), end.clone())?).into(),
             )?);
             let top_curve = builder.curve(Curve3::circle_arc(
                 top_center.clone(),
@@ -1508,7 +1513,7 @@ pub fn cone_frustum(
                 vertices[index + 4],
                 vertices[next + 4],
                 top_curve,
-                ParameterDomain::new(start, end)?,
+                (ParameterDomain::new(start, end)?).into(),
             )?);
         }
         let mut generators = Vec::with_capacity(4);
@@ -1521,7 +1526,7 @@ pub fn cone_frustum(
                 vertices[index],
                 vertices[index + 4],
                 curve,
-                ParameterDomain::unit(),
+                (ParameterDomain::unit()).into(),
             )?);
         }
 
@@ -1665,7 +1670,7 @@ pub fn torus(
         let vertices = points
             .iter()
             .cloned()
-            .map(|point| builder.vertex(point))
+            .map(|point| builder.vertex((point).into()))
             .collect::<Result<Vec<_>, _>>()?;
         let index = |u: usize, v: usize| u * 4 + v;
 
@@ -1689,7 +1694,7 @@ pub fn torus(
                     vertices[index(u_index, v_index)],
                     vertices[index(next_u, v_index)],
                     curve,
-                    ParameterDomain::new(u_start.clone(), u_end.clone())?,
+                    (ParameterDomain::new(u_start.clone(), u_end.clone())?).into(),
                 )?);
             }
         }
@@ -1714,7 +1719,7 @@ pub fn torus(
                     vertices[index(u_index, v_index)],
                     vertices[index(u_index, next_v)],
                     curve,
-                    ParameterDomain::new(v_start, v_end)?,
+                    (ParameterDomain::new(v_start, v_end)?).into(),
                 )?);
             }
         }
@@ -2124,7 +2129,7 @@ fn add_persistent_curve_region(
     let vertices = points
         .iter()
         .cloned()
-        .map(|point| builder.vertex(point))
+        .map(|point| builder.vertex((point).into()))
         .collect::<Result<Vec<_>, _>>()?;
     let mut bottom_curves = Vec::with_capacity(count);
     let mut bottom_edges = Vec::with_capacity(count);
@@ -2139,7 +2144,7 @@ fn add_persistent_curve_region(
             vertices[index],
             vertices[next],
             bottom_curve_id,
-            domain.clone(),
+            (domain.clone()).into(),
             true,
         )?);
         let top_curve = spatial_extrusion_curve(pcurve, &z_max)?;
@@ -2149,7 +2154,7 @@ fn add_persistent_curve_region(
             vertices[index + count],
             vertices[next + count],
             top_curve_id,
-            top_domain,
+            (top_domain).into(),
             true,
         )?);
         bottom_curves.push(bottom_curve);
@@ -2165,7 +2170,7 @@ fn add_persistent_curve_region(
             vertices[index],
             vertices[index + count],
             curve,
-            ParameterDomain::unit(),
+            (ParameterDomain::unit()).into(),
         )?);
     }
 
@@ -2703,12 +2708,12 @@ fn sweep_rational_bezier_frame_region(
     let lower_vertices = lower_points
         .iter()
         .cloned()
-        .map(|point| builder.vertex(point))
+        .map(|point| builder.vertex((point).into()))
         .collect::<Result<Vec<_>, _>>()?;
     let upper_vertices = upper_points
         .iter()
         .cloned()
-        .map(|point| builder.vertex(point))
+        .map(|point| builder.vertex((point).into()))
         .collect::<Result<Vec<_>, _>>()?;
     let mut lower_edges = Vec::with_capacity(count);
     let mut upper_edges = Vec::with_capacity(count);
@@ -2725,7 +2730,7 @@ fn sweep_rational_bezier_frame_region(
                 lower_vertices[index],
                 lower_vertices[next],
                 lower_curve,
-                ParameterDomain::unit(),
+                (ParameterDomain::unit()).into(),
             )?);
             let upper_curve = builder.curve(Curve3::line(
                 upper_points[index].clone(),
@@ -2735,7 +2740,7 @@ fn sweep_rational_bezier_frame_region(
                 upper_vertices[index],
                 upper_vertices[next],
                 upper_curve,
-                ParameterDomain::unit(),
+                (ParameterDomain::unit()).into(),
             )?);
             let translated_controls = origins
                 .iter()
@@ -2752,7 +2757,7 @@ fn sweep_rational_bezier_frame_region(
                 lower_vertices[index],
                 upper_vertices[index],
                 translated_path,
-                ParameterDomain::unit(),
+                (ParameterDomain::unit()).into(),
             )?);
         }
     }
@@ -3165,11 +3170,9 @@ pub fn loft(sections: &[LoftSection]) -> Result<(ArenaModel, SolidId), Construct
         for (section, profile) in sections.iter().zip(&profiles) {
             let mut ring = Vec::with_capacity(count);
             for point in profile {
-                ring.push(builder.vertex(Point3::new(
-                    point.x.clone(),
-                    point.y.clone(),
-                    section.z.clone(),
-                ))?);
+                ring.push(builder.vertex(
+                    (Point3::new(point.x.clone(), point.y.clone(), section.z.clone())).into(),
+                )?);
             }
             vertices.push(ring);
         }
@@ -3195,7 +3198,7 @@ pub fn loft(sections: &[LoftSection]) -> Result<(ArenaModel, SolidId), Construct
                     vertices[section_index][index],
                     vertices[section_index][next],
                     curve,
-                    ParameterDomain::unit(),
+                    (ParameterDomain::unit()).into(),
                 )?);
             }
             rings.push(ring);
@@ -3221,7 +3224,7 @@ pub fn loft(sections: &[LoftSection]) -> Result<(ArenaModel, SolidId), Construct
                     vertices[span][index],
                     vertices[span + 1][index],
                     curve,
-                    ParameterDomain::unit(),
+                    (ParameterDomain::unit()).into(),
                 )?);
             }
             connectors.push(span_connectors);
@@ -3874,7 +3877,7 @@ fn add_planar_path_wire(
         .collect::<Result<Vec<_>, _>>()?;
     let vertices = points
         .into_iter()
-        .map(|point| builder.vertex(point))
+        .map(|point| builder.vertex((point).into()))
         .collect::<Result<Vec<_>, _>>()?;
     let mut uses = Vec::with_capacity(curves.len());
     for (index, pcurve) in curves.into_iter().enumerate() {
@@ -3885,7 +3888,7 @@ fn add_planar_path_wire(
             vertices[index],
             vertices[(index + 1) % vertices.len()],
             curve,
-            domain,
+            (domain).into(),
         )?;
         let pcurve = builder.pcurve(Pcurve::new(pcurve))?;
         uses.push(builder.edge_use(
@@ -4245,7 +4248,7 @@ fn add_normalized_curve_path_revolution_shell(
     let vertices = points
         .iter()
         .cloned()
-        .map(|point| builder.vertex(point))
+        .map(|point| builder.vertex((point).into()))
         .collect::<Result<Vec<_>, _>>()?;
     let vertex =
         |profile_index: usize, angle_index: usize| vertices[profile_index * 4 + angle_index];
@@ -4280,7 +4283,7 @@ fn add_normalized_curve_path_revolution_shell(
                 vertex(profile_index, angle_index),
                 vertex(profile_index, next_angle),
                 circle,
-                ParameterDomain::new(start, end)?,
+                (ParameterDomain::new(start, end)?).into(),
             )?);
         }
     }
@@ -4300,7 +4303,7 @@ fn add_normalized_curve_path_revolution_shell(
                 vertex(profile_index, angle_index),
                 vertex(next_profile, angle_index),
                 meridian,
-                curve_domain,
+                (curve_domain).into(),
             )?);
         }
     }
@@ -4410,7 +4413,7 @@ fn add_normalized_contour_revolution_shell(
     let vertices = points
         .iter()
         .cloned()
-        .map(|point| builder.vertex(point))
+        .map(|point| builder.vertex((point).into()))
         .collect::<Result<Vec<_>, _>>()?;
     let vertex =
         |profile_index: usize, angle_index: usize| vertices[profile_index * 4 + angle_index];
@@ -4433,7 +4436,7 @@ fn add_normalized_contour_revolution_shell(
                 vertex(profile_index, angle_index),
                 vertex(profile_index, next_angle),
                 curve,
-                ParameterDomain::new(start, end)?,
+                (ParameterDomain::new(start, end)?).into(),
             )?);
         }
     }
@@ -4453,7 +4456,7 @@ fn add_normalized_contour_revolution_shell(
                 vertex(profile_index, angle_index),
                 vertex(next_profile, angle_index),
                 curve,
-                curve_domain,
+                (curve_domain).into(),
             )?);
         }
     }
@@ -4562,7 +4565,7 @@ fn add_normalized_revolution_shell(
     let vertices = points
         .iter()
         .cloned()
-        .map(|point| builder.vertex(point))
+        .map(|point| builder.vertex((point).into()))
         .collect::<Result<Vec<_>, _>>()?;
 
     let vertex =
@@ -4585,7 +4588,7 @@ fn add_normalized_revolution_shell(
                 vertex(profile_index, angle_index),
                 vertex(profile_index, next_angle),
                 curve,
-                ParameterDomain::new(start, end)?,
+                (ParameterDomain::new(start, end)?).into(),
             )?);
         }
     }
@@ -4602,7 +4605,7 @@ fn add_normalized_revolution_shell(
                 vertex(profile_index, angle_index),
                 vertex(next_profile, angle_index),
                 curve,
-                ParameterDomain::unit(),
+                (ParameterDomain::unit()).into(),
             )?);
         }
     }
@@ -4987,7 +4990,7 @@ fn add_normalized_extrusion_shell(
     let vertices = points
         .iter()
         .cloned()
-        .map(|point| builder.vertex(point))
+        .map(|point| builder.vertex((point).into()))
         .collect::<Result<Vec<_>, _>>()?;
     let mut edges = HashMap::<(usize, usize), EdgeId>::new();
     let mut faces = Vec::with_capacity(count + 2);
@@ -5170,7 +5173,7 @@ fn add_planar_wire(
                 vertices[key.0],
                 vertices[key.1],
                 curve,
-                ParameterDomain::unit(),
+                (ParameterDomain::unit()).into(),
             )?;
             edges.insert(key, edge);
             edge
@@ -5880,7 +5883,7 @@ mod tests {
         let vertices = points
             .iter()
             .cloned()
-            .map(|point| builder.vertex(point))
+            .map(|point| builder.vertex((point).into()))
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
         let mut uses = Vec::new();
@@ -5894,7 +5897,7 @@ mod tests {
                     vertices[index],
                     vertices[next],
                     curve,
-                    ParameterDomain::unit(),
+                    (ParameterDomain::unit()).into(),
                 )
                 .unwrap();
             let pcurve = builder
@@ -5929,7 +5932,7 @@ mod tests {
 
         let half = (Real::one() / r(2)).unwrap();
         let (split_model, split) = model
-            .split_edge(EdgeId::from_index(0).unwrap(), half.clone())
+            .split_edge(EdgeId::from_index(0).unwrap(), (half.clone()).into())
             .unwrap();
         assert_eq!(split.vertex.index(), 4);
         assert_eq!(split.first.index(), 0);
@@ -5938,7 +5941,12 @@ mod tests {
         assert_eq!(split_model.wire(wire).unwrap().edge_uses().len(), 5);
         assert_eq!(
             compare_reals(
-                &split_model.vertex(split.vertex).unwrap().point().x,
+                &split_model
+                    .vertex(split.vertex)
+                    .unwrap()
+                    .represented_point()
+                    .unwrap()
+                    .x,
                 &Real::one(),
                 crate::STRICT_PREDICATES
             )
@@ -5948,8 +5956,10 @@ mod tests {
         let (first_use, second_use) = split.edge_uses[0];
         assert_eq!(
             compare_reals(
-                &split_model
-                    .edge_parameter_at(first_use, &Real::one())
+                split_model
+                    .edge_parameter_at(first_use, &crate::Parameter::from_real(Real::one()))
+                    .unwrap()
+                    .try_real()
                     .unwrap(),
                 &half,
                 crate::STRICT_PREDICATES
@@ -5959,8 +5969,10 @@ mod tests {
         );
         assert_eq!(
             compare_reals(
-                &split_model
-                    .edge_parameter_at(second_use, &Real::zero())
+                split_model
+                    .edge_parameter_at(second_use, &crate::Parameter::from_real(Real::zero()))
+                    .unwrap()
+                    .try_real()
                     .unwrap(),
                 &half,
                 crate::STRICT_PREDICATES
@@ -5997,7 +6009,7 @@ mod tests {
             Direction::Reversed
         );
         let (reversed_split, reversed_ids) = reflected
-            .split_edge(EdgeId::from_index(0).unwrap(), half)
+            .split_edge(EdgeId::from_index(0).unwrap(), (half).into())
             .unwrap();
         assert_eq!(reversed_split.wire(wire).unwrap().edge_uses().len(), 5);
         assert_eq!(
@@ -6032,7 +6044,7 @@ mod tests {
         let vertices = points
             .iter()
             .cloned()
-            .map(|point| builder.vertex(point))
+            .map(|point| builder.vertex((point).into()))
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
         let mut uses = Vec::new();
@@ -6046,7 +6058,7 @@ mod tests {
                     vertices[index],
                     vertices[next],
                     curve,
-                    ParameterDomain::unit(),
+                    (ParameterDomain::unit()).into(),
                 )
                 .unwrap();
             let pcurve = builder
@@ -6252,7 +6264,9 @@ mod tests {
         };
         let midpoint = |use_id| {
             let edge = model.edge(model.edge_use(use_id).unwrap().edge()).unwrap();
-            let parameter = (edge.domain().start() + edge.domain().end()) / r(2);
+            let parameter = (edge.domain().represented_start().unwrap()
+                + edge.domain().represented_end().unwrap())
+                / r(2);
             model
                 .curve(edge.curve())
                 .unwrap()
@@ -6296,12 +6310,14 @@ mod tests {
             model
                 .vertex(directed_start(uses[0]))
                 .unwrap()
-                .point()
+                .represented_point()
+                .unwrap()
                 .clone(),
             model
                 .vertex(directed_start(uses[2]))
                 .unwrap()
-                .point()
+                .represented_point()
+                .unwrap()
                 .clone(),
         )
         .unwrap();
@@ -6343,10 +6359,11 @@ mod tests {
         let directed_point = |use_id, fraction: &Real| {
             let edge_use = model.edge_use(use_id).unwrap();
             let edge = model.edge(edge_use.edge()).unwrap();
-            let span = edge.domain().end() - edge.domain().start();
+            let span = edge.domain().represented_end().unwrap()
+                - edge.domain().represented_start().unwrap();
             let parameter = match edge_use.direction() {
-                Direction::Forward => edge.domain().start() + &span * fraction,
-                Direction::Reversed => edge.domain().end() - &span * fraction,
+                Direction::Forward => edge.domain().represented_start().unwrap() + &span * fraction,
+                Direction::Reversed => edge.domain().represented_end().unwrap() - &span * fraction,
             };
             model
                 .curve(edge.curve())
@@ -6444,12 +6461,14 @@ mod tests {
                 model
                     .vertex(directed_vertex(first_use))
                     .unwrap()
-                    .point()
+                    .represented_point()
+                    .unwrap()
                     .clone(),
                 model
                     .vertex(directed_vertex(second_use))
                     .unwrap()
-                    .point()
+                    .represented_point()
+                    .unwrap()
                     .clone(),
             )
             .unwrap()
@@ -6586,12 +6605,14 @@ mod tests {
                 model
                     .vertex(directed_vertex(first_use))
                     .unwrap()
-                    .point()
+                    .represented_point()
+                    .unwrap()
                     .clone(),
                 model
                     .vertex(directed_vertex(second_use))
                     .unwrap()
-                    .point()
+                    .represented_point()
+                    .unwrap()
                     .clone(),
             )
             .unwrap()
@@ -6631,11 +6652,12 @@ mod tests {
             let edge_use = model.edge_use(use_id).unwrap();
             let edge = model.edge(edge_use.edge()).unwrap();
             let fraction = (r(numerator) / r(3)).unwrap();
-            let span = edge.domain().end() - edge.domain().start();
+            let span = edge.domain().represented_end().unwrap()
+                - edge.domain().represented_start().unwrap();
             let offset = span * fraction;
             let parameter = match edge_use.direction() {
-                Direction::Forward => edge.domain().start() + offset,
-                Direction::Reversed => edge.domain().end() - offset,
+                Direction::Forward => edge.domain().represented_start().unwrap() + offset,
+                Direction::Reversed => edge.domain().represented_end().unwrap() - offset,
             };
             model
                 .curve(edge.curve())
@@ -6725,7 +6747,7 @@ mod tests {
         let (split_bezier, split) = bezier
             .split_edge(
                 EdgeId::from_index(0).unwrap(),
-                (Real::one() / r(2)).unwrap(),
+                ((Real::one() / r(2)).unwrap()).into(),
             )
             .unwrap();
         assert_eq!(
@@ -6783,7 +6805,10 @@ mod tests {
             .validate()
             .unwrap();
         let (split_nurbs, _) = nurbs
-            .split_edge(EdgeId::from_index(1).unwrap(), (r(7) / r(2)).unwrap())
+            .split_edge(
+                EdgeId::from_index(1).unwrap(),
+                ((r(7) / r(2)).unwrap()).into(),
+            )
             .unwrap();
         crate::ImportedModel::from_json(&split_nurbs.to_json().unwrap())
             .unwrap()
@@ -6836,7 +6861,7 @@ mod tests {
         let (split_bezier, _) = bezier
             .split_edge(
                 EdgeId::from_index(0).unwrap(),
-                (Real::one() / r(2)).unwrap(),
+                ((Real::one() / r(2)).unwrap()).into(),
             )
             .unwrap();
         assert_eq!(
@@ -6927,7 +6952,7 @@ mod tests {
         let (split_bezier, _) = bezier
             .split_edge(
                 EdgeId::from_index(0).unwrap(),
-                (Real::one() / r(2)).unwrap(),
+                ((Real::one() / r(2)).unwrap()).into(),
             )
             .unwrap();
         assert_eq!(
@@ -7118,7 +7143,7 @@ mod tests {
         let vertices = points
             .iter()
             .cloned()
-            .map(|point| builder.vertex(point))
+            .map(|point| builder.vertex((point).into()))
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
         let quarter = (Real::pi() / r(2)).unwrap();
@@ -7145,7 +7170,7 @@ mod tests {
                     vertices[index],
                     vertices[next],
                     curve,
-                    ParameterDomain::new(start, end).unwrap(),
+                    (ParameterDomain::new(start, end).unwrap()).into(),
                 )
                 .unwrap();
             let pcurve = builder
@@ -7182,14 +7207,19 @@ mod tests {
 
         let split_angle = (Real::pi() / r(4)).unwrap();
         let source_use = EdgeUseId::from_index(0).unwrap();
-        let rational_parameter = model.pcurve_parameter_at(source_use, &split_angle).unwrap();
+        let rational_parameter = model
+            .pcurve_parameter_at(
+                source_use,
+                &crate::Parameter::from_real(split_angle.clone()),
+            )
+            .unwrap();
         let source_pcurve = model
             .pcurve(model.edge_use(source_use).unwrap().pcurve())
             .unwrap();
         let split_parameter_point = source_pcurve.point_at(&rational_parameter).unwrap();
         assert_eq!(
             compare_reals(
-                &split_parameter_point.x,
+                split_parameter_point.coordinates().unwrap().x(),
                 &(r(2).sqrt().unwrap()),
                 crate::STRICT_PREDICATES
             )
@@ -7198,7 +7228,7 @@ mod tests {
         );
 
         let (split_model, split) = model
-            .split_edge(EdgeId::from_index(0).unwrap(), split_angle)
+            .split_edge(EdgeId::from_index(0).unwrap(), (split_angle).into())
             .unwrap();
         assert_eq!(split_model.wire(wire).unwrap().edge_uses().len(), 5);
         assert_eq!(
@@ -7223,7 +7253,7 @@ mod tests {
         let (split, ids) = model
             .split_edge(
                 EdgeId::from_index(0).unwrap(),
-                (Real::one() / r(2)).unwrap(),
+                ((Real::one() / r(2)).unwrap()).into(),
             )
             .unwrap();
         assert_eq!(split.uses_of_edge(ids.first).unwrap().len(), 2);
@@ -7244,7 +7274,10 @@ mod tests {
 
         let (cylinder_model, cylinder_solid) = cylinder(r(2), r(3)).unwrap();
         let (split_cylinder, cylinder_ids) = cylinder_model
-            .split_edge(EdgeId::from_index(0).unwrap(), (Real::pi() / r(4)).unwrap())
+            .split_edge(
+                EdgeId::from_index(0).unwrap(),
+                ((Real::pi() / r(4)).unwrap()).into(),
+            )
             .unwrap();
         assert_eq!(
             split_cylinder
@@ -7282,7 +7315,10 @@ mod tests {
 
         let (frustum_model, frustum_solid) = cone_frustum(r(2), r(1), r(3)).unwrap();
         let (split_frustum, _) = frustum_model
-            .split_edge(EdgeId::from_index(0).unwrap(), (Real::pi() / r(4)).unwrap())
+            .split_edge(
+                EdgeId::from_index(0).unwrap(),
+                ((Real::pi() / r(4)).unwrap()).into(),
+            )
             .unwrap();
         assert_eq!(
             compare_reals(
@@ -7296,7 +7332,10 @@ mod tests {
 
         let (torus_model, torus_solid) = torus(r(3), r(1)).unwrap();
         let (split_torus, _) = torus_model
-            .split_edge(EdgeId::from_index(0).unwrap(), (Real::pi() / r(4)).unwrap())
+            .split_edge(
+                EdgeId::from_index(0).unwrap(),
+                ((Real::pi() / r(4)).unwrap()).into(),
+            )
             .unwrap();
         assert_eq!(
             compare_reals(
@@ -9075,8 +9114,18 @@ mod tests {
     fn edit_replays_replacements_and_rejects_invalid_staged_geometry() {
         let (source, _) = cuboid(p(0, 0, 0), p(2, 3, 5)).unwrap();
         let (edge_id, edge) = source.edges().next().unwrap();
-        let start = source.vertex(edge.start()).unwrap().point().clone();
-        let end = source.vertex(edge.end()).unwrap().point().clone();
+        let start = source
+            .vertex(edge.start())
+            .unwrap()
+            .represented_point()
+            .unwrap()
+            .clone();
+        let end = source
+            .vertex(edge.end())
+            .unwrap()
+            .represented_point()
+            .unwrap()
+            .clone();
         let mut valid = source.edit();
         valid
             .replace_curve(edge.curve(), Curve3::line(start, end).unwrap())
@@ -9088,8 +9137,13 @@ mod tests {
                 edited
                     .vertex(edited.edge(edge_id).unwrap().start())
                     .unwrap()
-                    .point(),
-                source.vertex(edge.start()).unwrap().point(),
+                    .represented_point()
+                    .unwrap(),
+                source
+                    .vertex(edge.start())
+                    .unwrap()
+                    .represented_point()
+                    .unwrap(),
                 crate::STRICT_PREDICATES
             )
             .value(),
@@ -9098,7 +9152,9 @@ mod tests {
 
         let (vertex, _) = source.vertices().next().unwrap();
         let mut invalid = source.edit();
-        invalid.replace_vertex(vertex, p(100, 100, 100)).unwrap();
+        invalid
+            .replace_vertex(vertex, (p(100, 100, 100)).into())
+            .unwrap();
         let error = invalid.commit().unwrap_err();
         let crate::EditError::Validation(report) = error else {
             panic!("invalid edit must fail model validation");

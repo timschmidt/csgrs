@@ -1165,11 +1165,11 @@ fn add_opposite_planar_edge_supports(
             let start = opposite_model
                 .vertex(edge.start())
                 .expect("validated opposite vertex")
-                .point();
+                .represented_point()?;
             let end = opposite_model
                 .vertex(edge.end())
                 .expect("validated opposite vertex")
-                .point();
+                .represented_point()?;
             if exact_order(&normal.dot(&(start - origin)), &Real::zero())? != Ordering::Equal
                 || exact_order(&normal.dot(&(end - origin)), &Real::zero())? != Ordering::Equal
             {
@@ -1490,7 +1490,7 @@ fn face_interior_witnesses(model: &ArenaModel, face: FaceId) -> Result<Vec<Point
             .pcurve(first_use.pcurve())
             .expect("validated spherical pcurve")
             .line_segment()
-            .expect("validated spherical trim uses longitude lines");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         let latitude = if let [upper_wire] = face_record.inner() {
             let upper_use = model
                 .edge_use(
@@ -1504,7 +1504,7 @@ fn face_interior_witnesses(model: &ArenaModel, face: FaceId) -> Result<Vec<Point
                 .pcurve(upper_use.pcurve())
                 .expect("validated spherical band pcurve")
                 .line_segment()
-                .expect("validated spherical band latitude")
+                .ok_or(GeometryError::UnsupportedPcurveContour)?
                 .start()
                 .y()
                 .clone();
@@ -2090,9 +2090,15 @@ fn selected_edge_endpoints(
                                 .model
                                 .vertex(vertex)
                                 .expect("validated selected vertex")
-                                .point()
+                                .represented_point()?
                                 .clone(),
-                            curve_parameters: vec![(curve.clone(), parameter.clone())],
+                            curve_parameters: vec![(
+                                curve.clone(),
+                                parameter
+                                    .try_real()
+                                    .ok_or(GeometryError::UnrepresentableParameter)?
+                                    .clone(),
+                            )],
                         },
                     );
                 }
@@ -2189,15 +2195,25 @@ fn atomize_selected_edges(
                 parameters
             };
             for parameter in parameters {
-                if exact_order(&parameter, edge.domain().start())? == Ordering::Greater
-                    && exact_order(&parameter, edge.domain().end())? == Ordering::Less
+                if exact_order(
+                    &parameter,
+                    (edge.domain().start())
+                        .try_real()
+                        .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                )? == Ordering::Greater
+                    && exact_order(
+                        &parameter,
+                        (edge.domain().end())
+                            .try_real()
+                            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                    )? == Ordering::Less
                 {
                     insert_descending_real(&mut cuts, parameter)?;
                 }
             }
         }
         for cut in cuts {
-            let (model, _) = selection.model.split_edge(edge_id, cut)?;
+            let (model, _) = selection.model.split_edge(edge_id, (cut).into())?;
             selection.model = model;
         }
     }
@@ -2416,8 +2432,8 @@ fn copy_selected_wire(
                 curve = curve.reversed().map_err(GeometryError::from)?;
             }
             let pcurve = crate::Pcurve::new(curve);
-            let pcurve_start = pcurve.domain_start()?;
-            let pcurve_end = pcurve.domain_end()?;
+            let pcurve_start = pcurve.represented_start()?;
+            let pcurve_end = pcurve.represented_end()?;
             let (edge_start, edge_end) = match direction {
                 crate::Direction::Forward => (mapped_domain.start(), mapped_domain.end()),
                 crate::Direction::Reversed => (mapped_domain.end(), mapped_domain.start()),
@@ -2443,7 +2459,11 @@ fn copy_selected_wire(
             } else {
                 edge_use.parameter_correspondence().clone()
             }
-            .remapped_edge(edge.domain(), &mapped_domain, edge_reversed)?;
+            .remapped_edge(
+                &(edge.domain()).represented_domain()?,
+                &mapped_domain,
+                edge_reversed,
+            )?;
             (pcurve, correspondence)
         };
         let pcurve = builder.pcurve(pcurve).map_err(ConstructionError::from)?;
@@ -2495,13 +2515,20 @@ fn copy_or_match_selected_edge(
     let start = model
         .vertex(edge.start())
         .expect("validated selected start")
-        .point();
+        .represented_point()?;
     let end = model
         .vertex(edge.end())
         .expect("validated selected end")
-        .point();
+        .represented_point()?;
     let curve = model.curve(edge.curve()).expect("validated selected curve");
-    let restricted_curve = curve.subcurve(edge.domain().start(), edge.domain().end())?;
+    let restricted_curve = curve.subcurve(
+        (edge.domain().start())
+            .try_real()
+            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+        (edge.domain().end())
+            .try_real()
+            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+    )?;
     let restricted_curve = if regularize_to_planar {
         restricted_curve
             .canonical_line()?
@@ -2558,7 +2585,13 @@ fn copy_or_match_selected_edge(
         .curve(restricted_curve.clone())
         .map_err(ConstructionError::from)?;
     let id = builder
-        .edge_with_endpoint_certificate(start_id, end_id, curve_id, restricted_domain.clone(), true)
+        .edge_with_endpoint_certificate(
+            start_id,
+            end_id,
+            curve_id,
+            (restricted_domain.clone()).into(),
+            true,
+        )
         .map_err(ConstructionError::from)?;
     stitched_edges.push(StitchedEdge {
         id,
@@ -2633,7 +2666,7 @@ fn copy_or_match_vertex(
         }
     }
     let id = builder
-        .vertex(point.clone())
+        .vertex((point.clone()).into())
         .map_err(ConstructionError::from)?;
     vertices.push((point.clone(), id));
     Ok(id)
@@ -3213,7 +3246,14 @@ fn project_face_boundary_paths_to_plane(
             let curve = model
                 .curve(edge.curve())
                 .expect("validated contained-face spatial curve")
-                .subcurve(edge.domain().start(), edge.domain().end())?;
+                .subcurve(
+                    (edge.domain().start())
+                        .try_real()
+                        .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                    (edge.domain().end())
+                        .try_real()
+                        .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                )?;
             let curve = match edge_use.direction() {
                 crate::Direction::Forward => curve,
                 crate::Direction::Reversed => curve.reversed()?,
@@ -3333,7 +3373,14 @@ fn contained_face_boundary_traces_from_plane(
                 ) {
                     return Ok(None);
                 }
-                let curve = edge_curve.subcurve(edge.domain().start(), edge.domain().end())?;
+                let curve = edge_curve.subcurve(
+                    (edge.domain().start())
+                        .try_real()
+                        .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                    (edge.domain().end())
+                        .try_real()
+                        .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                )?;
                 let pcurve = if let Some(parameter_plane) = &affine_parameter_plane {
                     let parameter_origin = parameter_plane
                         .plane_origin()
@@ -3377,11 +3424,11 @@ fn contained_face_boundary_traces_from_plane(
             let start = plane_model
                 .vertex(edge.start())
                 .expect("validated plane start vertex")
-                .point();
+                .represented_point()?;
             let end = plane_model
                 .vertex(edge.end())
                 .expect("validated plane end vertex")
-                .point();
+                .represented_point()?;
             let support = Surface::plane(start.clone(), end - start, plane_normal.clone())?;
             let mut duplicate = false;
             for prior in &support_planes {
@@ -3988,7 +4035,10 @@ fn model_boundary_contacts(
             canonical_coordinate(&spatial_point.z),
         );
         let observed_parameter = model
-            .edge_parameter_at(edge_use_id, &pcurve_parameter)
+            .edge_parameter_at(
+                edge_use_id,
+                &crate::Parameter::from_real(pcurve_parameter.clone()),
+            )
             .map_err(|error| match error {
                 QueryError::Geometry(error) => error,
                 QueryError::InvalidReference { .. } => GeometryError::UnsupportedIntersection,
@@ -3999,6 +4049,10 @@ fn model_boundary_contacts(
         let curve = model
             .curve(edge.curve())
             .expect("validated boundary curve")
+            .clone();
+        let observed_parameter = observed_parameter
+            .try_real()
+            .ok_or(GeometryError::UnrepresentableParameter)?
             .clone();
         let edge_parameter = match canonical_surface {
             Some(surface) => {
@@ -4618,11 +4672,11 @@ fn coplanar_boundary_split_traces(
             let start = source_model
                 .vertex(edge.start())
                 .expect("validated coincident source vertex")
-                .point();
+                .represented_point()?;
             let end = source_model
                 .vertex(edge.end())
                 .expect("validated coincident source vertex")
-                .point();
+                .represented_point()?;
             let direction = end - start;
             let Some((span_start, span_end)) = (match spanning_segment_on_planar_face(
                 target_model,
@@ -10992,8 +11046,8 @@ mod tests {
             split_nurbs.curve(split_edge.curve()).unwrap().kind(),
             crate::Curve3Kind::Nurbs
         );
-        assert_eq!(split_edge.domain().start(), &Real::from(2));
-        assert_eq!(split_edge.domain().end(), &Real::from(4));
+        assert_eq!(split_edge.domain().start().try_real(), Some(&Real::from(2)));
+        assert_eq!(split_edge.domain().end().try_real(), Some(&Real::from(4)));
         assert_eq!(
             split_nurbs
                 .uses_of_edge(nurbs_split.open().unwrap().face.edge)

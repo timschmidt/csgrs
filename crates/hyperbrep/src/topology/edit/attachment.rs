@@ -19,7 +19,7 @@ impl ArenaModel {
             } => {
                 let (staged, split) = self.split_edge_with_pcurve_parameter(
                     edge,
-                    parameter,
+                    (parameter).into(),
                     pcurve_split.map(|witness| *witness),
                 )?;
                 Ok((staged, split.vertex, Some(split)))
@@ -108,7 +108,9 @@ impl ArenaModel {
                 }
                 let start_order = decided_model_order(compare_reals(
                     contact.parameter(),
-                    edge.domain.start(),
+                    (edge.domain.start())
+                        .try_real()
+                        .ok_or(crate::GeometryError::UnrepresentableParameter)?,
                     crate::STRICT_PREDICATES,
                 ))?;
                 if start_order == std::cmp::Ordering::Equal {
@@ -119,7 +121,9 @@ impl ArenaModel {
                 }
                 let end_order = decided_model_order(compare_reals(
                     contact.parameter(),
-                    edge.domain.end(),
+                    (edge.domain.end())
+                        .try_real()
+                        .ok_or(crate::GeometryError::UnrepresentableParameter)?,
                     crate::STRICT_PREDICATES,
                 ))?;
                 if end_order == std::cmp::Ordering::Equal {

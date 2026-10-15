@@ -21,11 +21,15 @@ impl ArenaModelBuilder {
         let Some(first_vertex) = vertices.iter().next() else {
             return Ok(None);
         };
-        let first_z = self.vertex_ref(*first_vertex)?.point().z.clone();
+        let first_z = self
+            .vertex_ref(*first_vertex)?
+            .represented_point()?
+            .z
+            .clone();
         let mut z_min = first_z.clone();
         let mut z_max = first_z;
         for vertex in &vertices {
-            let z = &self.vertex_ref(*vertex)?.point().z;
+            let z = &self.vertex_ref(*vertex)?.represented_point()?.z;
             if decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
                 == std::cmp::Ordering::Less
             {
@@ -43,7 +47,7 @@ impl ArenaModelBuilder {
             return Ok(None);
         }
         for vertex in &vertices {
-            let z = &self.vertex_ref(*vertex)?.point().z;
+            let z = &self.vertex_ref(*vertex)?.represented_point()?.z;
             if decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
                 != std::cmp::Ordering::Equal
                 && decided_model_order(compare_reals(z, &z_max, crate::STRICT_PREDICATES))?
@@ -64,8 +68,8 @@ impl ArenaModelBuilder {
             let mut horizontal_cap = true;
             for edge_use in &boundaries[0] {
                 let (start, end) = self.directed_vertices(*edge_use)?;
-                let start = self.vertex_ref(start)?.point();
-                let end = self.vertex_ref(end)?.point();
+                let start = self.vertex_ref(start)?.represented_point()?;
+                let end = self.vertex_ref(end)?.represented_point()?;
                 if decided_model_order(compare_reals(&start.z, &z_max, crate::STRICT_PREDICATES))?
                     != std::cmp::Ordering::Equal
                     || decided_model_order(compare_reals(&end.z, &z_max, crate::STRICT_PREDICATES))?
@@ -113,7 +117,15 @@ impl ArenaModelBuilder {
                     Direction::Forward => edge.domain.start(),
                     Direction::Reversed => edge.domain.end(),
                 };
-                let mut tangent = curve.derivative_at(parameter, 1)?.vector().clone();
+                let mut tangent = curve
+                    .derivative_at(
+                        (parameter)
+                            .try_real()
+                            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                        1,
+                    )?
+                    .vector()
+                    .clone();
                 if edge_use.direction == Direction::Reversed {
                     tangent = -tangent;
                 }
@@ -423,10 +435,13 @@ impl ArenaModelBuilder {
             .keys()
             .next()
             .expect("certified cap pair has cross edges");
-        let translation = self.vertex_ref(first_to_second[&first_vertex])?.point()
-            - self.vertex_ref(first_vertex)?.point();
+        let translation = self
+            .vertex_ref(first_to_second[&first_vertex])?
+            .represented_point()?
+            - self.vertex_ref(first_vertex)?.represented_point()?;
         for (first, second) in &first_to_second {
-            let candidate = self.vertex_ref(*second)?.point() - self.vertex_ref(*first)?.point();
+            let candidate = self.vertex_ref(*second)?.represented_point()?
+                - self.vertex_ref(*first)?.represented_point()?;
             if !vectors_equal(&translation, &candidate)? {
                 return Ok(false);
             }
@@ -593,7 +608,7 @@ impl ArenaModelBuilder {
             .into_iter()
             .min()
             .ok_or(BuildError::EmptyShell)?;
-        Ok(self.vertex_ref(vertex)?.point().clone())
+        Ok(self.vertex_ref(vertex)?.represented_point()?.clone())
     }
 
     pub(crate) fn signed_shell_six_volume(&self, shell: ShellId) -> Result<Real, BuildError> {
@@ -604,12 +619,12 @@ impl ArenaModelBuilder {
                 let wire = self.wire_ref(*wire_id)?;
                 let first_use = *wire.edge_uses.first().ok_or(BuildError::EmptyWire)?;
                 let (anchor_id, _) = self.directed_vertices(first_use)?;
-                let anchor = self.vertex_ref(anchor_id)?.point();
+                let anchor = self.vertex_ref(anchor_id)?.represented_point()?;
                 for pair in wire.edge_uses[1..].windows(2) {
                     let (first_id, _) = self.directed_vertices(pair[0])?;
                     let (second_id, _) = self.directed_vertices(pair[1])?;
-                    let first = self.vertex_ref(first_id)?.point();
-                    let second = self.vertex_ref(second_id)?.point();
+                    let first = self.vertex_ref(first_id)?.represented_point()?;
+                    let second = self.vertex_ref(second_id)?.represented_point()?;
                     sum += Vector3::from(anchor.clone())
                         .dot(&Vector3::from(first.clone()).cross(&Vector3::from(second.clone())));
                 }

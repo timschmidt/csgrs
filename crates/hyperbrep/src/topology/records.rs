@@ -54,13 +54,19 @@ pub enum SolidPointLocation {
 /// Canonical topological vertex.
 #[derive(Clone, Debug)]
 pub struct Vertex {
-    pub(super) point: Point3,
+    pub(super) point: GeometricPoint3,
 }
 
 impl Vertex {
     /// Returns the exact model-space point.
-    pub const fn point(&self) -> &Point3 {
+    pub const fn point(&self) -> &GeometricPoint3 {
         &self.point
+    }
+
+    pub(crate) fn represented_point(&self) -> Result<&Point3, GeometryError> {
+        self.point
+            .try_coordinates()
+            .ok_or(GeometryError::UnrepresentablePoint)
     }
 }
 
@@ -70,7 +76,7 @@ pub struct Edge {
     pub(super) start: VertexId,
     pub(super) end: VertexId,
     pub(super) curve: Curve3Id,
-    pub(super) domain: ParameterDomain,
+    pub(super) domain: ParameterRange,
     pub(super) endpoint_certificate: bool,
 }
 
@@ -91,7 +97,7 @@ impl Edge {
     }
 
     /// Returns the exact edge interval on its spatial curve.
-    pub const fn domain(&self) -> &ParameterDomain {
+    pub const fn domain(&self) -> &ParameterRange {
         &self.domain
     }
 }

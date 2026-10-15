@@ -28,7 +28,7 @@ impl Edit {
     pub fn replace_vertex(
         &mut self,
         id: VertexRef<'_>,
-        point: Point3,
+        point: GeometricPoint3,
     ) -> Result<&mut Self, EditError> {
         self.source
             .require_revision(id.model, EntityKind::Vertex)
@@ -83,7 +83,7 @@ impl Edit {
         start: VertexRef<'_>,
         end: VertexRef<'_>,
         curve: Curve3Ref<'_>,
-        domain: ParameterDomain,
+        domain: ParameterRange,
     ) -> Result<&mut Self, EditError> {
         self.source
             .require_revision(id.model, EntityKind::Edge)

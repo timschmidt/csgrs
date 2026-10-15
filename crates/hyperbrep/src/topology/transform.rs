@@ -12,23 +12,42 @@ impl ArenaModel {
         crate::context::strict(|| {
             let reverses_orientation =
                 affine_transform_orientation(transform)? == std::cmp::Ordering::Less;
-            let vertices = self
-                .data
-                .vertices
-                .iter()
-                .map(|vertex| {
-                    transform
-                        .transform_point3(&vertex.point)
-                        .map(|point| Vertex { point })
-                        .map_err(GeometryError::Numeric)
-                })
-                .collect::<Result<Vec<_>, _>>()?;
             let curves = self
                 .data
                 .curves
                 .iter()
                 .map(|curve| curve.transformed(transform))
                 .collect::<Result<Vec<_>, _>>()?;
+            let curve_sources = std::cell::OnceCell::new();
+            let vertices = self
+                .data
+                .vertices
+                .iter()
+                .map(|vertex| {
+                    let point = if let Some(coordinates) = vertex.point.try_coordinates() {
+                        transform
+                            .transform_point3(coordinates)
+                            .map_err(GeometryError::Numeric)?
+                            .into()
+                    } else if let Some((source, parameter)) = vertex.point.curve_source()
+                        && let Some(index) = curve_sources
+                            .get_or_init(|| {
+                                self.data
+                                    .curves
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(index, curve)| (curve.identity_address(), index))
+                                    .collect::<HashMap<_, _>>()
+                            })
+                            .get(&source.identity_address())
+                    {
+                        curves[*index].point_at(parameter)?
+                    } else {
+                        vertex.point.transformed(transform)?
+                    };
+                    Ok(Vertex { point })
+                })
+                .collect::<Result<Vec<_>, GeometryError>>()?;
             let surfaces = self
                 .data
                 .surfaces

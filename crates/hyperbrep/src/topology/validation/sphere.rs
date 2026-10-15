@@ -324,7 +324,7 @@ impl ArenaModelBuilder {
             {
                 return Ok(None);
             }
-            sweep += edge.domain.end() - edge.domain.start();
+            sweep += edge.domain.represented_end()? - edge.domain.represented_start()?;
         }
         if !real_values_equal(&sweep, &Real::tau())? {
             return Ok(None);
@@ -496,7 +496,7 @@ impl ArenaModelBuilder {
             {
                 return Ok(None);
             }
-            sweep += edge.domain.end() - edge.domain.start();
+            sweep += edge.domain.represented_end()? - edge.domain.represented_start()?;
         }
         if !real_values_equal(&sweep, &Real::tau())? {
             return Ok(None);

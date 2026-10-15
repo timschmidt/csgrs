@@ -81,13 +81,50 @@ Bounds are conservative exact enclosures, with no promised width. Affine
 transforms certify invertibility, transform the source controls and reuse the
 selector; they do not add a chain of point-expression wrappers.
 
-Edge-domain endpoints, vertices, pcurve correspondence and archive graph nodes
-still require stored `Real` values and must report `UnrepresentableParameter`
-rather than drop a selected contact. Derivatives and subdivision also retain
-their represented-parameter requirements. This is partial WP02 progress, not
-the G1 split/persistence gate. The
+The
 [qualification record](evidence/2026-10-15-retained-spatial-points/manifest.json)
-records the covered cases and remaining limits.
+records that increment's covered cases and limits. The topology transfer
+implemented subsequently is described below.
+
+## Selected topology trims
+
+`ParameterDomain` describes authored carrier domains with `Real` coefficients.
+`ParameterRange` describes canonical increasing edge trims with exact
+`Parameter` endpoints. Vertex records store `GeometricPoint3`. Builder incidence
+checks compare retained curve images; they do not demand stored coordinates.
+Scalar coefficient algorithms explicitly request an available scalar or
+coordinate view and return a typed blocker otherwise.
+
+`EdgeRef::split(Parameter)` restricts the original spatial carrier and splits
+every incident pcurve in traversal order. An affine pcurve relation transports
+the same selector through Hypercurve. Selected restrictions preserve their
+source chart and the original relation; native reparameterized pieces get
+exact recomputed affine coefficients. Validation checks the actual map at
+both endpoints. It cannot infer agreement merely because a queried parameter
+is an endpoint.
+
+The exact subdivision inherits the source edge-image, wire simplicity,
+orientation, nesting and solid certificates: a partition of a validated
+boundary preserves its image. Publication still checks connectivity, ownership
+and parameter correspondence. Arbitrary replacements invalidate those proofs.
+No-op edits retain them. These in-memory certificates are not trusted archive
+input.
+
+Hypercurve's `Curve2::parameter_endpoints` exposes traversal order separately
+from its parameter-domain order. BREP reflection uses this distinction to
+reverse retained pcurves without reflecting their source parameter chart.
+Spatial transforms reuse the transformed arena curve for retained vertices;
+the source lookup is built only when a selected vertex needs it. Bounds union
+selected-point enclosures with the existing conservative curve bounds.
+
+The [topology qualification](evidence/2026-10-15-selected-topology/README.md)
+covers shared-edge splits, repeated edits, rational/NURBS charts, reflections
+and retained solid queries. Selected archive graph replay, surface/contact
+images, general Boolean transfer and complete recertification of arbitrary
+selected input remain open. The format-8 encoder returns
+`UnrepresentablePoint` or `UnrepresentableParameter` when a required stored view
+is absent. Native coefficient subdivision and angular conic evaluation retain
+their explicit scalar requirements. WP02/G1 is not complete.
 
 ## Source organization
 

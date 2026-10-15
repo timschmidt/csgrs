@@ -25,7 +25,7 @@ fn staged() -> Staged {
     let vertices = points
         .iter()
         .cloned()
-        .map(|p| builder.vertex(p).unwrap())
+        .map(|p| builder.vertex((p).into()).unwrap())
         .collect::<Vec<_>>();
     let mut curves = Vec::new();
     let mut pcurves = Vec::new();
@@ -41,7 +41,7 @@ fn staged() -> Staged {
                 &vertices[i],
                 &vertices[next],
                 &curve,
-                ParameterDomain::unit(),
+                (ParameterDomain::unit()).into(),
             )
             .unwrap();
         let line = LineSeg2::try_new(
@@ -117,7 +117,7 @@ fn all_builder_reference_inputs_reject_foreign_keys_before_mutation() {
             &other.vertices[0],
             &own.vertices[1],
             &own.curves[0],
-            ParameterDomain::unit(),
+            (ParameterDomain::unit()).into(),
         ),
         EntityKind::Vertex,
     );
@@ -126,7 +126,7 @@ fn all_builder_reference_inputs_reject_foreign_keys_before_mutation() {
             &own.vertices[0],
             &other.vertices[1],
             &own.curves[0],
-            ParameterDomain::unit(),
+            (ParameterDomain::unit()).into(),
         ),
         EntityKind::Vertex,
     );
@@ -135,7 +135,7 @@ fn all_builder_reference_inputs_reject_foreign_keys_before_mutation() {
             &own.vertices[0],
             &own.vertices[1],
             &other.curves[0],
-            ParameterDomain::unit(),
+            (ParameterDomain::unit()).into(),
         ),
         EntityKind::Curve3,
     );
@@ -248,7 +248,7 @@ fn cloned_models_share_identity_but_transformed_decoded_and_committed_models_do_
         ));
         let mut edit = independent.edit();
         assert!(matches!(
-            edit.replace_vertex(vertex, point(7, 8, 9)),
+            edit.replace_vertex(vertex, (point(7, 8, 9)).into()),
             Err(EditError::Reference(GeometryReferenceError::ForeignModel {
                 kind: EntityKind::Vertex
             }))
@@ -418,7 +418,9 @@ fn topology_edits_reject_foreign_related_entities_and_preserve_the_source() {
         Err(EditError::Reference(_))
     ));
     assert_eq!(edit.commit().unwrap().to_json().unwrap(), before);
-    let split = edge.split((Real::one() / Real::from(2)).unwrap()).unwrap();
+    let split = edge
+        .split(((Real::one() / Real::from(2)).unwrap()).into())
+        .unwrap();
     assert!(split.source_model().same_revision(model));
     assert!(!split.model().same_revision(model));
     assert_eq!(split.details().first().end(), split.details().vertex());

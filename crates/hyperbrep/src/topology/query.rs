@@ -763,8 +763,8 @@ impl ArenaModel {
     pub fn edge_parameter_at(
         &self,
         edge_use: EdgeUseId,
-        pcurve_parameter: &Real,
-    ) -> Result<Real, QueryError> {
+        pcurve_parameter: &Parameter,
+    ) -> Result<Parameter, QueryError> {
         crate::context::strict(|| {
             let edge_use_record = self
                 .edge_use(edge_use)
@@ -798,8 +798,8 @@ impl ArenaModel {
     pub fn pcurve_parameter_at(
         &self,
         edge_use: EdgeUseId,
-        edge_parameter: &Real,
-    ) -> Result<Real, QueryError> {
+        edge_parameter: &Parameter,
+    ) -> Result<Parameter, QueryError> {
         crate::context::strict(|| {
             let edge_use_record = self
                 .edge_use(edge_use)
@@ -1148,11 +1148,18 @@ impl ArenaModel {
         let Some(first_id) = vertex_ids.iter().next() else {
             return Ok(None);
         };
-        let first = self.vertex(*first_id).expect("validated vertex").point();
+        let first = self
+            .vertex(*first_id)
+            .expect("validated vertex")
+            .represented_point()?;
         let mut z_min = first.z.clone();
         let mut z_max = first.z.clone();
         for vertex_id in &vertex_ids {
-            let z = &self.vertex(*vertex_id).expect("validated vertex").point().z;
+            let z = &self
+                .vertex(*vertex_id)
+                .expect("validated vertex")
+                .represented_point()?
+                .z;
             if decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
                 == std::cmp::Ordering::Less
             {
@@ -1170,7 +1177,11 @@ impl ArenaModel {
             return Ok(None);
         }
         for vertex_id in &vertex_ids {
-            let z = &self.vertex(*vertex_id).expect("validated vertex").point().z;
+            let z = &self
+                .vertex(*vertex_id)
+                .expect("validated vertex")
+                .represented_point()?
+                .z;
             let at_min = decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
                 == std::cmp::Ordering::Equal;
             let at_max = decided_model_order(compare_reals(z, &z_max, crate::STRICT_PREDICATES))?
@@ -1233,7 +1244,10 @@ impl ArenaModel {
                 let mut segments = Vec::with_capacity(wire.edge_uses.len());
                 for edge_use_id in &wire.edge_uses {
                     let (start, end) = self.directed_vertices(*edge_use_id);
-                    let point = self.vertex(start).expect("validated vertex").point();
+                    let point = self
+                        .vertex(start)
+                        .expect("validated vertex")
+                        .represented_point()?;
                     if decided_model_order(compare_reals(
                         &point.z,
                         &z_max,
@@ -1243,11 +1257,17 @@ impl ArenaModel {
                         is_top = false;
                         break;
                     }
-                    segments.push(self.projected_model_cap_segment(
-                        *edge_use_id,
-                        self.vertex(start).expect("validated vertex").point(),
-                        self.vertex(end).expect("validated vertex").point(),
-                    )?);
+                    segments.push(
+                        self.projected_model_cap_segment(
+                            *edge_use_id,
+                            self.vertex(start)
+                                .expect("validated vertex")
+                                .represented_point()?,
+                            self.vertex(end)
+                                .expect("validated vertex")
+                                .represented_point()?,
+                        )?,
+                    );
                 }
                 if !is_top {
                     break;
@@ -1382,7 +1402,15 @@ impl ArenaModel {
                     Direction::Forward => edge.domain.start(),
                     Direction::Reversed => edge.domain.end(),
                 };
-                let mut tangent = curve.derivative_at(parameter, 1)?.vector().clone();
+                let mut tangent = curve
+                    .derivative_at(
+                        (parameter)
+                            .try_real()
+                            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                        1,
+                    )?
+                    .vector()
+                    .clone();
                 if edge_use.direction == Direction::Reversed {
                     tangent = -tangent;
                 }

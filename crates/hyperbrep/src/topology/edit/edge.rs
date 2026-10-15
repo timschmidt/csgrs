@@ -13,7 +13,7 @@ impl ArenaModel {
     pub fn split_edge(
         &self,
         edge_id: EdgeId,
-        parameter: Real,
+        parameter: Parameter,
     ) -> Result<(Self, ArenaEdgeSplit), TopologyEditError> {
         crate::context::strict(|| self.split_edge_with_pcurve_parameter(edge_id, parameter, None))
     }
@@ -21,7 +21,7 @@ impl ArenaModel {
     pub(in crate::topology) fn split_edge_with_pcurve_parameter(
         &self,
         edge_id: EdgeId,
-        parameter: Real,
+        parameter: Parameter,
         retained_contact: Option<(EdgeUseId, CurvePoint2, Point3)>,
     ) -> Result<(Self, ArenaEdgeSplit), TopologyEditError> {
         let edge = self
@@ -31,32 +31,24 @@ impl ArenaModel {
                 index: edge_id.index(),
             })?
             .clone();
-        if decided_model_order(compare_reals(
-            &parameter,
-            edge.domain.start(),
-            crate::STRICT_PREDICATES,
-        ))? != std::cmp::Ordering::Greater
-            || decided_model_order(compare_reals(
-                &parameter,
-                edge.domain.end(),
-                crate::STRICT_PREDICATES,
-            ))? != std::cmp::Ordering::Less
+        if parameter.compare(edge.domain.start())? != std::cmp::Ordering::Greater
+            || parameter.compare(edge.domain.end())? != std::cmp::Ordering::Less
         {
             return Err(GeometryError::InvalidParameterDomain.into());
         }
         let split_point = if let Some((_, _, point)) = &retained_contact {
-            point.clone()
+            point.clone().into()
         } else {
             self.curve(edge.curve)
                 .expect("validated edge curve ID")
-                .evaluate_real(&parameter)?
+                .point_at(&parameter)?
         };
         let vertex = VertexId::from_index(self.data.vertices.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
         let second = EdgeId::from_index(self.data.edges.len())
             .ok_or(BuildError::CapacityExceeded(EntityKind::Edge))?;
-        let first_domain = ParameterDomain::new(edge.domain.start().clone(), parameter.clone())?;
-        let second_domain = ParameterDomain::new(parameter.clone(), edge.domain.end().clone())?;
+        let first_domain = ParameterRange::new(edge.domain.start().clone(), parameter.clone())?;
+        let second_domain = ParameterRange::new(parameter.clone(), edge.domain.end().clone())?;
         let uses = self
             .uses_of_edge(edge_id)
             .expect("validated edge adjacency")
@@ -84,18 +76,27 @@ impl ArenaModel {
                 .expect("validated edge-use pcurve ID");
             let (first_pcurve, second_pcurve) = match &edge_use.parameter_correspondence {
                 ParameterCorrespondence::AngularSweep => {
+                    let parameter = parameter
+                        .try_real()
+                        .ok_or(GeometryError::UnrepresentableParameter)?;
                     if let Some((_, retained_point, _)) = retained_contact
                         .as_ref()
                         .filter(|(retained_use, _, _)| retained_use == use_id)
                     {
-                        let arc = pcurve.circular_arc().expect(
-                            "validated angular-sweep correspondence uses a circular pcurve",
-                        );
+                        let arc = pcurve
+                            .circular_arc()
+                            .ok_or(GeometryError::UnsupportedPcurveContour)?;
                         let (start, end) = match edge_use.direction {
-                            Direction::Forward => (edge.domain.start(), edge.domain.end()),
-                            Direction::Reversed => (edge.domain.end(), edge.domain.start()),
+                            Direction::Forward => (
+                                edge.domain.represented_start()?,
+                                edge.domain.represented_end()?,
+                            ),
+                            Direction::Reversed => (
+                                edge.domain.represented_end()?,
+                                edge.domain.represented_start()?,
+                            ),
                         };
-                        let fraction = ((&parameter - start) / (end - start))
+                        let fraction = ((parameter - start) / (end - start))
                             .map_err(GeometryError::Numeric)?;
                         let (first, second) = match crate::error::classified(
                             arc.split_at_retained_sweep_point(&fraction, retained_point.clone()),
@@ -114,14 +115,20 @@ impl ArenaModel {
                             Pcurve::new(Curve2::from(second)),
                         )
                     } else {
-                        let arc = pcurve.circular_arc().expect(
-                            "validated angular-sweep correspondence uses a circular pcurve",
-                        );
+                        let arc = pcurve
+                            .circular_arc()
+                            .ok_or(GeometryError::UnsupportedPcurveContour)?;
                         let (start, end) = match edge_use.direction {
-                            Direction::Forward => (edge.domain.start(), edge.domain.end()),
-                            Direction::Reversed => (edge.domain.end(), edge.domain.start()),
+                            Direction::Forward => (
+                                edge.domain.represented_start()?,
+                                edge.domain.represented_end()?,
+                            ),
+                            Direction::Reversed => (
+                                edge.domain.represented_end()?,
+                                edge.domain.represented_start()?,
+                            ),
                         };
-                        let fraction = ((&parameter - start) / (end - start))
+                        let fraction = ((parameter - start) / (end - start))
                             .map_err(GeometryError::Numeric)?;
                         let (first, second) =
                             match crate::error::classified(arc.split_at_sweep_fraction(&fraction))
@@ -247,6 +254,13 @@ impl ArenaModel {
                 {
                     expanded.push(*continuation);
                 }
+            }
+            if expanded.len() != wire.edge_uses.len() {
+                // Exact subdivision partitions each old directed pcurve into
+                // two consecutive restrictions with the same complete image.
+                // Simplicity, orientation and nesting therefore remain proved
+                // by the validated source wire, without scalar endpoint views.
+                wire.simplicity_certificate = true;
             }
             wire.edge_uses = expanded;
         }

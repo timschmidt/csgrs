@@ -63,25 +63,25 @@ impl ArenaModelBuilder {
                     pcurve,
                     &edge.domain,
                     edge_use.direction,
-                    pcurve_parameter,
+                    &pcurve_parameter,
                 )?;
-                require_real_equal(
-                    &edge_parameter,
-                    expected_edge_parameter,
-                    BuildError::ParameterCorrespondenceMismatch { endpoint },
-                )?;
+                if edge_parameter.compare(expected_edge_parameter)? != std::cmp::Ordering::Equal {
+                    return Err(BuildError::ParameterCorrespondenceMismatch { endpoint });
+                }
                 if inherited_image {
                     continue;
                 }
-                let edge_point = curve.evaluate_real(&edge_parameter)?;
-                let surface_parameter = pcurve.point_at(pcurve_parameter)?;
+                let edge_point = curve.point_at(&edge_parameter)?;
+                let surface_parameter = pcurve.evaluate_real(
+                    pcurve_parameter
+                        .try_real()
+                        .ok_or(GeometryError::UnrepresentableParameter)?,
+                )?;
                 let surface_point = surface.point_at(&surface_parameter)?;
-                if !complete_image_certificate_subsumes_endpoint_sampling {
-                    require_point_equal(
-                        &edge_point,
-                        &surface_point,
-                        BuildError::EdgeUseImageMismatch { endpoint },
-                    )?;
+                if !complete_image_certificate_subsumes_endpoint_sampling
+                    && !edge_point.coincides_with(&surface_point.into())?
+                {
+                    return Err(BuildError::EdgeUseImageMismatch { endpoint });
                 }
             }
             if inherited_image {
@@ -216,7 +216,7 @@ impl ArenaModelBuilder {
                 ) => {
                     let line = pcurve
                         .line_segment()
-                        .expect("line pcurve kind carries line geometry");
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?;
                     if real_values_equal(line.start().x(), line.end().x())? {
                         self.validate_revolution_meridian_image(
                             curve, edge, edge_use, pcurve, surface,

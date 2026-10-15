@@ -37,10 +37,12 @@ composes this authority into spatial incidence without a second solver.
 The current retained-parameter API covers spatial inverse queries and
 comparison. `GeometricPoint3` retains selected images of lines, rational
 Béziers and finite NURBS, with exact comparison, bounds and invertible affine
-transforms. Edge domains, vertices, pcurve correspondence and archive replay
-must still be extended before selected roots can pass through a complete
-topology edit. Existing materialization requirements remain explicit typed
-blockers at those consumers. Selected conic angles return
+transforms. Topological vertices store these points; `ParameterRange` retains
+canonical selected edge trims separately from authored `ParameterDomain`
+coefficients. Exact edge subdivision retains every incident pcurve's source
+chart and correspondence. Full selected archive replay and arbitrary selected
+surface/contact validation remain open. Existing materialization requirements
+remain explicit typed blockers at those consumers. Selected conic angles return
 `UnsupportedSelectedEvaluation`; they are never reinterpreted as rational
 chart coordinates. See the
 [current contract](../ARCHITECTURE.md#retained-inverse-parameters).
@@ -181,10 +183,12 @@ operations such as tessellation.
 
 ## API Rules
 
-- Geometry inputs and retained values use `Real`, `Point2`, `Point3`, exact
-  vectors, and exact transforms.
-- Functions borrow `&Real` for evaluation parameters when ownership is not
-  required.
+- Authored coefficients use `Real`, `Point2`, `Point3`, exact vectors and exact
+  transforms. Selected geometric values use `Parameter`, `ParameterRange`
+  and `GeometricPoint3`; their optional stored views do not define validity.
+- Point evaluation and topological correspondence borrow `&Parameter` when
+  ownership is unnecessary. Native coefficient algorithms borrow `&Real` and
+  report an explicit blocker if the required stored view is unavailable.
 - IDs and direction/role enums implement `Eq`, `Ord`, and `Hash`.
 - Geometry records keep fields private.
 - Constructors return `Result`; geometric input never causes a public panic.

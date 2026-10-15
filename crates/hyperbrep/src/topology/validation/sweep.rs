@@ -178,7 +178,7 @@ impl ArenaModelBuilder {
             .keys()
             .min()
             .expect("grouped curve sweep has connectors");
-        let reference_point = self.vertex_ref(reference)?.point().clone();
+        let reference_point = self.vertex_ref(reference)?.represented_point()?.clone();
         let path = connector_by_lower[&reference].clone();
         if !real_values_equal(path.domain().start(), &Real::zero())?
             || !real_values_equal(path.domain().end(), &Real::one())?
@@ -201,7 +201,7 @@ impl ArenaModelBuilder {
             lower_coordinates.insert(
                 *lower,
                 project_point_to_plane_frame(
-                    self.vertex_ref(*lower)?.point(),
+                    self.vertex_ref(*lower)?.represented_point()?,
                     &reference_point,
                     &lower_u,
                     &lower_v,
@@ -412,7 +412,7 @@ impl ArenaModelBuilder {
                     .iter()
                     .map(|vertex| {
                         project_point_to_plane_frame(
-                            self.vertex_ref(*vertex)?.point(),
+                            self.vertex_ref(*vertex)?.represented_point()?,
                             &reference_point,
                             &lower_u,
                             &lower_v,
@@ -499,7 +499,10 @@ impl ArenaModelBuilder {
                 .iter()
                 .map(|(edge, _, _)| {
                     let domain = self.edge_ref(*edge)?.domain.clone();
-                    Ok((domain.start().clone(), domain.end().clone()))
+                    Ok((
+                        domain.represented_start()?.clone(),
+                        domain.represented_end()?.clone(),
+                    ))
                 })
                 .collect::<Result<Vec<_>, BuildError>>()?;
             if !self.exact_intervals_tile(
@@ -576,8 +579,8 @@ impl ArenaModelBuilder {
             if visited.len() != adjacency.len() {
                 continue;
             }
-            let lower_point = self.vertex_ref(lowers[0])?.point();
-            let upper_point = self.vertex_ref(uppers[0])?.point();
+            let lower_point = self.vertex_ref(lowers[0])?.represented_point()?;
+            let upper_point = self.vertex_ref(uppers[0])?.represented_point()?;
             let curve_start = curve.evaluate_real(curve.domain().start())?;
             let curve_end = curve.evaluate_real(curve.domain().end())?;
             let curve = if points_equal(&curve_start, lower_point)?
@@ -966,7 +969,7 @@ impl ArenaModelBuilder {
             .iter()
             .min()
             .expect("curve sweep cap has vertices");
-        let reference_point = self.vertex_ref(reference)?.point().clone();
+        let reference_point = self.vertex_ref(reference)?.represented_point()?.clone();
         let path = connector_by_lower[&reference].clone();
         if !real_values_equal(path.domain().start(), &Real::zero())?
             || !real_values_equal(path.domain().end(), &Real::one())?
@@ -982,7 +985,7 @@ impl ArenaModelBuilder {
             unreachable!("connector kind was checked");
         };
         for lower in &lower_vertices {
-            let offset = self.vertex_ref(*lower)?.point() - &reference_point;
+            let offset = self.vertex_ref(*lower)?.represented_point()? - &reference_point;
             let Curve3ExactData::RationalBezier {
                 control_points,
                 weights,
@@ -1057,8 +1060,10 @@ impl ArenaModelBuilder {
                     return Ok(None);
                 }
             }
-            let start_offset = self.vertex_ref(lower_edge.start)?.point() - &reference_point;
-            let end_offset = self.vertex_ref(lower_edge.end)?.point() - &reference_point;
+            let start_offset =
+                self.vertex_ref(lower_edge.start)?.represented_point()? - &reference_point;
+            let end_offset =
+                self.vertex_ref(lower_edge.end)?.represented_point()? - &reference_point;
             let SurfaceExactData::RationalBezier {
                 control_points,
                 weights,
@@ -1096,7 +1101,7 @@ impl ArenaModelBuilder {
             .iter()
             .map(|vertex| {
                 project_point_to_plane_frame(
-                    self.vertex_ref(*vertex)?.point(),
+                    self.vertex_ref(*vertex)?.represented_point()?,
                     &reference_point,
                     &lower_u,
                     &lower_v,

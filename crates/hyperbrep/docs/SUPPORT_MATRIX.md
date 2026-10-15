@@ -37,10 +37,11 @@ invertible affine transforms. NURBS selectors stay in their authored knot
 chart. Scalar parameters expose stored coordinates; selected conic angular
 evaluation returns `UnsupportedSelectedEvaluation`.
 
-Derivatives, subdivision, edge domains, vertices, pcurve transfers and archives
-still use represented parameters/coordinates. Topology transfer
-requiring an unavailable `Real` returns `UnrepresentableParameter`; retained
-3D split and archive replay remain open. See the
+Native coefficient derivatives/subdivision and archives still require stored
+parameters/coordinates. Topology vertices and edge trims now retain selected
+images and parameters; affine pcurve transfers and exact edge splits preserve
+them. A remaining scalar-only path returns `UnrepresentableParameter` or
+`UnrepresentablePoint`. Selected archive replay remains open. See the
 [parameter contract](ARCHITECTURE.md#retained-inverse-parameters) and
 [spatial point contract](ARCHITECTURE.md#retained-spatial-points).
 
@@ -476,13 +477,25 @@ other nonplanar bounded faces and general curved regularization remain open.
 ## Local topology editing
 
 `EdgeRef::split` splits a canonical edge and every incident use at an exact
-interior edge parameter. Line and native circular pcurves are retained,
+interior `Parameter`. `ParameterRange` stores selected trim endpoints and
+vertices store `GeometricPoint3`. Line/rational Bézier/NURBS carriers can
+retain nonmaterialized selected cuts with affine pcurve correspondence;
+native angular conics still require represented parameters. Line and native circular pcurves are retained,
 forward/reversed uses remain ordered, typed IDs for the first half are stable,
 and the result is fully revalidated. The active prism, cylinder, frustum, and
 torus solid certificates accept exact edge subdivisions rather than depending
 on primitive edge counts. Angular correspondences split circular pcurves
 directly in retained root sweep space; nested edits do not round-trip through
 rational-Bézier parameters or accumulate equivalent expression trees.
+
+Selected source restrictions preserve their parameter charts through repeated
+splits and affine transforms, including reflection. Validation checks actual
+affine endpoint mappings and retains the source's complete image/wire proofs
+under exact subdivision. Arbitrary edits invalidate those proofs. Cuboid and
+cylinder selected splits retain classification and volume certificates;
+the [qualification cases](evidence/2026-10-15-selected-topology/README.md)
+also exercise rational and NURBS profile sheets. Selected archive replay and
+general selected surface/contact validation remain unsupported.
 
 `FaceRef::split` splits a trimmed planar face along an exact line chord
 between nonadjacent outer-boundary vertices. It authors one identity-shared

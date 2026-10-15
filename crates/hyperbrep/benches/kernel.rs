@@ -609,13 +609,15 @@ fn main() {
         builder::cuboid(point(0, 0, 0), point(2, 2, 2)).expect("benchmark edit source");
     let edit_source = edit_source_selection.model();
     let edge = edit_source.edges().next().expect("cuboid has edges");
-    let edge_midpoint =
-        ((edge.domain().start() + edge.domain().end()) / Real::from(2)).expect("two is nonzero");
+    let edge_midpoint = ((edge.domain().start().try_real().expect("native trim")
+        + edge.domain().end().try_real().expect("native trim"))
+        / Real::from(2))
+    .expect("two is nonzero");
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..EDIT_ITERATIONS {
         let edited_change = edge
-            .split(black_box(edge_midpoint.clone()))
+            .split(black_box(edge_midpoint.clone().into()))
             .expect("benchmark edge split");
         let edited = edited_change.model();
         checksum += usize::from(
@@ -666,8 +668,10 @@ fn main() {
 
     let edge_midpoint = |use_id: hyperbrep::EdgeUseRef<'_>| {
         let edge = use_id.edge();
-        let parameter = ((edge.domain().start() + edge.domain().end()) / Real::from(2))
-            .expect("two is nonzero");
+        let parameter = ((edge.domain().start().try_real().expect("native trim")
+            + edge.domain().end().try_real().expect("native trim"))
+            / Real::from(2))
+        .expect("two is nonzero");
         edge.curve()
             .point_at(&parameter.into())
             .expect("edge midpoint evaluates")
@@ -706,11 +710,12 @@ fn main() {
         let edge = edge_use.edge();
         let fraction =
             (Real::from(numerator) / Real::from(3)).expect("three is a nonzero denominator");
-        let span = edge.domain().end() - edge.domain().start();
+        let span = edge.domain().end().try_real().expect("native trim")
+            - edge.domain().start().try_real().expect("native trim");
         let offset = span * fraction;
         let parameter = match edge_use.direction() {
-            Direction::Forward => edge.domain().start() + offset,
-            Direction::Reversed => edge.domain().end() - offset,
+            Direction::Forward => edge.domain().start().try_real().expect("native trim") + offset,
+            Direction::Reversed => edge.domain().end().try_real().expect("native trim") - offset,
         };
         edge.curve()
             .point_at(&parameter.into())
@@ -753,7 +758,13 @@ fn main() {
         elapsed / EDIT_ITERATIONS as u32,
     );
 
-    let vertex_point = |use_id| directed_start(use_id).point().clone();
+    let vertex_point = |use_id| {
+        directed_start(use_id)
+            .point()
+            .try_coordinates()
+            .expect("authored vertex")
+            .clone()
+    };
     let crossing_traces = [
         Curve3::line(vertex_point(uses[0]), vertex_point(uses[2])).expect("first cap diagonal"),
         Curve3::line(vertex_point(uses[1]), vertex_point(uses[3])).expect("second cap diagonal"),

@@ -538,7 +538,7 @@ impl ArenaModelBuilder {
                     } else {
                         radius = Some(data.x_radius);
                     }
-                    sweep += edge.domain.end() - edge.domain.start();
+                    sweep += edge.domain.represented_end()? - edge.domain.represented_start()?;
                 }
                 if !real_values_equal(&sweep, &Real::tau())? {
                     return Ok(None);

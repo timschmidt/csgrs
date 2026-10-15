@@ -25,7 +25,7 @@ fuzz_target!(|bytes: &[u8]| {
     let Ok(vertices) = points
         .iter()
         .cloned()
-        .map(|point| builder.vertex(point))
+        .map(|point| builder.vertex(point.into()))
         .collect::<Result<Vec<_>, _>>()
     else {
         return;
@@ -44,7 +44,7 @@ fuzz_target!(|bytes: &[u8]| {
             &vertices[index],
             &vertices[next],
             &curve,
-            ParameterDomain::unit(),
+            ParameterDomain::unit().into(),
         ) else {
             return;
         };

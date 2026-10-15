@@ -113,8 +113,8 @@ impl ArenaModelBuilder {
                 } else {
                     (edge.end, edge.start)
                 };
-                let extrusion = self.vertex_ref(second_vertex)?.point()
-                    - self.vertex_ref(first_vertex)?.point();
+                let extrusion = self.vertex_ref(second_vertex)?.represented_point()?
+                    - self.vertex_ref(first_vertex)?.represented_point()?;
                 let determinant = u.dot(&v.cross(&extrusion));
                 if decided_model_order(compare_reals(
                     &determinant,
@@ -137,13 +137,13 @@ impl ArenaModelBuilder {
                                 Ok(Curve2::from(
                                     LineSeg2::try_new(
                                         project_point_to_plane_frame(
-                                            self.vertex_ref(start)?.point(),
+                                            self.vertex_ref(start)?.represented_point()?,
                                             &origin,
                                             &u,
                                             &v,
                                         )?,
                                         project_point_to_plane_frame(
-                                            self.vertex_ref(end)?.point(),
+                                            self.vertex_ref(end)?.represented_point()?,
                                             &origin,
                                             &u,
                                             &v,

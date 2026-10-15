@@ -17,7 +17,7 @@ impl ArenaModelBuilder {
         debug_assert!(data.circle);
         let arc = pcurve
             .circular_arc()
-            .expect("circular pcurve kind carries circular geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         let center_parameter = Point2::new(arc.center().x().clone(), arc.center().y().clone());
         let mapped_center = surface.point_at(&center_parameter)?;
         require_point_equal(
@@ -38,12 +38,13 @@ impl ArenaModelBuilder {
         };
         require_point_equal(
             &mapped_start,
-            self.vertex_ref(directed_start_vertex)?.point(),
+            self.vertex_ref(directed_start_vertex)?
+                .represented_point()?,
             BuildError::EdgeUseSupportMismatch,
         )?;
         require_point_equal(
             &mapped_end,
-            self.vertex_ref(directed_end_vertex)?.point(),
+            self.vertex_ref(directed_end_vertex)?.represented_point()?,
             BuildError::EdgeUseSupportMismatch,
         )?;
 
@@ -90,7 +91,7 @@ impl ArenaModelBuilder {
     ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
-            .expect("line pcurve kind carries line geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         require_real_equal(
             line.start().x(),
             line.end().x(),
@@ -125,16 +126,20 @@ impl ArenaModelBuilder {
                 BuildError::EdgeUseSupportMismatch,
             )?;
         }
-        for parameter in [pcurve.domain_start()?, pcurve.domain_end()?] {
+        for parameter in [pcurve.represented_start()?, pcurve.represented_end()?] {
             let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
                 pcurve,
                 &edge.domain,
                 edge_use.direction,
-                parameter,
+                &crate::Parameter::from_real((parameter).clone()),
             )?;
-            let edge_point = curve.evaluate_real(&edge_parameter)?;
+            let edge_point = curve.evaluate_real(
+                edge_parameter
+                    .try_real()
+                    .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+            )?;
             let axial = (&edge_point - &origin).dot(&axis);
-            let surface_parameter = pcurve.point_at(parameter)?;
+            let surface_parameter = pcurve.evaluate_real(parameter)?;
             require_real_equal(
                 &axial,
                 &surface_parameter.y,
@@ -154,7 +159,7 @@ impl ArenaModelBuilder {
     ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
-            .expect("line pcurve kind carries line geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         require_real_equal(
             line.start().y(),
             line.end().y(),
@@ -173,7 +178,7 @@ impl ArenaModelBuilder {
             BuildError::EdgeUseSupportMismatch,
         )?;
 
-        let pcurve_span = pcurve.domain_end()? - pcurve.domain_start()?;
+        let pcurve_span = pcurve.represented_end()? - pcurve.represented_start()?;
         let du = line.end().x() - line.start().x();
         let du_dt = (du / pcurve_span).map_err(GeometryError::Numeric)?;
         let surface_parameter = Point2::new(line.start().x().clone(), line.start().y().clone());
@@ -182,13 +187,22 @@ impl ArenaModelBuilder {
             pcurve,
             &edge.domain,
             edge_use.direction,
-            pcurve.domain_start()?,
+            &crate::Parameter::from_real((pcurve.represented_start()?).clone()),
         )?;
         let edge_rate = match &edge_use.parameter_correspondence {
             ParameterCorrespondence::Affine { scale, .. } => scale,
             ParameterCorrespondence::AngularSweep => unreachable!("matched affine relation"),
         };
-        let edge_tangent = curve.derivative_at(&edge_parameter, 1)?.vector().clone() * edge_rate;
+        let edge_tangent = curve
+            .derivative_at(
+                edge_parameter
+                    .try_real()
+                    .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                1,
+            )?
+            .vector()
+            .clone()
+            * edge_rate;
         require_vector_equal(
             &surface_tangent,
             &edge_tangent,
@@ -206,7 +220,7 @@ impl ArenaModelBuilder {
     ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
-            .expect("line pcurve kind carries line geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         let u_constant = real_values_equal(line.start().x(), line.end().x())?;
         let v_constant = real_values_equal(line.start().y(), line.end().y())?;
         if u_constant == v_constant {
@@ -274,7 +288,7 @@ impl ArenaModelBuilder {
             BuildError::EdgeUseSupportMismatch,
         )?;
 
-        let pcurve_span = pcurve.domain_end()? - pcurve.domain_start()?;
+        let pcurve_span = pcurve.represented_end()? - pcurve.represented_start()?;
         let parameter_delta = if varying_u {
             line.end().x() - line.start().x()
         } else {
@@ -291,13 +305,22 @@ impl ArenaModelBuilder {
             pcurve,
             &edge.domain,
             edge_use.direction,
-            pcurve.domain_start()?,
+            &crate::Parameter::from_real((pcurve.represented_start()?).clone()),
         )?;
         let edge_rate = match &edge_use.parameter_correspondence {
             ParameterCorrespondence::Affine { scale, .. } => scale,
             ParameterCorrespondence::AngularSweep => unreachable!("matched affine relation"),
         };
-        let edge_tangent = curve.derivative_at(&edge_parameter, 1)?.vector().clone() * edge_rate;
+        let edge_tangent = curve
+            .derivative_at(
+                edge_parameter
+                    .try_real()
+                    .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                1,
+            )?
+            .vector()
+            .clone()
+            * edge_rate;
         require_vector_equal(
             &surface_tangent,
             &edge_tangent,
@@ -316,7 +339,7 @@ impl ArenaModelBuilder {
     ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
-            .expect("line pcurve kind carries line geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         let Curve3ExactData::EllipseArc(curve_data) = curve.exact_data() else {
             unreachable!("circle kind carries ellipse-arc exact data");
         };
@@ -403,15 +426,15 @@ impl ArenaModelBuilder {
             BuildError::EdgeUseSupportMismatch,
         )?;
 
-        let edge_offset = edge.domain.start() - &curve_data.domain_start;
+        let edge_offset = edge.domain.represented_start()? - &curve_data.domain_start;
         let edge_angle_at_start = if curve_data.direction > 0 {
             &curve_data.angle_at_start + edge_offset
         } else {
             &curve_data.angle_at_start - edge_offset
         };
         let actual = EllipseArcExactData {
-            domain_start: edge.domain.start().clone(),
-            domain_end: edge.domain.end().clone(),
+            domain_start: edge.domain.represented_start()?.clone(),
+            domain_end: edge.domain.represented_end()?.clone(),
             angle_at_start: edge_angle_at_start,
             ..*curve_data
         };
@@ -453,7 +476,7 @@ impl ArenaModelBuilder {
     ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
-            .expect("line pcurve kind carries line geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         require_real_equal(
             line.start().x(),
             line.end().x(),
@@ -471,7 +494,7 @@ impl ArenaModelBuilder {
     ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
-            .expect("line pcurve kind carries line geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         require_real_equal(
             line.start().y(),
             line.end().y(),
@@ -511,7 +534,7 @@ impl ArenaModelBuilder {
             BuildError::EdgeUseSupportMismatch,
         )?;
 
-        let pcurve_span = pcurve.domain_end()? - pcurve.domain_start()?;
+        let pcurve_span = pcurve.represented_end()? - pcurve.represented_start()?;
         let du_dt =
             ((line.end().x() - line.start().x()) / &pcurve_span).map_err(GeometryError::Numeric)?;
         let surface_parameter = Point2::new(line.start().x().clone(), line.start().y().clone());
@@ -520,13 +543,22 @@ impl ArenaModelBuilder {
             pcurve,
             &edge.domain,
             edge_use.direction,
-            pcurve.domain_start()?,
+            &crate::Parameter::from_real((pcurve.represented_start()?).clone()),
         )?;
         let edge_rate = match &edge_use.parameter_correspondence {
             ParameterCorrespondence::Affine { scale, .. } => scale,
             ParameterCorrespondence::AngularSweep => unreachable!("matched affine relation"),
         };
-        let edge_tangent = curve.derivative_at(&edge_parameter, 1)?.vector().clone() * edge_rate;
+        let edge_tangent = curve
+            .derivative_at(
+                edge_parameter
+                    .try_real()
+                    .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                1,
+            )?
+            .vector()
+            .clone()
+            * edge_rate;
         require_vector_equal(
             &surface_tangent,
             &edge_tangent,
@@ -541,7 +573,7 @@ impl ArenaModelBuilder {
     ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
-            .expect("line pcurve kind carries line geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         let u_constant = real_values_equal(line.start().x(), line.end().x())?;
         if u_constant {
             return Ok(());
@@ -567,7 +599,7 @@ impl ArenaModelBuilder {
     ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
-            .expect("line pcurve kind carries line geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         require_real_equal(
             line.start().y(),
             line.end().y(),
@@ -591,27 +623,35 @@ impl ArenaModelBuilder {
             .expect("extrusion kind carries extrusion geometry");
         let offset = direction.clone() * line.start().y();
         let expected = translated_curve(&profile.subcurve(profile_start, profile_end)?, &offset)?;
-        let actual = curve.subcurve(edge.domain.start(), edge.domain.end())?;
+        let actual = curve.subcurve(
+            edge.domain.represented_start()?,
+            edge.domain.represented_end()?,
+        )?;
         if !curve_parameterizations_equal(&actual, &expected)? {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
 
-        let edge_domain_span = edge.domain.end() - edge.domain.start();
+        let edge_domain_span = edge.domain.represented_end()? - edge.domain.represented_start()?;
         let actual_span = actual.domain().end() - actual.domain().start();
         let profile_span = profile_end - profile_start;
         let expected_span = expected.domain().end() - expected.domain().start();
         for (pcurve_parameter, surface_parameter) in [
-            (pcurve.domain_start()?, line.start().x()),
-            (pcurve.domain_end()?, line.end().x()),
+            (pcurve.represented_start()?, line.start().x()),
+            (pcurve.represented_end()?, line.end().x()),
         ] {
             let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
                 pcurve,
                 &edge.domain,
                 edge_use.direction,
-                pcurve_parameter,
+                &crate::Parameter::from_real((pcurve_parameter).clone()),
             )?;
             let actual_parameter = actual.domain().start()
-                + ((&edge_parameter - edge.domain.start()) * &actual_span / &edge_domain_span)
+                + ((edge_parameter
+                    .try_real()
+                    .ok_or(GeometryError::UnrepresentableParameter)?
+                    - edge.domain.represented_start()?)
+                    * &actual_span
+                    / &edge_domain_span)
                     .map_err(GeometryError::Numeric)?;
             let expected_parameter = expected.domain().start()
                 + ((surface_parameter - profile_start) * &expected_span / &profile_span)
@@ -635,7 +675,7 @@ impl ArenaModelBuilder {
     ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
-            .expect("line pcurve kind carries line geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         require_real_equal(
             line.start().x(),
             line.end().x(),
@@ -657,26 +697,34 @@ impl ArenaModelBuilder {
         let expected = surface
             .revolution_meridian_curve(line.start().x())?
             .subcurve(profile_start, profile_end)?;
-        let actual = curve.subcurve(edge.domain.start(), edge.domain.end())?;
+        let actual = curve.subcurve(
+            edge.domain.represented_start()?,
+            edge.domain.represented_end()?,
+        )?;
         if !curve_parameterizations_equal(&actual, &expected)? {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
-        let edge_domain_span = edge.domain.end() - edge.domain.start();
+        let edge_domain_span = edge.domain.represented_end()? - edge.domain.represented_start()?;
         let actual_span = actual.domain().end() - actual.domain().start();
         let profile_span = profile_end - profile_start;
         let expected_span = expected.domain().end() - expected.domain().start();
         for (pcurve_parameter, surface_parameter) in [
-            (pcurve.domain_start()?, line.start().y()),
-            (pcurve.domain_end()?, line.end().y()),
+            (pcurve.represented_start()?, line.start().y()),
+            (pcurve.represented_end()?, line.end().y()),
         ] {
             let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
                 pcurve,
                 &edge.domain,
                 edge_use.direction,
-                pcurve_parameter,
+                &crate::Parameter::from_real((pcurve_parameter).clone()),
             )?;
             let actual_parameter = actual.domain().start()
-                + ((&edge_parameter - edge.domain.start()) * &actual_span / &edge_domain_span)
+                + ((edge_parameter
+                    .try_real()
+                    .ok_or(GeometryError::UnrepresentableParameter)?
+                    - edge.domain.represented_start()?)
+                    * &actual_span
+                    / &edge_domain_span)
                     .map_err(GeometryError::Numeric)?;
             let expected_parameter = expected.domain().start()
                 + ((surface_parameter - profile_start) * &expected_span / &profile_span)
@@ -700,7 +748,7 @@ impl ArenaModelBuilder {
     ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
-            .expect("line pcurve kind carries line geometry");
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
         require_real_equal(
             line.start().y(),
             line.end().y(),
@@ -709,41 +757,54 @@ impl ArenaModelBuilder {
         if real_values_equal(line.start().x(), line.end().x())? {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
-        let actual = curve.subcurve(edge.domain.start(), edge.domain.end())?;
+        let actual = curve.subcurve(
+            edge.domain.represented_start()?,
+            edge.domain.represented_end()?,
+        )?;
         let actual_span = actual.domain().end() - actual.domain().start();
         let first_edge_parameter = edge_use.parameter_correspondence.edge_parameter(
             pcurve,
             &edge.domain,
             edge_use.direction,
-            pcurve.domain_start()?,
+            &crate::Parameter::from_real((pcurve.represented_start()?).clone()),
         )?;
         let second_edge_parameter = edge_use.parameter_correspondence.edge_parameter(
             pcurve,
             &edge.domain,
             edge_use.direction,
-            pcurve.domain_end()?,
+            &crate::Parameter::from_real((pcurve.represented_end()?).clone()),
         )?;
-        let (angle_at_start, angle_at_end) =
-            if real_values_equal(&first_edge_parameter, actual.domain().start())? {
-                require_real_equal(
-                    &second_edge_parameter,
-                    actual.domain().end(),
-                    BuildError::EdgeUseSupportMismatch,
-                )?;
-                (line.start().x(), line.end().x())
-            } else {
-                require_real_equal(
-                    &first_edge_parameter,
-                    actual.domain().end(),
-                    BuildError::EdgeUseSupportMismatch,
-                )?;
-                require_real_equal(
-                    &second_edge_parameter,
-                    actual.domain().start(),
-                    BuildError::EdgeUseSupportMismatch,
-                )?;
-                (line.end().x(), line.start().x())
-            };
+        let (angle_at_start, angle_at_end) = if real_values_equal(
+            first_edge_parameter
+                .try_real()
+                .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+            actual.domain().start(),
+        )? {
+            require_real_equal(
+                second_edge_parameter
+                    .try_real()
+                    .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                actual.domain().end(),
+                BuildError::EdgeUseSupportMismatch,
+            )?;
+            (line.start().x(), line.end().x())
+        } else {
+            require_real_equal(
+                first_edge_parameter
+                    .try_real()
+                    .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                actual.domain().end(),
+                BuildError::EdgeUseSupportMismatch,
+            )?;
+            require_real_equal(
+                second_edge_parameter
+                    .try_real()
+                    .ok_or(crate::GeometryError::UnrepresentableParameter)?,
+                actual.domain().start(),
+                BuildError::EdgeUseSupportMismatch,
+            )?;
+            (line.end().x(), line.start().x())
+        };
         let angle_delta = angle_at_end - angle_at_start;
         let expected_direction = if real_values_equal(&angle_delta, &actual_span)? {
             1

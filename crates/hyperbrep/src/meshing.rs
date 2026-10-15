@@ -465,14 +465,14 @@ fn sampled_boundaries(
             if lines_only && pcurve.line_segment().is_none() {
                 return Err(TessellationError::CurvedBoundary);
             }
-            let span = pcurve.domain_end()? - pcurve.domain_start()?;
+            let span = pcurve.represented_end()? - pcurve.represented_start()?;
             for segment in 0..segments_per_use {
                 let numerator = Real::from(
                     u128::try_from(segment).map_err(|_| TessellationError::RefinementOverflow)?,
                 );
                 let fraction = (numerator / &denominator).map_err(GeometryError::Numeric)?;
-                let parameter = pcurve.domain_start()? + &span * fraction;
-                parameters.push(pcurve.point_at(&parameter)?);
+                let parameter = pcurve.represented_start()? + &span * fraction;
+                parameters.push(pcurve.evaluate_real(&parameter)?);
             }
         }
     }

@@ -49,6 +49,30 @@ The default regression budget is 10% for an established cohort. A deliberate
 regression requires a recorded semantic or architectural reason and a new
 baseline.
 
+## Selected topology — 2026-10-15
+
+Kept for exact selected vertices, trims, shared-edge subdivision and pcurve
+composition. The [qualification](docs/evidence/2026-10-15-selected-topology/README.md)
+records ten public regressions, four rejected mutants and all native/WASM-build
+checks. The first native-mapping prototype exceeded the default budget in
+three editing cohorts and was replaced with direct stored-scalar formulas.
+Selected charts continue to use Hypercurve's existing algebraic authority.
+
+All 66 existing receipts agree across three alternating process pairs. The
+median of case median ratios is **1.011410**, with a maximum of **1.058066**;
+all cohorts stay within 10%. Binary size grows **67,040 bytes**; median process
+peak RSS is **21,472 → 21,808 KiB**. The
+[comparison](docs/evidence/2026-10-15-selected-topology/comparison.json) and
+[rejected prototype](docs/evidence/2026-10-15-selected-topology/prototype/comparison.json)
+retain every sample. No allocation-count or statistical significance is claimed.
+
+The new four-row topology harness measures native/selected splits, sixteen
+composed splits and reflection/inverse with exact checks. Prepared roots and
+source construction are outside timing. Median costs are 148.213,
+161.454, 1931.441 and 337.269 µs respectively; these are
+feature costs, not speedups. Selected archive graphs, complete work bounds,
+large-chain growth and external comparisons remain open.
+
 ## Retained spatial points — 2026-10-15
 
 Kept for exact evaluation and composition of selected line, Bézier and NURBS

@@ -121,11 +121,12 @@ impl ArenaModelBuilder {
         let shell_edges = self.shell_edge_set(&self.shell_ref(shell)?.faces)?;
         let shell_vertices = self.shell_vertex_set(shell)?;
         let reference = *lower_vertices.iter().min().expect("loft cap has vertices");
-        let reference_point = self.vertex_ref(reference)?.point().clone();
+        let reference_point = self.vertex_ref(reference)?.represented_point()?.clone();
         let upper_height_reference =
             self.vertex_ref(*upper_vertices.iter().min().expect("loft cap has vertices"))?;
         let normal = lower_u.cross(&lower_v);
-        let height_denominator = normal.dot(&(upper_height_reference.point() - &reference_point));
+        let height_denominator =
+            normal.dot(&(upper_height_reference.represented_point()? - &reference_point));
         if decided_model_order(compare_reals(
             &height_denominator,
             &Real::zero(),
@@ -139,7 +140,8 @@ impl ArenaModelBuilder {
         sorted_vertices.sort_by_key(|vertex| vertex.index());
         let mut layers = Vec::<(Real, Vec<VertexId>)>::new();
         for vertex in sorted_vertices {
-            let height = (normal.dot(&(self.vertex_ref(vertex)?.point() - &reference_point))
+            let height = (normal
+                .dot(&(self.vertex_ref(vertex)?.represented_point()? - &reference_point))
                 / &height_denominator)
                 .map_err(GeometryError::Numeric)?;
             if decided_model_order(compare_reals(
@@ -371,10 +373,10 @@ impl ArenaModelBuilder {
                 SurfaceKind::Plane => {}
                 SurfaceKind::RationalBezier => {
                     let expected = [
-                        self.vertex_ref(lower_edge.start)?.point(),
-                        self.vertex_ref(lower_edge.end)?.point(),
-                        self.vertex_ref(mapped_start)?.point(),
-                        self.vertex_ref(mapped_end)?.point(),
+                        self.vertex_ref(lower_edge.start)?.represented_point()?,
+                        self.vertex_ref(lower_edge.end)?.represented_point()?,
+                        self.vertex_ref(mapped_start)?.represented_point()?,
+                        self.vertex_ref(mapped_end)?.represented_point()?,
                     ];
                     if !self.certified_bilinear_loft_side(face.surface, expected)? {
                         return Ok(None);
@@ -392,7 +394,8 @@ impl ArenaModelBuilder {
         }
 
         let mapped_reference = ordered_layers.last().expect("loft has an upper layer")[0];
-        let height_axis = self.vertex_ref(mapped_reference)?.point() - &reference_point;
+        let height_axis =
+            self.vertex_ref(mapped_reference)?.represented_point()? - &reference_point;
         let uu = lower_u.dot(&lower_u);
         let uv = lower_u.dot(&lower_v);
         let vv = lower_v.dot(&lower_v);
@@ -412,7 +415,7 @@ impl ArenaModelBuilder {
             let baseline = reference_point.clone() + height_axis.clone() * &layers[layer].0;
             let points = ordered
                 .iter()
-                .map(|vertex| project(self.vertex_ref(*vertex)?.point(), &baseline))
+                .map(|vertex| project(self.vertex_ref(*vertex)?.represented_point()?, &baseline))
                 .collect::<Result<Vec<_>, _>>()?;
             let contour = Contour2::try_new(
                 (0..points.len())
@@ -611,8 +614,11 @@ impl ArenaModelBuilder {
 
         let reference = *lower_vertices.iter().min().expect("loft cap has vertices");
         let mapped_reference = correspondence[&reference];
-        let reference_point = self.vertex_ref(reference)?.point().clone();
-        let mapped_reference_point = self.vertex_ref(mapped_reference)?.point().clone();
+        let reference_point = self.vertex_ref(reference)?.represented_point()?.clone();
+        let mapped_reference_point = self
+            .vertex_ref(mapped_reference)?
+            .represented_point()?
+            .clone();
         let extrusion = &mapped_reference_point - &reference_point;
         for edge_id in &lower_edges {
             let edge = self.edge_ref(*edge_id)?;
@@ -646,10 +652,12 @@ impl ArenaModelBuilder {
                         .expect("certified loft side has one lower edge");
                     let lower_edge = self.edge_ref(lower_edge_id)?;
                     let expected = [
-                        self.vertex_ref(lower_edge.start)?.point(),
-                        self.vertex_ref(lower_edge.end)?.point(),
-                        self.vertex_ref(correspondence[&lower_edge.start])?.point(),
-                        self.vertex_ref(correspondence[&lower_edge.end])?.point(),
+                        self.vertex_ref(lower_edge.start)?.represented_point()?,
+                        self.vertex_ref(lower_edge.end)?.represented_point()?,
+                        self.vertex_ref(correspondence[&lower_edge.start])?
+                            .represented_point()?,
+                        self.vertex_ref(correspondence[&lower_edge.end])?
+                            .represented_point()?,
                     ];
                     if !self.certified_bilinear_loft_side(face.surface, expected)? {
                         return Ok(None);
@@ -680,13 +688,19 @@ impl ArenaModelBuilder {
         ordered_vertices.reverse();
         let lower_points = ordered_vertices
             .iter()
-            .map(|vertex| project(self.vertex_ref(*vertex)?.point(), &reference_point))
+            .map(|vertex| {
+                project(
+                    self.vertex_ref(*vertex)?.represented_point()?,
+                    &reference_point,
+                )
+            })
             .collect::<Result<Vec<_>, _>>()?;
         let upper_points = ordered_vertices
             .iter()
             .map(|vertex| {
                 project(
-                    self.vertex_ref(correspondence[vertex])?.point(),
+                    self.vertex_ref(correspondence[vertex])?
+                        .represented_point()?,
                     &mapped_reference_point,
                 )
             })

@@ -901,6 +901,21 @@ impl Curve2 {
         })
     }
 
+    /// Borrows the parameters of [`Self::start`] and [`Self::end`], in traversal order.
+    ///
+    /// A retained source restriction can traverse its increasing parameter
+    /// domain backwards. Reversing an authored native curve instead reflects
+    /// its parameterization, so its directed endpoints remain increasing.
+    /// This view preserves selected parameters and does not evaluate points.
+    pub fn parameter_endpoints(&self) -> (&CurveParameter2, &CurveParameter2) {
+        let domain = self.parameter_domain();
+        if self.source_traversal_is_reversed() {
+            (domain.end(), domain.start())
+        } else {
+            (domain.start(), domain.end())
+        }
+    }
+
     pub(crate) fn native_parameter_domain(&self) -> ExactCurveResult<ParamRange> {
         self.geometry()
             .map(geometry_parameter_range)

@@ -1,6 +1,7 @@
 //! Exact arithmetic and geometric support for topology certificates.
 
 use super::*;
+use std::cmp::Ordering;
 
 pub(super) fn certified_homothetic_loft_scale(
     lower: &[CurvePoint2],
@@ -1609,20 +1610,41 @@ pub(super) fn insert_exact_split_parameter(
 pub(super) fn split_parameter_correspondence(
     source: &ParameterCorrespondence,
     pcurve: &Pcurve,
-    edge_domain: &ParameterDomain,
+    edge_domain: &ParameterRange,
     direction: Direction,
 ) -> Result<ParameterCorrespondence, BuildError> {
     match source {
         ParameterCorrespondence::AngularSweep => Ok(ParameterCorrespondence::AngularSweep),
-        ParameterCorrespondence::Affine { .. } => {
+        ParameterCorrespondence::Affine { scale, offset } => {
             let (edge_start, edge_end) = match direction {
                 Direction::Forward => (edge_domain.start(), edge_domain.end()),
                 Direction::Reversed => (edge_domain.end(), edge_domain.start()),
             };
-            let pcurve_width = pcurve.domain_end()? - pcurve.domain_start()?;
-            let scale = ((edge_end - edge_start) / pcurve_width).map_err(GeometryError::Numeric)?;
-            let offset = edge_start - &scale * pcurve.domain_start()?;
-            Ok(ParameterCorrespondence::affine(scale, offset)?)
+            let (local_start, local_end) = pcurve.curve().parameter_endpoints();
+            if let (Some(edge_start), Some(edge_end), Some(local_start), Some(local_end)) = (
+                edge_start.try_real(),
+                edge_end.try_real(),
+                local_start.scalar(),
+                local_end.scalar(),
+            ) {
+                // Native subdivisions can reparameterize their pieces. Keep
+                // the existing scalar formula and avoid preparing root maps.
+                let scale = ((edge_end - edge_start) / (local_end - local_start))
+                    .map_err(GeometryError::Numeric)?;
+                let offset = edge_start - &scale * local_start;
+                return ParameterCorrespondence::affine(scale, offset);
+            }
+            let pcurve_start = pcurve.domain_start()?;
+            let pcurve_end = pcurve.domain_end()?;
+            if pcurve_start
+                .affine_image(scale, offset)?
+                .compare(edge_start)?
+                == Ordering::Equal
+                && pcurve_end.affine_image(scale, offset)?.compare(edge_end)? == Ordering::Equal
+            {
+                return Ok(source.clone());
+            }
+            Err(GeometryError::UnrepresentableParameter.into())
         }
     }
 }
@@ -1908,24 +1930,26 @@ pub(super) fn require_point_equal(
 
 pub(super) fn require_curve_point_at_parameter(
     curve: &Curve3,
-    parameter: &Real,
-    point: &Point3,
+    parameter: &Parameter,
+    point: &GeometricPoint3,
     mismatch: BuildError,
 ) -> Result<(), BuildError> {
-    let evaluated = curve.evaluate_real(parameter)?;
-    match point3_equal(&evaluated, point, crate::STRICT_PREDICATES) {
-        PredicateOutcome::Decided { value: true, .. } => return Ok(()),
-        PredicateOutcome::Decided { value: false, .. } => return Err(mismatch),
-        PredicateOutcome::Unknown { .. } => {}
-    }
-    match curve.parameters_of(point)? {
+    let evaluated = curve.point_at(parameter)?;
+    let unresolved = match evaluated.coincides_with(point) {
+        Ok(true) => return Ok(()),
+        Ok(false) => return Err(mismatch),
+        Err(error) => error,
+    };
+    let Some(coordinates) = point.try_coordinates() else {
+        return Err(unresolved.into());
+    };
+    match curve.parameters_of(coordinates)? {
         CurveParameterLocation::EntireDomain => Ok(()),
         CurveParameterLocation::None => Err(mismatch),
         CurveParameterLocation::Parameters(parameters) => {
-            let parameter = crate::Parameter::from_real(parameter.clone());
             let mut unresolved = None;
             for candidate in parameters {
-                match candidate.compare(&parameter) {
+                match candidate.compare(parameter) {
                     Ok(std::cmp::Ordering::Equal) => return Ok(()),
                     Ok(_) => {}
                     Err(error) => {
@@ -2046,28 +2070,18 @@ pub(super) fn compute_bounds(
     spheres: &[Option<CertifiedSphereShell>],
     sphere_pairs: &[Option<CertifiedSpherePairShell>],
 ) -> Result<Option<Aabb>, GeometryError> {
-    let mut bounds = vertices
-        .first()
-        .map(|first| (first.point.clone(), first.point.clone()));
-    for vertex in vertices.iter().skip(1) {
-        let (mins, maxs) = bounds.as_mut().expect("first vertex initialized bounds");
-        update_min(&mut mins.x, &vertex.point.x)?;
-        update_min(&mut mins.y, &vertex.point.y)?;
-        update_min(&mut mins.z, &vertex.point.z)?;
-        update_max(&mut maxs.x, &vertex.point.x)?;
-        update_max(&mut maxs.y, &vertex.point.y)?;
-        update_max(&mut maxs.z, &vertex.point.z)?;
+    let mut bounds = None;
+    for vertex in vertices {
+        if let Some(coordinates) = vertex.point.try_coordinates() {
+            union_point_bounds(&mut bounds, coordinates, coordinates)?;
+        } else {
+            let enclosure = vertex.point.bounds()?;
+            union_point_bounds(&mut bounds, &enclosure.mins, &enclosure.maxs)?;
+        }
     }
     for curve in curves {
         let curve_bounds = curve.bounds()?;
-        let (mins, maxs) =
-            bounds.get_or_insert_with(|| (curve_bounds.mins.clone(), curve_bounds.maxs.clone()));
-        update_min(&mut mins.x, &curve_bounds.mins.x)?;
-        update_min(&mut mins.y, &curve_bounds.mins.y)?;
-        update_min(&mut mins.z, &curve_bounds.mins.z)?;
-        update_max(&mut maxs.x, &curve_bounds.maxs.x)?;
-        update_max(&mut maxs.y, &curve_bounds.maxs.y)?;
-        update_max(&mut maxs.z, &curve_bounds.maxs.z)?;
+        union_point_bounds(&mut bounds, &curve_bounds.mins, &curve_bounds.maxs)?;
     }
     for sphere in spheres.iter().flatten() {
         union_sphere_bounds(&mut bounds, &sphere.center, &sphere.radius)?;
@@ -2077,6 +2091,24 @@ pub(super) fn compute_bounds(
         union_sphere_bounds(&mut bounds, &pair.second_center, &pair.second_radius)?;
     }
     Ok(bounds.map(|(mins, maxs)| Aabb::new(mins, maxs)))
+}
+
+fn union_point_bounds(
+    bounds: &mut Option<(Point3, Point3)>,
+    lower: &Point3,
+    upper: &Point3,
+) -> Result<(), GeometryError> {
+    let Some((mins, maxs)) = bounds else {
+        *bounds = Some((lower.clone(), upper.clone()));
+        return Ok(());
+    };
+    update_min(&mut mins.x, &lower.x)?;
+    update_min(&mut mins.y, &lower.y)?;
+    update_min(&mut mins.z, &lower.z)?;
+    update_max(&mut maxs.x, &upper.x)?;
+    update_max(&mut maxs.y, &upper.y)?;
+    update_max(&mut maxs.z, &upper.z)?;
+    Ok(())
 }
 
 pub(super) fn union_sphere_bounds(

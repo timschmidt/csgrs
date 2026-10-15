@@ -521,7 +521,15 @@ does not complete the G1 edge/pcurve/archive composition gate.
 The [spatial-point increment](evidence/2026-10-15-retained-spatial-points/README.md)
 adds selected evaluation, exact spatial comparisons, bounds and affine
 composition. Vertices, edge domains, dual-pcurve subdivision and selected
-archive graph replay remain the next G1 obligations.
+archive graph replay remained that increment's next G1 obligations.
+
+The [selected-topology increment](evidence/2026-10-15-selected-topology/README.md)
+now carries those parameters into vertices, trim ranges and both incident
+pcurve uses. Repeated subdivision retains the source chart; reversal changes
+traversal independently. A reflection regression caught the distinction between
+an increasing interval and directed endpoints. This is a local implementation
+result, not a claim that the general intersection pipeline is complete.
+Selected graph persistence and recertification after load still keep G1 open.
 
 Small mathematical fixtures should precede large imported examples. The
 following are proposed exact counterexamples and proof obligations, not
