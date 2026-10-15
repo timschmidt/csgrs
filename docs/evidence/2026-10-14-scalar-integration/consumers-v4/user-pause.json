@@ -1,0 +1,9 @@
+{
+  "reason": "User paused the goal during the DRC validation command.",
+  "driver_pids": [],
+  "terminated_process_ids": [],
+  "signal": "SIGTERM",
+  "completed_driver": false,
+  "last_observed_results": "KiCad smoke runtime guard failed; copper-neck check still running when paused.",
+  "resume_policy": "Do not resume or relabel this interrupted numerical trial. Preserve all sources, binaries and raw output."
+}

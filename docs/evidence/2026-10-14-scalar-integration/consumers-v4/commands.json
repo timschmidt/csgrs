@@ -1,0 +1,707 @@
+[
+  {
+    "name": "foundations",
+    "exit_code": 0,
+    "seconds": 188.05439889524132,
+    "stdout_sha256": "481cba2e0f945c26ec3beeeb28ef5efbe5e121e4806a44639f053544f7028c2c",
+    "stderr_sha256": "9a0b9b260d65b09251d111ea1f34d70a329bd1aebdc1b2937bdd210208c58e7a",
+    "test_batches": [
+      {
+        "passed": 19,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 8,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 67,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 16,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 21,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 252,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 14,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 19,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 9,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 18,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 606,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 9,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 131,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 211,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      }
+    ],
+    "warnings": [],
+    "sources_and_previous_binaries_unchanged": true
+  },
+  {
+    "name": "curve",
+    "exit_code": 0,
+    "seconds": 1127.2688004700467,
+    "stdout_sha256": "fff9c7328f931c6f63a957bd687faf23b0729f1066ced262c5179d066b6ea852",
+    "stderr_sha256": "4acc45c95791526374e3078a8ec6661a13bf1e2012c6fff1bd2f3a673883d3a7",
+    "test_batches": [
+      {
+        "passed": 1757,
+        "failed": 0,
+        "ignored": 6,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 9,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 13,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 12,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 28,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 49,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 23,
+        "failed": 0,
+        "ignored": 11,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 14,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 49,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 60,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 39,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 11,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 108,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 15,
+        "failed": 0,
+        "ignored": 3,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 38,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 13,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 21,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 13,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 12,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 22,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 15,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 34,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 20,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 8,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      }
+    ],
+    "warnings": [],
+    "sources_and_previous_binaries_unchanged": true
+  },
+  {
+    "name": "drc",
+    "exit_code": 101,
+    "seconds": 636.6893865694292,
+    "stdout_sha256": "a48d22f8e8011ed5d04a5bb5d015fcf08d02aafe7cc787722a6681f047c7c4b1",
+    "stderr_sha256": "7e4bf8297ee3eca3c0ee9d509e4f6330b98915680cd9d102e44888407118125e",
+    "test_batches": [
+      {
+        "passed": 1560,
+        "failed": 2,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      }
+    ],
+    "warnings": [],
+    "sources_and_previous_binaries_unchanged": true
+  }
+]

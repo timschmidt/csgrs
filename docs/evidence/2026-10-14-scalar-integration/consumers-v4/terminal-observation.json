@@ -1,0 +1,69 @@
+{
+  "scope": "Terminal observation of the already-running trial after the user paused the goal; no retry or new numerical execution.",
+  "terminal_session_id": 71253,
+  "terminal_exit_code": 101,
+  "prior_pause_snapshot": "user-pause.json",
+  "prior_pause_snapshot_is_final_status": false,
+  "pause_stop_attempt": {
+    "matched_driver_pids": [],
+    "termination_signal_delivered": false
+  },
+  "all_planned_commands_returned": true,
+  "all_commands_passed": false,
+  "result_complete_field_means": "All planned commands returned successfully; false does not imply that the driver remains active.",
+  "commands": [
+    {
+      "name": "foundations",
+      "exit_code": 0,
+      "test_totals": {
+        "passed": 1542,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "curve",
+      "exit_code": 0,
+      "test_totals": {
+        "passed": 2485,
+        "failed": 0,
+        "ignored": 33
+      }
+    },
+    {
+      "name": "drc",
+      "exit_code": 101,
+      "test_totals": {
+        "passed": 1560,
+        "failed": 2,
+        "ignored": 0
+      }
+    }
+  ],
+  "failed_runtime_guards": [
+    {
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "reported_worker_seconds": 220.166012272
+    },
+    {
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "reported_seconds": 106.462625344
+    }
+  ],
+  "raw_outputs_match_original_command_digests": true,
+  "preserved_trial_files_sha256": {
+    "binaries.json": "cb6879c995336e33886798850961c9b51359096b142cbd47ba05d24232845cc5",
+    "commands.json": "b5071ee75d9fb677b6c9a85db446e4d4768987b3ffceac85e8f747438dea07c4",
+    "curve.stderr": "4acc45c95791526374e3078a8ec6661a13bf1e2012c6fff1bd2f3a673883d3a7",
+    "curve.stdout": "fff9c7328f931c6f63a957bd687faf23b0729f1066ced262c5179d066b6ea852",
+    "drc.stderr": "7e4bf8297ee3eca3c0ee9d509e4f6330b98915680cd9d102e44888407118125e",
+    "drc.stdout": "a48d22f8e8011ed5d04a5bb5d015fcf08d02aafe7cc787722a6681f047c7c4b1",
+    "foundations.stderr": "9a0b9b260d65b09251d111ea1f34d70a329bd1aebdc1b2937bdd210208c58e7a",
+    "foundations.stdout": "481cba2e0f945c26ec3beeeb28ef5efbe5e121e4806a44639f053544f7028c2c",
+    "protocol.json": "bdb9f6f3efeee928636cb314106e05c1ac4248558420c0579f1ed6833102d149",
+    "result.json": "95585c3e758de8b07008240942361202daeb1c11fadf9e5db1b7d01cc979f055",
+    "user-pause.json": "ef6dc64ce5e7897bd393451075b15fd0c60dcacc49f70b218cf2c80f7e06729a"
+  },
+  "runtime_admitted": false,
+  "goal_remains_paused": true
+}
