@@ -9151,6 +9151,50 @@
         "Seven existing Hypermesh tests and one existing all-feature CSGRS test remain ignored under their original conditions."
       ],
       "full_plan_complete": false
+    },
+    "section_proof_reuse": {
+      "status": "kept: identical native section inputs reuse their winding proof",
+      "baseline_commit": "3a2d3fd1b",
+      "evidence": "docs/evidence/2026-10-15-section-proof-reuse/assessment-v1.json",
+      "decision": "docs/evidence/2026-10-15-section-proof-reuse/decision-v1.json",
+      "closure": "docs/evidence/2026-10-15-section-proof-reuse/closure-v1.json",
+      "validation": {
+        "baseline-v1/regressions": [
+          25,
+          0,
+          0
+        ],
+        "baseline-v2/regressions": [
+          25,
+          0,
+          0
+        ],
+        "candidate-v1/regressions": [
+          25,
+          0,
+          0
+        ],
+        "cargo-v1/curve-tests": [
+          231,
+          0,
+          0
+        ],
+        "cargo-v1/minimal-tests": [
+          96,
+          0,
+          0
+        ]
+      },
+      "preserved_contract": "25 section/projection regressions and 43 byte-identical snapshots preserve exact rows, exposed boundary evidence and certainty, including the original full-resolution sphere and frustum. No policy or fixture changes.",
+      "cost": "Middle-section varied and disabled-cache medians improve 42.1% and 40.4%; allocation calls fall 43.6% (3300 to 1862), requested bytes fall 43.8%. All 9216 timed operations complete with matching exact rows, output sizes and checksums. Full 43-case corpus snapshots also complete three times per revision.",
+      "limitations": [
+        "Shared unpinned host, three samples per case and allocation instrumentation. Short controls can vary. No universal or cross-library speedup claim; all unfavorable results retained.",
+        "Exact native library bytes are shared by both direct-rustc probe builds; separate Cargo tests cover feature isolation. Prior E4 timing used a different configuration and is not a matched cost baseline for this probe.",
+        "Operation-local certainty and exposed boundary evidence are preserved; this does not establish inherited mesh-construction provenance or analytic-surface fidelity.",
+        "No internal total-work, retained-byte or cancellation bounds. Trials use external 1800-second wall and 8 GiB per-process address-space containment.",
+        "Full workflow matrix, clean external release, broad strict completion and the 35 pending native files remain open. No push. Previously reproduced Hypercircuit fixture failures are not re-run here."
+      ],
+      "full_plan_complete": false
     }
   },
   "status_meanings": {
