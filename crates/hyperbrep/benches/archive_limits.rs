@@ -135,4 +135,42 @@ fn main() {
     measure("archive_limits/reject_tokens:", 100_000, true, || {
         rejected(&wide, &limited, ArchiveResource::Tokens, 33)
     });
+    let limited = ArchiveLimits {
+        records: 99,
+        ..limits
+    };
+    measure("archive_limits/reject_records:", 10_000, false, || {
+        rejected(&json, &limited, ArchiveResource::Records, 100)
+    });
+    let high_degree = r#"{"version":9,"curves":[{"Nurbs":{"degree":300,"control_points":[],"weights":[],"knots":[]}}]}"#;
+    measure("archive_limits/reject_degree:", 10_000, false, || {
+        rejected(high_degree, &limits, ArchiveResource::Degree, 300)
+    });
+    let bad = serde_json::json!(vec!["not an exact scalar"; 128]);
+    let large_controls = serde_json::json!({"version":9,"pcurves":[{"RationalBezier":{"homogeneous_controls":bad}}]}).to_string();
+    let limited = ArchiveLimits {
+        geometry_elements: 64,
+        ..limits
+    };
+    measure("archive_limits/reject_geometry:", 10_000, false, || {
+        rejected(
+            &large_controls,
+            &limited,
+            ArchiveResource::GeometryElements,
+            128,
+        )
+    });
+    let wide_wire = serde_json::json!({"version":9,"wires":[{"edge_uses":bad}]}).to_string();
+    let limited = ArchiveLimits {
+        topology_references: 64,
+        ..limits
+    };
+    measure("archive_limits/reject_topology:", 10_000, false, || {
+        rejected(
+            &wide_wire,
+            &limited,
+            ArchiveResource::TopologyReferences,
+            128,
+        )
+    });
 }

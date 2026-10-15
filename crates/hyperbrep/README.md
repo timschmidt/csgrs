@@ -30,8 +30,9 @@ scalar precision, time or memory. Scopes do not propagate to worker threads
 or futures. See [operation scopes](docs/ARCHITECTURE.md#operation-scopes).
 
 Archive input uses `RawModel::from_json(json, &ArchiveLimits::default())` or
-caller-selected byte, nesting and token limits. Exceeding a limit returns a
-typed resource error before deserialization. `RawModel::validate` then
+caller-selected byte, nesting, token, record, degree, geometry-element and
+topology-reference limits. Exceeding a limit returns a typed resource error
+before exact-scalar deserialization. `RawModel::validate` then
 reconstructs geometry proofs. Input limits do not bound scalar reconstruction
 or geometric validation; see the [archive contract](docs/SELECTED_ARCHIVE.md).
 

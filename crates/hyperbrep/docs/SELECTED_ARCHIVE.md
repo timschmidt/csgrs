@@ -2,37 +2,65 @@
 
 Version 9 retains authored coordinates and selected curve images in the same
 model. It replaces version 8; there is no migration reader.
-`RawModel::from_json(json, &limits)` admits input syntax under explicit
-`ArchiveLimits`, checks the format envelope before decoding records and rejects
-trailing input.
+`RawModel::from_json(json, &limits)` admits input syntax and record structure
+under explicit `ArchiveLimits`, checks the format version before decoding exact
+scalar data and rejects trailing input.
 `RawModel::validate` is the trust boundary. Parsing alone grants no geometry,
 measurement or topology authority.
 
 ## Input admission
 
-`ArchiveLimits` sets `input_bytes`, `nesting_depth` and `tokens`. Defaults are
-16 MiB, 1,024 nested containers and 1,000,000 tokens; the caller explicitly
-passes a configuration. Byte admission runs first. An iterative scan of the
-borrowed UTF-8 input then counts open objects/arrays and syntax tokens without
-allocating or recursing. A token is an opening container, quoted string
-(including a key), or primitive lexeme. Closing delimiters, punctuation and
-whitespace do not count as tokens; all bytes, including whitespace and ignored
-fields, count toward the byte limit. Brackets and escaped quotes inside strings
-do not contribute structural depth.
+The caller passes `ArchiveLimits` explicitly. Its defaults and units are:
+
+| Field | Default | Counted resource |
+| --- | ---: | --- |
+| `input_bytes` | 16 MiB | All UTF-8 bytes, including whitespace and ignored fields |
+| `nesting_depth` | 1,024 | Simultaneously open JSON objects and arrays |
+| `tokens` | 1,000,000 | Opening containers, quoted strings (including keys), and primitive lexemes |
+| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve sources, and inline extrusion/revolution profiles |
+| `degree` | 256 | Each declared NURBS axis degree, inferred Bezier axis degree, or selected-root polynomial storage degree |
+| `geometry_elements` | 1,000,000 | Aggregate variable controls, weights, knots, root coefficients, and tensor row headers |
+| `topology_references` | 1,000,000 | Aggregate wire edge uses, face inner wires, shell faces and solid void shells |
+
+Byte admission runs first. A constant-storage iterative scan then counts depth
+and tokens without allocating or recursing. Closing delimiters, punctuation and
+whitespace are not tokens; brackets and escaped quotes inside strings do not
+increase structural depth. This scan precedes any version-specific parsing.
+
+Next, a Serde seed carries one shared budget through record metadata. It reads
+counts and degrees without constructing exact scalars, geometry or collections
+of records. Top-level entries are charged before their payloads are inspected;
+inline profiles and variable sizes are charged when the enclosing record's
+summary is complete. Detached sources use the same budget as model arenas.
+Successful inputs combine version and metadata admission in one pass. On a
+metadata failure, a separate header read can still diagnose an unsupported
+version regardless of field order. It never migrates an older schema. Duplicate
+or absent versions are invalid JSON-model envelopes.
+
+A control point counts once, not once per coordinate. Every tensor row also
+counts, including an empty row. Bezier degrees are control counts minus one
+(saturating at zero); tensor degrees use row count and maximum row width.
+Rational quadratic pcurves have degree two. Root degree is coefficient count
+minus one without trimming trailing zeros. Fixed-size analytic coordinates,
+chart-image coefficients and fixed record references are bounded by record
+counts instead of variable-size counters. Unknown fields consume syntax limits,
+not schema counters. Full decoding and geometry validation remain responsible
+for malformed dimensions, missing fields, invalid coefficients and references.
 
 Exhaustion returns `PersistenceError::ResourceLimit(ArchiveLimitExceeded)` with
-the resource, allowance and observed length or first disallowed count. It
-occurs before either version parsing or exact-scalar deserialization. Retrying
-with larger limits preserves the original input and exact result. Malformed
-input that passes admission still goes through the existing JSON validator.
-No part is silently omitted to fit a limit. The one-argument API is removed;
-callers select their limits directly.
+the resource, allowance and observed amount. This is the input length, first
+disallowed syntax/record count, declared/inferred degree, or aggregate after a
+record summary. Every limit is inclusive. Retrying with larger limits preserves
+the original input and exact result; no data is silently omitted to fit a limit.
+The one-argument API is removed; callers select their limits directly.
 
-These are syntax limits, not bounds on coefficient reconstruction, geometry
-work, aggregate allocations, elapsed time or native stack use. A small scalar
-expression can demand substantial work. Native `serde_stacker` remains in the
-decoder, and configurable depth alone does not prove a safe WASM call stack.
-See [admission evidence](evidence/2026-10-15-archive-admission/README.md).
+These limits do not bound coefficient reconstruction, geometry work, aggregate
+allocations, elapsed time or native stack use. A small scalar expression can
+demand substantial work. Metadata parsing and error reporting may allocate;
+only the initial syntax scanner has an allocation-free claim. Native
+`serde_stacker` remains in the decoder, and configurable depth alone does not
+prove a safe WASM call stack. See the [syntax admission evidence](evidence/2026-10-15-archive-admission/README.md)
+and [structural admission evidence](evidence/2026-10-15-archive-structure/README.md).
 
 ## Records and deterministic ordering
 
@@ -154,8 +182,8 @@ boundary image, void-shell nesting, surface/contact/fiber graphs, non-authored
 Hypercurve support fragments, general Boolean transfer, and selected angular
 conic images remain open. A typed failure is not a successful round trip.
 
-This format is not the completed WP13 resource-boundary design. Entity,
-degree and aggregate allocation limits, an iterative WASM-safe record decoder,
+This format is not the completed WP13 resource-boundary design. Aggregate
+allocation and scalar-work limits, an iterative WASM-safe record decoder,
 independently versioned coefficient/certificate envelopes, semantic provenance
 and the optional serialization feature still need implementation. Native
 `serde_stacker` handling is retained; WASM compilation does not establish a

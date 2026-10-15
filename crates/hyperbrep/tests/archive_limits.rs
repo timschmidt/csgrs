@@ -39,6 +39,7 @@ fn exact_limits(json: &str) -> ArchiveLimits {
         input_bytes: json.len(),
         nesting_depth,
         tokens,
+        ..ArchiveLimits::default()
     }
 }
 
@@ -63,6 +64,7 @@ fn each_input_limit_accepts_its_boundary_and_allows_an_exact_retry() {
             ArchiveResource::InputBytes => &mut reduced.input_bytes,
             ArchiveResource::NestingDepth => &mut reduced.nesting_depth,
             ArchiveResource::Tokens => &mut reduced.tokens,
+            _ => unreachable!("this test enumerates syntax limits"),
         };
         *allowance -= 1;
         let expected = ArchiveLimitExceeded {

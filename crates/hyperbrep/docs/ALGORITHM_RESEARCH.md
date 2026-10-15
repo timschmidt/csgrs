@@ -730,3 +730,22 @@ not bound scalar reconstruction or later replay. The
 against an independently parsed JSON tree, records rejected faults and measures
 scan overhead and early-rejection allocations. Full iterative coefficient and
 record decoding remains open; no external implementation was copied.
+
+## Archive structure admission (2026-10-15)
+
+[Serde's `DeserializeSeed` contract](https://docs.rs/serde/1.0.228/serde/de/trait.DeserializeSeed.html)
+provides explicit state to deserialization. HyperBRep uses that mechanism to
+carry one archive budget through record arrays and selected-source graphs.
+Count visitors discard scalar payloads and retain only sizes; they do not reserve
+storage from a size hint. This is our resource-admission design, not a claim that
+Serde bounds arbitrary numeric reconstruction or native stack use.
+
+The first prototype added an independent metadata pass after the version pass.
+Its allocation-instrumented cuboid decode/encode median was 580.281 microseconds
+against a 379.363 microsecond baseline, a 1.529619 ratio. It retained exact
+receipts but was superseded by combined version/metadata admission. The error
+path can separately diagnose unsupported versions without admitting old record
+schemas. The [experiment and final evidence](evidence/2026-10-15-archive-structure/README.md)
+retain all observations and allocation counts. Scalar bit/work limits, iterative
+WASM-safe decoding and the inherited controlled-host timing follow-up remain
+open; these counters alone cannot certify hostile-input runtime safety.

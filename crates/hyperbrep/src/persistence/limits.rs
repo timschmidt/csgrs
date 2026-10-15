@@ -4,10 +4,11 @@ use std::fmt;
 
 use super::PersistenceError;
 
-/// Caller-selected bounds checked before archive deserialization.
+/// Caller-selected bounds checked before exact scalar/geometry deserialization.
 ///
-/// These count the borrowed input and its JSON syntax, including unknown
-/// fields. They do not bound scalar arithmetic, allocations during scalar
+/// Syntax limits count the borrowed input, including unknown fields. Record
+/// limits inspect version 9 metadata without decoding coordinate values.
+/// They do not bound scalar arithmetic, allocations during scalar
 /// reconstruction, geometry validation, elapsed time, or native stack usage.
 /// Increasing a limit permits retry without changing exact geometry semantics.
 /// No limit silently simplifies or truncates input.
@@ -22,16 +23,36 @@ pub struct ArchiveLimits {
     /// Closing brackets, commas, colons and whitespace do not count. A quoted
     /// string or a number/boolean/null lexeme counts once, regardless of length.
     pub tokens: usize,
+    /// Total topology/geometry records, selected parameters and source records.
+    /// Inline extrusion/revolution profiles count as additional geometry records.
+    pub records: usize,
+    /// Largest authored spline/root degree (Bezier control count minus one).
+    /// Tensor Bezier extents use row count and maximum row width. Trailing
+    /// zero coefficients are not simplified to reduce the charged root degree.
+    pub degree: usize,
+    /// Total variable geometry-array entries: controls, weights, knots, root
+    /// coefficients, and tensor row headers. A control point counts once.
+    /// Empty tensor rows still count; fixed analytic coordinate fields do not.
+    pub geometry_elements: usize,
+    /// Total entries in variable topology lists: wire uses, face inner wires,
+    /// shell faces and solid void shells. Fixed record references are not counted.
+    pub topology_references: usize,
 }
 
 impl Default for ArchiveLimits {
-    /// Allows 16 MiB, 1,024 nested containers and 1,000,000 syntax tokens.
+    /// Allows 16 MiB, 1,024 nested containers, 1,000,000 syntax tokens,
+    /// 250,000 records, degree 256, and 1,000,000 geometry elements and
+    /// variable topology references each.
     /// These are input-admission defaults, not a safe stack or runtime guarantee.
     fn default() -> Self {
         Self {
             input_bytes: 16 * 1024 * 1024,
             nesting_depth: 1024,
             tokens: 1_000_000,
+            records: 250_000,
+            degree: 256,
+            geometry_elements: 1_000_000,
+            topology_references: 1_000_000,
         }
     }
 }
@@ -45,6 +66,14 @@ pub enum ArchiveResource {
     NestingDepth,
     /// JSON containers, strings and primitive lexemes.
     Tokens,
+    /// Topology/geometry and selected-graph records, including inline profiles.
+    Records,
+    /// Authored spline or root degree.
+    Degree,
+    /// Controls, weights, knots, root coefficients and tensor row headers.
+    GeometryElements,
+    /// Variable topology-list entries.
+    TopologyReferences,
 }
 
 /// A failed archive admission, distinct from malformed data or invalid topology.
@@ -54,7 +83,8 @@ pub struct ArchiveLimitExceeded {
     pub resource: ArchiveResource,
     /// Caller-selected allowance.
     pub limit: usize,
-    /// Observed input length, or the first disallowed depth/token count.
+    /// Observed length, first disallowed depth/token/record count, declared
+    /// degree, or aggregate entry count after the current record summary.
     pub observed: usize,
 }
 

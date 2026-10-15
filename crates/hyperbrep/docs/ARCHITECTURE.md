@@ -153,12 +153,16 @@ defines Hypercurve's complete-image injectivity gate for boundary reassembly;
 connected multi-span NURBS with one common strict monotone coordinate can pass.
 See [composition evidence](evidence/2026-10-15-spline-replay/README.md).
 
-Archive decoding requires explicit `ArchiveLimits` for input bytes, JSON depth
-and tokens. A constant-storage scan precedes version and scalar decoding;
-resource exhaustion remains distinct from malformed JSON and invalid geometry.
+Archive decoding requires explicit `ArchiveLimits` for input bytes, JSON depth,
+tokens, records, degrees, variable geometry elements and topology references.
+A constant-storage syntax scan precedes a resource-only metadata pass. Stateful
+Serde seeds carry the shared budget through arenas and detached selected sources;
+metadata summaries contain no exact scalars or per-entry collections. Successful
+inputs read version and metadata together. The full record decoder runs only
+after admission, and model validation still rebuilds every geometry proof.
 The [archive contract](SELECTED_ARCHIVE.md#input-admission) defines exact units
-and retry behavior. Entity/degree/allocation limits and an iterative record
-decoder remain separate work; syntax admission is not a total resource bound.
+and retry behavior. Allocation/scalar-work limits and an iterative WASM-safe
+record decoder remain separate work; structural admission is not a total bound.
 
 ## Source organization
 

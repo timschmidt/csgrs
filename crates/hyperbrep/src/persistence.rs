@@ -16,6 +16,7 @@ use crate::{
     PcurveId, ShellId, Surface, SurfaceId, SurfaceKind, ValidationReport, VertexId, WireId,
 };
 
+mod admission;
 mod limits;
 pub use limits::{ArchiveLimitExceeded, ArchiveLimits, ArchiveResource};
 mod selection;
@@ -117,24 +118,11 @@ pub struct ImportedModel {
 }
 
 impl ImportedModel {
-    /// Admits bounded JSON syntax, then parses without claiming topology validity.
+    /// Admits JSON syntax and record structure before decoding exact scalar data.
     pub fn from_json(json: &str, limits: &ArchiveLimits) -> Result<Self, PersistenceError> {
         limits.admit_json(json)?;
         crate::context::strict(|| {
-            // Read the format envelope before attempting the version-specific
-            // record schema. This diagnoses old formats without a migration path.
-            #[derive(Deserialize)]
-            struct Header {
-                version: u32,
-            }
-            let mut header = serde_json::Deserializer::from_str(json);
-            header.disable_recursion_limit();
-            let version = Header::deserialize(serde_stacker::Deserializer::new(&mut header))
-                .map_err(|error| PersistenceError::Json(error.to_string()))?
-                .version;
-            if version != FORMAT_VERSION {
-                return Err(PersistenceError::UnsupportedVersion(version));
-            }
+            admission::check_records(json, limits)?;
             let mut deserializer = serde_json::Deserializer::from_str(json);
             deserializer.disable_recursion_limit();
             let data =

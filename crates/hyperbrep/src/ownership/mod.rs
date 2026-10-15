@@ -216,9 +216,10 @@ pub struct RawModel {
 impl RawModel {
     /// Parses JSON under explicit input limits without asserting topology validity.
     ///
-    /// Byte, nesting and token admission happens before deserialization and
-    /// returns [`PersistenceError::ResourceLimit`] on exhaustion. These limits
-    /// do not bound scalar reconstruction or subsequent geometric validation.
+    /// Byte, nesting and token admission precedes version decoding. A metadata
+    /// pass checks records, degree, geometry arrays and topology lists before
+    /// exact scalar decoding. Exhaustion returns [`PersistenceError::ResourceLimit`].
+    /// These limits do not bound scalar reconstruction or geometric validation work.
     pub fn from_json(json: &str, limits: &crate::ArchiveLimits) -> Result<Self, PersistenceError> {
         ImportedModel::from_json(json, limits).map(|inner| Self { inner })
     }

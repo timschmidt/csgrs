@@ -1,5 +1,44 @@
 # HyperBREP Performance Contract
 
+## 2026-10-15: shared archive structure admission
+
+Kept as partial WP13 resource-contract work. The
+[qualification](docs/evidence/2026-10-15-archive-structure/README.md) compares
+against `155f15e4f` in three alternating process pairs pinned to CPU 0.
+All 66 native receipts match. The median of case median timing ratios is
+0.995768; the largest is 1.073196, within the default 10% budget. Three further
+pairs preserve eight spline replay receipts with ratios 0.999766–1.014925.
+This comparison does not close the prior archive-input-admission timing issue.
+
+The allocation-instrumented cuboid decode/encode case changes from 379.930 to
+380.386 microseconds (1.001200 ratio). Its 695 allocation calls and 216,464
+requested allocator bytes per iteration are unchanged. The three existing
+syntax rejections remain allocation-free and within the timing budget.
+Four new structural rejections, each measured for 10,000 iterations per process,
+have these medians and Rust allocator requests per iteration:
+
+| Rejected allowance | Median | Allocation calls | Requested bytes |
+| --- | ---: | ---: | ---: |
+| Records (100 observed, 99 allowed) | 180.694 µs | 7 | 214 |
+| Degree (300 observed, 256 allowed) | 1.082 µs | 4 | 126 |
+| Geometry elements (128 observed, 64 allowed) | 9.104 µs | 5 | 166 |
+| Topology references (128 observed, 64 allowed) | 8.556 µs | 4 | 126 |
+
+Fixtures differ; the rows are not a relative cost comparison of the resources.
+Error construction and metadata parsing can allocate. Counts include Rust
+allocation/reallocation requests, not foreign allocations, retained heap or
+native stack. The kernel executable grows 224,768 bytes to 24,997,880;
+median native process peak RSS is 21,796 versus 22,008 KiB. No significance
+or universal resource bound is inferred.
+
+An initial implementation retained separate version and metadata passes.
+Its four established allocation-instrumented cohorts exceeded the 10% gate;
+cuboid decode/encode had ratio 1.529619. That prototype was superseded by shared
+version/metadata admission on the successful path. Every initial observation
+and the source difference remain in the evidence bundle; none contributes to
+the final-source cost statistics. Numeric reconstruction and iterative WASM-safe
+decoding remain open. This is a resource-contract extension, not a speedup claim.
+
 ## 2026-10-15: explicit archive input admission
 
 Kept as a WP13 resource-contract extension with an architectural cost

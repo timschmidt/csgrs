@@ -479,6 +479,37 @@
       "validation": "243 all-feature core tests, 62 integration tests and four doctests; 236 default core tests, 61 integration tests and four doctests; 39 focused release tests. Strict Clippy, warning-denied docs, WASM library compilation, fuzz-bin Clippy, nine benchmark builds and formatting pass. Four deliberate faults trigger runtime test failures and are restored before final checks.",
       "cost_evidence": "Six native pairs preserve all 66 receipts. Pooled 10% timing gate fails: all-six median/largest case ratios 1.243534/1.340618. Diagnostic paired medians 1.003536/1.050614 do not replace that gate. Kept because pre-deserialization admission is required resource behavior, with controlled-host timing requalification open. Three additional pairs preserve eight replay receipts with 2.04\u20134.01% replay overhead. Executable +1,872 bytes; six-trial median peak RSS 22,046 to 21,748 KiB. Three runs record zero Rust allocation calls/bytes on byte/depth/token rejection. Exact scopes and all raw samples are retained.",
       "limits": "Syntax limits are not total byte-allocation, coefficient-work, call-stack, entity/degree or geometric-validation bounds. Iterative WASM-safe record decoding, coefficient/certificate envelopes, complete selected graphs and semantic provenance remain open. No runtime fuzz/ASan/lexicase, full Hypercurve/workspace suite, external oracle, WASM execution, full timing admission or pre-push qualification."
+    },
+    {
+      "id": "archive-structure-admission",
+      "work_packages": [
+        "WP01",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P5",
+        "P6",
+        "P8",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "kept; all established measured timing cohorts pass this increment's budget; inherited archive-input-admission timing qualification remains open; no work-package gate completed",
+      "change": "Extend ArchiveLimits with aggregate record, degree, geometry-element and topology-reference limits. Stateful Serde seeds inspect schema metadata without constructing exact scalars or per-record collections; model arenas, detached sources, roots and inline profiles share one budget. Combine version and metadata admission on successful input; diagnose unsupported versions independently after admission failures.",
+      "source": "../src/persistence/admission.rs",
+      "contract": "SELECTED_ARCHIVE.md#input-admission",
+      "evidence": "evidence/2026-10-15-archive-structure/manifest.json",
+      "validation": "243 all-feature core tests, 70 integration tests and four doctests; 236 default core tests, 69 integration tests and four doctests; 47 focused release tests. Strict Clippy, warning-denied docs, WASM library compilation, fuzz-bin Clippy, nine benchmark builds and formatting pass. Eight new structural tests and six restored runtime-failing implementation faults cover shared budgets, every variable-size family, boundary retries, invalid scalar/index payloads and version ordering.",
+      "cost_evidence": "Three native pairs preserve 66 receipts; median/largest case ratios 0.995768/1.073196. Three additional pairs preserve eight spline replay receipts (ratios 0.999766\u20131.014925). Four established allocation-instrumented cases pass the 10% gate; positive decode/encode ratio 1.001200 with unchanged 695 calls / 216,464 requested bytes per iteration. Executable +224,768 bytes; median native RSS 21,796 to 22,008 KiB. Four new structural rejection costs and all superseded separate-pass prototype data are retained. Prior input-admission timing failure is not cleared by this comparison.",
+      "limits": "Structural limits do not bound scalar reconstruction, aggregate allocation, call-stack use or geometric validation. Metadata parsing and errors can allocate. Iterative WASM-safe decoding, coefficient/certificate envelopes, complete selected graphs and semantic provenance remain open. No runtime fuzz/ASan/lexicase, full dependency/workspace suite, external oracle, WASM execution or pre-push qualification."
     }
   ],
   "work_packages": [
@@ -654,7 +685,7 @@
   "next_actions": [
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
     "Complete WP02/G1 beyond planar spline replay, subdivided cuboid and axial-cylinder archive replay. Extend independent solid/void/corner proofs, retained surface/contact images and selected Boolean transfer while preserving every existing exact behavior. Native-to-selected spline composition and five repeated selected cuboid cuts now have regression evidence.",
-    "Continue WP13 beyond explicit byte/depth/token admission: add entity/degree/control-lattice and allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
+    "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
     "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
