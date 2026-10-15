@@ -3,7 +3,7 @@
 // replaces an existing successful proof, approximates an atom, or rebuilds the
 // authoritative expression. Atom equality uses the shared structural matcher.
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct RingPolynomial {
     // Sorted monomials, with sorted atom IDs and nonzero rational coefficients.
     terms: Vec<(Vec<u8>, Rational)>,

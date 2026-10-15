@@ -1,0 +1,148 @@
+#[cfg(test)]
+mod ring_quotient_tests {
+    use super::*;
+
+    fn raw(approximation: Approximation) -> Computable {
+        Computable {
+            internal: Arc::new(Node::new(
+                approximation,
+                BoundCache::Invalid,
+                ExactSignCache::Invalid,
+            )),
+            signal: None,
+        }
+    }
+
+    fn positive_denominator() -> Computable {
+        raw(Approximation::Add(
+            raw(Approximation::Int(BigInt::from(4))),
+            raw(Approximation::PrescaledSin(Computable::rational(
+                Rational::fraction(1, 3).unwrap(),
+            ))),
+        ))
+    }
+
+    fn inverse_identity(denominator: &Computable) -> Computable {
+        raw(Approximation::Add(
+            raw(Approximation::Multiply(
+                denominator.clone(),
+                raw(Approximation::Inverse(denominator.clone())),
+            )),
+            raw(Approximation::Int(BigInt::from(-1))),
+        ))
+    }
+
+    fn assert_unproved(value: &Computable) {
+        assert!(matches!(
+            value.internal.facts.exact_sign(),
+            ExactSignCache::Invalid
+        ));
+        assert!(value.cached().is_none());
+    }
+
+    #[test]
+    fn quotient_reuse_requires_a_real_nonzero_proof_and_can_recover() {
+        let denominator = positive_denominator();
+        let value = inverse_identity(&denominator);
+        assert_eq!(denominator.immediate_sign(), None);
+        assert_eq!(value.bounded_quotient_rational(), None);
+        assert_unproved(&value);
+        assert_unproved(&denominator);
+        denominator
+            .internal
+            .facts
+            .replace_exact_sign(ExactSignCache::Unknown);
+        assert_eq!(value.bounded_quotient_rational(), None);
+        assert_unproved(&value);
+        assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
+        assert_eq!(denominator.immediate_sign(), Some(RealSign::Positive));
+        assert_eq!(value.bounded_quotient_rational(), Some(Rational::zero()));
+        assert_eq!(value.sign_until(0), Some(RealSign::Zero));
+        assert!(value.cached().is_none());
+    }
+
+    #[test]
+    fn quotient_rejects_zero_and_unproved_denominators() {
+        let a = positive_denominator();
+        let cancelled = raw(Approximation::Add(a.clone(), raw(Approximation::Negate(a))));
+        for denominator in [
+            Computable::zero(),
+            raw(Approximation::Int(BigInt::zero())),
+            cancelled,
+            positive_denominator(),
+        ] {
+            let value = inverse_identity(&denominator);
+            assert_eq!(value.bounded_quotient_rational(), None);
+            assert_unproved(&value);
+        }
+    }
+
+    #[test]
+    fn quotient_can_prove_a_nonzero_denominator_without_refinement() {
+        let a = positive_denominator();
+        let denominator = raw(Approximation::Add(
+            raw(Approximation::Add(
+                a.clone(),
+                raw(Approximation::Int(BigInt::from(2))),
+            )),
+            raw(Approximation::Negate(a)),
+        ));
+        assert_eq!(denominator.immediate_sign(), None);
+        let value = inverse_identity(&denominator);
+        assert_eq!(value.bounded_quotient_rational(), Some(Rational::zero()));
+        // The local denominator witness was not published as a partial root
+        // result. Only the completed queried expression receives a proof.
+        assert_unproved(&denominator);
+        assert!(value.cached().is_none());
+    }
+
+    #[test]
+    fn quotient_limits_and_cancellation_publish_no_partial_proof() {
+        let denominator = positive_denominator();
+        assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
+        let mut value = inverse_identity(&denominator);
+        let mut nodes = RingRecognition::new(&value);
+        nodes.nodes_left = 2;
+        assert!(
+            nodes
+                .expand_quotient(&value, RingRecognition::MAX_DEPTH)
+                .is_none()
+        );
+        let mut work = RingRecognition::new(&value);
+        work.operations_left = 1;
+        assert!(
+            work.expand_quotient(&value, RingRecognition::MAX_DEPTH)
+                .is_none()
+        );
+        assert!(
+            RingRecognition::new(&value)
+                .expand_quotient(&value, 1)
+                .is_none()
+        );
+        assert_unproved(&value);
+        let signal = Arc::new(AtomicBool::new(true));
+        value.abort(signal.clone());
+        assert_eq!(value.bounded_quotient_rational(), None);
+        assert_unproved(&value);
+        signal.store(false, std::sync::atomic::Ordering::Relaxed);
+        assert_eq!(value.bounded_quotient_rational(), Some(Rational::zero()));
+        assert!(value.cached().is_none());
+    }
+
+    #[test]
+    fn quotient_expansion_preserves_degree_and_coefficient_limits() {
+        let denominator = positive_denominator();
+        assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
+        let mut value = raw(Approximation::Inverse(denominator.clone()));
+        for _ in 0..4 {
+            value = raw(Approximation::Square(value));
+        }
+        assert_eq!(value.bounded_quotient_rational(), None);
+        assert_unproved(&value);
+        for shift in [i32::MIN, i32::MAX] {
+            let value = raw(Approximation::Offset(inverse_identity(&denominator), shift));
+            assert_eq!(value.bounded_quotient_rational(), None);
+            assert_unproved(&value);
+        }
+    }
+}

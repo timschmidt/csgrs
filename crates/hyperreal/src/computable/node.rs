@@ -32,6 +32,8 @@ include!("node/roots_inverse_hyperbolic.rs");
 include!("node/algebra.rs");
 include!("node/ring_polynomial.rs");
 include!("node/ring_polynomial_tests.rs");
+include!("node/ring_quotient.rs");
+include!("node/ring_quotient_tests.rs");
 include!("node/quadratic_tower.rs");
 include!("node/radical_tower.rs");
 include!("node/approximation_queries.rs");

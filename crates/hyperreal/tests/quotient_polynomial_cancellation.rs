@@ -82,3 +82,65 @@ fn an_unproved_zero_denominator_keeps_its_typed_failure() {
         Err(Problem::UnknownZero)
     ));
 }
+
+#[test]
+fn quotient_proofs_survive_precision_changes_and_concurrent_queries() {
+    let (left, right) = equivalent_quotients();
+    let difference = left - right;
+    assert_eq!(
+        difference.exact_rational_normal_form(),
+        Some(Rational::zero())
+    );
+    for precision in [0, -1100, 0] {
+        assert_eq!(
+            difference.certified_sign_until(precision).sign(),
+            Some(RealSign::Zero)
+        );
+    }
+    std::thread::scope(|scope| {
+        for _ in 0..4 {
+            scope.spawn(|| {
+                assert_eq!(
+                    difference.exact_rational_normal_form(),
+                    Some(Rational::zero())
+                );
+                assert_eq!(
+                    difference.certified_sign_until(0).sign(),
+                    Some(RealSign::Zero)
+                );
+            });
+        }
+    });
+}
+
+#[test]
+fn distinct_denominators_use_the_exact_common_denominator() {
+    let a = Real::from(4) + Real::e().sin();
+    let b = Real::from(2) + (Real::pi() / Real::from(8)).unwrap().sin();
+    // a > 3 and b > 2. 1/a - 1/b = (b-a)/(ab).
+    let difference =
+        a.inverse_ref().unwrap() - b.inverse_ref().unwrap() - ((&b - &a) / (&a * &b)).unwrap();
+    assert_eq!(
+        difference.exact_rational_normal_form(),
+        Some(Rational::zero())
+    );
+    let nonrational = a.inverse_ref().unwrap() + b.inverse_ref().unwrap();
+    assert_eq!(nonrational.exact_rational_normal_form(), None);
+    assert_eq!(
+        nonrational.certified_sign_until(-64).sign(),
+        Some(RealSign::Positive)
+    );
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn quotient_proof_preserves_the_authoritative_serialized_expression() {
+    let (left, right) = equivalent_quotients();
+    let difference = left - right;
+    let before = serde_json::to_string(&difference).unwrap();
+    assert_eq!(
+        difference.exact_rational_normal_form(),
+        Some(Rational::zero())
+    );
+    assert_eq!(serde_json::to_string(&difference).unwrap(), before);
+}

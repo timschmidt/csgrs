@@ -9322,6 +9322,27 @@
       "remaining": "Prove quotient identities with nonzero-denominator evidence, preserve prior successful proof domains, run semantic/topology/repeated-composition acceptance, broad downstream checks and matched completed-contract costs before retention.",
       "runtime_admitted": false,
       "full_plan_complete": false
+    },
+    "quotient_scalar_proof_work": {
+      "status": "candidate: guarded quotient proofs pass; shared-expression frontier and full admission remain open",
+      "baseline_commit": "a9e3fbb29",
+      "progress": "docs/evidence/2026-10-15-quotient-scalar-proofs/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-quotient-scalar-proofs/scalar-and-drill-v1/result.json",
+      "diagnosis": "docs/evidence/2026-10-15-quotient-scalar-proofs/orientation-algebra-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-quotient-scalar-proofs/checkpoint-v1.json",
+      "implementation_sha256": {
+        "crates/hyperreal/src/computable/node.rs": "8a90c811535f2962993f8978edd285ae080afe619056e2ef3b898818beeda6b9",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "60f472c4263fe0980514f5cdc620f1f34b4e5d67d3ebd13007deb4ea5def680b",
+        "crates/hyperreal/src/computable/node/ring_quotient.rs": "393dbfde64402051d5b230e3be18c70d4dc733610cfd8bf5e3c226db4c1c47ed",
+        "crates/hyperreal/src/computable/node/ring_quotient_tests.rs": "371f342796c1cd0875fd42c95b5f07c40e701e0287a65ee836d70cee1f170cb2",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "8829c0ba56b8d94dced891bace58faaf62e8bbe8370e546c53f42cda0e28841d",
+        "crates/hyperreal/tests/quotient_polynomial_cancellation.rs": "a0ce6d3b89e1993aa5250fcc86ab7f504e0d743a560f2b6276e5131c7880ea17"
+      },
+      "qualification": "15 commands pass; 906 default and 1013 all-feature scalar tests, strict scalar Clippy, formatting, 28 doctests, CSGRS curve build and eight original drill observations. Configurations overlap; probe success is not strict geometry completion.",
+      "workflow": "8/24 segments remain Certified. 16/32 strict pass coordinate equality and stop at retained line orientation; approximate results remain qualified. Captured zero determinants have 648 arithmetic visits, exceeding the 512-node attempt limit.",
+      "remaining": "Investigate shared subexpression proof reuse without raising limits; preserve prior successful proofs, complete original strict drills, semantic/topology/composition acceptance, broad downstream qualification and matched completed-contract costs before retention.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
     }
   },
   "status_meanings": {

@@ -73,7 +73,9 @@ impl Real {
     ///
     /// Unlike [`Real::exact_rational`], this query may inspect a retained
     /// rational/π/quadratic expression or cancel structurally identical opaque
-    /// atoms in a rational polynomial. It never approximates: `None` means only
+    /// atoms in a rational polynomial or quotient. Expanding an inverse requires
+    /// an exact nonzero proof for its operand, either already retained or proved
+    /// by this reduction. It never approximates: `None` means only
     /// that recognition did not establish a rational value. Polynomial expansion
     /// has separate node, depth, term, degree, coefficient and work limits;
     /// these do not bound the existing structural comparisons or the entire
@@ -82,6 +84,9 @@ impl Real {
     /// 64 monomials, degree 8 and 4096 stored coefficient bits. Its 8192 work
     /// charges count node visits, coefficient operations, term insertion and
     /// structural comparisons; one comparison can inspect a larger opaque DAG.
+    /// After that fallback declines, quotient recognition gets a separate
+    /// attempt with the same limits. Its charges also count comparisons of
+    /// denominator coefficients. Earlier successful proofs remain preferred.
     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
         if let Some(rational) = self.exact_rational() {
             return Some(rational);
@@ -89,7 +94,8 @@ impl Real {
         let computable = self.computable_ref();
         let rational = computable
             .bounded_laurent_rational(64)
-            .or_else(|| computable.bounded_ring_rational())?;
+            .or_else(|| computable.bounded_ring_rational())
+            .or_else(|| computable.bounded_quotient_rational())?;
         Some(rational * &self.rational)
     }
 
