@@ -10,6 +10,7 @@
 //! decisions, not only to individual scalar values.
 
 mod dual_contour;
+mod evaluation;
 mod expr;
 mod facts;
 mod gradient;
@@ -19,6 +20,7 @@ mod hypervoxel_adapter;
 mod interval;
 mod lipschitz;
 mod mesh;
+mod metaball;
 mod policy;
 mod primitive;
 mod sampling;
@@ -36,6 +38,7 @@ pub use dual_contour::{
     SdfDualGridSampleRecord, SdfDualNormalEvidence, SdfDualQefTerm, SdfDualVertexPlacementStatus,
     SdfGridSampleSign,
 };
+pub use evaluation::SdfEvaluationError;
 pub use expr::{SdfCoordinate, SdfExpr};
 pub use facts::SdfFacts;
 pub use gradient::{SdfGradientReport, SdfNormalReport};
@@ -53,6 +56,7 @@ pub use mesh::{
     SdfMeshPreviewBackend, SdfMeshPreviewReport, SdfPreviewNormalStatus, SdfPreviewTriangle,
     SdfPreviewVertex,
 };
+pub use metaball::{Metaball, MetaballField};
 pub use primitive::SdfPrimitive;
 pub use sampling::{
     SdfGridSamplingError, SdfGridSamplingReport, SdfPreviewGrid, SdfPreviewSample,

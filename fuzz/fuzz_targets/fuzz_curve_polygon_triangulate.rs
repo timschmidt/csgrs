@@ -32,9 +32,10 @@ fuzz_target!(|bytes: &[u8]| {
         points.push([x, y]);
     }
 
-    let region = csgrs::curve::polygon(&points);
-    let Ok(mesh) =
-        csgrs::curve::try_triangulate(&region, &csgrs::GeometryContext::STRICT)
+    let Ok(region) = csgrs::curve::polygon(&points) else {
+        return;
+    };
+    let Ok(mesh) = csgrs::curve::try_triangulate(&region, &csgrs::GeometryContext::STRICT)
     else {
         return;
     };

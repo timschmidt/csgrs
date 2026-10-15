@@ -11,22 +11,28 @@ fn r(value: f64) -> Real {
 
 #[test]
 fn repeated_boolean_and_transform_sequence_stays_nonempty() {
-    let base = solid::center(&solid::cube(r(1.0)));
+    let base = solid::center(&solid::cube(r(1.0)).expect("valid primitive fixture"))
+        .expect("valid modeling fixture");
     let mut acc = base.clone();
 
     for i in 0..3 {
         let shift = r(i as f64) * r(0.18);
         let part = solid::rotate(
-            &base.translated(shift, r(0.0), r(0.0)),
+            &base
+                .translated(shift, r(0.0), r(0.0))
+                .expect("valid transform fixture"),
             r(0.0),
             r(90.0) * r(i as f64),
             r(0.0),
-        );
+        )
+        .expect("valid transform fixture");
         acc = acc.try_union(&part).expect("certified union");
     }
 
     assert!(!acc.triangles.is_empty());
-    let bounds = solid::bounding_box(&acc);
+    let bounds = solid::bounding_box(&acc)
+        .expect("decidable fixture bounds")
+        .expect("nonempty fixture");
     assert_eq!(
         hyperlimit::compare_reals(&bounds.maxs.x, &bounds.mins.x, PredicatePolicy::STRICT)
             .value(),
@@ -36,11 +42,12 @@ fn repeated_boolean_and_transform_sequence_stays_nonempty() {
 
 #[test]
 fn native_curve_boolean_outputs_can_be_extruded() {
-    let left = curve::rectangle(r(2.0), r(1.0));
+    let left = curve::rectangle(r(2.0), r(1.0)).expect("valid planar fixture");
     let right = curve::transformed(
-        &curve::circle(r(0.75), 32),
+        &curve::circle(r(0.75), 32).expect("valid planar fixture"),
         &hyperlattice::Matrix4::affine_translation([r(1.0), r(0.5), r(0.0)]),
-    );
+    )
+    .expect("valid planar transform fixture");
     let region = left
         .boolean_region(&right, hypercurve::BooleanOp::Union)
         .expect("curve union");

@@ -309,7 +309,8 @@ mod tests {
 
     #[test]
     fn sampled_sphere_is_representable_at_the_dxf_boundary() {
-        let sphere = crate::solid::sphere(Real::from(4_u8), 20, 10);
+        let sphere =
+            crate::solid::sphere(Real::from(4_u8), 20, 10).expect("valid primitive fixture");
         let bytes = to_dxf(&sphere).unwrap();
         assert_eq!(
             from_dxf(&bytes).unwrap().triangles.len(),

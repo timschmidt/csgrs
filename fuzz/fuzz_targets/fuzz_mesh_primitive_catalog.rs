@@ -57,26 +57,27 @@ fuzz_target!(|bytes: &[u8]| {
     };
 
     let mesh = match tag {
-        0 => solid::cuboid(a, b, c),
-        1 => solid::cube(at_least_tolerance(a.abs())),
-        2 => solid::sphere(at_least_tolerance(a.abs()), segments, segments),
-        3 => solid::cylinder(a, b, segments),
-        4 => solid::frustum(a, b, c, segments),
+        0 => solid::cuboid(a, b, c).ok(),
+        1 => solid::cube(at_least_tolerance(a.abs())).ok(),
+        2 => solid::sphere(at_least_tolerance(a.abs()), segments, segments).ok(),
+        3 => solid::cylinder(a, b, segments).ok(),
+        4 => solid::frustum(a, b, c, segments).ok(),
         5 => solid::frustum_between(
             Point3::origin(),
             Point3::new(a.clone(), b.clone(), c),
             a,
             b,
             segments,
-        ),
-        6 => solid::ellipsoid(a, b, c, segments, segments),
-        7 => solid::arrow(Point3::origin(), Vector3::from_xyz(a, b, c), segments, false),
-        8 => solid::octahedron(a),
-        9 => solid::icosahedron(a),
-        10 => solid::torus(a, b, segments, segments),
+        )
+        .ok(),
+        6 => solid::ellipsoid(a, b, c, segments, segments).ok(),
+        7 => solid::arrow(Point3::origin(), Vector3::from_xyz(a, b, c), segments, false).ok(),
+        8 => solid::octahedron(a).ok(),
+        9 => solid::icosahedron(a).ok(),
+        10 => solid::torus(a, b, segments, segments).ok(),
         11 => solid::teardrop_cylinder(a, b, c, segments, &context)
             .map(csgrs::GeometryOutcome::into_value)
-            .unwrap_or_else(|_| solid::empty()),
+            .ok(),
         12 => solid::spur_gear_involute(
             a,
             teeth,
@@ -88,10 +89,10 @@ fuzz_target!(|bytes: &[u8]| {
             &context,
         )
         .map(csgrs::GeometryOutcome::into_value)
-        .unwrap_or_else(|_| solid::empty()),
+        .ok(),
         13 => solid::spur_gear_cycloid(a, teeth, positive_b, b, segments, c, &context)
             .map(csgrs::GeometryOutcome::into_value)
-            .unwrap_or_else(|_| solid::empty()),
+            .ok(),
         _ => solid::helical_involute_gear(
             a,
             teeth,
@@ -105,8 +106,10 @@ fuzz_target!(|bytes: &[u8]| {
             &context,
         )
         .map(csgrs::GeometryOutcome::into_value)
-        .unwrap_or_else(|_| solid::empty()),
+        .ok(),
     };
 
-    support::validate_triangle_mesh(&mesh, true);
+    if let Some(mesh) = mesh {
+        support::validate_triangle_mesh(&mesh, true);
+    }
 });

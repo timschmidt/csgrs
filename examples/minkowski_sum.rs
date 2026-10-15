@@ -9,8 +9,8 @@ const PATH: &str = "stl/examples/minkowski_sum";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let cube = solid::cube(r(1.5));
-    let sphere = solid::sphere(r(0.4), 16, 8);
+    let cube = solid::cube(r(1.5)).expect("valid primitive fixture");
+    let sphere = solid::sphere(r(0.4), 16, 8).expect("valid primitive fixture");
     write_mesh(&solid::minkowski_sum(&cube, &sphere).unwrap(), "rounded_cube");
 }
 

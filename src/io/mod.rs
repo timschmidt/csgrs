@@ -75,6 +75,13 @@ pub enum IoError {
         format: &'static str,
         detail: String,
     },
+    /// A modeling constructor failed while importing a format record.
+    #[error("{format} construction failed: {source}")]
+    Construction {
+        format: &'static str,
+        #[source]
+        source: crate::errors::ValidationError,
+    },
 
     #[cfg(feature = "dxf-io")]
     #[error("DXF processing failed: {0}")]

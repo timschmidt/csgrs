@@ -59,20 +59,24 @@ fuzz_target!(|bytes: &[u8]| {
     let a = curve::rectangle(
         at_least_tolerance(decode_real(bytes, &mut idx).abs()),
         at_least_tolerance(decode_real(bytes, &mut idx).abs()),
-    );
-    let b = curve::circle(
+    )
+    .expect("valid planar fixture");
+    let Ok(b) = curve::circle(
         at_least_tolerance(decode_real(bytes, &mut idx).abs()),
         (bytes[idx % bytes.len()] as usize % 32) + 3,
-    )
-    .transform_affine(
+    ) else {
+        return;
+    };
+    let Ok(b) = b.transform_affine(
         &Real::one(),
         &Real::zero(),
         &Real::zero(),
         &Real::one(),
         &decode_real(bytes, &mut idx),
         &decode_real(bytes, &mut idx),
-    )
-    .unwrap_or_else(|_| curve::empty());
+    ) else {
+        return;
+    };
     let result = match bytes[idx % bytes.len()] % 4 {
         0 => a.boolean_region(&b, hypercurve::BooleanOp::Union),
         1 => a.boolean_region(&b, hypercurve::BooleanOp::Difference),

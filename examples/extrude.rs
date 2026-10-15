@@ -13,9 +13,9 @@ const PATH: &str = "stl/examples/extrude";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let square = curve::square(r(1.5));
-    let circle = curve::circle(r(0.5), 32);
-    let star = curve::star(5, r(1.2), r(0.45));
+    let square = curve::square(r(1.5)).expect("valid planar fixture");
+    let circle = curve::circle(r(0.5), 32).expect("valid planar fixture");
+    let star = curve::star(5, r(1.2), r(0.45)).expect("valid sampled profile fixture");
 
     write_mesh(
         &curve::try_extrude(&square, r(1.0), &GeometryContext::STRICT)
@@ -32,7 +32,8 @@ fn main() {
     let revolved = curve::revolve(&circle, r(360.0), 48, &GeometryContext::STRICT)
         .unwrap()
         .into_value()
-        .translated(r(1.5), r(0.0), r(0.0));
+        .translated(r(1.5), r(0.0), r(0.0))
+        .expect("valid transform fixture");
     write_mesh(&revolved, "circle_revolve");
 
     let path = (0..40)
@@ -42,9 +43,13 @@ fn main() {
         })
         .collect::<Vec<_>>();
     write_mesh(
-        &curve::try_sweep(&curve::circle(r(0.08), 12), &path, &GeometryContext::STRICT)
-            .unwrap()
-            .into_value(),
+        &curve::try_sweep(
+            &curve::circle(r(0.08), 12).expect("valid planar fixture"),
+            &path,
+            &GeometryContext::STRICT,
+        )
+        .unwrap()
+        .into_value(),
         "sweep",
     );
 

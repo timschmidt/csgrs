@@ -261,21 +261,24 @@ mod tests {
         handle.bom.merge_into_parent = true;
         handle.count = 2;
         let handle_id = document.insert(document.root(), handle).expect("handle");
-        let mut printed =
-            AssemblyNode::printed("handle.stl", "Printed handle", solid::cube(Real::from(4)));
+        let mut printed = AssemblyNode::printed(
+            "handle.stl",
+            "Printed handle",
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
+        );
         printed.count = 1;
         document.insert(handle_id, printed).expect("printed");
         let mut insert = AssemblyNode::vitamin(
             "insert(M3)",
             "insert(M3): Heatfit insert M3",
-            solid::cube(Real::from(1)),
+            solid::cube(Real::from(1)).expect("valid primitive fixture"),
         );
         insert.count = 2;
         document.insert(handle_id, insert).expect("insert");
         let mut screw = AssemblyNode::vitamin(
             "screw(M3)",
             "screw(M3): Screw M3 pan x 16mm",
-            solid::cube(Real::from(1)),
+            solid::cube(Real::from(1)).expect("valid primitive fixture"),
         );
         screw.count = 4;
         screw.explode = ExplodeSpec::translation(Vector3::new([
@@ -284,8 +287,11 @@ mod tests {
             Real::from(8),
         ]));
         document.insert(document.root(), screw).expect("screw");
-        let mut hidden =
-            AssemblyNode::vitamin("nut(M3)", "nut(M3): Nut M3", solid::cube(Real::from(1)));
+        let mut hidden = AssemblyNode::vitamin(
+            "nut(M3)",
+            "nut(M3): Nut M3",
+            solid::cube(Real::from(1)).expect("valid primitive fixture"),
+        );
         hidden.bom.hidden = true;
         document.insert(document.root(), hidden).expect("nut");
         document

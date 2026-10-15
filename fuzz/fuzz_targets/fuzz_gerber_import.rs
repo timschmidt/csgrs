@@ -6,8 +6,7 @@ use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|bytes: &[u8]| {
     if let Ok((region, _, _)) = csgrs::io::gerber::import_gerber(bytes) {
-        let Ok(mesh) =
-            csgrs::curve::try_triangulate(&region, &csgrs::GeometryContext::STRICT)
+        let Ok(mesh) = csgrs::curve::try_triangulate(&region, &csgrs::GeometryContext::STRICT)
         else {
             return;
         };

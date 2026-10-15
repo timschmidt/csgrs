@@ -344,6 +344,42 @@ inversion likewise requires its own proof and solver support.
 
 ## Performance opportunities grounded in the existing implementation
 
+### Upstream proof changes and acceptance order (2026-10-15)
+
+The integration of `7cf9d82acee6f152047eb37e5ff2e6dcece51a0d` adds exact
+polynomial and guarded quotient recognition after existing rational/Laurent
+proofs in `Real::exact_rational_normal_form`. Quotient expansion requires
+nonzero-denominator evidence; it cannot infer nonzero values from a formally
+nonzero polynomial. A query-local shared-node map reuses completed quotient
+projections while retaining node ownership for the attempt. Failed attempts
+do not become permanent negative facts. The source declares separate node,
+depth, atom, term, degree, coefficient-bit and work limits; these are not a
+bound on all structural-comparison work or whole-query heap bytes.
+
+Hyperlimit's point equality now seeks a certified unequal coordinate even
+when another coordinate is undecided; equality still requires every
+coordinate. It seeks strict evidence before an authorized approximate
+terminal, preserving admissible witnesses rather than inheriting unrelated
+uncertainty from lexicographic ordering. BREP should reuse this owning-layer
+implementation, and the scalar's product cancellation/normal-form proofs,
+instead of adding local identities or numerical coincidence tolerances.
+
+These are reviewed source changes, not independent mathematical verification
+or BREP performance results. Upstream labels the polynomial/quotient/shared
+proof work as candidates with admission still open; its full-resolution
+16/32-segment drilled compositions remain regression obligations. The
+[integration evidence](evidence/2026-10-15-upstream-integration/README.md)
+records target-source checks. Subsequent experiments must freeze a baseline
+with these dependencies, preserve all existing successes and report completed
+contracts and certainty beside cost. Old pre-integration binaries cannot
+isolate the cost of a new BREP-only change.
+
+Apply the updated admission order before broader experiments: empty-result
+composition and visible failures, ordinary strict workflows, then external
+consumer/release validation. Independent semantic checks, topology validity
+and fidelity to source are distinct obligations. Raising proof limits,
+accepting a new Unknown or reducing a hard fixture is not a completion repair.
+
 ### Existing machinery to extend
 
 The inspected source already contains important accelerators:

@@ -68,6 +68,32 @@ finite region projections, and curve-to-solid operations.
 - Float ingress rejects non-finite values. Integer and opaque-real egress
   remains fallible when a value cannot be represented.
 - A non-success status leaves the documented output unowned.
+- Mesh primitive and planar square/rectangle/circle/polygon constructors distinguish invalid input (`VALIDATION_FAILED`),
+  undecided predicates (`PREDICATE_UNDECIDED`), resource/capacity failure
+  (`RESOURCE_EXHAUSTED`), unsupported representations (`UNSUPPORTED`), and other
+  native geometry failure (`GEOMETRY_FAILED`). These statuses are additive;
+  existing numeric values are unchanged. Proven zero-size solids succeed as
+  empty geometry after all constructor parameters have been validated.
+  Nonnegative zero-size planar primitives also succeed as canonical empty
+  regions; an empty or malformed polygon ring fails. Resolution and companion
+  dimensions are validated before a zero-size shortcut. No ABI signature or
+  numeric status changed in this planar failure migration.
+- Mesh transforms retain native failure categories. A projective image that
+  reaches or crosses infinity reports `UNBOUNDED` (9). Invalid transforms and
+  undecided predicates remain distinct failures, and publish no model handle.
+- Mesh and curve bounds return `NO_BOUNDS` (10) for a completed empty query.
+  They require a valid output pointer but leave its record untouched; no
+  opaque-real endpoints are allocated. Only `OK` writes an owned bounds record.
+  Nonempty zero-size bounds, invalid input, and undecided predicates remain
+  distinct. Centering and floating preserve canonical empty geometry and
+  propagate bounds errors without publishing a model handle.
+- C++ exceptions retain the C status in `error::status()`; Python exceptions
+  retain it in `CsgrsError.status`; Go retains it in `StatusError.Status`.
+  WASM primitive constructors, transforms, bounds, and positioning throw a
+  `GeometryError` with a string `code` (`invalid_input`, `undecided`,
+  `resource_exhausted`, `unsupported`, `unbounded`, or `geometry_failure`) and a diagnostic
+  message. Other binding operations that still flatten native error categories
+  remain outside this migration.
 - The last-error pointer is borrowed, thread-local, and valid only until the
   next ABI call on that thread.
 

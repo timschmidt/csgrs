@@ -24,7 +24,7 @@ fn main() {
     let start = Instant::now();
     let mut constructed_polygons = 0_usize;
     for _ in 0..construction_iterations {
-        let mesh = solid::sphere(Real::from(10), 24, 12);
+        let mesh = solid::sphere(Real::from(10), 24, 12).expect("valid primitive fixture");
         constructed_polygons += mesh.triangles.len();
         black_box(mesh);
     }
@@ -33,7 +33,7 @@ fn main() {
         start.elapsed().as_micros()
     );
 
-    let sphere = solid::sphere(Real::from(10), 24, 12);
+    let sphere = solid::sphere(Real::from(10), 24, 12).expect("valid primitive fixture");
     let buffer_iterations = iterations("CSGRS_BUFFER_BENCH_ITERS", 128);
     let start = Instant::now();
     let mut buffer_words = 0_usize;
@@ -47,12 +47,15 @@ fn main() {
         start.elapsed().as_micros()
     );
 
-    let left = solid::cube(Real::from(2));
-    let right = solid::cube(Real::from(2)).translated(
-        (Real::from(1) / Real::from(2)).expect("nonzero denominator"),
-        (Real::from(1) / Real::from(3)).expect("nonzero denominator"),
-        (Real::from(1) / Real::from(5)).expect("nonzero denominator"),
-    );
+    let left = solid::cube(Real::from(2)).expect("valid primitive fixture");
+    let right = solid::cube(Real::from(2))
+        .expect("valid primitive fixture")
+        .translated(
+            (Real::from(1) / Real::from(2)).expect("nonzero denominator"),
+            (Real::from(1) / Real::from(3)).expect("nonzero denominator"),
+            (Real::from(1) / Real::from(5)).expect("nonzero denominator"),
+        )
+        .expect("valid transform fixture");
     let boolean_iterations = iterations("CSGRS_BOOLEAN_BENCH_ITERS", 8);
     let start = Instant::now();
     let mut polygons = 0_usize;
@@ -68,7 +71,7 @@ fn main() {
         start.elapsed().as_micros()
     );
 
-    let hull_source = solid::sphere(Real::from(10), 16, 8);
+    let hull_source = solid::sphere(Real::from(10), 16, 8).expect("valid primitive fixture");
     let hull_iterations = iterations("CSGRS_HULL_BENCH_ITERS", 4);
     let start = Instant::now();
     let mut hull_polygons = 0_usize;
@@ -98,8 +101,8 @@ fn main() {
         start.elapsed().as_micros()
     );
 
-    let minkowski_left = solid::cube(Real::from(2));
-    let minkowski_right = solid::cube(Real::from(3));
+    let minkowski_left = solid::cube(Real::from(2)).expect("valid primitive fixture");
+    let minkowski_right = solid::cube(Real::from(3)).expect("valid primitive fixture");
     let minkowski_iterations = iterations("CSGRS_MINKOWSKI_BENCH_ITERS", 16);
     let start = Instant::now();
     let mut minkowski_polygons = 0_usize;

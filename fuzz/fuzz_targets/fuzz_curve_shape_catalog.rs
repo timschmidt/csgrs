@@ -94,17 +94,64 @@ fuzz_target!(|bytes: &[u8]| {
     ];
 
     let region = match tag {
-        0 => curve::rectangle(a, b),
-        1 => curve::square(a),
-        2 => curve::circle(a, segments),
-        3 => curve::right_triangle(a, b),
-        4 => curve::ellipse(a, b, segments),
-        5 => curve::regular_ngon(segments, a),
-        6 => curve::arrow(a, b, c, positive_b),
-        7 => curve::trapezoid(a, b, c, real(0.25)),
-        8 => curve::star(segments, a, b),
-        9 => curve::rounded_rectangle(a, b, c, segments),
-        10 => curve::squircle(a, b, segments),
+        0 => {
+            let Ok(region) = curve::rectangle(a, b) else {
+                return;
+            };
+            region
+        },
+        1 => {
+            let Ok(region) = curve::square(a) else {
+                return;
+            };
+            region
+        },
+        2 => {
+            let Ok(region) = curve::circle(a, segments) else {
+                return;
+            };
+            region
+        },
+        3 => {
+            let Ok(region) = curve::right_triangle(a, b) else {
+                return;
+            };
+            region
+        },
+        4 => {
+            let Ok(region) = curve::ellipse(a, b, segments) else {
+                return;
+            };
+            region
+        },
+        5 => {
+            let Ok(region) = curve::regular_ngon(segments, a) else {
+                return;
+            };
+            region
+        },
+        6 => match curve::arrow(a, b, c, positive_b) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
+        7 => match curve::trapezoid(a, b, c, real(0.25)) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
+        8 => match curve::star(segments, a, b) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
+        9 => {
+            let Ok(region) = curve::rounded_rectangle(a, b, c, segments) else {
+                return;
+            };
+            region
+        },
+        10 => match curve::squircle(a, b, segments) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
         11 => {
             let Ok(outcome) = curve::keyhole(a, b, c, segments, &context) else {
                 return;
@@ -124,8 +171,14 @@ fuzz_target!(|bytes: &[u8]| {
             };
             outcome.into_value()
         },
-        14 => curve::pie_slice(a, b, c, segments),
-        15 => curve::heart(a, b, segments),
+        14 => match curve::pie_slice(a, b, c, segments) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
+        15 => match curve::heart(a, b, segments) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
         16 => {
             let Ok(outcome) = curve::crescent(positive_a, positive_b, c, segments, &context)
             else {
@@ -142,16 +195,32 @@ fuzz_target!(|bytes: &[u8]| {
         21 => curve::cycloidal_rack(a, teeth, c, segments.clamp(4, 8)),
         22 => {
             if bytes[idx % bytes.len()] & 1 == 0 {
-                curve::teardrop(a, b, segments)
+                match curve::teardrop(a, b, segments) {
+                    Ok(region) => region,
+                    Err(_) => return,
+                }
             } else {
-                curve::teardrop(positive_a.clone(), positive_a + positive_b, segments.max(2))
+                match curve::teardrop(
+                    positive_a.clone(),
+                    positive_a + positive_b,
+                    segments.max(2),
+                ) {
+                    Ok(region) => region,
+                    Err(_) => return,
+                }
             }
         },
         23 => {
             if bytes[idx % bytes.len()] & 1 == 0 {
-                curve::egg(a, b, segments)
+                match curve::egg(a, b, segments) {
+                    Ok(region) => region,
+                    Err(_) => return,
+                }
             } else {
-                curve::egg(positive_a, positive_b, segments.max(3))
+                match curve::egg(positive_a, positive_b, segments.max(3)) {
+                    Ok(region) => region,
+                    Err(_) => return,
+                }
             }
         },
         24 => {
@@ -190,7 +259,7 @@ fuzz_target!(|bytes: &[u8]| {
             }
             return;
         },
-        29 => curve::supershape(
+        29 => match curve::supershape(
             positive_a,
             positive_b,
             c,
@@ -198,17 +267,25 @@ fuzz_target!(|bytes: &[u8]| {
             exponent_a,
             exponent_b,
             segments,
-        ),
-        _ => curve::polygon_points(&native_points),
+        ) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
+        _ => {
+            let Ok(region) = curve::polygon_points(&native_points) else {
+                return;
+            };
+            region
+        },
     };
 
     assert_curve_finite(&region, &context);
     if let Ok(flat) = curve::try_triangulate(&region, &context) {
         support::validate_triangle_mesh(&flat.into_value(), false);
     }
-    if !region.is_empty() {
-        if let Ok(solid) = curve::try_extrude(&region, Real::one(), &context) {
-            support::validate_triangle_mesh(&solid.into_value(), true);
-        }
+    if !region.is_empty()
+        && let Ok(solid) = curve::try_extrude(&region, Real::one(), &context)
+    {
+        support::validate_triangle_mesh(&solid.into_value(), true);
     }
 });

@@ -60,15 +60,23 @@ type CurveRegion struct {
 	Family Family
 }
 
+// StatusError retains the native failure category and diagnostic.
+type StatusError struct {
+	Status  int
+	Message string
+}
+
+func (e *StatusError) Error() string { return e.Message }
+
 func check(status C.csgrs_status_t) error {
 	if status == C.CSGRS_STATUS_OK {
 		return nil
 	}
 	msg := C.csgrs_last_error_message()
 	if msg == nil {
-		return errors.New("csgrs error")
+		return &StatusError{Status: int(status), Message: "csgrs error"}
 	}
-	return errors.New(C.GoString(msg))
+	return &StatusError{Status: int(status), Message: C.GoString(msg)}
 }
 
 func I128FromInt64(value int64) I128 {
@@ -245,10 +253,54 @@ func (m *TriangleMesh) RotateI128(x, y, z I128) (*TriangleMesh, error) { var out
 func (m *TriangleMesh) TranslateReal(x, y, z *Real) (*TriangleMesh, error) { var out *C.csgrs_triangle_mesh_t; err := check(C.csgrs_triangle_mesh_real_translate(m.ptr, x.ptr, y.ptr, z.ptr, &out)); return triangleMeshOut(FamilyReal, out, err) }
 func (m *TriangleMesh) ScaleReal(x, y, z *Real) (*TriangleMesh, error) { var out *C.csgrs_triangle_mesh_t; err := check(C.csgrs_triangle_mesh_real_scale(m.ptr, x.ptr, y.ptr, z.ptr, &out)); return triangleMeshOut(FamilyReal, out, err) }
 func (m *TriangleMesh) RotateReal(x, y, z *Real) (*TriangleMesh, error) { var out *C.csgrs_triangle_mesh_t; err := check(C.csgrs_triangle_mesh_real_rotate(m.ptr, x.ptr, y.ptr, z.ptr, &out)); return triangleMeshOut(FamilyReal, out, err) }
-func (m *TriangleMesh) BoundingBoxF64() (Aabb3F64, error) { var out Aabb3F64; err := check(C.csgrs_triangle_mesh_f64_bounding_box(m.ptr, &out)); return out, err }
-func (m *TriangleMesh) BoundingBoxF32() (Aabb3F32, error) { var out Aabb3F32; err := check(C.csgrs_triangle_mesh_f32_bounding_box(m.ptr, &out)); return out, err }
-func (m *TriangleMesh) BoundingBoxI128() (Aabb3I128, error) { var out Aabb3I128; err := check(C.csgrs_triangle_mesh_i128_bounding_box(m.ptr, &out)); return out, err }
-func (m *TriangleMesh) BoundingBoxReal() (Aabb3Real, error) { var out Aabb3Real; err := check(C.csgrs_triangle_mesh_real_bounding_box(m.ptr, &out)); return out, err }
+// BoundingBoxF64 returns nil without error when the geometry is empty.
+func (m *TriangleMesh) BoundingBoxF64() (*Aabb3F64, error) {
+	var out Aabb3F64
+	status := C.csgrs_triangle_mesh_f64_bounding_box(m.ptr, &out)
+	if status == C.CSGRS_STATUS_NO_BOUNDS {
+		return nil, nil
+	}
+	if err := check(status); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+// BoundingBoxF32 returns nil without error when the geometry is empty.
+func (m *TriangleMesh) BoundingBoxF32() (*Aabb3F32, error) {
+	var out Aabb3F32
+	status := C.csgrs_triangle_mesh_f32_bounding_box(m.ptr, &out)
+	if status == C.CSGRS_STATUS_NO_BOUNDS {
+		return nil, nil
+	}
+	if err := check(status); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+// BoundingBoxI128 returns nil without error when the geometry is empty.
+func (m *TriangleMesh) BoundingBoxI128() (*Aabb3I128, error) {
+	var out Aabb3I128
+	status := C.csgrs_triangle_mesh_i128_bounding_box(m.ptr, &out)
+	if status == C.CSGRS_STATUS_NO_BOUNDS {
+		return nil, nil
+	}
+	if err := check(status); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+// BoundingBoxReal returns nil without error when the geometry is empty.
+func (m *TriangleMesh) BoundingBoxReal() (*Aabb3Real, error) {
+	var out Aabb3Real
+	status := C.csgrs_triangle_mesh_real_bounding_box(m.ptr, &out)
+	if status == C.CSGRS_STATUS_NO_BOUNDS {
+		return nil, nil
+	}
+	if err := check(status); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
 func (m *TriangleMesh) VerticesAndIndicesF64() (MeshBuffersF64, error) { var out MeshBuffersF64; err := check(C.csgrs_triangle_mesh_f64_vertices_and_indices(m.ptr, &out)); return out, err }
 func (m *TriangleMesh) VerticesAndIndicesF32() (MeshBuffersF32, error) { var out MeshBuffersF32; err := check(C.csgrs_triangle_mesh_f32_vertices_and_indices(m.ptr, &out)); return out, err }
 func (m *TriangleMesh) VerticesAndIndicesI128() (MeshBuffersI128, error) { var out MeshBuffersI128; err := check(C.csgrs_triangle_mesh_i128_vertices_and_indices(m.ptr, &out)); return out, err }
@@ -295,16 +347,60 @@ func CurveRegionRealCircle(radius *Real, segments int) (*CurveRegion, error) { v
 
 func (p *CurveRegion) ExtrudeF64(height float64) (*TriangleMesh, error) { var out *C.csgrs_triangle_mesh_t; err := check(C.csgrs_curve_region_f64_extrude(p.ptr, C.double(height), &out)); return triangleMeshOut(FamilyF64, out, err) }
 func (p *CurveRegion) TranslateF64(x, y, z float64) (*CurveRegion, error) { var out *C.csgrs_curve_region_t; err := check(C.csgrs_curve_region_f64_translate(p.ptr, C.double(x), C.double(y), C.double(z), &out)); return curveRegionOut(FamilyF64, out, err) }
-func (p *CurveRegion) BoundingBoxF64() (Aabb3F64, error) { var out Aabb3F64; err := check(C.csgrs_curve_region_f64_bounding_box(p.ptr, &out)); return out, err }
+// BoundingBoxF64 returns nil without error when the geometry is empty.
+func (p *CurveRegion) BoundingBoxF64() (*Aabb3F64, error) {
+	var out Aabb3F64
+	status := C.csgrs_curve_region_f64_bounding_box(p.ptr, &out)
+	if status == C.CSGRS_STATUS_NO_BOUNDS {
+		return nil, nil
+	}
+	if err := check(status); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
 func (p *CurveRegion) ExtrudeF32(height float32) (*TriangleMesh, error) { var out *C.csgrs_triangle_mesh_t; err := check(C.csgrs_curve_region_f32_extrude(p.ptr, C.float(height), &out)); return triangleMeshOut(FamilyF32, out, err) }
 func (p *CurveRegion) ExtrudeI128(height I128) (*TriangleMesh, error) { var out *C.csgrs_triangle_mesh_t; err := check(C.csgrs_curve_region_i128_extrude(p.ptr, height, &out)); return triangleMeshOut(FamilyI128, out, err) }
 func (p *CurveRegion) ExtrudeReal(height *Real) (*TriangleMesh, error) { var out *C.csgrs_triangle_mesh_t; err := check(C.csgrs_curve_region_real_extrude(p.ptr, height.ptr, &out)); return triangleMeshOut(FamilyReal, out, err) }
 func (p *CurveRegion) TranslateF32(x, y, z float32) (*CurveRegion, error) { var out *C.csgrs_curve_region_t; err := check(C.csgrs_curve_region_f32_translate(p.ptr, C.float(x), C.float(y), C.float(z), &out)); return curveRegionOut(FamilyF32, out, err) }
 func (p *CurveRegion) TranslateI128(x, y, z I128) (*CurveRegion, error) { var out *C.csgrs_curve_region_t; err := check(C.csgrs_curve_region_i128_translate(p.ptr, x, y, z, &out)); return curveRegionOut(FamilyI128, out, err) }
 func (p *CurveRegion) TranslateReal(x, y, z *Real) (*CurveRegion, error) { var out *C.csgrs_curve_region_t; err := check(C.csgrs_curve_region_real_translate(p.ptr, x.ptr, y.ptr, z.ptr, &out)); return curveRegionOut(FamilyReal, out, err) }
-func (p *CurveRegion) BoundingBoxF32() (Aabb3F32, error) { var out Aabb3F32; err := check(C.csgrs_curve_region_f32_bounding_box(p.ptr, &out)); return out, err }
-func (p *CurveRegion) BoundingBoxI128() (Aabb3I128, error) { var out Aabb3I128; err := check(C.csgrs_curve_region_i128_bounding_box(p.ptr, &out)); return out, err }
-func (p *CurveRegion) BoundingBoxReal() (Aabb3Real, error) { var out Aabb3Real; err := check(C.csgrs_curve_region_real_bounding_box(p.ptr, &out)); return out, err }
+// BoundingBoxF32 returns nil without error when the geometry is empty.
+func (p *CurveRegion) BoundingBoxF32() (*Aabb3F32, error) {
+	var out Aabb3F32
+	status := C.csgrs_curve_region_f32_bounding_box(p.ptr, &out)
+	if status == C.CSGRS_STATUS_NO_BOUNDS {
+		return nil, nil
+	}
+	if err := check(status); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+// BoundingBoxI128 returns nil without error when the geometry is empty.
+func (p *CurveRegion) BoundingBoxI128() (*Aabb3I128, error) {
+	var out Aabb3I128
+	status := C.csgrs_curve_region_i128_bounding_box(p.ptr, &out)
+	if status == C.CSGRS_STATUS_NO_BOUNDS {
+		return nil, nil
+	}
+	if err := check(status); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+// BoundingBoxReal returns nil without error when the geometry is empty.
+func (p *CurveRegion) BoundingBoxReal() (*Aabb3Real, error) {
+	var out Aabb3Real
+	status := C.csgrs_curve_region_real_bounding_box(p.ptr, &out)
+	if status == C.CSGRS_STATUS_NO_BOUNDS {
+		return nil, nil
+	}
+	if err := check(status); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
 
 func (p *CurveRegion) Union(other *CurveRegion) (*CurveRegion, error) { return p.profileBinary(other, "union") }
 func (p *CurveRegion) Difference(other *CurveRegion) (*CurveRegion, error) { return p.profileBinary(other, "difference") }

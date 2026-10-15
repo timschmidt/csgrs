@@ -127,7 +127,37 @@ guarantee.
 - `SdfExpr::metric_status`, `Sdf::metric_status`, and `Sdf::facts` describe
   what the resulting scalar can certify.
 
+### Inverse-square metaballs
+
+`Metaball` retains a Hyperlattice point and positive radius. Its fallible
+`influence` computes `r² / distance²` exactly, without truncating distant
+contributions; a query at the center reports `DivideByZero` with its native
+scalar cause. `MetaballField::new` borrows and validates all sources and a
+positive iso value. Its `evaluate_point` returns the continuous normalized
+field `(iso-I)/(iso+I)`, with exact limit -1 at centers, including coincident
+sources. Negative is inside, zero is the intended level set, and positive is
+outside. Multiplying all influences and the iso value by the same positive
+factor preserves this field.
+
+`sampling_bounds` returns optional conservative bounds after validating
+nonnegative padding. Construction predicates remain strict. The field is
+sign-equivalent, not a distance; a mesh sampled from it needs separate topology
+validation and carries no analytic-fidelity bound. Scalar work and memory are
+not internally bounded. CSGRS uses this carrier for both 3D metaball modeling
+and 2D metaball sampling. Hypermesh owns the sampled surface extraction and
+Hypercurve owns the sampled planar contour arrangement; neither establishes
+continuous-field fidelity merely by certifying its numerical decisions.
+
 ### Exact and conservative queries
+
+`Sdf::evaluate_point` returns `Result<Real, SdfEvaluationError>` with strict
+construction decisions. Invalid primitive domains, undecided branch choices,
+and scalar arithmetic failures remain distinct, with native causes available
+through `Error::source`. `SdfPrimitive::try_scalar_value` uses the same native
+primitive implementation. Its older `scalar_value` convenience intentionally
+discards errors into `None`; use the fallible method in modeling pipelines.
+Constructing a retained scalar proves neither its sign nor continuous-field
+topology. Classification and preview APIs retain their separate report contracts.
 
 - `Sdf::classify_point` returns scalar, location, domain, metric, and evidence
   status for one exact point; `classify_points` batches the same semantics.

@@ -72,7 +72,9 @@ impl BooleanMeshBatch {
     }
 
     /// Consumes bounded results as reusable triangle meshes while sharing the
-    /// exact position allocation across every returned mesh.
+    /// exact position allocation across the nonempty returned meshes.
+    /// Empty results have neither positions nor triangles, so they remain
+    /// canonical empty geometry even when other batch rows use vertices.
     ///
     /// Source provenance remains available only on this batch and is discarded
     /// by this explicit carrier conversion.
@@ -92,6 +94,10 @@ impl BooleanMeshBatch {
             }
         })?;
         for result in self.results {
+            if result.triangles.is_empty() {
+                meshes.push(TriangleMesh::new(Vec::new(), Vec::new()));
+                continue;
+            }
             let mut triangles = Vec::new();
             triangles
                 .try_reserve_exact(result.triangles.len())

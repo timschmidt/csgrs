@@ -237,6 +237,19 @@ impl TriangleMesh {
         Ok(())
     }
 
+    /// Resolves a triangle's position rows, preserving invalid-index diagnostics.
+    pub fn triangle_points(&self, triangle: Triangle) -> HypermeshResult<[&Point3; 3]> {
+        let [a, b, c] = triangle.indices().map(|index| {
+            self.positions
+                .get(index)
+                .ok_or(HypermeshError::VertexIndexOutOfBounds {
+                    index,
+                    vertex_count: self.positions.len(),
+                })
+        });
+        Ok([a?, b?, c?])
+    }
+
     /// Checks indexed edge pairing for a closed, consistently oriented
     /// two-manifold.
     pub fn is_closed_manifold(&self) -> bool {
@@ -361,6 +374,8 @@ impl TriangleMesh {
         &self,
         decisions: &DecisionContext,
     ) -> HypermeshResult<Option<ExactAabb>> {
+        // Position facts do not validate an independently mutated index buffer.
+        self.validate_triangle_indices()?;
         let facts = self.position_facts();
         if let Some(bounds) = facts.and_then(|facts| facts.exact_bounds.get()) {
             return Ok(bounds.as_deref().cloned());
@@ -587,7 +602,9 @@ impl TriangleMesh {
     }
 
     /// Applies an exact homogeneous transform under the selected predicate
-    /// policy.
+    /// policy. Indices must be valid, and the homogeneous scale must have one
+    /// nonzero sign on each triangle. A triangle crossing infinity cannot be
+    /// represented by a finite triangle joining its transformed vertices.
     pub fn try_transformed(
         &self,
         context: &MeshContext,
@@ -603,13 +620,16 @@ impl TriangleMesh {
         decisions: &DecisionContext,
         matrix: &Matrix4,
     ) -> HypermeshResult<Self> {
+        self.validate_triangle_indices()?;
         let matrix_facts = matrix.structural_facts();
         let positions = if matrix_facts.is_affine {
             matrix
                 .transform_point3_batch(&self.positions)
                 .map_err(|_| HypermeshError::UnknownClassification)?
         } else {
-            self.positions
+            let mut scales = Vec::with_capacity(self.positions.len());
+            let positions = self
+                .positions
                 .iter()
                 .map(|point| {
                     let transformed = matrix.transform_vec4_point(&Vector4::new([
@@ -619,9 +639,23 @@ impl TriangleMesh {
                         Real::one(),
                     ]));
                     let [x, y, z, w] = transformed.0;
+                    let sign = compare_real_decision(decisions, &w, &Real::zero())?;
+                    if sign == std::cmp::Ordering::Equal {
+                        return Err(HypermeshError::PointAtInfinity);
+                    }
+                    scales.push(sign);
                     affine_projective_point_decision(decisions, &HomogeneousPoint3::new(x, y, z, w))
                 })
-                .collect::<HypermeshResult<Vec<_>>>()?
+                .collect::<HypermeshResult<Vec<_>>>()?;
+            // Homogeneous scale is affine on each source triangle. Equal,
+            // nonzero vertex signs certify the entire triangle's finiteness.
+            for (triangle_index, triangle) in self.triangles.iter().enumerate() {
+                let [a, b, c] = triangle.indices();
+                if scales[a] != scales[b] || scales[a] != scales[c] {
+                    return Err(HypermeshError::UnboundedProjectiveTriangle { triangle_index });
+                }
+            }
+            positions
         };
         let transformed = Self::new(positions, self.triangles.to_vec());
         let preserves_valid_pwn = matches!(

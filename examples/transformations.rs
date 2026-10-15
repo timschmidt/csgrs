@@ -13,15 +13,32 @@ const PATH: &str = "stl/examples/transformations";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let cube = solid::cube(r(1.5));
-    write_mesh(&cube.translated(r(2.0), r(0.0), r(0.0)), "translated");
-    write_mesh(&solid::rotate(&cube, r(30.0), r(45.0), r(10.0)), "rotated");
-    write_mesh(&solid::scale(&cube, r(1.0), r(0.5), r(2.0)), "scaled");
-    write_mesh(&solid::scale(&cube, r(-1.0), r(1.0), r(1.0)), "mirrored_x");
+    let cube = solid::cube(r(1.5)).expect("valid primitive fixture");
+    write_mesh(
+        &cube
+            .translated(r(2.0), r(0.0), r(0.0))
+            .expect("valid transform fixture"),
+        "translated",
+    );
+    write_mesh(
+        &solid::rotate(&cube, r(30.0), r(45.0), r(10.0)).expect("valid transform fixture"),
+        "rotated",
+    );
+    write_mesh(
+        &solid::scale(&cube, r(1.0), r(0.5), r(2.0)).expect("valid transform fixture"),
+        "scaled",
+    );
+    write_mesh(
+        &solid::scale(&cube, r(-1.0), r(1.0), r(1.0)).expect("valid transform fixture"),
+        "mirrored_x",
+    );
 
     let transform = Matrix4::affine_translation([r(0.0), r(2.0), r(0.0)])
         * Matrix4::affine_nonuniform_scale([r(0.5), r(1.0), r(1.5)]);
-    write_mesh(&cube.transformed(&transform), "matrix_transform");
+    write_mesh(
+        &cube.transformed(&transform).expect("valid transform fixture"),
+        "matrix_transform",
+    );
 }
 
 fn r(value: f64) -> Real {

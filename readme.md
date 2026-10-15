@@ -76,14 +76,14 @@ use csgrs::{
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let body = solid::cube(Real::from(12));
+    let body = solid::cube(Real::from(12))?;
     let opening = curve::try_extrude(
-        &curve::square(Real::from(4)),
+        &curve::square(Real::from(4))?,
         Real::from(16),
         &GeometryContext::STRICT,
     )?
     .into_value()
-    .translated(Real::from(4), Real::from(4), Real::from(-2));
+    .translated(Real::from(4), Real::from(4), Real::from(-2))?;
 
     let part = body.try_difference(&opening)?;
     std::fs::write("drilled_cube.stl", to_stl_binary(&part, "drilled_cube")?)?;
@@ -108,41 +108,99 @@ documentation contains complete signatures, feature conditions, and errors.
 
 Functions in `csgrs::curve` return native Hypercurve types.
 
+Rectangle, square, circle, ellipse, regular polygon, right triangle, polygon,
+and rounded-rectangle constructors now return `Result<CurveRegion2,
+ValidationError>`. Their policy-taking variants and the compound constructors
+return `Result<GeometryOutcome<CurveRegion2>, ValidationError>`. This API
+migration replaces empty-on-error behavior: propagate `?` or handle the typed
+error explicitly. Negative dimensions, malformed rings, unresolved predicates,
+and checked capacity/allocation failures remain failures through scalar
+adapters and bindings.
+
+Nonnegative primitive dimensions may produce canonical empty geometry when a
+dimension is certified zero, after all arguments are checked. Sampled circles
+and ellipses still require at least three segments; polygons require a valid
+ring with at least three vertices. Use `curve::empty()` for explicit absence.
+Compound constructors retain their documented positive-dimension/range
+restrictions. A zero rounded-corner segment count selects the sharp rectangle;
+corner radii are clamped to half the smaller dimension. Sampling still defines
+a polygon and provides no analytic-surface fidelity bound.
+
+Rounded rectangles retain every nonzero straight side between their tangent
+endpoints. A positive `corner_segments = n` gives `n` equal-angle chords per
+quarter-circle and at most `4 * (n + 1)` vertices; only proven coincident
+endpoints are omitted. This corrects an earlier sampler that omitted distinct
+tangent endpoints, cutting away part of the intended polygon. For example,
+`rounded_rectangle(4, 2, 1/2, 1)` has area `15/2`, rather than `4`.
+Existing rounded-rectangle and Gerber obround outputs may therefore gain
+vertices and change exported bytes or previews. Regenerate derived artifacts;
+this is a geometry correction, not a performance-only change.
+
+The ring cache retains only successful strict constructions, keyed by owned
+exact coordinate rows, in a thread-local FIFO of at most 64 entries. Approximate
+requests may reuse those proofs but do not populate the cache. Failures are not
+cached. The limit counts entries, not heap bytes; scalar growth, secondary
+kernel allocation, total work and cancellation remain unbounded internally.
+The sampled `arrow`, `trapezoid`, `star`, `teardrop`, `egg`, `squircle`,
+`pie_slice`, `heart`, and `supershape` constructors also return `Result`; each
+has a `_with_context` variant returning `GeometryOutcome`. Their existing
+positive-dimension restrictions and sampling formulas remain. An equal-width
+arrow now omits its duplicate shoulders and retains its shaft and triangular
+head. `teardrop_cylinder` propagates profile errors and joins construction and
+extrusion certainty. WASM star, teardrop, egg and heart constructors throw
+`GeometryError` with a diagnostic `code` instead of publishing failed profiles.
+
+Stars require at least three tips and `outer_radius > inner_radius > 0`;
+teardrops require `length > width / 2` and at least two semicircle chords.
+Eggs and squircles require at least three samples; hearts require eight.
+Sectors require a positive radius, a nonzero signed sweep of at most 360 degrees,
+and at least one chord. A full turn keeps the existing minimum of three circle
+samples. A successfully regularized zero-area sample, such as a one-chord
+semicircle, is canonical empty geometry. Supershapes require positive axes,
+nonzero `n1`, at least three samples and defined powers at every sample.
+Invalid input, undecided predicates, scalar-domain errors and capacity failures
+remain distinct from successful empty results. Native topology failures retain
+their cause. These sampled polygons carry no analytic-fidelity bound.
+
+Gear, text, airfoil and other legacy convenience operations still need their
+own typed-failure migration. End-to-end provenance remains a separate open
+contract from these operation-local certainty receipts.
+
 Rendered filled constructors:
 
 | Preview | Function |
 |---|---|
-| <img src="docs/square.png" width="144" alt="Filled square with visible edges and vertices"/> | `curve::square(width: Real) -> CurveRegion2` |
-| <img src="docs/rectangle.png" width="144" alt="Filled rectangle with visible edges and vertices"/> | `curve::rectangle(width: Real, length: Real) -> CurveRegion2` |
-| <img src="docs/circle.png" width="144" alt="Filled sampled circle with visible edges and vertices"/> | `curve::circle(radius: Real, segments: usize) -> CurveRegion2` |
-| <img src="docs/right_triangle.png" width="144" alt="Filled right triangle with visible edges and vertices"/> | `curve::right_triangle(width: Real, height: Real) -> CurveRegion2` |
-| <img src="docs/polygon.png" width="144" alt="Filled polygon with visible edges and vertices"/> | `curve::polygon(points: &[[Real; 2]]) -> CurveRegion2` |
-| <img src="docs/rounded_rectangle.png" width="144" alt="Filled rounded rectangle with visible edges and vertices"/> | `curve::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize) -> CurveRegion2` |
-| <img src="docs/ellipse.png" width="144" alt="Filled sampled ellipse with visible edges and vertices"/> | `curve::ellipse(width: Real, height: Real, segments: usize) -> CurveRegion2` |
-| <img src="docs/regular_ngon.png" width="144" alt="Filled regular polygon with visible edges and vertices"/> | `curve::regular_ngon(sides: usize, radius: Real) -> CurveRegion2` |
-| <img src="docs/curve_arrow.png" width="144" alt="Filled planar arrow with visible edges and vertices"/> | `curve::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real) -> CurveRegion2` |
-| <img src="docs/trapezoid.png" width="144" alt="Filled trapezoid with visible edges and vertices"/> | `curve::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real) -> CurveRegion2` |
-| <img src="docs/star.png" width="144" alt="Filled star with visible edges and vertices"/> | `curve::star(num_points: usize, outer_radius: Real, inner_radius: Real) -> CurveRegion2` |
-| <img src="docs/teardrop.png" width="144" alt="Filled teardrop with visible edges and vertices"/> | `curve::teardrop(width: Real, length: Real, segments: usize) -> CurveRegion2` |
-| <img src="docs/curve_egg.png" width="144" alt="Filled egg with visible edges and vertices"/> | `curve::egg(width: Real, length: Real, segments: usize) -> CurveRegion2` |
-| <img src="docs/squircle.png" width="144" alt="Filled squircle with visible edges and vertices"/> | `curve::squircle(width: Real, height: Real, segments: usize) -> CurveRegion2` |
-| <img src="docs/keyhole.png" width="144" alt="Filled keyhole with visible edges and vertices"/> | `curve::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
-| <img src="docs/reuleaux.png" width="144" alt="Filled Reuleaux polygon with visible exact curve edges and vertices"/> | `curve::reuleaux(sides: usize, diameter: Real, circle_segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
-| <img src="docs/heart.png" width="144" alt="Filled heart with visible edges and vertices"/> | `curve::heart(width: Real, height: Real, segments: usize) -> CurveRegion2` |
-| <img src="docs/ring.png" width="144" alt="Filled annulus with visible exact curve edges and vertices"/> | `curve::ring(inner_diameter: Real, thickness: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
-| <img src="docs/pie_slice.png" width="144" alt="Filled circular sector with visible edges and vertices"/> | `curve::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize) -> CurveRegion2` |
-| <img src="docs/crescent.png" width="144" alt="Filled crescent with visible exact curve edges and vertices"/> | `curve::crescent(outer_radius: Real, inner_radius: Real, offset: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
-| <img src="docs/supershape.png" width="144" alt="Filled superformula shape with visible edges and vertices"/> | `curve::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize) -> CurveRegion2` |
-| <img src="docs/circle_with_keyway.png" width="144" alt="Circle with a keyway and visible exact curve edges"/> | `curve::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
-| <img src="docs/circle_with_flat.png" width="144" alt="Circle with one flat and visible exact curve edges"/> | `curve::circle_with_flat(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
-| <img src="docs/circle_with_two_flats.png" width="144" alt="Circle with two flats and visible exact curve edges"/> | `curve::circle_with_two_flats(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>` |
+| <img src="docs/square.png" width="144" alt="Filled square with visible edges and vertices"/> | `curve::square(width: Real) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/rectangle.png" width="144" alt="Filled rectangle with visible edges and vertices"/> | `curve::rectangle(width: Real, length: Real) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/circle.png" width="144" alt="Filled sampled circle with visible edges and vertices"/> | `curve::circle(radius: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/right_triangle.png" width="144" alt="Filled right triangle with visible edges and vertices"/> | `curve::right_triangle(width: Real, height: Real) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/polygon.png" width="144" alt="Filled polygon with visible edges and vertices"/> | `curve::polygon(points: &[[Real; 2]]) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/rounded_rectangle.png" width="144" alt="Filled rounded rectangle with visible edges and vertices"/> | `curve::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/ellipse.png" width="144" alt="Filled sampled ellipse with visible edges and vertices"/> | `curve::ellipse(width: Real, height: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/regular_ngon.png" width="144" alt="Filled regular polygon with visible edges and vertices"/> | `curve::regular_ngon(sides: usize, radius: Real) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/curve_arrow.png" width="144" alt="Filled planar arrow with visible edges and vertices"/> | `curve::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/trapezoid.png" width="144" alt="Filled trapezoid with visible edges and vertices"/> | `curve::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/star.png" width="144" alt="Filled star with visible edges and vertices"/> | `curve::star(num_points: usize, outer_radius: Real, inner_radius: Real) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/teardrop.png" width="144" alt="Filled teardrop with visible edges and vertices"/> | `curve::teardrop(width: Real, length: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/curve_egg.png" width="144" alt="Filled egg with visible edges and vertices"/> | `curve::egg(width: Real, length: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/squircle.png" width="144" alt="Filled squircle with visible edges and vertices"/> | `curve::squircle(width: Real, height: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/keyhole.png" width="144" alt="Filled keyhole with visible edges and vertices"/> | `curve::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/reuleaux.png" width="144" alt="Filled Reuleaux polygon with visible exact curve edges and vertices"/> | `curve::reuleaux(sides: usize, diameter: Real, circle_segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/heart.png" width="144" alt="Filled heart with visible edges and vertices"/> | `curve::heart(width: Real, height: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/ring.png" width="144" alt="Filled annulus with visible exact curve edges and vertices"/> | `curve::ring(inner_diameter: Real, thickness: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/pie_slice.png" width="144" alt="Filled circular sector with visible edges and vertices"/> | `curve::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/crescent.png" width="144" alt="Filled crescent with visible exact curve edges and vertices"/> | `curve::crescent(outer_radius: Real, inner_radius: Real, offset: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/supershape.png" width="144" alt="Filled superformula shape with visible edges and vertices"/> | `curve::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/circle_with_keyway.png" width="144" alt="Circle with a keyway and visible exact curve edges"/> | `curve::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/circle_with_flat.png" width="144" alt="Circle with one flat and visible exact curve edges"/> | `curve::circle_with_flat(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/circle_with_two_flats.png" width="144" alt="Circle with two flats and visible exact curve edges"/> | `curve::circle_with_two_flats(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
 | <img src="docs/involute_gear.png" width="144" alt="Filled involute gear profile with visible edges and vertices"/> | `curve::involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize) -> CurveRegion2` |
 | <img src="docs/cycloidal_gear.png" width="144" alt="Filled cycloidal gear profile with visible edges and vertices"/> | `curve::cycloidal_gear(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize) -> CurveRegion2` |
 | <img src="docs/involute_rack.png" width="144" alt="Filled involute rack profile with visible edges and vertices"/> | `curve::involute_rack(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real) -> CurveRegion2` |
 | <img src="docs/cycloidal_rack.png" width="144" alt="Filled cycloidal rack profile with visible edges and vertices"/> | `curve::cycloidal_rack(module: Real, teeth: usize, clearance: Real, segments_per_flank: usize) -> CurveRegion2` |
 | <img src="docs/airfoil_naca4.png" width="144" alt="Filled NACA four-digit airfoil with visible edges and vertices"/> | `curve::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize) -> CurveRegion2` |
 | <img src="docs/bezier.png" width="144" alt="Filled exact Bezier boundary with visible edge and vertex"/> | `curve::bezier_region(control: &[[Real; 2]], display_segments: usize) -> CurveRegion2` |
-| <img src="docs/metaballs_2d.png" width="144" alt="Filled planar metaball contours with visible edges and vertices"/> | `curve::metaballs(balls: &[(Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real) -> CurveRegion2` |
+| <img src="docs/metaballs_2d.png" width="144" alt="Filled planar metaball contours with visible edges and vertices"/> | `curve::metaballs(balls: &[(Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/from_image.png" width="144" alt="Filled raster-traced region with visible edges and vertices"/> | `curve::from_image(image: &GrayImage, threshold: u8) -> Result<CurveRegion2, RasterTraceError>` |
 | <img src="docs/truetype.png" width="144" alt="Filled TrueType glyph regions with visible exact edges and vertices"/> | `curve::truetype_text(text: &str, font_data: &[u8], scale: Real) -> CurveRegion2` |
 
@@ -164,14 +222,43 @@ The Hershey catalog is compiled into Hypercurve and exposed as
 
 Planar operations:
 
-- `CurveRegion2::boolean_region(&other, BooleanOp::{Union, Difference, Intersection, Xor}, policy)`
+- `CurveRegion2::boolean_region(&other, BooleanOp::{Union, Difference, Intersection, Xor})`
   from Hypercurve, or `boolean_regions` for all four sharing one arrangement;
 - `offset` and `offset_rounded`;
 - `transformed`, `translated`, `rotated`, and `scaled`;
-- `contains_xy`, `bounding_box`, `finite_profiles`, and `triangulate`.
+- `contains_xy`, `bounding_box`, `try_finite_profiles`, and `try_triangulate`.
 
-`finite_profiles` is an explicit display/interchange projection. It is not a
+`try_finite_profiles` is an explicit display/interchange projection. It is not a
 replacement for the native curve topology.
+
+The four `curve::transformed`/`translated`/`rotated`/`scaled` functions now
+return `Result<CurveRegion2, ValidationError>`; failures no longer become empty
+regions. Their `try_` aliases and context variants use the same error type,
+retaining native causes in `ValidationError::ExactCurve`. Context variants
+return operation-local certainty. `contains_xy` now returns
+`Result<Option<bool>, ValidationError>`: `Some(true)`/`Some(false)` classify
+inside/outside, `Ok(None)` means a proved boundary, and an undecided query is
+an error. Canonical empty regions classify outside and remain composable under
+valid transforms. Invalid transform arguments are checked even for empty input.
+
+A `Matrix4` applied to a planar region must restrict to a nonsingular affine
+map on `z = 0`, keep that plane in `z = 0`, and have constant nonzero homogeneous
+weight. The weight is divided out, including negative or nonunit values.
+The third column has no effect on an XY input. Perspective and out-of-plane
+images return `UnsupportedTransform`; a constant zero weight with a nonzero
+coordinate image returns `UnboundedTransform`. An all-zero homogeneous image
+is invalid input. Unproved constraints remain undecided, or explicitly
+qualified when the selected policy consumes approximate evidence. This corrects
+the old behavior that ignored these components and could publish a different set.
+
+Scalar adapters and native bindings share this admission path. They validate
+all three scalar inputs: Z translation must preserve the plane; Z scale has no
+effect on XY geometry; X/Y/Z rotations are applied in that order and their
+combined image must remain planar. An X half-turn is therefore a reflection,
+while an X quarter-turn is unsupported. WASM transforms and strict point queries
+throw `GeometryError` with a diagnostic `code`; contextual queries retain their
+explicit boundary/uncertain status. These receipts do not establish end-to-end
+provenance or an internal work, retained-memory, or cancellation bound.
 
 ### Curves to solids
 
@@ -192,36 +279,101 @@ Functions in `csgrs::solid` return `TriangleMesh`:
 
 | Preview | Function |
 |---|---|
-| <img src="docs/cube.png" width="144" alt="Cube with visible faces, edges, and vertices"/> | `solid::cube(width: Real) -> TriangleMesh` |
-| <img src="docs/cuboid.png" width="144" alt="Cuboid with visible faces, edges, and vertices"/> | `solid::cuboid(width: Real, length: Real, height: Real) -> TriangleMesh` |
-| <img src="docs/sphere.png" width="144" alt="Sampled sphere with visible faces, edges, and vertices"/> | `solid::sphere(radius: Real, segments: usize, stacks: usize) -> TriangleMesh` |
-| <img src="docs/cylinder.png" width="144" alt="Sampled cylinder with visible faces, edges, and vertices"/> | `solid::cylinder(radius: Real, height: Real, segments: usize) -> TriangleMesh` |
-| <img src="docs/ellipsoid.png" width="144" alt="Sampled ellipsoid with visible faces, edges, and vertices"/> | `solid::ellipsoid(radius_x: Real, radius_y: Real, radius_z: Real, segments: usize, stacks: usize) -> TriangleMesh` |
-| <img src="docs/frustum.png" width="144" alt="Conical frustum with visible faces, edges, and vertices"/> | `solid::frustum(radius_bottom: Real, radius_top: Real, height: Real, segments: usize) -> TriangleMesh` |
-| <img src="docs/frustum_between.png" width="144" alt="Conical frustum between two points with visible faces, edges, and vertices"/> | `solid::frustum_between(start: Point3, end: Point3, start_radius: Real, end_radius: Real, segments: usize) -> TriangleMesh` |
+| <img src="docs/cube.png" width="144" alt="Cube with visible faces, edges, and vertices"/> | `solid::cube(width: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/cuboid.png" width="144" alt="Cuboid with visible faces, edges, and vertices"/> | `solid::cuboid(width: Real, length: Real, height: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/sphere.png" width="144" alt="Sampled sphere with visible faces, edges, and vertices"/> | `solid::sphere(radius: Real, segments: usize, stacks: usize) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/cylinder.png" width="144" alt="Sampled cylinder with visible faces, edges, and vertices"/> | `solid::cylinder(radius: Real, height: Real, segments: usize) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/ellipsoid.png" width="144" alt="Sampled ellipsoid with visible faces, edges, and vertices"/> | `solid::ellipsoid(radius_x: Real, radius_y: Real, radius_z: Real, segments: usize, stacks: usize) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/frustum.png" width="144" alt="Conical frustum with visible faces, edges, and vertices"/> | `solid::frustum(radius_bottom: Real, radius_top: Real, height: Real, segments: usize) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/frustum_between.png" width="144" alt="Conical frustum between two points with visible faces, edges, and vertices"/> | `solid::frustum_between(start: Point3, end: Point3, start_radius: Real, end_radius: Real, segments: usize) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/polyhedron.png" width="144" alt="Indexed polyhedron with visible faces, edges, and vertices"/> | `solid::polyhedron(points: &[[Real; 3]], faces: &[&[usize]]) -> Result<TriangleMesh, ValidationError>` |
-| <img src="docs/octahedron.png" width="144" alt="Regular octahedron with visible faces, edges, and vertices"/> | `solid::octahedron(radius: Real) -> TriangleMesh` |
-| <img src="docs/icosahedron.png" width="144" alt="Regular icosahedron with visible faces, edges, and vertices"/> | `solid::icosahedron(radius: Real) -> TriangleMesh` |
-| <img src="docs/mesh_arrow.png" width="144" alt="Three-dimensional arrow with visible faces, edges, and vertices"/> | `solid::arrow(start: Point3, direction: Vector3, segments: usize, mirrored: bool) -> TriangleMesh` |
-| <img src="docs/torus.png" width="144" alt="Sampled torus with visible faces, edges, and vertices"/> | `solid::torus(major_radius: Real, minor_radius: Real, major_segments: usize, minor_segments: usize) -> TriangleMesh` |
+| <img src="docs/octahedron.png" width="144" alt="Regular octahedron with visible faces, edges, and vertices"/> | `solid::octahedron(radius: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/icosahedron.png" width="144" alt="Regular icosahedron with visible faces, edges, and vertices"/> | `solid::icosahedron(radius: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/mesh_arrow.png" width="144" alt="Three-dimensional arrow with visible faces, edges, and vertices"/> | `solid::arrow(start: Point3, direction: Vector3, segments: usize, mirrored: bool) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/torus.png" width="144" alt="Sampled torus with visible faces, edges, and vertices"/> | `solid::torus(major_radius: Real, minor_radius: Real, major_segments: usize, minor_segments: usize) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/teardrop_cylinder.png" width="144" alt="Extruded teardrop solid with visible faces, edges, and vertices"/> | `solid::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/spur_gear_involute.png" width="144" alt="Involute spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_involute(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/spur_gear_cycloid.png" width="144" alt="Cycloidal spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_cycloid(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, thickness: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/helical_involute_gear.png" width="144" alt="Helical involute gear with visible faces, edges, and vertices"/> | `solid::helical_involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_degrees: Real, slices: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
-| <img src="docs/metaballs_3d.png" width="144" alt="Sampled metaball solid with visible faces, edges, and vertices"/> | `solid::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real) -> TriangleMesh` |
-| <img src="docs/sdf.png" width="144" alt="Sampled signed-distance-field solid with visible faces, edges, and vertices"/> | `solid::sdf(field: impl Fn(&Point3) -> Real, resolution: (usize, usize, usize), min: Point3, max: Point3, iso_value: Real) -> TriangleMesh` |
-| <img src="docs/gyroid.png" width="144" alt="Bounded gyroid solid with visible faces, edges, and vertices"/> | `solid::gyroid_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> TriangleMesh` |
-| <img src="docs/schwarz_p.png" width="144" alt="Bounded Schwarz-P solid with visible faces, edges, and vertices"/> | `solid::schwarz_p_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> TriangleMesh` |
-| <img src="docs/schwarz_d.png" width="144" alt="Bounded Schwarz-D solid with visible faces, edges, and vertices"/> | `solid::schwarz_d_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> TriangleMesh` |
-| <img src="docs/gyroid_surface.png" width="144" alt="Bounded gyroid level surface with visible faces, edges, and vertices"/> | `solid::gyroid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> TriangleMesh` |
-| <img src="docs/schwarz_p_surface.png" width="144" alt="Bounded Schwarz-P level surface with visible faces, edges, and vertices"/> | `solid::schwarz_p(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> TriangleMesh` |
-| <img src="docs/schwarz_d_surface.png" width="144" alt="Bounded Schwarz-D level surface with visible faces, edges, and vertices"/> | `solid::schwarz_d(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> TriangleMesh` |
+| <img src="docs/metaballs_3d.png" width="144" alt="Sampled metaball solid with visible faces, edges, and vertices"/> | `solid::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/sdf.png" width="144" alt="Sampled signed-distance-field solid with visible faces, edges, and vertices"/> | `solid::sdf(field: impl Fn(&Point3) -> Real, resolution: (usize, usize, usize), min: Point3, max: Point3, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/gyroid.png" width="144" alt="Bounded gyroid solid with visible faces, edges, and vertices"/> | `solid::gyroid_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/schwarz_p.png" width="144" alt="Bounded Schwarz-P solid with visible faces, edges, and vertices"/> | `solid::schwarz_p_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/schwarz_d.png" width="144" alt="Bounded Schwarz-D solid with visible faces, edges, and vertices"/> | `solid::schwarz_d_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/gyroid_surface.png" width="144" alt="Bounded gyroid level surface with visible faces, edges, and vertices"/> | `solid::gyroid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/schwarz_p_surface.png" width="144" alt="Bounded Schwarz-P level surface with visible faces, edges, and vertices"/> | `solid::schwarz_p(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
+| <img src="docs/schwarz_d_surface.png" width="144" alt="Bounded Schwarz-D level surface with visible faces, edges, and vertices"/> | `solid::schwarz_d(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
 
 `solid::empty()` is intentionally image-free. Diagnostic variants
 `metaballs_with_diagnostics` and `sdf_with_diagnostics` produce the same shape
 families while returning sampling reports. `sdf_expr` and
 `sdf_expr_with_diagnostics` accept retained `hypersdf::SdfExpr` values and
-produce the same SDF shape family.
+produce the same SDF shape family. All four SDF constructors now return `Result`:
+use `?` to propagate failures before passing a mesh downstream. Successful
+empty level surfaces remain `Ok`; invalid expression domains, undecided
+construction or extraction, and capacity exhaustion are errors with retained
+native causes. `ValidationError::SdfSample` also records the failing grid index.
+Grid dimensions below two are rejected instead of silently increased. Diagnostic
+queries also fail when their requested sign or extrema cannot be established.
+
+`*_with_context` variants retain the certainty of the decisions consumed under
+the selected policy, including `sdf_expr_with_diagnostics_and_context`.
+Expression construction remains strict under either meshing policy. Diagnostic
+previews remain lossy and preserve only strict sign evidence; they may withhold
+samples accepted approximately by the mesh operation. The display backend also
+uses a chunk boundary convention that can omit final-layer faces. The modeling
+path now uses Hypermesh's `surface_nets_standalone`, which includes all faces
+whose four incident cells are present in the grid. Hypermesh's existing
+`surface_nets` keeps its documented chunk convention. The modeling output
+correction is a contract migration, not a performance-only change.
+Numerical certification
+of the sampled level surface establishes neither closed topology nor fidelity
+to the continuous field. Check required topology separately and retain the
+source expression when that distinction matters.
+
+The SDF sampling path checks primary buffer capacities and reservations. Scalar
+expression growth, secondary extraction/preview allocations, total work and
+cancellation do not yet have internal bounds. The 3D metaball constructors now share this native sampler and return `Result`.
+`MetaBall` reexports Hypersdf's retained `Metaball`; its `influence` returns a
+fallible exact inverse-square value, with no distant cutoff and a typed pole
+error at the center. `metaballs_with_context` and
+`metaballs_with_diagnostics_and_context` retain the certainty actually consumed.
+Radii and iso values must be positive, padding nonnegative, and every requested
+grid dimension at least two, including for empty inputs.
+
+This is an explicit geometry migration: extraction samples
+`F = (iso - I)/(iso + I)`, where `I = sum(r² / distance²)`, and uses the exact
+continuous limit `F = -1` at centers. The normalization preserves the intended
+level set while making finite interpolation well-defined, including for
+coincident centers. The former cutoff, finite singularity sentinel and hidden
+`f32` vertex construction are removed from 3D modeling. Grid locations retain
+the existing conservative bounds and one-cell exterior border. Diagnostic sign
+counts and extrema describe F, with negative meaning inside. Output coordinates
+and serialized artifacts change; this is not a performance-only change or an
+analytic-surface fidelity guarantee.
+
+The 2D `curve::metaballs` now returns `Result` and samples the same normalized
+native field, removing its cutoff, center sentinel, and empty-on-error fallback.
+`curve::metaballs_with_context` also retains predicate certainty. It preserves
+the existing core grid within the conservative bounds, without the 3D exterior
+border. Hypercurve owns exact marching-squares edge crossings and material/hole
+arrangement. Ambiguous cells retain the center-sample-sum sign rule (zero is
+inside). Chords define a deterministic polygonal proposal, not an exact bilinear
+level curve or certified approximation of the continuous field. Boundary samples
+must be strictly exterior; unresolved decisions and unsupported arrangements
+remain typed failures. This migration changes 2D coordinates and serialized
+artifacts as well. Primary grid buffers are checked; total work, secondary
+allocations, coefficient growth and cancellation remain internally unbounded.
+
+Triangulation and linear extrusion now use native certified line profiles and
+Hypertri without finite-coordinate projection, including line-image Bézier
+boundaries, holes, rational coordinates, and coordinates beyond `f64` range.
+Their exact vertices and output artifacts can therefore differ from the former
+quantized output. Other profile representations retain the existing sampled
+finite path; source-curve fidelity and end-to-end provenance for that path remain
+open targets. Rust extrusion adapters retain native errors, C-family bindings
+retain status categories, and WASM extrusion/triangulation expose `GeometryError`
+codes. Required topology is checked separately from numerical certainty.
 
 Sampling arguments such as segments, stacks, slices, and resolution are
 explicit tessellation choices; CSGRS has no global tolerance setting.
@@ -258,6 +410,73 @@ Hypermesh retains reusable bounds, topology, transform, convexity, and
 Boolean facts on `TriangleMesh`. Cloning a mesh shares its immutable geometry
 and retained facts.
 
+`solid::empty()` is a valid operand for every modeling Boolean. Union can
+accumulate from empty, and a subtraction that removes everything can feed the
+next operation. Canonical empty geometry has neither positions nor triangles;
+a mesh missing just one of those arrays remains an input error. The other
+operand is still validated and regularized under the selected policy, even
+when the result is necessarily empty. Conversion from a shared Hypermesh
+Boolean batch now gives empty rows zero positions as well as zero triangles;
+nonempty rows continue sharing the batch's position allocation.
+
+Primitive constructors (`cube`, `cuboid`, `sphere`, `cylinder`, `ellipsoid`,
+`frustum`, `frustum_between`, `octahedron`, `icosahedron`, `arrow`, and `torus`)
+now return `Result<TriangleMesh, ValidationError>`. This is an API migration:
+propagate construction errors with `?` before transforming or composing a model.
+Negative dimensions/radii, invalid sample counts, undecided strict predicates,
+unsupported torus representations, and unrepresentable buffer capacities are
+errors, with structured variants retained by `AdapterError::Construction`.
+Proven zero-size primitives remain canonical empty sets after validation of all
+parameters. Cylinder/frustum height is directed, so negative height remains
+supported. A cone may have one zero radius. Sample counts require at least three
+segments and, for spheres/ellipsoids, two stacks. Nonempty tori require
+`major_radius > minor_radius`; a zero minor radius represents the empty set.
+Only successful constructions enter the primitive cache.
+
+Modeling transforms (`solid::transform`, `rotate`, `scale`, `mirror`, and
+`SolidExt::{transformed, translated}`) also return `Result<TriangleMesh,
+ValidationError>`; propagate them with `?`. Their existing `try_` counterparts
+remain equivalent. Invalid indices, singular transforms, invalid planes,
+undecided predicates, and projective images crossing infinity fail explicitly.
+The shared Hypermesh implementation validates indices and certifies a nonzero
+homogeneous scale of constant sign on each triangle. Separate components may
+have opposite signs. Native diagnostics remain available in
+`ValidationError::Mesh` and `AdapterError::Construction`. Open surfaces and point
+sets remain supported transform inputs; a transform does not certify topology.
+Valid transforms of canonical empty geometry remain canonical empty.
+Context variants report operation-local predicate certainty; they do not certify
+the provenance of an earlier approximate construction. Transform work and
+allocation do not yet have an internal total-work, heap-byte, or cancellation bound.
+
+Bounds queries (`solid::bounding_box`, `curve::bounding_box`, their `try_`
+variants, and `SolidExt::exact_bounds`) now return `Result<Option<Aabb>,
+ValidationError>`. Propagate errors with `?`, then handle `None` as a completed
+query on empty geometry. A point at the origin has `Some` zero-size bounds.
+Context queries retain the certainty receipt around the optional bounds.
+Scalar adapters follow the same optional-result contract. Mesh bounds validate
+indices before reusing retained position facts; a bounds query does not validate
+closed-solid topology. `solid::center` and `float` now return `Result`; they
+preserve canonical empty geometry and propagate bounds failures.
+
+The six TPMS constructors (`gyroid`, `schwarz_p`, `schwarz_d`, and their `_solid`
+forms) also return `Result<TriangleMesh, ValidationError>`. Their sampling formulas
+and valid resolutions are unchanged. Resolutions below two are now rejected
+instead of silently clamped. Periods must be proved positive and solid wall
+thickness must be proved nonnegative. Empty bounds and zero wall thickness
+produce canonical empty geometry after parameter validation. Undecided bounds,
+sample signs, interpolation, orientation, and native Surface Nets failures remain
+errors with their diagnostic category; they no longer produce an empty model.
+Certification concerns the sampled representation, not the continuous TPMS field.
+
+These constructors make strict numerical decisions and retain exact sampled
+coordinates. They do not certify fidelity to an analytic surface or attach
+end-to-end provenance to a mesh. Buffer capacity checks and fallible reservations
+report representational overflow and reservation failure. They do not bound total
+work, scalar expression growth, peak heap usage, or allocator/process termination;
+there is no constructor cancellation contract yet. Use external containment for
+large or adversarial sample counts. Other legacy convenience operations that
+replace errors with empty geometry remain an open migration target.
+
 For sampled curved solids whose predicates remain undecided in strict mode,
 select `GeometryContext::APPROXIMATE_512` explicitly:
 
@@ -265,9 +484,9 @@ select `GeometryContext::APPROXIMATE_512` explicitly:
 use csgrs::{GeometryContext, Real, solid::{self, SolidExt}};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4));
-    let drill = solid::cylinder(Real::from(2), Real::from(6), 16)
-        .translated(Real::from(6), Real::from(6), Real::from(-1));
+    let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4))?;
+    let drill = solid::cylinder(Real::from(2), Real::from(6), 16)?
+        .translated(Real::from(6), Real::from(6), Real::from(-1))?;
     let result = body.try_difference_with_context(
         &drill,
         &GeometryContext::APPROXIMATE_512,
@@ -294,7 +513,8 @@ report. The existing convenience entry points retain their strict default.
 | Mesh bounds and queries | `solid::try_bounding_box_with_context`, `contains_point_with_context`, `polyline_intersections_with_context`, `dihedral_angle_with_context` |
 | Hulls, copies, and polygon caps | `solid::convex_hull_with_context`, `minkowski_sum_with_context`, `distribute_linear_with_context`, `distribute_grid_with_context`, `distribute_arc_with_context`, `polyhedron_with_context`, `loft_with_context` |
 | Projection and slicing | `solid::flatten_with_context`, `slice_z_with_context` |
-| Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context` |
+| Native Real metaball meshing | `solid::metaballs_with_context`, `metaballs_with_diagnostics_and_context` |
+| Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context`, `sdf_expr_with_diagnostics_and_context` |
 | Curve construction | `curve::polygon_with_context`, `rectangle_with_context`, `square_with_context`, `circle_with_context`, `ellipse_with_context`, `regular_ngon_with_context`, `rounded_rectangle_with_context`, `bezier_region_with_context`, `bspline_path_with_context` |
 | Curve transforms and queries | `curve::try_transformed_with_context`, `try_translated_with_context`, `try_rotated_with_context`, `try_scaled_with_context`, `try_bounding_box_with_context`, `contains_xy_with_context`, `hilbert_strings_with_context` |
 | Mesh imports | `io::obj::from_obj_with_context`, `from_obj_attributed_with_context`, `io::dxf::from_dxf_with_context`, `io::vrml::from_vrml_with_context` |
@@ -329,12 +549,26 @@ The inverse dimensional conversions preserve native Hypercurve topology:
 
 | Preview | Function |
 |---|---|
-| <img src="docs/flatten.png" width="144" alt="Filled planar projection of a three-dimensional solid with visible exact edges and vertices"/> | `solid::flatten(mesh: &TriangleMesh) -> CurveRegion2` |
-| <img src="docs/slice_z.png" width="144" alt="Filled planar slice of a three-dimensional solid with visible exact edges and vertices"/> | `solid::slice_z(mesh: &TriangleMesh, z: Real) -> (CurveRegion2, Vec<CurveString2>, Vec<CurvePath2>)` |
+| <img src="docs/flatten.png" width="144" alt="Filled planar projection of a three-dimensional solid with visible exact edges and vertices"/> | `solid::flatten(mesh: &TriangleMesh) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/slice_z.png" width="144" alt="Filled planar slice of a three-dimensional solid with visible exact edges and vertices"/> | `solid::slice_z(mesh: &TriangleMesh, z: Real) -> Result<SliceResult, ValidationError>` |
 
-`flatten` unions the XY projections of all triangle faces. `slice_z` returns
-filled closed sections, open curve strings, and higher-order paths separately
-instead of discarding their topology roles.
+`flatten` unions the XY projections of all triangle faces, omitting projected
+faces of zero area. `slice_z` returns filled closed sections, open curve strings,
+and higher-order paths separately. Closed sections and coplanar faces use
+signed nonzero winding: holes stay empty, equally oriented shells accumulate,
+and opposite traversals cancel. The sections approached from above and below
+are united, preserving cuts through shared edges and coplanar caps. Isolated
+point contacts are omitted by this regularized area/wire carrier.
+
+Migration: both primary functions now return `Result`; propagate errors with
+`?` or handle them explicitly. Invalid indices and undecided predicates no
+longer become empty geometry. This is a correctness and API change, including
+corrected slice topology; prior slice serialization is not preserved. The
+context variants retain aggregate operation-local certainty. They do not
+certify inherited construction intent or input manifoldness, nor impose an
+internal total-work, memory-byte or cancellation bound. Native Hypermesh
+section records retain source triangles, edges and exact interpolation
+parameters; the planar return value does not expose those mesh-source records.
 
 ### Metadata
 
@@ -344,7 +578,7 @@ face information:
 ```rust
 use csgrs::{AttributedMesh, Real, solid};
 
-let geometry = solid::cube(Real::from(2));
+let geometry = solid::cube(Real::from(2)).expect("positive cube width");
 let attributed = AttributedMesh::from_uniform(geometry, "housing");
 assert_eq!(
     attributed.face_metadata().len(),

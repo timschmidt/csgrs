@@ -1,7 +1,7 @@
 // The runner copies this beside the generated csgrs.d.ts before type-checking.
 import {
   CurveRegionJs, GeometryBoolResultJs, GeometryCertaintyJs,
-  GeometryQueryStatusJs, MeshJs,
+  GeometryQueryStatusJs, Matrix4Js, MeshJs, Point3Js,
 } from "./csgrs";
 
 function assertNever(value: never): never {
@@ -32,7 +32,41 @@ describe(query);
 query.free();
 square.free();
 
+for (const profile of [
+  CurveRegionJs.star(4, 2, 1),
+  CurveRegionJs.teardrop(2, 3, 2),
+  CurveRegionJs.egg(2, 4, 4),
+  CurveRegionJs.heart(2, 2, 8),
+]) {
+  const extrusion = profile.extrude(3, false);
+  const receipt: GeometryCertaintyJs = extrusion.certainty;
+  if (receipt !== GeometryCertaintyJs.Certified) throw new Error("Uncertified fixture");
+  extrusion.free();
+  profile.free();
+}
+
+const planarSource = CurveRegionJs.square(1);
+const normalizedMatrix = new Matrix4Js(4, 0, 17, 2, 0, -6, 19, 4, 0, 0, 0, 0, 0, 0, 23, 2);
+const transformed = planarSource.transformWithContext(normalizedMatrix, false);
+const transformReceipt: GeometryCertaintyJs = transformed.certainty;
+if (transformReceipt !== GeometryCertaintyJs.Certified) throw new Error("Uncertified transform");
+const planarImage = transformed.intoRegion();
+const classified: boolean | undefined = planarImage.containsXY(2, 0);
+if (classified !== true) throw new Error("Wrong homogeneous image");
+planarImage.free();
+normalizedMatrix.free();
+planarSource.free();
+
 const cube = MeshJs.cube(1);
+const bounds = cube.boundingBoxWithContext(false);
+const minimum: Point3Js | undefined = bounds.min;
+const maximum: Point3Js | undefined = bounds.max;
+const empty: boolean = bounds.isEmpty;
+if (!empty && minimum && maximum) {
+  minimum.free();
+  maximum.free();
+}
+bounds.free();
 const result = cube.unionWithContext(cube, false);
 const certainty: GeometryCertaintyJs = result.certainty;
 if (certainty === GeometryCertaintyJs.Certified) {

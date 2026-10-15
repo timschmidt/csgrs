@@ -38,6 +38,32 @@ the release benchmark profile. Times are medians after two warmup batches.
 
 ## Retained changes
 
+On 15 October 2026, CSGRS retained reuse of a signed-winding proof when the
+above and below sections contain identical directed native segment records.
+The [paired probe and acceptance record](docs/evidence/2026-10-15-section-proof-reuse/README.md)
+preserve all 25 section regressions and 43 byte-identical snapshots, including
+the original sphere and frustum fixtures, public boundary evidence and certainty.
+Both versions link the same native library bytes. The instrumented cube probe
+includes construction, validation, exact output materialization and drop;
+three fresh-process samples per case complete 9,216 timed operations in total.
+
+| Completed operation | Warm latency change | Varied-input latency change | Disabled modeling-cache latency change |
+| --- | ---: | ---: | ---: |
+| Middle section | −2.3% | −42.1% | −40.4% |
+| Bottom section | −2.2% | −1.1% | +2.8% |
+| Top section | −2.5% | +3.9% | +2.1% |
+| XY projection | −3.3% | −2.0% | −2.7% |
+
+Middle-section allocation calls fall from 3,300 to 1,862 per varied/disabled
+operation, and requested bytes from 370,358 to 208,154. Other allocation counts
+are unchanged. Peak live allocation above warmup falls by 3,504 bytes, while
+the retained-byte delta after 128 operations rises by 1,376 bytes. The probe
+executable shrinks 2,880 bytes; its CSGRS archive grows 15,304 bytes. These are
+focused measurements on a shared unpinned host, with all adverse controls
+retained; no universal speedup, whole-process memory bound, shipped binary-size
+claim, or comparison with the earlier differently configured repair probe is
+made. Full-corpus snapshot process wall/RSS samples are recorded separately.
+
 Hyperreal's bounded Laurent/radical recognizer reuses owned coefficient storage
 during scaling, multiplication by one term, and inversion. Four of six focused
 query families allocate less; construction and retained bytes are unchanged.

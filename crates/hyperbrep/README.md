@@ -20,6 +20,13 @@ Constructors and Booleans return owned `BodySet` or `SheetSet` selections.
 Typed arena positions in errors are diagnostic labels and cannot resolve a
 record through the public API.
 
+Boolean results can be empty or contain multiple bodies, but the current
+Boolean front doors accept two individual `SolidRef` operands. An empty
+`BodySet` cannot yet feed the next Boolean directly. Closing that composition
+gap is the first priority under the updated
+[development plan](docs/DEVELOPMENT_PLAN.md#acceptance-order-after-the-upstream-integration);
+the constructor inventory below does not establish complete CAD workflows.
+
 `OperationContext::strict(WorkBudget { refinements, promotions })` runs a
 synchronous batch through `context.evaluate(|| ...)`. Nested BREP, Hypercurve
 and Hypersolve calls share the admitted solver work. The returned

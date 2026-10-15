@@ -59,7 +59,7 @@ fn bounds_and_positioning_propagate_policy_and_certainty() {
 
 #[test]
 fn transformation_policy_does_not_allow_collapsed_geometry() {
-    let mesh = solid::cube(Real::one());
+    let mesh = solid::cube(Real::one()).expect("valid primitive fixture");
     let zero = unresolved_zero();
     assert!(
         solid::try_scale_with_context(&mesh, zero.clone(), Real::one(), Real::one(), &STRICT)
@@ -110,7 +110,7 @@ fn transformation_policy_does_not_allow_collapsed_geometry() {
 
 #[test]
 fn hulls_and_queries_accept_terminal_equality() {
-    let cube = solid::cube(Real::one());
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let mut positions = cube.positions.to_vec();
     positions.push(Point3::new(unresolved_zero(), Real::zero(), Real::zero()));
     let mesh = TriangleMesh::new(positions, cube.triangles.to_vec());
@@ -146,7 +146,7 @@ fn hulls_and_queries_accept_terminal_equality() {
 
 #[test]
 fn distributions_do_not_reuse_approximate_results_for_strict_calls() {
-    let cube = solid::cube(Real::one());
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let step = Real::one() + unresolved_zero();
     assert!(
         solid::distribute_grid_with_context(&cube, 1, 2, step.clone(), Real::one(), &STRICT)
@@ -216,7 +216,7 @@ fn scalar_mesh_booleans_expose_context_without_losing_certainty() {
 #[cfg(feature = "curve")]
 #[test]
 fn slices_and_flattening_report_uncertainty_instead_of_empty_success() {
-    let cube = solid::cube(Real::one());
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let z = unresolved_zero();
     assert!(solid::slice_z_with_context(&cube, z.clone(), &STRICT).is_err());
     let sliced = solid::slice_z_with_context(&cube, z.clone(), &APPROXIMATE).unwrap();
@@ -239,7 +239,7 @@ fn slices_and_flattening_report_uncertainty_instead_of_empty_success() {
 #[cfg(feature = "curve")]
 #[test]
 fn curve_queries_preserve_boundary_and_uncertainty_distinctions() {
-    let square = csgrs::curve::square(Real::one());
+    let square = csgrs::curve::square(Real::one()).expect("valid planar fixture");
     let half = (Real::one() / Real::from(2)).unwrap();
     assert!(
         csgrs::curve::contains_xy_with_context(
@@ -275,7 +275,7 @@ fn curve_queries_preserve_boundary_and_uncertainty_distinctions() {
 #[cfg(feature = "curve")]
 #[test]
 fn explicit_geometry_context_is_independent_of_enclosing_display_preview() {
-    let square = csgrs::curve::square(Real::one());
+    let square = csgrs::curve::square(Real::one()).expect("valid planar fixture");
     let half = (Real::one() / Real::from(2)).unwrap();
     for preview in [
         hypercurve::CurvePreviewOptions::try_strict(0.01, 0.01).unwrap(),
@@ -405,8 +405,14 @@ fn composite_curve_constructors_preserve_nested_predicate_certainty() {
     assert!(!clipped.value.is_empty());
     let bounds =
         csgrs::curve::try_bounding_box_with_context(&clipped.value, &APPROXIMATE).unwrap();
-    assert_eq!(bounds.value.mins.y.to_f64_lossy().unwrap(), 0.0);
-    assert_eq!(bounds.value.maxs.y.to_f64_lossy().unwrap(), 1.0);
+    assert_eq!(
+        bounds.value.as_ref().unwrap().mins.y.to_f64_lossy().unwrap(),
+        0.0
+    );
+    assert_eq!(
+        bounds.value.as_ref().unwrap().maxs.y.to_f64_lossy().unwrap(),
+        1.0
+    );
 
     let rounded = csgrs::curve::rounded_rectangle_with_context(
         Real::from(2),
@@ -425,12 +431,16 @@ fn composite_curve_constructors_preserve_nested_predicate_certainty() {
 fn javascript_mesh_results_expose_the_consumed_certainty() {
     use csgrs::solid::SolidExt;
     use csgrs::wasm::mesh_js::MeshJs;
-    let body = MeshJs::from(solid::cuboid(Real::from(12), Real::from(12), Real::from(4)));
-    let drill = MeshJs::from(solid::cylinder(Real::from(2), Real::from(6), 16).translated(
-        Real::from(6),
-        Real::from(6),
-        Real::from(-1),
-    ));
+    let body = MeshJs::from(
+        solid::cuboid(Real::from(12), Real::from(12), Real::from(4))
+            .expect("valid primitive fixture"),
+    );
+    let drill = MeshJs::from(
+        solid::cylinder(Real::from(2), Real::from(6), 16)
+            .expect("valid primitive fixture")
+            .translated(Real::from(6), Real::from(6), Real::from(-1))
+            .expect("valid transform fixture"),
+    );
     let result = body.difference_with_context(&drill, true).unwrap();
     assert!(result.approximate_512_consumed());
     assert_eq!(result.into_mesh().triangle_count(), 144);
@@ -465,7 +475,9 @@ fn obj_context_preserves_certified_concave_triangulation_and_parse_errors() {
 #[cfg(feature = "dxf-io")]
 #[test]
 fn dxf_context_preserves_exact_imports() {
-    let source = csgrs::io::dxf::to_dxf(&solid::cube(Real::one())).unwrap();
+    let source =
+        csgrs::io::dxf::to_dxf(&solid::cube(Real::one()).expect("valid primitive fixture"))
+            .unwrap();
     for context in [STRICT, APPROXIMATE] {
         let imported = csgrs::io::dxf::from_dxf_with_context(&source, &context).unwrap();
         assert_eq!(imported.certainty, GeometryCertainty::Certified);

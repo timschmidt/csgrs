@@ -42,11 +42,14 @@ fn metadata(handle: &str, offset: Vector3) -> PartMetadata {
 fn main() {
     let parts = (0..64)
         .map(|idx| {
-            let geometry = solid::cube(Real::from(2)).translated(
-                Real::from(idx % 8) * Real::from(3),
-                Real::from(idx / 8),
-                Real::from(idx),
-            );
+            let geometry = solid::cube(Real::from(2))
+                .expect("valid primitive fixture")
+                .translated(
+                    Real::from(idx % 8) * Real::from(3),
+                    Real::from(idx / 8),
+                    Real::from(idx),
+                )
+                .expect("valid transform fixture");
             AttributedMesh::from_uniform(
                 geometry,
                 metadata(&format!("p{idx}"), vector(i64::from(idx), 0, 8)),

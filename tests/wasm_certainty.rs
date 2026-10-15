@@ -31,7 +31,7 @@ fn named_receipts_preserve_both_certainty_values() {
         assert_eq!(query.value(), Some(false));
         assert_eq!(query.reason(), None);
         let result = GeometryMeshResultJs::from(GeometryOutcome {
-            value: solid::cube(Real::one()),
+            value: solid::cube(Real::one()).expect("valid primitive fixture"),
             certainty,
         });
         assert_eq!(result.certainty(), expected);
@@ -45,7 +45,8 @@ fn named_receipts_preserve_both_certainty_values() {
 
 #[test]
 fn curve_boundary_is_distinct_from_empty_and_outside() {
-    let square = CurveRegionJs::from(curve::square(Real::one()));
+    let square =
+        CurveRegionJs::from(curve::square(Real::one()).expect("valid planar fixture"));
     let empty = CurveRegionJs::new();
     for approximate in [false, true] {
         let boundary = square
@@ -68,16 +69,19 @@ fn curve_boundary_is_distinct_from_empty_and_outside() {
     }
     assert_eq!(empty.contains_xy(0.0, 0.0).unwrap(), Some(false));
     assert_eq!(
-        curve::contains_xy(&curve::empty(), Real::zero(), Real::zero()),
+        curve::contains_xy(&curve::empty(), Real::zero(), Real::zero()).unwrap(),
         Some(false)
     );
 }
 
 #[test]
 fn curve_uncertainty_survives_a_warm_approximate_boundary_query() {
-    let square =
-        curve::try_translated(&curve::square(Real::one()), unresolved_zero(), Real::zero())
-            .unwrap();
+    let square = curve::try_translated(
+        &curve::square(Real::one()).expect("valid planar fixture"),
+        unresolved_zero(),
+        Real::zero(),
+    )
+    .unwrap();
     let square = CurveRegionJs::from(square);
     for approximate in [false, true, false] {
         let result = square
@@ -102,7 +106,7 @@ fn curve_uncertainty_survives_a_warm_approximate_boundary_query() {
 
 #[test]
 fn unknown_mesh_query_does_not_claim_a_certified_value() {
-    let cube = MeshJs::from(solid::cube(Real::one()));
+    let cube = MeshJs::from(solid::cube(Real::one()).expect("valid primitive fixture"));
     let half = (Real::one() / Real::from(2)).unwrap();
     let point = Point3Js::from(Point3::new(unresolved_zero(), half.clone(), half));
     for approximate in [false, true, false] {

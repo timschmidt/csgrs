@@ -7,7 +7,9 @@ from typing import Iterable, Sequence
 
 
 class CsgrsError(RuntimeError):
-    pass
+    def __init__(self, message: str, status: int | None = None):
+        super().__init__(message)
+        self.status = status
 
 
 class _RealHandle(ctypes.Structure):
@@ -217,7 +219,7 @@ def load(path: str | os.PathLike[str] | None = None) -> ctypes.CDLL:
 def _check(status: int) -> None:
     if status != 0:
         message = load().csgrs_last_error_message()
-        raise CsgrsError(message.decode() if message else f"csgrs status {status}")
+        raise CsgrsError(message.decode() if message else f"csgrs status {status}", status)
 
 
 def _call(name: str, *args):
@@ -471,7 +473,10 @@ class TriangleMesh:
 
     def bounding_box(self):
         out = self.family.aabb_type()
-        _call(f"csgrs_triangle_mesh_{self.family.prefix}_bounding_box", self.ptr, ctypes.byref(out))
+        status = getattr(load(), f"csgrs_triangle_mesh_{self.family.prefix}_bounding_box")(self.ptr, ctypes.byref(out))
+        if status == 10:  # CSGRS_STATUS_NO_BOUNDS: completed empty query
+            return None
+        _check(status)
         return out
 
     def vertices_and_indices(self):
@@ -549,7 +554,10 @@ class CurveRegion:
 
     def bounding_box(self):
         out = self.family.aabb_type()
-        _call(f"csgrs_curve_region_{self.family.prefix}_bounding_box", self.ptr, ctypes.byref(out))
+        status = getattr(load(), f"csgrs_curve_region_{self.family.prefix}_bounding_box")(self.ptr, ctypes.byref(out))
+        if status == 10:  # CSGRS_STATUS_NO_BOUNDS: completed empty query
+            return None
+        _check(status)
         return out
 
     def extrude(self, height):

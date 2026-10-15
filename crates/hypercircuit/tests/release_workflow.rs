@@ -733,9 +733,12 @@ fn external_obj_vrml_and_gltf_package_models_resolve_with_digest_and_scene_ident
         )
         .unwrap();
     let obj = b"v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\nf 1 3 2\nf 1 2 4\nf 2 3 4\nf 3 1 4\n";
-    let gltf = csgrs::io::gltf::to_gltf(&csgrs::solid::cube(Real::one()), "package-detail")
-        .unwrap()
-        .into_bytes();
+    let gltf = csgrs::io::gltf::to_gltf(
+        &csgrs::solid::cube(Real::one()).expect("valid primitive fixture"),
+        "package-detail",
+    )
+    .unwrap()
+    .into_bytes();
     let vrml = br#"#VRML V2.0 utf8
 Group { children [
   Shape { geometry IndexedLineSet {
@@ -836,6 +839,47 @@ Group { children [
         object.kind,
         hypercircuit::Pcb3dSceneObjectKind::ComponentBody { .. }
     )));
+}
+
+#[test]
+fn failed_package_model_transform_is_an_explicit_omission_with_recovery() {
+    let (circuit, _, mut layout) = release_fixture();
+    let reference = &mut layout.land_patterns[0].models[0];
+    reference.uri = "package://two-pin/body.obj".into();
+    reference.format = hypercircuit::Pcb3dModelFormat::WavefrontObj;
+    let materialized = layout
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
+        .unwrap();
+    let mut resolver = |_: &hypercircuit::Pcb3dModelReference| {
+        Ok(b"v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\nf 1 3 2\nf 1 2 4\nf 2 3 4\nf 3 1 4\n".to_vec())
+    };
+    layout.land_patterns[0].models[0].transform.scale_x = Real::zero();
+    let failed = materialized.stackup_3d_with_model_resolver(&layout, &mut resolver);
+    assert!(failed.component_models.is_empty());
+    assert!(failed.model_resolutions.is_empty());
+    let failures = failed
+        .omissions
+        .iter()
+        .filter(|omission| {
+            matches!(
+                omission,
+                hypercircuit::Pcb3dAssemblyOmission::ExternalPackageModelTransformFailed {
+                    model_index: 0,
+                    kind: csgrs::errors::ValidationErrorKind::InvalidInput,
+                    ..
+                }
+            )
+        })
+        .count();
+    assert_eq!(failures, 2);
+    layout.land_patterns[0].models[0].transform.scale_x = Real::one();
+    let restored = materialized.stackup_3d_with_model_resolver(&layout, &mut resolver);
+    assert_eq!(restored.component_models.len(), 2);
+    assert_eq!(restored.model_resolutions.len(), 2);
 }
 
 #[test]

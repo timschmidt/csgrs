@@ -587,7 +587,7 @@ mod tests {
 
     fn square(name: &str) -> PcbRegion {
         PcbRegion::new(
-            curve::rectangle(Scalar::from(2), Scalar::from(2)),
+            curve::rectangle(Scalar::from(2), Scalar::from(2)).expect("valid planar fixture"),
             Some(LayerMetadata { name: name.into() }),
         )
     }

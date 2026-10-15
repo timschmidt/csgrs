@@ -4,18 +4,32 @@ This matrix describes certified behavior in the current clean-break API.
 “Unsupported” means the operation returns a structured error; it never means
 that sampled or tolerance-based geometry is substituted.
 
-## Exchange syntax
+The updated [acceptance contract](../../../docs/admission.md) applies to
+completed workflows, beyond individual rows in this matrix. Numerical
+certainty, topology validity and fidelity to a source are distinct claims.
+The [integration record](evidence/2026-10-15-upstream-integration/README.md)
+retains current checks and open composition/delivery gates; no whole-stack or
+released-package qualification is inferred from the carrier inventory.
+
+## Exchange
 
 [HyperBRep IO](../../hyperbrep-io/README.md) parses/writes the bounded Part 21
 HEADER/DATA subset with exact numeric lexemes, simple/complex instances, typed
 parameters, aggregates, original encoded string tokens and multiple DATA sections.
 Unknown records and unresolved references remain addressable by source IDs.
 Native tests and an executed WASM probe cover deep input, round trips and limits.
-This is syntax support, not STEP geometry import, EXPRESS validation or AP242
-conformance. Header/schema semantics, units, text decoding, geometry/topology,
-assemblies and exact/approximated geometry export remain open. See the
+Syntax success alone confers no geometry authority. The typed STEP layer now
+adds checked standard headers, decoded text, exact unit graphs, selected
+faceted import, planar straight-edge advanced import with 3D/pcurve source
+parameter maps, and exact faceted export of the supported native solids.
+Holes and selected body occurrences are accounted for; unsupported records
+remain in the source exchange. Import uses native strict validation without
+implicit healing or tolerance welding. See the
+[mapping contract](../../hyperbrep-io/docs/STEP_MAPPING.md),
 [dependency decision](../../hyperbrep-io/docs/PARSER_REVIEW.md) and
-[qualification](evidence/2026-10-15-step-syntax/README.md).
+[advanced-import evidence](evidence/2026-10-15-step-advanced/README.md).
+Complete EXPRESS/AP conformance, whole-document/product traversal, assemblies,
+curved analytic/spline exchange and approximate export remain open.
 
 ## Operation resources
 
@@ -293,6 +307,15 @@ stitching on partially clipped tensor operands, and the rest of the
 analytic/spline pair matrix.
 
 ## Booleans
+
+Public `union`, `intersection` and `difference` currently consume two
+`SolidRef` values and return `BodySet`. Empty and disconnected outputs are
+representable, but an empty result cannot be supplied directly to the next
+Boolean, and a multi-body result has no single operand view. The
+[compiler reproduction](evidence/2026-10-15-upstream-integration/empty-operand.log)
+records this API gap. The plan's `BodySet` operand/result contract and complete
+empty identities remain unimplemented; the family-specific results below do
+not close that workflow gate.
 
 `boolean::{union, intersection, difference}` supports certified global-z
 prisms whose planar boundaries contain exact lines and circular arcs.

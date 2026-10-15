@@ -114,6 +114,62 @@ impl MaterializationDecisions {
         })
     }
 
+    fn rectangle(
+        &self,
+        width: Real,
+        height: Real,
+    ) -> Result<CurveRegion2, GeometryMaterializationError> {
+        self.consume_geometry(curve::rectangle_with_context(
+            width,
+            height,
+            &GeometryContext::new(self.predicates),
+        ))
+        .map_err(GeometryMaterializationError::Construction)
+    }
+
+    fn translated(
+        &self,
+        input: &CurveRegion2,
+        x: Real,
+        y: Real,
+    ) -> Result<CurveRegion2, GeometryMaterializationError> {
+        self.consume_geometry(curve::try_translated_with_context(
+            input,
+            x,
+            y,
+            &self.geometry_context(),
+        ))
+        .map_err(GeometryMaterializationError::Construction)
+    }
+
+    fn scaled(
+        &self,
+        input: &CurveRegion2,
+        x: Real,
+        y: Real,
+    ) -> Result<CurveRegion2, GeometryMaterializationError> {
+        self.consume_geometry(curve::try_scaled_with_context(
+            input,
+            x,
+            y,
+            &self.geometry_context(),
+        ))
+        .map_err(GeometryMaterializationError::Construction)
+    }
+
+    fn rotated(
+        &self,
+        input: &CurveRegion2,
+        z_degrees: Real,
+    ) -> Result<CurveRegion2, GeometryMaterializationError> {
+        self.consume_geometry(curve::try_rotated_with_context(
+            input,
+            z_degrees,
+            &self.geometry_context(),
+        ))
+        .map_err(GeometryMaterializationError::Construction)
+    }
+
     fn boundary_operation<T>(
         &self,
         mut evaluate: impl FnMut(PredicatePolicy) -> Result<T, BoardBoundaryGeometryError>,
@@ -662,6 +718,18 @@ pub enum Pcb3dAssemblyOmission {
         /// Native exact extrusion diagnostic.
         detail: String,
     },
+    /// An extruded layer could not be positioned; no layer solid was published.
+    LayerTransformFailed {
+        layer: String,
+        kind: csgrs::errors::ValidationErrorKind,
+        detail: String,
+    },
+    /// A package body could not be positioned; no body solid was published.
+    ComponentBodyTransformFailed {
+        instance: String,
+        kind: csgrs::errors::ValidationErrorKind,
+        detail: String,
+    },
     /// A declared package body outline could not produce material topology.
     InvalidComponentBody(String),
     /// A valid package body profile could not be extruded without losing geometry.
@@ -711,6 +779,14 @@ pub enum Pcb3dAssemblyOmission {
         /// Stable malformed source URI.
         uri: String,
         /// Native parser diagnostic.
+        detail: String,
+    },
+    /// A parsed model could not be transformed; no placed model was published.
+    ExternalPackageModelTransformFailed {
+        instance: String,
+        model_index: usize,
+        uri: String,
+        kind: csgrs::errors::ValidationErrorKind,
         detail: String,
     },
 }
@@ -828,7 +904,7 @@ impl Display for Pcb3dGltfError {
 impl std::error::Error for Pcb3dGltfError {}
 
 /// Failure while lowering retained PCB intent into geometry.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum GeometryMaterializationError {
     /// Structural circuit or layout validation failed.
     InvalidSourceModel,
@@ -844,6 +920,10 @@ pub enum GeometryMaterializationError {
     Boolean(String),
     /// Exact zone-island classification or area comparison was indeterminate.
     ZoneIsland(String),
+    /// Native bounds could not be established; retain the curve diagnostic.
+    Bounds(ExactCurveError),
+    /// A modeling constructor failed; no replacement profile was published.
+    Construction(csgrs::errors::ValidationError),
 }
 
 impl Display for GeometryMaterializationError {
@@ -866,11 +946,23 @@ impl Display for GeometryMaterializationError {
                     "PCB zone island policy could not be certified: {source}"
                 )
             }
+            Self::Bounds(source) => write!(formatter, "PCB geometry bounds failed: {source}"),
+            Self::Construction(source) => {
+                write!(formatter, "PCB profile construction failed: {source}")
+            }
         }
     }
 }
 
-impl std::error::Error for GeometryMaterializationError {}
+impl std::error::Error for GeometryMaterializationError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Bounds(source) => Some(source),
+            Self::Construction(source) => Some(source),
+            _ => None,
+        }
+    }
+}
 
 impl PcbLayout {
     /// Materializes substrate, copper, and drill geometry without discarding sources.
@@ -937,11 +1029,11 @@ impl PcbLayout {
         for via in self.vias.iter().chain(&stitching.vias) {
             let radius = half(&via.land_diameter)?;
             let source = format!("via:{}", via.id.as_str());
-            let profile = curve::translated(
+            let profile = decisions.translated(
                 &exact_circle_profile(&radius, &source, &decisions)?,
                 via.center.x.clone(),
                 via.center.y.clone(),
-            );
+            )?;
             for layer in via.start_layer.0..=via.end_layer.0 {
                 copper_features.push(MaterializedCopperFeature {
                     source: source.clone(),
@@ -976,7 +1068,7 @@ impl PcbLayout {
                     ViaMaskDisposition::Tented => {}
                     ViaMaskDisposition::Open { margin } => {
                         let opening_radius = radius.clone() + margin;
-                        let profile = curve::translated(
+                        let profile = decisions.translated(
                             &exact_circle_profile(
                                 &opening_radius,
                                 &format!("mask:via:{}", via.id.as_str()),
@@ -984,7 +1076,7 @@ impl PcbLayout {
                             )?,
                             via.center.x.clone(),
                             via.center.y.clone(),
-                        );
+                        )?;
                         process_features.push(MaterializedProcessFeature {
                             source: format!(
                                 "mask:via:{}:{}",
@@ -1445,17 +1537,17 @@ fn hatch_zone(
             Some(Ordering::Greater) => break,
             None => return Err(GeometryMaterializationError::Arithmetic),
         }
-        let stripe = curve::translated(
-            &curve::rectangle(extent.clone() + extent.clone(), line_width.clone()),
+        let stripe = decisions.translated(
+            &decisions.rectangle(extent.clone() + extent.clone(), line_width.clone())?,
             Real::zero(),
             offset.clone(),
-        );
+        )?;
         let stripe = match decisions.compare_reals(angle_degrees, &Real::zero()) {
             Some(Ordering::Equal) => stripe,
-            Some(_) => curve::rotated(&stripe, angle_degrees.clone()),
+            Some(_) => decisions.rotated(&stripe, angle_degrees.clone())?,
             None => return Err(GeometryMaterializationError::Arithmetic),
         };
-        let stripe = curve::translated(&stripe, center.x.clone(), center.y.clone());
+        let stripe = decisions.translated(&stripe, center.x.clone(), center.y.clone())?;
         stripes = Some(match stripes {
             None => stripe,
             Some(existing) => zone_boolean(
@@ -1489,16 +1581,16 @@ fn thermal_spoke_mask(
     let (_, extent) = zone_center_extent(zone_boundary, decisions)?;
     let span = extent.clone() + extent.clone();
     let spokes = if count == 4 {
-        let horizontal = curve::translated(
-            &curve::rectangle(span.clone(), width.clone()),
+        let horizontal = decisions.translated(
+            &decisions.rectangle(span.clone(), width.clone())?,
             center.x.clone(),
             center.y.clone(),
-        );
-        let vertical = curve::translated(
-            &curve::rectangle(width.clone(), span),
+        )?;
+        let vertical = decisions.translated(
+            &decisions.rectangle(width.clone(), span)?,
             center.x.clone(),
             center.y.clone(),
-        );
+        )?;
         zone_boolean(
             "thermal-spokes",
             "merge exact orthogonal spoke masks",
@@ -1511,8 +1603,9 @@ fn thermal_spoke_mask(
         let mut spokes: Option<CurveRegion2> = None;
         for index in 0..count {
             let angle = step.clone() * Real::from(index);
-            let spoke = curve::rotated(&curve::rectangle(span.clone(), width.clone()), angle);
-            let spoke = curve::translated(&spoke, center.x.clone(), center.y.clone());
+            let spoke =
+                decisions.rotated(&decisions.rectangle(span.clone(), width.clone())?, angle)?;
+            let spoke = decisions.translated(&spoke, center.x.clone(), center.y.clone())?;
             spokes = Some(match spokes {
                 None => spoke,
                 Some(existing) => zone_boolean(
@@ -1526,21 +1619,26 @@ fn thermal_spoke_mask(
         }
         spokes.ok_or(GeometryMaterializationError::Arithmetic)?
     };
-    let bounds = curve::bounding_box(clearance);
-    let width = bounds.maxs.x.clone() - bounds.mins.x.clone();
-    let height = bounds.maxs.y.clone() - bounds.mins.y.clone();
+    let Some(bounds) = decisions
+        .exact_curve(|| clearance.bounds())
+        .map_err(GeometryMaterializationError::Bounds)?
+    else {
+        return Ok(CurveRegion2::empty());
+    };
+    let width = bounds.max_x() - bounds.min_x();
+    let height = bounds.max_y() - bounds.min_y();
     let two = Real::from(2);
     let clip_center = Point2::new(
-        ((bounds.mins.x + bounds.maxs.x) / two.clone())
+        ((bounds.min_x() + bounds.max_x()) / two.clone())
             .map_err(|_| GeometryMaterializationError::Arithmetic)?,
-        ((bounds.mins.y + bounds.maxs.y) / two)
+        ((bounds.min_y() + bounds.max_y()) / two)
             .map_err(|_| GeometryMaterializationError::Arithmetic)?,
     );
-    let clip = curve::translated(
-        &curve::rectangle(width, height),
+    let clip = decisions.translated(
+        &decisions.rectangle(width, height)?,
         clip_center.x,
         clip_center.y,
-    );
+    )?;
     zone_boolean(
         "thermal-spokes",
         "clip spoke masks to land clearance bounds",
@@ -2013,10 +2111,20 @@ impl PcbMaterializationReport {
                     &decisions.geometry_context(),
                 )) {
                     Ok(geometry) => {
-                        let geometry =
-                            geometry.translated(Real::zero(), Real::zero(), z_start.clone());
-                        let solid = AttributedMesh::from_uniform(geometry, metadata.clone());
-                        layers.push(Pcb3dLayer { metadata, solid });
+                        match geometry.translated(Real::zero(), Real::zero(), z_start.clone()) {
+                            Ok(geometry) => {
+                                let solid =
+                                    AttributedMesh::from_uniform(geometry, metadata.clone());
+                                layers.push(Pcb3dLayer { metadata, solid });
+                            }
+                            Err(error) => {
+                                omissions.push(Pcb3dAssemblyOmission::LayerTransformFailed {
+                                    layer: layer.name.clone(),
+                                    kind: error.kind(),
+                                    detail: error.to_string(),
+                                })
+                            }
+                        }
                     }
                     Err(error) => {
                         omissions.push(Pcb3dAssemblyOmission::LayerExtrusionFailed {
@@ -2061,11 +2169,23 @@ impl PcbMaterializationReport {
                             &decisions.geometry_context(),
                         )) {
                             Ok(geometry) => {
-                                let geometry =
-                                    geometry.translated(Real::zero(), Real::zero(), body_z);
-                                let solid =
-                                    AttributedMesh::from_uniform(geometry, metadata.clone());
-                                component_bodies.push(Pcb3dComponentBody { metadata, solid });
+                                match geometry.translated(Real::zero(), Real::zero(), body_z) {
+                                    Ok(geometry) => {
+                                        let solid = AttributedMesh::from_uniform(
+                                            geometry,
+                                            metadata.clone(),
+                                        );
+                                        component_bodies
+                                            .push(Pcb3dComponentBody { metadata, solid });
+                                    }
+                                    Err(error) => omissions.push(
+                                        Pcb3dAssemblyOmission::ComponentBodyTransformFailed {
+                                            instance: placement.instance.as_str().into(),
+                                            kind: error.kind(),
+                                            detail: error.to_string(),
+                                        },
+                                    ),
+                                }
                             }
                             Err(error) => omissions.push(
                                 Pcb3dAssemblyOmission::ComponentBodyExtrusionFailed {
@@ -2218,28 +2338,42 @@ fn resolve_component_model(
         });
     }
     let source_triangle_count = source_mesh.triangles.len();
+    let transform_failure = |error: csgrs::errors::ValidationError| {
+        Pcb3dAssemblyOmission::ExternalPackageModelTransformFailed {
+            instance: placement.instance.as_str().into(),
+            model_index,
+            uri: reference.uri.clone(),
+            kind: error.kind(),
+            detail: error.to_string(),
+        }
+    };
     let transform = &reference.transform;
     let mut geometry = solid::scale(
         &source_mesh,
         transform.scale_x.clone(),
         transform.scale_y.clone(),
         transform.scale_z.clone(),
-    );
+    )
+    .map_err(transform_failure)?;
     geometry = solid::rotate(
         &geometry,
         transform.rotate_x_degrees.clone(),
         transform.rotate_y_degrees.clone(),
         transform.rotate_z_degrees.clone(),
-    );
-    geometry = geometry.translated(
-        transform.offset_x.clone(),
-        transform.offset_y.clone(),
-        transform.offset_z.clone(),
-    );
+    )
+    .map_err(transform_failure)?;
+    geometry = geometry
+        .translated(
+            transform.offset_x.clone(),
+            transform.offset_y.clone(),
+            transform.offset_z.clone(),
+        )
+        .map_err(transform_failure)?;
     let mounting_z = match placement.side {
         BoardSide::Front => board_thickness.clone(),
         BoardSide::Back => {
-            geometry = solid::scale(&geometry, -Real::one(), Real::one(), -Real::one());
+            geometry = solid::scale(&geometry, -Real::one(), Real::one(), -Real::one())
+                .map_err(transform_failure)?;
             Real::zero()
         }
     };
@@ -2248,12 +2382,15 @@ fn resolve_component_model(
         Real::zero(),
         Real::zero(),
         placement.rotation_degrees.clone(),
-    );
-    geometry = geometry.translated(
-        placement.position.x.clone(),
-        placement.position.y.clone(),
-        mounting_z,
-    );
+    )
+    .map_err(transform_failure)?;
+    geometry = geometry
+        .translated(
+            placement.position.x.clone(),
+            placement.position.y.clone(),
+            mounting_z,
+        )
+        .map_err(transform_failure)?;
     let mesh = AttributedMesh::from_uniform(geometry, metadata.clone());
     let evidence = Pcb3dModelResolutionEvidence {
         instance: placement.instance.clone(),
@@ -2375,11 +2512,7 @@ fn preview_drill_profile(
                 &drill.source,
                 decisions,
             )?;
-            Ok(curve::translated(
-                &profile,
-                drill.center.x.clone(),
-                drill.center.y.clone(),
-            ))
+            decisions.translated(&profile, drill.center.x.clone(), drill.center.y.clone())
         }
         DrillShape::Slot { start, end, width } => stroked_path_profile(
             &[start.clone(), end.clone()],
@@ -2532,7 +2665,7 @@ fn materialize_placements(
                 .and_then(|pin| instance.pins.iter().find(|binding| binding.pin == *pin))
                 .map(|binding| binding.net.clone());
             let local_profile = pad_profile(pad, options, decisions)?;
-            let profile = transform_pad_profile(local_profile.clone(), pad, placement);
+            let profile = transform_pad_profile(local_profile.clone(), pad, placement, decisions)?;
             let source = format!(
                 "pad:{}:{}:{}",
                 placement.instance.as_str(),
@@ -2593,7 +2726,7 @@ fn materialize_placements(
                             source: format!("mask:{source}"),
                             role: side_process_role(side, true),
                             kind: ProcessFeatureKind::PadMaskOpening,
-                            profile: transform_pad_profile(mask, pad, placement),
+                            profile: transform_pad_profile(mask, pad, placement, decisions)?,
                         });
                 }
                 if pad.drill.is_none() {
@@ -2622,7 +2755,7 @@ fn materialize_placements(
                                 source: format!("paste:{source}"),
                                 role: side_process_role(side, false),
                                 kind: ProcessFeatureKind::PadPasteAperture,
-                                profile: transform_pad_profile(paste, pad, placement),
+                                profile: transform_pad_profile(paste, pad, placement, decisions)?,
                             });
                     }
                 }
@@ -2709,7 +2842,7 @@ fn materialize_pattern_graphics(
         else {
             continue;
         };
-        let profile = transform_local_profile(profile, placement);
+        let profile = transform_local_profile(profile, placement, decisions)?;
         match &graphic.layer {
             LayerRole::Copper(layer) => {
                 materialization
@@ -2827,11 +2960,11 @@ fn graphic_profile(
                 }
                 None => return Err(GeometryMaterializationError::Arithmetic),
             };
-            Ok(Some(curve::translated(
+            Ok(Some(decisions.translated(
                 &ring,
                 center.x.clone(),
                 center.y.clone(),
-            )))
+            )?))
         }
         LandPatternGraphicPrimitive::Polygon { vertices, filled } => {
             if *filled {
@@ -2884,11 +3017,11 @@ fn graphic_profile(
             // floating policy at the hypercircuit boundary.
             let point_height = (height.clone() * Real::from(360) / Real::from(127))
                 .map_err(|_| GeometryMaterializationError::Arithmetic)?;
-            let profile = curve::rotated(
+            let profile = decisions.rotated(
                 &curve::truetype_text(text, &policy.font_data, point_height),
                 rotation_degrees.clone(),
-            );
-            let profile = curve::translated(&profile, position.x.clone(), position.y.clone());
+            )?;
+            let profile = decisions.translated(&profile, position.x.clone(), position.y.clone())?;
             if profile.is_empty() {
                 omissions.push(ProcessMaterializationOmission::TextFontRejected {
                     source: source.to_owned(),
@@ -3062,9 +3195,10 @@ fn pad_profile(
             decisions,
         ),
         PadShape::Rectangle { width, height } => Ok(center_pad_profile(
-            curve::rectangle(width.clone(), height.clone()),
+            decisions.rectangle(width.clone(), height.clone())?,
             width,
             height,
+            decisions,
         )?),
         PadShape::RoundedRectangle {
             width,
@@ -3168,7 +3302,7 @@ fn exact_rounded_rectangle_profile(
             CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
         })
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?;
-    center_pad_profile(region, width, height)
+    center_pad_profile(region, width, height, decisions)
 }
 
 fn exact_circle_profile(
@@ -3213,27 +3347,33 @@ fn center_pad_profile(
     profile: CurveRegion2,
     width: &Real,
     height: &Real,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
-    Ok(curve::translated(&profile, -half(width)?, -half(height)?))
+    decisions.translated(&profile, -half(width)?, -half(height)?)
 }
 
 fn transform_pad_profile(
     profile: CurveRegion2,
     pad: &LandPatternPad,
     placement: &PcbPlacement,
-) -> CurveRegion2 {
-    let local = curve::rotated(&profile, pad.rotation_degrees.clone());
-    let local = curve::translated(&local, pad.center.x.clone(), pad.center.y.clone());
-    transform_local_profile(local, placement)
+    decisions: &MaterializationDecisions,
+) -> Result<CurveRegion2, GeometryMaterializationError> {
+    let local = decisions.rotated(&profile, pad.rotation_degrees.clone())?;
+    let local = decisions.translated(&local, pad.center.x.clone(), pad.center.y.clone())?;
+    transform_local_profile(local, placement, decisions)
 }
 
-fn transform_local_profile(profile: CurveRegion2, placement: &PcbPlacement) -> CurveRegion2 {
+fn transform_local_profile(
+    profile: CurveRegion2,
+    placement: &PcbPlacement,
+    decisions: &MaterializationDecisions,
+) -> Result<CurveRegion2, GeometryMaterializationError> {
     let sided = match placement.side {
         BoardSide::Front => profile,
-        BoardSide::Back => curve::scaled(&profile, -Real::one(), Real::one()),
+        BoardSide::Back => decisions.scaled(&profile, -Real::one(), Real::one())?,
     };
-    let rotated = curve::rotated(&sided, placement.rotation_degrees.clone());
-    curve::translated(
+    let rotated = decisions.rotated(&sided, placement.rotation_degrees.clone())?;
+    decisions.translated(
         &rotated,
         placement.position.x.clone(),
         placement.position.y.clone(),
@@ -3907,7 +4047,7 @@ mod tests {
     use super::{
         MaterializationContext, MaterializationDecisions, MaterializationOptions,
         exact_circle_profile, exact_compound_composition, half, pad_profile, project_cubic_bezier,
-        stroked_path_profile, transform_drill, transform_pad_profile,
+        stroked_path_profile, thermal_spoke_mask, transform_drill, transform_pad_profile,
     };
     use crate::{
         BoardSide, CircuitInstanceId, DrillShape, LandPatternId, LandPatternPad, PadId, PadShape,
@@ -3922,6 +4062,76 @@ mod tests {
     use hyperlattice::Point2;
     use hyperpath::{CubicBezier, TraceLayer};
     use hyperreal::Real;
+
+    #[test]
+    fn rectangle_materialization_preserves_errors_and_consumed_certainty() {
+        use csgrs::errors::ValidationError;
+        use std::error::Error;
+        let strict = MaterializationDecisions::new(&MaterializationContext::STRICT);
+        let error = strict.rectangle(Real::zero(), -Real::one()).unwrap_err();
+        assert!(matches!(
+            error,
+            super::GeometryMaterializationError::Construction(ValidationError::NegativeParameter {
+                name: "height"
+            })
+        ));
+        assert!(error.source().is_some());
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        assert!(matches!(
+            strict.rectangle(zero.clone(), Real::one()),
+            Err(super::GeometryMaterializationError::Construction(
+                ValidationError::PredicateUndecided { .. }
+            ))
+        ));
+        let approximate = MaterializationDecisions::new(&MaterializationContext::APPROXIMATE_512);
+        let qualified_empty = approximate.rectangle(zero.clone(), Real::one()).unwrap();
+        let translated = approximate
+            .translated(&qualified_empty, Real::from(2), Real::from(3))
+            .unwrap();
+        let reflected = approximate
+            .scaled(&translated, -Real::one(), Real::one())
+            .unwrap();
+        let rotated = approximate.rotated(&reflected, Real::from(90)).unwrap();
+        assert!(rotated.is_empty());
+        assert_eq!(
+            approximate.certainty(),
+            GeometryCertainty::Approximate512Consumed
+        );
+        assert!(strict.rectangle(zero, Real::one()).is_err());
+        let exact = strict.rectangle(Real::from(2), Real::from(3)).unwrap();
+        assert_eq!(exact.filled_area().unwrap(), Some(Real::from(6)));
+        assert_eq!(strict.certainty(), GeometryCertainty::Certified);
+    }
+
+    #[test]
+    fn thermal_spoke_bounds_preserve_empty_clearance() {
+        let boundary = [(-5, -5), (5, -5), (5, 5), (-5, 5)]
+            .map(|(x, y)| Point2::new(Real::from(x), Real::from(y)));
+        for context in [
+            MaterializationContext::STRICT,
+            MaterializationContext::APPROXIMATE_512,
+        ] {
+            let decisions = MaterializationDecisions::new(&context);
+            let mask = thermal_spoke_mask(
+                &boundary,
+                &Point2::origin(),
+                &Real::one(),
+                4,
+                &CurveRegion2::empty(),
+                &decisions,
+            )
+            .unwrap();
+            assert!(mask.is_empty());
+            assert_eq!(decisions.certainty(), GeometryCertainty::Certified);
+            let square = curve::square(Real::one()).expect("valid planar fixture");
+            let restored = decisions
+                .exact_curve(|| mask.boolean_region(&square, BooleanOp::Union))
+                .unwrap();
+            assert_eq!(restored.bounds().unwrap(), square.bounds().unwrap());
+        }
+    }
 
     fn rounded_pad(id: &str, center_x: i32) -> LandPatternPad {
         LandPatternPad {
@@ -3972,7 +4182,7 @@ mod tests {
             &decisions,
         )
         .unwrap();
-        let second = curve::translated(&second_local, Real::one(), Real::zero());
+        let second = curve::translated(&second_local, Real::one(), Real::zero()).unwrap();
         let paths = decisions.exact_curve(|| first.boundary_paths()).unwrap();
         assert!(paths.iter().flat_map(|path| path.curves()).any(|curve| {
             matches!(
@@ -4073,7 +4283,7 @@ mod tests {
             &decisions,
         )
         .unwrap();
-        let second = curve::translated(&second, Real::from(4), Real::zero());
+        let second = curve::translated(&second, Real::from(4), Real::zero()).unwrap();
 
         let difference = exact_compound_composition(
             std::slice::from_ref(&first),
@@ -4082,30 +4292,33 @@ mod tests {
         )
         .expect("exact signed difference must retain both curve-loop operands");
         assert_eq!(
-            curve::contains_xy(&difference, Real::from(-2), Real::zero()),
+            curve::contains_xy(&difference, Real::from(-2), Real::zero()).unwrap(),
             Some(true)
         );
         assert_eq!(
-            curve::contains_xy(&difference, Real::from(2), Real::zero()),
+            curve::contains_xy(&difference, Real::from(2), Real::zero()).unwrap(),
             Some(false)
         );
 
         let union = exact_compound_composition(&[first.clone(), second.clone()], &[], &decisions)
             .expect("exact signed union must retain both curve-loop operands");
         assert_eq!(
-            curve::contains_xy(&union, Real::from(5), Real::zero()),
+            curve::contains_xy(&union, Real::from(5), Real::zero()).unwrap(),
             Some(true)
         );
 
         let hard_cut = exact_compound_composition(
-            &[first, curve::rectangle(Real::from(6), Real::one())],
+            &[
+                first,
+                curve::rectangle(Real::from(6), Real::one()).expect("valid planar fixture"),
+            ],
             &[second.clone(), second],
             &decisions,
         )
         .expect("a dominant exact cut must survive overlapping positive operands");
         let half = (Real::one() / Real::from(2_u8)).unwrap();
         assert_eq!(
-            curve::contains_xy(&hard_cut, Real::from(2), half),
+            curve::contains_xy(&hard_cut, Real::from(2), half).unwrap(),
             Some(false)
         );
     }
@@ -4117,12 +4330,14 @@ mod tests {
             &exact_circle_profile(&Real::from(3), "disjoint-circle", &decisions).unwrap(),
             Real::from(15),
             Real::from(3),
-        );
+        )
+        .unwrap();
         let rectangle = curve::translated(
-            &curve::rectangle(Real::from(26), Real::from(6)),
+            &curve::rectangle(Real::from(26), Real::from(6)).expect("valid planar fixture"),
             Real::from(15),
             Real::from(15),
-        );
+        )
+        .unwrap();
         let union = exact_compound_composition(&[circle, rectangle], &[], &decisions).unwrap();
         let profiles = curve::try_finite_profiles(&union, &decisions.geometry_context())
             .unwrap()
@@ -4135,16 +4350,18 @@ mod tests {
     fn overlapping_additive_union_does_not_reclassify_material_as_a_hole() {
         let decisions = MaterializationDecisions::new(&MaterializationContext::STRICT);
         let trace = curve::translated(
-            &curve::rectangle(Real::from(20), Real::one()),
+            &curve::rectangle(Real::from(20), Real::one()).expect("valid planar fixture"),
             Real::from(15),
             Real::from(3),
-        );
+        )
+        .unwrap();
         let radius = (Real::from(3) / Real::from(2)).unwrap();
         let via_land = curve::translated(
             &exact_circle_profile(&radius, "via-land", &decisions).unwrap(),
             Real::from(15),
             Real::from(3),
-        );
+        )
+        .unwrap();
 
         let union = exact_compound_composition(&[trace, via_land], &[], &decisions).unwrap();
         let profiles = curve::try_finite_profiles(&union, &decisions.geometry_context())
@@ -4153,7 +4370,7 @@ mod tests {
         assert_eq!(profiles.len(), 1);
         assert!(profiles[0].holes().is_empty());
         assert_eq!(
-            curve::contains_xy(&union, Real::from(15), Real::from(4)),
+            curve::contains_xy(&union, Real::from(15), Real::from(4)).unwrap(),
             Some(true)
         );
     }
@@ -4167,10 +4384,12 @@ mod tests {
             let decisions = MaterializationDecisions::new(&context);
             let square = |half: i32| {
                 curve::translated(
-                    &curve::rectangle(Real::from(2 * half), Real::from(2 * half)),
+                    &curve::rectangle(Real::from(2 * half), Real::from(2 * half))
+                        .expect("valid planar fixture"),
                     Real::from(-half),
                     Real::from(-half),
                 )
+                .unwrap()
             };
             let exterior = square(6);
             let cut = square(4);
@@ -4179,10 +4398,11 @@ mod tests {
                 .unwrap();
             let island = square(1);
             let bridge = curve::translated(
-                &curve::rectangle(Real::from(2), Real::from(4)),
+                &curve::rectangle(Real::from(2), Real::from(4)).expect("valid planar fixture"),
                 Real::from(3),
                 Real::from(-2),
-            );
+            )
+            .unwrap();
             let operands = [ring.clone(), island, bridge, ring, CurveRegion2::empty()];
             let aggregate = exact_compound_composition(&operands, &[], &decisions).unwrap();
             let sequential = operands
@@ -4205,7 +4425,7 @@ mod tests {
                 (7, 0, false),
             ] {
                 assert_eq!(
-                    curve::contains_xy(&aggregate, Real::from(x), Real::from(y)),
+                    curve::contains_xy(&aggregate, Real::from(x), Real::from(y)).unwrap(),
                     Some(inside)
                 );
             }
@@ -4251,7 +4471,9 @@ mod tests {
             pad_profile(&pad, &MaterializationOptions::default(), &decisions).unwrap(),
             &pad,
             &placement,
-        );
+            &decisions,
+        )
+        .unwrap();
         let profiles = curve::try_finite_profiles(&profile, &decisions.geometry_context())
             .unwrap()
             .into_value();

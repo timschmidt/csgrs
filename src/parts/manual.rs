@@ -238,7 +238,7 @@ mod tests {
                 AssemblyNode::printed(
                     "handle.stl",
                     "Printed handle",
-                    solid::cube(Real::from(4)),
+                    solid::cube(Real::from(4)).expect("valid primitive fixture"),
                 ),
             )
             .expect("printed");

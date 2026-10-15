@@ -116,6 +116,11 @@ start of a hole in the same flat point buffer.
 
 ### Triangulate polygons (`earcut`)
 
+Ear clipping uses a triangle AABB only as a certified rejection filter. An
+undecided box proceeds to the final triangle predicate, and the filter does
+not consume approximate evidence. The final topology decisions still require
+admissible evidence under the selected policy.
+
 | Task | API |
 | --- | --- |
 | Return flat indices and certainty | `earcut` |

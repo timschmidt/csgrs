@@ -108,7 +108,8 @@ fn build_document() -> (AssemblyDocument, NodeId, NodeId) {
     let mut block = AssemblyNode::printed(
         "block.stl",
         "Printed block",
-        solid::cuboid(Real::from(30), Real::from(12), Real::from(10)),
+        solid::cuboid(Real::from(30), Real::from(12), Real::from(10))
+            .expect("valid primitive fixture"),
     );
     let hole = frame("insert-hole", 8, 6, 10);
     let screw_hole = frame("screw-hole", 22, 6, 10);
@@ -120,11 +121,10 @@ fn build_document() -> (AssemblyDocument, NodeId, NodeId) {
     let mut insert = AssemblyNode::vitamin(
         "insert(M3)",
         "insert(M3): Heatfit insert M3",
-        solid::cuboid(Real::from(4), Real::from(4), Real::from(6)).translated(
-            Real::from(-2),
-            Real::from(-2),
-            Real::from(-6),
-        ),
+        solid::cuboid(Real::from(4), Real::from(4), Real::from(6))
+            .expect("valid primitive fixture")
+            .translated(Real::from(-2), Real::from(-2), Real::from(-6))
+            .expect("valid transform fixture"),
     );
     insert.placement = mate(&insert_seat, &hole).expect("insert mates onto the block");
     insert.attachments.push(insert_seat);
@@ -135,11 +135,10 @@ fn build_document() -> (AssemblyDocument, NodeId, NodeId) {
     let mut screw = AssemblyNode::vitamin(
         "screw(M3)",
         "screw(M3): Screw M3 cap x 12mm",
-        solid::cuboid(Real::from(3), Real::from(3), Real::from(12)).translated(
-            Real::from(-1),
-            Real::from(-1),
-            Real::zero(),
-        ),
+        solid::cuboid(Real::from(3), Real::from(3), Real::from(12))
+            .expect("valid primitive fixture")
+            .translated(Real::from(-1), Real::from(-1), Real::zero())
+            .expect("valid transform fixture"),
     );
     screw.placement = mate(&screw_seat, &screw_hole).expect("screw mates onto the block");
     screw.attachments.push(screw_seat);

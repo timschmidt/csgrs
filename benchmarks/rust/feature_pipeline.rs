@@ -31,7 +31,7 @@ fn mesh_measurement(mesh: &TriangleMesh, work_units: usize) -> Measurement {
 }
 
 fn compound_region(
-    result: Result<csgrs::GeometryOutcome<CurveRegion2>, csgrs::errors::CurveBooleanError>,
+    result: Result<csgrs::GeometryOutcome<CurveRegion2>, csgrs::errors::ValidationError>,
 ) -> CurveRegion2 {
     result.expect("compound curve Boolean").into_value()
 }
@@ -93,22 +93,28 @@ fn main() {
         ];
         let faces: [&[usize]; 4] = [&[0, 2, 1], &[0, 1, 3], &[0, 3, 2], &[1, 2, 3]];
         let meshes = [
-            solid::cuboid(Real::from(2), Real::from(3), Real::from(5)),
-            solid::cube(Real::from(4)),
-            solid::sphere(Real::from(4), 16, 8),
-            solid::cylinder(Real::from(3), Real::from(8), 32),
-            solid::frustum(Real::from(3), Real::from(2), Real::from(8), 16),
+            solid::cuboid(Real::from(2), Real::from(3), Real::from(5))
+                .expect("valid primitive fixture"),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
+            solid::sphere(Real::from(4), 16, 8).expect("valid primitive fixture"),
+            solid::cylinder(Real::from(3), Real::from(8), 32)
+                .expect("valid primitive fixture"),
+            solid::frustum(Real::from(3), Real::from(2), Real::from(8), 16)
+                .expect("valid primitive fixture"),
             solid::polyhedron(&points, &faces).expect("tetrahedron"),
-            solid::torus(Real::from(8), Real::from(2), 32, 12),
-            solid::ellipsoid(Real::from(3), Real::from(5), Real::from(7), 24, 12),
+            solid::torus(Real::from(8), Real::from(2), 32, 12)
+                .expect("valid primitive fixture"),
+            solid::ellipsoid(Real::from(3), Real::from(5), Real::from(7), 24, 12)
+                .expect("valid primitive fixture"),
             solid::arrow(
                 Point3::origin(),
                 Vector3::from_xyz(Real::from(2), Real::from(3), Real::from(4)),
                 12,
                 false,
-            ),
-            solid::octahedron(Real::from(4)),
-            solid::icosahedron(Real::from(4)),
+            )
+            .expect("valid primitive fixture"),
+            solid::octahedron(Real::from(4)).expect("valid primitive fixture"),
+            solid::icosahedron(Real::from(4)).expect("valid primitive fixture"),
             curve::try_extrude(
                 &curve::involute_gear(
                     Real::from(2),
@@ -142,19 +148,25 @@ fn main() {
             [Real::from(2), Real::from(3)],
         ];
         let regions = [
-            curve::rectangle(Real::from(12), Real::from(8)),
-            curve::square(Real::from(8)),
-            curve::circle(Real::from(4), 24),
-            curve::right_triangle(Real::from(6), Real::from(4)),
-            curve::polygon(&polygon),
-            curve::ellipse(Real::from(8), Real::from(4), 24),
-            curve::regular_ngon(7, Real::from(4)),
-            curve::arrow(Real::from(6), Real::from(2), Real::from(3), Real::from(4)),
-            curve::rounded_rectangle(Real::from(12), Real::from(8), Real::from(2), 8),
-            curve::star(12, Real::from(8), Real::from(4)),
-            curve::teardrop(Real::from(6), Real::from(10), 24),
-            curve::egg(Real::from(6), Real::from(10), 24),
-            curve::squircle(Real::from(8), Real::from(6), 24),
+            curve::rectangle(Real::from(12), Real::from(8)).expect("valid planar fixture"),
+            curve::square(Real::from(8)).expect("valid planar fixture"),
+            curve::circle(Real::from(4), 24).expect("valid planar fixture"),
+            curve::right_triangle(Real::from(6), Real::from(4)).expect("valid planar fixture"),
+            curve::polygon(&polygon).expect("valid planar fixture"),
+            curve::ellipse(Real::from(8), Real::from(4), 24).expect("valid planar fixture"),
+            curve::regular_ngon(7, Real::from(4)).expect("valid planar fixture"),
+            curve::arrow(Real::from(6), Real::from(2), Real::from(3), Real::from(4))
+                .expect("valid sampled profile fixture"),
+            curve::rounded_rectangle(Real::from(12), Real::from(8), Real::from(2), 8)
+                .expect("valid planar fixture"),
+            curve::star(12, Real::from(8), Real::from(4))
+                .expect("valid sampled profile fixture"),
+            curve::teardrop(Real::from(6), Real::from(10), 24)
+                .expect("valid sampled profile fixture"),
+            curve::egg(Real::from(6), Real::from(10), 24)
+                .expect("valid sampled profile fixture"),
+            curve::squircle(Real::from(8), Real::from(6), 24)
+                .expect("valid sampled profile fixture"),
             compound_region(curve::keyhole(
                 Real::from(4),
                 Real::from(2),
@@ -174,7 +186,8 @@ fn main() {
                 24,
                 &GeometryContext::APPROXIMATE_512,
             )),
-            curve::heart(Real::from(8), Real::from(8), 32),
+            curve::heart(Real::from(8), Real::from(8), 32)
+                .expect("valid sampled profile fixture"),
             compound_region(curve::crescent(
                 Real::from(6),
                 Real::from(4),
@@ -217,11 +230,12 @@ fn main() {
         )
     });
 
-    let curve_left = curve::circle(Real::from(10), 64);
+    let curve_left = curve::circle(Real::from(10), 64).expect("valid planar fixture");
     let curve_right = curve::transformed(
-        &curve::square(Real::from(12)),
+        &curve::square(Real::from(12)).expect("valid planar fixture"),
         &Matrix4::affine_translation([Real::from(4), Real::zero(), Real::zero()]),
-    );
+    )
+    .expect("valid planar transform fixture");
     config.run("feature", "profile_boolean", "all_operations", 2, || {
         let results = [
             curve_left
@@ -264,12 +278,14 @@ fn main() {
         Measurement::new(128, (sharp.len() + rounded.len()) as u64, sharp.len() as u64)
     });
     config.run("feature", "profile_transform", "all_csg_helpers", 4, || {
-        let source = curve::rectangle(Real::from(8), Real::from(5));
+        let source =
+            curve::rectangle(Real::from(8), Real::from(5)).expect("valid planar fixture");
         let outputs = [
             curve::transformed(
                 &source,
                 &Matrix4::affine_translation([Real::from(3), Real::from(-2), Real::zero()]),
-            ),
+            )
+            .expect("valid planar transform fixture"),
             source
                 .transform_affine(
                     &Real::zero(),
@@ -293,7 +309,8 @@ fn main() {
             curve::transformed(
                 &source,
                 &Matrix4::affine_translation([Real::from(7), Real::from(-4), Real::zero()]),
-            ),
+            )
+            .expect("valid planar transform fixture"),
         ];
         let contours = outputs.iter().map(CurveRegion2::len).sum::<usize>();
         Measurement::new(8, contours as u64, contours as u64)
@@ -304,17 +321,20 @@ fn main() {
         "arc_linear_grid",
         1,
         || {
-            let source = curve::square(Real::one());
+            let source = curve::square(Real::one()).expect("valid planar fixture");
             let mut regions = Vec::new();
             for index in 0..14 {
-                regions.push(curve::transformed(
-                    &source,
-                    &Matrix4::affine_translation([
-                        Real::from((index % 4) as u64) * Real::from(3),
-                        Real::from((index / 4) as u64) * Real::from(3),
-                        Real::zero(),
-                    ]),
-                ));
+                regions.push(
+                    curve::transformed(
+                        &source,
+                        &Matrix4::affine_translation([
+                            Real::from((index % 4) as u64) * Real::from(3),
+                            Real::from((index / 4) as u64) * Real::from(3),
+                            Real::zero(),
+                        ]),
+                    )
+                    .expect("valid planar transform fixture"),
+                );
             }
             let contours = regions.iter().map(CurveRegion2::len).sum::<usize>();
             Measurement::new(14, contours as u64, contours as u64)
@@ -331,9 +351,10 @@ fn main() {
                     .expect("extrusion")
                     .into_value();
             let radial = curve::transformed(
-                &curve::rectangle(Real::from(3), Real::from(8)),
+                &curve::rectangle(Real::from(3), Real::from(8)).expect("valid planar fixture"),
                 &Matrix4::affine_translation([Real::from(5), Real::zero(), Real::zero()]),
-            );
+            )
+            .expect("valid planar transform fixture");
             let revolution =
                 curve::revolve(&radial, Real::from(360), 32, &GeometryContext::STRICT)
                     .expect("revolution")
@@ -349,7 +370,7 @@ fn main() {
             .expect("twisted extrusion")
             .into_value();
             let sweep = curve::try_sweep(
-                &curve::circle(Real::one(), 24),
+                &curve::circle(Real::one(), 24).expect("valid planar fixture"),
                 &[
                     Point3::origin(),
                     Point3::new(Real::zero(), Real::zero(), Real::from(4)),
@@ -368,12 +389,11 @@ fn main() {
         },
     );
 
-    let mesh = solid::sphere(Real::from(8), 24, 12);
-    let positioned = solid::cuboid(Real::from(2), Real::from(3), Real::from(5)).translated(
-        Real::from(7),
-        Real::from(-4),
-        Real::from(-9),
-    );
+    let mesh = solid::sphere(Real::from(8), 24, 12).expect("valid primitive fixture");
+    let positioned = solid::cuboid(Real::from(2), Real::from(3), Real::from(5))
+        .expect("valid primitive fixture")
+        .translated(Real::from(7), Real::from(-4), Real::from(-9))
+        .expect("valid transform fixture");
     config.run(
         "feature",
         "mesh_positioning",
@@ -381,9 +401,11 @@ fn main() {
         8,
         || {
             let outputs = [
-                solid::center(&positioned),
-                solid::float(&positioned),
-                positioned.translated(Real::from(3), Real::from(-2), Real::from(5)),
+                solid::center(&positioned).expect("valid modeling fixture"),
+                solid::float(&positioned).expect("valid modeling fixture"),
+                positioned
+                    .translated(Real::from(3), Real::from(-2), Real::from(5))
+                    .expect("valid transform fixture"),
             ];
             let triangles = outputs.iter().map(|mesh| mesh.triangles.len()).sum::<usize>();
             Measurement::new(
@@ -394,14 +416,16 @@ fn main() {
         },
     );
     config.run("feature", "mesh_distribution", "arc_linear_grid", 1, || {
-        let source = solid::cube(Real::one());
+        let source = solid::cube(Real::one()).expect("valid primitive fixture");
         let copies = (0..22)
             .map(|index| {
-                source.translated(
-                    Real::from((index % 6) as u64) * Real::from(3),
-                    Real::from((index / 6) as u64) * Real::from(3),
-                    Real::zero(),
-                )
+                source
+                    .translated(
+                        Real::from((index % 6) as u64) * Real::from(3),
+                        Real::from((index / 6) as u64) * Real::from(3),
+                        Real::zero(),
+                    )
+                    .expect("valid transform fixture")
             })
             .collect::<Vec<_>>();
         mesh_measurement(&solid::merge(&copies), 22)
@@ -494,26 +518,32 @@ fn main() {
         "slice_and_flatten",
         1,
         || {
-            let (region, strings, paths) = solid::slice_z(&mesh, Real::zero());
-            let flattened = solid::flatten(&mesh);
+            let (region, strings, paths) =
+                solid::slice_z(&mesh, Real::zero()).expect("valid slice workload");
+            let flattened = solid::flatten(&mesh).expect("valid projection workload");
             let output = region.len() + strings.len() + paths.len() + flattened.len();
             Measurement::new(mesh.triangles.len() as u64, output as u64, output as u64)
         },
     );
     config.run("feature", "mesh_profile_projection", "slice", 1, || {
-        let (region, strings, paths) = solid::slice_z(&mesh, Real::zero());
+        let (region, strings, paths) =
+            solid::slice_z(&mesh, Real::zero()).expect("valid slice workload");
         let output = region.len() + strings.len() + paths.len();
         Measurement::new(mesh.triangles.len() as u64, output as u64, output as u64)
     });
     config.run("feature", "mesh_profile_projection", "flatten", 1, || {
-        let output = solid::flatten(&mesh).len();
+        let output = solid::flatten(&mesh)
+            .expect("valid projection workload")
+            .len();
         Measurement::new(mesh.triangles.len() as u64, output as u64, output as u64)
     });
     config.run("feature", "hypermesh", "buffers_hull_minkowski", 1, || {
         let hull = solid::convex_hull(&mesh).expect("hull");
-        let sum =
-            solid::minkowski_sum(&solid::cube(Real::from(2)), &solid::cube(Real::from(3)))
-                .expect("Minkowski");
+        let sum = solid::minkowski_sum(
+            &solid::cube(Real::from(2)).expect("valid primitive fixture"),
+            &solid::cube(Real::from(3)).expect("valid primitive fixture"),
+        )
+        .expect("Minkowski");
         let output = mesh.triangles.len() * 3 + hull.triangles.len() + sum.triangles.len();
         Measurement::new(mesh.triangles.len() as u64, output as u64, output as u64)
     });
@@ -531,15 +561,19 @@ fn main() {
         )
     });
     config.run("feature", "hypermesh", "cube_minkowski", 1, || {
-        let sum =
-            solid::minkowski_sum(&solid::cube(Real::from(2)), &solid::cube(Real::from(3)))
-                .expect("Minkowski");
+        let sum = solid::minkowski_sum(
+            &solid::cube(Real::from(2)).expect("valid primitive fixture"),
+            &solid::cube(Real::from(3)).expect("valid primitive fixture"),
+        )
+        .expect("Minkowski");
         mesh_measurement(&sum, 16)
     });
 
-    let boolean_left = solid::cube(Real::from(4));
-    let boolean_right =
-        solid::cube(Real::from(4)).translated(Real::one(), Real::one(), Real::one());
+    let boolean_left = solid::cube(Real::from(4)).expect("valid primitive fixture");
+    let boolean_right = solid::cube(Real::from(4))
+        .expect("valid primitive fixture")
+        .translated(Real::one(), Real::one(), Real::one())
+        .expect("valid transform fixture");
     config.run("feature", "mesh_boolean", "immediate_four", 1, || {
         boolean_measurement(&boolean_results(&boolean_left, &boolean_right, 4))
     });
@@ -555,23 +589,29 @@ fn main() {
     let fixtures = [
         (
             "disjoint",
-            solid::cube(Real::from(4)),
-            solid::cube(Real::from(4)).translated(Real::from(10), Real::zero(), Real::zero()),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
+            solid::cube(Real::from(4))
+                .expect("valid primitive fixture")
+                .translated(Real::from(10), Real::zero(), Real::zero())
+                .expect("valid transform fixture"),
         ),
         (
             "identical",
-            solid::cube(Real::from(4)),
-            solid::cube(Real::from(4)),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
         ),
         (
             "contained",
-            solid::cube(Real::from(4)),
-            solid::cube(Real::from(2)),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
+            solid::cube(Real::from(2)).expect("valid primitive fixture"),
         ),
         (
             "face_touching",
-            solid::cube(Real::from(4)),
-            solid::cube(Real::from(4)).translated(Real::from(4), Real::zero(), Real::zero()),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
+            solid::cube(Real::from(4))
+                .expect("valid primitive fixture")
+                .translated(Real::from(4), Real::zero(), Real::zero())
+                .expect("valid transform fixture"),
         ),
     ];
     for (name, left, right) in &fixtures {
@@ -598,7 +638,8 @@ fn main() {
                 sdf_min.clone(),
                 sdf_max.clone(),
                 Real::zero(),
-            ),
+            )
+            .expect("valid SDF fixture"),
             20 * 20 * 20,
         )
     });
@@ -611,7 +652,8 @@ fn main() {
             ),
         ];
         mesh_measurement(
-            &solid::metaballs(&balls, (20, 20, 20), Real::one(), Real::one()),
+            &solid::metaballs(&balls, (20, 20, 20), Real::one(), Real::one())
+                .expect("valid metaball fixture"),
             20 * 20 * 20,
         )
     });
@@ -621,14 +663,17 @@ fn main() {
             (Point2::new(Real::from(2), Real::zero()), Real::from(2)),
         ];
         curve_measurement(
-            &curve::metaballs(&balls, (48, 48), Real::one(), Real::one()),
+            &curve::metaballs(&balls, (48, 48), Real::one(), Real::one())
+                .expect("valid planar metaball fixture"),
             48 * 48,
         )
     });
     config.run("feature", "implicit", "tpms_catalog", 1, || {
-        let bounds = solid::cube(Real::from(12));
-        let gyroid = solid::gyroid(&bounds, 18, Real::from(6), Real::zero());
-        let schwarz = solid::schwarz_p(&bounds, 18, Real::from(6), Real::zero());
+        let bounds = solid::cube(Real::from(12)).expect("valid primitive fixture");
+        let gyroid = solid::gyroid(&bounds, 18, Real::from(6), Real::zero())
+            .expect("valid modeling fixture");
+        let schwarz = solid::schwarz_p(&bounds, 18, Real::from(6), Real::zero())
+            .expect("valid modeling fixture");
         let triangles = gyroid.triangles.len() + schwarz.triangles.len();
         Measurement::new(2 * 18 * 18 * 18, triangles as u64, triangles as u64)
     });
@@ -677,11 +722,14 @@ fn main() {
                     },
                 ),
             );
-            let geometry = solid::cube(Real::from(2)).translated(
-                Real::from(index % 8) * Real::from(3),
-                Real::from(index / 8) * Real::from(3),
-                Real::from(index % 3),
-            );
+            let geometry = solid::cube(Real::from(2))
+                .expect("valid primitive fixture")
+                .translated(
+                    Real::from(index % 8) * Real::from(3),
+                    Real::from(index / 8) * Real::from(3),
+                    Real::from(index % 3),
+                )
+                .expect("valid transform fixture");
             AttributedMesh::from_uniform(geometry, metadata)
         })
         .collect::<Vec<_>>();
@@ -691,7 +739,7 @@ fn main() {
         Measurement::new(parts.len() as u64, edges as u64, edges as u64)
     });
 
-    let io_mesh = solid::sphere(Real::from(4), 20, 10);
+    let io_mesh = solid::sphere(Real::from(4), 20, 10).expect("valid primitive fixture");
     config.run("feature", "mesh_io", "all_exporters", 1, || {
         let stl = csgrs::io::stl::to_stl_binary(&io_mesh, "benchmark").expect("STL");
         let dxf = csgrs::io::dxf::to_dxf(&io_mesh).expect("DXF");

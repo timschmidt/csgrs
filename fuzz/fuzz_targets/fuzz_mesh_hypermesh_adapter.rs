@@ -38,7 +38,10 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     real(value.clamp(-100.0, 100.0))
 }
 
-fn decode_mesh(bytes: &[u8], idx: &mut usize) -> TriangleMesh {
+fn decode_mesh(
+    bytes: &[u8],
+    idx: &mut usize,
+) -> Result<TriangleMesh, csgrs::errors::ValidationError> {
     let tag = bytes[*idx % bytes.len()] % 8;
     *idx += 1;
     let a = decode_real(bytes, idx);
@@ -98,7 +101,9 @@ fuzz_target!(|bytes: &[u8]| {
     }
 
     let mut idx = 0usize;
-    let mesh = decode_mesh(bytes, &mut idx);
+    let Ok(mesh) = decode_mesh(bytes, &mut idx) else {
+        return;
+    };
     let buffers = mesh
         .to_exact_gpu_mesh_buffers()
         .expect("csgrs primitives have finite renderer projections");

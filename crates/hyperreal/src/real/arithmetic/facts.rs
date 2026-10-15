@@ -73,13 +73,34 @@ impl Real {
     ///
     /// Unlike [`Real::exact_rational`], this query may inspect a retained
     /// rational/π/quadratic expression or cancel structurally identical opaque
-    /// nonlinear atoms in a bounded affine form. It never approximates: `None`
-    /// means only that the bounded normal form does not cover the expression.
+    /// atoms in a rational polynomial or quotient. Expanding an inverse requires
+    /// an exact nonzero proof for its operand, either already retained or proved
+    /// by this reduction. It never approximates: `None` means only
+    /// that recognition did not establish a rational value. Polynomial expansion
+    /// has separate node, depth, term, degree, coefficient and work limits;
+    /// these do not bound the existing structural comparisons or the entire
+    /// query's heap use. A declined attempt is not retained as negative evidence.
+    /// The polynomial fallback permits 512 node visits, depth 64, 32 atoms,
+    /// 64 monomials, degree 8 and 4096 stored coefficient bits. Its 8192 work
+    /// charges count node visits, coefficient operations, term insertion and
+    /// structural comparisons; one comparison can inspect a larger opaque DAG.
+    /// After that fallback declines, quotient recognition gets a separate
+    /// attempt with the same limits. Its charges also count comparisons of
+    /// denominator coefficients. Earlier successful proofs remain preferred.
+    /// Within that attempt, shared nodes reuse completed projections. Each hit
+    /// consumes a work charge and checks cancellation, without another node
+    /// expansion. At most 512 temporary projections are retained until return;
+    /// this entry limit is not a heap-byte bound. No cache survives the query.
     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
         if let Some(rational) = self.exact_rational() {
             return Some(rational);
         }
-        Some(self.computable_ref().bounded_laurent_rational(64)? * &self.rational)
+        let computable = self.computable_ref();
+        let rational = computable
+            .bounded_laurent_rational(64)
+            .or_else(|| computable.bounded_ring_rational())
+            .or_else(|| computable.bounded_quotient_rational())?;
+        Some(rational * &self.rational)
     }
 
     /// Returns `(a, b, d)` when bounded symbolic normalization proves that
@@ -748,7 +769,8 @@ impl Real {
     /// Callers use this after object-level facts have already removed
     /// structurally zero terms. Exact-rational inputs still go through the
     /// whole-polynomial reducer; mixed symbolic inputs keep rational factors as
-    /// scales and avoid introducing unrelated optimization passes.
+    /// scales. Opposite identical two-factor products cancel before expansion,
+    /// including reversed factor order; structural equality is the proof.
     pub fn active_signed_product_sum<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Real; FACTORS]; TERMS],
@@ -773,6 +795,9 @@ impl Real {
             );
             return sum;
         }
+        if Self::opposite_products_cancel(positive_terms, terms) {
+            return Real::zero();
+        }
 
         let mut total = None;
         for i in 0..TERMS {
@@ -786,6 +811,30 @@ impl Real {
             });
         }
         total.unwrap_or_else(Real::zero)
+    }
+
+    /// A fixed product identity, not a numerical comparison or normalization
+    /// of arbitrary expression trees. `Real` equality proves matching factors;
+    /// a failed match supplies no fact about their mathematical values.
+    #[inline]
+    fn opposite_products_cancel<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Real; FACTORS]; TERMS],
+    ) -> bool {
+        if TERMS != 2 || FACTORS != 2 || positive_terms[0] == positive_terms[1] {
+            return false;
+        }
+        let [a, b] = terms[0].as_slice() else {
+            return false;
+        };
+        let [c, d] = terms[1].as_slice() else {
+            return false;
+        };
+        let cancel = (a == c && b == d) || (a == d && b == c);
+        if cancel {
+            crate::trace_dispatch!("real", "product_sum", "opposite-identical-products");
+        }
+        cancel
     }
 
     fn sin_pi_pythagorean_product_sum<const TERMS: usize, const FACTORS: usize>(

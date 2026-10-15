@@ -22,7 +22,7 @@
 //! - **gerber-io**: Gerber/RS-274X import/export for native filled and open curves
 //! - Exact convex hull and Minkowski sum are always available through `hypermesh`.
 //! - **metaballs**: enables an implementation of [metaballs](https://en.wikipedia.org/wiki/Metaballs)
-//! - **sdf**: signed distance fields ([sdf](https://en.wikipedia.org/wiki/Signed_distance_function)) using [fast-surface-nets](https://crates.io/crates/fast-surface-nets)
+//! - **sdf**: retained implicit fields sampled with native-real Hypermesh Surface Nets
 //! - **hypertri**: hyperreal-backed polygon and curve triangulation
 //!
 //! #### Optional
@@ -74,7 +74,7 @@ pub use hyperreal::Real;
 
 pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
     hyperlimit::PredicatePolicy::STRICT;
-#[cfg(any(test, feature = "sdf"))]
+#[cfg(test)]
 pub(crate) const MESH_CONTEXT: hypermesh::MeshContext =
     hypermesh::MeshContext::new(PREDICATE_POLICY);
 

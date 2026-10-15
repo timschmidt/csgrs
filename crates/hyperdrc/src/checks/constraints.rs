@@ -4089,7 +4089,10 @@ mod native_width_regressions {
     #[test]
     fn native_width_does_not_require_parser_cached_bounds() {
         let width = crate::scalar::scalar("0.08");
-        let region = PcbRegion::new(csgrs::curve::rectangle(width.clone(), Scalar::one()), None);
+        let region = PcbRegion::new(
+            csgrs::curve::rectangle(width.clone(), Scalar::one()).expect("valid planar fixture"),
+            None,
+        );
         assert!(region.exact_bounds().is_none());
         let bounds = super::native_region_bounds_scalar(&region)
             .expect("native geometry remains indexable without parser-attached bounds");
@@ -4105,7 +4108,7 @@ mod native_width_regressions {
     #[test]
     fn denied_native_width_cannot_become_zero_or_a_cached_value() {
         let region = PcbRegion::new(
-            csgrs::curve::rectangle(Scalar::one(), Scalar::from(2)),
+            csgrs::curve::rectangle(Scalar::one(), Scalar::from(2)).expect("valid planar fixture"),
             None,
         );
         assert_eq!(

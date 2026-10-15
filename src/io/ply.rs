@@ -96,7 +96,7 @@ mod tests {
 
     #[test]
     fn cube_output_parses() {
-        let mesh = crate::solid::cube(Real::one());
+        let mesh = crate::solid::cube(Real::one()).expect("valid primitive fixture");
         let output = to_ply(&mesh, "cube").unwrap();
         let parsed = Parser::<DefaultElement>::new()
             .read_ply(&mut Cursor::new(output.as_bytes()))

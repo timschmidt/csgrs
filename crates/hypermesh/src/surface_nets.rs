@@ -209,6 +209,27 @@ pub fn surface_nets(
     context: &MeshContext,
     grid: SurfaceNetsGrid<'_>,
 ) -> Result<MeshOutcome<SurfaceNetsOutput>, SurfaceNetsError> {
+    surface_nets_impl(context, grid, false)
+}
+
+/// Constructs a Surface Nets proposal for a standalone sampled grid.
+///
+/// Unlike [`surface_nets`]'s chunk ownership convention, this includes faces in
+/// the final cell layer whenever all four incident cells are present. It does
+/// not cap the grid boundary: validate required closed topology separately.
+/// Numerical certainty describes the sampled proposal, not the continuous field.
+pub fn surface_nets_standalone(
+    context: &MeshContext,
+    grid: SurfaceNetsGrid<'_>,
+) -> Result<MeshOutcome<SurfaceNetsOutput>, SurfaceNetsError> {
+    surface_nets_impl(context, grid, true)
+}
+
+fn surface_nets_impl(
+    context: &MeshContext,
+    grid: SurfaceNetsGrid<'_>,
+    include_final_layer: bool,
+) -> Result<MeshOutcome<SurfaceNetsOutput>, SurfaceNetsError> {
     validate_grid(&grid)?;
     let decisions = DecisionContext::new(context);
     let negative = classify_samples(&decisions, grid.values)?;
@@ -221,7 +242,7 @@ pub fn surface_nets(
         active_cells: Vec::new(),
     };
     builder.estimate_vertices()?;
-    builder.build_faces(&decisions)?;
+    builder.build_faces(&decisions, include_final_layer)?;
     builder.transform_positions_to_world();
     builder.validate_triangles(&decisions)?;
     let active_cell_count = builder.active_cells.len();
@@ -327,13 +348,22 @@ impl SurfaceNetsBuilder<'_> {
         Point3::centroid(&intersections).ok_or(SurfaceNetsError::VertexConstructionFailed { cell })
     }
 
-    fn build_faces(&mut self, decisions: &DecisionContext) -> Result<(), SurfaceNetsError> {
+    fn build_faces(
+        &mut self,
+        decisions: &DecisionContext,
+        include_final_layer: bool,
+    ) -> Result<(), SurfaceNetsError> {
         let [nx, ny, nz] = self.grid.dimensions;
         let strides = [1_usize, nx as usize, (nx as usize) * (ny as usize)];
         for active_index in 0..self.active_cells.len() {
             let active = self.active_cells[active_index];
             let [x, y, z] = active.index;
-            if y != 0 && z != 0 && x != nx - 2 {
+            // Every active cell has its positive-axis sample in this grid,
+            // including the last cell. The four incident cells lie behind
+            // the edge on the other two axes. Only their lower boundaries
+            // need exclusion; reserving a final layer for a neighboring chunk
+            // would drop valid faces from this standalone grid.
+            if y != 0 && z != 0 && (include_final_layer || x != nx - 2) {
                 self.maybe_add_quad(
                     decisions,
                     active.sample_index,
@@ -342,7 +372,7 @@ impl SurfaceNetsBuilder<'_> {
                     strides[2],
                 )?;
             }
-            if x != 0 && z != 0 && y != ny - 2 {
+            if x != 0 && z != 0 && (include_final_layer || y != ny - 2) {
                 self.maybe_add_quad(
                     decisions,
                     active.sample_index,
@@ -351,7 +381,7 @@ impl SurfaceNetsBuilder<'_> {
                     strides[0],
                 )?;
             }
-            if x != 0 && y != 0 && z != nz - 2 {
+            if x != 0 && y != 0 && (include_final_layer || z != nz - 2) {
                 self.maybe_add_quad(
                     decisions,
                     active.sample_index,
@@ -519,6 +549,62 @@ mod tests {
                 .iter()
                 .all(|position| position.x == plane)
         );
+    }
+
+    #[test]
+    fn affine_planes_cover_first_and_last_cell_layers_on_every_axis() {
+        let origin = Point3::new((-1).into(), (-1).into(), (-1).into());
+        let step = Vector3::new([Real::one(), Real::one(), Real::one()]);
+        for axis in 0..3 {
+            for numerator in [-1, 1] {
+                let plane = rational(numerator, 3);
+                let mut values = Vec::new();
+                for z in -1..=1 {
+                    for y in -1..=1 {
+                        for x in -1..=1 {
+                            values.push(Real::from([x, y, z][axis]) - &plane);
+                        }
+                    }
+                }
+                let outcome = surface_nets_standalone(
+                    &STRICT,
+                    SurfaceNetsGrid::new(&origin, &step, [3, 3, 3], &values),
+                )
+                .unwrap();
+                // Retain the documented legacy chunk convention independently.
+                let chunk = surface_nets(
+                    &STRICT,
+                    SurfaceNetsGrid::new(&origin, &step, [3, 3, 3], &values),
+                )
+                .unwrap();
+                assert_eq!(
+                    chunk.value.mesh.triangles.len(),
+                    if numerator < 0 { 2 } else { 0 }
+                );
+                let mesh = outcome.value.mesh;
+                assert_eq!(outcome.value.active_cell_count, 4);
+                assert_eq!(mesh.positions.len(), 4);
+                assert_eq!(mesh.triangles.len(), 2, "axis {axis}, plane {plane}");
+                // The four cell centers span a unit square at the exact plane.
+                for position in mesh.positions.iter() {
+                    let coordinates = [&position.x, &position.y, &position.z];
+                    assert_eq!(coordinates[axis], &plane);
+                    for (other, coordinate) in coordinates.into_iter().enumerate() {
+                        if other != axis {
+                            assert!(
+                                coordinate == &rational(-1, 2) || coordinate == &rational(1, 2)
+                            );
+                        }
+                    }
+                }
+                // Oriented area is one in the positive field-gradient direction.
+                let twice_area = mesh.triangles.iter().fold(Real::zero(), |sum, triangle| {
+                    let [a, b, c] = triangle.indices().map(|i| mesh.positions[i].to_vector());
+                    sum + (&b - &a).cross(&(&c - &a)).0[axis].clone()
+                });
+                assert_eq!(twice_area, Real::from(2));
+            }
+        }
     }
 
     #[test]

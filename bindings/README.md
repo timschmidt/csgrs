@@ -64,6 +64,44 @@ behavior, metadata rules, and topology stay in the Rust layers.
 
 ## Compatibility
 
+Planar transforms share the native matrix contract. A matrix must act as a
+nonsingular affine map on the XY plane, preserve that plane, and have constant
+nonzero homogeneous weight; the weight is divided out. Perspective and
+out-of-plane maps return `UNSUPPORTED` (7); constant zero weight with a nonzero
+coordinate image returns `UNBOUNDED` (9); singular planar maps or an all-zero
+homogeneous image return `VALIDATION_FAILED` (4).
+Unresolved predicates remain `PREDICATE_UNDECIDED` (5), with diagnostic text.
+These checks also apply to empty regions. C++/Python exceptions and Go errors
+retain the C status. Scalar conversion still has its own failure category.
+
+Three-component planar transform methods now validate every component and
+preserve its meaning. Nonzero Z translation and rotations leaving the XY plane
+are rejected. Z scale has no effect on XY geometry. Plane-preserving X/Y
+half-turns perform their actual reflections; rotation order is X, then Y, then Z.
+These corrections replace the earlier ignored components without changing
+binding signatures. WASM transforms expose matching `GeometryError.code`
+categories. Strict WASM membership returns no value only at a proved boundary;
+an undecided query throws `GeometryError` with code `undecided`.
+
+Planar square, rectangle, circle and polygon constructors preserve native
+failure through C status codes, C++/Python exceptions and Go errors. Negative
+dimensions, invalid resolutions and malformed polygon rings no longer publish
+empty model handles. A certified zero-size primitive is successful empty
+geometry after every argument has been checked. WASM's corresponding
+constructors (also ellipse, right triangle, regular polygon, ring and crescent)
+throw `GeometryError` with a machine-readable `code`. Signatures at these
+language boundaries are unchanged.
+
+Bounds are optional. The C ABI returns `CSGRS_STATUS_NO_BOUNDS` (10) for a
+completed empty query and leaves the output record untouched. C++ returns
+`std::optional`, Python returns `None`, and Go returns a nil bounds pointer with
+a nil error. Nonempty results retain their previous coordinate types. Invalid
+input and unresolved predicates remain errors; Go's `StatusError` retains both
+the C status and diagnostic message. Go callers must now check the bounds
+pointer before dereferencing it. Native JavaScript loaders must map `NO_BOUNDS`
+to absence and preserve all other status categories; the loader implementation
+is supplied by the consumer and is not included here.
+
 Opaque handles may cross only the ABI version that created them. Callers must
 use the matching free function, must not mix scalar families, and must copy any
 borrowed last-error text before another ABI call. The wrappers are currently

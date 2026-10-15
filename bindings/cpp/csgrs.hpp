@@ -3,6 +3,7 @@
 #include "../../crates/csgrs-ffi/include/csgrs.h"
 
 #include <cstddef>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -11,12 +12,16 @@ namespace csgrs {
 
 class error : public std::runtime_error {
 public:
-  explicit error(const char *message) : std::runtime_error(message ? message : "csgrs error") {}
+  explicit error(const char *message, csgrs_status_t status = CSGRS_STATUS_VALIDATION_FAILED)
+      : std::runtime_error(message ? message : "csgrs error"), status_(status) {}
+  csgrs_status_t status() const noexcept { return status_; }
+private:
+  csgrs_status_t status_;
 };
 
 inline void check(csgrs_status_t status) {
   if (status != CSGRS_STATUS_OK) {
-    throw error(csgrs_last_error_message());
+    throw error(csgrs_last_error_message(), status);
   }
 }
 
@@ -181,7 +186,13 @@ public:
   TriangleMesh inverse() const { return unary(Traits::mesh_inverse); }
   TriangleMesh center() const { return unary(Traits::mesh_center); }
   TriangleMesh floating() const { return unary(Traits::mesh_float); }
-  aabb_type bounding_box() const { aabb_type out{}; check(Traits::mesh_bounding_box(handle_, &out)); return out; }
+  std::optional<aabb_type> bounding_box() const {
+    aabb_type out{};
+    const auto status = Traits::mesh_bounding_box(handle_, &out);
+    if (status == CSGRS_STATUS_NO_BOUNDS) return std::nullopt;
+    check(status);
+    return out;
+  }
   mesh_buffers_type vertices_and_indices() const { mesh_buffers_type out{}; check(Traits::mesh_vertices_and_indices(handle_, &out)); return out; }
   graphics_mesh_type graphics_mesh() const { graphics_mesh_type out{}; check(Traits::mesh_graphics_mesh(handle_, &out)); return out; }
   csgrs_triangle_mesh_t *get() const { return handle_; }
@@ -230,7 +241,13 @@ public:
   CurveRegion translate(scalar_type x, scalar_type y, scalar_type z) const { csgrs_curve_region_t *out = nullptr; check(Traits::region_translate(handle_, x, y, z, &out)); return CurveRegion(out); }
   CurveRegion scale(scalar_type sx, scalar_type sy, scalar_type sz) const { csgrs_curve_region_t *out = nullptr; check(Traits::region_scale(handle_, sx, sy, sz, &out)); return CurveRegion(out); }
   CurveRegion rotate(scalar_type x, scalar_type y, scalar_type z) const { csgrs_curve_region_t *out = nullptr; check(Traits::region_rotate(handle_, x, y, z, &out)); return CurveRegion(out); }
-  aabb_type bounding_box() const { aabb_type out{}; check(Traits::region_bounding_box(handle_, &out)); return out; }
+  std::optional<aabb_type> bounding_box() const {
+    aabb_type out{};
+    const auto status = Traits::region_bounding_box(handle_, &out);
+    if (status == CSGRS_STATUS_NO_BOUNDS) return std::nullopt;
+    check(status);
+    return out;
+  }
   TriangleMesh<Traits> extrude(scalar_type height) const { csgrs_triangle_mesh_t *out = nullptr; check(Traits::region_extrude(handle_, height, &out)); return TriangleMesh<Traits>(out); }
   TriangleMesh<Traits> extrude_vector(vec3_type direction) const { csgrs_triangle_mesh_t *out = nullptr; check(Traits::region_extrude_vector(handle_, direction, &out)); return TriangleMesh<Traits>(out); }
   TriangleMesh<Traits> revolve(scalar_type angle, std::size_t segments) const { csgrs_triangle_mesh_t *out = nullptr; check(Traits::region_revolve(handle_, angle, segments, &out)); return TriangleMesh<Traits>(out); }

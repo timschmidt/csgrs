@@ -101,6 +101,7 @@ mod fractional_separation_tests {
     #[test]
     fn fractional_separation_roots_with_negative_integral_denominators_match_mpfr() {
         use rug::{Float, Integer, Rational as Q, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         // Both numerator and denominator are negative. Roots of their positive
         // quotient still have an integral numerator gamma*root(beta/gamma),
         // whose selected sign may be negative. No principal-root shortcut is valid.

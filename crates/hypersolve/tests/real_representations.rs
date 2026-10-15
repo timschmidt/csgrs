@@ -8,18 +8,17 @@
 
 use std::collections::HashMap;
 
-use hyperlimit::{PredicateOutcome, PredicatePolicy, Sign};
+use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy, Sign};
 use hyperreal::{
     CertifiedRealEquality, CertifiedRealSign, Rational, Real, RealSign, StructuralKind,
 };
 use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_with_analysis};
 use hypersolve::predicates::StructuralPredicateBackend;
 use hypersolve::{
-    BareissError, Classification, Constraint, ConstraintKind, DomainCheckStatus, EvaluationContext,
-    Expr, ExprDegree, PredicateBackend, Problem, SparseBareissError, SparseResidualReplayError,
-    SparseResidualTerm, SymbolId, certify_candidate, certify_candidate_domains,
-    classify_real_sign_predicate, compare_real_predicate, context_from_problem,
-    determinant_bareiss, evaluate_residuals, replay_dense_linear_residuals,
+    Classification, Constraint, ConstraintKind, DomainCheckStatus, EvaluationContext, Expr,
+    ExprDegree, PredicateBackend, Problem, SparseResidualTerm, SymbolId, certify_candidate,
+    certify_candidate_domains, classify_real_sign_predicate, compare_real_predicate,
+    context_from_problem, determinant_bareiss, evaluate_residuals, replay_dense_linear_residuals,
     replay_sparse_linear_residuals, solve_dense_linear_system_bareiss, solve_direct_affine_system,
     solve_sparse_linear_system_bareiss, solve_sparse_linear_system_bareiss_pattern_preserving,
 };
@@ -264,9 +263,7 @@ fn finite_real_certificate_inventory_is_current() {
 fn every_real_certificate_crosses_solver_analysis_and_proof_surfaces() {
     let structural_backend = StructuralPredicateBackend;
     let mut sparse_solved = 0;
-    let mut sparse_explicitly_unknown = 0;
     let mut pattern_solved = 0;
-    let mut pattern_explicitly_unknown = 0;
 
     for case in representation_cases() {
         let context_label = case.certificate;
@@ -394,53 +391,53 @@ fn every_real_certificate_crosses_solver_analysis_and_proof_surfaces() {
         assert_same_real(&dense.solution[0], &Real::from(2), context_label);
         assert_same_real(&dense.solution[1], &Real::from(3), context_label);
 
-        // Keep the strict sparse proof identity-preserving. Unlike the dense
-        // API above, this API intentionally has no approximate terminal
-        // policy and must not accept merely overlapping computable DAGs.
+        // Positivity was certified above, so v*x=v has the exact solution
+        // x=1. Quotient recognition now closes every original recipe; an
+        // Unknown is a regression in this success corpus, not an alternate
+        // passing outcome. Genuine undecided replay has separate controls.
         let terms = vec![SparseResidualTerm {
             row: 0,
             column: 0,
             coefficient: value.clone(),
         }];
         let sparse_rhs = vec![value.clone()];
-        match solve_sparse_linear_system_bareiss(1, 1, &terms, &sparse_rhs, MIN_PRECISION) {
-            Ok(sparse) => {
-                assert!(
-                    sparse.dense_solve.residual_replay.accepted,
-                    "{context_label}"
-                );
-                assert!(sparse.sparse_residual_replay.accepted, "{context_label}");
-                assert_same_real(&sparse.dense_solve.solution[0], &Real::one(), context_label);
-                sparse_solved += 1;
-            }
-            Err(SparseBareissError::DenseSolve(BareissError::UnknownResidual))
-            | Err(SparseBareissError::SparseReplay(SparseResidualReplayError::UnknownResidual)) => {
-                // The strict API must surface non-canonical computable
-                // cancellation as uncertainty, never silently use f64.
-                sparse_explicitly_unknown += 1;
-            }
-            Err(error) => panic!("{context_label}: unexpected sparse solve failure: {error:?}"),
-        }
+        let sparse = solve_sparse_linear_system_bareiss(1, 1, &terms, &sparse_rhs, MIN_PRECISION)
+            .unwrap_or_else(|error| {
+                panic!("{context_label}: strict sparse solve failed: {error:?}")
+            });
+        assert!(
+            sparse.dense_solve.residual_replay.accepted,
+            "{context_label}"
+        );
+        assert_eq!(
+            sparse.dense_solve.residual_replay.certainty,
+            Certainty::Exact
+        );
+        assert!(sparse.sparse_residual_replay.accepted, "{context_label}");
+        assert_eq!(
+            sparse.dense_solve.solution[0].exact_rational_normal_form(),
+            Some(Rational::from(1)),
+            "{context_label}"
+        );
+        sparse_solved += 1;
 
-        match solve_sparse_linear_system_bareiss_pattern_preserving(
+        let pattern = solve_sparse_linear_system_bareiss_pattern_preserving(
             1,
             1,
             &terms,
             &sparse_rhs,
             MIN_PRECISION,
-        ) {
-            Ok(pattern) => {
-                assert!(pattern.sparse_residual_replay.accepted, "{context_label}");
-                assert_same_real(&pattern.solution[0], &Real::one(), context_label);
-                pattern_solved += 1;
-            }
-            Err(SparseBareissError::SparseReplay(SparseResidualReplayError::UnknownResidual)) => {
-                pattern_explicitly_unknown += 1
-            }
-            Err(error) => {
-                panic!("{context_label}: unexpected pattern-preserving failure: {error:?}")
-            }
-        }
+        )
+        .unwrap_or_else(|error| {
+            panic!("{context_label}: strict pattern-preserving solve failed: {error:?}")
+        });
+        assert!(pattern.sparse_residual_replay.accepted, "{context_label}");
+        assert_eq!(
+            pattern.solution[0].exact_rational_normal_form(),
+            Some(Rational::from(1)),
+            "{context_label}"
+        );
+        pattern_solved += 1;
 
         let mut domain_problem = Problem::default();
         let domain_variable = domain_problem.add_variable("positive", value.clone());
@@ -466,10 +463,8 @@ fn every_real_certificate_crosses_solver_analysis_and_proof_surfaces() {
         );
     }
 
-    assert_eq!(sparse_solved + sparse_explicitly_unknown, 22);
-    assert_eq!(pattern_solved + pattern_explicitly_unknown, 22);
-    assert!(sparse_solved > 0 && pattern_solved > 0);
-    assert!(sparse_explicitly_unknown > 0);
+    assert_eq!(sparse_solved, 22);
+    assert_eq!(pattern_solved, 22);
 }
 
 #[test]

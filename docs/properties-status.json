@@ -8,9 +8,17 @@
       "status": "in-progress",
       "plan": "crates/hyperbrep/docs/DEVELOPMENT_PLAN.md",
       "work_packages": "crates/hyperbrep/docs/IMPLEMENTATION_STATUS.json",
-      "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-step-advanced/manifest.json",
+      "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-upstream-integration/manifest.json",
       "contract": "Pure Rust native/WASM exact CAD implementation; greenfield API/archive changes with direct caller updates and no compatibility shims.",
-      "qualification": "See the work-package ledger for command-specific evidence. No whole-plan or property completion is inferred from the foundational increments."
+      "qualification": "See the work-package ledger for command-specific evidence. No whole-plan or property completion is inferred from the foundational increments.",
+      "upstream_revision": "7cf9d82acee6f152047eb37e5ff2e6dcece51a0d",
+      "acceptance_protocol": "docs/admission.md",
+      "integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-upstream-integration/README.md",
+      "acceptance_order": [
+        "Empty-result composition and visible failures",
+        "Ordinary strict-mode completion",
+        "Complete user-path and release validation"
+      ]
     },
     "existing_worktree_changes_in_scope": true,
     "accepted_cache_contract": "Warming may strengthen Unknown into Certified and reuse prior higher-precision proofs; it must never contradict or weaken an available certificate.",
@@ -4837,7 +4845,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "normal-form-image-filter-broader-qualification-ready",
+      "status": "test-oracle-cleanup-admitted-runtime-prototypes-still-isolated",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5232,7 +5240,4151 @@
       "sphere_normal_image_scalar_observed_overheads_retained": true,
       "sphere_normal_image_qualification_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-normal-image-qualification-scope-v1.json",
       "sphere_normal_image_qualification_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_sphere_normal_image_v1.py",
-      "sphere_normal_image_qualification_executed": false
+      "sphere_normal_image_qualification_executed": true,
+      "sphere_normal_image_qualification_complete": true,
+      "sphere_normal_image_qualification_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-normal-image-qualification-v1/result.json",
+      "sphere_normal_image_qualification_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-normal-image-qualification-closure-v1.json",
+      "sphere_normal_image_qualification_assessor": "docs/evidence/2026-10-14-sampled-sphere-hull/assess_sphere_normal_image_qualification_v1.py",
+      "sphere_normal_image_qualification_counts": {
+        "default-tests": {
+          "passed": 3928,
+          "failed": 0,
+          "ignored": 35,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 95
+        },
+        "all-features-tests": {
+          "passed": 4080,
+          "failed": 0,
+          "ignored": 40,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 96
+        },
+        "doctests": {
+          "passed": 29,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 4
+        },
+        "grammar-native-consumers": {
+          "passed": 19,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 4
+        }
+      },
+      "sphere_normal_image_qualification_driver_terminal_exit_code": 0,
+      "sphere_normal_image_qualification_assessor_terminal_exit_code": 0,
+      "sphere_normal_image_native_cost_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-native-cost-scope-v1.json",
+      "sphere_normal_image_native_cost_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_normal_image_native_cost_v1.py",
+      "sphere_normal_image_native_cost_executed": true,
+      "sphere_normal_image_resources_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-resources-scope-v1.json",
+      "sphere_normal_image_resources_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_normal_image_resources_v1.py",
+      "sphere_normal_image_resources_executed": true,
+      "sphere_normal_image_asan_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-scope-v1.json",
+      "sphere_normal_image_asan_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_normal_image_asan_v1.py",
+      "sphere_normal_image_asan_executed": true,
+      "sphere_normal_image_native_cost_complete": true,
+      "sphere_normal_image_native_cost_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-native-cost-assessment-v1.json",
+      "sphere_normal_image_native_cost_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-native-cost-closure-v1.json",
+      "sphere_normal_image_native_cost_median_ratios": {
+        "fifteen_degrees": 1.008514908134725,
+        "original_medium": 1.003971844013428,
+        "fifth_turn": 1.0342763448944066,
+        "seventh_turn": 1.0590010528152172
+      },
+      "sphere_normal_image_native_cost_flagged_cases": [],
+      "sphere_normal_image_native_cost_all_observed_increases_retained": true,
+      "sphere_normal_image_native_speedup_claimed": false,
+      "sphere_normal_image_resources_complete": true,
+      "sphere_normal_image_resources_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-resources-assessment-v1.json",
+      "sphere_normal_image_resources_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-resources-closure-v1.json",
+      "sphere_normal_image_resources_all_repeated_counters_identical": true,
+      "sphere_normal_image_resources_all_paired_deltas_zero": true,
+      "sphere_normal_image_resources_lifecycle_bytes_both_groups": {
+        "fifteen_degrees": [
+          746376,
+          746376,
+          746376
+        ],
+        "original_medium": [
+          66760,
+          66760,
+          66760
+        ],
+        "fifth_turn": [
+          30912,
+          30912,
+          30912
+        ],
+        "seventh_turn": [
+          25032,
+          25032,
+          25032
+        ]
+      },
+      "sphere_normal_image_native_heap_saving_claimed": false,
+      "sphere_normal_image_asan_complete": false,
+      "sphere_normal_image_asan_failure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-v1/failure.json",
+      "sphere_normal_image_asan_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-closure-v1.json",
+      "sphere_normal_image_asan_partial_tests_passed": 242,
+      "sphere_normal_image_asan_failure_classification": "LeakSanitizer infrastructure failure; the diagnostic gives a generic ptrace warning. Its exact cause has not yet been demonstrated. No leak report or library invalid-access diagnostic was produced.",
+      "sphere_normal_image_lsan_environment_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-lsan-environment-scope-v1.json",
+      "sphere_normal_image_lsan_environment_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/diagnose_normal_image_lsan_v1.py",
+      "sphere_normal_image_lsan_environment_executed": true,
+      "sphere_normal_image_lsan_environment_result": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-lsan-environment-v1/result.json",
+      "sphere_normal_image_lsan_environment_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-lsan-environment-closure-v1.json",
+      "sphere_normal_image_lsan_sandbox_restriction_demonstrated": true,
+      "sphere_normal_image_asan_v2_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-scope-v2.json",
+      "sphere_normal_image_asan_v2_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_normal_image_asan_v2.py",
+      "sphere_normal_image_asan_v2_executed": true,
+      "sphere_normal_image_asan_v2_complete": false,
+      "sphere_normal_image_asan_v2_failure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-v2/failure.json",
+      "sphere_normal_image_asan_v2_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-closure-v2.json",
+      "sphere_normal_image_asan_v2_partial_counts": {
+        "passed": 1379,
+        "failed": 0,
+        "ignored": 7,
+        "measured": 0,
+        "filtered_out": 0,
+        "summaries": 24
+      },
+      "sphere_normal_image_asan_v2_leak_bytes": 163672,
+      "sphere_normal_image_asan_v2_leak_allocations": 560,
+      "sphere_normal_image_asan_v2_all_reported_stacks_gmp": true,
+      "sphere_normal_image_mpfr_cache_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-mpfr-cache-scope-v1.json",
+      "sphere_normal_image_mpfr_cache_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_normal_image_mpfr_cache_v1.py",
+      "sphere_normal_image_mpfr_cache_result": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-mpfr-cache-v1/result.json",
+      "sphere_normal_image_mpfr_cache_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-mpfr-cache-closure-v1.json",
+      "sphere_normal_image_mpfr_cache_complete": true,
+      "sphere_normal_image_mpfr_thread_cache_mechanism_demonstrated": true,
+      "sphere_normal_image_full_suite_leak_cause_established": false,
+      "sphere_normal_image_test_cleanup_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-test-cleanup-scope-v1.json",
+      "sphere_normal_image_test_cleanup_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_normal_image_test_cleanup_v1.py",
+      "sphere_normal_image_test_cleanup_result": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-test-cleanup-v1/result.json",
+      "sphere_normal_image_test_cleanup_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-test-cleanup-closure-v1.json",
+      "sphere_normal_image_test_cleanup_complete": true,
+      "sphere_normal_image_test_cleanup_counts": {
+        "default-tests": {
+          "passed": 1476,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 45
+        },
+        "all-features-tests": {
+          "passed": 1595,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 46
+        },
+        "native-hull-tests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 1
+        }
+      },
+      "sphere_normal_image_test_cleanup_admitted": true,
+      "mpfr_test_cleanup_main_qualification_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/mpfr-test-cleanup-main-scope-v1.json",
+      "mpfr_test_cleanup_main_qualification_result": "docs/evidence/2026-10-14-sampled-sphere-hull/mpfr-test-cleanup-main-v1/result.json",
+      "mpfr_test_cleanup_main_qualification_complete": true,
+      "mpfr_test_cleanup_main_qualification_counts": {
+        "default-tests": {
+          "passed": 878,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 22
+        },
+        "all-features-tests": {
+          "passed": 983,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 23
+        }
+      },
+      "mpfr_test_cleanup_main_admission": "docs/evidence/2026-10-14-sampled-sphere-hull/mpfr-test-cleanup-main-admission-v1/admission.json",
+      "mpfr_test_cleanup_main_source_mapping": "docs/evidence/2026-10-14-sampled-sphere-hull/mpfr-test-cleanup-main-admission-v1/source-hashes-after.json.gz"
+    },
+    "structural_fuzz_inventory": {
+      "status": "shared-22-form-inventory-and-monotone-cache-checks-admitted",
+      "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/structural-fuzz-inventory-scope-v5.json",
+      "result": "docs/evidence/2026-10-14-sampled-sphere-hull/structural-fuzz-inventory-v5/result.json",
+      "admission": "docs/evidence/2026-10-14-sampled-sphere-hull/structural-fuzz-inventory-admission-v5/admission.json",
+      "source_mapping": "docs/evidence/2026-10-14-sampled-sphere-hull/structural-fuzz-inventory-admission-v5/source-hashes-after.json.gz",
+      "test_only_change": true,
+      "admitted": true,
+      "representatives": 22,
+      "fixed_replayed_seeds": 43,
+      "retained_stride_schedule_ordered_pairs": 484,
+      "bounded_mutation_runs": 256,
+      "test_counts": {
+        "default-tests": 4,
+        "all-features-tests": 6
+      },
+      "limits": [
+        "A bounded inventory regression and smoke campaign, not exhaustive topology exploration, a directed lexicase campaign, or P38 completion.",
+        "Shared fixture recipes and production arithmetic remain unchanged. No runtime performance claim or benchmark gate applies to this test-only change.",
+        "Default/all-feature integration checks use ordinary release builds; the fuzz executable requests AddressSanitizer, leak detection, coverage instrumentation, and instrumented standard-library rebuilding. Actual build and execution evidence determines completion.",
+        "The corpus is finite. Interval overlap checks can reject inconsistent arithmetic but do not prove symbolic equality for every generated expression.",
+        "No full workspace CI, platform coverage, or push-readiness claim."
+      ],
+      "directed_lexicase_campaign_complete": false,
+      "plan_complete": false
+    },
+    "scalar_adversarial_selection": {
+      "status": "legacy-timing-promotion-described-accurately-standalone-scalar-search-admitted",
+      "review": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-review-v1.json",
+      "qualification": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-wording-v1/result.json",
+      "admission": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-wording-admission-v1/admission.json",
+      "source_mapping": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-wording-admission-v1/source-hashes-after.json.gz",
+      "description_correction_admitted": true,
+      "independent_representation_populations_implemented": true,
+      "P38_complete": false,
+      "plan_complete": false,
+      "legacy_selection_algorithm_changed": false,
+      "standalone_directed_scalar_search": "docs/evidence/2026-10-14-directed-scalar-search/main-admission-v3/admission.json"
+    },
+    "directed_scalar_search": {
+      "status": "finite-scalar-lexicase-and-native-enclosure-tooling-admitted",
+      "admitted": true,
+      "development_tooling_only": true,
+      "contract": "docs/evidence/2026-10-14-directed-scalar-search/contract-v4.json",
+      "comparison_contract": "docs/evidence/2026-10-14-directed-scalar-search/competitive-contract-v2.json",
+      "search_qualification": "docs/evidence/2026-10-14-directed-scalar-search/qualification-v4/result.json",
+      "search_closure": "docs/evidence/2026-10-14-directed-scalar-search/closure-v4.json",
+      "comparison_qualification": "docs/evidence/2026-10-14-directed-scalar-search/competitive-qualification-v2/result.json",
+      "comparison_closure": "docs/evidence/2026-10-14-directed-scalar-search/competitive-closure-v2.json",
+      "admission": "docs/evidence/2026-10-14-directed-scalar-search/main-admission-v3/admission.json",
+      "source_mapping": "docs/evidence/2026-10-14-directed-scalar-search/main-admission-v3/source-hashes-after.json.gz",
+      "representations": 22,
+      "generations": 3,
+      "campaign_probes": 528,
+      "selection_events": 264,
+      "mutated_descendants": 247,
+      "retained_selected_inputs": 59,
+      "native_comparison_samples": 1298,
+      "samples_per_backend_per_input": 11,
+      "maximum_absolute_enclosure_width": "1/115792089237316195423570985008687907853269984665640564039457584007913129639936",
+      "python_tests": 33,
+      "search_rust_tests_each_configuration": 7,
+      "adapter_rust_tests_each_configuration": 3,
+      "sanitizers": "ASan/LSan on Rust targets and rebuilt standard library; native GMP/MPFR not claimed instrumented",
+      "prior_failed_trials": [
+        "docs/evidence/2026-10-14-directed-scalar-search/closure-v1.json",
+        "docs/evidence/2026-10-14-directed-scalar-search/closure-v2.json",
+        "docs/evidence/2026-10-14-directed-scalar-search/closure-v3.json"
+      ],
+      "numeric_and_selection_evidence_replayed": true,
+      "finite_scalar_campaign_complete": true,
+      "finite_scalar_interval_comparison_complete": true,
+      "limits": [
+        "Finite nonzero scalar recipes from 22 private representation classes; not exhaustive inputs or whole-stack directed fuzzing.",
+        "Each input runs in a fresh process. Individual query samples rebuild Real objects, but shared constants can already be warm; this is not an all-caches-cold claim.",
+        "Independent interval overlap rejects contradictions but does not prove arbitrary symbolic identities.",
+        "The Rust targets and rebuilt standard library used ASan/LSan; native GMP/MPFR code is not claimed instrumented.",
+        "This compares interval enclosure operations on selected scalar inputs; it does not compare structural certificate APIs or establish whole-library rankings.",
+        "No warm-result performance claim, cross-machine generalization or matched cross-library allocation claim.",
+        "Native GMP/MPFR code is not claimed ASan-instrumented.",
+        "Other stack layers, exhaustive coverage, formal obligations and complete P38 remain open."
+      ],
+      "remaining": [
+        "Directed representation populations in the remaining stack layers",
+        "Exhaustive coverage and additional compositions, degeneracies and policies",
+        "Remaining formal verification, production runtime and native geometry admission obligations"
+      ],
+      "P38_complete": false,
+      "plan_complete": false,
+      "formatting_followup": {
+        "file": "crates/hyperreal/fuzz/directed/lexicase.py",
+        "change": "One extra EOF blank line removed",
+        "qualified_ast_and_bytecode_identical": true,
+        "frozen_campaign_sources_preserved": true
+      }
+    },
+    "empty_result_composition": {
+      "updated_on": "2026-10-15",
+      "status": "Implemented with the recorded local and binding qualification; broader plan requirements remain open.",
+      "properties": [
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P25",
+        "P35",
+        "P37"
+      ],
+      "owners": [
+        "CSGRS modeling Boolean composition",
+        "Hypermesh batch-to-mesh conversion"
+      ],
+      "domain": "Canonical empty geometry and the existing nonempty closed-PWN domain, under STRICT or APPROXIMATE_512. Noncanonical emptiness, malformed topology and undecided validation remain typed failures.",
+      "implementation": "Reduce one-empty operations through the kernel truth program, retain original operand indices in diagnostics, and convert empty batch rows to zero positions and zero triangles. Nonempty rows retain their shared arena.",
+      "baseline": "Eight new acceptance tests failed on the target revision; the initial candidate passed all eight plus 13 existing tests. The final suite adds hole/disconnected and post-warming mutation cases, for ten acceptance tests.",
+      "native_test_totals": {
+        "mesh-output-tests": {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 177
+        },
+        "mesh-boolean-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "csgrs-all-feature-tests": {
+          "passed": 167,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-tests": {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "binding_consumers": [
+        "C f64 ABI",
+        "C++ F64 wrapper",
+        "Python TriangleMeshF64 wrapper",
+        "Generated WASM JavaScript runtime and TypeScript declarations"
+      ],
+      "checks": [
+        "Final workspace formatting",
+        "Strict minimal-feature Clippy",
+        "Strict all-feature/all-target Clippy for csgrs, hypermesh and csgrs-ffi",
+        "Strict all-feature rustdoc for csgrs, hypermesh and csgrs-ffi"
+      ],
+      "evidence": "docs/evidence/2026-10-14-empty-composition/closure-v1.json",
+      "remaining": [
+        "Primary constructors and convenience operations still contain silent-empty fallbacks; typed failures through all adapters and bindings require further work.",
+        "These receipts describe operation-local decisions. End-to-end construction provenance, including export/import, remains open.",
+        "Ordinary strict-mode completion, including the original drilled-body case, remains open; no policies or fixtures were weakened here.",
+        "Internal total-work, heap-byte and cancellation contracts are not established by these externally contained checks.",
+        "The existing ignored README PNG regeneration test was not run. No new sanitizer or directed-fuzz campaign is claimed for this change.",
+        "This is not the full repository pre-push matrix or a clean external package/release validation; no push was performed.",
+        "The original 35 pending native changes remain byte-identical. Their earlier DRC runtime failures, including the closed scalar-integration trial, were neither resolved nor rerun here."
+      ],
+      "plan_complete": false
+    },
+    "primitive_failure_visibility": {
+      "updated_on": "2026-10-15",
+      "status": "Native primitive failure migration implemented and locally qualified in the recorded scope.",
+      "properties": [
+        "P4",
+        "P6",
+        "P8",
+        "P18",
+        "P20",
+        "P25",
+        "P30",
+        "P35",
+        "P37"
+      ],
+      "owners": [
+        "CSGRS primitive constructors and successful-result cache",
+        "shared modeling predicate diagnostics",
+        "scalar adapters and affected C/C++/Python/WASM error boundaries"
+      ],
+      "domain": "Strict cube, cuboid, sphere, cylinder, ellipsoid, frustum, frustum_between, octahedron, icosahedron, arrow and ring torus construction; nonnegative dimensions/radii, directed signed heights, documented resolution minima and representable buffer capacities.",
+      "migration": "Primary constructors now return Result<TriangleMesh, ValidationError>. Negative inputs, invalid resolutions, undecided predicates, unsupported representations, and capacity/reservation failures no longer masquerade as empty geometry. Proven degeneracies remain canonical empty after validation. Only successes are cached. Rust consumers must handle/propagate Result; C statuses are additive, C++/Python preserve status, and WASM constructor exceptions expose code.",
+      "baseline": "All four initial adapter acceptance tests failed on 22ee9939e plus the original in-scope native changes. Candidate v1 passed 66 focused tests but failed strict Clippy on missing const. Candidate v2 fixed that lint and passed 67 focused tests plus strict minimal all-target Clippy. Native v1 later passed the runtime/downstream checks but failed fuzz Clippy on an existing nested conditional; that condition was collapsed without weakening validation. Binding v1 passed all native consumers and reproduced plain-string nonfinite constructor errors in actual WASM. Native v2 and WASM binding v2 qualify the corrections; all failed phases and executables are retained.",
+      "test_totals": {
+        "all-feature-tests": {
+          "passed": 180,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-tests": {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "downstream-release-model": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 7
+        },
+        "doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "binding_consumers": [
+        "Actual C f64 ABI",
+        "C++ F64 RAII wrapper",
+        "Python ctypes F64 wrapper",
+        "Generated WASM Node.js runtime and TypeScript declarations"
+      ],
+      "evidence": "docs/evidence/2026-10-15-primitive-failures/qualification-correction-v1.json",
+      "remaining": [
+        "Other modeling conveniences and curve/sampled-field constructors still contain silent-empty or origin fallbacks; this patch does not complete visible-failure migration.",
+        "Existing non-constructor adapters still flatten some native error categories. The Go wrapper retains only error text and was not qualified (no Go toolchain found). The separate native JS wrapper requires an external loader; generated WASM was the exercised JavaScript distribution.",
+        "Construction uses strict decisions but does not attach end-to-end provenance or certify fidelity to analytic surfaces; export/import provenance remains open.",
+        "Checked platform capacities and fallible primary-buffer reservations are not total-work, expression-growth, heap-byte or cancellation budgets. Secondary allocations and allocator/process termination remain outside the contract; no complete internal resource bound is claimed.",
+        "The original drilled-body strict-mode frontier and all full-scale geometry remain unchanged. Ordinary strict-mode completion still requires work.",
+        "One existing README PNG regeneration test remains ignored. No sanitizer, live fuzz campaign, performance comparison, full repository pre-push matrix, or clean external release installation is claimed for this migration. No push was performed.",
+        "The original 35 pending native files remain byte-identical. Earlier DRC runtime failures and scalar-integration limitations remain open and were not rerun here."
+      ],
+      "plan_complete": false,
+      "qualification_correction": {
+        "finding": "The original downstream test command returned success with zero tests because the target requires both drc and interchange. The initial commentary credited it too early. Those two original downstream invocations establish no runtime coverage.",
+        "corrected_commands": "docs/evidence/2026-10-15-primitive-failures/downstream-v1.json",
+        "result": "The selected actual package-model test passed with both required features enabled; strict Clippy also passed for that target and feature combination.",
+        "retained_original": "docs/evidence/2026-10-15-primitive-failures/closure-v1.json",
+        "retained_original_sha256": "79fa7c2db23d9edefb4040b9d72ca1a784ee8109e910bec708bfb5a09926e317"
+      }
+    },
+    "transform_failure_visibility": {
+      "updated_on": "2026-10-15",
+      "status": "Transform failure migration and projective finiteness repair implemented and locally qualified in the recorded scope.",
+      "properties": [
+        "P4",
+        "P6",
+        "P8",
+        "P18",
+        "P20",
+        "P25",
+        "P30",
+        "P35",
+        "P37"
+      ],
+      "owners": [
+        "Hypermesh indexed projective transformation",
+        "CSGRS modeling transforms",
+        "scalar and language adapters",
+        "HyperCircuit package-model materialization"
+      ],
+      "domain": "Indexed open or closed meshes, point sets, and canonical empty geometry. Modeling transforms require invertibility and nonzero projective scale of constant sign on each triangle. Distinct finite components may have opposite signs. Numerical certainty is operation-local; topology and inherited provenance are separate.",
+      "migration": "solid::transform/rotate/scale/mirror, SolidExt::transformed/translated, and curve::translated_solid now return Result. Existing try_ entry points retain typed native Mesh errors. C UNBOUNDED=9 is additive; C++/Python retain status and WASM GeometryError.code distinguishes unbounded/invalid/undecided failures. Failed HyperCircuit placement produces a typed omission without publishing a model or resolution evidence.",
+      "semantic_evidence": [
+        "Singular transforms and invalid planes cannot become successful empty geometry.",
+        "Invalid triangle indices fail even after a previous successful transform; shared kernel checks serve modeling and adapters.",
+        "An exact rational triangle with finite vertices and an edge crossing x=0 rejects the invertible map (x,y,z)->(1/x,y/x,z/x).",
+        "Separate positive/negative-scale components retain independently derived exact coordinates and orientation.",
+        "Exact reflected/scaled/translated/rotated cubes preserve positive signed volume 24, required topology, empty-union composition, and subtraction to canonical empty.",
+        "Strict/approximate/strict failure sequences retain their category, and subsequent valid operations recover."
+      ],
+      "baseline_and_failed_trials": "All six baseline tests failed on 8850192f2 plus the original in-scope native changes. Candidate v1 failed compilation during call-site migration; candidate v2 passed 75 focused tests and strict minimal all-target Clippy. Native v1 exposed an unmigrated curve alias and an unused WASM import; native v2 qualifies their correction. All failed trials, sources, patches and observed binaries are retained.",
+      "test_totals": {
+        "native-v2/fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/all-feature-tests": {
+          "passed": 191,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/hypermesh-tests": {
+          "passed": 235,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/ffi-tests": {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/ffi-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/wasm": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "downstream-v1/downstream-release-models": {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 7
+        },
+        "downstream-v1/downstream-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "bindings": "Actual C f64, C++ and Python consumers execute empty composition, primitive failures and transform failures; actual generated Node WASM and strict TypeScript checks pass. Opaque-real FFI tests exercise undecided transform status without publishing a handle.",
+      "resources": "Index validation adds O(triangles) traversal; non-affine transforms retain O(vertices) projective signs and scan triangles for sign changes. No internal total-work, heap-byte or cancellation bound is claimed. Test commands use 1800-second external wall containment. No latency or allocation improvement is claimed.",
+      "limitations": [
+        "Eight existing ignored tests remain unexecuted: one CSGRS rendering test and seven Hypermesh external-fixture/manual scale or memory tests.",
+        "This is not the complete workflow matrix, sanitizer admission, clean external release/MSRV validation, or an optimization comparison.",
+        "Go and the separate native JS loader remain unqualified.",
+        "Bounds, positioning, distributions, projection/slicing and other legacy convenience failures remain open, as do end-to-end provenance, resource limits, strict workflow completion and prior scalar/native admission gaps."
+      ],
+      "evidence": "docs/evidence/2026-10-15-transform-failures/closure-v1.json",
+      "implementation_commit": "fc99c3fb6",
+      "plan_complete": false
+    },
+    "bounds_failure_visibility": {
+      "updated_on": "2026-10-15",
+      "status": "Optional bounds and positioning/TPMS failure migration implemented and locally qualified in the recorded scope.",
+      "properties": [
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P18",
+        "P20",
+        "P25",
+        "P30",
+        "P35",
+        "P37"
+      ],
+      "owners": [
+        "Hypermesh indexed bounds",
+        "CSGRS optional bounds and positioning",
+        "native curve bounds bridge",
+        "sampled TPMS extraction",
+        "scalar and language adapters",
+        "HyperCircuit thermal-clearance bounds"
+      ],
+      "domain": "Valid indexed point sets and open or closed meshes, canonical empty meshes, and native curve regions. Absence differs from nonempty zero-size bounds. Bounds queries do not certify closed-solid topology. TPMS numerical certainty applies to sampled geometry, not the continuous field; operation-local receipts do not certify inherited construction provenance.",
+      "migration": "Modeling and scalar-adapter bounds return Result<Option<Aabb>> or optional context receipts. Center/float and all six TPMS constructors return Result. C NO_BOUNDS=10 is additive and leaves output untouched; C++ optional, Python None, Go nil pointer with nil error, WASM undefined or isEmpty/optional endpoints expose absence. Go StatusError retains native category. HyperCircuit uses shared native optional bounds under its existing policy and retains typed curve failures. Resolution below two is deliberately rejected instead of clamped; period must be positive and wall thickness nonnegative.",
+      "semantic_evidence": [
+        "Origin point bounds are Some while canonical empty has None; exact centered/floated cuboids retain coordinate extrema, signed volume 48, required topology and subsequent Boolean composition.",
+        "Native indexed bounds reject malformed or subsequently mutated triangle indices before reusing position facts.",
+        "Strict/approximate/strict bounds and positioning retain policy admissibility and certainty; undecided failures preserve native payloads through adapters and opaque-real C status.",
+        "Empty curves retain absent bounds and completed empty Hilbert output after parameter validation.",
+        "All three TPMS sheet and solid families consume empty bounds; zero-thickness solids remain empty only after validating parameters. Invalid/unknown periods and thicknesses and overflowing resolution remain typed failures.",
+        "The shared sampled-field path preserves SurfaceNetsError and recovers on a subsequent constant field. Existing 10-resolution TPMS solid topology fixtures and other source fixture resolutions are unchanged."
+      ],
+      "baseline_and_failed_trials": "All eight baseline tests failed at 542871237 plus the original in-scope native changes. Candidate v1 failed compilation during migration. Candidate v2 passed 133 focused tests but failed strict Clippy on a WASM getter annotation. Native v1 passed its commands but exposed a minimal-feature unused-import warning and predates the final downstream/WASM call-site corrections; it is retained as historical evidence. Final accepted phases are recorded separately.",
+      "test_totals": {
+        "native-v2/fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/all-feature-tests": {
+          "passed": 202,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/hypermesh-tests": {
+          "passed": 235,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/ffi-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/cc-version": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/c++-version": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/python3-version": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/node-version": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/ffi-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/bounds_failures-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/bounds_failures-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/bounds_failures-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/bounds_failures-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/bounds_failures-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/go-version": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/go-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/go-run": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/wasm": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "downstream-v1/downstream-materialize-unit": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 18
+        },
+        "downstream-v1/downstream-materialize": {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "downstream-v1/downstream-release-models": {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 7
+        },
+        "downstream-v1/downstream-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "bindings": "Actual f64 C, C++, Python, and compiled cgo consumers exercise absence, positioning, error/recovery and composition. Opaque-real FFI tests verify absent/undecided output records remain untouched and failures publish no geometry handle. Generated Node WASM and strict generated TypeScript checks pass. Go toolchain metadata and SHA-256 are retained in go-toolchain.json.",
+      "resources": "Native bounds add an O(triangles) index-validation traversal before position-fact reuse. Primary sample buffers use checked capacity/reservation; secondary allocations, native extraction and scalar expression work remain unbounded internally. No total-work, heap-byte or cancellation contract is claimed. Commands use an external 1800-second wall limit. No performance improvement is claimed.",
+      "limitations": [
+        "Eight existing ignored tests remain unexecuted: one CSGRS rendering case and seven Hypermesh external-fixture/manual scale or memory cases.",
+        "This is not the complete workflow matrix, sanitizer admission, clean external release/MSRV validation, or a performance comparison.",
+        "The separate native JavaScript loader is supplied by consumers and remains unqualified. Go qualification uses the local cgo wrapper and actual native library, not a published Go module.",
+        "HyperCircuit thermal-spoke placement formulas are preserved. Their full geometric fidelity is not established by the bounds migration or the existing report-oriented integration fixtures; independent placement/set-equality coverage remains follow-up work.",
+        "Legacy SDF conveniences, distribution, projection/slicing and other silent fallback migrations remain open, together with end-to-end provenance, internal resource limits, ordinary strict workflow completion and prior scalar/native admission gaps."
+      ],
+      "evidence": "docs/evidence/2026-10-15-bounds-failures/closure-v1.json",
+      "implementation_commit": "6095f177ec586f1bf7091586460f9e5b5d118ae0",
+      "plan_complete": false
+    },
+    "sdf_failure_visibility": {
+      "updated_on": "2026-10-15",
+      "status": "Typed SDF scalar evaluation and modeling failures implemented and locally qualified; standalone-grid extraction supplied by Hypermesh to the modeling sampler.",
+      "properties": [
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P18",
+        "P20",
+        "P25",
+        "P35",
+        "P37"
+      ],
+      "owners": [
+        "Hypersdf strict scalar/domain/branch evaluation",
+        "CSGRS shared sampled-field modeling and diagnostics",
+        "Hypermesh Surface Nets face ownership"
+      ],
+      "domain": "Real callbacks and retained SdfExpr values over rectangular sample grids, preserving valid formulas and fixture resolutions. The output is the sampled Surface Nets level-surface proposal; numerical certainty does not establish closed topology or continuous-field fidelity. Strict construction branches and selected-policy extraction have separate roles.",
+      "migration": "solid::sdf, sdf_with_diagnostics, sdf_expr and sdf_expr_with_diagnostics now return Result and delegate to the shared context sampler. Expression failures retain sample index and SdfEvaluationError including native scalar source. Added sdf_expr_with_diagnostics_and_context. Resolution below two now fails instead of clamping; diagnostics fail when requested signs/extrema cannot be decided. The modeling sampler uses the new shared Hypermesh surface_nets_standalone entry point, including final-layer faces whenever all four incident cells are present. The existing native surface_nets entry point retains its documented chunk ownership convention. This explicitly migrates modeling output rather than claiming unchanged artifacts. Hypersdf classification and preview keep their existing report contracts; the legacy primitive scalar_value Option explicitly discards the new fallible method's errors.",
+      "semantic_evidence": [
+        "Eight reproduced SDF failures distinguish invalid domains, undecided scalar branches/samples, capacity overflow and invalid resolution from successful empty geometry.",
+        "Arithmetic failure after two successful samples preserves grid index [2,0,0] and the native SqrtNegative cause through Error::source. Subsequent constant-field sampling, union from empty and subtraction to empty succeed.",
+        "Independently derived scalar values cover all eight native primitives, expression composition, boundaries, invalid parameters and unresolved domains/branches.",
+        "Exact rational plane positions, sample counts and extrema are checked independently of wrapper agreement. Native planes crossing first/last layers on all three axes have independently known unit oriented area and exact transverse coordinates.",
+        "Strict/approximate/strict sequences retain local certainty: approximate sample evidence does not authorize approximate expression branches or enter strict preview sign buckets. Selecting an approximate policy for a known constant still yields Certified.",
+        "Existing sampled spheres, extreme exact scalar magnitudes, closed-mesh validation, downstream Boolean use and all three TPMS solid fixtures retain their original resolutions and pass."
+      ],
+      "trials": "baseline-v1 preparation failed before tests; baseline-v2 failed all eight regressions at a8ca70322 plus original native changes. Candidate v1/v2 compile failures are retained. Candidate v3 exposed missing final-layer plane faces in the modeling API despite successful error tests. Native chunk ownership was subsequently identified as deliberate and retained; the modeling layer now selects standalone extraction. Candidate v4 passed focused runtime checks but strict Clippy rejected test loop style. Native v1 stopped on pre-existing nested fuzz formatting drift; formatting-only fixes were applied. Native v2 passed runtime and root lint checks but stopped on a pre-existing nested fuzz loop lint. Native v3 fixes that lint and qualifies the final source, including the explicit native chunk/standalone split.",
+      "test_totals": {
+        "fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "all-feature-tests": {
+          "passed": 213,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "sdf-only-tests": {
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypermesh-tests": {
+          "passed": 236,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-all-feature-tests": {
+          "passed": 110,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-default-tests": {
+          "passed": 109,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "sdf-only-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "resources": "Checked primary sample, coordinate and diagnostic-preview reservations report capacity/allocation failures. Scalar expression work, native extraction and secondary preview allocations still lack internal total-work, heap-byte and cancellation limits. Each validation command uses external 1800-second wall containment. No performance improvement or bounded execution is claimed.",
+      "limitations": [
+        "Eight existing ignored cases remain: one root rendering case and seven Hypermesh external-fixture/manual scale or memory tests. Counts across feature configurations overlap.",
+        "The lossy Hypersdf preview backend retains its chunk boundary convention and may omit final-layer faces or withhold unknown-sign samples accepted by approximate meshing. It remains PreviewOnly and never replaces the authoritative native mesh.",
+        "Examples and benchmark consumers are compiled with strict all-target Clippy; no benchmark timing or generated rendering claim is made. Fuzz targets are compiled and linted, not fuzzed for a duration.",
+        "SDF Rust APIs are not exposed by the current C/Go/Python/WASM bindings. FFI unit tests and all-target compilation pass, but live binding consumers were not rerun for this Rust/API and native-grid change.",
+        "The complete workflow matrix, sanitizers, clean external package/release/MSRV validation and performance comparison remain open.",
+        "Separate metaball fallbacks and approximation policy, other modeling failure migrations, end-to-end provenance, resource bounds, ordinary strict-workflow completion and prior scalar/native admission gaps remain open."
+      ],
+      "evidence": "docs/evidence/2026-10-15-sdf-failures/closure-v1.json",
+      "implementation_commit": "0a1ecb0aca4d71ee337860e239280af769e76912",
+      "plan_complete": false
+    },
+    "metaball_failure_visibility": {
+      "updated_on": "2026-10-15",
+      "status": "Native exact inverse-square fields and fallible 3D metaball modeling implemented and locally qualified, with an explicit normalized-field output migration.",
+      "properties": [
+        "P1",
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P37"
+      ],
+      "owners": [
+        "Hypersdf inverse-square evaluation and conservative field bounds",
+        "CSGRS modeling composition and shared sampled-field diagnostics",
+        "Hypermesh standalone Surface Nets extraction"
+      ],
+      "domain": "Retained Real centers and strictly positive radii, positive iso value, nonnegative padding and requested sample-grid dimensions of at least two. All parameters are validated before empty-input success. Field construction and conservative bounds use strict predicates; extraction uses the selected policy and retains its local certainty. Numerical certainty applies to the sampled proposal, with topology and continuous-field fidelity separate.",
+      "migration": "solid::metaballs and metaballs_with_diagnostics return Result. Added metaballs_with_context and metaballs_with_diagnostics_and_context. MetaBall is the native Hypersdf Metaball carrier; influence returns an exact Result without a distant cutoff or finite pole sentinel. MetaballField borrows validated sources and evaluates F=(iso-I)/(iso+I), I=sum(r^2/distance^2), continuously extended to -1 at centers. The exact zero set is preserved, but interpolation and serialized mesh coordinates intentionally change. Grid locations retain the conservative 101/100 margin and one-cell exterior border. Diagnostics now describe normalized F, negative inside. Hidden f32 extraction and the duplicated 3D sampler were removed in favor of the shared native sampler. This is a geometry/API migration, not a performance-only change.",
+      "semantic_evidence": [
+        "Ten baseline regressions reproduced invalid radius/padding, unresolved radius, empty shortcuts hiding invalid parameters, resolution clamping, capacity exhaustion, distant influence truncation, a finite pole sentinel and inexact sampled vertices on 5d49530ee plus the unchanged original native work.",
+        "Independent exact influence and field values cover near/far points, r=2 at squared distance 9, poles, iso scaling and coincident sources. All radii are validated before any center shortcut; native scalar causes survive Error::source.",
+        "A sampled unit source at requested resolution 3 has independently derived coordinate magnitudes 20201/60600 and volume (2*20201/60600)^3. Its closed topology, exact diagnostics and empty-union/subtraction-to-empty composition pass.",
+        "Strict/approximate/strict queries preserve unresolved construction as typed Undecided. Selecting approximate meshing for exact decided samples still produces Certified. Successful construction after an error remains possible.",
+        "The original two-source 20^3 benchmark fixture and all three sources of the original 8^3 README fixture complete under strict policy, with closed topology, positive exact signed volume and bounds strictly inside independently justified conservative bounds. The pre-existing two-source 6^3 diagnostic fixture also passes unchanged in geometry input and resolution.",
+        "The metaballs-only feature compiles, passes its failure/diagnostic tests and strict all-target Clippy without enabling the public sdf feature. Shared SDF/TPMS, native Hypermesh, Hypersdf and FFI regression checks pass."
+      ],
+      "trials": "Baseline v1 failed all ten tests. Its preparatory protocol described (iso-I)/(1+I); the final v2 protocol records the scale-invariant denominator iso+I. The unit-iso oracle is unchanged. Candidate v1 stopped before compilation because dep:hypersdf suppressed the implicit feature used by sdf; the manifest now retains hypersdf. Candidate v2 passed focused tests, five native field tests and strict all-target Clippy. Native v1 adds both full-size published workloads and final documentation, and all 19 commands pass. Every failed trial and source snapshot is retained.",
+      "test_totals": {
+        "fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "metaballs-only-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "metaballs-only-tests": {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "all-feature-tests": {
+          "passed": 225,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "sdf-only-tests": {
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypermesh-tests": {
+          "passed": 236,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-all-feature-tests": {
+          "passed": 115,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-default-tests": {
+          "passed": 114,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "sdf-only-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "resources": "The shared sampler checks grid capacities and primary reservations, exposing overflow/allocation failure instead of an empty result. Each validation command has external 1800-second wall containment. Scalar expression growth, coefficient growth, native extraction allocations, total work, heap bytes and cancellation lack internal bounds; no bounded-execution or performance improvement claim is made. Peak memory and allocation counters were not measured.",
+      "limitations": [
+        "The separate 2D curve::metaballs field and contour implementation still has its prior cutoff, sentinel and failure behavior. Its native owning-layer migration remains open.",
+        "Eight existing cases remain ignored: one root rendering case and seven Hypermesh external-fixture/manual scale or memory tests. Feature-configuration test counts overlap.",
+        "Examples, benchmark and fuzz consumers compile under strict all-target or fuzz Clippy. The two full-size construction fixtures run as tests, but generated images, export artifacts, benchmark timings and duration-based fuzzing were not qualified here.",
+        "Metaball constructors are not exposed by the current C/Go/Python/WASM bindings. FFI unit tests and all-target compilation pass; live binding consumers were not rerun for this Rust-only API migration.",
+        "The full workflow matrix, sanitizers, clean external package/release/MSRV validation, end-to-end provenance, continuous-field fidelity bounds and performance comparisons remain open.",
+        "The original 35 pending native files remain unchanged and unadmitted. Earlier scalar/native integration gaps and the complete properties plan remain open."
+      ],
+      "evidence": "docs/evidence/2026-10-15-metaball-failures/closure-v1.json",
+      "implementation_commit": "ab91bd45621310998c07288ee497d5dab9f4be4f",
+      "plan_complete": false
+    },
+    "curve_metaball_composition": {
+      "updated_on": "2026-10-15",
+      "status": "Planar exact-field sampling, native contour extraction and exact linear-profile composition implemented and locally qualified, with explicit API/geometry migrations.",
+      "properties": [
+        "P1",
+        "P3",
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P13",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P28",
+        "P29",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "owners": [
+        "Hypersdf exact fields and conservative bounds",
+        "Hypercurve marching-squares proposals, arrangement and retained line-image authority",
+        "Hyperlimit independent coordinate witnesses",
+        "Hypertri triangulation and conservative filter composition",
+        "CSGRS sampling/modeling and typed adapter/binding failures"
+      ],
+      "domain": "Positive-radius planar inverse-square sources, positive iso, nonnegative padding and grid dimensions at least two. Parameters are validated before empty success. Native sampled chords require exterior boundary samples and a supported arrangement. Exact certified line profiles retain material/hole ownership and native coordinates through triangulation and extrusion, including authored line-image Beziers, rational holes and large exact translations.",
+      "migration": "curve::metaballs returns Result and adds metaballs_with_context. Sampling shares native F=(iso-I)/(iso+I), with -1 at centers, replacing cutoff/sentinel/empty-on-error behavior. The original 2D core grid and center-sum diagonal rule remain; normalized interpolation intentionally changes vertices and serialization. Exact line-profile modeling replaces its former f64 projection, also changing formerly quantized artifacts. Numerical certainty concerns the sampled proposal or native profile, with topology and source fidelity separate. This is not a performance-only change.",
+      "semantic_evidence": [
+        "Nine planar baseline failures reproduced invalid/undecided arguments, hidden invalid empty cases, grid limits, incorrect sampled diamond area and a lost ring hole.",
+        "Independent normalized diamond area 2*(20201/20200)^2; grid diamond/zero-vertex/ring/disconnected/diagonal cases; closed extrusion with exact signed volume; reusable empty and subtraction-to-empty compositions.",
+        "Independent rational material/hole area 23/3 and height-two volume 46/3, including translation by 10^400, native coordinate membership and closed manifold validation.",
+        "Original 24x24 README and 48x48 benchmark inputs remain full-size strict successes; the unchanged involute/cycloidal gear catalog passes after native predicate and filter fixes.",
+        "Point equality can use one certified unequal coordinate despite uncertainty elsewhere; true equality still needs every coordinate. Lexicographic ordering is unchanged. Unknown AABB rejection filters defer to final triangle predicates without an approximate filter decision.",
+        "Typed native adapter errors, strict/approximate/strict evidence isolation, C/C++/Python/Go integer width 2^53+1 and failure recovery, plus WASM large-translation/extrusion recovery and typed zero/non-finite input failures."
+      ],
+      "test_totals": {
+        "fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "all-feature-tests": {
+          "passed": 238,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypercurve-tests": {
+          "passed": 2493,
+          "failed": 0,
+          "ignored": 33,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hyperlimit-tests": {
+          "passed": 365,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypertri-tests": {
+          "passed": 188,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypermesh-tests": {
+          "passed": 236,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-tests": {
+          "passed": 115,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "planar-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "planar-tests": {
+          "passed": 16,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "metaballs-only-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "metaballs-only-tests": {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-default-grid": {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "sdf-only-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "doctests": {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "validation": "All 22 native commands passed. The final WASM ingress edit passed host all-target/all-feature Clippy and WASM Clippy. Binding v1 passed 36/37 commands; every WASM semantic assertion passed but duplicate test ownership caused a cleanup failure before TypeScript. Binding v2 changed only that JS bookkeeping, reused identical generated module bytes, and passed all five commands including Node cleanup and TypeScript. Existing ignored cases total 41 across the principal native suites; alternate-feature counts overlap.",
+      "resources": "Serial commands, two Cargo jobs, offline resolution, external 1800-second wall and 8-GiB per-process address-space containment. Node/WASM and final TypeScript omit RLIMIT_AS for V8 virtual reservations while retaining wall containment. GNU time records command timing/maximum resident memory, including compilation. Primary buffers are checked; total work, scalar depth/coefficient growth, secondary allocations, heap-byte bounds and cancellation remain unbounded or unmeasured. No matched benchmark, allocation-efficiency or speedup claim.",
+      "limitations": [
+        "Other profile representations retain the existing finite sampled path; complete fidelity and end-to-end provenance remain open. Finite display receipts do not certify topology after quantization.",
+        "The full workflow/pre-push matrix, sanitizers, directed campaigns, external package/release/MSRV validation, image/export regeneration and continuous-field fidelity bounds were not completed here. No push occurred.",
+        "Validation includes the original 35 pending native files, unchanged and still awaiting separate admission. It is not clean-checkout or published-package evidence for this partial commit set.",
+        "The original scalar/native integration gaps and the full properties plan remain open. The earlier 3D record's open 2D migration item is superseded only by this local qualification.",
+        "The first seed-copy failure has only the preserved truncated-tool-output summary, not full stderr. The second failure has a complete captured preparation log. All later unfavorable trials and generated artifacts remain."
+      ],
+      "implementation_commits": [
+        "77053db06",
+        "4af09da67"
+      ],
+      "implementation_head": "4af09da67d1c1e2aaa34e351b8cbe3d2b168ad83",
+      "evidence": "docs/evidence/2026-10-15-curve-metaball-failures/closure-v1.json",
+      "plan_complete": false
+    },
+    "curve_constructor_failures": {
+      "updated_on": "2026-10-15",
+      "decision": "kept: restores typed failure and reusable empties. The focused warm-rectangle median increased from 1.277 to 1.549 microseconds; median allocation counts/byte requests match. The correctness migration is not a performance-only optimization.",
+      "status": "Foundational planar constructors and existing context compounds preserve typed failure and reusable canonical empties; locally qualified API migration.",
+      "properties": [
+        "P1",
+        "P3",
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P13",
+        "P17",
+        "P18",
+        "P20",
+        "P25",
+        "P28",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "owners": [
+        "CSGRS modeling parameter validation and composition",
+        "Hypercurve native contour/region validity",
+        "Scalar adapters, Gerber, Hypercircuit and language boundaries"
+      ],
+      "domain": "Nonnegative rectangle/square/right-triangle dimensions; sampled circle/ellipse/ngon require at least three samples including zero area; valid nonempty polygon rings; nonnegative rounded rectangle dimensions/radius with checked sampling capacity and existing clamp. Keyhole, Reuleaux, ring, crescent and circle-cut compounds retain the positive/range restrictions detailed in the evidence README.",
+      "migration": "Basic constructors return Result<CurveRegion2, ValidationError>; context variants and existing compounds preserve GeometryOutcome with ValidationError. Negative, malformed, undecided and capacity failures no longer publish empty success. Every relevant argument is checked before canonical zero-area success. Native causes survive scalar/binding/IO/downstream wrappers. Hypercircuit materialization/handoff diagnostic enums retain PartialEq but lose Eq. Language binding signatures are unchanged.",
+      "semantic_evidence": [
+        "Nine baseline failures reproduced; 14 expanded regressions establish typed categories, cause preservation, recovery, empty union/subtraction/extrusion composition and invalid companions to zero dimensions.",
+        "Independent rectangle area 35/6, triangle area 35/12, sampled circle area 2 and ellipse area 4; exact triangulated area and height-three signed volume, with separate closed manifold checks.",
+        "Strict/approximate/strict sequences distinguish selecting policy from consuming terminal evidence. Cache admits only successful strict proofs, with owned structural keys, cloned values and 64-entry thread-local FIFO; cold/warm, failure, eviction, reset, transformed-output and thread isolation tests pass.",
+        "HyperCircuit rectangle materialization retains cause and consumed certainty; the public keepout handoff records typed construction omission and recovers after corrected geometry. Actual C/C++/Python/Go/WASM consumers exercise invalid constructors, canonical empties and recovery.",
+        "Existing strict shape/gear catalog, README inputs, adversarial fixtures and sampling resolutions are preserved; no ignored test was added."
+      ],
+      "test_totals": {
+        "fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "all-feature-tests": {
+          "passed": 253,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypercircuit-materialize-unit": {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 20
+        },
+        "hypercircuit-drc-unit": {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 26
+        },
+        "hypercircuit-materialize-integration": {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypercircuit-curved-outline": {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hyperdrc-authoring": {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 1558
+        },
+        "hyperdrc-constraints": {
+          "passed": 31,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 1531
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-tests": {
+          "passed": 70,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "doctests": {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "validation": "All 19 native and 39 binding commands passed after the final implementation edit. Includes formatting, all-target/all-feature strict Clippy for four affected crates, CSGRS library/integration, affected Hypercircuit/HyperDRC tests, feature-minimal/curve configurations, fuzz-target Clippy, warning-free docs/doctests and real binding consumers. Failed quota and missing-import trials remain preserved.",
+      "cost_probe": {
+        "kind": "focused cost probe; not a supported-corpus performance or optimization claim",
+        "median_samples": {
+          "rectangle-warm-baseline": {
+            "nanos": 1307331,
+            "allocations": 2048,
+            "requested_bytes": 50176,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 49
+          },
+          "rectangle-warm-candidate": {
+            "nanos": 1585791,
+            "allocations": 2048,
+            "requested_bytes": 50176,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 49
+          },
+          "rectangle-miss-baseline": {
+            "nanos": 31631654,
+            "allocations": 323456,
+            "requested_bytes": 40734912,
+            "retained_byte_delta": 2992,
+            "peak_live_bytes_above_start": 19680
+          },
+          "rectangle-miss-candidate": {
+            "nanos": 30610033,
+            "allocations": 323456,
+            "requested_bytes": 40734912,
+            "retained_byte_delta": 2992,
+            "peak_live_bytes_above_start": 19680
+          },
+          "circle4-warm-baseline": {
+            "nanos": 6830792,
+            "allocations": 94208,
+            "requested_bytes": 4711424,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 744
+          },
+          "circle4-warm-candidate": {
+            "nanos": 6100073,
+            "allocations": 94208,
+            "requested_bytes": 4711424,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 744
+          },
+          "circle4-miss-baseline": {
+            "nanos": 69765873,
+            "allocations": 701500,
+            "requested_bytes": 76657816,
+            "retained_byte_delta": 344,
+            "peak_live_bytes_above_start": 32552
+          },
+          "circle4-miss-candidate": {
+            "nanos": 67616329,
+            "allocations": 701500,
+            "requested_bytes": 76657816,
+            "retained_byte_delta": 344,
+            "peak_live_bytes_above_start": 32552
+          },
+          "polygon-warm-baseline": {
+            "nanos": 1900630,
+            "allocations": 3072,
+            "requested_bytes": 443392,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 384
+          },
+          "polygon-warm-candidate": {
+            "nanos": 1886711,
+            "allocations": 3072,
+            "requested_bytes": 443392,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 384
+          },
+          "polygon-miss-baseline": {
+            "nanos": 31892866,
+            "allocations": 324480,
+            "requested_bytes": 41128128,
+            "retained_byte_delta": 2992,
+            "peak_live_bytes_above_start": 20064
+          },
+          "polygon-miss-candidate": {
+            "nanos": 31846439,
+            "allocations": 324480,
+            "requested_bytes": 41128128,
+            "retained_byte_delta": 2992,
+            "peak_live_bytes_above_start": 20064
+          }
+        },
+        "raw_evidence": "docs/evidence/2026-10-15-curve-constructor-failures/cost-v2",
+        "library_sizes": {
+          "/tmp/csgrs-curve-constructor-failures/baseline-v1/release/deps/libcsgrs.rlib": 4394348,
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/curve-constructor-failures/native-v1/release/deps/libcsgrs.rlib": 4422696
+        },
+        "claim": "Proportionate measurement on three small successful strict workloads, with exact-area assertions and materialized output. Instrumented allocation counts and binary sizes; no supported-corpus speedup or native heap bound claim."
+      },
+      "resources": "Checked primary capacities/reservations. Serial validation with two Cargo jobs, offline resolution, external 1800-second wall and 8-GiB per-process address-space containment; Node/WASM exempts the address-space limit. Primary scalar growth, secondary allocations, total work, retained heap bytes and cancellation remain internally unbounded or unmeasured. Closed compiler targets are immutable; seed copies have separate inodes.",
+      "limitations": [
+        "Other sampled shapes, gear/text constructors and legacy transforms still need typed-failure migration. Operation-local certainty is not end-to-end provenance; sampled polygons do not carry analytic-fidelity bounds.",
+        "This is worktree evidence including the unchanged original 35 pending native files, not a clean-checkout or published-package qualification. Their separate admission and original scalar/native gaps remain open.",
+        "Full CI/pre-push, release/MSRV/external-package validation, directed fuzz/sanitizer campaigns and regenerated image/export artifacts remain open. No push occurred.",
+        "The focused cost probe uses a shared host and instrumented Rust allocation wrapper. It does not count every native allocation or qualify performance across the supported corpus."
+      ],
+      "implementation_commit": "fd83df3075042d3d8210f3604885f50811c80214",
+      "evidence": "docs/evidence/2026-10-15-curve-constructor-failures/closure-v1.json",
+      "plan_complete": false
+    },
+    "rounded_rectangle_fidelity": {
+      "updated_on": "2026-10-15",
+      "decision": "kept: corrects the represented sampled set. Output geometry, vertex counts and derived artifacts intentionally change. This is not an optimization or a matched comparison with the old incorrect result.",
+      "status": "Rounded rectangle retains nonzero straight sides and uses existing clamp facts to omit only coincident endpoints; locally qualified correction.",
+      "properties": [
+        "P1",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "owners": [
+        "CSGRS sampled rounded-rectangle geometry",
+        "Hypercurve contour and topology validation",
+        "Gerber and README rendering boundaries"
+      ],
+      "domain": "Nonnegative width, height, radius. Radius clamps to half the smaller dimension. Validated zero dimensions give canonical empty; zero radius or zero corner-segment count gives the sharp rectangle. Positive n gives n equal-angle chords per quarter-circle and all nonzero tangent straight sides; at most 4*(n+1) points, checked before allocation. No analytic fidelity bound is claimed.",
+      "migration": "No API signature changes. Rounded rectangles and Gerber obrounds can gain up to four tangent vertices. One-chord 4x2 radius-1/2 area changes from incorrect 4 to 15/2; clamped 4x2/2x4 capsules from 4 to 6. Derived exports/previews change. Regenerate artifacts; docs/rounded_rectangle.png is regenerated from the original full fixture and unchanged renderer functions.",
+      "semantic_evidence": [
+        "Three baseline failures, four initial passing regressions and the unchanged 49-test strict shape catalog; ten expanded regressions pass. One preserved test-only failure used structural equality on reordered sums; final tests require strict mathematical equality.",
+        "Independent exact rational, algebraic and symbolic areas; explicit one-chord vertices and full-resolution benchmark/README tangent endpoints. Both clamping directions, full-radius and sharp controls retained.",
+        "Strict translate, subtract interior hole, restore by union, subtract to empty and height-three extrusion: exact area 13/2, signed volume 39/2 and separate closed-manifold check. OBJ round-trip preserves this dyadic fixture exactly. Gerber obround import/export preserves exact tangent boundary points and independent inside/outside classifications.",
+        "Approximate clamp evidence remains qualified across strict/approximate/strict requests. Capacity overflow remains typed before empty shortcuts. Existing constructor/cache/context and adversarial regressions remain enabled."
+      ],
+      "test_totals": {
+        "fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "all-feature-tests": {
+          "passed": 263,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-tests": {
+          "passed": 78,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "benchmark-consumer": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "renderer-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "validation": "All 13 final native commands passed: root and fuzz formatting; all-target strict Clippy for all features, no defaults and curve-only; all-feature library/integration tests; minimal and curve library/affected integration tests; fuzz-target Clippy; warning-free docs and doctests; original rounded-rectangle benchmark consumer; full renderer build. Direct language bindings do not expose rounded_rectangle or Gerber import; no binding implementation/signature changed in this slice.",
+      "render": {
+        "evidence": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/render-v2",
+        "migration": {
+          "path": "docs/rounded_rectangle.png",
+          "previous_sha256": "8680f5aa83974eeb80b4c48f03467545c3c0da9a473dbb94f4df14e0e509707f",
+          "previous_bytes": 29473,
+          "generated_path": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/render-v2/first/rounded_rectangle.png",
+          "generated_sha256": "e1dd521b14d7f8a4a95fbc1492bdf7c34ff14ebf2bfd5717cb577cc09ee9eba2",
+          "generated_bytes": 26480,
+          "repeat": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/render-v2/repeat/rounded_rectangle.png",
+          "claim": "Focused deterministic asset migration; same original fixture, resolution and renderer functions. Full README image corpus remains unqualified."
+        },
+        "claim": "Two byte-identical focused renders, original dimensions and 12 corner segments. All renderer functions and constants unchanged. Full image-corpus regression remains open. First harness build omitted the hypermesh extern; failed trial preserved."
+      },
+      "cost_probe": {
+        "kind": "focused corrected-output measurement, not a speedup or supported-corpus comparison",
+        "median_samples": {
+          "octagon-warm": {
+            "nanos": 2460482,
+            "allocations": 24704,
+            "requested_bytes": 1345792,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 1320
+          },
+          "octagon-miss": {
+            "nanos": 20027168,
+            "allocations": 119923,
+            "requested_bytes": 14846448,
+            "retained_byte_delta": 23328,
+            "peak_live_bytes_above_start": 64776
+          },
+          "benchmark-warm": {
+            "nanos": 70915421,
+            "allocations": 1526912,
+            "requested_bytes": 90350720,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 32680
+          },
+          "benchmark-miss": {
+            "nanos": 1059638285,
+            "allocations": 17393331,
+            "requested_bytes": 964601376,
+            "retained_byte_delta": 12032,
+            "peak_live_bytes_above_start": 422468
+          },
+          "readme-warm": {
+            "nanos": 98051791,
+            "allocations": 1606528,
+            "requested_bytes": 104313984,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 58064
+          },
+          "readme-miss": {
+            "nanos": 1496118936,
+            "allocations": 20668482,
+            "requested_bytes": 1174929848,
+            "retained_byte_delta": 163280,
+            "peak_live_bytes_above_start": 889977
+          }
+        },
+        "operations_per_sample": 128,
+        "fresh_process_samples_per_case": 3,
+        "measured_completed_operations": 2304,
+        "library_sizes": {
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/rounded-rectangle-fidelity/native-v1/release/deps/libcsgrs.rlib": 10020198
+        },
+        "evidence": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/cost-v1",
+        "claim": "All sampled operations completed Certified with materialized boundaries, exact tangent assertions, and independent area for one-chord cases. Allocation wrapper includes instrumentation; ring-cache warm and FIFO-miss states do not imply globally cold scalar caches."
+      },
+      "resources": "Primary point capacity and reservation checked. Serial offline trials, two Cargo jobs, external 1800-second wall and 8-GiB address-space containment per process. Scalar growth, total work, secondary allocations, retained heap-byte budgets and cancellation remain internally unbounded or unmeasured. No native heap bound or broad performance claim.",
+      "limitations": [
+        "Other constructors and legacy wrappers still need typed-failure migration. Operation-local certainty does not establish end-to-end provenance or fidelity to analytic source geometry.",
+        "The 35 original pending native files are byte-identical and uncommitted, pending separate admission. This is worktree qualification, not clean-checkout or published-package validation.",
+        "Full CI/pre-push, MSRV/release/external-package and full image-corpus validation, directed fuzz/sanitizer campaigns, and the rest of the properties plan remain open. No push occurred."
+      ],
+      "implementation_commit": "573bdcb8f9f558f4c64001c1d03f7c0525ae48dd",
+      "evidence": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/closure-v1.json",
+      "plan_complete": false
+    },
+    "sampled_profile_failures": {
+      "updated_on": "2026-10-15",
+      "decision": "kept: typed-failure and certainty migration with an equal-width-arrow completeness correction; not a performance-only change or supported-corpus speedup claim",
+      "status": "Nine sampled-profile APIs and their teardrop-solid/WASM consumers locally qualified; old successful fixtures retained exactly.",
+      "properties": [
+        "P1",
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P28",
+        "P29",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "owners": [
+        "CSGRS profile parameter validation and sampling",
+        "Hypercurve topology",
+        "CSGRS teardrop-solid certainty composition",
+        "WASM diagnostic boundary"
+      ],
+      "domain": "Arrow/trapezoid positive dimensions; star n>=3 and outer>inner>0; teardrop n>=2 and length>width/2>0; egg/squircle positive dimensions and n>=3; heart positive dimensions and n>=8; sector positive radius, n>=1, nonzero signed sweep with magnitude<=360; supershape positive axes, n>=3, nonzero n1 and defined scalar powers. Original sample formulas/resolutions retained. Full-turn sector preserves max(n,3) circle sampling; valid zero-area samples may regularize to canonical empty. No analytic-fidelity bound.",
+      "migration": "arrow, trapezoid, star, teardrop, egg, squircle, pie_slice, heart and supershape now return Result<CurveRegion2, ValidationError>. Their _with_context variants return GeometryOutcome. Adapt callers with typed Result handling. Equal-width positive arrows omit only proven duplicate shoulders and now retain shaft plus triangular head. teardrop_cylinder joins profile/extrusion certainty. WASM star/teardrop/egg/heart retain signatures and throw GeometryError with code instead of publishing failed geometry.",
+      "semantic_evidence": [
+        "Baseline 9 pass/15 fail: fourteen reproduced error/completeness defects and one incorrect zero-area-sector oracle. Candidate-v1 23 pass/1 fail. That oracle was corrected after establishing successful native regularization, without changing production behavior. Candidate-v2 has 30 passing regressions; all failed trials retained.",
+        "Independent rational/algebraic areas for all nine families under strict and approximate policies remain Certified when only proofs are consumed. Empty union/self-subtraction and downstream extrusion compose. Equal-width arrow area is 5/2; one-chord semicircle is Certified empty with downstream union/extrusion checks.",
+        "Arrow with an interior hole has exact area 9/4 and volume 9 at height 4; sampled teardrop also has volume 9. Independent signed-volume computation and a separate closed-manifold check pass. Dyadic OBJ round-trip preserves positions exactly; this is a format-specific claim.",
+        "Approximate arrow-shoulder equality remains qualified even with an identical strictly proved ring cached. Strict/approximate/strict does not promote the qualified comparison. Capacity failures remain typed and recovery succeeds. This does not establish end-to-end source provenance.",
+        "Nine original full README fixtures retain all 729 exact coordinate pairs across baseline, both candidates and final native phase. Original benchmark fixtures and iteration counts remain. Cost samples additionally preserve all 128 exact coordinate-row variants per family. These artifact checks supplement semantic oracles."
+      ],
+      "test_totals": {
+        "fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "all-feature-tests": {
+          "passed": 293,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-tests": {
+          "passed": 108,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "benchmark-consumer": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "renderer-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "validation": "All 13 native commands passed: root/fuzz formatting; all-target -D warnings Clippy for all features, minimal and curve-only; all-feature library/integration tests (293 pass, one existing full image-corpus test ignored); minimal 38 pass; curve-only 108 pass; fuzz-target Clippy; warning-free docs; one doctest; nine original benchmark consumers; full renderer build. 440 passing test executions across overlapping configurations. WASM-target Clippy and actual Node/TypeScript binding consumers passed, including 13 new rejection cases and four successful recovery/classification/extrusion fixtures. No C/C++/Python/Go surface exposes these constructors.",
+      "cost_probe": {
+        "kind": "focused matched successful-output measurement, not a broad performance claim",
+        "evidence": "docs/evidence/2026-10-15-sampled-profile-failures/cost-v2",
+        "failed_trial": "cost-v1 retained: rustc E0505 in the independent sector-area harness. cost-v2 borrows both factors; production source, inputs and timing boundary unchanged.",
+        "commands": 128,
+        "fresh_process_samples": 108,
+        "operations_per_sample": 128,
+        "timed_completed_operations": 13824,
+        "exact_variants_per_revision": 1152,
+        "median_samples": {
+          "arrow-warm": {
+            "baseline": {
+              "nanos": 1638107,
+              "allocations": 11136,
+              "requested_bytes": 1705344,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7377
+            },
+            "candidate": {
+              "nanos": 1549474,
+              "allocations": 11264,
+              "requested_bytes": 1791360,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7377
+            }
+          },
+          "arrow-miss": {
+            "baseline": {
+              "nanos": 15002432,
+              "allocations": 105256,
+              "requested_bytes": 14049128,
+              "retained_byte_delta": 1056,
+              "peak_live_bytes_above_start": 41090
+            },
+            "candidate": {
+              "nanos": 15003551,
+              "allocations": 105384,
+              "requested_bytes": 14135144,
+              "retained_byte_delta": 1056,
+              "peak_live_bytes_above_start": 41762
+            }
+          },
+          "trapezoid-warm": {
+            "baseline": {
+              "nanos": 867190,
+              "allocations": 6144,
+              "requested_bytes": 947456,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4558
+            },
+            "candidate": {
+              "nanos": 868880,
+              "allocations": 6144,
+              "requested_bytes": 947456,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4558
+            }
+          },
+          "trapezoid-miss": {
+            "baseline": {
+              "nanos": 11113348,
+              "allocations": 65613,
+              "requested_bytes": 7824346,
+              "retained_byte_delta": 1768,
+              "peak_live_bytes_above_start": 24728
+            },
+            "candidate": {
+              "nanos": 10316793,
+              "allocations": 65613,
+              "requested_bytes": 7824346,
+              "retained_byte_delta": 1768,
+              "peak_live_bytes_above_start": 24728
+            }
+          },
+          "star-warm": {
+            "baseline": {
+              "nanos": 13711620,
+              "allocations": 241408,
+              "requested_bytes": 15531520,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 11704
+            },
+            "candidate": {
+              "nanos": 12831280,
+              "allocations": 241280,
+              "requested_bytes": 15482368,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 11704
+            }
+          },
+          "star-miss": {
+            "baseline": {
+              "nanos": 84170642,
+              "allocations": 1459281,
+              "requested_bytes": 93162860,
+              "retained_byte_delta": 9608,
+              "peak_live_bytes_above_start": 95265
+            },
+            "candidate": {
+              "nanos": 85027734,
+              "allocations": 1459153,
+              "requested_bytes": 93113708,
+              "retained_byte_delta": 9608,
+              "peak_live_bytes_above_start": 95265
+            }
+          },
+          "teardrop-warm": {
+            "baseline": {
+              "nanos": 1242185,
+              "allocations": 11776,
+              "requested_bytes": 1249536,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4319
+            },
+            "candidate": {
+              "nanos": 1132493,
+              "allocations": 11776,
+              "requested_bytes": 1249536,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4319
+            }
+          },
+          "teardrop-miss": {
+            "baseline": {
+              "nanos": 9483351,
+              "allocations": 68232,
+              "requested_bytes": 9133568,
+              "retained_byte_delta": 17408,
+              "peak_live_bytes_above_start": 52016
+            },
+            "candidate": {
+              "nanos": 10128776,
+              "allocations": 68232,
+              "requested_bytes": 9133568,
+              "retained_byte_delta": 17408,
+              "peak_live_bytes_above_start": 52016
+            }
+          },
+          "egg-warm": {
+            "baseline": {
+              "nanos": 1622729,
+              "allocations": 19456,
+              "requested_bytes": 1711872,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4633
+            },
+            "candidate": {
+              "nanos": 1872011,
+              "allocations": 19456,
+              "requested_bytes": 1711872,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4633
+            }
+          },
+          "egg-miss": {
+            "baseline": {
+              "nanos": 11397859,
+              "allocations": 81651,
+              "requested_bytes": 9852112,
+              "retained_byte_delta": 25264,
+              "peak_live_bytes_above_start": 59760
+            },
+            "candidate": {
+              "nanos": 10661869,
+              "allocations": 81651,
+              "requested_bytes": 9852112,
+              "retained_byte_delta": 25264,
+              "peak_live_bytes_above_start": 59760
+            }
+          },
+          "squircle-warm": {
+            "baseline": {
+              "nanos": 1479129,
+              "allocations": 15232,
+              "requested_bytes": 1391872,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4259
+            },
+            "candidate": {
+              "nanos": 1513217,
+              "allocations": 15232,
+              "requested_bytes": 1391872,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4259
+            }
+          },
+          "squircle-miss": {
+            "baseline": {
+              "nanos": 9741252,
+              "allocations": 77584,
+              "requested_bytes": 9525806,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 34008
+            },
+            "candidate": {
+              "nanos": 10823218,
+              "allocations": 77584,
+              "requested_bytes": 9525806,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 34008
+            }
+          },
+          "sector-warm": {
+            "baseline": {
+              "nanos": 1118864,
+              "allocations": 11520,
+              "requested_bytes": 1059200,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 3333
+            },
+            "candidate": {
+              "nanos": 904098,
+              "allocations": 11392,
+              "requested_bytes": 1034624,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 3333
+            }
+          },
+          "sector-miss": {
+            "baseline": {
+              "nanos": 7555792,
+              "allocations": 59926,
+              "requested_bytes": 6213908,
+              "retained_byte_delta": 17264,
+              "peak_live_bytes_above_start": 33054
+            },
+            "candidate": {
+              "nanos": 8237015,
+              "allocations": 59798,
+              "requested_bytes": 6189332,
+              "retained_byte_delta": 17264,
+              "peak_live_bytes_above_start": 32958
+            }
+          },
+          "heart-warm": {
+            "baseline": {
+              "nanos": 44917462,
+              "allocations": 749184,
+              "requested_bytes": 49766912,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 38176
+            },
+            "candidate": {
+              "nanos": 43288544,
+              "allocations": 748544,
+              "requested_bytes": 49697280,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 38176
+            }
+          },
+          "heart-miss": {
+            "baseline": {
+              "nanos": 231429181,
+              "allocations": 3592596,
+              "requested_bytes": 228834462,
+              "retained_byte_delta": 162584,
+              "peak_live_bytes_above_start": 298929
+            },
+            "candidate": {
+              "nanos": 228560838,
+              "allocations": 3591956,
+              "requested_bytes": 228764830,
+              "retained_byte_delta": 162584,
+              "peak_live_bytes_above_start": 298929
+            }
+          },
+          "supershape-warm": {
+            "baseline": {
+              "nanos": 2176881,
+              "allocations": 30464,
+              "requested_bytes": 1992960,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4139
+            },
+            "candidate": {
+              "nanos": 2344489,
+              "allocations": 30464,
+              "requested_bytes": 1992960,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4139
+            }
+          },
+          "supershape-miss": {
+            "baseline": {
+              "nanos": 12460777,
+              "allocations": 122687,
+              "requested_bytes": 12062184,
+              "retained_byte_delta": 34744,
+              "peak_live_bytes_above_start": 66080
+            },
+            "candidate": {
+              "nanos": 12056533,
+              "allocations": 122687,
+              "requested_bytes": 12062184,
+              "retained_byte_delta": 34744,
+              "peak_live_bytes_above_start": 66080
+            }
+          }
+        },
+        "candidate_to_baseline_latency_ratios": {
+          "arrow-warm": 0.9458930338494372,
+          "arrow-miss": 1.000074587906814,
+          "trapezoid-warm": 1.0019488232105997,
+          "trapezoid-miss": 0.9283244797157436,
+          "star-warm": 0.935796062026223,
+          "star-miss": 1.0101827903368017,
+          "teardrop-warm": 0.9116943128439,
+          "teardrop-miss": 1.068058748431857,
+          "egg-warm": 1.1536189961478471,
+          "egg-miss": 0.9354273464867393,
+          "squircle-warm": 1.023045995312106,
+          "squircle-miss": 1.1110705276898698,
+          "sector-warm": 0.8080499506642451,
+          "sector-miss": 1.09015904619926,
+          "heart-warm": 0.9637353063269692,
+          "heart-miss": 0.9876059579539367,
+          "supershape-warm": 1.0769945624037327,
+          "supershape-miss": 0.9675586843420759
+        },
+        "library_sizes": {
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/baseline-v1/release/deps/libcsgrs.rlib": 10020198,
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/native-v1/release/deps/libcsgrs.rlib": 9869558
+        },
+        "binary_artifacts": {
+          "target/sampled-profile-failures/cost-v2/baseline": {
+            "sha256": "31ed939501b0c473e6dbcc50a45f810710e614d457928a5b5535be5ccddac380",
+            "bytes": 35365056
+          },
+          "target/sampled-profile-failures/cost-v2/candidate": {
+            "sha256": "6bd9f0ae5644186e377e2621cb4cb549dd57bbd9236ffeb0f49b012c6e8a15c6",
+            "bytes": 35344888
+          },
+          "target/sampled-profile-failures/baseline-v1/release/deps/libcsgrs.rlib": {
+            "sha256": "f91a7e36f52900f514a300e911e5472010a6a98e426c2aefd338dce962a6591f",
+            "bytes": 10020198
+          },
+          "target/sampled-profile-failures/native-v1/release/deps/libcsgrs.rlib": {
+            "sha256": "f512811f19fcce806bf190a715ea4da850c3f398084e2d949c74df6be942fe61",
+            "bytes": 9869558
+          }
+        },
+        "claim": "Same successful strict workload with independent exact-area proof, boundary materialization, exact-expression serialization, checksum and drop in timing. All outputs and paired checksums agree. Three samples per case on a shared unpinned host with allocator instrumentation; noisy latency is mixed. Warm egg median is about 15.4% higher, FIFO-miss squircle about 11.1% higher. Arrow adds one allocation and 672 requested bytes per operation; star removes one allocation/384 bytes, sector one/192, heart five/544. Other measured allocation counts match. Ring FIFO misses do not imply globally cold scalar caches."
+      },
+      "source_sizes": {
+        "src/curve/native.rs": {
+          "baseline_bytes": 145202,
+          "candidate_bytes": 151147
+        },
+        "src/solid.rs": {
+          "baseline_bytes": 104009,
+          "candidate_bytes": 104244
+        },
+        "src/wasm/curve_js.rs": {
+          "baseline_bytes": 21956,
+          "candidate_bytes": 22348
+        }
+      },
+      "resources": "Checked primary-buffer counts and fallible reservations; no internal bound on total work, scalar growth, secondary allocations, heap retention or cancellation. Serial offline Cargo trials with two jobs and external 1800-second wall/per-process 8-GiB address-space containment. Actual WASM/Node command has wall containment without address-space cap because of V8/WASM reservations. Allocation probe covers the Rust global allocator, not all native allocations or RSS.",
+      "limitations": [
+        "Gear, rack, airfoil, text and other legacy convenience paths still require failure migration. Operation-local certainty is separate from source provenance, topology and analytic fidelity.",
+        "Original 35 pending native files remain byte-identical and uncommitted, awaiting separate admission. This is worktree qualification, not clean external-package or release qualification.",
+        "Full workflow/pre-push matrix, MSRV/release/external-package checks, full image corpus, directed fuzz/sanitizers and remaining properties-plan requirements stay open. No push or CI edits."
+      ],
+      "implementation_commit": "fcb269765fdc3b7622fcd70f1baee24a6ad0232e",
+      "evidence": "docs/evidence/2026-10-15-sampled-profile-failures/closure-v1.json",
+      "turn_outcome": "progress",
+      "plan_complete": false
+    },
+    "planar_operation_failures": {
+      "updated_on": "2026-10-15",
+      "decision": "kept: typed-failure and homogeneous-meaning repair; not a performance-only change",
+      "status": "Affected planar APIs and consumers locally qualified. Seven broader Hypercircuit fixture failures reproduce byte-for-byte on the starting worktree and remain failed.",
+      "properties": [
+        "P1",
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P28",
+        "P29",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "owners": [
+        "CSGRS public planar operations and homogeneous matrix admission",
+        "Hypercurve affine topology and classification",
+        "Scalar/FFI/WASM diagnostic boundaries",
+        "Hypercircuit materialization certainty aggregation"
+      ],
+      "domain": "Nonsingular affine restriction to z=0 with constant nonzero homogeneous weight and image in the XY plane. Normalize six XY coefficients by the weight, including negative weights; the third column is irrelevant. Native Hypercurve owns determinant and topology. Perspective/out-of-plane maps are Unsupported, zero weight with nonzero coordinate image is Unbounded, and an all-zero homogeneous image is Invalid. Unproved constraints are Undecided or explicitly qualified under the selected approximate policy. Invalid arguments are checked on canonical empty inputs too.",
+      "migration": "curve transformed/translated/rotated/scaled now return Result<CurveRegion2, ValidationError>; try_ and context variants preserve the same native causes. contains_xy returns Result<Option<bool>, ValidationError>, with None reserved for boundary. Scalar adapters preserve all three input components and apply X/Y/Z rotations in order. Nonzero Z translation and out-of-plane rotations are rejected; plane-preserving half-turns perform reflections. Gerber, Hypercircuit, FFI and WASM retain typed causes. FabricationPackageError adds Construction and retains PartialEq without Eq.",
+      "semantic_evidence": [
+        "Unchanged baseline regressions reproduce fourteen defects (3 pass/14 fail). Twenty final regressions pass, with independent exact coordinate substitution, area 18, volume 36, a separate manifold check, holes, affine-cut commutation, empty-result composition and mutation/recovery.",
+        "Matrix admission consumes the selected policy and preserves qualification through native identity shortcuts. Strict/approximate/strict does not promote approximate evidence. Definite membership distinguishes inside, outside and boundary from a native undecided blocker.",
+        "Hypercircuit translates/scales/rotates through its selected materialization context and aggregates certainty. Qualified empty construction remains qualified through subsequent transforms. Failures cannot become empty fabrication images.",
+        "Actual C, C++, Python, Go and generated Node/WASM consumers exercise errors, normalized coordinates, plane-preserving reflections, canonical empty operands and recovery. TypeScript checks the generated declarations."
+      ],
+      "test_totals": {
+        "baseline-v1": {
+          "prepare-target": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "regression-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "baseline-v2": {
+          "prepare-target": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "regression-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "regressions": {
+            "passed": 3,
+            "failed": 10,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "baseline-v3": {
+          "prepare-target": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "regression-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "regressions": {
+            "passed": 3,
+            "failed": 14,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "candidate-v1": {
+          "regressions": {
+            "passed": 17,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "library-tests": {
+            "passed": 85,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "native-v1": {
+          "fmt": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "fuzz-fmt": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "strict-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "all-feature-tests": {
+            "passed": 312,
+            "failed": 0,
+            "ignored": 1,
+            "measured": 0,
+            "filtered": 0
+          },
+          "minimal-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "minimal-tests": {
+            "passed": 38,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve-tests": {
+            "passed": 127,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "fuzz-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "docs": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "doctests": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "benchmark-consumer": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "profile-benchmark-consumer": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "renderer-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-all-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-tests": {
+            "passed": 9,
+            "failed": 1,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "downstream-v1": {
+          "regressions": {
+            "passed": 20,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-tests": {
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "hypercircuit-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "hypercircuit-tests": {
+            "passed": 116,
+            "failed": 6,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "downstream-remainder-v2": {
+          "prepare-target": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "edit": {
+            "passed": 36,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "erc": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "event_interchange": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "event_simulation": {
+            "passed": 8,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "fabrication": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "hierarchy": {
+            "passed": 11,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "intent": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "interchange": {
+            "passed": 17,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "interface": {
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "kicad_library": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "kicad_schematic": {
+            "passed": 9,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "layout": {
+            "passed": 15,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "layout_module": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "lceda": {
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "legacy_csgrs": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "materialize": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "mna": {
+            "passed": 17,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "mosfet": {
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "nonlinear": {
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "package": {
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "placement": {
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "preview": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "project": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "project_manifest": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "readme": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "release_workflow": {
+            "passed": 9,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "routing_corpus": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "schematic": {
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "schematic_auto": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "simulation": {
+            "passed": 20,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "stitching": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "workflow": {
+            "passed": 8,
+            "failed": 1,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "downstream-baseline-v1": {
+          "prepare-source": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "downstream-failures": {
+            "passed": 11,
+            "failed": 7,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "native-v2": {
+          "fmt": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "fuzz-fmt": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "strict-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "all-feature-tests": {
+            "passed": 313,
+            "failed": 0,
+            "ignored": 1,
+            "measured": 0,
+            "filtered": 0
+          },
+          "minimal-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "minimal-tests": {
+            "passed": 38,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve-tests": {
+            "passed": 128,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "fuzz-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "docs": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "doctests": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "benchmark-consumer": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "profile-benchmark-consumer": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "renderer-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-all-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-tests": {
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-all-tests": {
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "hypercircuit-docs": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "hypercircuit-doctests": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "cost-library": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "bindings-v1": {
+          "prepare-target": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "cc-version": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "c++-version": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "python3-version": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "node-version": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "empty_composition-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "empty_composition-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "empty_composition-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "empty_composition-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "empty_composition-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "primitive_failures-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "primitive_failures-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "primitive_failures-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "primitive_failures-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "primitive_failures-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "transform_failures-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "transform_failures-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "transform_failures-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "transform_failures-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "transform_failures-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "bounds_failures-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "bounds_failures-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "bounds_failures-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "bounds_failures-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "bounds_failures-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "exact_linear_modeling-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "exact_linear_modeling-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "exact_linear_modeling-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "exact_linear_modeling-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "exact_linear_modeling-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve_constructor_failures-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve_constructor_failures-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve_constructor_failures-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve_constructor_failures-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve_constructor_failures-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "planar_operation_failures-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "planar_operation_failures-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "planar_operation_failures-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "planar_operation_failures-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "planar_operation_failures-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "go-version": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "go-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "go-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "wasm-v1": {
+          "wasm-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "wasm": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "cost-build-v1": {
+          "renderer-library": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        }
+      },
+      "validation": "All 22 final native commands, 43 native-binding commands and two WASM commands pass. Native checks include all-feature/minimal/curve-only strict Clippy and tests, fuzz-target Clippy, docs/doctests, original benchmark cases, renderer build, FFI default/all-feature tests and Clippy, and Hypercircuit docs/doctests. Hypercircuit all-feature Clippy passes; its complete library/integration execution has 341 passes and seven fixture failures. All seven actual and expected byte pairs match the reconstructed starting revision with the same 35 pending native files. The failures are retained, not waived or relabeled as passing.",
+      "preserved_failed_trials": [
+        "baseline-v1 missing check-cfg in direct-rustc harness",
+        "baseline-v2/v3 reproduced defects",
+        "native-v1 all-zero homogeneous image misclassified as Unbounded; existing Invalid expectation retained",
+        "native-v1 profile benchmark filter selected zero cases and receives no validation credit",
+        "downstream-remainder-v1 setup encountered stale compiler fingerprints without executables",
+        "downstream-v1/remainder-v2 and reconstructed baseline retain all seven pre-existing fixture failures",
+        "cost-v1 candidate rustc E0308 exposed mismatched transitive library identity before any measurements; v1 unit-configuration check is insufficient. cost-build-v1 uses the exact baseline example command for cost-v2"
+      ],
+      "cost_probe": {
+        "kind": "focused matched successful-output probe, not a supported-corpus speedup claim",
+        "evidence": "docs/evidence/2026-10-15-planar-operation-failures/cost-v2",
+        "commands": 114,
+        "fresh_process_samples": 96,
+        "operations_per_sample": 128,
+        "timed_completed_operations": 12288,
+        "exact_variants_per_revision": 1024,
+        "median_samples": {
+          "translate-warm": {
+            "baseline": {
+              "nanos": 1911569,
+              "allocations": 9984,
+              "requested_bytes": 1562368,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8205
+            },
+            "candidate": {
+              "nanos": 1741541,
+              "allocations": 9984,
+              "requested_bytes": 1562368,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8205
+            }
+          },
+          "translate-varied": {
+            "baseline": {
+              "nanos": 7378124,
+              "allocations": 58575,
+              "requested_bytes": 7090044,
+              "retained_byte_delta": 1632,
+              "peak_live_bytes_above_start": 19432
+            },
+            "candidate": {
+              "nanos": 6909027,
+              "allocations": 58575,
+              "requested_bytes": 7090044,
+              "retained_byte_delta": 1632,
+              "peak_live_bytes_above_start": 19432
+            }
+          },
+          "scale-warm": {
+            "baseline": {
+              "nanos": 1782718,
+              "allocations": 14336,
+              "requested_bytes": 1889024,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8181
+            },
+            "candidate": {
+              "nanos": 1962336,
+              "allocations": 14336,
+              "requested_bytes": 1889024,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8181
+            }
+          },
+          "scale-varied": {
+            "baseline": {
+              "nanos": 6706000,
+              "allocations": 60965,
+              "requested_bytes": 7356374,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            },
+            "candidate": {
+              "nanos": 7291450,
+              "allocations": 60965,
+              "requested_bytes": 7356374,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            }
+          },
+          "rotate-warm": {
+            "baseline": {
+              "nanos": 1850493,
+              "allocations": 14464,
+              "requested_bytes": 1683200,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7829
+            },
+            "candidate": {
+              "nanos": 1989514,
+              "allocations": 14464,
+              "requested_bytes": 1683200,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7829
+            }
+          },
+          "rotate-varied": {
+            "baseline": {
+              "nanos": 6982771,
+              "allocations": 59260,
+              "requested_bytes": 7065960,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            },
+            "candidate": {
+              "nanos": 7881660,
+              "allocations": 59260,
+              "requested_bytes": 7065960,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            }
+          },
+          "matrix-warm": {
+            "baseline": {
+              "nanos": 2665697,
+              "allocations": 28800,
+              "requested_bytes": 2469632,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 11631
+            },
+            "candidate": {
+              "nanos": 3068879,
+              "allocations": 28800,
+              "requested_bytes": 2469632,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 11631
+            }
+          },
+          "matrix-varied": {
+            "baseline": {
+              "nanos": 8303990,
+              "allocations": 74976,
+              "requested_bytes": 7825724,
+              "retained_byte_delta": 17088,
+              "peak_live_bytes_above_start": 34888
+            },
+            "candidate": {
+              "nanos": 8103834,
+              "allocations": 74976,
+              "requested_bytes": 7825724,
+              "retained_byte_delta": 17088,
+              "peak_live_bytes_above_start": 34888
+            }
+          },
+          "query-warm": {
+            "baseline": {
+              "nanos": 1409883,
+              "allocations": 9856,
+              "requested_bytes": 1388416,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4159
+            },
+            "candidate": {
+              "nanos": 1343188,
+              "allocations": 9856,
+              "requested_bytes": 1388416,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4159
+            }
+          },
+          "query-varied": {
+            "baseline": {
+              "nanos": 5883067,
+              "allocations": 54083,
+              "requested_bytes": 6719124,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            },
+            "candidate": {
+              "nanos": 5940443,
+              "allocations": 54083,
+              "requested_bytes": 6719124,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            }
+          },
+          "adapter_translate-warm": {
+            "baseline": {
+              "nanos": 1838914,
+              "allocations": 9984,
+              "requested_bytes": 1562368,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8205
+            },
+            "candidate": {
+              "nanos": 2118984,
+              "allocations": 9984,
+              "requested_bytes": 1562368,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8205
+            }
+          },
+          "adapter_translate-varied": {
+            "baseline": {
+              "nanos": 7410772,
+              "allocations": 58575,
+              "requested_bytes": 7090044,
+              "retained_byte_delta": 1632,
+              "peak_live_bytes_above_start": 19432
+            },
+            "candidate": {
+              "nanos": 7885829,
+              "allocations": 58575,
+              "requested_bytes": 7090044,
+              "retained_byte_delta": 1632,
+              "peak_live_bytes_above_start": 19432
+            }
+          },
+          "adapter_scale-warm": {
+            "baseline": {
+              "nanos": 1799417,
+              "allocations": 14336,
+              "requested_bytes": 1889024,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8181
+            },
+            "candidate": {
+              "nanos": 1727701,
+              "allocations": 14336,
+              "requested_bytes": 1889024,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8181
+            }
+          },
+          "adapter_scale-varied": {
+            "baseline": {
+              "nanos": 6641455,
+              "allocations": 60965,
+              "requested_bytes": 7356374,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            },
+            "candidate": {
+              "nanos": 6853321,
+              "allocations": 60965,
+              "requested_bytes": 7356374,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            }
+          },
+          "adapter_rotate-warm": {
+            "baseline": {
+              "nanos": 1961605,
+              "allocations": 14464,
+              "requested_bytes": 1683200,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7829
+            },
+            "candidate": {
+              "nanos": 2164491,
+              "allocations": 16384,
+              "requested_bytes": 1784576,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7829
+            }
+          },
+          "adapter_rotate-varied": {
+            "baseline": {
+              "nanos": 7498806,
+              "allocations": 59260,
+              "requested_bytes": 7065960,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            },
+            "candidate": {
+              "nanos": 7630727,
+              "allocations": 61180,
+              "requested_bytes": 7167336,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            }
+          }
+        },
+        "candidate_to_baseline_latency_ratios": {
+          "translate-warm": 0.9110531715046645,
+          "translate-varied": 0.9364205589388305,
+          "scale-warm": 1.1007551390629364,
+          "scale-varied": 1.087302415747092,
+          "rotate-warm": 1.0751264662984406,
+          "rotate-varied": 1.1287295544992095,
+          "matrix-warm": 1.1512482476440495,
+          "matrix-varied": 0.9758964064263084,
+          "query-warm": 0.9526946562232469,
+          "query-varied": 1.0097527361153629,
+          "adapter_translate-warm": 1.1523018477209919,
+          "adapter_translate-varied": 1.0641035778728587,
+          "adapter_scale-warm": 0.9601448691437282,
+          "adapter_scale-varied": 1.0319005398666408,
+          "adapter_rotate-warm": 1.1034285699720383,
+          "adapter_rotate-varied": 1.0175922673556297
+        },
+        "library_sizes": {
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/native-v1/release/deps/libcsgrs.rlib": 9869558,
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/cost-build-v1/release/deps/libcsgrs.rlib": 9852650
+        },
+        "claim": "Same completed strict workloads include construction, operation, independent exact coordinates/area, output materialization, serialization and drop. All exact rows and paired checksums agree. Every favorable and unfavorable sample is retained. Warm adapter translation median is 15.2% higher and warm affine-matrix median is 15.1% higher; other latencies are mixed. Adapter rotation adds 15 allocations and 792 requested bytes per operation; other measured allocation counts match. Shared unpinned host and allocator instrumentation limit timing claims. Warm and varied inputs are distinct; varied does not imply globally cold scalar caches. cost-v1 produced no timings after its dependency mismatch; cost-build-v1 uses the exact baseline example command for cost-v2."
+      },
+      "source_sizes": {
+        "src/curve/native.rs": {
+          "baseline_bytes": 151147,
+          "candidate_bytes": 153571
+        },
+        "src/adapter/curve.rs": {
+          "baseline_bytes": 10854,
+          "candidate_bytes": 10526
+        },
+        "src/wasm/curve_js.rs": {
+          "baseline_bytes": 22348,
+          "candidate_bytes": 22951
+        },
+        "crates/hypercircuit/src/materialize.rs": {
+          "baseline_bytes": 175264,
+          "candidate_bytes": 177269
+        },
+        "crates/hypercircuit/src/fabrication.rs": {
+          "baseline_bytes": 71745,
+          "candidate_bytes": 72350
+        }
+      },
+      "resources": "No internal total-work, expression-growth, heap-byte or cancellation bound is claimed. Serial offline trials with two Cargo jobs use external 1800-second wall and 8-GiB per-process address-space containment; Node/WASM retains only wall containment because of virtual reservations. Allocation probes cover the Rust global allocator, not all native allocations or RSS. Identical non-executable compiler files in terminal trials are hard-linked with every path and byte retained; new trials copy to independent inodes.",
+      "limitations": [
+        "Seven baseline downstream fixtures remain failing and require native/release admission; no snapshots or original workload resolutions changed.",
+        "The 35 original pending native files remain byte-identical and uncommitted pending separate admission. This is worktree qualification, not a clean external-package release.",
+        "Gear/rack/airfoil/text and other convenience failures, end-to-end source provenance, full strict workload completion, internal resource bounds, coverage/fuzz/formal goals and the full workflow/MSRV/release/user-path matrix remain open. No push or CI changes."
+      ],
+      "implementation_commit": "f88f846945650e8dfcb8f11680ff137c9b0d4de8",
+      "evidence": "docs/evidence/2026-10-15-planar-operation-failures/closure-v1.json",
+      "turn_outcome": "progress",
+      "plan_complete": false
+    },
+    "slice_projection_contract": {
+      "status": "qualified correctness repair; broader resource/provenance/release admission remains pending",
+      "implementation_commit": "07258a70d",
+      "evidence": "docs/evidence/2026-10-15-slice-projection-contract/qualification-v1.json",
+      "closure": "docs/evidence/2026-10-15-slice-projection-contract/closure-v1.json",
+      "baseline": "16 tests: 6 pass, 10 fail; expanded 21 tests: 8 pass, 13 fail",
+      "regressions": "25 modeling tests pass; candidate-v3 unindexed-input failure retained and corrected in candidate-v4",
+      "validation": "14 native commands and full renderer pass; root test totals 338/96/231; Hypermesh default/all-feature totals 237/238; Clippy and docs deny warnings; 73 rendered images",
+      "cost": "82 commands, 9216 completed timed operations; exact semantic oracles, raw unfavorable samples and actual serialization differences retained. Rebuild artifact discrepancy documented; no optimization claim.",
+      "remaining": [
+        "End-to-end construction provenance is not established; native section source indices/parameters refer to the call input and the planar result does not expose these mesh-source records.",
+        "No internal total-work, retained-byte or cancellation bound; trials use external 1800-second wall and 8 GiB per-process address-space limits.",
+        "Clean external release/package admission and full CI matrix remain pending. No push performed.",
+        "Thirty-five pre-existing native files remain byte-identical and unadmitted. Seven previously reproduced Hypercircuit snapshot/golden failures remain unresolved; they were not re-executed by this slice.",
+        "Seven existing Hypermesh tests and one existing all-feature CSGRS test remain ignored under their original conditions."
+      ],
+      "full_plan_complete": false
+    },
+    "section_proof_reuse": {
+      "status": "kept: identical native section inputs reuse their winding proof",
+      "baseline_commit": "3a2d3fd1b",
+      "evidence": "docs/evidence/2026-10-15-section-proof-reuse/assessment-v1.json",
+      "decision": "docs/evidence/2026-10-15-section-proof-reuse/decision-v1.json",
+      "closure": "docs/evidence/2026-10-15-section-proof-reuse/closure-v1.json",
+      "validation": {
+        "baseline-v1/regressions": [
+          25,
+          0,
+          0
+        ],
+        "baseline-v2/regressions": [
+          25,
+          0,
+          0
+        ],
+        "candidate-v1/regressions": [
+          25,
+          0,
+          0
+        ],
+        "cargo-v1/curve-tests": [
+          231,
+          0,
+          0
+        ],
+        "cargo-v1/minimal-tests": [
+          96,
+          0,
+          0
+        ]
+      },
+      "preserved_contract": "25 section/projection regressions and 43 byte-identical snapshots preserve exact rows, exposed boundary evidence and certainty, including the original full-resolution sphere and frustum. No policy or fixture changes.",
+      "cost": "Middle-section varied and disabled-cache medians improve 42.1% and 40.4%; allocation calls fall 43.6% (3300 to 1862), requested bytes fall 43.8%. All 9216 timed operations complete with matching exact rows, output sizes and checksums. Full 43-case corpus snapshots also complete three times per revision.",
+      "limitations": [
+        "Shared unpinned host, three samples per case and allocation instrumentation. Short controls can vary. No universal or cross-library speedup claim; all unfavorable results retained.",
+        "Exact native library bytes are shared by both direct-rustc probe builds; separate Cargo tests cover feature isolation. Prior E4 timing used a different configuration and is not a matched cost baseline for this probe.",
+        "Operation-local certainty and exposed boundary evidence are preserved; this does not establish inherited mesh-construction provenance or analytic-surface fidelity.",
+        "No internal total-work, retained-byte or cancellation bounds. Trials use external 1800-second wall and 8 GiB per-process address-space containment.",
+        "Full workflow matrix, clean external release, broad strict completion and the 35 pending native files remain open. No push. Previously reproduced Hypercircuit fixture failures are not re-run here."
+      ],
+      "full_plan_complete": false
+    },
+    "scalar_product_cancellation": {
+      "status": "kept: opposite identical symbolic products construct certified exact zero",
+      "baseline_commit": "f1092edb1",
+      "implementation_commit": "775af8774",
+      "evidence": "docs/evidence/2026-10-15-strict-drilled-workflows/scalar-assessment-v1.json",
+      "decision": "docs/evidence/2026-10-15-strict-drilled-workflows/scalar-decision-v1.json",
+      "acceptance_record": "docs/evidence/2026-10-15-strict-drilled-workflows/scalar-acceptance.md",
+      "next_scalar_frontier": "docs/evidence/2026-10-15-strict-drilled-workflows/affine-baseline-v1/frontier.stdout",
+      "closure": "docs/evidence/2026-10-15-strict-drilled-workflows/scalar-closure-v1.json",
+      "validation": {
+        "scalar-default": {
+          "passed": 886,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 23
+        },
+        "scalar-all-features": {
+          "passed": 991,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 24
+        },
+        "foundations": {
+          "passed": 1544,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 46
+        },
+        "native-mesh": {
+          "passed": 240,
+          "failed": 0,
+          "ignored": 7,
+          "test_executables_or_doc_groups": 8
+        },
+        "root-curve": {
+          "passed": 231,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 28
+        },
+        "curve-native": {
+          "passed": 2493,
+          "failed": 0,
+          "ignored": 33,
+          "test_executables_or_doc_groups": 51
+        },
+        "root-minimal": {
+          "passed": 96,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 24
+        },
+        "root-all-features": {
+          "passed": 338,
+          "failed": 0,
+          "ignored": 1,
+          "test_executables_or_doc_groups": 32
+        },
+        "scalar-docs": {
+          "passed": 28,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 1
+        }
+      },
+      "scope": "Exactly two opposite-sign two-factor products with structural factor matches. Other signs, arities and factors retain the original arithmetic path. Near-distinct 1e-12 controls remain strictly nonzero.",
+      "cost": {
+        "scope": "Instrumented scalar construction and sign proof, prepared and rebuilt inputs, three APIs. Shared unpinned host; no application speedup or statistical-significance claim.",
+        "short_batches": "Three fixed process pairs, 128 operations per row. Baseline: 6912 certified and 2304 Unknown; candidate: 9216 certified and zero Unknown. All 18 completed-control medians were slower by 0.15% to 31.29%. These observations and every raw sample remain preserved.",
+        "long_batches": "Five fixed process pairs using the same frozen binaries, 4096 operations per row. Baseline: 368640 certified and 122880 Unknown; candidate: 491520 certified and zero Unknown. Completed-control median changes range from -10.54% to +4.66%; individual pair ratios remain available and include larger adverse variation.",
+        "adverse_completed_controls": "Long-batch prepared positive-sum controls are 1.50% to 4.66% slower; prepared unequal-factor controls are 0.88% to 1.76% slower. The prepared rational active-product-sum median is 3.39% slower. These costs are retained as a tradeoff for the higher-priority certified completion extension.",
+        "memory": "Existing controls have unchanged allocation-call counts and peak live bytes. All measured rows retain zero additional live bytes. Newly certified prepared cancellation uses zero allocations; rebuilt cancellation uses 124 allocations per operation. The undecided baseline used 233 and 1479 respectively, which is not a comparison of equally completed contracts.",
+        "size": "Probe executable increases by 656 bytes and direct-rustc Hyperreal archive by 4382 bytes. These are focused artifacts, not release-distribution size estimates.",
+        "representation": "New opposite identical products construct rational zero and may serialize differently from the previously retained expression. No signature or wire-schema change; existing encoded expressions remain valid. Canonical artifact expectations must distinguish source revisions. This is not a serialization-preserving optimization.",
+        "evidence": [
+          "docs/evidence/2026-10-15-strict-drilled-workflows/scalar-assessment-v1.json",
+          "docs/evidence/2026-10-15-strict-drilled-workflows/cost-confirmation-assessment-v1.json"
+        ]
+      },
+      "workflow_frontier": {
+        "strict_certified_segments": [
+          8,
+          24
+        ],
+        "strict_undecided_segments": [
+          16,
+          32
+        ],
+        "qualified_approximate_segments": [
+          16,
+          32
+        ],
+        "original_16_segment_fixture_unchanged": true,
+        "exact_volume_comparison_16_segments": "unresolved",
+        "next_blocker": "The second neighboring-triangle coplanarity test retains the affine identity h(v-o)u-h(u-o)v-[h(v-o)o-h(u-o)o]=0 as an opaque expression. Diagnostic-v3 preserves the current trace. No trigonometric identity is required for that cancellation."
+      },
+      "limitations": [
+        "Current ordinary strict drill is still undecided; successful scalar completion does not establish completed mesh geometry.",
+        "Existing 35 native curve/DRC edits remain unadmitted and byte-identical; original full-board cost failures and circuit fixture differences were not rerun here.",
+        "Structural comparisons use the existing DAG walk. Four factor comparisons bound the number of equality calls, not their input-dependent work or heap bytes. No new total-work, cancellation or retained-memory contract is claimed.",
+        "Eight GiB address-space and 1800-second wall limits are external containment, not kernel budgets.",
+        "No full CI/pre-push, released-package, MSRV, binding, sanitizer, formal-proof or whole-stack admission is claimed. No push performed.",
+        "Scalar cost samples are instrumented on a shared unpinned host. Baseline Unknown latency is not a successful-operation comparison; no downstream speedup or full mesh artifact equality claim."
+      ],
+      "next_step": "Extend the scalar proof of the captured affine coplanarity identity under a declared resource contract, preserving original 16/32-segment fixtures, all certified controls and genuine undecided/approximate outcomes. This scalar unit does not deliver strict drilling.",
+      "full_plan_complete": false
+    },
+    "affine_scalar_proof_work": {
+      "status": "candidate: polynomial proof tests pass; quotient frontier and full admission remain open",
+      "baseline_commit": "c35179831",
+      "progress": "docs/evidence/2026-10-15-affine-scalar-proofs/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-affine-scalar-proofs/scalar-and-drill-v2/result.json",
+      "diagnosis": "docs/evidence/2026-10-15-affine-scalar-proofs/coordinate-algebra-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-affine-scalar-proofs/checkpoint-v1.json",
+      "implementation_sha256": {
+        "crates/hyperreal/src/computable/node.rs": "a5ebefe11ed3134bdeb94f12e9ab537b105d208003f74e73f02ebe954f99241b",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "3354960258e06e4f1ec91388edb24b2f46f48ab02f9ec50a8bb06d79bc214dd5",
+        "crates/hyperreal/src/computable/node/ring_polynomial_tests.rs": "6f1d61fcd80886129fc83ff7698f8d9d98b32b17530aa90158698bf9275c2963",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "96ef44fc7ece7126ea6fff87e84b76029602a20689c8d4289ebf7928233a9161",
+        "crates/hyperreal/tests/affine_polynomial_cancellation.rs": "c26c3ddf35169a24d2f49772793b5835d811d816d7563c710483f9911370f166"
+      },
+      "qualification": "15 commands pass; 895 default and 1001 all-feature scalar results, strict scalar Clippy, formatting, 28 doctests, CSGRS curve build and eight original drill observations. Configurations overlap; probe success is not strict geometry completion.",
+      "workflow": "8/24 segments remain Certified. 16/32 strict now stop at 3D coordinate equality; approximate results remain qualified. No full-drill completion or exact-volume claim.",
+      "remaining": "Prove quotient identities with nonzero-denominator evidence, preserve prior successful proof domains, run semantic/topology/repeated-composition acceptance, broad downstream checks and matched completed-contract costs before retention.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
+    },
+    "quotient_scalar_proof_work": {
+      "status": "candidate: guarded quotient proofs pass; shared-expression frontier and full admission remain open",
+      "baseline_commit": "a9e3fbb29",
+      "progress": "docs/evidence/2026-10-15-quotient-scalar-proofs/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-quotient-scalar-proofs/scalar-and-drill-v1/result.json",
+      "diagnosis": "docs/evidence/2026-10-15-quotient-scalar-proofs/orientation-algebra-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-quotient-scalar-proofs/checkpoint-v1.json",
+      "implementation_sha256": {
+        "crates/hyperreal/src/computable/node.rs": "8a90c811535f2962993f8978edd285ae080afe619056e2ef3b898818beeda6b9",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "60f472c4263fe0980514f5cdc620f1f34b4e5d67d3ebd13007deb4ea5def680b",
+        "crates/hyperreal/src/computable/node/ring_quotient.rs": "393dbfde64402051d5b230e3be18c70d4dc733610cfd8bf5e3c226db4c1c47ed",
+        "crates/hyperreal/src/computable/node/ring_quotient_tests.rs": "371f342796c1cd0875fd42c95b5f07c40e701e0287a65ee836d70cee1f170cb2",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "8829c0ba56b8d94dced891bace58faaf62e8bbe8370e546c53f42cda0e28841d",
+        "crates/hyperreal/tests/quotient_polynomial_cancellation.rs": "a0ce6d3b89e1993aa5250fcc86ab7f504e0d743a560f2b6276e5131c7880ea17"
+      },
+      "qualification": "15 commands pass; 906 default and 1013 all-feature scalar tests, strict scalar Clippy, formatting, 28 doctests, CSGRS curve build and eight original drill observations. Configurations overlap; probe success is not strict geometry completion.",
+      "workflow": "8/24 segments remain Certified. 16/32 strict pass coordinate equality and stop at retained line orientation; approximate results remain qualified. Captured zero determinants have 648 arithmetic visits, exceeding the 512-node attempt limit.",
+      "remaining": "Investigate shared subexpression proof reuse without raising limits; preserve prior successful proofs, complete original strict drills, semantic/topology/composition acceptance, broad downstream qualification and matched completed-contract costs before retention.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
+    },
+    "shared_scalar_proof_work": {
+      "status": "candidate: original strict drills and semantic checks pass; full composition and admission remain open",
+      "baseline_commit": "df2dfac1d",
+      "progress": "docs/evidence/2026-10-15-shared-scalar-proofs/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-shared-scalar-proofs/scalar-and-drill-v1/result.json",
+      "model_acceptance": "docs/evidence/2026-10-15-shared-scalar-proofs/model-acceptance-v3/result.json",
+      "model_clippy": "docs/evidence/2026-10-15-shared-scalar-proofs/model-clippy-v1/result.json",
+      "diagnosis": "docs/evidence/2026-10-15-shared-scalar-proofs/composition-algebra-v3.json",
+      "checkpoint": "docs/evidence/2026-10-15-shared-scalar-proofs/checkpoint-v1.json",
+      "implementation_sha256": {
+        "crates/hyperreal/src/computable/node.rs": "8a90c811535f2962993f8978edd285ae080afe619056e2ef3b898818beeda6b9",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "2780131268cd79e776d117723c3c905aac1ae0b9b164c4e9e2b66b7293c115da",
+        "crates/hyperreal/src/computable/node/ring_quotient.rs": "5905c185df863f8dfc40046caa37521610668157bc7e6f17ab1d30a90307d9f8",
+        "crates/hyperreal/src/computable/node/ring_quotient_tests.rs": "7c9042345c4dbc9caa180c5e414cdfaffa9c568cd79104f390a1e6f1f54b0855",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "2640f68cd89d92f2eb087988fa153ced0fcca9efd62b5a16b66065ca57ac5c4c",
+        "crates/hyperreal/tests/quotient_polynomial_cancellation.rs": "a0ce6d3b89e1993aa5250fcc86ab7f504e0d743a560f2b6276e5131c7880ea17",
+        "tests/mesh_boolean_context.rs": "49d8e88febbe7ed8aa234c3ac58add009008f3680250c8c905d4d9e98cc7a307",
+        "tests/strict_drilled_workflows.rs": "1dd8a22959400ca3f4b78e5c6bbed7afecf83b767b832634ef9b55ae523a4abe"
+      },
+      "qualification": "908 default and 1015 all-feature scalar tests, scalar and root-curve Clippy with warnings denied, formatting, 28 scalar doctests. All original 8/16/24/32 drills complete Certified under both contexts and pass Certified manifold checks. Final context tests and independent membership/volume enclosure checks pass. Counts overlap.",
+      "workflow": "8/24 complete the full empty-accumulation/subtraction/reunion chain. New 16/32 composition tests remain failing at empty accumulation with typed Real sign classification Unknown. Their initial drills succeed; full workflows remain incomplete.",
+      "numeric_scope": "Exact membership including +/-1/10^12 hole-boundary offsets and independently derived polygonal six-volume enclosure within 1/10^24. Exact large volume equality and analytic-cylinder fidelity are not claimed.",
+      "remaining": "Confirm the next normalization decline and investigate exact factor cancellation or construction-proof retention. Independent conditional expansion encounters degrees 9/10 versus production cap 8. Preserve all limits and failing full-resolution tests; then run broad downstream qualification, matched cost/allocation evidence and release/user-path validation.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
     }
   },
   "status_meanings": {

@@ -137,7 +137,8 @@ fn sdf_native_real_surface_nets_produces_closed_mesh() {
         p3(-1.0, -1.0, -1.0),
         p3(1.0, 1.0, 1.0),
         r(0.0),
-    );
+    )
+    .expect("valid SDF fixture");
 
     assert!(!mesh.triangles.is_empty());
     assert!(mesh.is_closed_manifold());
@@ -156,14 +157,16 @@ fn sdf_expr_preserves_exact_signs_below_float_range() {
         p3(-1.0, -1.0, -1.0),
         p3(1.0, 1.0, 1.0),
         iso.clone(),
-    );
+    )
+    .expect("valid SDF fixture");
     let (expression_mesh, diagnostics) = solid::sdf_expr_with_diagnostics(
         SdfExpr::x().mul_expr(SdfExpr::constant(tiny)),
         (9, 9, 9),
         p3(-1.0, -1.0, -1.0),
         p3(1.0, 1.0, 1.0),
         iso,
-    );
+    )
+    .expect("valid SDF fixture");
 
     assert!(!closure_mesh.triangles.is_empty());
     assert_eq!(expression_mesh, closure_mesh);
@@ -203,7 +206,8 @@ fn sdf_native_real_surface_nets_handles_values_above_float_range() {
         p3(0.0, 0.0, 0.0),
         p3(1.0, 1.0, 1.0),
         Real::zero(),
-    );
+    )
+    .expect("valid SDF fixture");
 
     assert_eq!(mesh.positions.len(), 4);
     assert_eq!(mesh.triangles.len(), 2);
@@ -224,7 +228,8 @@ fn native_real_sdf_mesh_is_hypermesh_boolean_ready() {
         p3(-1.0, -1.0, -1.0),
         p3(1.0, 1.0, 1.0),
         Real::zero(),
-    );
+    )
+    .expect("valid SDF fixture");
 
     assert!(!mesh.triangles.is_empty());
     assert!(mesh.is_closed_manifold());
@@ -234,7 +239,10 @@ fn native_real_sdf_mesh_is_hypermesh_boolean_ready() {
             .expect("native-real Surface Nets output should be valid Hypermesh input");
     assert_eq!(validation.certainty, MeshCertainty::Certified);
 
-    let enclosing = solid::cube(r(2.0)).translated(r(-1.0), r(-1.0), r(-1.0));
+    let enclosing = solid::cube(r(2.0))
+        .expect("valid primitive fixture")
+        .translated(r(-1.0), r(-1.0), r(-1.0))
+        .expect("valid transform fixture");
     let intersection = mesh
         .try_intersection(&enclosing)
         .expect("native-real SDF mesh should be accepted by Hypermesh Boolean operations");
@@ -252,14 +260,16 @@ fn sdf_expr_preview_tracks_nonzero_iso_surface() {
         p3(-2.0, -2.0, -2.0),
         p3(2.0, 2.0, 2.0),
         r(1.0),
-    );
+    )
+    .expect("valid SDF fixture");
     let (diagnostic_mesh, diagnostics) = solid::sdf_expr_with_diagnostics(
         expression,
         (17, 17, 17),
         p3(-2.0, -2.0, -2.0),
         p3(2.0, 2.0, 2.0),
         r(1.0),
-    );
+    )
+    .expect("valid SDF fixture");
 
     assert_eq!(diagnostic_mesh, direct_mesh);
     assert!(!diagnostic_mesh.triangles.is_empty());
@@ -289,19 +299,22 @@ fn sdf_expr_preview_tracks_nonzero_iso_surface() {
 
 #[test]
 fn tpms_solid_accepts_positive_hyperreal_period_and_thickness() {
-    let volume = solid::cube(r(2.0));
+    let volume = solid::cube(r(2.0)).expect("valid primitive fixture");
     let solids = [
         (
             "gyroid",
-            solid::gyroid_solid(&volume, 10, r(2.0), r(0.0), r(0.4)),
+            solid::gyroid_solid(&volume, 10, r(2.0), r(0.0), r(0.4))
+                .expect("valid modeling fixture"),
         ),
         (
             "Schwarz-P",
-            solid::schwarz_p_solid(&volume, 10, r(2.0), r(0.0), r(0.4)),
+            solid::schwarz_p_solid(&volume, 10, r(2.0), r(0.0), r(0.4))
+                .expect("valid modeling fixture"),
         ),
         (
             "Schwarz-D",
-            solid::schwarz_d_solid(&volume, 10, r(2.0), r(0.0), r(0.4)),
+            solid::schwarz_d_solid(&volume, 10, r(2.0), r(0.0), r(0.4))
+                .expect("valid modeling fixture"),
         ),
     ];
     for (name, mesh) in solids {
@@ -319,21 +332,19 @@ fn tpms_solid_accepts_positive_hyperreal_period_and_thickness() {
 
 #[test]
 fn implicit_shapes_reject_unrepresentable_grid_dimensions() {
-    let volume = solid::cube(r(2.0));
-    assert!(
-        solid::gyroid(&volume, usize::MAX, r(2.0), r(0.0))
-            .triangles
-            .is_empty()
-    );
-    assert!(
+    let volume = solid::cube(r(2.0)).expect("valid primitive fixture");
+    assert!(matches!(
+        solid::gyroid(&volume, usize::MAX, r(2.0), r(0.0)),
+        Err(csgrs::errors::ValidationError::CapacityOverflow)
+    ));
+    assert!(matches!(
         solid::sdf(
             |point| point.to_vector().norm(),
             (usize::MAX, 2, 2),
             p3(-1.0, -1.0, -1.0),
             p3(1.0, 1.0, 1.0),
             r(0.0),
-        )
-        .triangles
-        .is_empty()
-    );
+        ),
+        Err(csgrs::errors::ValidationError::CapacityOverflow)
+    ));
 }

@@ -1817,6 +1817,7 @@ mod tests {
     #[test]
     fn large_signed_rational_powers_match_mpfr() {
         use rug::{Float, Rational as MpfrRational, float::Round, ops::Pow};
+        crate::mpfr_test::cleanup_on_thread_exit();
 
         for numerator in [-65_537_i64, -65_535, 65_535, 65_537] {
             let rational = Rational::fraction(numerator, 65_536).unwrap();

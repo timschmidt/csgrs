@@ -43,19 +43,21 @@ fuzz_target!(|bytes: &[u8]| {
     let segments = 4;
     idx += 1;
     let a = match bytes[idx % bytes.len()] % 3 {
-        0 => solid::cube(size_a.clone()),
-        1 => solid::octahedron(size_a.clone()),
-        _ => solid::cylinder(size_a.clone(), size_b.clone(), segments),
+        0 => solid::cube(size_a.clone()).expect("valid primitive fixture"),
+        1 => solid::octahedron(size_a.clone()).expect("valid primitive fixture"),
+        _ => solid::cylinder(size_a.clone(), size_b.clone(), segments)
+            .expect("valid primitive fixture"),
     };
     idx += 1;
     let b = match bytes[idx % bytes.len()] % 3 {
-        0 => solid::cube(size_b.clone()),
-        1 => solid::octahedron(size_b.clone()),
+        0 => solid::cube(size_b.clone()).expect("valid primitive fixture"),
+        1 => solid::octahedron(size_b.clone()).expect("valid primitive fixture"),
         _ => csgrs::curve::try_extrude(
             &csgrs::curve::rectangle(
                 size_b.clone(),
                 (size_b.clone() / Real::from(2_u8)).expect("two is nonzero"),
-            ),
+            )
+            .expect("valid planar fixture"),
             size_a,
             &csgrs::GeometryContext::STRICT,
         )
@@ -66,7 +68,8 @@ fuzz_target!(|bytes: &[u8]| {
         decode_real(bytes, &mut idx),
         decode_real(bytes, &mut idx),
         decode_real(bytes, &mut idx),
-    );
+    )
+    .expect("finite rational translation of valid indexed geometry");
     support::validate_triangle_mesh(&a, true);
     support::validate_triangle_mesh(&b, true);
     let result = match bytes[idx % bytes.len()] % 4 {

@@ -131,12 +131,12 @@ impl GeometryBoolResultJs {
 /// Bounds and aggregate predicate certainty.
 #[wasm_bindgen]
 pub struct GeometryBoundsResultJs {
-    bounds: Aabb,
+    bounds: Option<Aabb>,
     certainty: GeometryCertainty,
 }
 
-impl From<GeometryOutcome<Aabb>> for GeometryBoundsResultJs {
-    fn from(outcome: GeometryOutcome<Aabb>) -> Self {
+impl From<GeometryOutcome<Option<Aabb>>> for GeometryBoundsResultJs {
+    fn from(outcome: GeometryOutcome<Option<Aabb>>) -> Self {
         Self {
             bounds: outcome.value,
             certainty: outcome.certainty,
@@ -146,19 +146,26 @@ impl From<GeometryOutcome<Aabb>> for GeometryBoundsResultJs {
 
 #[wasm_bindgen]
 impl GeometryBoundsResultJs {
+    /// True for a completed bounds query on empty geometry.
+    #[wasm_bindgen(getter, js_name = isEmpty)]
+    #[allow(clippy::missing_const_for_fn)] // wasm-bindgen requires a non-const export.
+    pub fn is_empty(&self) -> bool {
+        self.bounds.is_none()
+    }
+
     #[wasm_bindgen(getter)]
     pub fn certainty(&self) -> GeometryCertaintyJs {
         self.certainty.into()
     }
 
     #[wasm_bindgen(getter)]
-    pub fn min(&self) -> Point3Js {
-        self.bounds.mins.clone().into()
+    pub fn min(&self) -> Option<Point3Js> {
+        self.bounds.as_ref().map(|bounds| bounds.mins.clone().into())
     }
 
     #[wasm_bindgen(getter)]
-    pub fn max(&self) -> Point3Js {
-        self.bounds.maxs.clone().into()
+    pub fn max(&self) -> Option<Point3Js> {
+        self.bounds.as_ref().map(|bounds| bounds.maxs.clone().into())
     }
 
     #[wasm_bindgen(getter, js_name = approximate512Consumed)]

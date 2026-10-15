@@ -1,6 +1,7 @@
 # HyperBRep development plan
 
-Status: implementation blueprint. Updated 2026-10-14.
+Status: implementation blueprint. Updated 2026-10-15 for upstream
+`7cf9d82acee6f152047eb37e5ff2e6dcece51a0d` and its acceptance contract.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,
@@ -70,29 +71,79 @@ writing this plan does not verify or close a property or target.
 | --- | --- |
 | P1–P3 | Preserve exact authored values and symbolic structure; use certified structural facts; structural inequality or `Unknown` is never geometric disjointness. See [scalar contracts](#scalar-retained-geometry-and-proof-contracts). |
 | P4 | Cache warming, eviction, policy and precision changes preserve every available certificate and value contract. Exercise the explicit cache-state matrix in [performance and resources](#performance-resources-and-reproducibility). |
-| P5 | Bound coefficient/expression growth at the earliest sufficient layer and measure repeated composition, including allocation and reconstruction costs. |
-| P6–P7 | Propagate ordinary numeric `Problem` values without panic; reject non-finite ingress; reuse stable Hyperreal primitives and fused reducers instead of local substitutes. |
-| P8–P11 | Make strict policy explicit in the operation context; retain decision certainty and proof-stage receipts; reuse the least-cost sufficient proof; return typed uncertainty or exhaustion when certification fails. |
+| P5 | Bound coefficient/expression growth at the earliest sufficient layer. Distinguish precision, total work, retained memory and cancellation; test exhaustion, cleanup and recovery. Disclose absent bounds and externally contain dangerous tests. |
+| P6–P7 | Propagate ordinary numeric `Problem` values without panic; distinguish successful empty geometry from invalid, unsupported, undecided, exhausted and unbounded outcomes through every consumer. Reuse stable Hyperreal primitives and fused reducers. |
+| P8–P11 | Keep policy and proof scope explicit. Bind local certainty to the claim and evidence actually consumed; retain inherited qualification separately. Reuse admissible strict proofs across policies; neither policy selection nor a cache hit alone upgrades a claim. |
 | P12–P13 | Use `CurveRegion2` for all planar filled regions and chart arrangements; winding and the declared fill rule determine material/hole roles without author orientation hints. |
 | P14–P16 | Preserve provisional/uncertain receipts through composition and adapters; every output boundary retains source and contact evidence; promotion never consumes display chords as exact geometry. |
-| P17 | Preserve exact regularized-set, winding, overlap, tangency, degeneracy and ownership semantics in every admitted operation. |
-| P18 | Retained carriers and parameters must represent each result needed by the next supported operation. |
-| P19 | Preserve selected-root/fiber identity, signs, parameters and topology certificates through edits, persistence and replay. |
-| P20 | Bound and measure repeated-operation growth; a mathematically closed representation alone is insufficient. |
+| P17 | Independently derived expectations and regularized-set identities establish semantic equality with stated preconditions. Matching counts, checksums or wrappers around one kernel alone cannot establish the intended set. |
+| P18 | Every supported result remains an operand when composition is defined, including empty, disconnected, holed and symbolic geometry. Exercise accumulation from empty and complete subtraction; shortcuts must not hide malformed operands. |
+| P19 | Preserve selected-root/fiber identity, signs, parameters and dependency certainty through edits, persistence and replay. A strict operation on a quantized mesh does not certify fidelity to the original source. |
+| P20 | Bound and measure repeated-operation growth; precision and entry counts are not total-work or heap-byte bounds. Exhaustion precedes publication; partial results need an explicit provisional contract. |
 | P21–P22 | Preserve Hypermesh's broad closed-PWN contract and one shared arrangement across expression roots. BREP's manifold contract is a separate carrier contract; conversions diagnose unsupported topology without narrowing Hypermesh. |
 | P23–P24 | Reject exterior-containing results as `UnboundedBooleanOutput`; use exact coincidence and retain small but distinct gaps and features. |
-| P25–P27 | The grammar adapts native carriers, interchange losses remain explicit, and retained optimizations preserve exact rows, output size and deterministic checksums. |
-| P28–P30 | Validate hostile inputs and handle ownership, catch boundary panics with the existing status contract, and expose certainty at every ABI. Display buffers never become authoritative source evidence. |
+| P25–P27 | Fix invariants in the lowest owning layer and share enforcement. Keep the primary modeling path fallible; expose format-specific loss. Test semantic equality separately from deterministic artifacts and identify representation migrations separately from performance-only work. |
+| P28–P30 | Validate hostile inputs and ownership, catch boundary panics, and expose certainty, provenance and typed failures through real ABI consumers. Successful empty geometry remains distinguishable from failure. |
 | P31–P34 | The [machine and community interfaces](#machine-and-community-interfaces) require certified demotion, fail-closed bounded machine IR, replayable jobs and exact OpenSCAD numeric ingress. Ownership remains downstream. |
-| P35 | Retain each license-clean minimized failure as a deterministic regression and preserve its original full-resolution hard case. |
-| P36 | Keep or reject changes using correctness and proportionate runtime/allocation/size evidence; record all idea dispositions and interactions. |
-| P37 | Scope every claim to linked source, commands and evidence; distinguish inventory, source reading, probes, matched benchmarks and proofs. |
+| P35 | Retain minimized and original full-resolution failures. Never obtain a pass by weakening policies, accepting a new Unknown, omitting difficult geometry or reducing resolution. Explicit migrations are not fixes under the original contract. |
+| P36 | Compare the same completed contract, including provenance, certainty, validation and materialized output. Retain source/dependency/toolchain/hardware/input/policy/cache/timing records, unfavorable samples, and supported-corpus regressions. |
+| P37 | Scope claims to evidence. Source integration or a ledger edit does not establish admission. Delivery requires a clean external consumer of the documented package, including its downstream pipeline, features, MSRV and affected bindings. |
 | P38 | Run representation-specific lexicase campaigns with ASan, dispatch tracing and competitive benchmark gates, retaining selection scores and failures. |
-| P39 | Publish a machine-readable frontier of typed blockers, domains, recipes and certificates. Extend `Unknown` to certified behavior while preserving all previously certified results. |
+| P39 | Measure capability by completed, validated named workflows; report certified, qualified approximate, undecided, unsupported, invalid, exhausted and incorrect results separately. Preserve the certified-success corpus individually. |
+
+### Acceptance order after the upstream integration
+
+The [integration record](evidence/2026-10-15-upstream-integration/README.md)
+identifies the merged revisions, checks and remaining gaps. It supplements
+the historical audit rather than relabeling its old observations as current.
+The root [agent rules](../../../AGENTS.md), properties and admission protocol
+apply to each subsequent patch; these application notes do not replace them.
+
+1. **Empty-result composition and visible failures.** Reproduce gaps on the
+   target source, identify the owning layer and missing acceptance test, then
+   implement the smallest coherent repair. BREP's current Boolean front doors
+   take two `SolidRef` values and return a `BodySet`; an empty result cannot
+   be supplied to the next Boolean. Close that public composition gap before
+   treating additional primitive or exchange cases as workflow completion.
+   Audit error propagation through builders, queries, persistence, adapters
+   and bindings at the same time; no failure becomes empty, false, zero,
+   unchanged input or incomplete success.
+2. **Ordinary strict-mode completion.** Maintain named recipes for drilled
+   bodies, transformed primitives, profile extrusion, holes, repeated cuts,
+   touching/coplanar surfaces and supported symbolic coordinates. Each recipe
+   must consume previous outputs and check the intended set, topology and
+   source relationship separately. Preserve every certified success; record
+   the exact failing operation and typed reason for incomplete workflows.
+   The upstream 16/32-segment polygonal drill compositions remain explicit
+   regression obligations even though the initial drill is certified.
+3. **Complete user-path and release validation.** Exercise the documented
+   distribution in a clean project: install, construct, transform, compose,
+   inspect certainty, validate topology, export, reimport and check the
+   format-specific contract. A path-dependent workspace probe or WASM runtime
+   test is useful local evidence, not proof of an installed release. Record
+   absent packages, feature/MSRV coverage and binding gaps honestly.
+
+For every construction and conversion, record **numerical certainty**,
+**topological validity** and **geometric fidelity** as distinct claims. A
+validated sampled mesh is not thereby the exact analytic surface; a certified
+predicate is not a manifoldness proof. Approximate construction followed by
+strict transform, Boolean, export, import and validation retains its original
+qualification unless a new proof establishes the particular source claim.
+
+Before implementation, record the domain, owning layer, relevant properties,
+affected consumers, missing/failing test, witness, resource units and outcome
+vocabulary. After the final edit, run affected local and downstream checks;
+link raw evidence and limits. Upstream changes invalidate source-specific
+qualification for the new candidate: preserve historical logs, reproduce on
+the integrated revision and establish fresh matched baselines before cost
+claims. Performance work serves these acceptance milestones; it does not
+replace them. All work packages and research gates remain in scope.
 
 All fourteen known open targets remain in scope. Already verified ledger
 entries must be preserved and extended to new BREP paths, not treated as
 evidence for paths that do not yet exist.
+A historical verified label applies to its recorded source and domain;
+revised criteria require fresh evaluation and explicit remaining gaps.
 
 | Target | Ownership and planned completion evidence |
 | --- | --- |
@@ -362,6 +413,12 @@ carry their own receipts. Composite adapters propagate the weakest consumed
 certainty. Cache reuse can reduce work without changing policy semantics or
 discarding the retained receipt.
 
+Bind each receipt to its claim and retain inherited construction/format
+qualification alongside operation-local certainty. Revalidating a derived
+mesh certifies facts about that mesh; it cannot upgrade fidelity to its exact
+source. New proofs must name the claim they establish. No conversion, cache
+hit or discarded outcome object may silently strengthen it.
+
 ```rust,ignore
 pub struct OperationContext { /* explicit strict policy, shared budget, receipts */ }
 impl OperationContext {
@@ -369,6 +426,7 @@ impl OperationContext {
     pub fn predicate_policy(&self) -> PredicatePolicy;
 }
 pub struct WorkLimits {
+    pub max_work_units: usize,
     pub refinements: usize,
     pub promotions: usize,
     pub elimination_cells: usize,
@@ -377,6 +435,7 @@ pub struct WorkLimits {
     pub max_degree: usize,
     pub max_coefficient_bits: usize,
     pub max_retained_nodes: usize,
+    pub max_retained_bytes: usize,
     pub max_input_entities: usize,
 }
 pub enum KernelError {
@@ -405,6 +464,13 @@ receive explicit child allocations. Cancellation is cooperative at documented
 checkpoints. A wall-clock deadline is advisory until every expensive primitive
 can yield; do not advertise hard time or memory bounds from partial counters.
 Do not cache resource exhaustion as permanent geometric inability.
+
+Define each charged work unit and retained-byte accounting rule in the owning
+layer. Node, entry and refinement counts remain separate from a byte allowance;
+charging a structural comparison once does not bound its internal DAG walk.
+The proposed total-work and byte fields require instrumentation and admission
+tests before they can promise complete bounds. Until then, expose their partial
+coverage and use external containment for dangerous acceptance cases.
 
 Charge total subdivision cells and evaluations, not just recursion depth:
 tensor refinement can grow both parameter directions at each level. Include
@@ -471,6 +537,15 @@ A compound can reference mixed objects without claiming a material interior.
 Nonmanifold cell complexes may be a future distinct type; they are not
 silently admitted as manifold solids.
 
+Make `BodySet` the operand as well as result of public volume composition.
+Provide a canonical `BodySet::empty()` and `BodySet::from_solid(SolidRef)`
+without reconstructing geometry. Migrate callers directly; retain single-solid
+fast paths privately inside the same operation. Multi-body inputs represent
+their regularized union, with shared intersections across expression roots;
+do not substitute a pairwise loop that changes overlapping-component meaning.
+Identity shortcuts operate only on admitted geometry and must retain required
+provenance. Untrusted `RawModel` and staged builders remain outside this API.
+
 Model coordinates are mathematical coordinates in a caller-chosen common
 frame. Documents and exchange layers own physical units and normalize them
 by exact scale before combining bodies. Kernel distance arguments use those
@@ -490,15 +565,15 @@ recording API changes access and indexing cost, not evidentiary correctness.
 ```rust,ignore
 pub enum BooleanOp { Union, Intersection, Difference, SymmetricDifference }
 pub fn boolean(
-    lhs: SolidRef<'_>, rhs: SolidRef<'_>, op: BooleanOp,
+    lhs: &BodySet, rhs: &BodySet, op: BooleanOp,
     cx: &OperationContext,
 ) -> Result<BodySet, KernelError>;
 pub fn boolean_many(
-    inputs: &[SolidRef<'_>], expression: &BooleanExpression,
+    inputs: &[&BodySet], expression: &BooleanExpression,
     cx: &OperationContext,
 ) -> Result<BodySet, KernelError>;
 pub fn boolean_recorded(
-    lhs: SolidRef<'_>, rhs: SolidRef<'_>, op: BooleanOp,
+    lhs: &BodySet, rhs: &BodySet, op: BooleanOp,
     cx: &OperationContext,
 ) -> Result<Change<BodySet>, KernelError>;
 pub struct Change<T> {
@@ -1465,6 +1540,12 @@ kernels, but a performance-only change must preserve this implementation's
 promised outputs. A deliberate format or semantic expansion needs its own
 reviewed migration and baseline, not a waived optimization check.
 
+Report completion and certainty beside every cost row. Baseline Unknown
+versus candidate Certified measures expanded capability, not faster completion
+of the same contract. Keep unsuccessful and unfavorable supported-corpus
+samples; include construction, required validation, provenance and output
+materialization consistently in timing boundaries.
+
 Extend [HyperBRep's performance ledger](../PERFORMANCE.md) and the relevant
 upstream/root ledgers with `kept`, `rejected`, `already-satisfied` or
 `architecture-inapplicable` for each idea. Retain decisive measurements,
@@ -1520,6 +1601,24 @@ of volume when the measurement is available. Compare represented sets and
 certified incidence, not identical face counts across valid decompositions.
 Internal deterministic serialization tests can additionally require exact
 byte equality under a defined canonicalization policy.
+
+The first composition gate covers `A union empty = A`,
+`A intersection empty = empty`, `A - empty = A`, `empty - A = empty`
+and `A - A = empty`, followed by further operations on every output. Include
+union accumulation from empty, subtraction through complete removal and
+reconstruction, disconnected bodies, holes and retained symbolic coordinates.
+Admission of malformed operands paired with empty must still fail; a shortcut
+must not erase validation. Under stated invertible affine/representation
+preconditions, test transform/Boolean equivariance and reconstruction of `A`
+from `A - B` and `A intersection B`. Independently derived membership and
+incidence expectations supplement measurements and serialization checks.
+
+Maintain machine-readable workflow outcomes: certified completion, qualified
+approximate completion, undecided, unsupported, invalid input, resource
+exhaustion and incorrect result. Record the failing stage rather than crediting
+an initial constructor for an incomplete chain. This corpus is part of
+WP00/WP08/WP21, including BREP and downstream csgrs paths without conflating
+their analytic and sampled geometry contracts.
 
 Turn USD BRep's seam/pole, cavity, healing-postcondition, winding and
 measurement failures into independent local construction recipes. Test
@@ -1683,6 +1782,14 @@ changes before dependents and record their compatible version ranges. Include
 API migration examples, release notes, source/fixture notices and a small
 redistributable example corpus; publishing itself is a separate release action.
 
+The final acceptance boundary is a clean external project using the documented
+package and actual affected bindings, without workspace patches, hidden local
+paths, undeclared assets or development-only settings. Test construction,
+transform, composition, certainty inspection, topology validation, export,
+reimport and the format's promised loss/fidelity contract. Record dependency
+versions, feature combinations, MSRV and package contents. If a required
+distribution is unpublished or unavailable, leave its delivery gate open.
+
 ### Documentation, research and repository completion
 
 Use the root csgrs and Hyperreal documentation as style and depth references.
@@ -1725,8 +1832,8 @@ below supplement the admission protocol; none authorizes weaker exactness.
 
 | ID | Owner and dependencies | Deliverables | Acceptance gate |
 | --- | --- | --- | --- |
-| WP00 | BREP; baseline | Freeze existing fixtures and exact-output receipts, compile API examples, property-linked capability/frontier ledger, benchmark baseline, versioned probe/checker controls and dedicated CI | Existing 233 library tests remain green; checker negative controls fail; optional features and WASM gaps are recorded and repaired; no source capability is lost unnoticed |
-| WP01 | BREP; WP00 | Split large files; scoped identity; explicit strict context, numeric errors and certainty receipts; ADR amendments; mandatory provenance and optional history indexes | Wrong-model/stale-reference and ordinary numeric failures are typed; receipts remain accessible without tracing; transactions preserve source on failure; behavior matches baseline |
+| WP00 | BREP; baseline | Freeze existing fixtures and exact-output receipts, compile API examples, property-linked capability/frontier ledger, benchmark baseline, versioned probe/checker controls and dedicated CI | Preserve the historical baseline and every later certified workflow; record named workflow outcomes and independent semantic checks; checker controls fail; optional-feature/WASM gaps stay explicit; test counts alone do not establish closure |
+| WP01 | BREP; WP00 | Split large files; scoped identity; explicit strict context, numeric errors and certainty receipts; ADR amendments; mandatory provenance and optional history indexes | Wrong-model/stale-reference and ordinary numeric failures remain typed through consumers; successful empty is distinct from failure; local and inherited receipts stay queryable; transactions preserve source on failure |
 | WP02 | Hypersolve, Hypercurve, BREP; WP01 | Retained parameters and geometric points; common-source comparison; budget/error propagation | A non-materializable contact can split a 3D edge, agree with both pcurves, reverse, transform and compare without float conversion |
 | WP03 | BREP, Hypercurve; WP02 | Chart atlas, periodic trim gluing, pole/apex strata and full-interval correspondence | Full sphere, torus holes across seams, cone apex and repeated seam uses validate and survive subdivision without changing material |
 | WP04 | BREP, Hypersolve, Hyperlimit; WP01–WP03 | Conservative hierarchy, prepared operands, complete analytic intersections and coincidence interfaces | Pair symmetry, frame changes, tangency and overlaps pass; hierarchy never loses a contact versus exhaustive enumeration |
@@ -1735,7 +1842,7 @@ below supplement the admission protocol; none authorizes weaker exactness.
 | WP05c | Same owners; WP05b | Singular branches, shared components and broader coincidence; supported-domain ledger expansion | Research G5: no missing components at singular events; base points, bad projections and parameter-diagonal exceptions handled or precisely diagnosed; repeated subdivision preserves branch identity |
 | WP06 | BREP, Hypercurve; WP03–WP05b | General chart arrangements, lift/partition/stitch and complete source maps | Crossing/overlapping/nested traces yield deterministic cells and shared edges independent of insertion order |
 | WP07 | BREP; WP05b–WP06 | General curved-shell embedding, material classification and cavity nesting | Valid mixed curved shells publish without a whole-solid recognizer or closed-form volume; pinches, self-overlap and false cavities fail |
-| WP08 | BREP; WP05c–WP07 | Common Boolean pipeline, all four operations, shared arrangements across expression roots, imprint/section/split | Mixed analytic/spline outputs support another Boolean and edit; contacts/empty/multi-body/nonmanifold outcomes have correct semantics; unbounded outputs fail typed; extra roots reuse intersections |
+| WP08 | BREP; WP05c–WP07 | Common Boolean pipeline, all four operations, shared arrangements across expression roots, imprint/section/split | Empty/single/multi-body outputs are valid operands; all empty identities, complete subtraction, reconstruction and ordinary strict workflows pass independent set/topology checks; mixed analytic/spline outputs compose and edit; unbounded/nonmanifold outcomes remain typed; extra roots reuse intersections |
 | WP09 | BREP; WP02–WP03, WP07–WP08 for full coverage | General extrusion/revolution, prescribed-frame sweeps and spline lofts | Existing constructors remain fast paths; holes, partial turns, frame closure and global self-intersection cases pass |
 | WP10 | BREP, Hypersolve; WP05c, WP07–WP08 | Retained surface parallels, regularized constant offsets, shelling and sheet thickening | Research G6: analytic and declared spline domains pass global distance/material selection, local/global self-contact, closure, collapse and opening-rim tests; non-rational outputs compose and persist |
 | WP11 | BREP; WP08, WP10 | Chamfers, constant-radius fillets, edge chains, declared corner networks and exact radius-law interface | Research G6: every selected edge is accounted for; contact/radius/G1 identities hold over full rails and end trims; each admitted corner has a constructive closure proof; collisions and excessive radii fail or regularize by contract |
@@ -1746,12 +1853,12 @@ below supplement the admission protocol; none authorizes weaker exactness.
 | WP15 | BREP, Hypertri, Hypergraphics; WP03, WP06–WP07 | Shared-edge whole-model tessellation, per-shell source ranges and diagnostic demo | Closure, mesh conformance, winding and requested error guarantees hold, including seams/poles and floating export; preview guarantees remain distinct |
 | WP16 | csgrs, Hypersolve, Hypercurve; WP08–WP09, WP13 | Native BREP grammar, basic sketches, feature DAG and durable selections | Parameter changes regenerate a modeled part; split/merge ambiguity is reported; undo/redo and save/load preserve meaning |
 | WP17 | csgrs parts, FFI, WASM and consumers; WP12, WP14b–WP16 | Assembly/BOM/drawing integration and idiomatic host bindings with queryable receipts | Shared instances, exact placement, basic attachment and native/WASM parity pass; real C/C++, Python and JS consumers reject hostile input and preserve certainty/ownership |
-| WP18 | All affected owners; WP00–WP17 and applicable WP21/WP23 gates | Versioned release corpus, fresh evaluation cases, benchmarks, packaging, API docs, site/demo and supported-domain audit | First-release scenarios complete through modeling, exchange, persistence and derived output; no known-pass regressions or incorrect successes; property evidence is linked and all required CI green |
+| WP18 | All affected owners; WP00–WP17 and applicable WP21/WP23 gates | Versioned release corpus, fresh evaluation cases, benchmarks, packaging, API docs, site/demo and supported-domain audit | First-release scenarios complete in clean external documented-package consumers through construction, transform, composition, certainty, topology, export/reimport and format-specific checks; dependency/features/MSRV/bindings agree; no known-pass regressions or incorrect successes; required CI green |
 | WP19 | BREP and solver/curve owners; WP18 | Variable-radius/G2 blends, guided lofts, broader sweep laws, advanced singular cases and defeaturing | Each extension meets its own continuity, closure, resource and composition contract |
 | WP20 | hyperbrep-io and downstream; WP14b, WP18 | Mesh recognition/reconstruction, USD exchange, advanced sketches/mates and optional further formats | Source-change accounting, explicit approximation, fixture provenance and format-specific interoperability gates pass |
-| WP21 | All affected owners; starts at WP00, continuous | Representation/dispatch coverage, per-family lexicase, ASan/traces, competitive benchmarks, optimization ledgers and Hyperreal/Hyperlattice/Hyperlimit Verus work | Every admitted change has proportionate correctness/cost evidence; full-resolution failures remain; exact rows/size/checksums are preserved; proof and 100% coverage gaps remain explicitly tracked until resolved |
+| WP21 | All affected owners; starts at WP00, continuous | Representation/dispatch coverage, per-family lexicase, ASan/traces, competitive benchmarks, optimization ledgers and Hyperreal/Hyperlattice/Hyperlimit Verus work | Every admitted change has independent correctness and same-completed-contract cost evidence with completion/certainty beside cost; unfavorable/full-resolution failures remain; performance-only artifacts are preserved; proof and 100% coverage gaps stay explicit |
 | WP22 | csgrs, Hyperpath and downstream machine/community owners; WP12, WP15–WP17 as applicable | Exact source-to-machine handoff, certified demotion/replay contracts, bounded fail-closed consumer integration and OpenSCAD differential corpus | Every admitted lowering certifies its error budget; machine IR is independently admitted with no audit work in the real-time core; source numerics remain exact and all compatibility differences are triaged |
-| WP23 | All crate/documentation/release owners; starts at WP00, continuous | Complete future-work inventory, consistent terminology, educational API docs, site integration and per-crate release-readiness records | Every future-work item has an owner and evidence gate; affected package/docs/binding checks pass; no unopened source is credited as read and no unready crate is declared release-ready |
+| WP23 | All crate/documentation/release owners; starts at WP00, continuous | Complete future-work inventory, consistent terminology, educational API docs, site integration and per-crate release-readiness records | Every future-work item has an owner and evidence gate; clean external package/docs/MSRV/feature/binding checks pass for each delivery claim; missing distribution remains open; no unopened source is credited as read or unready crate declared release-ready |
 | WP24 | Comparison and research owners; starts with WP00/WP21 baselines | Historical comparison revalidation, reproducible claim index, consolidated logs and scientific/educational manuscript | Every claimed result has reproducible source/oracle/command/output evidence; imported integrity and probes are not credited as benchmarks; proofs, measurements and open questions stay distinct |
 
 WP21–WP24 are cross-stack workstreams, not work deferred until after WP20.
@@ -1800,7 +1907,27 @@ remain the numerical and geometric foundation. A reference's use of "exact"
 for a retained analytic/NURBS carrier does not establish exact arithmetic or
 certified topology throughout its operation.
 
-### First implementation sequence
+### Current implementation priority
+
+Apply the [upstream acceptance order](#acceptance-order-after-the-upstream-integration)
+to the existing implementation before continuing broader geometry expansion.
+First reproduce and close BREP's empty/multi-body operand and failure-visibility
+gaps (WP01/WP08); run the ordinary strict workflow corpus against the integrated
+scalar/predicate stack (WP00/WP21); then complete the external consumer and
+release boundary for each admitted path (WP17/WP18/WP23). A dependency's own
+candidate status, unresolved tests or missing cost admission remains visible
+when inherited; merging it does not prove whole-stack acceptance.
+
+Preserve unfinished closed-edge work and its original evidence, then rebase
+its qualification and costs on the integrated source before retention. Its
+tests establish only their declared native domain, not general Boolean closure
+or curved STEP exchange. Existing archive cost regressions remain open.
+
+### Foundation dependency sequence
+
+The original sequence below records foundational dependencies; it does not
+override the current acceptance priorities or imply that every earlier gate
+has closed.
 
 1. Recheck the repository state and current workflows. Preserve unrelated
    changes. Start from the baseline fixtures and run the core feature matrix,

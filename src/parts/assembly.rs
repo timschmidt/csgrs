@@ -480,12 +480,14 @@ mod tests {
         handle.instructions = "Place inserts in the posts.".into();
         let handle_id = document.insert(document.root(), handle).expect("handle");
 
-        let block = solid::cube(Real::from(10));
+        let block = solid::cube(Real::from(10)).expect("valid primitive fixture");
         let printed = AssemblyNode::printed("handle.stl", "Handle", block);
         document.insert(handle_id, printed).expect("printed");
 
-        let insert_mesh =
-            solid::cube(Real::from(2)).translated(Real::from(4), Real::zero(), Real::zero());
+        let insert_mesh = solid::cube(Real::from(2))
+            .expect("valid primitive fixture")
+            .translated(Real::from(4), Real::zero(), Real::zero())
+            .expect("valid transform fixture");
         let mut insert =
             AssemblyNode::vitamin("insert(M3)", "insert(M3): Heatfit insert M3", insert_mesh);
         insert.count = 2;
@@ -496,8 +498,10 @@ mod tests {
         ]));
         let insert_id = document.insert(handle_id, insert).expect("insert");
 
-        let screw_mesh =
-            solid::cube(Real::from(1)).translated(Real::from(10), Real::zero(), Real::zero());
+        let screw_mesh = solid::cube(Real::from(1))
+            .expect("valid primitive fixture")
+            .translated(Real::from(10), Real::zero(), Real::zero())
+            .expect("valid transform fixture");
         let mut screw =
             AssemblyNode::vitamin("screw(M3)", "screw(M3): Screw M3 pan x 16mm", screw_mesh);
         screw.count = 4;

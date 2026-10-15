@@ -20,6 +20,14 @@ primary literature, performance experiments and solver applicability against
 revision `4529450d6`. It supplements this audit without changing the baseline
 test result or claiming that the proposed algorithms have landed.
 
+Upstream was subsequently integrated at
+`7cf9d82acee6f152047eb37e5ff2e6dcece51a0d` on 2026-10-15. The
+[integration record](evidence/2026-10-15-upstream-integration/README.md)
+records the changed acceptance contract, reviewed dependency changes,
+source-specific requalification and inherited open failures. This audit's
+baseline counts and source observations remain historical. Consult the current
+properties, admission protocol, plan and implementation ledger for new work.
+
 ## Baseline verification
 
 The following command completed successfully on the local native host:

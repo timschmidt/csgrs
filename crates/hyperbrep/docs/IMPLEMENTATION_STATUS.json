@@ -686,6 +686,50 @@
       "validation": "373 combined native debug results (324 core and 49 IO); all 49 IO results also pass in release. Seven new integration tests exercise original OCCT spatial-only/pcurve boxes and a holed solid, source incidence/maps, all three masters under reparameterization, reverse edge/bound senses, malformed alternate representations and explicit identity substitutions, hole-first bounds, split/reflection/native replay, exact units and coordinates above 2^53, limits and ambient approximate-policy isolation. Strict IO all-target/all-feature Clippy, warning-denied rustdoc, workspace formatting and six executed zero-import Wasmtime groups pass. The public example exactly reimports four native faceted exports; optional OCCT reads all four plus the three original inputs with expected unique topology counts and volumes. Six deliberate implementation faults fail at runtime and are restored; three receipt-reader faults are rejected. The initial incorrect diagnostic-entity assertion and rustdoc link failure are archived and corrected.",
       "cost_evidence": "Six new allocation-instrumented cases over three CPU-0 processes preserve receipts and complete within-run archive comparisons/fingerprints: median spatial-only box 1.135708 ms/3575 allocation requests/719150 requested bytes; pcurve box 1.390992 ms/4168/899726; hole 3.610197 ms/14625/2262375; two bodies 2.584637 ms; reparameterized master 1.400135 ms; nonmaster-sense rejection 278.801875 microseconds. No previous equivalent importer or speedup is claimed. Seven existing faceted rows run in three alternating pairs against frozen 60e789d04 with only the harness method name changed, preserving every receipt, geometry size/fingerprint and allocation count; timing ratios range 0.832881 to 1.013510. Larger provenance adds 608 to 2528 requested bytes per geometry iteration; unit-only rows unchanged. Faceted executable 20937304 to 21094504 bytes; median process RSS 41252 to 42508 KiB. New benchmark 22221000 bytes/9952 KiB median RSS; WASM 15840629 bytes. Seven kernel source trees and production package versions/sources/checksums unchanged. Historical archive-admission timing gate stays open.",
       "limits": "Only explicitly selected planar line-edge advanced representations are added. Native source maps live in the interchange report, not in the native archive; faceted re-export preserves geometry rather than original STEP graph/parameterization. Curved analytic/spline families, closed-circle edges, periodic trims, void/mapped/assembly exchange, full EXPRESS/AP validation and explicit healing/approximation remain unfinished. Named import limits do not bound all scalar/work/heap/time costs. OCCT is only a floating-point interoperability oracle. No runtime fuzz/ASan/lexicase campaign, full workspace/pre-push or release qualification; all 28 work-package gates remain open."
+    },
+    {
+      "id": "upstream-acceptance-integration",
+      "work_packages": [
+        "WP00",
+        "WP01",
+        "WP08",
+        "WP17",
+        "WP18",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P2",
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "integrate upstream and apply its acceptance contract; no whole-stack runtime admission",
+      "change": "Merge origin/main at 7cf9d82ac without rewriting history, preserve all upstream property records and unfinished BREP work, update the plan, public Boolean API proposal and work-package gates to prioritize consumable empty/multi-body results, visible failures, strict workflow completion and external-package delivery. Preserve the original Hypersolve quotient residual fixture and require its newly certified proof under both policies, retain separate approximate-terminal coverage, and clarify certainty documentation without changing executable production code. Require both strict sparse solver APIs to complete across all 22 original positive representation recipes, preserving the 22x22 ordered-pair matrix and separate genuine-Unknown controls.",
+      "source": "DEVELOPMENT_PLAN.md",
+      "evidence": "evidence/2026-10-15-upstream-integration/summary.json",
+      "validation": "Merged BREP/IO debug and release: 373 results each; minimal release: 365. Hypercurve release: 2439 passed, 28 existing ignored. All-feature Hyperreal: 1043; Hyperlimit: 365. Final Hypersolve default/all-feature: 974/975, all passing, plus 14 focused replay tests. Final BREP/IO debug repeats 373 passes; strict Clippy, warning-denied docs, fuzz-bin compilation, formatting and six-group WASM execution pass in the recorded scopes. Root modeling acceptance has 141 passes and the two unchanged upstream 16/32-segment drill composition failures. Counts overlap; setup and superseded-test failures remain retained.",
+      "cost_evidence": "No performance optimization or speedup claimed by this merge. Upstream proof work retains its own candidate/admission limits; future BREP measurements need frozen baselines on the integrated dependencies.",
+      "limits": "All 28 work-package gates remain open. The BodySet operand mismatch is reproduced as a compile-time API gap, not a runtime success. Full pre-push, MSRV, released-package, binding and whole-stack admission remain separate requirements. The closed-edge candidate remains preserved in a verified Git stash and is not credited by these merged-source checks. Imported raw evidence retains its upstream whitespace findings.",
+      "source_files": [
+        "DEVELOPMENT_PLAN.md",
+        "../../hypersolve/src/residual_replay.rs",
+        "../../hypersolve/tests/real_representations.rs"
+      ]
     }
   ],
   "work_packages": [
@@ -693,13 +737,13 @@
       "id": "WP00",
       "status": "in-progress",
       "deliverable": "Freeze existing fixtures and exact-output receipts, compile API examples, property-linked capability/frontier ledger, benchmark baseline, versioned probe/checker controls and dedicated CI",
-      "gate": "Existing 233 library tests remain green; checker negative controls fail; optional features and WASM gaps are recorded and repaired; no source capability is lost unnoticed"
+      "gate": "Preserve the historical baseline and every later certified workflow; record named workflow outcomes and independent semantic checks; checker controls fail; optional-feature/WASM gaps stay explicit; test counts alone do not establish closure"
     },
     {
       "id": "WP01",
       "status": "in-progress",
       "deliverable": "Split large files; scoped identity; explicit strict context, numeric errors and certainty receipts; ADR amendments; mandatory provenance and optional history indexes",
-      "gate": "Wrong-model/stale-reference and ordinary numeric failures are typed; receipts remain accessible without tracing; transactions preserve source on failure; behavior matches baseline"
+      "gate": "Wrong-model/stale-reference and ordinary numeric failures remain typed through consumers; successful empty is distinct from failure; local and inherited receipts stay queryable; transactions preserve source on failure"
     },
     {
       "id": "WP02",
@@ -753,7 +797,7 @@
       "id": "WP08",
       "status": "open",
       "deliverable": "Common Boolean pipeline, all four operations, shared arrangements across expression roots, imprint/section/split",
-      "gate": "Mixed analytic/spline outputs support another Boolean and edit; contacts/empty/multi-body/nonmanifold outcomes have correct semantics; unbounded outputs fail typed; extra roots reuse intersections"
+      "gate": "Empty/single/multi-body outputs are valid operands; all empty identities, complete subtraction, reconstruction and ordinary strict workflows pass independent set/topology checks; mixed analytic/spline outputs compose and edit; unbounded/nonmanifold outcomes remain typed; extra roots reuse intersections"
     },
     {
       "id": "WP09",
@@ -819,7 +863,7 @@
       "id": "WP18",
       "status": "open",
       "deliverable": "Versioned release corpus, fresh evaluation cases, benchmarks, packaging, API docs, site/demo and supported-domain audit",
-      "gate": "First-release scenarios complete through modeling, exchange, persistence and derived output; no known-pass regressions or incorrect successes; property evidence is linked and all required CI green"
+      "gate": "First-release scenarios complete in clean external documented-package consumers through construction, transform, composition, certainty, topology, export/reimport and format-specific checks; dependency/features/MSRV/bindings agree; no known-pass regressions or incorrect successes; required CI green"
     },
     {
       "id": "WP19",
@@ -837,7 +881,7 @@
       "id": "WP21",
       "status": "in-progress",
       "deliverable": "Representation/dispatch coverage, per-family lexicase, ASan/traces, competitive benchmarks, optimization ledgers and Hyperreal/Hyperlattice/Hyperlimit Verus work",
-      "gate": "Every admitted change has proportionate correctness/cost evidence; full-resolution failures remain; exact rows/size/checksums are preserved; proof and 100% coverage gaps remain explicitly tracked until resolved"
+      "gate": "Every admitted change has independent correctness and same-completed-contract cost evidence with completion/certainty beside cost; unfavorable/full-resolution failures remain; performance-only artifacts are preserved; proof and 100% coverage gaps stay explicit"
     },
     {
       "id": "WP22",
@@ -849,7 +893,7 @@
       "id": "WP23",
       "status": "open",
       "deliverable": "Complete future-work inventory, consistent terminology, educational API docs, site integration and per-crate release-readiness records",
-      "gate": "Every future-work item has an owner and evidence gate; affected package/docs/binding checks pass; no unopened source is credited as read and no unready crate is declared release-ready"
+      "gate": "Every future-work item has an owner and evidence gate; clean external package/docs/MSRV/feature/binding checks pass for each delivery claim; missing distribution remains open; no unopened source is credited as read or unready crate declared release-ready"
     },
     {
       "id": "WP24",
@@ -859,6 +903,10 @@
     }
   ],
   "next_actions": [
+    "Reproduce and close BREP Boolean composition over canonical empty and multi-body results before broader geometry expansion. Current front doors take SolidRef and cannot consume an empty BodySet. Implement one native BodySet operand/result contract, migrate callers directly, and test every empty identity followed by further operations without concealing invalid input or dropping provenance (WP01/WP08, P6/P17-P20).",
+    "Preserve and exercise named ordinary strict workflows with independent set, topology and source-fidelity checks. Retain upstream 16/32-segment drilled composition failures and all certified controls; inherited scalar candidate status is not admission. Record all seven outcome categories and the failing stage (WP00/WP21, P39).",
+    "Complete the documented-package pipeline in clean external consumers and actual affected bindings; verify features, dependency versions, MSRV, certainty and format-specific round trips. Local paths, source builds and WASM probes do not close delivery gates (WP17/WP18/WP23, P37).",
+    "Restore the unfinished native closed-edge candidate after the upstream integration and requalify its tests and completed-contract costs on the merged source; preserve interrupted and pre-integration evidence as historical.",
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
     "Complete WP02/G1 beyond planar spline replay, subdivided cuboid and axial-cylinder archive replay. Extend independent solid/void/corner proofs, retained surface/contact images and selected Boolean transfer while preserving every existing exact behavior. Native-to-selected spline composition and five repeated selected cuboid cuts now have regression evidence.",
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
@@ -866,5 +914,32 @@
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue WP14a from selected exact faceted exchange and planar advanced import: implement curved analytic mapping, exact closed-circle edge refinement, periodic trims and complete source accounting for all 3D/UV curve representations. Preserve independently checked source parameterizations and master semantics, diagnose off-carrier decimal vertices, and broaden representation traversal and schema/resource admission. Then WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. The independent planar import/edit/faceted-export/reimport fixtures do not establish whole-document or curved STEP exchange.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
-  ]
+  ],
+  "acceptance_contract": {
+    "upstream_revision": "7cf9d82acee6f152047eb37e5ff2e6dcece51a0d",
+    "properties": "../../../properties.md",
+    "protocol": "../../../docs/admission.md",
+    "agent_rules": "../../../AGENTS.md",
+    "integration": "evidence/2026-10-15-upstream-integration/README.md",
+    "order": [
+      "Empty-result composition and visible failures",
+      "Ordinary strict-mode completion",
+      "Complete user-path and release validation"
+    ],
+    "claims": [
+      "numerical certainty",
+      "topological validity",
+      "geometric fidelity"
+    ],
+    "outcomes": [
+      "certified completion",
+      "qualified approximate completion",
+      "undecided",
+      "unsupported",
+      "invalid input",
+      "resource exhaustion",
+      "incorrect result"
+    ],
+    "admission": "Documentation and integration do not establish implementation compliance. Source-specific evidence remains tied to its original revision; requalify after dependency changes."
+  }
 }

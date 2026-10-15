@@ -16,7 +16,7 @@
 //! use csgrs::{Real, solid::{self, cache::{self, CachePolicy}}};
 //!
 //! let mesh = cache::with_policy(CachePolicy::DISABLED, || {
-//!     solid::cube(Real::from(2))
+//!     solid::cube(Real::from(2)).expect("valid primitive fixture")
 //! });
 //! assert_eq!(mesh.triangles.len(), 12);
 //! ```
