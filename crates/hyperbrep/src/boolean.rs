@@ -20,7 +20,7 @@ use crate::geometry::{
     Curve3ExactData, EllipseArcExactData, SurfaceExactData, SurfaceIntersectionBoundaryContact,
     certified_atan2,
 };
-use crate::model::{
+use crate::topology::{
     CertifiedConeFrustumProfile, CertifiedCylinderProfile, CertifiedSpherePairKind,
     CertifiedSphereProfile, CertifiedTorusProfile, CertifiedZPrismProfile,
 };
@@ -2592,8 +2592,10 @@ fn exact_edge_curve_equal(
         return Ok(true);
     }
     Ok(
-        crate::model::compare_curve3_exact_data(&candidate.exact_data(), &existing.exact_data())?
-            == Ordering::Equal,
+        crate::topology::compare_curve3_exact_data(
+            &candidate.exact_data(),
+            &existing.exact_data(),
+        )? == Ordering::Equal,
     )
 }
 

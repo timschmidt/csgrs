@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "updated_on": "2026-10-14",
+  "plan": "DEVELOPMENT_PLAN.md",
+  "research": "ALGORITHM_RESEARCH.md",
+  "property_ledger": "../../../docs/properties-status.json",
+  "complete": false,
+  "compatibility": {
+    "greenfield": true,
+    "breaking_changes": true,
+    "compatibility_shims": false
+  },
+  "baseline": {
+    "revision": "5f02aadec",
+    "native_test_command": "cargo test --offline --locked -p hyperbrep --all-features --lib",
+    "result": {
+      "passed": 233,
+      "failed": 0,
+      "ignored": 0
+    },
+    "toolchain": "cargo 1.99.0 (5f94df478 2026-08-27)",
+    "notes": "Native library baseline only; does not establish full workspace, WASM runtime or pre-push qualification."
+  },
+  "increments": [
+    {
+      "id": "topology-module-split",
+      "work_packages": ["WP00", "WP01", "WP23"],
+      "properties": ["P6", "P36", "P37", "P39", "T13"],
+      "change": "Replace the 21,613-line model module with 37 topology modules grouped by ownership and operation. Preserve algorithm bodies and public crate-root exports; update internal callers directly.",
+      "source": "../src/topology/mod.rs",
+      "validation": [
+        {"command": "cargo test --offline --locked -p hyperbrep --all-features --quiet", "result": "233 passed; 0 failed; 0 ignored; 0 doctests"},
+        {"command": "cargo test --offline --locked -p hyperbrep --quiet", "result": "226 passed; 0 failed; 0 ignored; 0 doctests"},
+        {"command": "cargo check --offline --locked -p hyperbrep --all-targets --all-features", "result": "passed"},
+        {"command": "cargo clippy --offline --locked -p hyperbrep --all-targets --all-features -- -D warnings", "result": "passed after the Hypercurve closure-borrow cleanup in 26835aa38"},
+        {"command": "cargo build --offline --locked -p hyperbrep --all-features --lib --target wasm32-unknown-unknown", "result": "passed"},
+        {"command": "RUSTDOCFLAGS='-D warnings' cargo doc --offline --locked -p hyperbrep --all-features --no-deps", "result": "passed"},
+        {"command": "cargo fmt --all -- --check", "result": "passed"},
+        {"command": "local documentation and ledger check", "result": "104 relative file links resolve; both JSON ledgers parse; 28 unique work packages retained"}
+      ],
+      "cost_evidence": "Mechanical source organization only: arithmetic and predicate algorithms retained. Native all-feature test runtime was 19.37s before and 19.87s after in single debug runs. These are smoke measurements, not a matched benchmark or a performance claim.",
+      "limits": "This is partial WP01/T13 progress. Scoped identity, operation contexts, numeric cause preservation, general validation and the remaining large modules are unfinished. WASM compilation is not WASM runtime qualification. Full workspace/pre-push checks have not been run."
+    }
+  ],
+  "work_packages": [
+    {
+      "id": "WP00",
+      "status": "in-progress",
+      "deliverable": "Freeze existing fixtures and exact-output receipts, compile API examples, property-linked capability/frontier ledger, benchmark baseline, versioned probe/checker controls and dedicated CI",
+      "gate": "Existing 233 library tests remain green; checker negative controls fail; optional features and WASM gaps are recorded and repaired; no source capability is lost unnoticed"
+    },
+    {
+      "id": "WP01",
+      "status": "in-progress",
+      "deliverable": "Split large files; scoped identity; explicit strict context, numeric errors and certainty receipts; ADR amendments; mandatory provenance and optional history indexes",
+      "gate": "Wrong-model/stale-reference and ordinary numeric failures are typed; receipts remain accessible without tracing; transactions preserve source on failure; behavior matches baseline"
+    },
+    {
+      "id": "WP02",
+      "status": "open",
+      "deliverable": "Retained parameters and geometric points; common-source comparison; budget/error propagation",
+      "gate": "A non-materializable contact can split a 3D edge, agree with both pcurves, reverse, transform and compare without float conversion"
+    },
+    {
+      "id": "WP03",
+      "status": "open",
+      "deliverable": "Chart atlas, periodic trim gluing, pole/apex strata and full-interval correspondence",
+      "gate": "Full sphere, torus holes across seams, cone apex and repeated seam uses validate and survive subdivision without changing material"
+    },
+    {
+      "id": "WP04",
+      "status": "open",
+      "deliverable": "Conservative hierarchy, prepared operands, complete analytic intersections and coincidence interfaces",
+      "gate": "Pair symmetry, frame changes, tangency and overlaps pass; hierarchy never loses a contact versus exhaustive enumeration"
+    },
+    {
+      "id": "WP05a",
+      "status": "open",
+      "deliverable": "Exact cell/branch decomposition prototype and certificate format for bounded rational surface equations",
+      "gate": "Independent root counts and critical events verified on regular, tangent and common-factor fixtures; degree/bit/work costs measured"
+    },
+    {
+      "id": "WP05b",
+      "status": "open",
+      "deliverable": "General plane/spline and regular rational patch-pair contacts with retained pcurves; compare guarded bivariate/matrix reduction and four-parameter continuation",
+      "gate": "Research G3/G4: global component census, interior loops and trimmed algebraic endpoints produce complete replayable results, including save/load composition; cost and applicability are recorded"
+    },
+    {
+      "id": "WP05c",
+      "status": "open",
+      "deliverable": "Singular branches, shared components and broader coincidence; supported-domain ledger expansion",
+      "gate": "Research G5: no missing components at singular events; base points, bad projections and parameter-diagonal exceptions handled or precisely diagnosed; repeated subdivision preserves branch identity"
+    },
+    {
+      "id": "WP06",
+      "status": "open",
+      "deliverable": "General chart arrangements, lift/partition/stitch and complete source maps",
+      "gate": "Crossing/overlapping/nested traces yield deterministic cells and shared edges independent of insertion order"
+    },
+    {
+      "id": "WP07",
+      "status": "open",
+      "deliverable": "General curved-shell embedding, material classification and cavity nesting",
+      "gate": "Valid mixed curved shells publish without a whole-solid recognizer or closed-form volume; pinches, self-overlap and false cavities fail"
+    },
+    {
+      "id": "WP08",
+      "status": "open",
+      "deliverable": "Common Boolean pipeline, all four operations, shared arrangements across expression roots, imprint/section/split",
+      "gate": "Mixed analytic/spline outputs support another Boolean and edit; contacts/empty/multi-body/nonmanifold outcomes have correct semantics; unbounded outputs fail typed; extra roots reuse intersections"
+    },
+    {
+      "id": "WP09",
+      "status": "open",
+      "deliverable": "General extrusion/revolution, prescribed-frame sweeps and spline lofts",
+      "gate": "Existing constructors remain fast paths; holes, partial turns, frame closure and global self-intersection cases pass"
+    },
+    {
+      "id": "WP10",
+      "status": "open",
+      "deliverable": "Retained surface parallels, regularized constant offsets, shelling and sheet thickening",
+      "gate": "Research G6: analytic and declared spline domains pass global distance/material selection, local/global self-contact, closure, collapse and opening-rim tests; non-rational outputs compose and persist"
+    },
+    {
+      "id": "WP11",
+      "status": "open",
+      "deliverable": "Chamfers, constant-radius fillets, edge chains, declared corner networks and exact radius-law interface",
+      "gate": "Research G6: every selected edge is accounted for; contact/radius/G1 identities hold over full rails and end trims; each admitted corner has a constructive closure proof; collisions and excessive radii fail or regularize by contract"
+    },
+    {
+      "id": "WP12",
+      "status": "open",
+      "deliverable": "General queries, certified integration and moment adapter",
+      "gate": "Classification/nearest sets include degeneracies; integral bounds enclose independent references; no validity dependency on elementary volume"
+    },
+    {
+      "id": "WP13",
+      "status": "open",
+      "deliverable": "Exact graph persistence and bounded replay",
+      "gate": "Retained branch lineage survives round trip; forged/cyclic/oversized input fails safely on native and WASM"
+    },
+    {
+      "id": "WP14a",
+      "status": "open",
+      "deliverable": "STEP dependency decision, bounded syntax, entity/units graph and simple analytic/faceted exchange",
+      "gate": "Exact decimal import and consistent topology; primitives and multi-body files read in an independent tool"
+    },
+    {
+      "id": "WP14b",
+      "status": "open",
+      "deliverable": "Spline/trim/seam/void exchange, explicit heal/export approximation, representation traversal and basic assemblies",
+      "gate": "Independent files and repeated instances round trip with units/provenance; every unsupported or omitted component and geometric entity is accounted for"
+    },
+    {
+      "id": "WP15",
+      "status": "open",
+      "deliverable": "Shared-edge whole-model tessellation, per-shell source ranges and diagnostic demo",
+      "gate": "Closure, mesh conformance, winding and requested error guarantees hold, including seams/poles and floating export; preview guarantees remain distinct"
+    },
+    {
+      "id": "WP16",
+      "status": "open",
+      "deliverable": "Native BREP grammar, basic sketches, feature DAG and durable selections",
+      "gate": "Parameter changes regenerate a modeled part; split/merge ambiguity is reported; undo/redo and save/load preserve meaning"
+    },
+    {
+      "id": "WP17",
+      "status": "open",
+      "deliverable": "Assembly/BOM/drawing integration and idiomatic host bindings with queryable receipts",
+      "gate": "Shared instances, exact placement, basic attachment and native/WASM parity pass; real C/C++, Python and JS consumers reject hostile input and preserve certainty/ownership"
+    },
+    {
+      "id": "WP18",
+      "status": "open",
+      "deliverable": "Versioned release corpus, fresh evaluation cases, benchmarks, packaging, API docs, site/demo and supported-domain audit",
+      "gate": "First-release scenarios complete through modeling, exchange, persistence and derived output; no known-pass regressions or incorrect successes; property evidence is linked and all required CI green"
+    },
+    {
+      "id": "WP19",
+      "status": "open",
+      "deliverable": "Variable-radius/G2 blends, guided lofts, broader sweep laws, advanced singular cases and defeaturing",
+      "gate": "Each extension meets its own continuity, closure, resource and composition contract"
+    },
+    {
+      "id": "WP20",
+      "status": "open",
+      "deliverable": "Mesh recognition/reconstruction, USD exchange, advanced sketches/mates and optional further formats",
+      "gate": "Source-change accounting, explicit approximation, fixture provenance and format-specific interoperability gates pass"
+    },
+    {
+      "id": "WP21",
+      "status": "open",
+      "deliverable": "Representation/dispatch coverage, per-family lexicase, ASan/traces, competitive benchmarks, optimization ledgers and Hyperreal/Hyperlattice/Hyperlimit Verus work",
+      "gate": "Every admitted change has proportionate correctness/cost evidence; full-resolution failures remain; exact rows/size/checksums are preserved; proof and 100% coverage gaps remain explicitly tracked until resolved"
+    },
+    {
+      "id": "WP22",
+      "status": "open",
+      "deliverable": "Exact source-to-machine handoff, certified demotion/replay contracts, bounded fail-closed consumer integration and OpenSCAD differential corpus",
+      "gate": "Every admitted lowering certifies its error budget; machine IR is independently admitted with no audit work in the real-time core; source numerics remain exact and all compatibility differences are triaged"
+    },
+    {
+      "id": "WP23",
+      "status": "open",
+      "deliverable": "Complete future-work inventory, consistent terminology, educational API docs, site integration and per-crate release-readiness records",
+      "gate": "Every future-work item has an owner and evidence gate; affected package/docs/binding checks pass; no unopened source is credited as read and no unready crate is declared release-ready"
+    },
+    {
+      "id": "WP24",
+      "status": "open",
+      "deliverable": "Historical comparison revalidation, reproducible claim index, consolidated logs and scientific/educational manuscript",
+      "gate": "Every claimed result has reproducible source/oracle/command/output evidence; imported integrity and probes are not credited as benchmarks; proofs, measurements and open questions stay distinct"
+    }
+  ],
+  "next_actions": [
+    "Complete model revision identity and borrowed references, explicit operation contexts, budget propagation, typed numeric failures and required provenance in WP01.",
+    "Implement the WP02/G1 retained-parameter contact-to-split/persist/reload/composition vertical slice without requiring Real materialization.",
+    "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
+    "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
+  ]
+}

@@ -13,8 +13,8 @@
 
 mod error;
 mod geometry;
-mod model;
 mod persistence;
+mod topology;
 
 pub mod boolean;
 pub mod builder;
@@ -52,7 +52,8 @@ pub use geometry::{
     SurfacePcurveCorrespondence, SurfaceSurfaceIntersection,
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
-pub use model::{
+pub use persistence::{PersistenceError, RawModel};
+pub use topology::{
     BoundaryBridgeCurveSplit, BoundaryBridgeFaceSplit, BuildError, ClosedSurfaceCurveFaceSplit,
     Curve3Id, CurveFaceSplit, Direction, Edge, EdgeId, EdgeSplit, EdgeUse, EdgeUseId, Edit,
     EditError, Endpoint, EntityKind, Face, FaceId, FacePartition, FaceSplit, FaceTracePartition,
@@ -60,4 +61,3 @@ pub use model::{
     Shell, ShellId, Solid, SolidId, SolidPointLocation, SurfaceCurveFaceSplit, SurfaceId,
     TopologyEditError, ValidationReport, Vertex, VertexId, Wire, WireId,
 };
-pub use persistence::{PersistenceError, RawModel};

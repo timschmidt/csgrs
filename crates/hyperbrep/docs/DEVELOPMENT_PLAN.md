@@ -22,6 +22,12 @@ The current
 describe implemented behavior. This plan describes work to perform; proposed
 APIs and paths below do not already exist.
 
+Implementation progress is recorded in
+[IMPLEMENTATION_STATUS.json](IMPLEMENTATION_STATUS.json), linked from the
+project property ledger. Development is greenfield: update callers directly
+when APIs or archives change; do not build compatibility shims or maintain
+parallel legacy interfaces.
+
 ## Agreed direction
 
 The following choices came from the project owner:

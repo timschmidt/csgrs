@@ -11,7 +11,7 @@ use hyperlattice::{Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
 use crate::geometry::{Curve3ExactData, resolve_planar_classification};
-use crate::model::CertifiedSpherePairKind;
+use crate::topology::CertifiedSpherePairKind;
 use crate::{
     BuildError, Curve3, Direction, EdgeId, FaceId, GeometryError, Model, ModelBuilder, Orientation,
     ParameterCorrespondence, ParameterDomain, Pcurve, SolidId, Surface, ValidationReport, VertexId,

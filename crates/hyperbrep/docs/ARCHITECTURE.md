@@ -30,6 +30,26 @@ certificates, persistence, and modeling operations.
 HyperTRI is an optional derived consumer behind the `tessellation` feature. It
 is not a core dependency and cannot mutate or replace a source BREP.
 
+## Source organization
+
+The private [topology module](../src/topology/mod.rs) owns arena storage and
+shared certificate records. The crate root remains the public type facade;
+there is no parallel legacy model API.
+
+| Module | Responsibility |
+| --- | --- |
+| `topology/ids.rs`, `records.rs`, `correspondence.rs` | Typed identifiers, immutable topology records and exact parameter relations |
+| `topology/model.rs`, `builder.rs`, `error.rs` | Arena access, adjacency, staged construction/publication and typed failures |
+| `topology/edit/` | Edge/face/surface splitting, multi-trace partitioning, endpoint attachment, transactions and edit results |
+| `topology/validation/` | Image agreement, wire/shell checks and existing analytic/prism/sweep/loft family certificates |
+| `topology/query.rs`, `measure.rs`, `transform.rs` | Classification, exact measurements and immutable transforms |
+| `topology/helpers.rs`, `tests.rs` | Shared exact support routines and topology regressions |
+
+This split preserves the existing algorithms and admitted families. Scoped
+model identity, general curved-shell validation and retained algebraic
+parameters remain tracked in the
+[implementation ledger](IMPLEMENTATION_STATUS.json).
+
 ## Canonical model
 
 `Model` is an immutable `Arc`-shared snapshot over private typed arenas:
