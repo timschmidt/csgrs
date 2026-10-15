@@ -1043,30 +1043,52 @@ impl ArenaModelBuilder {
         &self,
         wire: WireId,
     ) -> Result<CurvePath2, BuildError> {
-        let wire = self.wire_ref(wire)?;
-        Ok(CurvePath2::try_new(
-            wire.edge_uses
-                .iter()
-                .map(|edge_use| {
-                    let edge_use = self.edge_use_ref(*edge_use)?;
-                    Ok(self.pcurve_ref(edge_use.pcurve)?.curve().clone())
-                })
-                .collect::<Result<Vec<_>, BuildError>>()?,
-        )
-        .map_err(GeometryError::from)?)
+        Ok(CurvePath2::try_new(self.wire_validation_curves(wire)?).map_err(GeometryError::from)?)
+    }
+
+    /// Reassemble contiguous restrictions only for a boundary proof. The model
+    /// keeps every edge, selected vertex, source chart and incidence unchanged.
+    fn wire_validation_curves(&self, wire: WireId) -> Result<Vec<Curve2>, BuildError> {
+        let curves = self
+            .wire_ref(wire)?
+            .edge_uses
+            .iter()
+            .map(|edge_use| {
+                Ok(self
+                    .pcurve_ref(self.edge_use_ref(*edge_use)?.pcurve)?
+                    .curve()
+                    .clone())
+            })
+            .collect::<Result<Vec<_>, BuildError>>()?;
+        Ok(crate::topology::wire_geometry::coalesce_restrictions(
+            curves,
+        )?)
     }
 
     pub(in crate::topology) fn build_wire_contour(
         &self,
         wire: WireId,
     ) -> Result<Contour2, BuildError> {
-        let wire = self.wire_ref(wire)?;
-        let mut segments = Vec::with_capacity(wire.edge_uses.len());
-        for edge_use in &wire.edge_uses {
-            let edge_use = self.edge_use_ref(*edge_use)?;
-            let pcurve = self.pcurve_ref(edge_use.pcurve)?;
-            segments.push(pcurve.segment()?);
+        let native = self
+            .wire_ref(wire)?
+            .edge_uses
+            .iter()
+            .map(|edge_use| {
+                Ok(self
+                    .pcurve_ref(self.edge_use_ref(*edge_use)?.pcurve)?
+                    .segment()?)
+            })
+            .collect::<Result<Vec<_>, BuildError>>();
+        match native {
+            Ok(segments) => return Ok(Contour2::try_new(segments).map_err(GeometryError::from)?),
+            Err(BuildError::Geometry(GeometryError::UnsupportedPcurveContour)) => {}
+            Err(error) => return Err(error),
         }
+        let segments = self
+            .wire_validation_curves(wire)?
+            .into_iter()
+            .map(|curve| Pcurve::new(curve).segment())
+            .collect::<Result<Vec<_>, _>>()?;
         Ok(Contour2::try_new(segments).map_err(GeometryError::from)?)
     }
 

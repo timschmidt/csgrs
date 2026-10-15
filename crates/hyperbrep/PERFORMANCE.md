@@ -1,5 +1,37 @@
 # HyperBREP Performance Contract
 
+## 2026-10-15: selected archive replay
+
+[Evidence and commands](docs/evidence/2026-10-15-selected-archive/README.md)
+cover format 9 graph persistence and independent sheet validation. Three
+alternating pinned process pairs preserve all 66 native benchmark receipts
+against `3426a3a43`. The median of case median timing ratios is **1.00163**;
+the largest sampled ratio is **1.03629**. The benchmark executable grows
+**205,040 bytes**; median process peak RSS changes from **21,636 to 22,020 KiB**.
+This is a correctness/completeness extension, not a claimed optimization.
+Format 9 intentionally changes archive bytes; its own round trips are checked
+for byte stability. Existing geometric benchmark outputs retain their checksums.
+
+The new `selected_archive` benchmark constructs sources outside timing and
+checks exact area, selected-coordinate retention and topology counts during
+replay. Medians across three processes, each with 100 iterations:
+
+| Operation | Median per iteration | Archive bytes |
+| --- | ---: | ---: |
+| Native sheet encode | 27.472 µs | 8,163 |
+| Native sheet parse, validate and area | 109.994 µs | 8,163 |
+| Selected sheet encode | 44.462 µs | 9,681 |
+| Selected sheet parse, validate and area | 218.026 µs | 9,681 |
+| Selected sheet plus 16 cuts encode | 133.211 µs | 26,923 |
+| Selected sheet plus 16 cuts replay and area | 587.420 µs | 26,923 |
+| Selected replay, another split and area | 258.493 µs | 9,681 input |
+
+The 5-edge and 21-edge archives both retain one selected root and one authored
+pcurve source. This fixed composition fixture checks sharing; it is not an
+asymptotic time/memory bound. RSS is not an allocation count. Selected solid
+revalidation and bounded hostile-input decoding remain open.
+
+
 Correctness is exact. Performance determines which certified route reaches the
 answer, not what answer is accepted.
 

@@ -119,12 +119,13 @@ selected-point enclosures with the existing conservative curve bounds.
 
 The [topology qualification](evidence/2026-10-15-selected-topology/README.md)
 covers shared-edge splits, repeated edits, rational/NURBS charts, reflections
-and retained solid queries. Selected archive graph replay, surface/contact
-images, general Boolean transfer and complete recertification of arbitrary
-selected input remain open. The format-8 encoder returns
-`UnrepresentablePoint` or `UnrepresentableParameter` when a required stored view
-is absent. Native coefficient subdivision and angular conic evaluation retain
-their explicit scalar requirements. WP02/G1 is not complete.
+and retained solid queries. [Archive version 9](SELECTED_ARCHIVE.md) now retains
+selected roots, flattened charts, spatial curve images and authored pcurve
+restrictions. Independent replay covers the selected sheet fixtures and exact
+planar area. Selected solid recertification still requires explicit coordinates;
+surface/contact graphs and general Boolean transfer remain open. Native
+coefficient subdivision and angular conic evaluation retain their explicit
+scalar requirements. WP02/G1 and WP13 are not complete.
 
 ## Source organization
 

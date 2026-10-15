@@ -19,8 +19,8 @@ use crate::{GeometryError, GeometryResult, Real};
 /// [`crate::Curve3::point_at`] retains selected images for lines and rational
 /// curves. Topology trim ranges and exact edge subdivision also preserve these
 /// parameters. Native coefficient subdivision, angular conic evaluation and
-/// persistence still require represented values; their typed blockers remain
-/// explicit.
+/// some independent solid validators still require represented values; their
+/// typed blockers remain explicit. Native archives retain selected root graphs.
 #[derive(Clone, Debug)]
 pub struct Parameter {
     value: BezierParameter2,

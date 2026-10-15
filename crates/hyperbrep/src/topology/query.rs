@@ -1017,13 +1017,28 @@ impl ArenaModel {
         &self,
         wire: WireId,
     ) -> Result<Contour2, GeometryError> {
-        let wire = self.wire(wire).expect("validated wire ID");
-        let mut segments = Vec::with_capacity(wire.edge_uses.len());
-        for edge_use in &wire.edge_uses {
-            let edge_use = self.edge_use(*edge_use).expect("validated edge-use ID");
-            let pcurve = self.pcurve(edge_use.pcurve).expect("validated pcurve ID");
-            segments.push(pcurve.segment()?);
+        let native = self
+            .wire(wire)
+            .expect("validated wire ID")
+            .edge_uses
+            .iter()
+            .map(|edge_use| {
+                let edge_use = self.edge_use(*edge_use).expect("validated edge-use ID");
+                self.pcurve(edge_use.pcurve)
+                    .expect("validated pcurve ID")
+                    .segment()
+            })
+            .collect::<Result<Vec<_>, _>>();
+        match native {
+            Ok(segments) => return Contour2::try_new(segments).map_err(GeometryError::from),
+            Err(GeometryError::UnsupportedPcurveContour) => {}
+            Err(error) => return Err(error),
         }
+        let segments = self
+            .model_wire_curves(wire)?
+            .into_iter()
+            .map(|curve| Pcurve::new(curve).segment())
+            .collect::<Result<Vec<_>, _>>()?;
         Contour2::try_new(segments).map_err(GeometryError::from)
     }
 
@@ -1031,20 +1046,23 @@ impl ArenaModel {
         &self,
         wire: WireId,
     ) -> Result<CurvePath2, GeometryError> {
+        CurvePath2::try_new(self.model_wire_curves(wire)?).map_err(GeometryError::from)
+    }
+
+    fn model_wire_curves(&self, wire: WireId) -> Result<Vec<Curve2>, GeometryError> {
         let wire = self.wire(wire).expect("validated wire ID");
-        CurvePath2::try_new(
-            wire.edge_uses
-                .iter()
-                .map(|edge_use| {
-                    let edge_use = self.edge_use(*edge_use).expect("validated edge-use ID");
-                    self.pcurve(edge_use.pcurve)
-                        .expect("validated pcurve ID")
-                        .curve()
-                        .clone()
-                })
-                .collect(),
-        )
-        .map_err(GeometryError::from)
+        let curves = wire
+            .edge_uses
+            .iter()
+            .map(|edge_use| {
+                let edge_use = self.edge_use(*edge_use).expect("validated edge-use ID");
+                self.pcurve(edge_use.pcurve)
+                    .expect("validated pcurve ID")
+                    .curve()
+                    .clone()
+            })
+            .collect();
+        crate::topology::wire_geometry::coalesce_restrictions(curves)
     }
 
     pub(crate) fn classify_surface_parameter_on_face(

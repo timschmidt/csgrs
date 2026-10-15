@@ -36,6 +36,7 @@ mod query;
 mod records;
 mod transform;
 mod validation;
+mod wire_geometry;
 
 pub use correspondence::ParameterCorrespondence;
 pub use edit::*;

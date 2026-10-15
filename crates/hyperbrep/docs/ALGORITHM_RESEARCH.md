@@ -647,3 +647,16 @@ kernel. Implement mathematical methods in Rust under the project's normal
 admission process and keep optional external oracles outside production
 dependencies. No new dependency or license decision is required merely to
 retain these research references.
+
+## Selected-root archive replay implementation note (2026-10-15)
+
+The [CGAL Algebraic Kernel manual](https://doc.cgal.org/latest/Algebraic_kernel_d/index.html)
+describes polynomial/isolating-interval root construction and root counting.
+This supports retaining selected-root definitions instead of materializing
+independent scalar coordinates. HyperBRep format 9 reconstructs those premises
+through Hypercurve, retaining flattened chart relations and shared curve sources.
+The implementation, exact boundary-reassembly conditions and remaining selected
+solid/resource limits are in the [archive contract](SELECTED_ARCHIVE.md).
+[Measured evidence](evidence/2026-10-15-selected-archive/README.md) covers selected
+sheet replay and composition; it does not close G1 or establish general surface
+intersection feasibility.

@@ -515,3 +515,6 @@ through explicitly derived adapters.
 Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
 It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
+
+Selected geometry archive coverage and remaining replay limits are documented
+in [Archive version 9](docs/SELECTED_ARCHIVE.md).

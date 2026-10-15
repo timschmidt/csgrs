@@ -152,6 +152,38 @@ fn compare(
 }
 
 impl Curve2 {
+    /// Borrows a retained authored source, ascending range and traversal flag.
+    ///
+    /// Native curves and non-authored support fragments return `None`. Repeated
+    /// source restrictions remain flat: the returned source is native, and the
+    /// range is expressed in its original chart even for reversed traversal.
+    pub fn source_restriction(&self) -> Option<(&Self, &CurveParameterRange2, bool)> {
+        self.source_range()
+            .map(|range| (&range.source, &range.range, range.reversed))
+    }
+
+    /// Restricts an authored curve without rebasing its parameter chart.
+    ///
+    /// Unlike scalar subdivision, scalar endpoints also retain the source
+    /// chart. The range must be ascending and lie in the current domain;
+    /// traversal follows `self`. All endpoint and containment evidence is
+    /// reconstructed under strict predicates. Non-authored support fragments
+    /// return an unsupported-construction error.
+    pub fn restrict_source(&self, range: CurveParameterRange2) -> ExactCurveResult<Self> {
+        if self.retained_fragment().is_some() {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Construction,
+                self.family(),
+                UncertaintyReason::Unsupported,
+            ));
+        }
+        self.restrict_authored_source(
+            range.start().clone(),
+            range.end().clone(),
+            &CurveContext::STRICT,
+        )
+    }
+
     /// Constructs a finite Bezier image in its original source chart.
     ///
     /// The oriented range may extend outside `[0, 1]` and may retain selected

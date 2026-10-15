@@ -47,3 +47,7 @@ harness = false
 [[bench]]
 name = "selected_topology"
 harness = false
+
+[[bench]]
+name = "selected_archive"
+harness = false

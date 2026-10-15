@@ -1180,6 +1180,19 @@ impl BezierParameterInterval {
 }
 
 impl BezierAlgebraicParameter2 {
+    /// Borrows the original selected root and its flattened projective chart.
+    ///
+    /// The image is `(numerator[0] + numerator[1] * root) /
+    /// (denominator[0] + denominator[1] * root)`. The source has no further
+    /// chart. This is construction evidence, independent of refinement caches;
+    /// archive readers must validate the root and reapply the chart.
+    pub fn source_chart(&self) -> Option<(&Self, &[Real; 2], &[Real; 2])> {
+        self.data
+            .projective_source
+            .as_ref()
+            .map(|chart| (&chart.root, &chart.numerator, &chart.denominator))
+    }
+
     /// Validates a singleton algebraic Bezier parameter isolator.
     pub fn try_isolate(
         polynomial: BezierParameterPolynomial,
@@ -1990,6 +2003,29 @@ impl BezierParameter2 {
             [Real::one(), Real::zero()],
         );
         Ok(Classification::Decided(Self::Algebraic(mapped)))
+    }
+
+    /// Applies a finite projective image while retaining selected-root evidence.
+    ///
+    /// Coefficients are in ascending power order. The denominator must be
+    /// certified nonzero at this parameter; a pole or unresolved proof returns
+    /// a typed error. A constant image may return an exact scalar. No cached
+    /// root-count or sign claim supplied by a caller is accepted.
+    pub fn projective_image(
+        &self,
+        numerator: &[Real; 2],
+        denominator: &[Real; 2],
+    ) -> crate::ExactCurveResult<Self> {
+        self.projective_image_unbounded(numerator, denominator, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Evaluation,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Evaluation, value)
+            })
     }
 
     /// Transports a finite scalar through a projective chart. The original

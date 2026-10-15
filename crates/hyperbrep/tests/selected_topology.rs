@@ -295,6 +295,13 @@ fn selected_spline_trims_keep_their_authored_parameter_charts() {
             )
             .unwrap();
         check_correspondences(continued.model());
+        let loaded = reload(continued.model());
+        check_correspondences(&loaded);
+        assert!(
+            loaded
+                .vertices()
+                .any(|vertex| vertex.point().try_coordinates().is_none())
+        );
     }
 }
 
@@ -361,8 +368,9 @@ fn remaining_scalar_boundaries_fail_explicitly_without_mutating_the_source() {
         .unwrap()
         .split(root())
         .unwrap();
+    let archive = split.model().to_raw().unwrap();
     assert!(matches!(
-        split.model().to_raw(),
+        archive.validate(),
         Err(hyperbrep::PersistenceError::Build(
             hyperbrep::BuildError::Geometry(GeometryError::UnrepresentablePoint)
         ))
@@ -468,6 +476,7 @@ fn planar_selected_rational_pcurves_survive_model_reflection() {
     let split = edge.split(root()).unwrap();
     let reflected = split.model().transformed(&reflection).unwrap();
     check_correspondences(&reflected);
+    check_correspondences(&reload(&reflected));
     let expected = split
         .details()
         .vertex()
@@ -521,4 +530,211 @@ fn selected_trim_range_orders_exactly_and_builder_checks_endpoint_incidence() {
             correct
         );
     }
+}
+
+#[test]
+fn selected_planar_archive_reconstructs_evidence_and_splits_again() {
+    use hypercurve::{Curve2, CurvePath2, LineSeg2, Point2};
+    let uv = |x, y| Point2::new(Real::from(x), Real::from(y));
+    let points = [uv(0, 0), uv(2, 0), uv(2, 2), uv(0, 2)];
+    let boundary = CurvePath2::try_new(
+        (0..4)
+            .map(|i| {
+                Curve2::from(
+                    LineSeg2::try_new(points[i].clone(), points[(i + 1) % 4].clone()).unwrap(),
+                )
+            })
+            .collect(),
+    )
+    .unwrap();
+    let source =
+        builder::planar_face(&boundary, &[], Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
+    let split = source
+        .model()
+        .edges()
+        .next()
+        .unwrap()
+        .split(root())
+        .unwrap();
+    let json = split.model().to_json().unwrap();
+    let loaded = hyperbrep::RawModel::from_json(&json)
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(loaded.counts(), split.model().counts());
+    assert_eq!(
+        loaded.faces().next().unwrap().area().unwrap(),
+        Real::from(4)
+    );
+    assert_eq!(loaded.to_json().unwrap(), json);
+    let selected = loaded
+        .vertices()
+        .find(|vertex| vertex.point().try_coordinates().is_none())
+        .unwrap();
+    assert!(
+        selected
+            .point()
+            .coincides_with(split.details().vertex().point())
+            .unwrap()
+    );
+    check_correspondences(&loaded);
+    let repeated = loaded
+        .edges()
+        .next()
+        .unwrap()
+        .split(rational(1, 2).into())
+        .unwrap();
+    let repeated = hyperbrep::RawModel::from_json(&repeated.model().to_json().unwrap())
+        .unwrap()
+        .validate()
+        .unwrap();
+    check_correspondences(&repeated);
+    let detached = Curve3::line(point(0, 0, 0), point(2, 0, 0))
+        .unwrap()
+        .point_at(&root())
+        .unwrap();
+    let selected = loaded
+        .vertices()
+        .find(|vertex| vertex.point().try_coordinates().is_none())
+        .unwrap();
+    let mut edit = loaded.edit();
+    edit.replace_vertex(selected, detached.clone()).unwrap();
+    let edited = edit.commit().unwrap();
+    let raw: serde_json::Value = serde_json::from_str(&edited.to_json().unwrap()).unwrap();
+    assert_eq!(
+        raw["selection"]["point_sources"].as_array().unwrap().len(),
+        1
+    );
+    let detached_replay = reload(&edited);
+    assert!(
+        detached_replay
+            .vertices()
+            .find(|vertex| vertex.point().try_coordinates().is_none())
+            .unwrap()
+            .point()
+            .coincides_with(&detached)
+            .unwrap()
+    );
+}
+
+fn reload(model: &Model) -> Model {
+    let json = model.to_json().unwrap();
+    let loaded = hyperbrep::RawModel::from_json(&json)
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(loaded.counts(), model.counts());
+    assert_eq!(loaded.to_json().unwrap(), json);
+    loaded
+}
+
+#[test]
+fn selected_archive_rejects_forged_roots_sources_charts_and_incidence() {
+    use hypercurve::{Curve2, CurvePath2, LineSeg2, Point2};
+    use serde_json::{Value, json};
+    let uv = |x, y| Point2::new(Real::from(x), Real::from(y));
+    let points = [uv(0, 0), uv(2, 0), uv(2, 2), uv(0, 2)];
+    let boundary = CurvePath2::try_new(
+        (0..4)
+            .map(|i| {
+                Curve2::from(
+                    LineSeg2::try_new(points[i].clone(), points[(i + 1) % 4].clone()).unwrap(),
+                )
+            })
+            .collect(),
+    )
+    .unwrap();
+    let source =
+        builder::planar_face(&boundary, &[], Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
+    let split = source
+        .model()
+        .edges()
+        .next()
+        .unwrap()
+        .split(root())
+        .unwrap();
+    let raw: Value = serde_json::from_str(&split.model().to_json().unwrap()).unwrap();
+    let selected_vertex = raw["vertices"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .position(|v| v.get("CurveImage").is_some())
+        .unwrap();
+    let selected_pcurve = raw["pcurves"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .position(|v| v.get("SourceRange").is_some())
+        .unwrap();
+    let roots = raw["selection"]["parameters"].as_array().unwrap().len();
+    let scalar = |n| serde_json::to_value(Real::from(n)).unwrap();
+    let mut mutants = Vec::new();
+    let mut add = |name, mutate: &dyn Fn(&mut Value)| {
+        let mut value = raw.clone();
+        mutate(&mut value);
+        mutants.push((name, value));
+    };
+    add("no root in bracket", &|v| {
+        v["selection"]["parameters"][0]["Root"]["interval"] =
+            json!([scalar(0), serde_json::to_value(rational(1, 4)).unwrap()])
+    });
+    add("zero polynomial", &|v| {
+        v["selection"]["parameters"][0]["Root"]["polynomial"] = json!([scalar(0)])
+    });
+    add("missing root", &|v| {
+        v["vertices"][selected_vertex]["CurveImage"]["parameter"] = json!({"Selected": roots})
+    });
+    add("missing source", &|v| {
+        v["vertices"][selected_vertex]["CurveImage"]["source"] = json!({"Model": 9999})
+    });
+    add("wrong point parameter", &|v| {
+        v["vertices"][selected_vertex]["CurveImage"]["parameter"] = json!({"Scalar": scalar(0)})
+    });
+    add("pcurve wrong traversal", &|v| {
+        v["pcurves"][selected_pcurve]["SourceRange"]["reversed"] = json!(true)
+    });
+    add("pcurve outside source", &|v| {
+        v["pcurves"][selected_pcurve]["SourceRange"]["range"][0] = json!({"Scalar": scalar(-1)})
+    });
+    add("missing pcurve source", &|v| {
+        v["pcurves"][selected_pcurve]["SourceRange"]["source"] = json!(9999)
+    });
+    add("wrong map and forged proofs", &|v| {
+        v["edge_uses"][0]["parameter_correspondence"]["Affine"]["offset"] = scalar(1);
+        v["edge_uses"][0]["image_certificate"] = json!(true);
+        v["wires"][0]["simplicity_certificate"] = json!(true);
+    });
+    add("cyclic chart", &|v| {
+        v["selection"]["parameters"].as_array_mut().unwrap().push(json!({"Image": {"root": roots, "numerator": [scalar(0), scalar(1)], "denominator": [scalar(1), scalar(0)]}}))
+    });
+    add("pole at selected root", &|v| {
+        v["selection"]["parameters"].as_array_mut().unwrap().push(json!({"Image": {"root": 0, "numerator": [scalar(0), scalar(1)], "denominator": [scalar(0), scalar(0)]}}))
+    });
+
+    add("multiple roots in bracket", &|v| {
+        v["selection"]["parameters"][0]["Root"]["polynomial"] = json!([
+            serde_json::to_value(rational(3, 16)).unwrap(),
+            scalar(-1),
+            scalar(1)
+        ]);
+        v["selection"]["parameters"][0]["Root"]["interval"] = json!([scalar(0), scalar(1)]);
+    });
+    add("wrong source image", &|v| {
+        v["selection"]["pcurve_sources"][0]["Line"]["end"][1] = scalar(1)
+    });
+    add("nested pcurve sources", &|v| {
+        v["selection"]["pcurve_sources"][0] = json!({"SourceRange": {"source": 0, "range": [{"Scalar": scalar(0)}, {"Scalar": scalar(1)}], "reversed": false}})
+    });
+    for (name, value) in mutants {
+        let json = serde_json::to_string(&value).unwrap();
+        assert!(
+            hyperbrep::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .is_err(),
+            "accepted {name}"
+        );
+    }
+    let json = split.model().to_json().unwrap();
+    assert!(hyperbrep::RawModel::from_json(&(json + " false")).is_err());
 }

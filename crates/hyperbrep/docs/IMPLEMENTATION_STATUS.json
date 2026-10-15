@@ -345,6 +345,40 @@
       "validation": "240 all-feature core tests, 45 integration tests and four doctests; 233 default core tests, 44 integration tests and four doctests; ten release topology regressions; four rejected mutants. Strict Clippy, warning-denied rustdoc, WASM compilation, fuzz-bin Clippy and formatting pass. Five benchmark builds, 66 matched native receipts and all 19 feature/control rows pass in three runs.",
       "cost_evidence": "Final median of case median ratios 1.011410, largest 1.058066; all within 10%. Binary +67040 bytes; median peak RSS 21472 to 21808 KiB. First prototype exceeded 10% in three editing cohorts and was replaced with direct native scalar mapping. Measurements are descriptive; no allocation or asymptotic-growth claim.",
       "limits": "WP02/G1 remains open: selected graph persistence, untrusted replay/recertification, general surface/contact images and Boolean transfer are unfinished. Angular conics and native coefficient algorithms retain typed materialization boundaries. No full resource budget, external oracle, new fuzz/ASan/lexicase campaign, WASM execution or full-workspace/pre-push qualification."
+    },
+    {
+      "id": "selected-archive-replay",
+      "work_packages": [
+        "WP01",
+        "WP02",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P6",
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39",
+        "T13"
+      ],
+      "decision": "kept as exact persistence and independent sheet-validation progress; no work-package gate completed",
+      "change": "Replace format 8 with format 9 root/chart/source tables, retained point/range records, checked graph reconstruction, authored restriction image validation and injectivity-guarded boundary reassembly. Preserve every topology record. Reject old formats and trailing input. Reuse Hypercurve projective transport and source restriction authority.",
+      "source": "../src/persistence/selection.rs",
+      "contract": "SELECTED_ARCHIVE.md",
+      "evidence": "evidence/2026-10-15-selected-archive/manifest.json",
+      "validation": "243 all-feature core tests, 47 integration tests and four doctests pass; default configuration, five Hypercurve chart/restriction tests, strict Clippy, warning-denied docs, WASM library compilation, release selected regressions, fuzz-bin Clippy, six benchmark builds and formatting pass. Final command and deliberate-fault records are in the evidence bundle.",
+      "cost_evidence": "Three alternating pinned process pairs preserve all 66 native benchmark receipts. Median of case median timing ratios 1.00163; largest 1.03629. Executable grows 205,040 bytes; median peak RSS 21,636 to 22,020 KiB. Seven new archive cohorts cover native/selected encode and replay, 16 further cuts and reload/split/area. These are descriptive samples, not allocation counts, statistical significance or general growth bounds.",
+      "limits": "Selected cuboid serialization is supported, but its independent solid validation still returns UnrepresentablePoint. General selected solid/surface/contact/fiber validation, non-authored pcurve fragments, semantic provenance and bounded/WASM-safe decoding remain open. No full Hypercurve suite, ASan, runtime fuzz/lexicase, external oracle, WASM execution or full-workspace/pre-push qualification is claimed."
     }
   ],
   "work_packages": [
@@ -440,7 +474,7 @@
     },
     {
       "id": "WP13",
-      "status": "open",
+      "status": "in-progress",
       "deliverable": "Exact graph persistence and bounded replay",
       "gate": "Retained branch lineage survives round trip; forged/cyclic/oversized input fails safely on native and WASM"
     },
@@ -519,7 +553,8 @@
   ],
   "next_actions": [
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
-    "Complete WP02/G1 beyond retained parameters, spatial points and selected topology splits: persist selected source/root/chart graphs, validate untrusted evidence on load, and compose reload/split/classification without requiring Real materialization. Add general surface/contact images and extend selected Boolean transfer while preserving all existing exact behavior.",
+    "Complete WP02/G1 beyond retained parameter/point/topology and selected sheet archive replay: independently recertify selected solid boundaries and compose reload/split/classification/volume without requiring Real materialization. Add general surface/contact images and selected Boolean transfer while preserving every existing exact behavior.",
+    "Continue WP13 with byte/entity/degree/allocation limits, iterative WASM-safe decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features; version 9 root/source replay is partial progress.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
   ]
