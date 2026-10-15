@@ -2638,6 +2638,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyperbrep-io"
+version = "0.1.0"
+dependencies = [
+ "hyperreal",
+]
+
+[[package]]
 name = "hypercircuit"
 version = "0.3.0"
 dependencies = [

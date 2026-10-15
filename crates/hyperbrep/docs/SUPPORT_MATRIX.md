@@ -4,6 +4,19 @@ This matrix describes certified behavior in the current clean-break API.
 “Unsupported” means the operation returns a structured error; it never means
 that sampled or tolerance-based geometry is substituted.
 
+## Exchange syntax
+
+[HyperBRep IO](../../hyperbrep-io/README.md) parses/writes the bounded Part 21
+HEADER/DATA subset with exact numeric lexemes, simple/complex instances, typed
+parameters, aggregates, original encoded string tokens and multiple DATA sections.
+Unknown records and unresolved references remain addressable by source IDs.
+Native tests and an executed WASM probe cover deep input, round trips and limits.
+This is syntax support, not STEP geometry import, EXPRESS validation or AP242
+conformance. Header/schema semantics, units, text decoding, geometry/topology,
+assemblies and exact/approximated geometry export remain open. See the
+[dependency decision](../../hyperbrep-io/docs/PARSER_REVIEW.md) and
+[qualification](evidence/2026-10-15-step-syntax/README.md).
+
 ## Operation resources
 
 `OperationContext` shares explicit refinement and promotion allowances across

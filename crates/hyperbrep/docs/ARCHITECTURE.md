@@ -30,6 +30,13 @@ certificates, persistence, and modeling operations.
 HyperTRI is an optional derived consumer behind the `tessellation` feature. It
 is not a core dependency and cannot mutate or replace a source BREP.
 
+The downstream [HyperBRep IO crate](../../hyperbrep-io/README.md) owns bounded
+Part 21 syntax and source-entity accounting. Its initial syntax layer depends
+only on Hyperreal for exact numeric conversion. Future document/geometry mapping
+will consume the model interface; the core does not depend on the exchange layer.
+Parsed records confer no geometry authority. Source-scoped views and flat
+parameter storage preserve references and avoid recursive parameter-tree drop.
+
 ## Retained inverse parameters
 
 [`Parameter`](../src/parameter.rs) holds an authored `Real` or a certified

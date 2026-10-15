@@ -474,6 +474,10 @@ source assumptions, prototype gates and performance experiments for that plan.
 The [implementation ledger](docs/IMPLEMENTATION_STATUS.json) tracks work
 packages, landed increments, verification and the remaining capability gaps.
 
+The downstream [HyperBRep IO crate](../hyperbrep-io/README.md) now provides bounded
+Part 21 syntax, exact numeric lexemes and source-entity accounting. STEP geometry
+and document mapping remain on the plan; syntax success does not validate a solid.
+
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.
 

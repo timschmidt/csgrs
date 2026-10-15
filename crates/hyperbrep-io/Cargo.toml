@@ -1,0 +1,18 @@
+[package]
+name = "hyperbrep-io"
+version = "0.1.0"
+edition = "2024"
+description = "Exact, bounded CAD exchange for the Hyper geometry stack"
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/timschmidt/hyperbrep"
+readme = "README.md"
+keywords = ["step", "cad", "geometry", "exact"]
+categories = ["parser-implementations", "graphics"]
+
+[dependencies]
+hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
+
+[[bench]]
+name = "part21"
+harness = false

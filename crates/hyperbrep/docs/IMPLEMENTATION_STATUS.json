@@ -510,6 +510,38 @@
       "validation": "243 all-feature core tests, 70 integration tests and four doctests; 236 default core tests, 69 integration tests and four doctests; 47 focused release tests. Strict Clippy, warning-denied docs, WASM library compilation, fuzz-bin Clippy, nine benchmark builds and formatting pass. Eight new structural tests and six restored runtime-failing implementation faults cover shared budgets, every variable-size family, boundary retries, invalid scalar/index payloads and version ordering.",
       "cost_evidence": "Three native pairs preserve 66 receipts; median/largest case ratios 0.995768/1.073196. Three additional pairs preserve eight spline replay receipts (ratios 0.999766\u20131.014925). Four established allocation-instrumented cases pass the 10% gate; positive decode/encode ratio 1.001200 with unchanged 695 calls / 216,464 requested bytes per iteration. Executable +224,768 bytes; median native RSS 21,796 to 22,008 KiB. Four new structural rejection costs and all superseded separate-pass prototype data are retained. Prior input-admission timing failure is not cleared by this comparison.",
       "limits": "Structural limits do not bound scalar reconstruction, aggregate allocation, call-stack use or geometric validation. Metadata parsing and errors can allocate. Iterative WASM-safe decoding, coefficient/certificate envelopes, complete selected graphs and semantic provenance remain open. No runtime fuzz/ASan/lexicase, full dependency/workspace suite, external oracle, WASM execution or pre-push qualification."
+    },
+    {
+      "id": "step-syntax",
+      "work_packages": [
+        "WP00",
+        "WP14a",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P1",
+        "P6",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "kept; bounded exact-lexeme Part 21 syntax and per-operation frame reuse; no work-package gate completed",
+      "change": "Create hyperbrep-io with a borrowed Part 21 HEADER/DATA reader and deterministic writer, flat parameter storage, source-scoped views, simple/complex entities, typed values, multiple sections and unresolved-reference accounting. Explicit cardinality/output limits and fallible collection reservation precede storage growth. Numeric conversion delegates to Hyperreal Rational after separate digit/exponent admission. Preserve encoded strings and unknown records without claiming geometry/schema validation.",
+      "source": "../../hyperbrep-io/src/part21/mod.rs",
+      "contract": "../../hyperbrep-io/README.md",
+      "evidence": "evidence/2026-10-15-step-syntax/manifest.json",
+      "validation": "Twelve native parser tests plus one doctest pass in debug and release. Strict all-target Clippy, warning-denied docs, WASM library compilation and executed Wasmtime probe pass. The probe has no imports and exercises exact numbers, references, round trips, rejection, 20,000 nested values and truncations. All 317 existing all-feature HyperBRep test results pass; six core layers and existing locked dependency packages are unchanged. Four deliberate implementation faults fail runtime tests and are restored before final checks. Standards review regressions for zero entity IDs, nonzero binary padding and exchange delimiters used as keywords fail on the initial lexer and pass after correction; all 64 padding/first-digit combinations are checked.",
+      "cost_evidence": "Three fresh alternating CPU-0 pairs preserve four syntax receipts and independently authored expected output. The retained frame reuse and lexical corrections change small/wide/deep/byte-reject median ratios to 0.881671/0.828410/0.965182/1.000000. Wide 10,000-entity allocation requests fall from 20,078 to 74 per cycle; requested allocator bytes from 18,508,330 to 16,908,010. Executable +280 bytes; median RSS 12,416 to 13,148 KiB. These are allocation-instrumented descriptive costs, not geometry-import or uninstrumented speedup claims. Earlier measurements before lexical corrections remain separately recorded.",
+      "dependency_decision": "Pinned Ruststep and step-p21 snapshots pass four shared syntax fixtures, but both round 9007199254740993.0, overflow/underflow 1.E\u00b1400 to infinity/zero, and panic on two tested oversized integers. Neither is adopted; no external schemas or fixtures copied. Their probes are not matched performance evidence.",
+      "limits": "Syntax success does not validate header/schema semantics, decoded string directives, EXPRESS entities, units, placements, geometry, topology or assembly ownership. Extended exchange sections/scopes/value references return typed blockers. Scalar total-work/allocation budgets, external CAD interoperability, runtime fuzz/ASan/lexicase and release/pre-push qualification remain open. The inherited archive-admission timing gate is unchanged."
     }
   ],
   "work_packages": [
@@ -611,7 +643,7 @@
     },
     {
       "id": "WP14a",
-      "status": "open",
+      "status": "in-progress",
       "deliverable": "STEP dependency decision, bounded syntax, entity/units graph and simple analytic/faceted exchange",
       "gate": "Exact decimal import and consistent topology; primitives and multi-body files read in an independent tool"
     },
@@ -688,6 +720,7 @@
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
     "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
+    "Advance WP14a from bounded Part 21 syntax to explicit header/text validation, typed entity graphs, exact units/placements and analytic/faceted BREP mapping; add independent STEP fixtures and an external reader before claiming geometry exchange. Keep source-entity diagnostics and exact-versus-approximate export policy explicit.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
   ]
 }

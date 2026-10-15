@@ -542,6 +542,12 @@ decimal preservation, writing support, schema coverage, WASM behavior and
 redistribution rights must pass a dependency review before reuse. See the
 [project overview](https://github.com/ricosjp/ruststep).
 
+The subsequent [parser dependency review](../../hyperbrep-io/docs/PARSER_REVIEW.md)
+compiles pinned Ruststep and step-p21 snapshots against the same hand-authored
+fixtures. Both pass the selected syntax cases but demote numeric lexemes and
+panic on tested oversized integers. HyperBRep IO therefore implements its bounded,
+lexeme-preserving syntax locally; no upstream schemas or fixture files are copied.
+
 ## Validation ownership and current CI coverage
 
 All twelve workflow files matter to the repository's pre-push contract.
