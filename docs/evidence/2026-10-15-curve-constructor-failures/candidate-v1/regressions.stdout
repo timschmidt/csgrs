@@ -1,0 +1,19 @@
+
+running 14 tests
+test approximate_selection_and_consumption_are_distinct_and_do_not_poison_strict_calls ... ok
+test canonical_degeneracies_compose_and_invalid_companions_still_fail ... ok
+test checked_compound_capacity_failure_is_not_successful_empty_geometry ... ok
+test compound_constructors_reject_invalid_parameters ... ok
+test degenerate_dimensions_do_not_conceal_invalid_companions ... ok
+test exact_constructor_sets_survive_triangulation_and_extrusion ... ok
+test failures_remain_structured_through_scalar_adapters ... ok
+test invalid_resolution_fails_even_for_a_zero_radius ... ok
+test malformed_polygon_cannot_enter_a_downstream_pipeline ... ok
+test native_polygon_cause_survives_the_modeling_wrapper ... ok
+test negative_dimensions_fail_through_the_public_adapter ... ok
+test representable_sample_count_with_unrepresentable_bytes_fails_before_allocation ... ok
+test undecided_compound_parameter_retains_a_typed_cause ... ok
+test undecided_dimensions_do_not_become_empty_regions ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

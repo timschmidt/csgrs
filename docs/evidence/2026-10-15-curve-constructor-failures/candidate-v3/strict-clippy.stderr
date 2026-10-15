@@ -1,0 +1,311 @@
+    Checking bevy_ecs v0.18.1
+    Checking rayon v1.12.0
+   Compiling wasm-bindgen-shared v0.2.126
+   Compiling built v0.8.0
+    Checking lazy_static v1.5.0
+   Compiling av-scenechange v0.14.1
+   Compiling rav1e v0.8.1
+   Compiling rustversion v1.0.22
+    Checking aligned v0.4.3
+   Compiling paste v1.0.15
+    Checking tracing v0.1.44
+   Compiling aho-corasick v1.1.4
+    Checking no_std_io2 v0.9.3
+    Checking nom v8.0.0
+   Compiling futures-macro v0.3.32
+   Compiling profiling-procmacros v1.0.18
+   Compiling arg_enum_proc_macro v0.3.4
+   Compiling bumpalo v3.20.2
+   Compiling regex-syntax v0.8.10
+    Checking bevy_app v0.18.1
+   Compiling pastey v0.1.1
+   Compiling heck v0.5.0
+    Checking y4m v0.8.0
+    Checking quick-error v2.0.1
+    Checking futures-task v0.3.32
+    Checking futures-util v0.3.32
+   Compiling regex-automata v0.4.14
+   Compiling wasm-bindgen-macro-support v0.2.126
+    Checking profiling v1.0.18
+    Checking av1-grain v0.2.5
+    Checking bitstream-io v4.10.0
+   Compiling wasm-bindgen v0.2.126
+    Checking sharded-slab v0.1.7
+    Checking maybe-rayon v0.1.1
+    Checking tracing-log v0.2.0
+    Checking async-channel v2.5.0
+    Checking matchers v0.2.0
+    Checking piper v0.2.5
+   Compiling blake3 v1.8.5
+   Compiling async-io v2.6.0
+   Compiling num-derive v0.4.2
+   Compiling simd_helpers v0.1.0
+    Checking encoding_rs v0.8.35
+    Checking new_debug_unreachable v1.0.6
+    Checking typewit v1.15.2
+    Checking imgref v1.12.1
+    Checking zune-core v0.5.1
+    Checking weezl v0.1.12
+   Compiling xml-rs v0.8.28
+    Checking nu-ansi-term v0.50.3
+   Compiling noop_proc_macro v0.3.0
+   Compiling xmltree v0.9.0
+    Checking tracing-subscriber v0.3.23
+    Checking zune-jpeg v0.5.15
+    Checking loop9 v0.1.5
+    Checking const_panic v0.2.15
+    Checking blocking v1.6.2
+   Compiling wasm-bindgen-macro v0.2.126
+   Compiling regex v1.12.3
+    Checking bevy_time v0.18.1
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking async-lock v3.4.2
+    Checking polling v3.11.0
+    Checking fdeflate v0.3.7
+    Checking zune-inflate v0.2.54
+    Checking rand_distr v0.5.1
+    Checking avif-serialize v0.8.8
+    Checking polycool v0.4.0
+    Checking const-fnv1a-hash v1.1.0
+    Checking arrayref v0.3.9
+    Checking const_soft_float v0.1.4
+    Checking bit_field v0.10.3
+    Checking byteorder-lite v0.1.0
+    Checking cpufeatures v0.3.0
+    Checking static_assertions v1.1.0
+    Checking pxfm v0.1.29
+    Checking lebe v0.5.3
+    Checking constant_time_eq v0.4.2
+   Compiling inflections v1.1.1
+    Checking rgb v0.8.53
+    Checking fax v0.2.7
+    Checking color_quant v1.1.0
+    Checking gif v0.14.2
+    Checking tiff v0.11.3
+    Checking ravif v0.13.0
+   Compiling gltf-derive v1.4.1
+    Checking exr v1.74.0
+    Checking moxcms v0.8.1
+    Checking ndshape v0.3.0
+    Checking image-webp v0.2.4
+    Checking constgebra v0.1.4
+    Checking bevy_diagnostic v0.18.1
+    Checking kurbo v0.13.1
+    Checking bevy_math v0.18.1
+    Checking png v0.18.1
+    Checking async-fs v2.2.0
+   Compiling lazy-regex-proc_macros v3.6.0
+    Checking stackfuture v0.3.1
+    Checking bevy_log v0.18.1
+   Compiling dxf v0.6.1
+   Compiling strum_macros v0.27.2
+    Checking ron v0.12.1
+    Checking async-broadcast v0.7.2
+   Compiling bevy_asset_macros v0.18.1
+    Checking qoi v0.4.1
+    Checking crossbeam-channel v0.5.15
+    Checking num-traits v0.1.43
+    Checking siphasher v1.0.3
+    Checking glam v0.29.3
+    Checking atomicow v1.2.0
+    Checking strum v0.27.2
+    Checking base64 v0.22.1
+    Checking gerber-types v0.7.0
+    Checking bevy_asset v0.18.1
+    Checking fast-surface-nets v0.2.1
+    Checking svgtypes v0.16.1
+    Checking enum_primitive v0.1.1
+    Checking image v0.25.10
+    Checking lazy-regex v3.6.0
+    Checking bevy_transform v0.18.1
+    Checking js-sys v0.3.103
+    Checking hexasphere v16.0.0
+    Checking gltf-json v1.4.1
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking wgpu-types v27.0.1
+    Checking float-cmp v0.9.0
+    Checking svg v0.18.0
+    Checking foldhash v0.1.5
+    Checking ttf-parser v0.25.1
+    Checking allocator-api2 v0.2.21
+    Checking hashbrown v0.15.5
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Checking ttf-parser-utils v0.1.1
+   Compiling doc-image-embed v0.2.1
+    Checking bevy_mesh v0.18.1
+    Checking stl_io v0.8.6
+    Checking serde-wasm-bindgen v0.6.5
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking gltf v1.4.1
+    Checking gerber_parser v0.4.0
+    Checking hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+    Checking quick-xml v0.39.4
+    Checking tempfile v3.27.0
+    Checking ppv-lite86 v0.2.21
+    Checking wait-timeout v0.2.1
+    Checking quick-error v1.2.3
+    Checking bit-vec v0.8.0
+    Checking fnv v1.0.7
+    Checking rusty-fork v0.3.1
+    Checking bit-set v0.8.0
+    Checking rand_chacha v0.9.0
+    Checking rand_xorshift v0.4.0
+    Checking unarray v0.1.4
+    Checking proptest v1.11.0
+   Compiling ahash v0.8.12
+    Checking bytes v1.11.1
+    Checking arrow-buffer v57.3.1
+    Checking lexical-util v1.0.7
+    Checking arrow-schema v57.3.1
+    Checking arrow-data v57.3.1
+   Compiling generic-array v0.14.7
+    Checking arrow-array v57.3.1
+   Compiling rustc_version v0.4.1
+    Checking typenum v1.20.1
+   Compiling flatbuffers v25.12.19
+    Checking arrow-select v57.3.1
+    Checking lexical-write-integer v1.0.6
+    Checking lexical-parse-integer v1.0.6
+    Checking utf8parse v0.2.2
+   Compiling vcpkg v0.2.15
+   Compiling pkg-config v0.3.34
+   Compiling libsqlite3-sys v0.37.0
+    Checking anstyle-parse v1.0.0
+    Checking lexical-parse-float v1.0.6
+    Checking lexical-write-float v1.0.6
+    Checking zopfli v0.8.3
+    Checking is_terminal_polyfill v1.70.2
+    Checking anstyle-query v1.1.5
+    Checking anstyle v1.0.14
+    Checking colorchoice v1.0.5
+    Checking anstream v1.0.0
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Checking lexical-core v1.0.6
+    Checking arrow-ord v57.3.1
+    Checking block-buffer v0.10.4
+    Checking crypto-common v0.1.7
+    Checking atoi v2.0.0
+    Checking ordered-float v2.10.1
+    Checking integer-encoding v3.0.4
+    Checking ryu v1.0.23
+    Checking debug_unsafe v0.1.4
+   Compiling zip v2.4.2
+    Checking clap_lex v1.1.1
+    Checking typed-path v0.12.3
+    Checking strsim v0.11.1
+    Checking clap_builder v4.6.7
+    Checking zip v7.2.0
+    Checking atoi_simd v0.17.0
+    Checking arrow-cast v57.3.1
+    Checking thrift v0.17.0
+    Checking digest v0.10.7
+    Checking arrow-ipc v57.3.1
+    Checking codepage v0.1.3
+   Compiling clap_derive v4.6.7
+    Checking xattr v1.6.1
+    Checking hashlink v0.11.1
+   Compiling displaydoc v0.2.7
+    Checking filetime v0.2.29
+    Checking fast-float2 v0.2.4
+    Checking cpufeatures v0.2.17
+    Checking fallible-streaming-iterator v0.1.9
+    Checking fallible-iterator v0.3.0
+   Compiling seq-macro v0.3.6
+    Checking twox-hash v2.1.5
+    Checking rusqlite v0.39.0
+    Checking parquet v57.3.1
+    Checking calamine v0.35.0
+    Checking sha2 v0.10.9
+    Checking tar v0.4.46
+    Checking clap v4.6.7
+    Checking hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+   Compiling ring v0.17.14
+    Checking tinyvec_macros v0.1.1
+    Checking winnow v1.0.2
+    Checking toml_parser v1.1.3+spec-1.1.0
+    Checking tinyvec v1.11.0
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Checking getrandom v0.2.17
+    Checking serde_spanned v1.1.1
+    Checking toml_datetime v1.1.1+spec-1.1.0
+    Checking untrusted v0.9.0
+    Checking toml_writer v1.1.2+spec-1.1.0
+    Checking toml v1.1.6+spec-1.1.0
+    Checking unicode-normalization v0.1.25
+    Checking semver v1.0.28
+   Compiling serde v1.0.228
+   Compiling cargo-platform v0.1.9
+   Compiling cargo_metadata v0.14.2
+   Compiling skeptic v0.13.7
+    Checking approx v0.4.0
+   Compiling thiserror-impl v1.0.69
+    Checking thiserror v1.0.69
+    Checking cgmath v0.18.0
+   Compiling ply-rs v0.1.3
+    Checking hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Checking peg-runtime v0.6.3
+    Checking peg v0.6.3
+    Checking three-d-asset v0.4.0
+    Checking clipper2-rust v1.1.0
+    Checking linked-hash-map v0.5.6
+    Checking manifold-rust v0.9.2
+    Checking tri-mesh v0.6.1
+    Checking boolmesh v0.1.9
+error[E0433]: cannot find type `Point2` in this scope
+    --> crates/hypercircuit/src/drc.rs:1855:23
+     |
+1855 |             position: Point2::origin(),
+     |                       ^^^^^^ use of undeclared type `Point2`
+
+error[E0433]: cannot find type `Point2` in this scope
+    --> crates/hypercircuit/src/drc.rs:1869:13
+     |
+1869 |             Point2::origin(),
+     |             ^^^^^^ use of undeclared type `Point2`
+
+error[E0433]: cannot find type `Point2` in this scope
+    --> crates/hypercircuit/src/drc.rs:1870:13
+     |
+1870 |             Point2::new(Real::one(), Real::zero()),
+     |             ^^^^^^ use of undeclared type `Point2`
+
+error[E0433]: cannot find type `Point2` in this scope
+    --> crates/hypercircuit/src/drc.rs:1871:13
+     |
+1871 |             Point2::new(Real::one(), Real::one()),
+     |             ^^^^^^ use of undeclared type `Point2`
+
+error[E0433]: cannot find type `Point2` in this scope
+    --> crates/hypercircuit/src/drc.rs:1872:13
+     |
+1872 |             Point2::new(Real::zero(), Real::one()),
+     |             ^^^^^^ use of undeclared type `Point2`
+
+error[E0433]: cannot find type `Point2` in this scope
+    --> crates/hypercircuit/src/drc.rs:1977:13
+     |
+1977 |             Point2::origin(),
+     |             ^^^^^^ use of undeclared type `Point2`
+
+error[E0433]: cannot find type `Point2` in this scope
+    --> crates/hypercircuit/src/drc.rs:1978:13
+     |
+1978 |             Point2::new(Real::one(), Real::zero()),
+     |             ^^^^^^ use of undeclared type `Point2`
+
+error[E0433]: cannot find type `Point2` in this scope
+    --> crates/hypercircuit/src/drc.rs:1979:13
+     |
+1979 |             Point2::new(Real::one(), Real::one()),
+     |             ^^^^^^ use of undeclared type `Point2`
+
+error[E0433]: cannot find type `Point2` in this scope
+    --> crates/hypercircuit/src/drc.rs:1980:13
+     |
+1980 |             Point2::new(Real::zero(), Real::one()),
+     |             ^^^^^^ use of undeclared type `Point2`
+
+For more information about this error, try `rustc --explain E0433`.
+error: could not compile `hypercircuit` (lib test) due to 9 previous errors
+warning: build failed, waiting for other jobs to finish...

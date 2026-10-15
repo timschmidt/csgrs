@@ -1,0 +1,13 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--reflink=auto",
+    "/tmp/csgrs-curve-constructor-failures/candidate-v1/release",
+    "/tmp/csgrs-curve-constructor-failures/candidate-v2/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "6663cad44221155e372c2b2adc5a35c0a963382b3f64bf10d7748cce0e8a0f20",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

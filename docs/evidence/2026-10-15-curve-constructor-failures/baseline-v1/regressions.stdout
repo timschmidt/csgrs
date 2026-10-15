@@ -1,0 +1,76 @@
+
+running 9 tests
+test checked_compound_capacity_failure_is_not_successful_empty_geometry ... FAILED
+test compound_constructors_reject_invalid_parameters ... FAILED
+test degenerate_dimensions_do_not_conceal_invalid_companions ... FAILED
+test invalid_resolution_fails_even_for_a_zero_radius ... FAILED
+test malformed_polygon_cannot_enter_a_downstream_pipeline ... FAILED
+test native_polygon_cause_survives_the_modeling_wrapper ... FAILED
+test negative_dimensions_fail_through_the_public_adapter ... FAILED
+test undecided_compound_parameter_retains_a_typed_cause ... FAILED
+test undecided_dimensions_do_not_become_empty_regions ... FAILED
+
+failures:
+
+---- checked_compound_capacity_failure_is_not_successful_empty_geometry stdout ----
+
+thread 'checked_compound_capacity_failure_is_not_successful_empty_geometry' (2672) panicked at tests/curve_constructor_failures.rs:70:5:
+assertion failed: curve::rounded_rectangle_with_context(Real::from(4), Real::from(4),
+        Real::one(), usize::MAX, &GeometryContext::STRICT).is_err()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- compound_constructors_reject_invalid_parameters stdout ----
+
+thread 'compound_constructors_reject_invalid_parameters' (2673) panicked at tests/curve_constructor_failures.rs:58:9:
+assertion failed: curve::keyhole(Real::one(), -Real::one(), Real::one(), 4, &context).is_err()
+
+---- degenerate_dimensions_do_not_conceal_invalid_companions stdout ----
+
+thread 'degenerate_dimensions_do_not_conceal_invalid_companions' (2674) panicked at tests/curve_constructor_failures.rs:27:5:
+assertion failed: curve::rectangle_with_context(Real::zero(), -Real::one(),
+        &GeometryContext::STRICT).is_err()
+
+---- invalid_resolution_fails_even_for_a_zero_radius stdout ----
+
+thread 'invalid_resolution_fails_even_for_a_zero_radius' (2675) panicked at tests/curve_constructor_failures.rs:38:9:
+assertion failed: RawCurveRegion::circle(radius, 2).is_err()
+
+---- malformed_polygon_cannot_enter_a_downstream_pipeline stdout ----
+
+thread 'malformed_polygon_cannot_enter_a_downstream_pipeline' (2676) panicked at tests/curve_constructor_failures.rs:45:5:
+assertion failed: RawCurveRegion::polygon(&points).is_err()
+
+---- native_polygon_cause_survives_the_modeling_wrapper stdout ----
+
+thread 'native_polygon_cause_survives_the_modeling_wrapper' (2677) panicked at tests/curve_constructor_failures.rs:52:5:
+native cause was flattened: Geometry("curve string has insufficient vertices")
+
+---- negative_dimensions_fail_through_the_public_adapter stdout ----
+
+thread 'negative_dimensions_fail_through_the_public_adapter' (2678) panicked at tests/curve_constructor_failures.rs:15:5:
+assertion failed: RawCurveRegion::square(-Real::one()).is_err()
+
+---- undecided_compound_parameter_retains_a_typed_cause stdout ----
+
+thread 'undecided_compound_parameter_retains_a_typed_cause' (2679) panicked at tests/curve_constructor_failures.rs:80:5:
+predicate cause was flattened: Curve(Topology("positive curve dimension is undecided under PredicatePolicy(0)"))
+
+---- undecided_dimensions_do_not_become_empty_regions stdout ----
+
+thread 'undecided_dimensions_do_not_become_empty_regions' (2680) panicked at tests/curve_constructor_failures.rs:22:5:
+assertion failed: RawCurveRegion::square(unresolved_zero()).is_err()
+
+
+failures:
+    checked_compound_capacity_failure_is_not_successful_empty_geometry
+    compound_constructors_reject_invalid_parameters
+    degenerate_dimensions_do_not_conceal_invalid_companions
+    invalid_resolution_fails_even_for_a_zero_radius
+    malformed_polygon_cannot_enter_a_downstream_pipeline
+    native_polygon_cause_survives_the_modeling_wrapper
+    negative_dimensions_fail_through_the_public_adapter
+    undecided_compound_parameter_retains_a_typed_cause
+    undecided_dimensions_do_not_become_empty_regions
+
+test result: FAILED. 0 passed; 9 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

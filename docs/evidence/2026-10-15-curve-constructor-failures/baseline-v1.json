@@ -1,0 +1,17 @@
+[
+  [
+    "regressions",
+    [
+      "cargo",
+      "test",
+      "--release",
+      "--no-default-features",
+      "--features",
+      "curve",
+      "--test",
+      "curve_constructor_failures",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]

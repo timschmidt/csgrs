@@ -1,0 +1,8 @@
+{
+  "runner_sha256": "31a45048e902df6e3c96e180eebe990c54f368f652615066918a4e17162e3199",
+  "manifest_sha256": "ab89605095759e0d27a11b5dec7a898917a5fefaeaba0598890026a3d5df9bce",
+  "linked_paths": 1205,
+  "duplicate_bytes_consolidated": 1008409001,
+  "protected_artifacts_verified": 554,
+  "scope": "Only non-executable compiler artifacts in terminal recent trials on the same temporary filesystem. Every path and byte retained. Executables, unique files, logs and source snapshots untouched. These targets remain immutable; new phases copy seeds with independent inodes."
+}

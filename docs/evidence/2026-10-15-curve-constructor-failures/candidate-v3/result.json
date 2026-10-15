@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.38967404095456,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "64d37009d7ca5079a71ebfb65ac0c8be8896b288568f489a427e1537d62661f0"
+    },
+    {
+      "name": "strict-clippy",
+      "exit_code": 101,
+      "seconds": 81.70160808414221,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "65fbf396b079f7d6fc68c9a820b1bb045f2346e75179607c9393af1fd085338d",
+      "resources_sha256": "fd544bd9ebaf2a0c15ef6cf96244df5e7608969dcfddef96598ba692ad916414"
+    }
+  ],
+  "passed": false
+}

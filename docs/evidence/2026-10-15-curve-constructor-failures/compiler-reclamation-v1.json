@@ -1,0 +1,8 @@
+{
+  "runner_sha256": "caa053348d8da2cc2e50a3546357f796a7fd6ea8b6702ff6e70b1b79f517c435",
+  "manifest_sha256": "be31b3b09ea20562663473723ba1c965ed7e0220f0051e1ca8c6f5f67295ff23",
+  "protected_artifacts_verified": 554,
+  "duplicate_count": 2107,
+  "duplicate_bytes_removed": 1682918575,
+  "reason": "candidate-v2 hit the temporary filesystem quota while compiling dependencies. Only byte-identical non-executable compiler copies in terminal named trials were removed. Earlier reclamation originals, all executed artifacts, unique compiler files and source/log evidence remain."
+}

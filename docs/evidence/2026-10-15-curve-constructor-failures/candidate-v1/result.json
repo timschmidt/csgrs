@@ -1,0 +1,29 @@
+{
+  "commands": [
+    {
+      "name": "regressions",
+      "exit_code": 0,
+      "seconds": 8.55643637990579,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-curve-constructor-failures/candidate-v1/release/deps/curve_constructor_failures-526a2455ed7f2aed": "bd6a8cfa185b6c5736cfdba30dbd4f1ec142b325edd7699a91d524ad9dd23851"
+      },
+      "stdout_sha256": "4f48a0ef6bfc1e6677113102a8d0c73fb9c3ccd278f338c7527b0ce65ddbfd45",
+      "stderr_sha256": "b0ee349818a6994c747ab8c2ea6823bab7e31a5f50df3a32bca978100dd39a22",
+      "resources_sha256": "a13eadbb949557902022f008a6b14cbe3b074fb17be96015d40bc02234a9ecbf"
+    },
+    {
+      "name": "core-tests",
+      "exit_code": 0,
+      "seconds": 10.927454359829426,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-curve-constructor-failures/candidate-v1/release/deps/csgrs-fbfb4e9daf55c3e5": "aab92cd45e0f4b592d7686acde1c6317870011b6239c404bff4906d041d177b9"
+      },
+      "stdout_sha256": "14e175246992eaa9d17411742312004e9538ac66c1f2d8e1036aaae84699dda5",
+      "stderr_sha256": "cc907bba8a7ec7be92cf97526bd914331b4952d4af336a6097d6b9bc34262b6b",
+      "resources_sha256": "9d6395a3c72ee82734debd948396c70f91b80ff9b3641ae69a43572c976b4498"
+    }
+  ],
+  "passed": true
+}

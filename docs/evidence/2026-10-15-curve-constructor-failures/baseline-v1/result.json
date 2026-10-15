@@ -1,0 +1,17 @@
+{
+  "commands": [
+    {
+      "name": "regressions",
+      "exit_code": 101,
+      "seconds": 162.5800194758922,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-curve-constructor-failures/baseline-v1/release/deps/curve_constructor_failures-526a2455ed7f2aed": "cc10ee771710c3816a51bc71239201e8570121fcb08b60f84aff1c8f4cade4f9"
+      },
+      "stdout_sha256": "6c4a5c2dbe6ae3c9eba902b348e5be619703b898f945031cc3731991b102cdbc",
+      "stderr_sha256": "39a7d80883d08d45a840ae2e616cfca8e7a118feebb4fbd300f473d8a626a042",
+      "resources_sha256": "14e4138eef6437b5823f6f1a40237c51e2d919b0cf79992b6c3565c08772ec80"
+    }
+  ],
+  "passed": false
+}
