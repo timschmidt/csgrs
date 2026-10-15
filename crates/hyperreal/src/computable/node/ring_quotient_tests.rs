@@ -195,4 +195,73 @@ mod ring_quotient_tests {
         drop(recognition);
         assert_eq!(value.bounded_quotient_rational(), Some(Rational::zero()));
     }
+
+    #[test]
+    fn zero_quotients_do_not_accumulate_irrelevant_denominators() {
+        let denominator = positive_denominator();
+        assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
+        let reciprocal = raw(Approximation::Inverse(denominator));
+        let zero = raw(Approximation::Add(
+            reciprocal.clone(),
+            raw(Approximation::Negate(reciprocal.clone())),
+        ));
+        let mut eighth_power = reciprocal;
+        for _ in 0..3 {
+            eighth_power = raw(Approximation::Square(eighth_power));
+        }
+        // Each child fits degree 8. Once 1/d - 1/d is proved zero,
+        // multiplying its unused denominator by d^8 serves no proof.
+        for (left, right) in [
+            (zero.clone(), eighth_power.clone()),
+            (eighth_power.clone(), zero),
+        ] {
+            let product = raw(Approximation::Multiply(left.clone(), right.clone()));
+            assert_eq!(product.bounded_quotient_rational(), Some(Rational::zero()));
+            let difference = raw(Approximation::Add(
+                raw(Approximation::Add(left, right)),
+                raw(Approximation::Negate(eighth_power.clone())),
+            ));
+            assert_eq!(difference.bounded_quotient_rational(), Some(Rational::zero()));
+            assert!(product.cached().is_none());
+            assert!(difference.cached().is_none());
+        }
+    }
+
+    #[test]
+    fn cancelled_cross_numerators_need_no_denominator_product() {
+        let denominator = positive_denominator();
+        assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
+        let fourth = raw(Approximation::Square(raw(Approximation::Square(
+            denominator,
+        ))));
+        let eighth = raw(Approximation::Square(fourth.clone()));
+        assert_eq!(fourth.sign_until(-64), Some(RealSign::Positive));
+        assert_eq!(eighth.sign_until(-64), Some(RealSign::Positive));
+        // 1/d^4 - d^4/d^8 = 0. The cross numerator has degree 8;
+        // constructing d^12 after it cancels would exceed the same cap.
+        let value = raw(Approximation::Add(
+            raw(Approximation::Inverse(fourth.clone())),
+            raw(Approximation::Negate(raw(Approximation::Multiply(
+                fourth,
+                raw(Approximation::Inverse(eighth)),
+            )))),
+        ));
+        assert_eq!(value.bounded_quotient_rational(), Some(Rational::zero()));
+        assert!(value.cached().is_none());
+    }
+
+    #[test]
+    fn zero_absorption_does_not_hide_unproved_or_zero_divisors() {
+        for denominator in [positive_denominator(), Computable::zero()] {
+            let reciprocal = raw(Approximation::Inverse(denominator));
+            for (left, right) in [
+                (Computable::zero(), reciprocal.clone()),
+                (reciprocal, Computable::zero()),
+            ] {
+                let value = raw(Approximation::Multiply(left, right));
+                assert_eq!(value.bounded_quotient_rational(), None);
+                assert_unproved(&value);
+            }
+        }
+    }
 }

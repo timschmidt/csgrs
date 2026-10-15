@@ -1,0 +1,19 @@
+[
+  {
+    "name": "units",
+    "command": [
+      "/run/user/1000/csgrs-quotient-factor-proofs/scalar-zero-baseline-v1/units",
+      "ring_quotient_tests",
+      "--test-threads=2"
+    ],
+    "exit_code": 101
+  },
+  {
+    "name": "public",
+    "command": [
+      "/run/user/1000/csgrs-quotient-factor-proofs/scalar-zero-baseline-v1/public",
+      "--test-threads=2"
+    ],
+    "exit_code": 101
+  }
+]

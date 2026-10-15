@@ -1,0 +1,15 @@
+error[E0460]: found possibly newer version of crate `hypertri` which `hypermesh` depends on
+  --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics/src/mass.rs:15:21
+   |
+15 |     triangles: Arc<[hypermesh::Triangle]>,
+   |                     ^^^^^^^^^
+   |
+   = note: perhaps that crate needs to be recompiled?
+   = note: the following crate versions were found:
+           crate `hypertri`: /run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhypertri-2f991b7c287fd1c7.rmeta
+           crate `hypertri`: /run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhypertri-2f991b7c287fd1c7.rlib
+           crate `hypermesh`: /run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v2/libhypermesh.rlib
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0460`.

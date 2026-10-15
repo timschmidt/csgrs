@@ -1,0 +1,65 @@
+{"started": "units", "command": ["/run/user/1000/csgrs-quotient-factor-proofs/scalar-zero-baseline-v1/units", "ring_quotient_tests", "--test-threads=2"]}
+
+running 10 tests
+test computable::node::ring_quotient_tests::quotient_can_prove_a_nonzero_denominator_without_refinement ... ok
+test computable::node::ring_quotient_tests::cancelled_cross_numerators_need_no_denominator_product ... FAILED
+test computable::node::ring_quotient_tests::quotient_expansion_preserves_degree_and_coefficient_limits ... ok
+test computable::node::ring_quotient_tests::quotient_limits_and_cancellation_publish_no_partial_proof ... ok
+test computable::node::ring_quotient_tests::quotient_rejects_zero_and_unproved_denominators ... ok
+test computable::node::ring_quotient_tests::quotient_reuse_requires_a_real_nonzero_proof_and_can_recover ... ok
+test computable::node::ring_quotient_tests::reused_quotient_proofs_still_charge_work_and_observe_cancellation ... ok
+test computable::node::ring_quotient_tests::shared_quotient_subexpressions_fit_the_existing_expansion_budget ... ok
+test computable::node::ring_quotient_tests::zero_absorption_does_not_hide_unproved_or_zero_divisors ... ok
+test computable::node::ring_quotient_tests::zero_quotients_do_not_accumulate_irrelevant_denominators ... FAILED
+
+failures:
+
+---- computable::node::ring_quotient_tests::cancelled_cross_numerators_need_no_denominator_product stdout ----
+
+thread 'computable::node::ring_quotient_tests::cancelled_cross_numerators_need_no_denominator_product' (1842429) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/computable/node/ring_quotient_tests.rs:249:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- computable::node::ring_quotient_tests::zero_quotients_do_not_accumulate_irrelevant_denominators stdout ----
+
+thread 'computable::node::ring_quotient_tests::zero_quotients_do_not_accumulate_irrelevant_denominators' (1842438) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/computable/node/ring_quotient_tests.rs:219:13:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+
+
+failures:
+    computable::node::ring_quotient_tests::cancelled_cross_numerators_need_no_denominator_product
+    computable::node::ring_quotient_tests::zero_quotients_do_not_accumulate_irrelevant_denominators
+
+test result: FAILED. 8 passed; 2 failed; 0 ignored; 0 measured; 785 filtered out; finished in 0.00s
+
+{"started": "public", "command": ["/run/user/1000/csgrs-quotient-factor-proofs/scalar-zero-baseline-v1/public", "--test-threads=2"]}
+
+running 7 tests
+test a_proved_zero_quotient_composes_with_high_degree_reciprocals ... FAILED
+test differently_expanded_quotients_have_an_exact_equality_proof ... ok
+test distinct_denominators_use_the_exact_common_denominator ... ok
+test polynomial_factor_division_preserves_small_nonzero_denominators ... ok
+test quotient_proofs_preserve_exact_nonzero_displacements ... ok
+test an_unproved_zero_denominator_keeps_its_typed_failure ... ok
+test quotient_proofs_survive_precision_changes_and_concurrent_queries ... ok
+
+failures:
+
+---- a_proved_zero_quotient_composes_with_high_degree_reciprocals stdout ----
+
+thread 'a_proved_zero_quotient_composes_with_high_degree_reciprocals' (1842440) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/quotient_polynomial_cancellation.rs:63:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    a_proved_zero_quotient_composes_with_high_degree_reciprocals
+
+test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

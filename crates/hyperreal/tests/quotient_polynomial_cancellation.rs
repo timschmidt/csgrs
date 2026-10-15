@@ -52,6 +52,25 @@ fn quotient_proofs_preserve_exact_nonzero_displacements() {
 }
 
 #[test]
+fn a_proved_zero_quotient_composes_with_high_degree_reciprocals() {
+    let (left, right) = equivalent_quotients();
+    let denominator = Real::from(4) + Real::e().sin();
+    let mut reciprocal = denominator.inverse_ref().unwrap();
+    for _ in 0..3 {
+        reciprocal = &reciprocal * &reciprocal;
+    }
+    let value = (left - right) * reciprocal;
+    assert_eq!(value.exact_rational_normal_form(), Some(Rational::zero()));
+    for numerator in [-1, 1] {
+        let displacement = Rational::fraction(numerator, 1_000_000_000_000).unwrap();
+        assert_eq!(
+            (&value + Real::from(displacement.clone())).exact_rational_normal_form(),
+            Some(displacement)
+        );
+    }
+}
+
+#[test]
 fn polynomial_factor_division_preserves_small_nonzero_denominators() {
     let a = Real::from(4) + Real::e().sin();
     let b = Real::one() + (Real::pi() / Real::from(8)).unwrap().sin();

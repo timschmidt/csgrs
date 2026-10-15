@@ -1,0 +1,23 @@
+	Command being timed: "env TMPDIR=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v4 CARGO_PKG_NAME=csgrs CARGO_PKG_VERSION=0.23.0 CARGO_MANIFEST_DIR=/home/tim/Documents/GitHub/workspace/csgrs rustc --crate-name csgrs --crate-type rlib --edition=2024 -C opt-level=3 -C debuginfo=1 -C force-frame-pointers=yes -D warnings /home/tim/Documents/GitHub/workspace/csgrs/src/lib.rs -L dependency=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v3/external -L dependency=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v2 -o /run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v4/libcsgrs.rlib --cfg feature="curve" --extern hyperlimit=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v2/libhyperlimit.rlib --extern hypercurve=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v2/libhypercurve.rlib --extern thiserror=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libthiserror-5e8fef11be9f720a.rlib --extern hyperlattice=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v2/libhyperlattice.rlib --extern hyperreal=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v2/libhyperreal.rlib --extern hashbrown=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhashbrown-d185ea42c13f671f.rlib --extern hypertri=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v2/libhypertri.rlib --extern hyperphysics=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v4/libhyperphysics.rlib --extern doc_image_embed=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libdoc_image_embed-655c39199a1a3493.so --extern hypermesh=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v2/libhypermesh.rlib -L dependency=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v4"
+	User time (seconds): 12.25
+	System time (seconds): 0.51
+	Percent of CPU this job got: 415%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.06
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 488816
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 196001
+	Voluntary context switches: 171
+	Involuntary context switches: 1822
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

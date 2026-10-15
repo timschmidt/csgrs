@@ -1,0 +1,35 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.8568398710340261,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "d0869b653bdbc79cafbe0134fb0c4236f8263a89ab9ac3de67d8efbbd3e7465d"
+    },
+    {
+      "name": "external-libraries",
+      "exit_code": 0,
+      "seconds": 2.1293326718732715,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "be057077c0267070e3986975c1a95b20a0844606c94c909b6a5019e8a11261db",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "22a9db59e8cd9e37a3959bbe35f495a1cc49f6c0e0c8f4c8c1dd650c5446aa04"
+    },
+    {
+      "name": "hyperphysics-build",
+      "exit_code": 1,
+      "seconds": 2.051532657817006,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "c4d881916b4dfe6b3e6c6d1949c61cfff6a902ab8c6d98e8ceb715c428de712f",
+      "resources_sha256": "faca8c29abf031c23146ae9fb46ca18e9cee10bdb95a879a370ce7893abdb3b9"
+    }
+  ],
+  "passed": false
+}

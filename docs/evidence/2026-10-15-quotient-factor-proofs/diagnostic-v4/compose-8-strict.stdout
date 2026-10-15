@@ -1,0 +1,3 @@
+segments=8 initial=Certified
+union_empty=Certified positions=40 triangles=80
+difference_body=Certified positions=0 triangles=0

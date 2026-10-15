@@ -1,0 +1,15 @@
+{
+  "commands": [
+    {
+      "name": "zero-reduction-algebra",
+      "exit_code": 0,
+      "seconds": 2.178421736229211,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "df27a367fd65974f37a992b0efae795e70d366d7b318f1d08e056430329a4473",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "179daf355f807a4299a6358ffd70e0e9a2e5957dfd46d16777a1a352b19c8f74"
+    }
+  ],
+  "passed": true
+}

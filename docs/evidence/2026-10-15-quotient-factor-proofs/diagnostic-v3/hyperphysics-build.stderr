@@ -1,0 +1,9 @@
+error[E0463]: can't find crate for `hypertri` which `hypermesh` depends on
+  --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics/src/mass.rs:15:21
+   |
+15 |     triangles: Arc<[hypermesh::Triangle]>,
+   |                     ^^^^^^^^^ can't find crate
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0463`.
