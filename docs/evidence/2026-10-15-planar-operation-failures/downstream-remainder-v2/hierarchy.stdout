@@ -1,0 +1,16 @@
+
+running 11 tests
+test authored_globals_join_same_named_nets_without_boundary_ports ... ok
+test exact_module_overrides_apply_to_instance_and_model_parameters_before_mna ... ok
+test flattening_exposes_scope_maps_and_namespaces_source_stimuli ... ok
+test global_child_port_cannot_bind_to_a_local_parent_net ... ok
+test hierarchy_validation_rejects_missing_ports_and_recursive_definitions ... ok
+test module_parameter_declarations_and_overrides_round_trip_exactly ... ok
+test module_parameters_forward_through_nested_subcircuits ... ok
+test one_net_cannot_expose_incompatible_boundary_signal_types ... ok
+test parameter_validation_rejects_unknown_units_targets_and_stale_stamps ... ok
+test reusable_modules_flatten_with_namespaced_ids_and_remapped_mna_stamps ... ok
+test typed_hierarchy_rejects_incompatible_signal_shapes_on_one_parent_net ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

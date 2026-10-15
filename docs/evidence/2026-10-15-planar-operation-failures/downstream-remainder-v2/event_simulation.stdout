@@ -1,0 +1,13 @@
+
+running 8 tests
+test agenda_clock_advancement_cannot_skip_pending_events ... ok
+test agenda_fingerprints_and_stochastic_draws_are_reproducible ... ok
+test agenda_orders_by_exact_time_phase_and_stable_sequence ... ok
+test cancellation_and_rescheduling_retain_lifecycle_evidence ... ok
+test delivered_phase_cannot_be_reentered_at_the_same_time ... ok
+test invalid_preordered_trace_is_rejected_atomically ... ok
+test named_breakpoint_schedules_support_trace_and_topology_adapters ... ok
+test preordered_fast_path_merges_with_existing_events ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

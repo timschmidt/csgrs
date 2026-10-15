@@ -1,0 +1,1 @@
+{"shape":"translate","cache":"varied","iterations":128,"completed":128,"policy":"strict","certainty":"Certified","oracle":"independent exact coordinates and area","nanos":6986421,"allocations":58575,"requested_bytes":7090044,"retained_byte_delta":1632,"peak_live_bytes_above_start":19432,"output_bytes":93876,"checksum":13684026371398015335}

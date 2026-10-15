@@ -1,0 +1,11 @@
+
+running 6 tests
+test exact_piecewise_linear_solver_enforces_enumeration_limit ... ok
+test exact_piecewise_linear_solver_enumerates_to_the_consistent_region ... ok
+test exact_piecewise_linear_solver_reports_shared_boundary_regions ... ok
+test retained_diode_model_round_trips_through_semantic_json ... ok
+test shockley_newton_returns_an_audited_iteration_limit ... ok
+test shockley_newton_uses_lossy_proposals_but_exact_true_law_replay ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

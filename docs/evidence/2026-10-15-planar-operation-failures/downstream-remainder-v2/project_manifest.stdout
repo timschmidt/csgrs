@@ -1,0 +1,8 @@
+
+running 3 tests
+test project_manifest_rejects_unknown_defaults_and_mixed_provider_fields ... ok
+test project_manifest_round_trips_and_selects_command_and_cargo_providers ... ok
+test project_materials_resolve_to_exact_hyperphysics_property_graphs ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

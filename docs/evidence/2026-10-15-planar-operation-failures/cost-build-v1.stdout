@@ -1,0 +1,2 @@
+{"started": "renderer-library", "phase": "cost-build-v1"}
+{"name": "renderer-library", "exit_code": 0, "seconds": 21.441390288993716, "sources_unchanged": true, "binaries_sha256": {}, "stdout_sha256": "ebd16149cc9608271a0d0b243040d85922bf16e8b347481e2fa6f88eb39ecb79", "stderr_sha256": "84cceab4ab03f22fc4f5d049b4d1e7a6e02be358314680c83294d7013bdc8945", "resources_sha256": "3427c2cbbbf1ca1aad37f4bb14caaf184cd4449a10208b80cb59925da5305bdf"}

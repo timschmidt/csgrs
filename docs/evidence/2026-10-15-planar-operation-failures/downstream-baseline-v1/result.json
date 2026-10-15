@@ -1,0 +1,28 @@
+{
+  "commands": [
+    {
+      "name": "prepare-source",
+      "exit_code": 0,
+      "seconds": 3.934226934798062,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "cac05c7498c745e8e4ca0c9befa4be09f053086522b9452615b9815fdfc9a6ad",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "2769692929a64b5be66c87c8dd463993f296cab78b6b72c600a9f0a5561e9f82"
+    },
+    {
+      "name": "downstream-failures",
+      "exit_code": 101,
+      "seconds": 301.9470476540737,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/planar-operation-failures/downstream-baseline-v1/release/deps/easyduino-dd5e52a01bac1f24": "6013612980fa3858a7ab8d594c4714a0d40e51de94c38def88712391604efe02",
+        "target/planar-operation-failures/downstream-baseline-v1/release/deps/workflow-717529809bd22e78": "4344864877c9871a279fb2663653fbeb058ae0ff876da8a71c7df1f6dd3f1d9e"
+      },
+      "stdout_sha256": "2f953a018ddd983e7ac6a2102e2dc0a7ca84eec4de06ef467a7e691ee9ee4970",
+      "stderr_sha256": "3665ca8bd83e28a4184099e5b6307123813dd23c3b3c6f28ae7fb1f054f7567f",
+      "resources_sha256": "4dbeba6ce2a6832349727bfff7d1f881a67cd460ac9e41c9dad086cdeae1a935"
+    }
+  ],
+  "passed": false
+}

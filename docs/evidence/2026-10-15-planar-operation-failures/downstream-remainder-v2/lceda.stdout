@@ -1,0 +1,9 @@
+
+running 4 tests
+test exports_deterministic_parseable_pro_archive_with_authored_pcb_records ... ok
+test rejects_zero_precision ... ok
+test supported_pcb_subset_imports_editor_changes_and_reexports_stably ... ok
+test supported_schematic_presentation_imports_editor_changes_without_connectivity_changes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

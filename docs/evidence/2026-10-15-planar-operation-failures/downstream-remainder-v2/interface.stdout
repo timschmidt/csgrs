@@ -1,0 +1,11 @@
+
+running 6 tests
+test binding_rejects_two_endpoints_presenting_the_same_direction ... ok
+test dual_bundle_endpoints_lower_to_existing_hierarchy_port_bindings ... ok
+test event_addresses_validate_against_bundle_members_and_hierarchy_paths ... ok
+test modport_dual_flips_directional_members_and_retains_symmetric_roles ... ok
+test typed_bundle_members_must_match_their_bound_circuit_ports ... ok
+test validation_reports_incomplete_views_and_endpoint_direction_mismatches ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

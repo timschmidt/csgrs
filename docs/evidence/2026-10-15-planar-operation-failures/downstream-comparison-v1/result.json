@@ -1,0 +1,65 @@
+{
+  "runner_sha256": "25fec4ef1f9149c1e089d1e057341c331e20e695fc1a86582e999fab156505fc",
+  "inputs_sha256": {
+    "docs/evidence/2026-10-15-planar-operation-failures/downstream-v1/hypercircuit-tests.stdout": "2b88bdf0645edbd14218de51ac53d753343eb55838644fec63c94a2dd0a1e971",
+    "docs/evidence/2026-10-15-planar-operation-failures/downstream-remainder-v2/workflow.stdout": "f73fbc1b59f40087f57e42035de4d499790c2901e1cf026eb0a14a6cd73f2fc0",
+    "docs/evidence/2026-10-15-planar-operation-failures/downstream-baseline-v1/downstream-failures.stdout": "2f953a018ddd983e7ac6a2102e2dc0a7ca84eec4de06ef467a7e691ee9ee4970"
+  },
+  "baseline_sources_unchanged": 2593,
+  "failures": {
+    "default_manufacturing_release_is_unsigned_deterministic_and_self_verifying": {
+      "actual_bytes": 134503,
+      "expected_bytes": 134343,
+      "actual_sha256": "aaae55e9957c7a2db67f3b60489d117afab7411b00f25a61e06e8c8de0e2d188",
+      "expected_sha256": "c22ba6c79b42b0c4754664b5b0f8fa03616ee2e7ae16401965287dfcbeb41e6d",
+      "baseline_candidate_actual_and_expected_identical": true,
+      "archive_members_changed_against_old_fixture": [
+        "evidence/hyperdrc.json",
+        "manufacturing-release.json"
+      ]
+    },
+    "esp32_runs_end_to_end_through_hyperdrc": {
+      "actual_bytes": 102757,
+      "expected_bytes": 102757,
+      "actual_sha256": "b3a0428305689adb1520b80fb741616dd6bff7a1e4cd853870b43a3bbc3765ae",
+      "expected_sha256": "d4e237c1b77a98216d9c80c6f0819cd206ee253833826fb02bf1b2a53345f3eb",
+      "baseline_candidate_actual_and_expected_identical": true
+    },
+    "esp32s3_runs_end_to_end_through_hyperdrc": {
+      "actual_bytes": 162167,
+      "expected_bytes": 162167,
+      "actual_sha256": "64aca0494a1107cfb415eae9c6eda5838f613291e75c553780e8a7600843f517",
+      "expected_sha256": "04b3d92d6218d3ddb73a32dfa2c5c91bd1b564e609035be26ef6dab0a2479b22",
+      "baseline_candidate_actual_and_expected_identical": true
+    },
+    "nano_runs_end_to_end_through_hyperdrc": {
+      "actual_bytes": 115202,
+      "expected_bytes": 115202,
+      "actual_sha256": "25be72d0dd282a4f2ea552b9e1f79ca1bcd087b93c51d5e53ab435c45db54a02",
+      "expected_sha256": "4f4e6673b793a23fe0bc00b799670198bb88050969e0f5d5d6c239e4cd1a436a",
+      "baseline_candidate_actual_and_expected_identical": true
+    },
+    "rp2040_runs_end_to_end_through_hyperdrc": {
+      "actual_bytes": 137731,
+      "expected_bytes": 137731,
+      "actual_sha256": "792319f31fac7910f7ca91a79071b405c1ee60a721c94596aebcae5a4dc8c9b0",
+      "expected_sha256": "d283c7be8beca4e3f2ce752c23ac3b9bdb4219560232e57f12b20098a13d4c9a",
+      "baseline_candidate_actual_and_expected_identical": true
+    },
+    "stm32f103_runs_end_to_end_through_hyperdrc": {
+      "actual_bytes": 160806,
+      "expected_bytes": 160806,
+      "actual_sha256": "5c057de4b6f0cf9319ca33f63ca198cc567d43536a313e2f1a4613be3a73919b",
+      "expected_sha256": "84d0efe06bb97602c319abae76ae5865dba7e98e1ce1ab0dff0a95c70a188f23",
+      "baseline_candidate_actual_and_expected_identical": true
+    },
+    "uno_runs_end_to_end_through_hyperdrc": {
+      "actual_bytes": 106754,
+      "expected_bytes": 106754,
+      "actual_sha256": "7d3dc6055a8408d553af96661b634c6f030251c9cb9bee6994d51aee19654316",
+      "expected_sha256": "3241c7a2b79a21571c056c56096cc897c0e56d1d19098d81a0333f7daf1bfa30",
+      "baseline_candidate_actual_and_expected_identical": true
+    }
+  },
+  "conclusion": "All seven failing actual outputs and expected fixtures match byte-for-byte on the reconstructed starting revision and the candidate. They are pre-existing failures with the unchanged 35 pending native files. No snapshot is updated and neither broad downstream trial is relabeled as passing. Geometry/materialization/fabrication checks retain their individual results. Manufacturing archive reproducibility assertions preceding its golden-fixture comparison passed."
+}

@@ -1,0 +1,9 @@
+
+running 4 tests
+test package_lock_json_round_trips_exact_coordinates_and_provenance ... ok
+test portable_part_library_publishes_locks_loads_and_instantiates_without_duplication ... ok
+test resolver_backtracks_to_highest_mutually_compatible_release_and_verifies_lock ... ok
+test reusable_circuit_library_artifact_round_trips_through_resolution_and_store ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,27 @@
+{
+  "commands": [
+    {
+      "name": "baseline-build",
+      "exit_code": 0,
+      "seconds": 1.6704271058551967,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "c3307467759461637a925ad5230963fd6967ef0831acd9b246ae1c30760e4c41"
+      }
+    },
+    {
+      "name": "candidate-build",
+      "exit_code": 1,
+      "seconds": 0.36804767698049545,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "7cb05e01ec2a0769218c5679a02c8b50a6362c54b7c00b99b05dab7805bb0fc1",
+        "resources": "84d9747ac76771bd03344538fa879b775be95b2124c1cf4b7f18cde246d402ac"
+      }
+    }
+  ],
+  "passed": false
+}

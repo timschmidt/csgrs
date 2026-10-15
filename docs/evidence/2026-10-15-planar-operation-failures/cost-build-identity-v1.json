@@ -1,0 +1,361 @@
+{
+  "compilation_units": [
+    {
+      "path": "target/sampled-profile-failures/native-v1/release/.fingerprint/csgrs-5357807c720d8967/lib-csgrs.json",
+      "sha256": "03db21da21631ee7fb42278052d91ea743f1d883677c60411baaa44276d825bc",
+      "configuration_without_dependency_fingerprint_values": {
+        "rustc": 1625334936438085654,
+        "features": "[\"amf-io\", \"attributed\", \"base64\", \"bench-feature-pipeline\", \"bevymesh\", \"chrono\", \"curve\", \"default\", \"dispatch-trace\", \"dxf\", \"dxf-io\", \"gerber-io\", \"gerber-types\", \"gerber_parser\", \"gltf-io\", \"hershey-text\", \"hypersdf\", \"image\", \"image-io\", \"js-sys\", \"metaballs\", \"obj-io\", \"offset\", \"ply-io\", \"sdf\", \"serde\", \"serde-wasm-bindgen\", \"serde_json\", \"stl-io\", \"stl_io\", \"svg-io\", \"truetype-text\", \"ttf-parser\", \"ttf-utils\", \"vrml-io\", \"wasm\", \"wasm-bindgen\"]",
+        "declared_features": "[\"amf-io\", \"attributed\", \"base64\", \"bench-feature-pipeline\", \"bevymesh\", \"chrono\", \"curve\", \"default\", \"dispatch-trace\", \"dxf\", \"dxf-io\", \"gerber-io\", \"gerber-types\", \"gerber_parser\", \"gltf-io\", \"hershey-text\", \"hypersdf\", \"image\", \"image-io\", \"js-sys\", \"metaballs\", \"obj-io\", \"offset\", \"ply-io\", \"sdf\", \"serde\", \"serde-wasm-bindgen\", \"serde_json\", \"stl-io\", \"stl_io\", \"svg-io\", \"truetype-text\", \"ttf-parser\", \"ttf-utils\", \"vrml-io\", \"wasm\", \"wasm-bindgen\"]",
+        "target": 5989468832792710274,
+        "profile": 2040997289075261528,
+        "path": 10763286916239946207,
+        "deps": [
+          [
+            390430846265316719,
+            "gltf",
+            false
+          ],
+          [
+            494870069918897175,
+            "wgpu_types",
+            false
+          ],
+          [
+            899433757904706369,
+            "hyperlimit",
+            false
+          ],
+          [
+            1156003183292959512,
+            "bevy_asset",
+            false
+          ],
+          [
+            1846820732405487584,
+            "hypercurve",
+            false
+          ],
+          [
+            1957009224993739128,
+            "thiserror",
+            false
+          ],
+          [
+            2467858119226893296,
+            "hypersdf",
+            false
+          ],
+          [
+            2538394439553624815,
+            "hyperlattice",
+            false
+          ],
+          [
+            2551482934563074397,
+            "hyperreal",
+            false
+          ],
+          [
+            2987262961022079395,
+            "image",
+            false
+          ],
+          [
+            3525727601854660179,
+            "gerber_types",
+            false
+          ],
+          [
+            3613059130379693208,
+            "js_sys",
+            false
+          ],
+          [
+            3856126590694406759,
+            "chrono",
+            false
+          ],
+          [
+            4961353526336270975,
+            "bevy_mesh",
+            false
+          ],
+          [
+            8921336173939679069,
+            "hashbrown",
+            false
+          ],
+          [
+            9740168411151160745,
+            "hypertri",
+            false
+          ],
+          [
+            10434485102629434171,
+            "ttf_parser",
+            false
+          ],
+          [
+            10809389552339631599,
+            "hyperphysics",
+            false
+          ],
+          [
+            11261232116272131900,
+            "serde_wasm_bindgen",
+            false
+          ],
+          [
+            12478975652986984749,
+            "wasm_bindgen",
+            false
+          ],
+          [
+            13077212702700853852,
+            "base64",
+            false
+          ],
+          [
+            13166893389244701063,
+            "ttf_utils",
+            false
+          ],
+          [
+            13548984313718623784,
+            "serde",
+            false
+          ],
+          [
+            13795362694956882968,
+            "serde_json",
+            false
+          ],
+          [
+            14672936905117014492,
+            "dxf",
+            false
+          ],
+          [
+            15229687275129989827,
+            "doc_image_embed",
+            false
+          ],
+          [
+            15685192148630126011,
+            "gerber_parser",
+            false
+          ],
+          [
+            16127592465096470790,
+            "hypermesh",
+            false
+          ],
+          [
+            17821123799030700581,
+            "stl_io",
+            false
+          ]
+        ],
+        "local": [
+          {
+            "CheckDepInfo": {
+              "dep_info": "release/.fingerprint/csgrs-5357807c720d8967/dep-lib-csgrs",
+              "checksum": false
+            }
+          }
+        ],
+        "rustflags": [],
+        "config": 9396254390672932401,
+        "compile_kind": 0
+      }
+    },
+    {
+      "path": "target/planar-operation-failures/native-v2/release/.fingerprint/csgrs-5357807c720d8967/lib-csgrs.json",
+      "sha256": "d2d4a1dda012703cc296f5f6f4ff7b58945d51b048b47247663f71b7ca4f16e7",
+      "configuration_without_dependency_fingerprint_values": {
+        "rustc": 1625334936438085654,
+        "features": "[\"amf-io\", \"attributed\", \"base64\", \"bench-feature-pipeline\", \"bevymesh\", \"chrono\", \"curve\", \"default\", \"dispatch-trace\", \"dxf\", \"dxf-io\", \"gerber-io\", \"gerber-types\", \"gerber_parser\", \"gltf-io\", \"hershey-text\", \"hypersdf\", \"image\", \"image-io\", \"js-sys\", \"metaballs\", \"obj-io\", \"offset\", \"ply-io\", \"sdf\", \"serde\", \"serde-wasm-bindgen\", \"serde_json\", \"stl-io\", \"stl_io\", \"svg-io\", \"truetype-text\", \"ttf-parser\", \"ttf-utils\", \"vrml-io\", \"wasm\", \"wasm-bindgen\"]",
+        "declared_features": "[\"amf-io\", \"attributed\", \"base64\", \"bench-feature-pipeline\", \"bevymesh\", \"chrono\", \"curve\", \"default\", \"dispatch-trace\", \"dxf\", \"dxf-io\", \"gerber-io\", \"gerber-types\", \"gerber_parser\", \"gltf-io\", \"hershey-text\", \"hypersdf\", \"image\", \"image-io\", \"js-sys\", \"metaballs\", \"obj-io\", \"offset\", \"ply-io\", \"sdf\", \"serde\", \"serde-wasm-bindgen\", \"serde_json\", \"stl-io\", \"stl_io\", \"svg-io\", \"truetype-text\", \"ttf-parser\", \"ttf-utils\", \"vrml-io\", \"wasm\", \"wasm-bindgen\"]",
+        "target": 5989468832792710274,
+        "profile": 2040997289075261528,
+        "path": 10763286916239946207,
+        "deps": [
+          [
+            390430846265316719,
+            "gltf",
+            false
+          ],
+          [
+            494870069918897175,
+            "wgpu_types",
+            false
+          ],
+          [
+            899433757904706369,
+            "hyperlimit",
+            false
+          ],
+          [
+            1156003183292959512,
+            "bevy_asset",
+            false
+          ],
+          [
+            1846820732405487584,
+            "hypercurve",
+            false
+          ],
+          [
+            1957009224993739128,
+            "thiserror",
+            false
+          ],
+          [
+            2467858119226893296,
+            "hypersdf",
+            false
+          ],
+          [
+            2538394439553624815,
+            "hyperlattice",
+            false
+          ],
+          [
+            2551482934563074397,
+            "hyperreal",
+            false
+          ],
+          [
+            2987262961022079395,
+            "image",
+            false
+          ],
+          [
+            3525727601854660179,
+            "gerber_types",
+            false
+          ],
+          [
+            3613059130379693208,
+            "js_sys",
+            false
+          ],
+          [
+            3856126590694406759,
+            "chrono",
+            false
+          ],
+          [
+            4961353526336270975,
+            "bevy_mesh",
+            false
+          ],
+          [
+            8921336173939679069,
+            "hashbrown",
+            false
+          ],
+          [
+            9740168411151160745,
+            "hypertri",
+            false
+          ],
+          [
+            10434485102629434171,
+            "ttf_parser",
+            false
+          ],
+          [
+            10809389552339631599,
+            "hyperphysics",
+            false
+          ],
+          [
+            11261232116272131900,
+            "serde_wasm_bindgen",
+            false
+          ],
+          [
+            12478975652986984749,
+            "wasm_bindgen",
+            false
+          ],
+          [
+            13077212702700853852,
+            "base64",
+            false
+          ],
+          [
+            13166893389244701063,
+            "ttf_utils",
+            false
+          ],
+          [
+            13548984313718623784,
+            "serde",
+            false
+          ],
+          [
+            13795362694956882968,
+            "serde_json",
+            false
+          ],
+          [
+            14672936905117014492,
+            "dxf",
+            false
+          ],
+          [
+            15229687275129989827,
+            "doc_image_embed",
+            false
+          ],
+          [
+            15685192148630126011,
+            "gerber_parser",
+            false
+          ],
+          [
+            16127592465096470790,
+            "hypermesh",
+            false
+          ],
+          [
+            17821123799030700581,
+            "stl_io",
+            false
+          ]
+        ],
+        "local": [
+          {
+            "CheckDepInfo": {
+              "dep_info": "release/.fingerprint/csgrs-5357807c720d8967/dep-lib-csgrs",
+              "checksum": false
+            }
+          }
+        ],
+        "rustflags": [],
+        "config": 9396254390672932401,
+        "compile_kind": 0
+      }
+    }
+  ],
+  "identical_core_libraries": {
+    "libhyperlattice-64c0cb923a8aa061.rlib": {
+      "paths": [
+        "target/sampled-profile-failures/native-v1/release/deps/libhyperlattice-64c0cb923a8aa061.rlib",
+        "target/planar-operation-failures/native-v2/release/deps/libhyperlattice-64c0cb923a8aa061.rlib"
+      ],
+      "sha256": "800b437402fdf7cca3571b7b3e358d6aaedee242bce3728ccc1ff65c807f6374"
+    },
+    "libhypercurve-65c0df1f5cff6824.rlib": {
+      "paths": [
+        "target/sampled-profile-failures/native-v1/release/deps/libhypercurve-65c0df1f5cff6824.rlib",
+        "target/planar-operation-failures/native-v2/release/deps/libhypercurve-65c0df1f5cff6824.rlib"
+      ],
+      "sha256": "4acd11c9511fd28299a477276199fb114cb7dff661a62707a7fc59d993644d0e"
+    }
+  },
+  "scope": "The baseline and final all-feature CSGRS library compilation units have identical features, profile, target, rustc, paths and dependency identities. Dependency fingerprint values reflect rebuilt artifacts and are retained in the original files; the core Hyperlattice and Hypercurve rlibs used by this probe are byte-identical. Original 35 pending native sources remain unchanged. This qualifies the planned matched probe without an extra rebuild."
+}

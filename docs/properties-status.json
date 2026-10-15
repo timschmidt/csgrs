@@ -7797,6 +7797,1342 @@
       "evidence": "docs/evidence/2026-10-15-sampled-profile-failures/closure-v1.json",
       "turn_outcome": "progress",
       "plan_complete": false
+    },
+    "planar_operation_failures": {
+      "updated_on": "2026-10-15",
+      "decision": "kept: typed-failure and homogeneous-meaning repair; not a performance-only change",
+      "status": "Affected planar APIs and consumers locally qualified. Seven broader Hypercircuit fixture failures reproduce byte-for-byte on the starting worktree and remain failed.",
+      "properties": [
+        "P1",
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P28",
+        "P29",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "owners": [
+        "CSGRS public planar operations and homogeneous matrix admission",
+        "Hypercurve affine topology and classification",
+        "Scalar/FFI/WASM diagnostic boundaries",
+        "Hypercircuit materialization certainty aggregation"
+      ],
+      "domain": "Nonsingular affine restriction to z=0 with constant nonzero homogeneous weight and image in the XY plane. Normalize six XY coefficients by the weight, including negative weights; the third column is irrelevant. Native Hypercurve owns determinant and topology. Perspective/out-of-plane maps are Unsupported, zero weight with nonzero coordinate image is Unbounded, and an all-zero homogeneous image is Invalid. Unproved constraints are Undecided or explicitly qualified under the selected approximate policy. Invalid arguments are checked on canonical empty inputs too.",
+      "migration": "curve transformed/translated/rotated/scaled now return Result<CurveRegion2, ValidationError>; try_ and context variants preserve the same native causes. contains_xy returns Result<Option<bool>, ValidationError>, with None reserved for boundary. Scalar adapters preserve all three input components and apply X/Y/Z rotations in order. Nonzero Z translation and out-of-plane rotations are rejected; plane-preserving half-turns perform reflections. Gerber, Hypercircuit, FFI and WASM retain typed causes. FabricationPackageError adds Construction and retains PartialEq without Eq.",
+      "semantic_evidence": [
+        "Unchanged baseline regressions reproduce fourteen defects (3 pass/14 fail). Twenty final regressions pass, with independent exact coordinate substitution, area 18, volume 36, a separate manifold check, holes, affine-cut commutation, empty-result composition and mutation/recovery.",
+        "Matrix admission consumes the selected policy and preserves qualification through native identity shortcuts. Strict/approximate/strict does not promote approximate evidence. Definite membership distinguishes inside, outside and boundary from a native undecided blocker.",
+        "Hypercircuit translates/scales/rotates through its selected materialization context and aggregates certainty. Qualified empty construction remains qualified through subsequent transforms. Failures cannot become empty fabrication images.",
+        "Actual C, C++, Python, Go and generated Node/WASM consumers exercise errors, normalized coordinates, plane-preserving reflections, canonical empty operands and recovery. TypeScript checks the generated declarations."
+      ],
+      "test_totals": {
+        "baseline-v1": {
+          "prepare-target": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "regression-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "baseline-v2": {
+          "prepare-target": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "regression-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "regressions": {
+            "passed": 3,
+            "failed": 10,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "baseline-v3": {
+          "prepare-target": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "regression-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "regressions": {
+            "passed": 3,
+            "failed": 14,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "candidate-v1": {
+          "regressions": {
+            "passed": 17,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "library-tests": {
+            "passed": 85,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "native-v1": {
+          "fmt": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "fuzz-fmt": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "strict-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "all-feature-tests": {
+            "passed": 312,
+            "failed": 0,
+            "ignored": 1,
+            "measured": 0,
+            "filtered": 0
+          },
+          "minimal-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "minimal-tests": {
+            "passed": 38,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve-tests": {
+            "passed": 127,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "fuzz-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "docs": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "doctests": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "benchmark-consumer": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "profile-benchmark-consumer": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "renderer-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-all-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-tests": {
+            "passed": 9,
+            "failed": 1,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "downstream-v1": {
+          "regressions": {
+            "passed": 20,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-tests": {
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "hypercircuit-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "hypercircuit-tests": {
+            "passed": 116,
+            "failed": 6,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "downstream-remainder-v2": {
+          "prepare-target": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "edit": {
+            "passed": 36,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "erc": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "event_interchange": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "event_simulation": {
+            "passed": 8,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "fabrication": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "hierarchy": {
+            "passed": 11,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "intent": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "interchange": {
+            "passed": 17,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "interface": {
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "kicad_library": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "kicad_schematic": {
+            "passed": 9,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "layout": {
+            "passed": 15,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "layout_module": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "lceda": {
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "legacy_csgrs": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "materialize": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "mna": {
+            "passed": 17,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "mosfet": {
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "nonlinear": {
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "package": {
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "placement": {
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "preview": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "project": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "project_manifest": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "readme": {
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "release_workflow": {
+            "passed": 9,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "routing_corpus": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "schematic": {
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "schematic_auto": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "simulation": {
+            "passed": 20,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "stitching": {
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "workflow": {
+            "passed": 8,
+            "failed": 1,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "downstream-baseline-v1": {
+          "prepare-source": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "downstream-failures": {
+            "passed": 11,
+            "failed": 7,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "native-v2": {
+          "fmt": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "fuzz-fmt": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "strict-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "all-feature-tests": {
+            "passed": 313,
+            "failed": 0,
+            "ignored": 1,
+            "measured": 0,
+            "filtered": 0
+          },
+          "minimal-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "minimal-tests": {
+            "passed": 38,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve-tests": {
+            "passed": 128,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "fuzz-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "docs": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "doctests": {
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "benchmark-consumer": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "profile-benchmark-consumer": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "renderer-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-all-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-tests": {
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-all-tests": {
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "ffi-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "hypercircuit-docs": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "hypercircuit-doctests": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "cost-library": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "bindings-v1": {
+          "prepare-target": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "cc-version": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "c++-version": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "python3-version": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "node-version": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "empty_composition-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "empty_composition-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "empty_composition-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "empty_composition-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "empty_composition-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "primitive_failures-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "primitive_failures-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "primitive_failures-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "primitive_failures-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "primitive_failures-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "transform_failures-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "transform_failures-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "transform_failures-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "transform_failures-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "transform_failures-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "bounds_failures-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "bounds_failures-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "bounds_failures-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "bounds_failures-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "bounds_failures-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "exact_linear_modeling-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "exact_linear_modeling-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "exact_linear_modeling-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "exact_linear_modeling-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "exact_linear_modeling-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve_constructor_failures-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve_constructor_failures-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve_constructor_failures-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve_constructor_failures-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "curve_constructor_failures-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "planar_operation_failures-c-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "planar_operation_failures-c-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "planar_operation_failures-cpp-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "planar_operation_failures-cpp-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "planar_operation_failures-python": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "go-version": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "go-build": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "go-run": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "wasm-v1": {
+          "wasm-clippy": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          },
+          "wasm": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        },
+        "cost-build-v1": {
+          "renderer-library": {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "measured": 0,
+            "filtered": 0
+          }
+        }
+      },
+      "validation": "All 22 final native commands, 43 native-binding commands and two WASM commands pass. Native checks include all-feature/minimal/curve-only strict Clippy and tests, fuzz-target Clippy, docs/doctests, original benchmark cases, renderer build, FFI default/all-feature tests and Clippy, and Hypercircuit docs/doctests. Hypercircuit all-feature Clippy passes; its complete library/integration execution has 341 passes and seven fixture failures. All seven actual and expected byte pairs match the reconstructed starting revision with the same 35 pending native files. The failures are retained, not waived or relabeled as passing.",
+      "preserved_failed_trials": [
+        "baseline-v1 missing check-cfg in direct-rustc harness",
+        "baseline-v2/v3 reproduced defects",
+        "native-v1 all-zero homogeneous image misclassified as Unbounded; existing Invalid expectation retained",
+        "native-v1 profile benchmark filter selected zero cases and receives no validation credit",
+        "downstream-remainder-v1 setup encountered stale compiler fingerprints without executables",
+        "downstream-v1/remainder-v2 and reconstructed baseline retain all seven pre-existing fixture failures",
+        "cost-v1 candidate rustc E0308 exposed mismatched transitive library identity before any measurements; v1 unit-configuration check is insufficient. cost-build-v1 uses the exact baseline example command for cost-v2"
+      ],
+      "cost_probe": {
+        "kind": "focused matched successful-output probe, not a supported-corpus speedup claim",
+        "evidence": "docs/evidence/2026-10-15-planar-operation-failures/cost-v2",
+        "commands": 114,
+        "fresh_process_samples": 96,
+        "operations_per_sample": 128,
+        "timed_completed_operations": 12288,
+        "exact_variants_per_revision": 1024,
+        "median_samples": {
+          "translate-warm": {
+            "baseline": {
+              "nanos": 1911569,
+              "allocations": 9984,
+              "requested_bytes": 1562368,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8205
+            },
+            "candidate": {
+              "nanos": 1741541,
+              "allocations": 9984,
+              "requested_bytes": 1562368,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8205
+            }
+          },
+          "translate-varied": {
+            "baseline": {
+              "nanos": 7378124,
+              "allocations": 58575,
+              "requested_bytes": 7090044,
+              "retained_byte_delta": 1632,
+              "peak_live_bytes_above_start": 19432
+            },
+            "candidate": {
+              "nanos": 6909027,
+              "allocations": 58575,
+              "requested_bytes": 7090044,
+              "retained_byte_delta": 1632,
+              "peak_live_bytes_above_start": 19432
+            }
+          },
+          "scale-warm": {
+            "baseline": {
+              "nanos": 1782718,
+              "allocations": 14336,
+              "requested_bytes": 1889024,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8181
+            },
+            "candidate": {
+              "nanos": 1962336,
+              "allocations": 14336,
+              "requested_bytes": 1889024,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8181
+            }
+          },
+          "scale-varied": {
+            "baseline": {
+              "nanos": 6706000,
+              "allocations": 60965,
+              "requested_bytes": 7356374,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            },
+            "candidate": {
+              "nanos": 7291450,
+              "allocations": 60965,
+              "requested_bytes": 7356374,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            }
+          },
+          "rotate-warm": {
+            "baseline": {
+              "nanos": 1850493,
+              "allocations": 14464,
+              "requested_bytes": 1683200,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7829
+            },
+            "candidate": {
+              "nanos": 1989514,
+              "allocations": 14464,
+              "requested_bytes": 1683200,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7829
+            }
+          },
+          "rotate-varied": {
+            "baseline": {
+              "nanos": 6982771,
+              "allocations": 59260,
+              "requested_bytes": 7065960,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            },
+            "candidate": {
+              "nanos": 7881660,
+              "allocations": 59260,
+              "requested_bytes": 7065960,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            }
+          },
+          "matrix-warm": {
+            "baseline": {
+              "nanos": 2665697,
+              "allocations": 28800,
+              "requested_bytes": 2469632,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 11631
+            },
+            "candidate": {
+              "nanos": 3068879,
+              "allocations": 28800,
+              "requested_bytes": 2469632,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 11631
+            }
+          },
+          "matrix-varied": {
+            "baseline": {
+              "nanos": 8303990,
+              "allocations": 74976,
+              "requested_bytes": 7825724,
+              "retained_byte_delta": 17088,
+              "peak_live_bytes_above_start": 34888
+            },
+            "candidate": {
+              "nanos": 8103834,
+              "allocations": 74976,
+              "requested_bytes": 7825724,
+              "retained_byte_delta": 17088,
+              "peak_live_bytes_above_start": 34888
+            }
+          },
+          "query-warm": {
+            "baseline": {
+              "nanos": 1409883,
+              "allocations": 9856,
+              "requested_bytes": 1388416,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4159
+            },
+            "candidate": {
+              "nanos": 1343188,
+              "allocations": 9856,
+              "requested_bytes": 1388416,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 4159
+            }
+          },
+          "query-varied": {
+            "baseline": {
+              "nanos": 5883067,
+              "allocations": 54083,
+              "requested_bytes": 6719124,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            },
+            "candidate": {
+              "nanos": 5940443,
+              "allocations": 54083,
+              "requested_bytes": 6719124,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            }
+          },
+          "adapter_translate-warm": {
+            "baseline": {
+              "nanos": 1838914,
+              "allocations": 9984,
+              "requested_bytes": 1562368,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8205
+            },
+            "candidate": {
+              "nanos": 2118984,
+              "allocations": 9984,
+              "requested_bytes": 1562368,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8205
+            }
+          },
+          "adapter_translate-varied": {
+            "baseline": {
+              "nanos": 7410772,
+              "allocations": 58575,
+              "requested_bytes": 7090044,
+              "retained_byte_delta": 1632,
+              "peak_live_bytes_above_start": 19432
+            },
+            "candidate": {
+              "nanos": 7885829,
+              "allocations": 58575,
+              "requested_bytes": 7090044,
+              "retained_byte_delta": 1632,
+              "peak_live_bytes_above_start": 19432
+            }
+          },
+          "adapter_scale-warm": {
+            "baseline": {
+              "nanos": 1799417,
+              "allocations": 14336,
+              "requested_bytes": 1889024,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8181
+            },
+            "candidate": {
+              "nanos": 1727701,
+              "allocations": 14336,
+              "requested_bytes": 1889024,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 8181
+            }
+          },
+          "adapter_scale-varied": {
+            "baseline": {
+              "nanos": 6641455,
+              "allocations": 60965,
+              "requested_bytes": 7356374,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            },
+            "candidate": {
+              "nanos": 6853321,
+              "allocations": 60965,
+              "requested_bytes": 7356374,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            }
+          },
+          "adapter_rotate-warm": {
+            "baseline": {
+              "nanos": 1961605,
+              "allocations": 14464,
+              "requested_bytes": 1683200,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7829
+            },
+            "candidate": {
+              "nanos": 2164491,
+              "allocations": 16384,
+              "requested_bytes": 1784576,
+              "retained_byte_delta": 0,
+              "peak_live_bytes_above_start": 7829
+            }
+          },
+          "adapter_rotate-varied": {
+            "baseline": {
+              "nanos": 7498806,
+              "allocations": 59260,
+              "requested_bytes": 7065960,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            },
+            "candidate": {
+              "nanos": 7630727,
+              "allocations": 61180,
+              "requested_bytes": 7167336,
+              "retained_byte_delta": 2992,
+              "peak_live_bytes_above_start": 20792
+            }
+          }
+        },
+        "candidate_to_baseline_latency_ratios": {
+          "translate-warm": 0.9110531715046645,
+          "translate-varied": 0.9364205589388305,
+          "scale-warm": 1.1007551390629364,
+          "scale-varied": 1.087302415747092,
+          "rotate-warm": 1.0751264662984406,
+          "rotate-varied": 1.1287295544992095,
+          "matrix-warm": 1.1512482476440495,
+          "matrix-varied": 0.9758964064263084,
+          "query-warm": 0.9526946562232469,
+          "query-varied": 1.0097527361153629,
+          "adapter_translate-warm": 1.1523018477209919,
+          "adapter_translate-varied": 1.0641035778728587,
+          "adapter_scale-warm": 0.9601448691437282,
+          "adapter_scale-varied": 1.0319005398666408,
+          "adapter_rotate-warm": 1.1034285699720383,
+          "adapter_rotate-varied": 1.0175922673556297
+        },
+        "library_sizes": {
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/native-v1/release/deps/libcsgrs.rlib": 9869558,
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/cost-build-v1/release/deps/libcsgrs.rlib": 9852650
+        },
+        "claim": "Same completed strict workloads include construction, operation, independent exact coordinates/area, output materialization, serialization and drop. All exact rows and paired checksums agree. Every favorable and unfavorable sample is retained. Warm adapter translation median is 15.2% higher and warm affine-matrix median is 15.1% higher; other latencies are mixed. Adapter rotation adds 15 allocations and 792 requested bytes per operation; other measured allocation counts match. Shared unpinned host and allocator instrumentation limit timing claims. Warm and varied inputs are distinct; varied does not imply globally cold scalar caches. cost-v1 produced no timings after its dependency mismatch; cost-build-v1 uses the exact baseline example command for cost-v2."
+      },
+      "source_sizes": {
+        "src/curve/native.rs": {
+          "baseline_bytes": 151147,
+          "candidate_bytes": 153571
+        },
+        "src/adapter/curve.rs": {
+          "baseline_bytes": 10854,
+          "candidate_bytes": 10526
+        },
+        "src/wasm/curve_js.rs": {
+          "baseline_bytes": 22348,
+          "candidate_bytes": 22951
+        },
+        "crates/hypercircuit/src/materialize.rs": {
+          "baseline_bytes": 175264,
+          "candidate_bytes": 177269
+        },
+        "crates/hypercircuit/src/fabrication.rs": {
+          "baseline_bytes": 71745,
+          "candidate_bytes": 72350
+        }
+      },
+      "resources": "No internal total-work, expression-growth, heap-byte or cancellation bound is claimed. Serial offline trials with two Cargo jobs use external 1800-second wall and 8-GiB per-process address-space containment; Node/WASM retains only wall containment because of virtual reservations. Allocation probes cover the Rust global allocator, not all native allocations or RSS. Identical non-executable compiler files in terminal trials are hard-linked with every path and byte retained; new trials copy to independent inodes.",
+      "limitations": [
+        "Seven baseline downstream fixtures remain failing and require native/release admission; no snapshots or original workload resolutions changed.",
+        "The 35 original pending native files remain byte-identical and uncommitted pending separate admission. This is worktree qualification, not a clean external-package release.",
+        "Gear/rack/airfoil/text and other convenience failures, end-to-end source provenance, full strict workload completion, internal resource bounds, coverage/fuzz/formal goals and the full workflow/MSRV/release/user-path matrix remain open. No push or CI changes."
+      ],
+      "implementation_commit": "f88f846945650e8dfcb8f11680ff137c9b0d4de8",
+      "evidence": "docs/evidence/2026-10-15-planar-operation-failures/closure-v1.json",
+      "turn_outcome": "progress",
+      "plan_complete": false
     }
   },
   "status_meanings": {

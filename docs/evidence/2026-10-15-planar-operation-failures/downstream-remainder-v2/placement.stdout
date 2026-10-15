@@ -1,0 +1,15 @@
+
+running 10 tests
+test deterministic_search_moves_only_the_colliding_unconstrained_package ... ok
+test exact_pin_access_feedback_moves_a_terminal_out_of_a_board_edge_trap ... ok
+test fixed_collisions_are_reported_without_breaking_constraints ... ok
+test optional_optimization_improves_a_legal_authored_connectivity_cost ... ok
+test pin_access_audit_observes_escape_policy_keepouts_and_foreign_pads ... ok
+test placement_search_uses_exact_arc_board_envelopes ... ok
+test regional_search_keeps_the_package_envelope_out_of_board_cutouts ... ok
+test retained_rotation_and_side_choices_are_searched_and_audited ... ok
+test routability_aware_optimization_reduces_exact_net_box_congestion ... ok
+test solved_placement_is_clean_under_hyperdrc_component_readiness ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+

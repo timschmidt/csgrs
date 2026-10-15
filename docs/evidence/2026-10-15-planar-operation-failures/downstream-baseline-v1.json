@@ -1,0 +1,30 @@
+[
+  [
+    "prepare-source",
+    [
+      "python3",
+      "docs/evidence/2026-10-15-planar-operation-failures/prepare_downstream_baseline_v1.py"
+    ]
+  ],
+  [
+    "downstream-failures",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/downstream-baseline-source-v1/Cargo.toml",
+      "-p",
+      "hypercircuit",
+      "--all-features",
+      "--test",
+      "easyduino",
+      "--test",
+      "workflow",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]

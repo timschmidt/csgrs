@@ -1,0 +1,18 @@
+{
+  "target/planar-operation-failures/cost-v2/baseline": {
+    "sha256": "fe6d1c34bc7e55918acead884b5c129888d421a8b59c0b6fc3a140bcee86f241",
+    "bytes": 35397728
+  },
+  "target/planar-operation-failures/cost-v2/candidate": {
+    "sha256": "5b49640148da5e06a4518db6efc544a1b487d61248ad1b8c05ebe303d1913307",
+    "bytes": 35568848
+  },
+  "target/sampled-profile-failures/native-v1/release/deps/libcsgrs.rlib": {
+    "sha256": "f512811f19fcce806bf190a715ea4da850c3f398084e2d949c74df6be942fe61",
+    "bytes": 9869558
+  },
+  "target/planar-operation-failures/cost-build-v1/release/deps/libcsgrs.rlib": {
+    "sha256": "2beb76b39e1325ee51fa5a4c2c45e328c8569fa9485775644a053d1c0b4f51cb",
+    "bytes": 9852650
+  }
+}

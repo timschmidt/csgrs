@@ -1,0 +1,105 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/downstream-v1",
+  "preserved_prior_executables_sha256": {
+    "target/planar-operation-failures/downstream-v1/release/deps/planar_operation_failures-5a01641d88b598a7": "f0014482c2c4894bc527ee2c36fc019d9b1a50d80fa21a3e5dcc80997dd57330",
+    "target/planar-operation-failures/downstream-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "580933b67c94c0962346c3cba84adaddeee876ec2da75e8e85348518343a7f67",
+    "target/planar-operation-failures/downstream-v1/release/deps/hypercircuit-b169ddc8551970da": "2f5eaa5abaadccbf6f2c755dda3eaafaa64940848ff09d01bef0693e421cf878",
+    "target/planar-operation-failures/downstream-v1/release/deps/hypercircuit-c6b11219df70db6a": "d74b9f9dd0a729bad940b146b840b6577bfc75af8d3fbb2f57e8d46673dcaae5",
+    "target/planar-operation-failures/downstream-v1/release/deps/ac-191e254d86d6cc3b": "5feffce52555eba5c0564c799f2c53c2e89a32b9f42e7ec4633468a48e49d805",
+    "target/planar-operation-failures/downstream-v1/release/deps/authoring-aad532f72473fa42": "5ec9aa7ad4ec0a822b1f043754ef49fa598ed4a05aa1d922da1a4119b16b97cc",
+    "target/planar-operation-failures/downstream-v1/release/deps/autoroute-3d21c7856dd0463e": "8597b149a1d13ecee25117e7e14683df9bc6354d036054a7665f65ac935adc99",
+    "target/planar-operation-failures/downstream-v1/release/deps/behavior-7fd73957ccc4e28c": "3523cfe46f14d5eea4cd57740e867b72677d61605f24e6d63604009f1c902f54",
+    "target/planar-operation-failures/downstream-v1/release/deps/cli-f9afd238fcc79974": "38047f20f975f08e6a517d364e17c9eb3fdd8a349719956cd46b1a9dc0771c8c",
+    "target/planar-operation-failures/downstream-v1/release/deps/coppertrace_erc-12605387298b99fe": "f361ed1e14a1c157ed8911f002a99112a031c0af84533399cde36321660b8a65",
+    "target/planar-operation-failures/downstream-v1/release/deps/coppertrace_examples-0970a2cf1eacd0f8": "37c8f381ec20e2d9c5345228ca355aea3679a57bc8b890a21c45ae8e79f3847d",
+    "target/planar-operation-failures/downstream-v1/release/deps/curved_outline-603a16d56b3218ff": "3e8e44f5fe3ef9d306e1a800fbc1148a5b4e32eeee476be02bf152891381bde9",
+    "target/planar-operation-failures/downstream-v1/release/deps/curved_routing-c136eccbe51e9eb7": "faa5045604c1bdd81dac6de824f66009135f08557eefb0b9d9e0509f82594a44",
+    "target/planar-operation-failures/downstream-v1/release/deps/declarative-d7d54234a389a94f": "189973e04eada242f0cc673560fd986d209743ec8ca2efa00b8dc9deff2ffd94",
+    "target/planar-operation-failures/downstream-v1/release/deps/dispatch_trace-f85626bd0182ca7f": "9e6b387581302a5651f691f9f211eacb562663734701665a12b4668cd7b6cd50",
+    "target/planar-operation-failures/downstream-v1/release/deps/easyduino-dd5e52a01bac1f24": "41cb60ad827e725500cd040138f856309eae4482da29d1a21500f4af4d0a317f"
+  },
+  "base_commit": "227792db15c1159487b63948ead2dbda84a5e740",
+  "runner_sha256": "073f453f8069c9e82f5a6828b0a68f818e8e5d2110b6ddf4ac0ec996b0832b49",
+  "phase": "downstream-baseline-v1",
+  "commands": [
+    [
+      "prepare-source",
+      [
+        "python3",
+        "docs/evidence/2026-10-15-planar-operation-failures/prepare_downstream_baseline_v1.py"
+      ]
+    ],
+    [
+      "downstream-failures",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/downstream-baseline-source-v1/Cargo.toml",
+        "-p",
+        "hypercircuit",
+        "--all-features",
+        "--test",
+        "easyduino",
+        "--test",
+        "workflow",
+        "--no-fail-fast",
+        "--",
+        "--test-threads=1"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/downstream-baseline-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P1",
+    "P3",
+    "P4",
+    "P6",
+    "P8",
+    "P9",
+    "P13",
+    "P17",
+    "P18",
+    "P20",
+    "P25",
+    "P28",
+    "P30",
+    "P35",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "CSGRS homogeneous matrix admission and public wrapper failure semantics",
+    "Hypercurve affine topology and point classification",
+    "WASM diagnostic and certainty boundary"
+  ],
+  "domain": "Nonsingular exact planar affine transforms, including homogeneous matrices whose restriction to z=0 has constant nonzero weight and remains in the XY plane. Divide out the weight, including negative gauges. Native affine kernels own determinant/topology. Unsupported perspective or out-of-plane maps must be explicit; unknown admissibility is undecided; zero constant homogeneous weight is unbounded. Ordinary invalid transforms are rejected even on empty operands. Point classification distinguishes boundary, inside/outside and undecided.",
+  "consumers": [
+    "Primary Rust planar transforms and point classification",
+    "Explicit context and try_ variants",
+    "WASM transforms and queries",
+    "Original examples and benchmark workloads"
+  ],
+  "missing_acceptance_test": [
+    "tests/planar_operation_failures.rs"
+  ],
+  "semantic_oracle": "Independent homogeneous coordinate substitution, exact area and volume, separate manifold check, semantic composition and typed errors. No display demotion or policy weakening.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: 1916037c7, fcb269765 and 98bda8a48 commit typed sampled-profile failures, exact regressions, native/WASM validation and matched completed-output costs. The full properties goal remains active."
+}

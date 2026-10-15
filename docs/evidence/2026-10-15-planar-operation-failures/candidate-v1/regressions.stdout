@@ -1,0 +1,22 @@
+
+running 17 tests
+test boundary_inside_outside_and_empty_queries_remain_definite ... ok
+test canonical_empty_transforms_feed_subsequent_composition ... ok
+test contextual_query_retains_the_native_blocker ... ok
+test matrix_admission_uses_the_selected_policy_without_certainty_upgrade ... ok
+test out_of_plane_geometry_is_not_silently_projected ... ok
+test perspective_is_not_silently_discarded ... ok
+test primary_query_distinguishes_uncertainty_from_boundary ... ok
+test primary_scale_rejects_singular_input_including_empty ... ok
+test primary_transform_rejects_singular_input_including_empty ... ok
+test scalar_adapter_does_not_ignore_nonfinite_third_components ... ok
+test scalar_adapter_keeps_plane_preserving_half_turns ... ok
+test scalar_adapter_preserves_native_transform_errors ... ok
+test scalar_adapter_rejects_out_of_plane_translation_and_rotation ... ok
+test strict_transforms_keep_holes_area_and_extrusion_volume ... ok
+test supported_homogeneous_scale_is_divided_out ... ok
+test unknown_scale_does_not_become_empty_geometry ... ok
+test zero_homogeneous_weight_is_not_finite_geometry ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

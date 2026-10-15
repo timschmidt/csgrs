@@ -1,0 +1,5 @@
+{
+  "target": "target/planar-operation-failures/candidate-v1",
+  "record": "docs/evidence/2026-10-15-planar-operation-failures/candidate-v1/result.json",
+  "release_only": true
+}

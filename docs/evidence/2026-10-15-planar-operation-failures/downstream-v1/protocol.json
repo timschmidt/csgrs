@@ -1,0 +1,154 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/native-v1",
+  "preserved_prior_executables_sha256": {
+    "target/planar-operation-failures/native-v1/release/deps/csgrs-7cb2efc2751cd581": "5d474b0b036410f43db3ae1a5d8442dd5917a4596687413e5f886af3fc1eaa22",
+    "target/planar-operation-failures/native-v1/release/deps/adversarial-aa8f7eb900ff711d": "0c736a26fd51bf6f418e8ac0638b3a941fea14e8d55ba361e251268082c78e5a",
+    "target/planar-operation-failures/native-v1/release/deps/adversarial_deep-5118e0b6d7de3ea6": "ae8b3f3fbd709897c34135bea2c39297ac3bf60069fff7aa5c22d2c9e24f20bb",
+    "target/planar-operation-failures/native-v1/release/deps/adversarial_extrusions-aa8048fe0de3f594": "e52a8b97439d789a6c3b9eb63bdd6dbaab0cb89cc1be99812815cd28754dc9e7",
+    "target/planar-operation-failures/native-v1/release/deps/adversarial_fixtures-cf11e31630975ad0": "c400bcbea9d9b820e96cfb3968b34ec99629883b9a902ebf794273e6f628cc3e",
+    "target/planar-operation-failures/native-v1/release/deps/adversarial_stress-d6d56cc4aa09a158": "7b9a6c092688fd66ba0ac3260456ae9ef767d448685155d0b83bf6785a7661e6",
+    "target/planar-operation-failures/native-v1/release/deps/bounds_failures-1de96205ff2a5e07": "bb7cf5c3121bf8eea853cf049e778735f8f8bb395790ca1b02720ea02cda3684",
+    "target/planar-operation-failures/native-v1/release/deps/competitive-0b8b38c506725d57": "06242feac19788dfdd79df026e92a96d8cd44fe4661b4f9899dfc617ef8ea335",
+    "target/planar-operation-failures/native-v1/release/deps/curve_constructor_failures-e22c3b5ab72457a8": "90df2b71c20e65d820a918d3e3509f12978a1ef872f082e649b62c9ae62d67f2",
+    "target/planar-operation-failures/native-v1/release/deps/curve_metaball_failures-cdc5511c980183da": "a8976e0439dc1d3bb019c0d4fc332a4ff1135db4686c56f552ee8c5f285a6c8a",
+    "target/planar-operation-failures/native-v1/release/deps/curve_metaball_workloads-37ab722afd06f275": "e70741cf0c8ea248f90b9160cbaf2d3dbfe7116165a7786cb7e829933b7f4a87",
+    "target/planar-operation-failures/native-v1/release/deps/empty_composition-3a7164c2b9d5044a": "977e7de7e9f058999339711ae0a517258ef6f12d575191557049271d7c18dae8",
+    "target/planar-operation-failures/native-v1/release/deps/exact_linear_modeling-26d44c8491c2f7a7": "a2d7b5aae4d150c7fa09a29142673b87a984eac7b8cec952507e065e52f15b42",
+    "target/planar-operation-failures/native-v1/release/deps/generated_benchmark_corpus-b45922908131dfbd": "e905d301952163ab5410c2b7c5dbbc7ed2229355495e7392758fa9e5bf0fb562",
+    "target/planar-operation-failures/native-v1/release/deps/geometry_context-e14123ad7d9b5126": "9fdc7d6bdbf5bc4d296ca573616c4be91e9292914b0db53a0c90adc35a4433e2",
+    "target/planar-operation-failures/native-v1/release/deps/mesh_boolean_context-9d9c68938c3691af": "0753129c74f6ac957297308e83f6adf9ccf133bebd7322ec12aaca7370ab5568",
+    "target/planar-operation-failures/native-v1/release/deps/metaball_failures-043b72a00404a6ff": "8b07c98b524dfa7bf8a33bf8b9c7d3e867fd2005434ab5f7fb4bb9be4f3745e7",
+    "target/planar-operation-failures/native-v1/release/deps/metaball_workloads-4d7fe7b802e9560f": "8469fe421447d5ee9ad4480f6a3a443c05ae5757f6e60c6b9a65a3eb0a2e3084",
+    "target/planar-operation-failures/native-v1/release/deps/metaballs_diagnostics-8dfd6522763c319c": "33b721f6bf68e40bde3995bf013d3cc69a407dfbde7d0245eee73f982cdb4ec0",
+    "target/planar-operation-failures/native-v1/release/deps/native_queries-f108d89258947ff9": "f9e616aae5ccba309b16cfad598b788993f40ac7874f8a68954efd5b94772fb8",
+    "target/planar-operation-failures/native-v1/release/deps/planar_operation_failures-5a01641d88b598a7": "154c2f40291983f9828cdb71651032c472556618d50d4a2c0c3fff26a00fb37a",
+    "target/planar-operation-failures/native-v1/release/deps/primitive_failures-aadd0e4e093d5243": "7b9bf4ef1ff754b49918b80b07e1a28d348ead293c9901afd51d76988826a78f",
+    "target/planar-operation-failures/native-v1/release/deps/readme-14ff37358f039d13": "9680da4caabbeb2834c1f832b413de6f9bd74485f7263a108e0e0267fd3e9ac1",
+    "target/planar-operation-failures/native-v1/release/deps/readme_render_regression-c73ca6dc64fc3820": "db16bd93c8b2d221c5bb2e52ef2d683e66aff6e9d62ebbbfec13bab3802a820a",
+    "target/planar-operation-failures/native-v1/release/deps/rounded_rectangle_fidelity-ec164e77ee6b2ff4": "46665a4105fcbe7f857700fffcd8679a39a4740b1f05b43edafcc93949011803",
+    "target/planar-operation-failures/native-v1/release/deps/sampled_profile_failures-41fee3c75c404f62": "eb6a4c036dd3e31872c08f494ce522bea4d09994038357c89aa17e5938485e8b",
+    "target/planar-operation-failures/native-v1/release/deps/sdf_failures-0e01156f99592da3": "c30291137bcef53fd8b8b1665a4116eb652f75098d837c36d025829813603f6e",
+    "target/planar-operation-failures/native-v1/release/deps/sdf_tpms_diagnostics-5aa3ece71b49182c": "9a348a9ef32dbd15eb9fc044237409eade365590bb4e03348b88987355df0a1b",
+    "target/planar-operation-failures/native-v1/release/deps/solid_cache-d34731e0e95db92a": "2d4f0e0daea2c48ebf665bbcb6987fcb70c0f5566031432d4aaaa2a9573e7022",
+    "target/planar-operation-failures/native-v1/release/deps/transform_failures-74f1159cb89f11ba": "65ac105dfef9f89d8db2ccc6d3496f102e3ee3dfeaa934e1af9571315f2995b9",
+    "target/planar-operation-failures/native-v1/release/deps/wasm_certainty-d7c6e3b405f88647": "ee805fa972a44cfefadef9d8242be59a0135c447a2a6199ac50afd7b89201c79",
+    "target/planar-operation-failures/native-v1/release/deps/csgrs-12b72f0ccdd38706": "77e6b44c82f498b1c7fa509b30be24828e6352f44cfe6ecc4b2133cf2cdcaedc",
+    "target/planar-operation-failures/native-v1/release/deps/bounds_failures-c661a92a5b4c7962": "0a87b059b029821a9919553db9bd8b186e0b43777d6f81c631933e10764f5f50",
+    "target/planar-operation-failures/native-v1/release/deps/curve_constructor_failures-fd8f13d67d2561c4": "6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd",
+    "target/planar-operation-failures/native-v1/release/deps/planar_operation_failures-cb132bda92ed78c2": "7630f6bd592c778afa35d6fa067bb3e084e5deecf62533746374d604d4e0615a",
+    "target/planar-operation-failures/native-v1/release/deps/rounded_rectangle_fidelity-1435e79a4c8f8808": "0326a0c9f5da56b219cf3c0db28ed85672d53d140696d7927b40ea9590d6844a",
+    "target/planar-operation-failures/native-v1/release/deps/sampled_profile_failures-59ed42fadf98b620": "40dce8f51aed77737a19b16a5aedcb200ac4d619a9285c55f73bf25c7eb41ae4",
+    "target/planar-operation-failures/native-v1/release/deps/csgrs-fbfb4e9daf55c3e5": "128bf95a8e15ca600b00b36c5a259dbaf75e8d5e1d1fa05b4e748c1bf30312bf",
+    "target/planar-operation-failures/native-v1/release/deps/bounds_failures-1388f390547a412c": "5f8348afd3f5faf9618d9c91197b9b25b3a437e9b48665ee2bf5e07ea7de12ac",
+    "target/planar-operation-failures/native-v1/release/deps/curve_constructor_failures-526a2455ed7f2aed": "7dbd8cbe568ef495ae9f41365f63759a543c46639bd56fc284940288030def16",
+    "target/planar-operation-failures/native-v1/release/deps/planar_operation_failures-0b782b7bdcc231b2": "17d73f6c02df12d0c6f40bdead185d8d63514861b7e1cac6046354ae17a2b4a8",
+    "target/planar-operation-failures/native-v1/release/deps/rounded_rectangle_fidelity-fedfafd26a0fcb2d": "37cdd9d9dbaa8e826fea970156d07f0040865f769bef64e8f38ecea857e62fa7",
+    "target/planar-operation-failures/native-v1/release/deps/sampled_profile_failures-6a6a901356d0e649": "15e00bb8de57e36d837392f6550e114a8ef071ed0c18f60a53cdf27d865752bc",
+    "target/planar-operation-failures/native-v1/release/deps/feature_pipeline-7fecdce69333ac9d": "5ded0ed701e8a37bf55e4c81a656ea20288ef270e44f553d6760cee4c8465321",
+    "target/planar-operation-failures/native-v1/release/deps/profile_primitives-a860b8425128ee3e": "6f45e5c8f501e424f23c072e23305c52b4c4ba7f144c48ba64775775d89c5354",
+    "target/planar-operation-failures/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "836e258709e4a77b5b6b87cd56ebb7c90d014843cd1441d9e42f7ad335be9cbe"
+  },
+  "base_commit": "227792db15c1159487b63948ead2dbda84a5e740",
+  "runner_sha256": "073f453f8069c9e82f5a6828b0a68f818e8e5d2110b6ddf4ac0ec996b0832b49",
+  "phase": "downstream-v1",
+  "commands": [
+    [
+      "regressions",
+      [
+        "cargo",
+        "test",
+        "--release",
+        "--all-features",
+        "--test",
+        "planar_operation_failures"
+      ]
+    ],
+    [
+      "ffi-tests",
+      [
+        "cargo",
+        "test",
+        "--release",
+        "--manifest-path",
+        "crates/csgrs-ffi/Cargo.toml"
+      ]
+    ],
+    [
+      "hypercircuit-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--release",
+        "--manifest-path",
+        "crates/hypercircuit/Cargo.toml",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "hypercircuit-tests",
+      [
+        "cargo",
+        "test",
+        "--release",
+        "--manifest-path",
+        "crates/hypercircuit/Cargo.toml",
+        "--all-features"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/downstream-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P1",
+    "P3",
+    "P4",
+    "P6",
+    "P8",
+    "P9",
+    "P13",
+    "P17",
+    "P18",
+    "P20",
+    "P25",
+    "P28",
+    "P30",
+    "P35",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "CSGRS homogeneous matrix admission and public wrapper failure semantics",
+    "Hypercurve affine topology and point classification",
+    "WASM diagnostic and certainty boundary"
+  ],
+  "domain": "Nonsingular exact planar affine transforms, including homogeneous matrices whose restriction to z=0 has constant nonzero weight and remains in the XY plane. Divide out the weight, including negative gauges. Native affine kernels own determinant/topology. Unsupported perspective or out-of-plane maps must be explicit; unknown admissibility is undecided; zero constant homogeneous weight is unbounded. Ordinary invalid transforms are rejected even on empty operands. Point classification distinguishes boundary, inside/outside and undecided.",
+  "consumers": [
+    "Primary Rust planar transforms and point classification",
+    "Explicit context and try_ variants",
+    "WASM transforms and queries",
+    "Original examples and benchmark workloads"
+  ],
+  "missing_acceptance_test": [
+    "tests/planar_operation_failures.rs"
+  ],
+  "semantic_oracle": "Independent homogeneous coordinate substitution, exact area and volume, separate manifold check, semantic composition and typed errors. No display demotion or policy weakening.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: 1916037c7, fcb269765 and 98bda8a48 commit typed sampled-profile failures, exact regressions, native/WASM validation and matched completed-output costs. The full properties goal remains active."
+}

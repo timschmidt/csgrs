@@ -1,0 +1,22 @@
+
+running 17 tests
+test companion_stamp_combines_exact_conductance_and_history_source ... ok
+test coupling_ports_keep_circuit_and_physics_handles_explicit ... ok
+test duplicate_mna_unknowns_are_rejected_before_assembly ... ok
+test electrothermal_fixture_keeps_trace_and_material_handles_explicit ... ok
+test electrothermal_rc_rejects_negative_resistance_domains ... ok
+test electrothermal_rc_replay_computes_exact_resistance_and_heat ... ok
+test empty_component_ids_are_rejected ... ok
+test exact_circuit_carriers_lower_to_mna_without_float_policy ... ok
+test exact_linear_solver_rejects_singular_systems_without_tolerance_guessing ... ok
+test generated_electrothermal_heat_is_i_squared_r ... ok
+test generated_mna_stamps_match_kcl_reference ... ok
+test nonlinear_reports_expose_domains_parameters_and_event_policy ... ok
+test piecewise_linear_report_keeps_exact_segments ... ok
+test replay_validates_candidate_shape_and_adapter_status ... ok
+test vccs_stamp_uses_exact_control_voltage_columns ... ok
+test voltage_source_and_resistor_stamp_replays_exact_candidate ... ok
+test wrong_candidate_is_rejected_by_exact_residuals ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

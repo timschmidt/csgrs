@@ -1,0 +1,7 @@
+engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum
+csgrs,warm,feature,profile_transform,all_csg_helpers,0,4,210806,32,16,16
+csgrs,warm,feature,profile_transform,all_csg_helpers,1,4,199506,32,16,16
+csgrs,warm,feature,profile_transform,all_csg_helpers,2,4,196727,32,16,16
+csgrs,warm,feature,profile_distribution,arc_linear_grid,0,1,191337,14,14,14
+csgrs,warm,feature,profile_distribution,arc_linear_grid,1,1,200586,14,14,14
+csgrs,warm,feature,profile_distribution,arc_linear_grid,2,1,191967,14,14,14

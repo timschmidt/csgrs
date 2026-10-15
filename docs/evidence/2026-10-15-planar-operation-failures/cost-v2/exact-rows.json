@@ -1,0 +1,42 @@
+{
+  "translate": {
+    "rows": 128,
+    "bytes": 94133,
+    "sha256": "f263aab38379233f767ad22f0b006ac8371fc8756471ebf1580b99aee434ed6a"
+  },
+  "scale": {
+    "rows": 128,
+    "bytes": 93723,
+    "sha256": "50f5b55c915089a7b064e3e343f15b6b762db323e1e4223b5ea409424b7dcb9c"
+  },
+  "rotate": {
+    "rows": 128,
+    "bytes": 93613,
+    "sha256": "d0f1569472fad2858e6ac4678f90f0d7fe48ea8531d1e395bce80e18c0aba7a4"
+  },
+  "matrix": {
+    "rows": 128,
+    "bytes": 93885,
+    "sha256": "2e2c5e3399d1c692ca95aedfa426ff947d9ee3be4484859cb1c2352cad414fc0"
+  },
+  "query": {
+    "rows": 128,
+    "bytes": 93357,
+    "sha256": "d8b063ee55a88baf06b484fab126217d1f4e3b8e967daf6f320e41d1e0aed43a"
+  },
+  "adapter_translate": {
+    "rows": 128,
+    "bytes": 94133,
+    "sha256": "f263aab38379233f767ad22f0b006ac8371fc8756471ebf1580b99aee434ed6a"
+  },
+  "adapter_scale": {
+    "rows": 128,
+    "bytes": 93723,
+    "sha256": "50f5b55c915089a7b064e3e343f15b6b762db323e1e4223b5ea409424b7dcb9c"
+  },
+  "adapter_rotate": {
+    "rows": 128,
+    "bytes": 93613,
+    "sha256": "d0f1569472fad2858e6ac4678f90f0d7fe48ea8531d1e395bce80e18c0aba7a4"
+  }
+}

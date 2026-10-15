@@ -1,0 +1,23 @@
+	Command being timed: "python3 docs/evidence/2026-10-15-planar-operation-failures/prepare_downstream_baseline_v1.py"
+	User time (seconds): 0.74
+	System time (seconds): 5.34
+	Percent of CPU this job got: 307%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.97
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 233984
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 90
+	Minor (reclaiming a frame) page faults: 67372
+	Voluntary context switches: 43076
+	Involuntary context switches: 4185
+	Swaps: 0
+	File system inputs: 955016
+	File system outputs: 438408
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

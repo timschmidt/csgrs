@@ -1,0 +1,25 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking getrandom v0.3.4
+    Checking ahash v0.8.12
+    Checking arrow-array v57.3.1
+    Checking arrow-select v57.3.1
+   Compiling rustix v1.1.4
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking arrow-ord v57.3.1
+    Checking arrow-cast v57.3.1
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking arrow-ipc v57.3.1
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking xattr v1.6.1
+    Checking parquet v57.3.1
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+    Checking tar v0.4.46
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+ Documenting hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Finished `release` profile [optimized] target(s) in 32.40s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/native-v2/doc/hypercircuit/index.html

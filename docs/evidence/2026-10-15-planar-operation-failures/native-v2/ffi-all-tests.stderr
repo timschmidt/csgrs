@@ -1,0 +1,3 @@
+    Finished `release` profile [optimized] target(s) in 0.10s
+     Running unittests src/lib.rs (target/planar-operation-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f)
+   Doc-tests csgrs_ffi

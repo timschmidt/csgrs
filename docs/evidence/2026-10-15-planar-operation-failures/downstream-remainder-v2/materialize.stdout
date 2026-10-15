@@ -1,0 +1,8 @@
+
+running 3 tests
+test declarative_board_materializes_source_addressable_copper_and_drills ... ok
+test multi_segment_orthogonal_route_materializes_as_one_source_feature ... ok
+test zone_island_policy_prunes_unconnected_and_exact_undersized_components ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+

@@ -1,0 +1,8 @@
+
+running 3 tests
+test automatic_layout_policy_and_work_bounds_fail_typed ... ok
+test checked_fluent_design_can_replace_an_empty_drawing_and_render_it ... ok
+test connectivity_depth_places_a_chain_without_ground_collapsing_columns ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

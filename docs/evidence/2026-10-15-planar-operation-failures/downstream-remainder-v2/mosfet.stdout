@@ -1,0 +1,10 @@
+
+running 5 tests
+test common_source_dc_solve_replays_the_exact_saturation_law ... ok
+test mosfet_terminal_roles_are_structurally_validated ... ok
+test p_channel_common_source_mirrors_current_and_stamp_polarity ... ok
+test retained_mosfet_model_round_trips_through_semantic_json ... ok
+test square_law_selects_exact_nmos_and_pmos_regions ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

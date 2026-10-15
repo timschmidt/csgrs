@@ -1,0 +1,14 @@
+
+running 9 tests
+test authored_role_handoff_preserves_physical_endpoints_and_source_subjects ... ok
+test component_keepouts_are_checked_against_placed_envelopes ... ok
+test cyclic_relative_placement_constraints_are_reported ... ok
+test external_obj_vrml_and_gltf_package_models_resolve_with_digest_and_scene_identity ... ok
+test failed_package_model_transform_is_an_explicit_omission_with_recovery ... ok
+test overlapping_component_courtyards_are_release_blocking ... ok
+test oversized_authored_mask_expansion_is_reported_by_native_hyperdrc ... ok
+test package_body_is_an_explicit_fallback_when_no_courtyard_exists ... ok
+test representative_board_spans_authoring_review_verification_and_release_outputs ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.58s
+

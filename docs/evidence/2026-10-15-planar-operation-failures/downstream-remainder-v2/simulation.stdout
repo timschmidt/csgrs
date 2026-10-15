@@ -1,0 +1,25 @@
+
+running 20 tests
+test adaptive_driven_run_evaluates_each_refined_endpoint ... ok
+test adaptive_transient_run_rejects_then_refines_to_the_exact_stop_time ... ok
+test analytic_source_delays_drive_the_exact_transient_endpoint_grid ... ok
+test analytic_waveforms_evaluate_exact_sine_and_exponential_laws ... ok
+test backward_euler_capacitor_steps_replay_and_carry_exact_history ... ok
+test backward_euler_inductor_integrates_exact_current ... ok
+test driven_transient_run_retains_source_and_response_waveforms ... ok
+test fixed_transient_run_emits_exact_time_ordered_waveforms ... ok
+test incremental_session_honors_event_breakpoints_and_applies_source_overrides ... ok
+test mixed_linear_reactive_diode_run_replays_every_nonlinear_endpoint ... ok
+test pulse_waveforms_repeat_with_exact_phase_values_and_breakpoints ... ok
+test retained_device_models_lower_solve_and_replay_without_manual_stamps ... ok
+test session_callbacks_emit_auditable_same_time_followups ... ok
+test session_honors_named_external_breakpoint_schedules ... ok
+test source_waveforms_evaluate_steps_and_exact_linear_interpolation ... ok
+test time_aware_lowering_overrides_scalar_source_parameters_with_audited_values ... ok
+test transient_run_lands_on_every_periodic_source_event ... ok
+test transient_run_rejects_invalid_time_policy_before_stepping ... ok
+test transient_run_returns_audited_limits_instead_of_partial_success ... ok
+test trapezoidal_capacitor_uses_voltage_and_current_history ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

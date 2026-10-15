@@ -1,0 +1,4 @@
+engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum
+csgrs,warm,profile_curves,boolean,curved_line_arc_union,0,4,118372,4,8,8
+csgrs,warm,profile_curves,boolean,curved_line_arc_union,1,4,120232,4,8,8
+csgrs,warm,profile_curves,boolean,curved_line_arc_union,2,4,119422,4,8,8

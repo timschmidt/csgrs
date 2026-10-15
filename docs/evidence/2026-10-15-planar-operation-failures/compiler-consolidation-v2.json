@@ -1,0 +1,21 @@
+{
+  "runner_sha256": "d631ed1482e6ad0dde531c1345f5ee24021a56a633124ff52f3beb6bab64ed5d",
+  "manifest_sha256": "a3d13a0e424d6e28ae454b6ebf89a4891aeb2763de95c2859636ddc15fc16c19",
+  "linked_paths": 6987,
+  "duplicate_bytes_consolidated": 6516932865,
+  "protected_artifacts_verified": 3744,
+  "closed_targets": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/baseline-v1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/baseline-v2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/baseline-v3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/candidate-v1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/downstream-v1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/native-v1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/baseline-v1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/candidate-v1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/candidate-v2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/native-v1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/wasm-v1"
+  ],
+  "scope": "Only non-executable compiler artifacts in terminal recent trials on the repository filesystem. Every path and byte retained. Executables, unique files, logs and source snapshots untouched. These targets remain immutable; new phases copy seeds with independent inodes."
+}

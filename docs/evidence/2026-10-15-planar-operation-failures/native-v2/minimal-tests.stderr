@@ -1,0 +1,8 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 4.25s
+     Running unittests src/lib.rs (target/planar-operation-failures/native-v2/release/deps/csgrs-12b72f0ccdd38706)
+     Running tests/bounds_failures.rs (target/planar-operation-failures/native-v2/release/deps/bounds_failures-c661a92a5b4c7962)
+     Running tests/curve_constructor_failures.rs (target/planar-operation-failures/native-v2/release/deps/curve_constructor_failures-fd8f13d67d2561c4)
+     Running tests/planar_operation_failures.rs (target/planar-operation-failures/native-v2/release/deps/planar_operation_failures-cb132bda92ed78c2)
+     Running tests/rounded_rectangle_fidelity.rs (target/planar-operation-failures/native-v2/release/deps/rounded_rectangle_fidelity-1435e79a4c8f8808)
+     Running tests/sampled_profile_failures.rs (target/planar-operation-failures/native-v2/release/deps/sampled_profile_failures-59ed42fadf98b620)

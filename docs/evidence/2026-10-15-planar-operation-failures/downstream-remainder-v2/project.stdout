@@ -1,0 +1,8 @@
+
+running 3 tests
+test module_bindings_reject_missing_duplicate_and_foreign_interfaces_atomically ... ok
+test nested_layout_transforms_compose_mirroring_and_orientation_exactly ... ok
+test recursive_checked_modules_compile_through_circuit_and_layout_hierarchy ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

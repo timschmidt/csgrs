@@ -1,0 +1,14 @@
+
+running 9 tests
+test bent_wires_split_into_native_segments_and_rejoin_as_valid_connectivity ... ok
+test installed_kicad_cli_can_follow_the_generated_native_hierarchy ... ok
+test installed_kicad_cli_can_render_the_generated_native_file ... ok
+test label_projection_and_hierarchy_boundary_are_typed ... ok
+test native_schematic_round_trip_reconstructs_presentation_against_circuit_truth ... ok
+test native_symbol_position_edits_reimport_without_changing_circuit_topology ... ok
+test nested_book_round_trip_restores_link_identity_and_reports_missing_files ... ok
+test non_schematic_roots_are_rejected_without_mutating_circuit_truth ... ok
+test reusable_multipart_library_and_exact_graphics_round_trip_once ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.18s
+

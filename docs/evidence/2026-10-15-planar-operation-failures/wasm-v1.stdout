@@ -1,0 +1,4 @@
+{"started": "wasm-clippy", "phase": "wasm-v1"}
+{"name": "wasm-clippy", "exit_code": 0, "seconds": 4.511765853967518, "sources_unchanged": true, "binaries_sha256": {}, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "50f522ba90bac79b98918a4f67326da162e43054733a44a11978f8c31936b4e6", "resources_sha256": "108ec68e6d78e90017a117b19661aa7aa4f3b76bc92529b5e08d65a28ba41e8d"}
+{"started": "wasm", "phase": "wasm-v1"}
+{"name": "wasm", "exit_code": 0, "seconds": 15.618746718857437, "sources_unchanged": true, "binaries_sha256": {}, "stdout_sha256": "70870ab9accd685edf7fc42949a7fa04f2536afa268ad1cf0bf230fbbd0a13fe", "stderr_sha256": "14d5a02ddc05f7eb448236e7dfa9e55bd0feeac295af53b875dd3642bf783a9f", "resources_sha256": "d8389113368b86a30c1f49edead26be84f98ee936571a2f61f6d3357d6bb2e45"}

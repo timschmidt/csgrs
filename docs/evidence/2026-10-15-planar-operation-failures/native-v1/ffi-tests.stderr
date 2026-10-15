@@ -1,0 +1,5 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling csgrs-ffi v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/csgrs-ffi)
+    Finished `release` profile [optimized] target(s) in 11.47s
+     Running unittests src/lib.rs (target/planar-operation-failures/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f)
+error: test failed, to rerun pass `-p csgrs-ffi --lib`

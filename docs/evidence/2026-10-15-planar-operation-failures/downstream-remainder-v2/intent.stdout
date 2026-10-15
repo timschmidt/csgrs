@@ -1,0 +1,7 @@
+
+running 2 tests
+test conflicting_global_declarations_and_stale_part_resolution_are_rejected ... ok
+test coppertrace_intent_preserves_spans_roles_typed_values_and_resolution_evidence ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

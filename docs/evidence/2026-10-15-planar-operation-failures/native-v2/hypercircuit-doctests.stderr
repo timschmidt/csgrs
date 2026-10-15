@@ -1,0 +1,5 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+   Compiling hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Finished `release` profile [optimized] target(s) in 2m 04s
+   Doc-tests hypercircuit

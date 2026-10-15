@@ -1,0 +1,33 @@
+[
+  [
+    "regressions",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--test",
+      "planar_operation_failures",
+      "--",
+      "--test-threads=1"
+    ]
+  ],
+  [
+    "library-tests",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]

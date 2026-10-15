@@ -1,0 +1,8 @@
+
+running 3 tests
+test module_validation_and_scope_binding_fail_before_partial_composition ... ok
+test reusable_layout_assembly_round_trips_before_composition ... ok
+test reusable_layout_modules_compose_to_flat_hyperpath_ready_intent ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

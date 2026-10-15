@@ -1,0 +1,54 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `bench` profile [optimized] target(s) in 1.24s
+     Running benchmarks/rust/profile_primitives.rs (target/planar-operation-failures/native-v2/release/deps/profile_primitives-a860b8425128ee3e)
+dispatch benchmark: profile_curves/boolean/curved_line_arc_union
+dispatch correlation: TraceCorrelationSummary { dispatch_events: 13046, predicate_events: 140, linear_algebra_events: 0, object_fact_events: 0, scalar_fact_events: 2640, detailed_fact_events: 0, unknown_fact_events: 0, exact_rational_kind_events: 1300, sign_or_zero_query_events: 2680, exact_reducer_events: 7865, approximation_events: 0, approximation_start_events: 0, approximation_cache_events: 0, refinement_events: 0, predicate_decision_stage_events: 140, cache_events: 704, fallback_or_abort_events: 0, rational_temporaries: 3504, rational_reductions: 0, rational_gcds: 0 }
+dispatch operation: csgrs-benchmark/entry/1
+dispatch operation: hypercurve/curve-region-disjoint-loop-roles/20
+dispatch operation: hypercurve/retained-endpoint-scope/20
+dispatch operation: hyperlimit/ordered_aabb2s_intersect_coordinates/140
+dispatch operation: rational/add/23
+dispatch operation: rational/arithmetic-reuse/1
+dispatch operation: rational/div/80
+dispatch operation: rational/linear/297
+dispatch operation: rational/mul/160
+dispatch operation: rational/mul-div/80
+dispatch operation: rational/neg/160
+dispatch operation: rational/product_sum/400
+dispatch operation: rational/sub/800
+dispatch operation: rational/word-result/704
+dispatch operation: real/add/160
+dispatch operation: real/constructor/6080
+dispatch operation: real/div/80
+dispatch operation: real/mul/320
+dispatch operation: real/product_sum/400
+dispatch operation: real/sub/1800
+dispatch operation: real/zero_status/1320
+dispatch path: csgrs-benchmark/entry/recorded-workload/1
+dispatch path: hypercurve/curve-region-disjoint-loop-roles/pairwise-disjoint/20
+dispatch path: hypercurve/retained-endpoint-scope/topology-connectivity-first/20
+dispatch path: hyperlimit/ordered_aabb2s_intersect_coordinates/exact-rational/140
+dispatch path: rational/add/word-sized/23
+dispatch path: rational/arithmetic-reuse/first-observation/1
+dispatch path: rational/div/word-sized/80
+dispatch path: rational/linear/retained-difference/240
+dispatch path: rational/linear/retained-sum/57
+dispatch path: rational/mul/retained-secondary-product/79
+dispatch path: rational/mul/word-sized/81
+dispatch path: rational/mul-div/proven-reduced-word-product/80
+dispatch path: rational/neg/retained/160
+dispatch path: rational/product_sum/all-zero/40
+dispatch path: rational/product_sum/dyadic-word-accumulator/360
+dispatch path: rational/sub/word-sized/800
+dispatch path: rational/word-result/cached-small-dyadic/80
+dispatch path: rational/word-result/cached-small-integer/624
+dispatch path: real/add/same-symbolic-basis/160
+dispatch path: real/constructor/one/460
+dispatch path: real/constructor/rational/4300
+dispatch path: real/constructor/zero/1320
+dispatch path: real/div/same-class/80
+dispatch path: real/mul/exact-rational/320
+dispatch path: real/product_sum/exact-rational-known-shared-denom/400
+dispatch path: real/sub/same-symbolic-basis/1800
+dispatch path: real/zero_status/symbolic-nonzero-scale/720
+dispatch path: real/zero_status/zero-scale/600

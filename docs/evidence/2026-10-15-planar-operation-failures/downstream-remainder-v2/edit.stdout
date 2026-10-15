@@ -1,0 +1,41 @@
+
+running 36 tests
+test board_configuration_keepouts_and_land_patterns_edit_reversibly ... ok
+test bus_presence_conflicts_with_stale_membership_edits ... ok
+test bus_slice_and_port_edits_are_dependency_checked_and_reversible ... ok
+test circuit_instances_and_models_edit_atomically_across_the_pcb_boundary ... ok
+test circuit_library_edits_work_without_a_pcb_and_round_trip_history ... ok
+test circuit_only_net_and_pin_binding_edits_are_reversible ... ok
+test circuit_port_removal_observes_schematic_references ... ok
+test circuit_presence_changes_reject_stale_identity_writes ... ok
+test complete_circuit_and_copper_definitions_edit_as_one_atomic_batch ... ok
+test complete_route_definition_conflicts_with_stale_narrow_writes ... ok
+test concurrent_commits_rebase_disjoint_fields_and_reject_overlapping_writes ... ok
+test exact_editor_batch_commits_once_and_survives_json_and_kicad ... ok
+test identityless_manual_stamps_replace_as_one_exact_reversible_field ... ok
+test inserted_driving_constraint_cannot_silently_reposition_authored_placement ... ok
+test keepout_presence_conflicts_with_stale_definition_edits ... ok
+test land_pattern_library_edits_are_dependency_aware_and_exactly_reversible ... ok
+test land_pattern_presence_conflicts_by_identity_while_assignment_rebases ... ok
+test net_presence_conflicts_with_stale_net_property_writes ... ok
+test pcb_container_attaches_to_circuit_only_documents_and_undoes_exactly ... ok
+test pcb_container_presence_conflicts_with_stale_nested_board_edits ... ok
+test pcb_copper_net_reassignment_is_atomic_and_dependency_checked ... ok
+test placement_presence_and_constraint_presence_reject_stale_writes ... ok
+test presence_changes_conflict_with_stale_field_edits_but_not_other_objects ... ok
+test rail_presence_conflicts_with_stale_definition_edits ... ok
+test remaining_circuit_collections_edit_atomically_and_reversibly ... ok
+test replay_log_compaction_and_v1_migration_refuse_unprovable_rebases ... ok
+test reversible_history_round_trips_and_keeps_revisions_monotonic ... ok
+test schematic_container_presence_conflicts_with_stale_nested_edits ... ok
+test schematic_object_presence_conflicts_with_stale_definition_edits ... ok
+test schematic_structure_edits_build_hierarchy_and_undo_to_no_schematic ... ok
+test serialized_history_rejects_noncontiguous_replay_evidence ... ok
+test stale_or_invalid_batches_leave_the_document_unchanged ... ok
+test structural_copper_edits_are_serializable_reversible_and_atomic ... ok
+test structural_placement_edits_are_serializable_reversible_and_atomic ... ok
+test touched_fixed_placement_constraints_are_not_silently_overridden ... ok
+test version_two_through_fourteen_histories_migrate_and_future_versions_are_rejected ... ok
+
+test result: ok. 36 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

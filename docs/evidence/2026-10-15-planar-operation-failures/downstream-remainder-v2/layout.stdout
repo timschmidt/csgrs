@@ -1,0 +1,20 @@
+
+running 15 tests
+test assembly_csv_reimport_reports_typed_tampering_and_handles_quoted_parts ... ok
+test assembly_views_derive_bom_and_pick_and_place_from_retained_identities ... ok
+test board_routing_problem_round_trips_accepted_hyperpath_candidates ... ok
+test invalid_package_model_reports_its_independent_record ... ok
+test kicad_custom_rules_report_flattened_and_nonrepresentable_class_policy ... ok
+test kicad_project_import_keeps_native_defaults_and_reports_composite_patterns ... ok
+test kicad_projects_non_native_routed_slots_to_valid_round_drills ... ok
+test kicad_review_board_exports_all_retained_copper_feature_families ... ok
+test kicad_semantic_round_trip_can_be_edited_and_reexported ... ok
+test kicad_stackup_and_custom_rule_companion_round_trip_exact_policy ... ok
+test newly_routed_vias_report_missing_process_intent ... ok
+test placed_instances_require_complete_nonduplicated_pin_to_pad_mappings ... ok
+test placement_inverse_transform_exactly_replays_front_and_back_side_semantics ... ok
+test representative_board_validates_and_lowers_routes_to_hyperpath ... ok
+test via_mask_opening_must_retain_positive_geometry ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

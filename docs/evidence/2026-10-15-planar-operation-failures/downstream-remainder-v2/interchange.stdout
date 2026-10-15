@@ -1,0 +1,22 @@
+
+running 17 tests
+test authored_coppertrace_intent_round_trips_with_source_ranges_and_contracts ... ok
+test decoded_pcb_must_pass_structural_validation ... ok
+test decoded_schematic_must_agree_with_decoded_circuit ... ok
+test exact_authored_event_trace_round_trips_and_validates ... ok
+test exact_source_stimuli_round_trip_through_semantic_json ... ok
+test invalid_canvas_and_wire_presentation_is_rejected_at_interchange_boundary ... ok
+test native_hierarchy_simulation_and_wire_presentation_round_trip_together ... ok
+test unknown_schema_versions_are_rejected ... ok
+test version_eight_json_migrates_through_each_additive_schema_boundary ... ok
+test version_nineteen_promotes_embedded_symbol_geometry_into_a_library ... ok
+test version_twenty_eight_defaults_authored_design_intent ... ok
+test version_twenty_five_defaults_new_differential_pair_neckdown ... ok
+test version_twenty_four_defaults_new_phase_tuning_groups ... ok
+test version_twenty_seven_promotes_legacy_bundle_member_names_to_real_types ... ok
+test version_twenty_three_defaults_new_differential_impedance_intent ... ok
+test versioned_semantic_json_round_trips_exact_values ... ok
+test versions_outside_the_migration_window_are_rejected ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

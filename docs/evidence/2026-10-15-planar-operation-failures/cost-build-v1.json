@@ -1,0 +1,17 @@
+[
+  [
+    "renderer-library",
+    [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--example",
+      "readme_renders",
+      "--message-format=json-render-diagnostics"
+    ]
+  ]
+]

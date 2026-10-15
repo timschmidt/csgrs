@@ -1,0 +1,4 @@
+{
+  "status": "failed before any test execution",
+  "cause": "Preparation asserted that every seeded fingerprint had a test executable; stale dependency fingerprints without executables exist. The subsequent runner invocation failed because its command specification was not created. Preserved downstream-remainder-v1.stdout/stderr. v2 selects only actual compiled test executables. No production or fixture changes."
+}

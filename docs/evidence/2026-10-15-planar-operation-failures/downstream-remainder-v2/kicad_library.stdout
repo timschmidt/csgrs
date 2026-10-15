@@ -1,0 +1,8 @@
+
+running 3 tests
+test installed_official_multipart_logic_and_dip_libraries_import_when_available ... ok
+test installed_official_resistor_libraries_import_when_available ... ok
+test native_library_pair_imports_to_one_portable_part_and_checked_design ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+

@@ -1,0 +1,9 @@
+
+running 4 tests
+test hierarchical_schematic_rejects_cycles_and_boundary_net_disagreement ... ok
+test hierarchical_schematic_validates_renders_pages_and_round_trips ... ok
+test schematic_rejects_wire_net_that_disagrees_with_pin_bindings ... ok
+test schematic_validates_typed_endpoints_and_renders_audited_svg ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,8 @@
+
+running 3 tests
+test deterministic_stitching_vias_feed_every_release_boundary ... ok
+test stitching_cap_is_explicit_in_reports_and_exports ... ok
+test stitching_uses_exact_arc_board_clearance_without_indeterminate_candidates ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

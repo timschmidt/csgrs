@@ -1,0 +1,89 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/wasm-v1",
+  "preserved_prior_executables_sha256": {},
+  "base_commit": "227792db15c1159487b63948ead2dbda84a5e740",
+  "runner_sha256": "073f453f8069c9e82f5a6828b0a68f818e8e5d2110b6ddf4ac0ec996b0832b49",
+  "phase": "wasm-v1",
+  "commands": [
+    [
+      "wasm-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--profile",
+        "wasm",
+        "--target",
+        "wasm32-unknown-unknown",
+        "--no-default-features",
+        "--features",
+        "wasm",
+        "--lib",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "wasm",
+      [
+        "env",
+        "WASM_BINDGEN=/tmp/csgrs-properties-tools/bin/wasm-bindgen",
+        "TSC=tests/wasm/node_modules/.bin/tsc",
+        "bash",
+        "scripts/test-wasm-bindings.sh"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/wasm-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P1",
+    "P3",
+    "P4",
+    "P6",
+    "P8",
+    "P9",
+    "P13",
+    "P17",
+    "P18",
+    "P20",
+    "P25",
+    "P28",
+    "P30",
+    "P35",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "CSGRS homogeneous matrix admission and public wrapper failure semantics",
+    "Hypercurve affine topology and point classification",
+    "WASM diagnostic and certainty boundary"
+  ],
+  "domain": "Nonsingular exact planar affine transforms, including homogeneous matrices whose restriction to z=0 has constant nonzero weight and remains in the XY plane. Divide out the weight, including negative gauges. Native affine kernels own determinant/topology. Unsupported perspective or out-of-plane maps must be explicit; unknown admissibility is undecided; zero constant homogeneous weight is unbounded. Ordinary invalid transforms are rejected even on empty operands. Point classification distinguishes boundary, inside/outside and undecided.",
+  "consumers": [
+    "Primary Rust planar transforms and point classification",
+    "Explicit context and try_ variants",
+    "WASM transforms and queries",
+    "Original examples and benchmark workloads"
+  ],
+  "missing_acceptance_test": [
+    "tests/planar_operation_failures.rs"
+  ],
+  "semantic_oracle": "Independent homogeneous coordinate substitution, exact area and volume, separate manifold check, semantic composition and typed errors. No display demotion or policy weakening.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: 1916037c7, fcb269765 and 98bda8a48 commit typed sampled-profile failures, exact regressions, native/WASM validation and matched completed-output costs. The full properties goal remains active."
+}

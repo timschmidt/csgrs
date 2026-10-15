@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-planar-operation-failures/validate_v1.py", line 175, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-planar-operation-failures/validate_v1.py", line 59, in main
+    commands = json.loads((E / (phase + '.json')).read_text())
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib64/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-planar-operation-failures/downstream-remainder-v1.json'

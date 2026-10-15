@@ -1,0 +1,13 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--reflink=auto",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/downstream-v1/release",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/downstream-baseline-v1/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "073f453f8069c9e82f5a6828b0a68f818e8e5d2110b6ddf4ac0ec996b0832b49",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

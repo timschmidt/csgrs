@@ -1,0 +1,29 @@
+{
+  "commands": [
+    {
+      "name": "regressions",
+      "exit_code": 0,
+      "seconds": 18.3478841627948,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/planar-operation-failures/candidate-v1/release/deps/planar_operation_failures-5a01641d88b598a7": "d8499fb0f5375330124c6dc82bce2619cb6a523f8a81350e63aa41d8042b1f59"
+      },
+      "stdout_sha256": "f1d07126b9a79c57162f740356a05b08840d51da87517f94692d23968333445a",
+      "stderr_sha256": "e0f49daf0f8f4359ba9396fb680f00698b750af5f8870cd6bddb48baeeebf74f",
+      "resources_sha256": "407295b0ab9d031293373728e4b368ed2fdc4f00d675d3f395cbc7b24a767a7e"
+    },
+    {
+      "name": "library-tests",
+      "exit_code": 0,
+      "seconds": 18.111838588956743,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/planar-operation-failures/candidate-v1/release/deps/csgrs-7cb2efc2751cd581": "da49fa1a845c33f8b370e404725cc9d6dada29aa9f351fcd262bd87175a92e3f"
+      },
+      "stdout_sha256": "869313fd12beeef4674bf91e1f07b351298eae89544aaace3b5582cee37c40bb",
+      "stderr_sha256": "dfa3f18fbc53e8e7474bfbe54422f2b575a2dd8b82cb8552176a42f935d90463",
+      "resources_sha256": "4650a12ad6d677ab287032bae1e8e69aac028efd6e02aff0e16c6ee1c720b222"
+    }
+  ],
+  "passed": true
+}
