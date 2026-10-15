@@ -3302,6 +3302,7 @@ mod tests {
     #[test]
     fn normal_dyadic_view_matches_gmp_rounding() {
         use rug::{Float, Integer, Rational as GmpRational, integer::Order};
+        crate::mpfr_test::cleanup_on_thread_exit();
 
         let mut state = 0x6a09_e667_f3bc_c909_u64;
         let mut checked = 0;

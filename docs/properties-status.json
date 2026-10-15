@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "normal-form-image-filter-test-cleanup-sanitizers-complete",
+      "status": "test-oracle-cleanup-admitted-runtime-prototypes-still-isolated",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5380,7 +5380,30 @@
           "completed_test_summaries": 1
         }
       },
-      "sphere_normal_image_test_cleanup_admitted": false
+      "sphere_normal_image_test_cleanup_admitted": true,
+      "mpfr_test_cleanup_main_qualification_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/mpfr-test-cleanup-main-scope-v1.json",
+      "mpfr_test_cleanup_main_qualification_result": "docs/evidence/2026-10-14-sampled-sphere-hull/mpfr-test-cleanup-main-v1/result.json",
+      "mpfr_test_cleanup_main_qualification_complete": true,
+      "mpfr_test_cleanup_main_qualification_counts": {
+        "default-tests": {
+          "passed": 878,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 22
+        },
+        "all-features-tests": {
+          "passed": 983,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 23
+        }
+      },
+      "mpfr_test_cleanup_main_admission": "docs/evidence/2026-10-14-sampled-sphere-hull/mpfr-test-cleanup-main-admission-v1/admission.json",
+      "mpfr_test_cleanup_main_source_mapping": "docs/evidence/2026-10-14-sampled-sphere-hull/mpfr-test-cleanup-main-admission-v1/source-hashes-after.json.gz"
     }
   },
   "status_meanings": {

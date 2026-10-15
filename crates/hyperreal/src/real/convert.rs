@@ -954,6 +954,7 @@ mod tests {
     fn borrowed_f64_preserves_values_with_large_denominators() {
         use num::{BigUint, One};
         use rug::{Float, Integer, Rational as GmpRational, float::Round, integer::Order};
+        crate::mpfr_test::cleanup_on_thread_exit();
 
         let check = |numerator: BigUint, denominator: BigUint, exact_float: bool| {
             let exact = GmpRational::from((

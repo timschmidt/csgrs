@@ -36,6 +36,7 @@ mod chudnovsky_pi_tests {
 
     #[test]
     fn chudnovsky_pi_matches_mpfr_from_one_bit_through_many_digits() {
+        crate::mpfr_test::cleanup_on_thread_exit();
         for bits in [
             1_u32, 2, 3, 4, 7, 8, 15, 16, 31, 32, 43, 44, 63, 64, 65, 96, 127, 128, 255, 256, 511,
             512, 1_023, 1_024, 2_047, 2_048, 4_095, 4_096, 4_097, 16_384, 65_536, 120_700,

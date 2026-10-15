@@ -1,0 +1,50 @@
+{
+  "complete": true,
+  "commands_all_zero": 5,
+  "test_counts": {
+    "default-tests": {
+      "passed": 878,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 22
+    },
+    "all-features-tests": {
+      "passed": 983,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 23
+    }
+  },
+  "test_only_changed_files": 13,
+  "test_patch_identical_to_prior_qualification": true,
+  "unadmitted_scalar_or_mesh_runtime_prototypes_included": false,
+  "all_frozen_sources_inputs_libraries_and_binaries_rechecked": true,
+  "artifacts_sha256": {
+    "all-features-clippy.stderr": "dfc7df91646db797c99e1459e0ebb69cb82a8acf0d674f95839fe8e0d2cd4801",
+    "all-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "all-features-tests.stderr": "0e491ab5b2dabe367db11bef651abbb7cab38ed401b61cf01a289cef7cde6b58",
+    "all-features-tests.stdout": "d1bc15a783c63cc5fb91b13542c3ded584e5528135ad3da03a57df7dd6c77886",
+    "binaries.json": "c36de26f70de23958926aeae9251e0f8b7a0fb2788d30bf2cd023432932d3489",
+    "commands.json": "86c600d086e4757d3245e8df918eaf7ddde7c6ff20ca0bf7d90e11538d66d81e",
+    "default-clippy.stderr": "2ac9943ff2ee71fc6894fc1b30ea53c9f140c0e71b1e70dc94a39dcfcf411228",
+    "default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-tests.stderr": "41f779bae43f2116ffcc02e8314388fa024b2750b909270cf2be70dfaa76fb2e",
+    "default-tests.stdout": "93c8f26506b523ede2e3779eb5e3ea7246a11e7f164260f1e5ce727febb48a83",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "5e57a7aadcccbd6c6ec2cec7f61231b553bc9632b0d39bb8420213c2be26b557",
+    "root-source-hashes.json.gz": "ac29c0621a542ff6a79363f29479cc0a351eb8859742e2cc54e27c3ddb8232ce",
+    "source-hashes.json.gz": "3f09d401f4753b342b96a02db7b99816d51cadfa2287a605a8425ed37751ba08"
+  },
+  "limits": [
+    "The exact test cleanup patch is reused by byte identity; its independently tested ordinary/unwinding helper controls are prerequisite evidence, not rerun samples.",
+    "This validates the Hyperreal test-harness change on main-equivalent production sources. It is not full workspace CI or push readiness.",
+    "No runtime optimization, performance improvement, or general leak freedom is claimed. The standard library and native GMP/MPFR code are not claimed rebuilt with ASan."
+  ],
+  "test_cleanup_admitted": false,
+  "plan_complete": false
+}

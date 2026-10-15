@@ -1,0 +1,104 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 10.784570469986647,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "default-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 12.134559080004692,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "2ac9943ff2ee71fc6894fc1b30ea53c9f140c0e71b1e70dc94a39dcfcf411228"
+  },
+  {
+    "name": "all-features-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--all-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 7.618242464028299,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "dfc7df91646db797c99e1459e0ebb69cb82a8acf0d674f95839fe8e0d2cd4801"
+  },
+  {
+    "name": "default-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 52.271533218212426,
+    "stdout_sha256": "93c8f26506b523ede2e3779eb5e3ea7246a11e7f164260f1e5ce727febb48a83",
+    "stderr_sha256": "41f779bae43f2116ffcc02e8314388fa024b2750b909270cf2be70dfaa76fb2e"
+  },
+  {
+    "name": "all-features-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--tests",
+      "--all-features",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 52.84703732794151,
+    "stdout_sha256": "d1bc15a783c63cc5fb91b13542c3ded584e5528135ad3da03a57df7dd6c77886",
+    "stderr_sha256": "0e491ab5b2dabe367db11bef651abbb7cab38ed401b61cf01a289cef7cde6b58"
+  }
+]

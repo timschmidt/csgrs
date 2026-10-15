@@ -762,9 +762,10 @@ mod tests {
 
     #[test]
     fn dispatch_snapshot_merges_equal_labels_from_distinct_static_storage() {
-        let label = || -> &'static str { Box::leak(String::from("same").into_boxed_str()) };
-        let first = (label(), label(), label());
-        let second = (label(), label(), label());
+        static LABELS: [[u8; 4]; 6] = [*b"same"; 6];
+        let label = |index: usize| std::str::from_utf8(&LABELS[index]).unwrap();
+        let first = (label(0), label(1), label(2));
+        let second = (label(3), label(4), label(5));
         assert!(!std::ptr::eq(first.0, second.0));
 
         reset();

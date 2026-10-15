@@ -7,6 +7,7 @@ mod tests {
 
     fn check_inverse_series_wide_coefficients(asin: bool, generic: bool) {
         use rug::{Float, Integer, Rational as Q, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         // At this precision, x=1/16 needs more than 23,170 recurrence steps.
         // The next squared coefficient exceeds i32::MAX. Check both signs
         // and both representations against a precision-matched, directed oracle.
@@ -73,6 +74,7 @@ mod tests {
     #[test]
     fn log1p_domain_guard_covers_public_residuals_outside_the_series_range() {
         use rug::{Float, Integer, Rational as Q, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         for q in [Q::from((-255,256)), Q::from((-3,4)), Q::from((1,2)), Q::from((3,4)), Q::from(1), Q::from(2), Q::from(10), Q::from(1000)] {
             let mut lo = Float::with_val(512, &q);
             assert_eq!(lo.to_rational().unwrap(), q);
@@ -94,6 +96,7 @@ mod tests {
     #[test]
     fn log1p_domain_guard_rechecks_every_working_sample_boundary_rounding() {
         use rug::{Float, Integer, Rational as Q, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         let mut checks = 0;
         for (p, s) in [(0_i32,-12_i32),(-1,-12),(-32,-45),(-128,-143)] {
             let threshold = Integer::from(1)<<(-s-1);
@@ -139,6 +142,7 @@ mod tests {
     #[test]
     fn log1p_domain_guard_covers_extreme_scales_and_cache_histories() {
         use rug::{Float, Integer, Rational as Q, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         let mut checks = 0;
         for bits in [8_i32,64,256,1024] {
             let tiny = Q::from((1,Integer::from(1)<<bits));
@@ -186,6 +190,7 @@ mod tests {
     #[test]
     fn log1p_domain_guard_matches_a_public_and_opaque_residual_grid() {
         use rug::{Float,Integer,Rational as Q,float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         let mut checks = 0;
         for numerator in -63_i32..=256 {
             let q = Q::from((numerator,64));
@@ -218,6 +223,7 @@ mod tests {
     #[test]
     fn log1p_domain_guard_does_not_trust_estimated_sum_magnitudes() {
         use rug::{Float,Integer,Rational as Q,float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         let root = |n| {
             let mut lo = Float::with_val(2048,n);
             let mut hi = lo.clone();
@@ -304,6 +310,7 @@ mod tests {
     #[test]
     fn atan_reduction_requires_a_positive_sign_for_large_reciprocal_shortcut() {
         use rug::{Float, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         let mut lower = Float::with_val(256, 100);
         let mut upper = lower.clone();
         lower.sin_round(Round::Down);
@@ -328,6 +335,7 @@ mod tests {
     #[test]
     fn atan_reduction_boundary_accepts_every_valid_coarse_cache_rounding() {
         use rug::{Float, Integer, Rational as Q, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         for numerator in -145_i32..=145 {
             let q = Q::from((numerator, 256));
             let mut lower = Float::with_val(512, &q);
@@ -386,6 +394,7 @@ mod tests {
 
     fn check_inverse_series_domain(asin: bool, raw_prescaled: bool) {
         use rug::{Float, Integer, Rational as Q, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         let root = |n| {
             let mut lo = Float::with_val(512, n);
             let mut hi = lo.clone();
@@ -457,6 +466,7 @@ mod tests {
     #[test]
     fn inverse_series_domain_boundary_accepts_valid_cache_roundings() {
         use rug::{Float, Integer, Rational as Q, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         let mut checks = 0;
         for numerator in -1023_i32..=1023 {
             let q = Q::from((numerator, 1024));
@@ -522,6 +532,7 @@ mod tests {
     #[test]
     fn inverse_series_domain_checks_every_working_sample_boundary_rounding() {
         use rug::{Float, Integer, Rational as Q, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
         let mut checks = 0;
         // These pairs include the kernels' iteration/rounding guard bits.
         for (precision, operand_precision) in [(0_i32, -12_i32), (-1, -13), (-32, -46), (-128, -144)] {
@@ -643,6 +654,7 @@ mod tests {
     #[test]
     fn exp_constructor_and_deferred_kernel_match_directed_mpfr() {
         use rug::{Float, Integer, Rational as RugRational, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
 
         fn check(input: Rational, raw: bool, precisions: &[Precision]) {
             // Includes e^10000 at absolute 256-bit accuracy, so 2048 relative
@@ -731,6 +743,7 @@ mod tests {
             Float, Integer,
             float::{Constant, Round},
         };
+        crate::mpfr_test::cleanup_on_thread_exit();
         let bits = 2048;
         let pi_low = Float::with_val_round(bits, Constant::Pi, Round::Down).0;
         let pi_high = Float::with_val_round(bits, Constant::Pi, Round::Up).0;
@@ -825,6 +838,7 @@ mod tests {
     #[test]
     fn binary64_filter_constant_enclosures_cover_mpfr_values() {
         use rug::{Float, float::Constant};
+        crate::mpfr_test::cleanup_on_thread_exit();
 
         let pi = Float::with_val(256, Constant::Pi);
         let pi_lower = Float::with_val(256, f64::from_bits(0x4009_21fb_5444_2d17));
@@ -847,6 +861,7 @@ mod tests {
     #[test]
     fn demand_sized_sqrt_seeds_match_directed_mpfr() {
         use rug::{Float, Integer, Rational as RugRational, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
 
         let check = |numerator: BigInt, denominator: BigUint, precisions: &[i32]| {
             let exact = Rational::from_bigint_fraction(numerator.clone(), denominator.clone())
@@ -920,6 +935,7 @@ mod tests {
     #[test]
     fn direct_nth_root_approximations_match_mpfr() {
         use rug::{Float, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
 
         for degree in 3_u32..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE {
             for radicand in [2_i64, 3, 17, 257] {
@@ -1488,6 +1504,7 @@ mod tests {
     #[test]
     fn certified_small_angle_quotients_match_mpfr() {
         use rug::{Float, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
 
         fn rounded_scaled(mut value: Float, precision: Precision) -> BigInt {
             value <<= precision.saturating_neg();
@@ -3362,6 +3379,7 @@ mod tests {
     #[test]
     fn expm1_range_guard_and_cache_orders_match_directed_mpfr() {
         use rug::{Float, Integer, Rational as RugRational, float::Round};
+        crate::mpfr_test::cleanup_on_thread_exit();
 
         fn check(input: Rational, precisions: &[Precision]) {
             // e^10000 needs over 14,000 integer bits before absolute guards.

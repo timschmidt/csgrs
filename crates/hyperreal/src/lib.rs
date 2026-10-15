@@ -56,3 +56,7 @@ pub use crate::problem::Problem;
 
 #[cfg(feature = "serde")]
 mod serde;
+
+#[cfg(test)]
+#[path = "../tests/support/mpfr.rs"]
+mod mpfr_test;

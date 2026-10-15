@@ -1,0 +1,207 @@
+{
+  "default-tests/hyperreal-604035958dfa7d8e": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-604035958dfa7d8e",
+    "sha256": "7182ca45b7bac824c3dc29fd68fdd63eb4e749e028a93dfaef98481dd61cfa7a",
+    "bytes": 16899512
+  },
+  "default-tests/adversarial_props-8fdae5353da25b66": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-8fdae5353da25b66",
+    "sha256": "b3cd73362b05e068979afcc6bd7038c2bf371559bb80db0eb20f1e4b309037f7",
+    "bytes": 6432360
+  },
+  "default-tests/adversarial_regressions-343c282611aecf4e": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_regressions-343c282611aecf4e",
+    "sha256": "a99488e91e8afce4be1ade9a49218bf1a7ec0794a97853b26d4ba519cc1efda6",
+    "bytes": 5582832
+  },
+  "default-tests/adversarial_semantics-df19d7f209940ebd": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_semantics-df19d7f209940ebd",
+    "sha256": "4e0598455235f04a621ad6d9b6b2de3090561c6516d4e8608dc45630b35f1679",
+    "bytes": 5518048
+  },
+  "default-tests/calculator_diagnostics-b290acfb9a293d03": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/calculator_diagnostics-b290acfb9a293d03",
+    "sha256": "b385ef526a45d8fe6fcb2213185f21e6503929ed4c10265f860cd72011e597b2",
+    "bytes": 2309440
+  },
+  "default-tests/checked_decimal-29abdbb057ddb765": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_decimal-29abdbb057ddb765",
+    "sha256": "167beb4f66996c4d026c3d348e6ca6ce1b1b67957abe832195daa9c95c038af5",
+    "bytes": 5339992
+  },
+  "default-tests/checked_scientific-a5e25f4358ca277f": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_scientific-a5e25f4358ca277f",
+    "sha256": "c092670e4adf604c1604025ef1006c025ce93c92992fa9513a038daa7b40c820",
+    "bytes": 5998952
+  },
+  "default-tests/cli-287650fe932e682e": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/cli-287650fe932e682e",
+    "sha256": "465dfd32e9f6750a27c704f7c1d1f6a78b338193f932d6e8249a207f4508c07d",
+    "bytes": 2309304
+  },
+  "default-tests/exact_quadratic_normal_form-a3a5a1046e8616f3": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/exact_quadratic_normal_form-a3a5a1046e8616f3",
+    "sha256": "bd42c8ade6aee8db97f55406973ada94ff38e6a6ba5d46f74a6e0aab632e3424",
+    "bytes": 5176608
+  },
+  "default-tests/fixed_decimal-8ae1a889e68a25a4": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/fixed_decimal-8ae1a889e68a25a4",
+    "sha256": "4e281e7250dcffb83e4e2be5fe24f55f8b8080954bbb8e2fad10219bfbe03f16",
+    "bytes": 5302616
+  },
+  "default-tests/gmp_api_coverage-93a9dfaff28741d1": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/gmp_api_coverage-93a9dfaff28741d1",
+    "sha256": "c1ac841db3e249f6cd16593d94b496374edf4eacc943fd95aff13550e13cf3ea",
+    "bytes": 2488456
+  },
+  "default-tests/multiquadratic_normal_form-e26d67b62f65a0f6": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/multiquadratic_normal_form-e26d67b62f65a0f6",
+    "sha256": "a81481fe5c0ddf67aeb9b736216447dd76db131a5b24b4c721ab996851ae5be9",
+    "bytes": 5296648
+  },
+  "default-tests/numeric_roundtrip_formats-a87890b14d7a77eb": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/numeric_roundtrip_formats-a87890b14d7a77eb",
+    "sha256": "f848b6efd47514d1ac8781661298e90ad98aeb73d3e7fd076de750400ba2f3c6",
+    "bytes": 2309456
+  },
+  "default-tests/numerical_cross_reference-fd0c277dffe4f0a1": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/numerical_cross_reference-fd0c277dffe4f0a1",
+    "sha256": "d51da6b9db3d98d12c03d840130ff5fe455cef795da17eb663694a8fa8fdb787",
+    "bytes": 6591088
+  },
+  "default-tests/precision_limits-026fd354335a069c": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/precision_limits-026fd354335a069c",
+    "sha256": "4da70cdfe80dd958453a3e1051c0ab5969d705de0e239a063d766e79e7489d29",
+    "bytes": 4409552
+  },
+  "default-tests/public_numeric_semantics-79050a1fa8be66b3": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/public_numeric_semantics-79050a1fa8be66b3",
+    "sha256": "e7e492624337cd070e62d15ada4fd8c15cbfe93bbba2bea50fe7cb9e27fb2bed",
+    "bytes": 6029400
+  },
+  "default-tests/rational_oracle-98509b40ddbb41b3": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/rational_oracle-98509b40ddbb41b3",
+    "sha256": "9fda9b97aa51a03719d0afb0c50ac5069147ab6170246048ee9e88d03f138258",
+    "bytes": 4548992
+  },
+  "default-tests/readme-9977fa3b279481ea": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-9977fa3b279481ea",
+    "sha256": "0c1331a0295fdbf6a8ccc79fd87a31e73ce29288f83da30e044781df27c0e12c",
+    "bytes": 2362984
+  },
+  "default-tests/readme_metadata-de999852b75c3fa1": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/readme_metadata-de999852b75c3fa1",
+    "sha256": "4bcfdf197022375400f6b4314a15bcc02eb7e06d14f1b199cb7d9b142be088cc",
+    "bytes": 2378008
+  },
+  "default-tests/real_representations-6ec8c8b8de17caff": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/real_representations-6ec8c8b8de17caff",
+    "sha256": "9ff1d8308d887819d4b1a61f93173a3270f778d78d21f415b982fae45bffe811",
+    "bytes": 5814056
+  },
+  "all-features-tests/hyperreal-61b50bb7db741757": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-61b50bb7db741757",
+    "sha256": "2b1bb8938ef436eb79bbd5c6d8f2c892f7f012c3156e96c9fe0c91a2af82c760",
+    "bytes": 22202400
+  },
+  "all-features-tests/hyperreal-73125c70e07fabf4": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-73125c70e07fabf4",
+    "sha256": "dd5a3c14cd4ca29835e584d06fb835f0104359606f786d2758804d6f5f7d779b",
+    "bytes": 2309336
+  },
+  "all-features-tests/adversarial_props-d53331f10ba3ce60": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-d53331f10ba3ce60",
+    "sha256": "9d5aac4c49d209330663ac247aec4c2cbd264b97ad5ee0b883e0ce3386374cc9",
+    "bytes": 8202576
+  },
+  "all-features-tests/adversarial_regressions-ff20b3beacc7b07b": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_regressions-ff20b3beacc7b07b",
+    "sha256": "ed7c92befb73ef7780ed4fa62ccc3dc38c5b4de466348cac38b584d443dede43",
+    "bytes": 7541952
+  },
+  "all-features-tests/adversarial_semantics-b58129b0af8377ab": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_semantics-b58129b0af8377ab",
+    "sha256": "7c4539c7bf42e3d2e30958779d3fabd44be338dd5d8ae1ca19cdbe94d1a0aae2",
+    "bytes": 6049936
+  },
+  "all-features-tests/calculator_diagnostics-e64554b161e59732": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/calculator_diagnostics-e64554b161e59732",
+    "sha256": "536e81f925ab8e9fc4fb9e07758dfbdf87fe1a8eb42efd94f7650eab3a9aeb3e",
+    "bytes": 2362560
+  },
+  "all-features-tests/checked_decimal-64d990a89a2221e7": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_decimal-64d990a89a2221e7",
+    "sha256": "75c754797c2df8846beb240faadb062d24c5af1d8c7793d3f0820c78f82d9d5a",
+    "bytes": 5789336
+  },
+  "all-features-tests/checked_scientific-91fee2362c925a1b": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_scientific-91fee2362c925a1b",
+    "sha256": "1444f3ca42af2ad4ce2004641762978d0db11d0ae9c08383dc102776ad0edf55",
+    "bytes": 6468600
+  },
+  "all-features-tests/cli-62b48c56edc70ea4": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/cli-62b48c56edc70ea4",
+    "sha256": "e389177425e5d65024e655a954391bed5a535d41add232a954a40fa9c675b297",
+    "bytes": 2625984
+  },
+  "all-features-tests/exact_quadratic_normal_form-f1031eed85a2e1b0": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/exact_quadratic_normal_form-f1031eed85a2e1b0",
+    "sha256": "ffbe034af4782242d5bcd8fcb607ed2b759a5edf8f7fd25d88b36d30c60b9ded",
+    "bytes": 5598616
+  },
+  "all-features-tests/fixed_decimal-21ed26d2ddbef4b1": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/fixed_decimal-21ed26d2ddbef4b1",
+    "sha256": "c0cdba9a96520039da2ba2787a34d4078d47a0ec4885aff2995444fc29101682",
+    "bytes": 5776240
+  },
+  "all-features-tests/gmp_api_coverage-5ccac0aabf30b17c": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/gmp_api_coverage-5ccac0aabf30b17c",
+    "sha256": "f37e5114ed18a9ef8cfbe99fc5cb9fc4a0b9b1344015c3bcc614d939af89649d",
+    "bytes": 2488456
+  },
+  "all-features-tests/multiquadratic_normal_form-9645396986c81d9e": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/multiquadratic_normal_form-9645396986c81d9e",
+    "sha256": "1b029dd8b6834db624606cf6c9a7e87b1685f7727a1927b8caec8b9e91d9a8d3",
+    "bytes": 5759584
+  },
+  "all-features-tests/numeric_roundtrip_formats-6b3f19521ef535bc": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/numeric_roundtrip_formats-6b3f19521ef535bc",
+    "sha256": "2acefb98259918037978d84dc96611968e985c0bec5cafa7d226fa0c2bdb9307",
+    "bytes": 7882800
+  },
+  "all-features-tests/numerical_cross_reference-2234dcca5971be3c": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/numerical_cross_reference-2234dcca5971be3c",
+    "sha256": "dd2a359ad85b77cf00d7cba1b5380b31e0e7a0e8a2c14aa3f13b9533f85002d8",
+    "bytes": 7318168
+  },
+  "all-features-tests/precision_limits-4c435f65d18dece1": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/precision_limits-4c435f65d18dece1",
+    "sha256": "35938b9987d144f83a5ac2505e1014934bd8bb61c624a8accf635cd898c2dca2",
+    "bytes": 4666904
+  },
+  "all-features-tests/public_numeric_semantics-cb093f54eb43b1f7": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/public_numeric_semantics-cb093f54eb43b1f7",
+    "sha256": "9790662fb269fdb10c87fdab2f0a47cf6ba6b325f77460e9b6e6c908a630fc4d",
+    "bytes": 6674368
+  },
+  "all-features-tests/rational_oracle-22aaaf93af38211b": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/rational_oracle-22aaaf93af38211b",
+    "sha256": "88c2747569e1601225aa0d4b026072325c928fb21736b9b77f078e4260c4d86c",
+    "bytes": 4706744
+  },
+  "all-features-tests/readme-ed44010ff36970d1": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-ed44010ff36970d1",
+    "sha256": "65eca1e02368518805602598cfa8ba050f97bac4223fa8fe364450ce4331a94d",
+    "bytes": 2362984
+  },
+  "all-features-tests/readme_metadata-75e69ce0f3ca211f": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/readme_metadata-75e69ce0f3ca211f",
+    "sha256": "055fb489040a7c15c25a7a0fbe9775e0e34b2d5bddac8d09396219713364c59c",
+    "bytes": 2378008
+  },
+  "all-features-tests/real_representations-39730d63fe46c0e3": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/real_representations-39730d63fe46c0e3",
+    "sha256": "21bcba9bfe904e8a250423dfbf36049abfc80710d833329f2c755364f0649888",
+    "bytes": 8585400
+  }
+}
