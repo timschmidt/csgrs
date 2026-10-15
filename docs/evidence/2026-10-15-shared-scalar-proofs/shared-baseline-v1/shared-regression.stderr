@@ -1,0 +1,4 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 23.49s
+     Running unittests src/lib.rs (/run/user/1000/csgrs-shared-scalar-proofs/shared-baseline-v1/release/deps/hyperreal-4234254b1d45f4c0)
+error: test failed, to rerun pass `-p hyperreal --lib`

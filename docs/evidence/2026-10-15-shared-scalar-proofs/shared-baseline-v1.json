@@ -1,0 +1,17 @@
+[
+  [
+    "shared-regression",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "shared_quotient_subexpressions_fit_the_existing_expansion_budget",
+      "--",
+      "--test-threads=2"
+    ]
+  ]
+]

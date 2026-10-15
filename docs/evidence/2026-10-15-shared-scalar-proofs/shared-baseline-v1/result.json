@@ -1,0 +1,17 @@
+{
+  "commands": [
+    {
+      "name": "shared-regression",
+      "exit_code": 101,
+      "seconds": 25.387362950015813,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-shared-scalar-proofs/shared-baseline-v1/release/deps/hyperreal-4234254b1d45f4c0": "9038017e7ca63f955f7071a63f7a3bc8239453ed29f8e2e248839574c07e6438"
+      },
+      "stdout_sha256": "9775f5ed99ee04d89af798dc1bc22ceaeb558f4e76798297f88ab14f93363fa4",
+      "stderr_sha256": "a9a96d617a3bc95474f128fb5356abb49b2b90f7f85e62c57f2fad02eaf3eb7a",
+      "resources_sha256": "052c5d009cea367ffe197209f86f8ad8e8f85b8266333791f8ba123c42ab9ef9"
+    }
+  ],
+  "passed": false
+}

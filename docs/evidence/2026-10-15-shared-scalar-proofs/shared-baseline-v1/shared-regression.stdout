@@ -1,0 +1,20 @@
+
+running 1 test
+test computable::node::ring_quotient_tests::shared_quotient_subexpressions_fit_the_existing_expansion_budget ... FAILED
+
+failures:
+
+---- computable::node::ring_quotient_tests::shared_quotient_subexpressions_fit_the_existing_expansion_budget stdout ----
+
+thread 'computable::node::ring_quotient_tests::shared_quotient_subexpressions_fit_the_existing_expansion_budget' (1821108) panicked at crates/hyperreal/src/computable/node/ring_quotient_tests.rs:167:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::ring_quotient_tests::shared_quotient_subexpressions_fit_the_existing_expansion_budget
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 790 filtered out; finished in 0.00s
+

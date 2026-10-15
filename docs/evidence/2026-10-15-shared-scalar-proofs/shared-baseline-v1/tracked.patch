@@ -1,0 +1,3052 @@
+diff --git a/crates/hypercurve/src/bbox.rs b/crates/hypercurve/src/bbox.rs
+index 3283dca83..5bf89d738 100644
+--- a/crates/hypercurve/src/bbox.rs
++++ b/crates/hypercurve/src/bbox.rs
+@@ -381,6 +381,9 @@ impl Aabb2 {
+         policy: &CurveContext,
+     ) -> Classification<bool> {
+         if !policy.is_edge_preview() {
++            if let Some(inside) = self.cached_interval_contains_point(point) {
++                return Classification::Decided(inside);
++            }
+             return match policy.consume_predicate(hyperlimit::point_in_ordered_aabb2_coordinates(
+                 [self.min_x(), self.min_y()],
+                 [self.max_x(), self.max_y()],
+@@ -405,6 +408,36 @@ impl Aabb2 {
+         Classification::Decided(y_inside)
+     }
+ 
++    /// Reuse already certified operand intervals before comparing unrelated
++    /// symbolic coordinates. Separation proves a miss; enclosure of the whole
++    /// point interval by the inner box proves containment. Overlapping bounds
++    /// and absent or aborted caches retain the ordinary predicate cascade.
++    fn cached_interval_contains_point(&self, point: &Point2) -> Option<bool> {
++        let coordinates = [
++            (self.min_x(), self.max_x(), point.x()),
++            (self.min_y(), self.max_y(), point.y()),
++        ];
++        if coordinates.iter().all(|(min, max, value)| {
++            min.exact_rational_ref().is_some()
++                && max.exact_rational_ref().is_some()
++                && value.exact_rational_ref().is_some()
++        }) {
++            // The borrowed rational predicate below already avoids allocation.
++            return None;
++        }
++        let mut contained = true;
++        for (min, max, value) in coordinates {
++            let [min_low, min_high] = min.cached_rational_interval(-32)?;
++            let [max_low, max_high] = max.cached_rational_interval(-32)?;
++            let [value_low, value_high] = value.cached_rational_interval(-32)?;
++            if value_high < min_low || value_low > max_high {
++                return Some(false);
++            }
++            contained &= value_low >= min_high && value_high <= max_low;
++        }
++        contained.then_some(true)
++    }
++
+     /// Classifies whether two closed boxes overlap.
+     ///
+     /// Edge and corner contacts count as overlap. This inclusive convention is
+@@ -661,6 +694,118 @@ mod tests {
+     use crate::policy::resolve_certified_value;
+     use crate::{CurveCertainty, CurvePreviewOptions};
+ 
++    #[test]
++    fn cached_box_containment_matches_integer_oracle_across_scales() {
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for (scale, reversed) in [
++                ("1", false),
++                ("-3", true),
++                ("1e400", false),
++                ("1e-400", false),
++            ] {
++                for warm in [false, true] {
++                    let scale: Real = scale.parse().unwrap();
++                    let origin_x = Real::from(7).sin() + Real::from(53).sqrt().unwrap();
++                    let origin_y = Real::pi();
++                    let transform = |x: i32, y: i32| {
++                        Point2::new(
++                            (&origin_x + Real::from(x)) * &scale,
++                            (&origin_y + Real::from(y)) * &scale,
++                        )
++                    };
++                    let (min, max) = if reversed {
++                        (transform(3, 7), transform(-2, -5))
++                    } else {
++                        (transform(-2, -5), transform(3, 7))
++                    };
++                    let bounds = Aabb2::new_unchecked(min, max);
++                    for x in -3..=4 {
++                        for y in -6..=8 {
++                            let point = transform(x, y);
++                            if warm {
++                                for value in [
++                                    bounds.min_x(),
++                                    bounds.max_x(),
++                                    bounds.min_y(),
++                                    bounds.max_y(),
++                                    point.x(),
++                                    point.y(),
++                                ] {
++                                    value.certified_rational_interval(-128).unwrap();
++                                }
++                            }
++                            let expected = (-2..=3).contains(&x) && (-5..=7).contains(&y);
++                            let outcome = resolve_certified_value(&policy, |attempt| {
++                                bounds.contains_point_with_policy(&point, attempt)
++                            });
++                            assert_eq!(outcome.value, Classification::Decided(expected));
++                            assert_eq!(outcome.certainty, CurveCertainty::Certified);
++                            if warm
++                                && (!expected || ((-1..=2).contains(&x) && (-4..=6).contains(&y)))
++                            {
++                                assert_eq!(
++                                    bounds.cached_interval_contains_point(&point),
++                                    Some(expected)
++                                );
++                            }
++                        }
++                    }
++                }
++            }
++        }
++    }
++
++    #[test]
++    fn cached_box_containment_retains_exact_boundary_and_close_gap_decisions() {
++        let origin = Real::from(7).sin() + Real::from(53).sqrt().unwrap();
++        let bounds = Aabb2::new_unchecked(
++            Point2::new(origin.clone(), Real::from(-1)),
++            Point2::new(&origin + Real::one(), Real::one()),
++        );
++        let gap: Real = "1e-40".parse().unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for (x, expected) in [
++                (&origin - &gap, false),
++                (origin.clone(), true),
++                (&origin + &gap, true),
++                (bounds.max_x() - &gap, true),
++                (bounds.max_x().clone(), true),
++                (bounds.max_x() + &gap, false),
++            ] {
++                let point = Point2::new(x, Real::zero());
++                for value in [bounds.min_x(), bounds.max_x(), point.x()] {
++                    value.certified_rational_interval(-192).unwrap();
++                }
++                // The read-only 32-bit interval filter cannot separate these
++                // coordinates; exact correlated structure must decide them.
++                assert_eq!(bounds.cached_interval_contains_point(&point), None);
++                let outcome = resolve_certified_value(&policy, |attempt| {
++                    bounds.contains_point_with_policy(&point, attempt)
++                });
++                assert_eq!(outcome.value, Classification::Decided(expected));
++                assert_eq!(outcome.certainty, CurveCertainty::Certified);
++            }
++        }
++    }
++
++    #[test]
++    fn cached_box_containment_does_not_reuse_aborted_coordinates() {
++        use std::sync::{Arc, atomic::AtomicBool};
++
++        let mut x = Real::from(7).sin() + Real::from(53).sqrt().unwrap();
++        x.certified_rational_interval(-96).unwrap();
++        let bounds = Aabb2::new_unchecked(Point2::from_values(0, -1), Point2::from_values(10, 1));
++        assert_eq!(
++            bounds.cached_interval_contains_point(&Point2::new(x.clone(), Real::zero())),
++            Some(true)
++        );
++        x.abort(Arc::new(AtomicBool::new(true)));
++        assert_eq!(
++            bounds.cached_interval_contains_point(&Point2::new(x, Real::zero())),
++            None
++        );
++    }
++
+     #[test]
+     fn aabb_construction_keeps_exact_input_points() {
+         for policy in [CurveContext::APPROXIMATE_512, CurveContext::STRICT] {
+diff --git a/crates/hypercurve/src/bezier.rs b/crates/hypercurve/src/bezier.rs
+index 27a789bc0..2aae777a7 100644
+--- a/crates/hypercurve/src/bezier.rs
++++ b/crates/hypercurve/src/bezier.rs
+@@ -88,6 +88,8 @@ pub struct QuadraticBezier2 {
+ 
+ #[derive(Clone, Debug)]
+ struct ExactQuadraticLineImage2 {
++    // This is a degree-elevation certificate: the quadratic and the line
++    // have the same affine parameter chart, not merely the same point set.
+     line: LineSeg2,
+     parallel_tangent_contacts: Option<Arc<[BezierParallelLineTangentContact2]>>,
+ }
+@@ -204,6 +206,9 @@ impl QuadraticBezier2 {
+         }
+     }
+ 
++    /// Retains a previously certified degree-elevated line after an affine
++    /// transform, subdivision, or equal-valued endpoint replacement. The
++    /// caller must preserve `control = (start + end) / 2` exactly.
+     pub(crate) fn with_retained_exact_line_image(
+         start: Point2,
+         control: Point2,
+@@ -212,6 +217,8 @@ impl QuadraticBezier2 {
+         Self::with_retained_exact_line_provenance(start, control, end, Vec::new())
+     }
+ 
++    /// As `with_retained_exact_line_image`, also retaining tangent contacts.
++    /// The same exact midpoint precondition applies.
+     pub(crate) fn with_retained_exact_line_provenance(
+         start: Point2,
+         control: Point2,
+diff --git a/crates/hypercurve/src/bezier_fit.rs b/crates/hypercurve/src/bezier_fit.rs
+index 1a9ea5de1..89697077f 100644
+--- a/crates/hypercurve/src/bezier_fit.rs
++++ b/crates/hypercurve/src/bezier_fit.rs
+@@ -118,7 +118,8 @@ pub enum BezierPointFitRelation {
+ pub enum BezierLineImageFitRelation {
+     /// Every control point is certified on the endpoint line segment.
+     Fit(CertifiedBezierLineImage2),
+-    /// At least one control point is certified off the endpoint line segment.
++    /// No nonzero endpoint line image exists: the endpoints coincide or the
++    /// curve is certified not to lie on that segment.
+     NotLine,
+ }
+ 
+@@ -522,6 +523,12 @@ impl RationalQuadraticBezier2 {
+         &self,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
++        // A retained circular support cannot contain a nonzero line segment.
++        // A collapsed chart is a point and is not an endpoint line either.
++        // Reuse that certificate before comparing wide control coordinates.
++        if self.retained_circular_conic().is_some() {
++            return Ok(Classification::Decided(BezierLineImageFitRelation::NotLine));
++        }
+         match weights_known_same_nonzero_sign(self.weights().as_slice(), policy) {
+             Some(true) => fit_control_polygon_line_image(&self.control_points(), policy),
+             Some(false) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+@@ -555,6 +562,11 @@ impl RationalBezier2 {
+         &self,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
++        // Restriction, reversal and degree elevation preserve the supporting
++        // circle, including the fact that its image is not a nonzero segment.
++        if self.retained_circular_conic().is_some() {
++            return Ok(Classification::Decided(BezierLineImageFitRelation::NotLine));
++        }
+         if let Some(line) = self.retained_exact_line_image() {
+             return Ok(Classification::Decided(BezierLineImageFitRelation::Fit(
+                 CertifiedBezierLineImage2 {
+diff --git a/crates/hypercurve/src/bezier_region.rs b/crates/hypercurve/src/bezier_region.rs
+index 4527055dc..5c3c338f4 100644
+--- a/crates/hypercurve/src/bezier_region.rs
++++ b/crates/hypercurve/src/bezier_region.rs
+@@ -19,6 +19,7 @@ pub(crate) mod curve_corner_chain;
+ use curve_corner_chain::CurveCornerChain2;
+ 
+ mod corner_edit;
++mod linear_stroke;
+ mod native_fragments;
+ mod offset_joins;
+ mod offset_spans;
+@@ -4309,6 +4310,14 @@ impl CurveRegion2 {
+                 return Ok(Classification::Uncertain(reason));
+             }
+         }
++        if let [curve] = path.curves()
++            && let Some(CurveGeometry2::Line(line)) = curve.geometry()
++            && line.endpoints_decided_distinct()
++            && matches!(cap_style, OffsetCap::Butt | OffsetCap::Round)
++        {
++            return linear_stroke::native_line_stroke(line, &half_width, cap_style, policy)
++                .map(Classification::Decided);
++        }
+         let closed = match crate::curve::curve_path_is_closed(path, policy) {
+             Classification::Decided(closed) => closed,
+             Classification::Uncertain(reason) => {
+@@ -5542,17 +5551,74 @@ impl CurveRegion2 {
+             ));
+         }
+ 
+-        let endpoint = Point2::new(point.x() + &direction_x, point.y() + &direction_y);
+         let ray = BezierRay2 {
+-            line: LineSeg2::try_new(point.clone(), endpoint)?,
++            // The squared norm or the retained tangent certificate above
++            // already proves that this displacement is nonzero.
++            line: LineSeg2::from_certified_nonzero_delta(
++                point.clone(),
++                direction_x.clone(),
++                direction_y.clone(),
++            ),
+             direction_x,
+             direction_y,
+         };
+         let source_tangent_contacts = retained_circle_tangent_contacts(
+             &self.data.boundary_loops[source_loop_index].fragments()[source_fragment_index],
+         );
++        // Every closed loop has winding zero strictly outside its certified
++        // box. Project this representative once, before visiting all loops:
++        // the per-loop ray routine otherwise repeats expensive interval
++        // certification for the same algebraic coordinates on every loop.
++        // Unavailable enclosures retain the exact ray query, and the source
++        // loop always retains its origin-contact handling.
++        let point_enclosure =
++            certified_f64_enclosure(point.x()).zip(certified_f64_enclosure(point.y()));
++        // The certified native view preserves traversal order within each
++        // role bin. Away from the boundary its winding is independent of the
++        // ray direction, without reconstructing conic parameter contacts.
++        // Boundary and unknown results retain the origin-aware ray below.
++        let mut native_contours = self
++            .data
++            .line_image_region
++            .certified()
++            .and_then(Option::as_ref)
++            .map(|native| {
++                (
++                    native.material_contours().iter(),
++                    native.hole_contours().iter(),
++                )
++            });
+         let mut windings = Vec::with_capacity(self.data.boundary_loops.len());
+         for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
++            let native_contour = self
++                .data
++                .certified_loop_roles
++                .as_deref()
++                .and_then(|roles| roles.get(loop_index))
++                .zip(native_contours.as_mut())
++                .and_then(|(role, (material, holes))| match role {
++                    CurveRegionLoopRole::Material => material.next(),
++                    CurveRegionLoopRole::Hole => holes.next(),
++                });
++            if loop_index != source_loop_index
++                && let Some(([x_low, x_high], [y_low, y_high])) = point_enclosure
++                && let Some((_, Some(bounds))) = boundary_loop.fragment_query_bounds(policy)
++                && (x_high < bounds[0]
++                    || x_low > bounds[1]
++                    || y_high < bounds[2]
++                    || y_low > bounds[3])
++            {
++                windings.push(0);
++                continue;
++            }
++            if loop_index != source_loop_index
++                && let Some(contour) = native_contour
++                && let Classification::Decided(winding) = policy
++                    .strict_predicate_pass(|| contour.winding_number_with_policy(point, policy))
++            {
++                windings.push(winding);
++                continue;
++            }
+             let skipped_origin = Some(RetainedRayOriginContact {
+                 fragment_index: (loop_index == source_loop_index).then_some(source_fragment_index),
+                 parameter: source_parameter,
+@@ -6823,6 +6889,9 @@ impl BezierSubcurve2 {
+         &self,
+         policy: &CurveContext,
+     ) -> CurveResult<Classification<Option<Real>>> {
++        if let Some(area) = self.retained_circular_signed_area(policy) {
++            return Ok(Classification::Decided(Some(area)));
++        }
+         match self {
+             Self::Quadratic(curve) => curve
+                 .signed_area_contribution()
+@@ -6886,6 +6955,9 @@ impl BezierSubcurve2 {
+         policy: &CurveContext,
+         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
+     ) -> CurveResult<Classification<Option<Real>>> {
++        if let Some(area) = self.retained_circular_signed_area(policy) {
++            return Ok(Classification::Decided(Some(area)));
++        }
+         match self {
+             Self::Quadratic(curve) => curve
+                 .signed_area_contribution()
+@@ -6902,6 +6974,29 @@ impl BezierSubcurve2 {
+             },
+         }
+     }
++
++    fn retained_circular_signed_area(&self, policy: &CurveContext) -> Option<Real> {
++        let has_circle = match self {
++            Self::RationalQuadratic(curve) => curve.retained_circular_conic().is_some(),
++            Self::Rational(curve) => curve.retained_circular_conic().is_some(),
++            Self::Quadratic(_) | Self::Cubic(_) => false,
++        };
++        if !has_circle {
++            return None;
++        }
++        // The retained circle and traversal certify the same Green integral
++        // as the rational chart. Keep that compact geometric form instead of
++        // expanding the chart's numerator and denominator into inverse-trig
++        // expressions. An unavailable native view retains the general integral.
++        policy.strict_predicate_pass(|| {
++            let Classification::Decided(Segment2::Arc(arc)) =
++                native_fragments::materialized_native_subcurve_segment(self, policy).ok()?
++            else {
++                return None;
++            };
++            crate::contour::arc_signed_area_contribution(&arc).ok()?
++        })
++    }
+ }
+ 
+ fn rational_line_signed_area_contribution(
+diff --git a/crates/hypercurve/src/bezier_region/offset_spans.rs b/crates/hypercurve/src/bezier_region/offset_spans.rs
+index 15b55b439..f378d3a78 100644
+--- a/crates/hypercurve/src/bezier_region/offset_spans.rs
++++ b/crates/hypercurve/src/bezier_region/offset_spans.rs
+@@ -69,6 +69,22 @@ impl CurveTangent2 {
+                 );
+             }
+             BezierSplitFragment2::Materialized { curve, .. } => {
++                if let BezierSubcurve2::Quadratic(quadratic) = curve
++                    && let Some(line) = quadratic.retained_exact_line_image()
++                    && line.endpoints_decided_distinct()
++                {
++                    // A positive multiple of the traversal derivative is
++                    // sufficient for turn ordering. A cut line keeps the
++                    // compact source direction and its nonzero certificate.
++                    return Ok(Classification::Decided(Self::RepresentedDirection(
++                        line.directed_support_delta(),
++                    )));
++                }
++                if let Some(tangent) = policy.strict_predicate_pass(|| {
++                    materialized_circle_endpoint_direction(curve, at_start, policy)
++                }) {
++                    return Ok(Classification::Decided(Self::RepresentedDirection(tangent)));
++                }
+                 // A polynomial Bezier's endpoint derivative is n times its
+                 // first or last control difference; no power basis is needed.
+                 let polynomial_endpoint = |controls: &[&Point2]| {
+@@ -218,6 +234,56 @@ impl CurveTangent2 {
+     }
+ }
+ 
++/// A retained circle proves the radial is normal to the tangent, but not
++/// which way a possibly retraced chart visits an endpoint. The homogeneous
++/// endpoint derivative numerator supplies that local orientation. Its scale
++/// is `degree / endpoint_weight²`, which is positive for a finite endpoint.
++fn materialized_circle_endpoint_direction(
++    curve: &BezierSubcurve2,
++    at_start: bool,
++    policy: &CurveContext,
++) -> Option<(Real, Real)> {
++    match curve {
++        BezierSubcurve2::RationalQuadratic(curve) => curve.retained_circular_conic()?,
++        BezierSubcurve2::Rational(curve) => curve.retained_circular_conic()?,
++        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => return None,
++    };
++    let rational = RationalBezier2::try_from_subcurve(curve).ok()?;
++    let circle = rational.retained_circular_conic()?;
++    if real_sign(&circle.radius_squared, policy) != Some(RealSign::Positive) {
++        return None;
++    }
++    let controls = rational.homogeneous_controls();
++    let (from, to, endpoint, weight) = if at_start {
++        (
++            &controls[0],
++            &controls[1],
++            rational.start(),
++            controls[0].weight(),
++        )
++    } else {
++        let end = controls.len() - 1;
++        (
++            &controls[end - 1],
++            &controls[end],
++            rational.end(),
++            controls[end].weight(),
++        )
++    };
++    if is_zero(weight, policy) != Some(false) {
++        return None;
++    }
++    let tx = Real::diff_of_products(to.x(), from.weight(), from.x(), to.weight());
++    let ty = Real::diff_of_products(to.y(), from.weight(), from.y(), to.weight());
++    let (dx, dy) = endpoint.delta_from(&circle.center);
++    match real_sign(&Real::diff_of_products(&dx, &ty, &dy, &tx), policy) {
++        Some(RealSign::Positive) => Some((-dy, dx)),
++        Some(RealSign::Negative) => Some((dy, -dx)),
++        // A stationary or undecided endpoint retains the derivative path.
++        Some(RealSign::Zero) | None => None,
++    }
++}
++
+ pub(super) fn exact_offset_tangent_is_selected_circle(tangent: &CurveTangent2) -> bool {
+     matches!(
+         tangent,
+diff --git a/crates/hypercurve/src/bezier_region/point_location.rs b/crates/hypercurve/src/bezier_region/point_location.rs
+index 03f323c3f..cdeb1426f 100644
+--- a/crates/hypercurve/src/bezier_region/point_location.rs
++++ b/crates/hypercurve/src/bezier_region/point_location.rs
+@@ -1548,22 +1548,25 @@ pub(super) fn classify_point_against_retained_loop_with_fill_rule(
+         }
+     }
+     let mut last_reason = UncertaintyReason::Boundary;
+-    let rays = ray_candidates(point);
++    let mut unresolved_rays = Vec::new();
+     // A ray that meets an unresolved endpoint is only one possible witness.
++    // Construct exact witnesses on demand; most queries need only the first.
++    // Keep every unresolved ray for the terminal pass, including its caches.
++    for ray in ray_candidates(point) {
++        match policy.strict_predicate_pass(|| {
++            classify_point_with_retained_ray(boundary_loop, point, &ray, fill_rule, policy)
++        })? {
++            Classification::Decided(location) => {
++                return Ok(Classification::Decided(location));
++            }
++            Classification::Uncertain(reason) => last_reason = reason,
++        }
++        unresolved_rays.push(ray);
++    }
+     // Exhaust every exact ray before permitting any terminal interpretation.
+-    for approximate in [false, true] {
+-        if approximate && !policy.permits_approximate_512() {
+-            break;
+-        }
+-        for ray in &rays {
+-            let classify =
+-                || classify_point_with_retained_ray(boundary_loop, point, ray, fill_rule, policy);
+-            let result = if approximate {
+-                classify()
+-            } else {
+-                policy.strict_predicate_pass(classify)
+-            }?;
+-            match result {
++    if policy.permits_approximate_512() {
++        for ray in unresolved_rays {
++            match classify_point_with_retained_ray(boundary_loop, point, &ray, fill_rule, policy)? {
+                 Classification::Decided(location) => {
+                     return Ok(Classification::Decided(location));
+                 }
+@@ -2967,7 +2970,7 @@ pub(super) struct BezierRay2 {
+     pub(super) direction_y: Real,
+ }
+ 
+-pub(super) fn ray_candidates(point: &Point2) -> Vec<BezierRay2> {
++pub(super) fn ray_candidates(point: &Point2) -> impl Iterator<Item = BezierRay2> + '_ {
+     let one = Real::one();
+     let two = Real::from(2_i8);
+     let directions = [
+@@ -2982,18 +2985,18 @@ pub(super) fn ray_candidates(point: &Point2) -> Vec<BezierRay2> {
+         (two, one.clone()),
+         (one.clone(), -one),
+     ];
+-    directions
+-        .into_iter()
+-        .map(|(direction_x, direction_y)| {
+-            let endpoint = Point2::new(point.x() + &direction_x, point.y() + &direction_y);
+-            BezierRay2 {
+-                line: LineSeg2::try_new(point.clone(), endpoint)
+-                    .expect("fixed exact ray directions are nonzero"),
+-                direction_x,
+-                direction_y,
+-            }
+-        })
+-        .collect()
++    directions.into_iter().map(|(direction_x, direction_y)| {
++        BezierRay2 {
++            // Every fixed direction has a nonzero integer coordinate.
++            line: LineSeg2::from_certified_nonzero_delta(
++                point.clone(),
++                direction_x.clone(),
++                direction_y.clone(),
++            ),
++            direction_x,
++            direction_y,
++        }
++    })
+ }
+ 
+ /// Returns a conservative outer box for point-query rejection.
+diff --git a/crates/hypercurve/src/bezier_region/tests.rs b/crates/hypercurve/src/bezier_region/tests.rs
+index 9e6a8ce18..ff38f4b3e 100644
+--- a/crates/hypercurve/src/bezier_region/tests.rs
++++ b/crates/hypercurve/src/bezier_region/tests.rs
+@@ -830,6 +830,105 @@ fn retained_and_represented_tangents_share_filled_face_order() {
+     }
+ }
+ 
++#[test]
++fn native_boundary_tangents_keep_line_support_and_circle_radials() {
++    let check = |curve: BezierSubcurve2, expected: [(i32, i32); 2], policy: &CurveContext| {
++        let fragment = BezierSplitFragment2::Materialized {
++            start: BezierParameter2::Exact(Real::zero()),
++            end: BezierParameter2::Exact(Real::one()),
++            curve,
++        };
++        for (at_start, (dx, dy)) in [true, false].into_iter().zip(expected) {
++            let Classification::Decided(tangent) =
++                CurveTangent2::at_boundary_endpoint(&fragment, at_start, policy).unwrap()
++            else {
++                panic!("the native endpoint has a certified traversal tangent");
++            };
++            for (vx, vy) in [(1, 0), (0, 1), (-1, 0), (0, -1), (dx, dy), (-dx, -dy)] {
++                let vector = CurveTangent2::RepresentedDirection((Real::from(vx), Real::from(vy)));
++                let cross = dx * vy - dy * vx;
++                let expected = match cross.cmp(&0) {
++                    Ordering::Less => RealSign::Negative,
++                    Ordering::Equal => RealSign::Zero,
++                    Ordering::Greater => RealSign::Positive,
++                };
++                assert_eq!(
++                    curve_tangent_cross_sign(&tangent, &vector, policy),
++                    Classification::Decided(expected)
++                );
++                if cross == 0 {
++                    assert_eq!(
++                        curve_tangents_are_opposite(&tangent, &vector, policy),
++                        Classification::Decided(dx * vx + dy * vy < 0)
++                    );
++                }
++            }
++        }
++    };
++    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++        let source = LineSeg2::from_certified_nonzero_delta(
++            Point2::new(Real::pi(), Real::e()),
++            Real::from(3),
++            Real::from(4),
++        )
++        .offset_left(Real::from(2).sqrt().unwrap())
++        .unwrap();
++        let cut = source.fragment_between_after_distinct_endpoints(
++            source.point_at(q(1, 3)),
++            source.end().clone(),
++            source.fragment_support(),
++        );
++        for line in [source, cut] {
++            for reversed in [false, true] {
++                let line = if reversed {
++                    line.reversed()
++                } else {
++                    line.clone()
++                };
++                let direction = if reversed { (-3, -4) } else { (3, 4) };
++                check(
++                    BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line)),
++                    [direction; 2],
++                    &policy,
++                );
++            }
++        }
++        let center = Point2::new(Real::pi(), Real::e());
++        let arc = CircularArc2::try_from_center(
++            center.translated(Real::from(3), Real::from(4)),
++            center.translated(Real::from(-4), Real::from(3)),
++            center,
++            false,
++        )
++        .unwrap();
++        for reversed in [false, true] {
++            let arc = if reversed {
++                arc.reversed()
++            } else {
++                arc.clone()
++            };
++            let Classification::Decided(decomposition) =
++                arc.rational_bezier_decomposition_raw(&policy).unwrap()
++            else {
++                panic!("the quarter-circle has one exact rational span");
++            };
++            assert_eq!(decomposition.spans().len(), 1);
++            let quadratic = decomposition.spans()[0].curve();
++            let expected = if reversed {
++                [(3, 4), (4, -3)]
++            } else {
++                [(-4, 3), (-3, -4)]
++            };
++            for curve in [
++                BezierSubcurve2::RationalQuadratic(quadratic.clone()),
++                BezierSubcurve2::Rational(RationalBezier2::from(quadratic.clone())),
++            ] {
++                check(curve, expected, &policy);
++            }
++        }
++    }
++}
++
+ #[test]
+ fn boundary_tangent_does_not_assign_a_direction_to_a_stationary_endpoint() {
+     let source = BezierSplitFragment2::Materialized {
+@@ -856,6 +955,177 @@ fn boundary_tangent_does_not_assign_a_direction_to_a_stationary_endpoint() {
+     }
+ }
+ 
++fn retraced_supported_circle() -> RationalBezier2 {
++    // s=4t(1-t), C(s)=((1-s²)/(1+s²),2s/(1+s²)). The image lies
++    // on the unit circle, but traverses the same arc in both directions.
++    let arc = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap();
++    let (implicit, circle) = crate::arc_bezier::circular_conic_provenance(&arc);
++    RationalBezier2::try_new(
++        vec![
++            p(1, 0),
++            p(1, 2),
++            Point2::new(q(-5, 11), q(8, 11)),
++            p(1, 2),
++            p(1, 0),
++        ],
++        vec![Real::one(), Real::one(), q(11, 3), Real::one(), Real::one()],
++    )
++    .unwrap()
++    .with_implicit_quadratic_conic(implicit, Some(circle))
++}
++
++#[test]
++fn retained_circle_support_does_not_fix_endpoint_direction() {
++    let source = BezierSplitFragment2::Materialized {
++        start: BezierParameter2::Exact(Real::zero()),
++        end: BezierParameter2::Exact(Real::one()),
++        curve: BezierSubcurve2::Rational(retraced_supported_circle()),
++    };
++    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++        for reversed in [false, true] {
++            let fragment = if reversed {
++                source.reversed().unwrap()
++            } else {
++                source.clone()
++            };
++            for at_start in [true, false] {
++                let Classification::Decided(tangent) =
++                    CurveTangent2::at_boundary_endpoint(&fragment, at_start, &policy).unwrap()
++                else {
++                    panic!("the retraced circle still has nonzero endpoint derivatives");
++                };
++                assert_eq!(
++                    curve_tangent_cross_sign(
++                        &tangent,
++                        &CurveTangent2::RepresentedDirection((Real::one(), Real::zero())),
++                        &policy,
++                    ),
++                    Classification::Decided(if at_start {
++                        RealSign::Negative
++                    } else {
++                        RealSign::Positive
++                    })
++                );
++            }
++        }
++    }
++}
++
++#[test]
++fn retained_circle_support_does_not_certify_a_single_arc_integral() {
++    let curve = retraced_supported_circle();
++    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++        assert!(matches!(
++            crate::arc_bezier::rational_bezier_circular_arc(&curve, &policy).unwrap(),
++            Classification::Decided(None)
++        ));
++        assert!(
++            BezierSubcurve2::Rational(curve.clone())
++                .retained_circular_signed_area(&policy)
++                .is_none()
++        );
++    }
++}
++
++#[test]
++fn retained_circle_support_keeps_stationary_endpoints_unordered() {
++    // C(t²)=((1-t⁴)/(1+t⁴), 2t²/(1+t⁴)) is injective on [0,1]
++    // but has zero derivative at t=0. Circle support cannot remove that zero.
++    let arc = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap();
++    let (implicit, circle) = crate::arc_bezier::circular_conic_provenance(&arc);
++    let curve = RationalBezier2::try_new(
++        vec![
++            p(1, 0),
++            p(1, 0),
++            Point2::new(Real::one(), q(1, 3)),
++            p(1, 1),
++            p(0, 1),
++        ],
++        vec![
++            Real::one(),
++            Real::one(),
++            Real::one(),
++            Real::one(),
++            Real::from(2),
++        ],
++    )
++    .unwrap()
++    .with_implicit_quadratic_conic(implicit, Some(circle));
++    let source = BezierSplitFragment2::Materialized {
++        start: BezierParameter2::Exact(Real::zero()),
++        end: BezierParameter2::Exact(Real::one()),
++        curve: BezierSubcurve2::Rational(curve),
++    };
++    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++        for reversed in [false, true] {
++            let fragment = if reversed {
++                source.reversed().unwrap()
++            } else {
++                source.clone()
++            };
++            assert!(matches!(
++                CurveTangent2::at_boundary_endpoint(&fragment, !reversed, &policy).unwrap(),
++                Classification::Uncertain(UncertaintyReason::Boundary)
++            ));
++            let Classification::Decided(tangent) =
++                CurveTangent2::at_boundary_endpoint(&fragment, reversed, &policy).unwrap()
++            else {
++                panic!("the other endpoint has a nonzero derivative");
++            };
++            assert_eq!(
++                curve_tangent_cross_sign(
++                    &tangent,
++                    &CurveTangent2::RepresentedDirection((Real::zero(), Real::one())),
++                    &policy,
++                ),
++                Classification::Decided(if reversed {
++                    RealSign::Positive
++                } else {
++                    RealSign::Negative
++                })
++            );
++        }
++    }
++}
++
++#[test]
++fn retained_circle_support_preserves_elevated_arcs_and_rejects_collapsed_charts() {
++    use crate::tests::decided;
++
++    let arc = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap();
++    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++        let decomposition = decided(arc.rational_bezier_decomposition_raw(&policy).unwrap());
++        let source = RationalBezier2::from(decomposition.spans()[0].curve().clone());
++        for degree in [2, 3, 5] {
++            let elevated = source.elevated_to_degree(degree).unwrap();
++            for reversed in [false, true] {
++                let curve = if reversed {
++                    elevated.reversed()
++                } else {
++                    elevated.clone()
++                };
++                let Classification::Decided(Some(recovered)) =
++                    crate::arc_bezier::rational_bezier_circular_arc(&curve, &policy).unwrap()
++                else {
++                    panic!("degree elevation retains a proper circular chart");
++                };
++                assert_eq!(recovered.is_clockwise(), reversed);
++                assert_eq!(recovered.start(), curve.start());
++                assert_eq!(recovered.end(), curve.end());
++            }
++            let collapsed = decided(
++                elevated
++                    .subcurve_between_exact_with_policy(&q(1, 2), &q(1, 2), &policy)
++                    .unwrap(),
++            );
++            assert!(matches!(
++                crate::arc_bezier::rational_bezier_circular_arc(&collapsed, &policy).unwrap(),
++                Classification::Decided(None)
++            ));
++        }
++    }
++}
++
+ #[test]
+ fn even_multiplicity_stationary_source_coalesces_one_offset_span() {
+     // With s=2u-1, P(u)=(s^3,s^4) has P'(u)=s^2(6,8s).
+@@ -9287,7 +9557,7 @@ fn selected_parallel_ray_vertices_use_spatial_endpoint_ownership() {
+             };
+             let boundary = CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap();
+             let origin = p(1, 0);
+-            let ray = ray_candidates(&origin).remove(0);
++            let ray = ray_candidates(&origin).next().unwrap();
+             assert_eq!(
+                 classify_point_with_retained_ray_skipping_origin(
+                     &boundary, &origin, &ray, None, &policy
+@@ -15239,3 +15509,99 @@ fn explicit_signed_loops_classify_after_regularization() {
+         Ok(Classification::Decided(RegionPointLocation::Outside))
+     );
+ }
++
++#[test]
++fn native_winding_reuse_preserves_interleaved_roles_and_traversal_directions() {
++    let circle = |radius: i32, clockwise| {
++        Contour2::try_new(vec![
++            Segment2::Arc(
++                CircularArc2::try_from_center(p(radius, 0), p(-radius, 0), p(0, 0), clockwise)
++                    .unwrap(),
++            ),
++            Segment2::Arc(
++                CircularArc2::try_from_center(p(-radius, 0), p(radius, 0), p(0, 0), clockwise)
++                    .unwrap(),
++            ),
++        ])
++        .unwrap()
++    };
++    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++        for reversed in 0..8 {
++            let outer_reversed = reversed & 1 != 0;
++            let hole_reversed = reversed & 2 != 0;
++            let source_reversed = reversed & 4 != 0;
++            let vertices = [p(0, -2), p(3, -2), p(3, 2), p(0, 2)];
++            let mut segments = vertices
++                .iter()
++                .zip(vertices.iter().cycle().skip(1))
++                .map(|(start, end)| {
++                    Segment2::Line(LineSeg2::try_new(start.clone(), end.clone()).unwrap())
++                })
++                .collect::<Vec<_>>();
++            if source_reversed {
++                segments = segments.iter().rev().map(Segment2::reversed).collect();
++            }
++            let paths = [
++                circle(1, hole_reversed),
++                circle(5, outer_reversed),
++                Contour2::try_new(segments).unwrap(),
++            ]
++            .iter()
++            .map(curve_path_from_native_contour)
++            .collect::<ExactCurveResult<Vec<_>>>()
++            .unwrap();
++            let build = || {
++                CurveRegion2::try_from_boundary_paths_with_loop_semantics_raw(
++                    &paths,
++                    &[
++                        CurveRegionLoopRole::Hole,
++                        CurveRegionLoopRole::Material,
++                        CurveRegionLoopRole::Material,
++                    ],
++                    &[FillRule::NonZero; 3],
++                    &policy,
++                )
++                .unwrap()
++            };
++            let native = build();
++            assert!(native.data.line_image_region.certified().unwrap().is_some());
++            let mut generic = build();
++            generic.data_mut_for_construction().line_image_region =
++                PolicyClassificationCache::new();
++            for inside in [false, true] {
++                let crossing = if inside != source_reversed {
++                    BezierLineCrossingDirection::PositiveToNegative
++                } else {
++                    BezierLineCrossingDirection::NegativeToPositive
++                };
++                let expected = vec![
++                    if hole_reversed { -1 } else { 1 },
++                    if outer_reversed { -1 } else { 1 },
++                    if inside {
++                        if source_reversed { -1 } else { 1 }
++                    } else {
++                        0
++                    },
++                ];
++                for region in [&native, &generic] {
++                    assert_eq!(
++                        region
++                            .loop_windings_from_boundary_side_ray(
++                                &p(0, 0),
++                                if inside { Real::one() } else { -Real::one() },
++                                Real::zero(),
++                                true,
++                                crossing,
++                                2,
++                                if source_reversed { 0 } else { 3 },
++                                Some(&CurveParameter2::from(q(1, 2))),
++                                &policy,
++                            )
++                            .unwrap(),
++                        Classification::Decided(expected.clone())
++                    );
++                }
++            }
++        }
++    }
++}
+diff --git a/crates/hypercurve/src/classify.rs b/crates/hypercurve/src/classify.rs
+index 6fa6dbdee..1a9e9b1cf 100644
+--- a/crates/hypercurve/src/classify.rs
++++ b/crates/hypercurve/src/classify.rs
+@@ -150,6 +150,20 @@ pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurveContext) ->
+     }
+ 
+     if !policy.is_edge_preview() {
++        // Reuse a previously certified enclosure without initiating any
++        // refinement. Strictly separated intervals decide the order; overlap
++        // and absent caches retain the complete predicate cascade below.
++        if let (Some(left), Some(right)) = (
++            left.cached_rational_interval(-32),
++            right.cached_rational_interval(-32),
++        ) {
++            if left[1] < right[0] {
++                return Some(Ordering::Less);
++            }
++            if left[0] > right[1] {
++                return Some(Ordering::Greater);
++            }
++        }
+         // Curve parameter ordering is a topology predicate: it decides whether
+         // an intersection root lies on a segment, whether two split markers
+         // coincide, and how degenerate overlaps are classified. Route the sign
+@@ -277,3 +291,37 @@ pub(crate) fn at_unit_interval_endpoint(value: &Real, policy: &CurveContext) ->
+ fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
+     hyperlimit::Point2::new(point.x().clone(), point.y().clone())
+ }
++
++#[cfg(test)]
++mod cached_interval_tests {
++    use super::*;
++
++    #[test]
++    fn cold_and_warm_orders_agree_for_separated_equal_and_close_values() {
++        for scale in [Real::one(), Real::from(-3), "1e400".parse().unwrap()] {
++            let left = (Real::from(7).sin() + Real::from(53).sqrt().unwrap()) * &scale;
++            for distance in [Real::zero(), Real::one(), "1e-40".parse().unwrap()] {
++                let right = &left + &distance;
++                let expected = if distance == Real::zero() {
++                    Ordering::Equal
++                } else {
++                    Ordering::Less
++                };
++                assert_eq!(
++                    compare_reals(&left, &right, &CurveContext::STRICT),
++                    Some(expected)
++                );
++                left.certified_rational_interval(-96).unwrap();
++                right.certified_rational_interval(-96).unwrap();
++                assert_eq!(
++                    compare_reals(&left, &right, &CurveContext::STRICT),
++                    Some(expected)
++                );
++                assert_eq!(
++                    compare_reals(&right, &left, &CurveContext::STRICT),
++                    Some(expected.reverse())
++                );
++            }
++        }
++    }
++}
+diff --git a/crates/hypercurve/src/contour.rs b/crates/hypercurve/src/contour.rs
+index ef867990f..fa19a9d3e 100644
+--- a/crates/hypercurve/src/contour.rs
++++ b/crates/hypercurve/src/contour.rs
+@@ -39,7 +39,19 @@ pub struct Contour2 {
+     fill_rule: FillRule,
+     signed_area_cache: Arc<OnceLock<CurveResult<Option<Real>>>>,
+     signed_x_first_moment_cache: Arc<OnceLock<CurveResult<Option<Real>>>>,
+-    exact_dyadic_line_aabbs_cache: Arc<OnceLock<Option<Arc<ExactDyadicLineAabbs>>>>,
++    bounds_cache: Arc<ContourBoundsCache>,
++}
++
++#[derive(Debug, Default)]
++struct ContourBoundsCache {
++    exact_dyadic_lines: OnceLock<Option<Arc<ExactDyadicLineAabbs>>>,
++    winding: OnceLock<Box<ContourWindingBounds>>,
++}
++
++#[derive(Debug)]
++struct ContourWindingBounds {
++    contour: Aabb2,
++    segments: Vec<Option<Aabb2>>,
+ }
+ 
+ /// Compact line bounds whose binary64 coordinates are lossless exact dyadics.
+@@ -141,7 +153,7 @@ impl Contour2 {
+             fill_rule,
+             signed_area_cache: Arc::new(OnceLock::new()),
+             signed_x_first_moment_cache: Arc::new(OnceLock::new()),
+-            exact_dyadic_line_aabbs_cache: Arc::new(OnceLock::new()),
++            bounds_cache: Arc::new(ContourBoundsCache::default()),
+         })
+     }
+ 
+@@ -152,7 +164,7 @@ impl Contour2 {
+             fill_rule,
+             signed_area_cache: Arc::new(OnceLock::new()),
+             signed_x_first_moment_cache: Arc::new(OnceLock::new()),
+-            exact_dyadic_line_aabbs_cache: Arc::new(OnceLock::new()),
++            bounds_cache: Arc::new(ContourBoundsCache::default()),
+         }
+     }
+ 
+@@ -339,7 +351,8 @@ impl Contour2 {
+         if policy != &CurveContext::STRICT {
+             return None;
+         }
+-        self.exact_dyadic_line_aabbs_cache
++        self.bounds_cache
++            .exact_dyadic_lines
+             .get_or_init(|| exact_dyadic_line_aabbs(self.segments()).map(Arc::new))
+             .clone()
+     }
+@@ -373,15 +386,55 @@ impl Contour2 {
+         point: &Point2,
+         policy: &CurveContext,
+     ) -> Classification<i32> {
++        // Native contours are immutable, and every stored box was certified
++        // under STRICT. Explicit work budgets and speculative/preview passes
++        // keep their existing work sequence and do not read or fill this cache.
++        let cache_allowed = !policy.is_edge_preview()
++            && !policy.has_bounded_exact_predicate_budget()
++            && !hypersolve::work_budget::is_active();
++        if cache_allowed && let Some(bounds) = self.bounds_cache.winding.get() {
++            let winding = policy.strict_predicate_pass(|| {
++                contour_winding_number_with_cached_aabbs(
++                    self,
++                    point,
++                    Some(&bounds.contour),
++                    &bounds.segments,
++                    policy,
++                )
++            });
++            if matches!(
++                winding,
++                Classification::Decided(_) | Classification::Uncertain(UncertaintyReason::Boundary)
++            ) {
++                return winding;
++            }
++            // A conservative arc envelope may tighten after refinement. Retry
++            // uncertain queries with fresh boxes so reuse cannot hide a proof
++            // that the ordinary query would now find. Boundary is certified
++            // segment incidence and does not need this retry.
++        }
+         let contour_box = decided_contour_aabb(self);
+         let segment_boxes = decided_segment_boxes(self.segments());
+-        contour_winding_number_with_cached_aabbs(
++        let winding = contour_winding_number_with_cached_aabbs(
+             self,
+             point,
+             contour_box.as_ref(),
+             &segment_boxes,
+             policy,
+-        )
++        );
++        if cache_allowed
++            && segment_boxes.iter().all(Option::is_some)
++            && let Some(contour) = contour_box
++        {
++            let _ = self
++                .bounds_cache
++                .winding
++                .set(Box::new(ContourWindingBounds {
++                    contour,
++                    segments: segment_boxes,
++                }));
++        }
++        winding
+     }
+ 
+     /// Classifies a point against this contour.
+@@ -1233,7 +1286,11 @@ fn process_minor_arc_winding(
+         is_left_or_equal(start, end, point, policy)?
+     };
+ 
+-    let inside_circle = point_inside_circle(center, radius_squared, point, policy)?;
++    // On this side of the chord, every winding branch is independent of
++    // circle membership. Reuse that geometric decision without expanding
++    // the squared distance between unrelated radical coordinate fields.
++    let inside_circle =
++        point_is_left != is_ccw && point_inside_circle(center, radius_squared, point, policy)?;
+     let decision = minor_arc_winding_decision(
+         le_real(start.y(), point.y(), policy)?,
+         gt_real(end.y(), point.y(), policy)?,
+@@ -1679,4 +1736,115 @@ mod tests {
+ 
+         assert_eq!(contour.signed_area().unwrap(), Some(expected));
+     }
++
++    #[test]
++    fn native_quarter_sector_winding_matches_integer_oracle() {
++        // The rigid map (u,v) -> ((3u-4v)/5, (4u+3v)/5) preserves
++        // the integer oracle for the radius-five first-quadrant sector.
++        // Translation by named constants also exercises correlated operands.
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            for translated in [false, true] {
++                let center = if translated {
++                    Point2::new(Real::pi(), Real::e())
++                } else {
++                    point(0, 0)
++                };
++                let transform = |u: i32, v: i32| {
++                    center.translated(
++                        (Real::from(3 * u - 4 * v) / Real::from(5)).unwrap(),
++                        (Real::from(4 * u + 3 * v) / Real::from(5)).unwrap(),
++                    )
++                };
++                let segments = vec![
++                    Segment2::Arc(
++                        crate::CircularArc2::try_from_center(
++                            transform(5, 0),
++                            transform(0, 5),
++                            center.clone(),
++                            false,
++                        )
++                        .unwrap(),
++                    ),
++                    Segment2::Line(LineSeg2::try_new(transform(0, 5), center.clone()).unwrap()),
++                    Segment2::Line(LineSeg2::try_new(center.clone(), transform(5, 0)).unwrap()),
++                ];
++                for reversed in [false, true] {
++                    let segments = if reversed {
++                        segments.iter().rev().map(Segment2::reversed).collect()
++                    } else {
++                        segments.clone()
++                    };
++                    let sector = Contour2::try_new(segments).unwrap();
++                    for u in -6..=6 {
++                        for v in -6..=6 {
++                            let norm = u * u + v * v;
++                            let expected = if u >= 0
++                                && v >= 0
++                                && norm <= 25
++                                && (u == 0 || v == 0 || norm == 25)
++                            {
++                                Classification::Uncertain(UncertaintyReason::Boundary)
++                            } else {
++                                Classification::Decided(if u > 0 && v > 0 && norm < 25 {
++                                    if reversed { -1 } else { 1 }
++                                } else {
++                                    0
++                                })
++                            };
++                            assert_eq!(
++                                sector.winding_number_with_policy(&transform(u, v), &policy),
++                                expected,
++                                "query=({u},{v}), reversed={reversed}, translated={translated}"
++                            );
++                        }
++                    }
++                }
++            }
++        }
++    }
++
++    #[test]
++    fn native_winding_bounds_are_shared_and_budget_attempts_are_transient() {
++        use hypersolve::work_budget::{WorkBudget, WorkKind, consume, with_budget};
++
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            let vertices = [point(-2, -2), point(2, -2), point(2, 2), point(-2, 2)];
++            let contour = Contour2::try_new(
++                (0..vertices.len())
++                    .map(|index| {
++                        Segment2::Line(
++                            LineSeg2::try_new(
++                                vertices[index].clone(),
++                                vertices[(index + 1) % vertices.len()].clone(),
++                            )
++                            .unwrap(),
++                        )
++                    })
++                    .collect(),
++            )
++            .unwrap();
++            let inner = point(0, 0);
++            let budgeted = with_budget(WorkBudget::ZERO, || {
++                contour.winding_number_with_policy(&inner, &policy)
++            });
++            assert_eq!(budgeted.result.unwrap(), Classification::Decided(1));
++            assert!(contour.bounds_cache.winding.get().is_none());
++            assert_eq!(
++                contour.winding_number_with_policy(&inner, &policy),
++                Classification::Decided(1)
++            );
++            assert!(contour.bounds_cache.winding.get().is_some());
++            let clone = contour.clone();
++            assert!(Arc::ptr_eq(&contour.bounds_cache, &clone.bounds_cache));
++            assert_eq!(
++                clone.winding_number_with_policy(&point(3, 0), &policy),
++                Classification::Decided(0)
++            );
++            let exhausted = with_budget(WorkBudget::ZERO, || {
++                let _ = consume(WorkKind::RootRefinement, 1);
++                contour.winding_number_with_policy(&inner, &policy)
++            });
++            assert!(exhausted.result.is_err());
++        }
++    }
+ }
+diff --git a/crates/hypercurve/src/curve.rs b/crates/hypercurve/src/curve.rs
+index 85dabd52f..407109b50 100644
+--- a/crates/hypercurve/src/curve.rs
++++ b/crates/hypercurve/src/curve.rs
+@@ -841,22 +841,12 @@ impl Curve2 {
+     pub(crate) fn from_retained_fragment(fragment: crate::BezierSplitFragment2) -> Self {
+         if let crate::BezierSplitFragment2::Materialized { curve, .. } = fragment {
+             // Region topology carries straight pieces as degree-elevated
+-            // quadratics. With a midpoint control the quadratic chart is the
+-            // line's own chart, so the line is the faithful public curve.
++            // quadratics. The retained image certifies the midpoint control
++            // and the line's own chart; re-proving that identity from wide
++            // endpoint expressions can lose an existing certificate.
+             // Parallel-tangency evidence lives on the quadratic; keep it there.
+             if let crate::BezierSubcurve2::Quadratic(quadratic) = &curve
+                 && quadratic.retained_parallel_line_tangent_contacts().is_empty()
+-                && quadratic.retained_exact_line_image().is_some()
+-                && [
+-                    Real::from(2_i8) * quadratic.control().x()
+-                        - quadratic.start().x()
+-                        - quadratic.end().x(),
+-                    Real::from(2_i8) * quadratic.control().y()
+-                        - quadratic.start().y()
+-                        - quadratic.end().y(),
+-                ]
+-                .iter()
+-                .all(|offset| offset.zero_status() == hyperreal::ZeroKnowledge::Zero)
+                 // The fragment's own endpoints are the loop's shared vertex
+                 // representations; a cached image may hold equal copies.
+                 && let Some(image) = quadratic.retained_exact_line_image()
+@@ -5297,6 +5287,73 @@ enum FilletLinearSource2<'a> {
+ mod tests {
+     use super::*;
+ 
++    #[test]
++    fn retained_affine_line_chart_survives_subdivision_reversal_and_transform() {
++        use crate::classify::compare_reals;
++        use std::cmp::Ordering;
++
++        let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
++        let line = LineSeg2::from_certified_nonzero_delta(
++            Point2::new(Real::pi(), Real::e()),
++            Real::from(3),
++            Real::from(4),
++        )
++        .offset_left(Real::from(2).sqrt().unwrap())
++        .unwrap();
++        let promoted = QuadraticBezier2::from_line_segment(line);
++        let (left, right) = promoted.split_at_exact(q(1, 3));
++        let transformed = promoted.transform_affine(
++            &Real::from(2),
++            &Real::one(),
++            &Real::zero(),
++            &Real::from(-3),
++            &Real::pi(),
++            &Real::e(),
++        );
++        for quadratic in [
++            promoted.clone(),
++            promoted.reversed_with_retained_provenance().unwrap(),
++            left,
++            right,
++            transformed,
++        ] {
++            let curve = Curve2::from_retained_fragment(crate::BezierSplitFragment2::Materialized {
++                start: crate::BezierParameter2::Exact(Real::zero()),
++                end: crate::BezierParameter2::Exact(Real::one()),
++                curve: crate::BezierSubcurve2::Quadratic(quadratic.clone()),
++            });
++            let Some(CurveGeometry2::Line(line)) = curve.geometry() else {
++                panic!("a retained degree-elevation certificate must recover its line chart");
++            };
++            for t in [Real::zero(), q(1, 7), q(2, 3), Real::one()] {
++                let expected = quadratic.point_at(t.clone());
++                let actual = line.point_at(t);
++                for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++                    assert_eq!(
++                        compare_reals(actual.x(), expected.x(), &policy),
++                        Some(Ordering::Equal)
++                    );
++                    assert_eq!(
++                        compare_reals(actual.y(), expected.y(), &policy),
++                        Some(Ordering::Equal)
++                    );
++                }
++            }
++        }
++        // Collinearity alone does not certify the affine parameter chart.
++        let non_affine = QuadraticBezier2::new(
++            Point2::from_values(0, 0),
++            Point2::from_values(1, 0),
++            Point2::from_values(4, 0),
++        );
++        let curve = Curve2::from_retained_fragment(crate::BezierSplitFragment2::Materialized {
++            start: crate::BezierParameter2::Exact(Real::zero()),
++            end: crate::BezierParameter2::Exact(Real::one()),
++            curve: crate::BezierSubcurve2::Quadratic(non_affine),
++        });
++        assert_eq!(curve.family(), CurveFamily2::QuadraticBezier);
++    }
++
+     #[test]
+     fn distinct_parallel_sources_keep_a_shared_fillet_center_family() {
+         let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
+diff --git a/crates/hypercurve/src/curve_intersection.rs b/crates/hypercurve/src/curve_intersection.rs
+index 91512f15a..80de2869b 100644
+--- a/crates/hypercurve/src/curve_intersection.rs
++++ b/crates/hypercurve/src/curve_intersection.rs
+@@ -3,10 +3,11 @@
+ #[path = "curve_support_intersection.rs"]
+ mod curve_support_intersection;
+ 
++use std::collections::HashMap;
+ use std::sync::Arc;
+ use std::sync::OnceLock;
+ 
+-use hyperreal::Real;
++use hyperreal::{Rational, Real};
+ 
+ use crate::classify::compare_reals;
+ use crate::intersect::{circle_relation_from_supports, oriented_param_range_overlap};
+@@ -639,6 +640,8 @@ pub(crate) struct CurveIntersectionContext {
+ #[derive(Debug, Default)]
+ pub(crate) struct CurveIntersectionBatchCache {
+     circular_support_relations: Vec<CircularSupportRelationCacheEntry>,
++    rational_circular_support_relations: HashMap<[[Rational; 3]; 2], usize>,
++    symbolic_circular_support_relations: Vec<usize>,
+     circular_point_parameters: Vec<CircularPointParameterCacheEntry>,
+     unit_parallel_self_intersections: Vec<Arc<UnitParallelSelfIntersections>>,
+ }
+@@ -715,13 +718,40 @@ impl CurveIntersectionBatchCache {
+         ) else {
+             return Ok(None);
+         };
+-        if let Some(entry) = self.circular_support_relations.iter().find(|entry| {
++        let exact_key = |support: CircularSupportRef<'_>| {
++            Some([
++                support.center.x().exact_rational_ref()?.clone(),
++                support.center.y().exact_rational_ref()?.clone(),
++                support.radius_squared.exact_rational_ref()?.clone(),
++            ])
++        };
++        let rational_key = exact_key(first)
++            .zip(exact_key(second))
++            .map(|(first, second)| [first, second]);
++        let matches = |entry: &CircularSupportRelationCacheEntry| {
+             entry.first.center == *first.center
+                 && entry.first.radius_squared == *first.radius_squared
+                 && entry.second.center == *second.center
+                 && entry.second.radius_squared == *second.radius_squared
+-        }) {
+-            return Ok(Some(entry.relation.clone()));
++        };
++        let cached_index = if let Some(key) = &rational_key {
++            let indexed = self.rational_circular_support_relations.get(key).copied();
++            // Exact rational keys rule out all other rational entries. A
++            // symbolic center can still prove equal to a rational one; retain
++            // the original first-match order for those entries as well.
++            self.symbolic_circular_support_relations
++                .iter()
++                .copied()
++                .take_while(|index| indexed.is_none_or(|cached| *index < cached))
++                .find(|index| matches(&self.circular_support_relations[*index]))
++                .or(indexed)
++        } else {
++            self.circular_support_relations.iter().position(matches)
++        };
++        if let Some(index) = cached_index {
++            return Ok(Some(
++                self.circular_support_relations[index].relation.clone(),
++            ));
+         }
+         let relation = circle_relation_from_supports(
+             first.center,
+@@ -733,6 +763,7 @@ impl CurveIntersectionBatchCache {
+         .map_err(|cause| {
+             ExactCurveError::invalid(CurveOperation2::Intersection, first_curve.family(), cause)
+         })?;
++        let index = self.circular_support_relations.len();
+         self.circular_support_relations
+             .push(CircularSupportRelationCacheEntry {
+                 first: RationalQuadraticCircle2 {
+@@ -747,6 +778,11 @@ impl CurveIntersectionBatchCache {
+                 },
+                 relation: relation.clone(),
+             });
++        if let Some(key) = rational_key {
++            self.rational_circular_support_relations.insert(key, index);
++        } else {
++            self.symbolic_circular_support_relations.push(index);
++        }
+         Ok(Some(relation))
+     }
+ 
+@@ -3441,6 +3477,54 @@ mod native_dispatch_tests {
+             }
+         }
+         assert_eq!(cache.circular_support_relations.len(), 1);
++        assert_eq!(cache.rational_circular_support_relations.len(), 1);
++        assert!(cache.symbolic_circular_support_relations.is_empty());
++    }
++
++    #[test]
++    fn indexed_circle_relations_match_cold_queries_for_radii_order_and_symbolic_centers() {
++        let circle = |x: Real, radius: i32| {
++            let center = Point2::new(x, Real::zero());
++            let start = Point2::new(center.x() + Real::from(radius), Real::zero());
++            Curve2::from(
++                CircularArc2::try_from_center(start.clone(), start, center, false).unwrap(),
++            )
++        };
++        let mut cache = CurveIntersectionBatchCache::default();
++        for origin in [Real::zero(), Real::pi()] {
++            for index in 0..16 {
++                let x = &origin + Real::from(5 * index);
++                for radius in [1, 2] {
++                    for reversed in [false, true] {
++                        let pair = || {
++                            let first = circle(x.clone(), 2);
++                            let second = circle(&x + Real::one(), radius);
++                            if reversed {
++                                (second, first)
++                            } else {
++                                (first, second)
++                            }
++                        };
++                        let (first, second) = pair();
++                        let expected = CurveIntersectionBatchCache::default()
++                            .circular_support_relation(&first, &second, &CurveContext::STRICT)
++                            .unwrap();
++                        for _ in 0..2 {
++                            // Rebuild equal coordinates rather than depending
++                            // on shared Point2 allocation identities.
++                            let (first, second) = pair();
++                            let actual = cache
++                                .circular_support_relation(&first, &second, &CurveContext::STRICT)
++                                .unwrap();
++                            assert_eq!(actual, expected);
++                        }
++                    }
++                }
++            }
++        }
++        assert_eq!(cache.circular_support_relations.len(), 128);
++        assert_eq!(cache.rational_circular_support_relations.len(), 64);
++        assert_eq!(cache.symbolic_circular_support_relations.len(), 64);
+     }
+ }
+ 
+diff --git a/crates/hypercurve/src/curve_region_boolean.rs b/crates/hypercurve/src/curve_region_boolean.rs
+index bdc619b1a..e867b187e 100644
+--- a/crates/hypercurve/src/curve_region_boolean.rs
++++ b/crates/hypercurve/src/curve_region_boolean.rs
+@@ -4248,7 +4248,15 @@ fn carrier_is_symmetric_zero_chain(carrier: &RegionCarrier, policy: &CurveContex
+         equal(first.x(), second.x()) && equal(first.y(), second.y())
+     };
+     match curve {
+-        BezierSubcurve2::Quadratic(curve) => same_point(curve.start(), curve.end()),
++        BezierSubcurve2::Quadratic(curve) => {
++            if curve
++                .retained_exact_line_image()
++                .is_some_and(crate::LineSeg2::endpoints_decided_distinct)
++            {
++                return false;
++            }
++            same_point(curve.start(), curve.end())
++        }
+         BezierSubcurve2::Cubic(curve) => {
+             same_point(curve.start(), curve.end()) && same_point(curve.control1(), curve.control2())
+         }
+diff --git a/crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs b/crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs
+index 2caa75d9f..ff6d20724 100644
+--- a/crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs
++++ b/crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs
+@@ -7414,3 +7414,115 @@ fn certified_branch_order_matches_exact_vector_order() {
+         }
+     }
+ }
++
++#[test]
++fn materialized_single_boundary_windings_match_two_rays() {
++    // Nested, disjoint boundaries have independently known winding vectors:
++    // the outer diamond contains both inner loops, the circle contains the
++    // small diamond, and each oriented boundary changes only its own entry.
++    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++        for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
++            for reversals in 0..8 {
++                let point = |x, y| Point2::from_values(x, y);
++                let diamond = |radius: i32| {
++                    let points = [
++                        point(-radius, 0),
++                        point(0, -radius),
++                        point(radius, 0),
++                        point(0, radius),
++                    ];
++                    (0..4)
++                        .map(|i| {
++                            Segment2::Line(
++                                LineSeg2::try_new(points[i].clone(), points[(i + 1) % 4].clone())
++                                    .unwrap(),
++                            )
++                        })
++                        .collect::<Vec<_>>()
++                };
++                let points = [point(3, 0), point(0, 3), point(-3, 0), point(0, -3)];
++                let circle = (0..4)
++                    .map(|i| {
++                        Segment2::Arc(
++                            crate::CircularArc2::try_from_center(
++                                points[i].clone(),
++                                points[(i + 1) % 4].clone(),
++                                point(0, 0),
++                                false,
++                            )
++                            .unwrap(),
++                        )
++                    })
++                    .collect::<Vec<_>>();
++                let contour = |index, mut segments: Vec<Segment2>| {
++                    if reversals & (1 << index) != 0 {
++                        segments = segments
++                            .into_iter()
++                            .rev()
++                            .map(|segment| segment.reversed())
++                            .collect();
++                    }
++                    crate::Contour2::try_new_with_fill_rule(segments, fill_rule).unwrap()
++                };
++                let region = CurveRegion2::try_from_native_contours_raw(
++                    vec![contour(0, diamond(6)), contour(1, diamond(1))],
++                    vec![contour(2, circle)],
++                    &policy,
++                )
++                .unwrap();
++                let context = CurveRegionBooleanContext::try_new_unary(&region, &policy).unwrap();
++                let topology = context.build_split_topology().unwrap();
++                assert!(topology.overlaps.is_empty());
++                let direction = |index| if reversals & (1 << index) == 0 { 1 } else { -1 };
++                let mut lines = 0;
++                let mut arcs = 0;
++                for (carrier_index, splits) in topology.split_fragments.iter().enumerate() {
++                    let loop_index = context.data.carriers[carrier_index].loop_index;
++                    for split in splits {
++                        if matches!(split.fragment, BezierSplitFragment2::Materialized { .. }) {
++                            if loop_index == 2 {
++                                arcs += 1;
++                            } else {
++                                lines += 1;
++                            }
++                        }
++                        let direct = context
++                            .regularized_fragment_geometric_decision(
++                                carrier_index,
++                                &split.fragment,
++                                false,
++                            )
++                            .unwrap();
++                        let derived = context
++                            .regularized_fragment_geometric_decision(
++                                carrier_index,
++                                &split.fragment,
++                                true,
++                            )
++                            .unwrap();
++                        let mut left = match loop_index {
++                            0 => vec![0, 0, 0],
++                            1 => vec![direction(0), 0, direction(2)],
++                            2 => vec![direction(0), 0, 0],
++                            _ => unreachable!(),
++                        };
++                        left[loop_index] = i32::from(direction(loop_index) > 0);
++                        let mut right = left.clone();
++                        right[loop_index] -= 1;
++                        assert_eq!(
++                            direct.side_windings,
++                            [left, right],
++                            "reversals={reversals}, loop={loop_index}"
++                        );
++                        assert_eq!(derived.side_windings, direct.side_windings);
++                        assert_eq!(derived.action, direct.action);
++                    }
++                }
++                assert!(
++                    lines > 0 && arcs > 0,
++                    "both materialized families must exercise the shortcut"
++                );
++            }
++        }
++    }
++}
+diff --git a/crates/hypercurve/src/curve_region_boolean/regularization.rs b/crates/hypercurve/src/curve_region_boolean/regularization.rs
+index 98d9172d9..652eff79b 100644
+--- a/crates/hypercurve/src/curve_region_boolean/regularization.rs
++++ b/crates/hypercurve/src/curve_region_boolean/regularization.rs
+@@ -62,6 +62,25 @@ impl<'a> CurveRegionBooleanContext<'a> {
+                 }
+             }
+         }
++        // Carrier membership is fixed throughout side propagation. Record the
++        // last present fragment of each authored loop once instead of scanning
++        // all carriers every time a loop-closing continuation is revisited.
++        let authored_loop_key = |carrier: &RegionCarrier| {
++            (
++                match carrier.operand {
++                    CurveRegionBooleanOperand2::First => 0_u8,
++                    CurveRegionBooleanOperand2::Second => 1_u8,
++                },
++                carrier.loop_index,
++            )
++        };
++        let mut last_authored_fragments = HashMap::<_, usize>::new();
++        for carrier in &self.data.carriers {
++            last_authored_fragments
++                .entry(authored_loop_key(carrier))
++                .and_modify(|last| *last = (*last).max(carrier.fragment_index))
++                .or_insert(carrier.fragment_index);
++        }
+         let authored_successor = |incoming: (usize, usize), outgoing: (usize, usize)| {
+             let (incoming_carrier, incoming_split) = incoming;
+             let (outgoing_carrier, outgoing_split) = outgoing;
+@@ -81,11 +100,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
+             }
+             outgoing.fragment_index == incoming.fragment_index.saturating_add(1)
+                 || outgoing.fragment_index == 0
+-                    && !self.data.carriers.iter().any(|candidate| {
+-                        candidate.operand == incoming.operand
+-                            && candidate.loop_index == incoming.loop_index
+-                            && candidate.fragment_index > incoming.fragment_index
+-                    })
++                    && last_authored_fragments.get(&authored_loop_key(incoming))
++                        == Some(&incoming.fragment_index)
+         };
+ 
+         let mut edge_offsets = Vec::with_capacity(topology.split_fragments.len());
+@@ -109,6 +125,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
+         let mut vertex_sector_links = Vec::new();
+         let mut winding_sector_links = Vec::new();
+         let mut transverse_winding_sector_links = Vec::new();
++        let mut authored_continuations = Vec::new();
+ 
+         // An authored continuation with no transverse event preserves both
+         // local face sectors exactly.
+@@ -151,6 +168,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
+             if !authored_successor(incoming, outgoing) {
+                 continue;
+             }
++            authored_continuations.push((vertex, incoming, outgoing));
+             let incoming = edge_index(incoming.0, incoming.1);
+             let outgoing = edge_index(outgoing.0, outgoing.1);
+             winding_sector_links.push((left_face(incoming), left_face(outgoing)));
+@@ -1300,46 +1318,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
+             }
+             Ok(())
+         };
++        // Overlap ownership is also fixed. Preserve incident order, including
++        // the first conflicting vertex, while retaining only continuations
++        // through which actions may propagate.
++        authored_continuations.retain(|&(_, incoming, outgoing)| {
++            !(edge_overlapped[incoming.0][incoming.1] && !edge_owns_overlap[incoming.0][incoming.1]
++                || edge_overlapped[outgoing.0][outgoing.1]
++                    && !edge_owns_overlap[outgoing.0][outgoing.1])
++        });
+         let propagate_authored_actions = |actions: &mut Vec<Vec<Option<RegionFragmentAction>>>,
+                                           blockers: &[Vec<Option<ExactCurveError>>]|
+          -> ExactCurveResult<()> {
+             let mut changed = true;
+             while changed {
+                 changed = false;
+-                for (vertex, incident) in incidents.iter().enumerate() {
+-                    if incident.len() != 2
+-                        || topology
+-                            .transverse_vertices
+-                            .get(vertex)
+-                            .copied()
+-                            .unwrap_or(false)
+-                    {
+-                        continue;
+-                    }
+-                    let (incoming, outgoing) = match (incident[0], incident[1]) {
+-                        ((carrier, split, false), (next_carrier, next_split, true)) => {
+-                            ((carrier, split), (next_carrier, next_split))
+-                        }
+-                        ((next_carrier, next_split, true), (carrier, split, false)) => {
+-                            ((carrier, split), (next_carrier, next_split))
+-                        }
+-                        _ => continue,
+-                    };
+-                    if !authored_successor(incoming, outgoing) {
+-                        continue;
+-                    }
++                for &(vertex, incoming, outgoing) in &authored_continuations {
+                     // A coincident edge that lost deterministic overlap
+                     // ownership is discarded as a duplicate image.  That
+                     // ownership action belongs only to the overlap cell;
+                     // it cannot propagate through the authored endpoint
+                     // into an adjacent unique edge.
+-                    if edge_overlapped[incoming.0][incoming.1]
+-                        && !edge_owns_overlap[incoming.0][incoming.1]
+-                        || edge_overlapped[outgoing.0][outgoing.1]
+-                            && !edge_owns_overlap[outgoing.0][outgoing.1]
+-                    {
+-                        continue;
+-                    }
+                     let first = actions[incoming.0][incoming.1];
+                     let second = actions[outgoing.0][outgoing.1];
+                     match (first, second) {
+@@ -1702,12 +1700,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
+         );
+         let mut upper = end.clone();
+         let mut last_reason = UncertaintyReason::Boundary;
+-        // Retained circular-conic provenance is a construction certificate for
+-        // a proper rational parametrization of a nondegenerate minor arc.
+-        let retained_regular_circle = matches!(
+-            &carrier.geometry,
+-            CurveSupport2::Bezier(curve) if retained_circular_support(curve).is_some()
+-        );
++        // A nonconstant quadratic circle chart is regular wherever finite.
++        // Circle support alone also admits higher-degree retracing or
++        // stationary reparametrizations, which need the derivative proof.
++        let retained_regular_circle = match &carrier.geometry {
++            CurveSupport2::Bezier(curve) if retained_circular_support(curve).is_some() => {
++                let quadratic = match curve {
++                    BezierSubcurve2::RationalQuadratic(_) => true,
++                    BezierSubcurve2::Rational(curve) => curve.degree() == 2,
++                    BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => false,
++                };
++                quadratic
++                    && curve.has_certified_injective_image(&self.data.policy.strict_counterpart())
++            }
++            _ => false,
++        };
+         // General rational conversion is only a fallback certificate source.
+         // Avoid rebuilding a circular quadratic whose native provenance has
+         // already supplied everything this classifier needs.
+@@ -1866,6 +1873,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
+                 tangent_x = -tangent_x;
+                 tangent_y = -tangent_y;
+             }
++            let representative_is_interior = source_endpoint_witness.as_ref() != Some(&parameter);
+             let source_parameter = CurveParameter2::from(BezierParameter2::Exact(parameter));
+             boundary_probe_representative =
+                 Some((representative.clone(), source_parameter.clone()));
+@@ -1884,20 +1892,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
+                 }
+                 Err(error) => return Err(error),
+             };
+-            let right = match self.fragment_side_classification(
+-                carrier_index,
+-                &representative,
+-                Some(&source_parameter),
+-                &tangent_x,
+-                &tangent_y,
+-                false,
+-            ) {
+-                Ok(location) => location,
+-                Err(ExactCurveError::Blocked(blocker)) => {
+-                    last_reason = blocker.reason();
+-                    continue;
++            let right = if has_single_boundary_jump && representative_is_interior {
++                self.regularized_opposite_from_left(carrier_index, &left)?
++            } else {
++                match self.fragment_side_classification(
++                    carrier_index,
++                    &representative,
++                    Some(&source_parameter),
++                    &tangent_x,
++                    &tangent_y,
++                    false,
++                ) {
++                    Ok(location) => location,
++                    Err(ExactCurveError::Blocked(blocker)) => {
++                        last_reason = blocker.reason();
++                        continue;
++                    }
++                    Err(error) => return Err(error),
+                 }
+-                Err(error) => return Err(error),
+             };
+             return Ok(RegularizedFragmentDecision::from_classified_sides(
+                 left, right,
+@@ -2296,6 +2308,43 @@ impl<'a> CurveRegionBooleanContext<'a> {
+         Err(self.blocked(carrier_index, last_reason))
+     }
+ 
++    /// Complete pair replay leaves one oriented source crossing in the open
++    /// fragment when no coincident span covers it. Its left winding exceeds
++    /// its right winding by one in that source loop, independent of fill rule
++    /// or material/hole role. Call only for a certified interior witness.
++    fn regularized_opposite_from_left(
++        &self,
++        carrier_index: usize,
++        left: &(Vec<i32>, RegionPointLocation),
++    ) -> ExactCurveResult<(Vec<i32>, RegionPointLocation)> {
++        let loop_index = self.data.carriers[carrier_index].loop_index;
++        let mut windings = left.0.clone();
++        let Some(winding) = windings.get_mut(loop_index) else {
++            return Err(self.invalid(
++                carrier_index,
++                CurveError::Topology(
++                    "a regularized fragment references a missing source loop".into(),
++                ),
++            ));
++        };
++        *winding = winding.checked_sub(1).ok_or_else(|| {
++            self.invalid(
++                carrier_index,
++                CurveError::Topology("a regularized winding underflowed i32".into()),
++            )
++        })?;
++        let location = self
++            .location_from_windings(self.region_for_carrier(carrier_index), &windings)
++            .map_err(|cause| self.invalid(carrier_index, cause))?;
++        #[cfg(feature = "dispatch-trace")]
++        hyperreal::dispatch_trace::record(
++            "hypercurve",
++            "regularization-fragment-side",
++            "single-boundary-winding-jump",
++        );
++        Ok((windings, location))
++    }
++
+     pub(super) fn regularized_algebraic_chord_fragment_decision(
+         &self,
+         carrier_index: usize,
+@@ -2318,35 +2367,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
+         // of intersecting a second, antiparallel boundary ray with the entire
+         // region.
+         let opposite_from_left = |left: &(Vec<i32>, RegionPointLocation)| {
+-            if !has_single_boundary_jump {
+-                return Ok(None);
++            if has_single_boundary_jump {
++                self.regularized_opposite_from_left(carrier_index, left)
++                    .map(Some)
++            } else {
++                Ok(None)
+             }
+-            let loop_index = self.data.carriers[carrier_index].loop_index;
+-            let mut windings = left.0.clone();
+-            let Some(winding) = windings.get_mut(loop_index) else {
+-                return Err(self.invalid(
+-                    carrier_index,
+-                    CurveError::Topology(
+-                        "a regularized fragment references a missing source loop".into(),
+-                    ),
+-                ));
+-            };
+-            *winding = winding.checked_sub(1).ok_or_else(|| {
+-                self.invalid(
+-                    carrier_index,
+-                    CurveError::Topology("a regularized winding underflowed i32".into()),
+-                )
+-            })?;
+-            let location = self
+-                .location_from_windings(self.region_for_carrier(carrier_index), &windings)
+-                .map_err(|cause| self.invalid(carrier_index, cause))?;
+-            #[cfg(feature = "dispatch-trace")]
+-            hyperreal::dispatch_trace::record(
+-                "hypercurve",
+-                "regularization-fragment-side",
+-                "single-boundary-winding-jump",
+-            );
+-            Ok(Some((windings, location)))
+         };
+         if let CurvePoint2(CurvePointData2::Exact(representative)) = representative {
+             let tangent = chord
+diff --git a/crates/hypercurve/src/offset.rs b/crates/hypercurve/src/offset.rs
+index efa109643..5c9670144 100644
+--- a/crates/hypercurve/src/offset.rs
++++ b/crates/hypercurve/src/offset.rs
+@@ -65,7 +65,7 @@ impl LineSeg2 {
+         let offset_x = &normal_x * &distance;
+         let offset_y = &normal_y * &distance;
+ 
+-        self.offset_between(
++        self.offset_translated_endpoints(
+             self.start().translated(offset_x.clone(), offset_y.clone()),
+             self.end().translated(offset_x, offset_y),
+             distance,
+diff --git a/crates/hypercurve/src/policy.rs b/crates/hypercurve/src/policy.rs
+index 618119f6d..dbe0e59b0 100644
+--- a/crates/hypercurve/src/policy.rs
++++ b/crates/hypercurve/src/policy.rs
+@@ -801,7 +801,6 @@ impl<T> PolicyClassificationCache<T> {
+         let _ = self.certified.set(value);
+     }
+ 
+-    #[cfg(test)]
+     pub(crate) fn certified(&self) -> Option<&T> {
+         self.certified.get()
+     }
+diff --git a/crates/hypercurve/src/rational_bezier_general.rs b/crates/hypercurve/src/rational_bezier_general.rs
+index 0cfb4446e..d8fa83d0d 100644
+--- a/crates/hypercurve/src/rational_bezier_general.rs
++++ b/crates/hypercurve/src/rational_bezier_general.rs
+@@ -2389,8 +2389,29 @@ impl RationalBezier2 {
+                 }
+                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
+             };
++            // A finite nonconstant quadratic circle chart has one traversal
++            // orientation. For L(s)=O+sD, dot(D,L(s)-center) is respectively
++            // -sqrt(discriminant) and +sqrt(discriminant) at the two roots.
++            // Crossing a CCW circle uses that same sign, since
++            // cross(D, rotate_ccw(radial)) = dot(D, radial); CW reverses it.
++            // Reuse the arc certificate instead of expanding a derivative at
++            // each reconstructed conic parameter. Unknown orientation keeps
++            // the original derivative predicate below.
++            let clockwise = if kind == BezierLineContactKind::Crossing {
++                match crate::arc_bezier::rational_bezier_circular_arc(
++                    self,
++                    &policy.strict_counterpart(),
++                ) {
++                    Ok(Classification::Decided(Some(arc))) => Some(arc.is_clockwise()),
++                    Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => {
++                        None
++                    }
++                }
++            } else {
++                None
++            };
+             let mut contacts = Vec::with_capacity(line_parameters.len());
+-            for line_parameter in line_parameters {
++            for (root_index, line_parameter) in line_parameters.into_iter().enumerate() {
+                 let point = Point2::new(
+                     line.start().x() + &line_dx * &line_parameter,
+                     line.start().y() + &line_dy * &line_parameter,
+@@ -2401,7 +2422,13 @@ impl RationalBezier2 {
+                     Classification::Uncertain(_) => break 'retained_circle,
+                 };
+                 for parameter in parameters {
+-                    let crossing_direction = if kind == BezierLineContactKind::Crossing {
++                    let crossing_direction = if let Some(clockwise) = clockwise {
++                        Some(if (root_index == 0) != clockwise {
++                            BezierLineCrossingDirection::PositiveToNegative
++                        } else {
++                            BezierLineCrossingDirection::NegativeToPositive
++                        })
++                    } else if kind == BezierLineContactKind::Crossing {
+                         let BezierParameter2::Exact(exact) = &parameter else {
+                             return Classification::Uncertain(UncertaintyReason::Unsupported);
+                         };
+diff --git a/crates/hypercurve/src/segment.rs b/crates/hypercurve/src/segment.rs
+index b9fafdc19..9dfdfbb22 100644
+--- a/crates/hypercurve/src/segment.rs
++++ b/crates/hypercurve/src/segment.rs
+@@ -20,13 +20,41 @@ use std::cmp::Ordering;
+ pub struct LineSeg2 {
+     start: Point2,
+     end: Point2,
+-    endpoints_decided_distinct: bool,
+     support: OnceLock<Arc<LineSupport2>>,
++    certificates: LineCertificates2,
++}
++
++#[derive(Clone, Copy, Debug, Default)]
++struct LineFlags2 {
++    endpoints_decided_distinct: bool,
+     has_retained_support: bool,
+     // Shared supports retain source orientation; this bit recovers the
+     // fragment's directed tangent without subtracting its wide endpoints.
+     support_direction_reversed: bool,
+-    offset_provenance: Option<Arc<LineOffsetProvenance2>>,
++}
++
++// Keep the flags beside the enum tag, sharing its alignment padding. An
++// offset owns its optional displacement, so each variant needs only one Arc
++// and the complete native line stays within its existing 48-byte contract.
++#[derive(Clone, Debug)]
++enum LineCertificates2 {
++    Plain(LineFlags2),
++    Displaced(LineFlags2, Arc<(Real, Real)>),
++    Offset(LineFlags2, Arc<LineOffsetProvenance2>),
++}
++
++impl LineCertificates2 {
++    const fn flags(&self) -> &LineFlags2 {
++        match self {
++            Self::Plain(flags) | Self::Displaced(flags, _) | Self::Offset(flags, _) => flags,
++        }
++    }
++
++    fn flags_mut(&mut self) -> &mut LineFlags2 {
++        match self {
++            Self::Plain(flags) | Self::Displaced(flags, _) | Self::Offset(flags, _) => flags,
++        }
++    }
+ }
+ 
+ impl PartialEq for LineSeg2 {
+@@ -35,16 +63,26 @@ impl PartialEq for LineSeg2 {
+     }
+ }
+ 
+-#[derive(Debug, PartialEq)]
++#[derive(Debug)]
+ pub(crate) struct LineSupport2 {
+     start: Point2,
+     end: Point2,
++    // Splitting preserves the support's original construction displacement.
++    // The finite fragment keeps its own endpoint difference for parameters.
++    retained_delta: Option<Arc<(Real, Real)>>,
++}
++
++impl PartialEq for LineSupport2 {
++    fn eq(&self, other: &Self) -> bool {
++        self.start == other.start && self.end == other.end
++    }
+ }
+ 
+ #[derive(Debug, PartialEq)]
+ struct LineOffsetProvenance2 {
+     source: Arc<LineSupport2>,
+     left_distance: Real,
++    retained_delta: Option<Arc<(Real, Real)>>,
+ }
+ 
+ fn line_support_cell(support: Option<Arc<LineSupport2>>) -> OnceLock<Arc<LineSupport2>> {
+@@ -83,11 +121,11 @@ impl LineSeg2 {
+         Ok(Self {
+             start,
+             end,
+-            endpoints_decided_distinct,
+             support: OnceLock::new(),
+-            has_retained_support: false,
+-            support_direction_reversed: false,
+-            offset_provenance: None,
++            certificates: LineCertificates2::Plain(LineFlags2 {
++                endpoints_decided_distinct,
++                ..LineFlags2::default()
++            }),
+         })
+     }
+ 
+@@ -96,14 +134,27 @@ impl LineSeg2 {
+         Self {
+             start,
+             end,
+-            endpoints_decided_distinct: false,
+             support: OnceLock::new(),
+-            has_retained_support: false,
+-            support_direction_reversed: false,
+-            offset_provenance: None,
++            certificates: LineCertificates2::Plain(LineFlags2::default()),
+         }
+     }
+ 
++    /// Constructs `start -> start + delta` from a certified nonzero displacement.
++    /// The caller must prove that at least one displacement coordinate is
++    /// nonzero, retaining any policy dependency in the enclosing operation.
++    pub(crate) fn from_certified_nonzero_delta(start: Point2, dx: Real, dy: Real) -> Self {
++        let end = Point2::new(start.x() + &dx, start.y() + &dy);
++        let mut line = Self::new_unchecked(start, end);
++        line.certificates = LineCertificates2::Displaced(
++            LineFlags2 {
++                endpoints_decided_distinct: true,
++                ..LineFlags2::default()
++            },
++            Arc::new((dx, dy)),
++        );
++        line
++    }
++
+     /// Returns the segment start point.
+     pub const fn start(&self) -> &Point2 {
+         &self.start
+@@ -116,13 +167,41 @@ impl LineSeg2 {
+ 
+     /// Returns `(end.x - start.x, end.y - start.y)`.
+     pub fn delta(&self) -> (Real, Real) {
+-        self.end.delta_from(&self.start)
++        self.retained_delta()
++            .map(|delta| delta.as_ref().clone())
++            .unwrap_or_else(|| self.end.delta_from(&self.start))
++    }
++
++    fn retained_delta(&self) -> Option<&Arc<(Real, Real)>> {
++        // An offset fragment can share the source's provenance, but its own
++        // finite displacement must come from its restricted endpoints.
++        if self.has_retained_support() {
++            return None;
++        }
++        match &self.certificates {
++            LineCertificates2::Plain(_) => None,
++            LineCertificates2::Displaced(_, delta) => Some(delta),
++            LineCertificates2::Offset(_, provenance) => provenance.retained_delta.as_ref(),
++        }
++    }
++
++    fn offset_provenance(&self) -> Option<&Arc<LineOffsetProvenance2>> {
++        match &self.certificates {
++            LineCertificates2::Offset(_, provenance) => Some(provenance),
++            LineCertificates2::Plain(_) | LineCertificates2::Displaced(_, _) => None,
++        }
+     }
+ 
+     pub(crate) fn support_delta(&self) -> (Real, Real) {
+         self.support.get().map_or_else(
+             || self.delta(),
+-            |support| support.end.delta_from(&support.start),
++            |support| {
++                support
++                    .retained_delta
++                    .as_deref()
++                    .cloned()
++                    .unwrap_or_else(|| support.end.delta_from(&support.start))
++            },
+         )
+     }
+ 
+@@ -133,7 +212,7 @@ impl LineSeg2 {
+     /// against it avoid subtracting the fragment's wide endpoints.
+     pub(crate) fn directed_support_delta(&self) -> (Real, Real) {
+         let (dx, dy) = self.support_delta();
+-        if self.has_retained_support && self.support_direction_reversed {
++        if self.has_retained_support() && self.certificates.flags().support_direction_reversed {
+             (-dx, -dy)
+         } else {
+             (dx, dy)
+@@ -149,25 +228,36 @@ impl LineSeg2 {
+         start: Point2,
+         end: Point2,
+     ) -> CurveResult<Self> {
+-        let validated = Self::try_new(start, end)?;
+-        if !self.has_retained_support {
++        let mut validated = if self.endpoints_decided_distinct() {
++            // The caller retained endpoint equality, so the source's
++            // distinctness proof applies to these representations as well.
++            let mut line = Self::new_unchecked(start, end);
++            line.certificates.flags_mut().endpoints_decided_distinct = true;
++            line
++        } else {
++            Self::try_new(start, end)?
++        };
++        let endpoints_decided_distinct = validated.endpoints_decided_distinct();
++        validated.certificates = self.certificates.clone();
++        validated
++            .certificates
++            .flags_mut()
++            .endpoints_decided_distinct = endpoints_decided_distinct;
++        if !self.has_retained_support() {
+             return Ok(validated);
+         }
+         Ok(Self {
+             support: line_support_cell(self.support.get().cloned()),
+-            has_retained_support: true,
+-            support_direction_reversed: self.support_direction_reversed,
+-            offset_provenance: self.offset_provenance.clone(),
+             ..validated
+         })
+     }
+ 
+     pub(crate) const fn has_retained_support(&self) -> bool {
+-        self.has_retained_support
++        self.certificates.flags().has_retained_support
+     }
+ 
+     pub(crate) const fn endpoints_decided_distinct(&self) -> bool {
+-        self.endpoints_decided_distinct
++        self.certificates.flags().endpoints_decided_distinct
+     }
+ 
+     pub(crate) fn support_start(&self) -> &Point2 {
+@@ -182,14 +272,20 @@ impl LineSeg2 {
+         end: Point2,
+         support: Arc<LineSupport2>,
+     ) -> Self {
++        let flags = LineFlags2 {
++            endpoints_decided_distinct: true,
++            has_retained_support: true,
++            support_direction_reversed: self.certificates.flags().support_direction_reversed,
++        };
++        let certificates = match self.offset_provenance() {
++            Some(provenance) => LineCertificates2::Offset(flags, provenance.clone()),
++            None => LineCertificates2::Plain(flags),
++        };
+         Self {
+             start,
+             end,
+-            endpoints_decided_distinct: true,
+             support: line_support_cell(Some(support)),
+-            has_retained_support: true,
+-            support_direction_reversed: self.support_direction_reversed,
+-            offset_provenance: self.offset_provenance.clone(),
++            certificates,
+         }
+     }
+ 
+@@ -199,6 +295,7 @@ impl LineSeg2 {
+                 Arc::new(LineSupport2 {
+                     start: self.start.clone(),
+                     end: self.end.clone(),
++                    retained_delta: self.retained_delta().cloned(),
+                 })
+             })
+             .clone()
+@@ -209,7 +306,7 @@ impl LineSeg2 {
+         other: &Self,
+         policy: &CurveContext,
+     ) -> Option<bool> {
+-        if !self.has_retained_support || !other.has_retained_support {
++        if !self.has_retained_support() || !other.has_retained_support() {
+             return None;
+         }
+         let first_support = self.support.get()?;
+@@ -233,24 +330,37 @@ impl LineSeg2 {
+         )
+     }
+ 
+-    pub(crate) fn offset_between(
++    /// Both endpoints must be the source endpoints translated by the same
++    /// left-normal offset. Translation preserves the source displacement and
++    /// its distinct-endpoint certificate.
++    pub(crate) fn offset_translated_endpoints(
+         &self,
+         start: Point2,
+         end: Point2,
+         distance: Real,
+     ) -> CurveResult<Self> {
+-        let mut offset = Self::try_new(start, end)?;
+-        let provenance = match self.offset_provenance.as_ref() {
++        let mut offset = if self.endpoints_decided_distinct() {
++            let mut offset = Self::new_unchecked(start, end);
++            offset.certificates.flags_mut().endpoints_decided_distinct = true;
++            offset
++        } else {
++            Self::try_new(start, end)?
++        };
++        let retained_delta = Some(Arc::new(self.delta()));
++        let provenance = match self.offset_provenance() {
+             None => LineOffsetProvenance2 {
+                 source: self.fragment_support(),
+                 left_distance: distance,
++                retained_delta,
+             },
+             Some(provenance) => LineOffsetProvenance2 {
+                 source: provenance.source.clone(),
+                 left_distance: &provenance.left_distance + &distance,
++                retained_delta,
+             },
+         };
+-        offset.offset_provenance = Some(Arc::new(provenance));
++        offset.certificates =
++            LineCertificates2::Offset(*offset.certificates.flags(), Arc::new(provenance));
+         Ok(offset)
+     }
+ 
+@@ -259,8 +369,8 @@ impl LineSeg2 {
+         other: &Self,
+         policy: &CurveContext,
+     ) -> Option<RetainedLineRelation2> {
+-        let first = self.offset_provenance.as_ref()?;
+-        let second = other.offset_provenance.as_ref()?;
++        let first = self.offset_provenance()?;
++        let second = other.offset_provenance()?;
+         let second_distance = if first.source == second.source {
+             second.left_distance.clone()
+         } else if first.source.start == second.source.end && first.source.end == second.source.start
+@@ -306,24 +416,26 @@ impl LineSeg2 {
+             ZeroKnowledge::Unknown => false,
+         };
+         let support = self
+-            .has_retained_support
++            .has_retained_support()
+             .then(|| self.support.get())
+             .flatten()
+             .map(|support| {
+                 Arc::new(LineSupport2 {
+                     start: map(&support.start),
+                     end: map(&support.end),
++                    retained_delta: None,
+                 })
+             });
+         Ok(Self {
+             start,
+             end,
+-            endpoints_decided_distinct,
+             support: line_support_cell(support),
+-            has_retained_support: self.has_retained_support,
+-            support_direction_reversed: self.support_direction_reversed,
+             // An arbitrary point map need not preserve signed offset distance.
+-            offset_provenance: None,
++            certificates: LineCertificates2::Plain(LineFlags2 {
++                endpoints_decided_distinct,
++                has_retained_support: self.has_retained_support(),
++                support_direction_reversed: self.certificates.flags().support_direction_reversed,
++            }),
+         })
+     }
+ 
+@@ -351,39 +463,61 @@ impl LineSeg2 {
+ 
+     /// Returns this segment with traversal direction reversed.
+     pub fn reversed(&self) -> Self {
+-        let offset_provenance = self.offset_provenance.as_ref().map(|provenance| {
+-            Arc::new(LineOffsetProvenance2 {
++        let retained_delta = self.retained_delta().map(|delta| {
++            let (dx, dy) = delta.as_ref();
++            Arc::new((-dx, -dy))
++        });
++        let flags = LineFlags2 {
++            endpoints_decided_distinct: self.endpoints_decided_distinct(),
++            has_retained_support: self.has_retained_support(),
++            support_direction_reversed: self.has_retained_support()
++                && !self.certificates.flags().support_direction_reversed,
++        };
++        let certificates = if let Some(provenance) = self.offset_provenance() {
++            let provenance = Arc::new(LineOffsetProvenance2 {
+                 source: Arc::new(LineSupport2 {
+                     start: provenance.source.end.clone(),
+                     end: provenance.source.start.clone(),
++                    retained_delta: provenance
++                        .source
++                        .retained_delta
++                        .as_deref()
++                        .map(|(dx, dy)| Arc::new((-dx, -dy))),
+                 }),
+                 left_distance: -provenance.left_distance.clone(),
+-            })
+-        });
++                retained_delta,
++            });
++            LineCertificates2::Offset(flags, provenance)
++        } else if let Some(delta) = retained_delta {
++            LineCertificates2::Displaced(flags, delta)
++        } else {
++            LineCertificates2::Plain(flags)
++        };
+         Self {
+             start: self.end.clone(),
+             end: self.start.clone(),
+-            endpoints_decided_distinct: self.endpoints_decided_distinct,
+             support: line_support_cell(
+-                self.has_retained_support
++                self.has_retained_support()
+                     .then(|| self.support.get().cloned())
+                     .flatten(),
+             ),
+-            has_retained_support: self.has_retained_support,
+-            support_direction_reversed: self.has_retained_support
+-                && !self.support_direction_reversed,
+-            offset_provenance,
++            certificates,
+         }
+     }
+ 
+     #[cfg(test)]
+     pub(crate) fn into_reversed(mut self) -> Self {
+-        if self.offset_provenance.is_some() {
++        if self.offset_provenance().is_some() {
+             return self.reversed();
+         }
+         std::mem::swap(&mut self.start, &mut self.end);
+-        if self.has_retained_support {
+-            self.support_direction_reversed = !self.support_direction_reversed;
++        if let LineCertificates2::Displaced(_, delta) = &mut self.certificates {
++            let (dx, dy) = delta.as_ref();
++            *delta = Arc::new((-dx, -dy));
++        }
++        if self.has_retained_support() {
++            let flags = self.certificates.flags_mut();
++            flags.support_direction_reversed = !flags.support_direction_reversed;
+         } else {
+             self.support.take();
+         }
+@@ -408,7 +542,7 @@ impl LineSeg2 {
+         let support_start = self.support_start();
+         let support_end = self.support.get().map_or(&self.end, |support| &support.end);
+         let side = classify_oriented_line(support_start, support_end, point, policy);
+-        if self.has_retained_support && self.support_direction_reversed {
++        if self.has_retained_support() && self.certificates.flags().support_direction_reversed {
+             // Retained support keeps the source orientation when a fragment
+             // reverses. The public classifier follows this segment's traversal.
+             side.map(|side| match side {
+@@ -1981,6 +2115,154 @@ fn sweep_kind_from_directed_angle(
+     })
+ }
+ 
++#[cfg(test)]
++mod retained_delta_tests {
++    use super::*;
++
++    #[test]
++    fn certified_ray_delta_survives_reversal_and_equal_endpoint_representations() {
++        let origin = Point2::new(
++            Real::pi() + Real::from(2).sqrt().unwrap(),
++            Real::e() + Real::from(3).sqrt().unwrap(),
++        );
++        let line = LineSeg2::from_certified_nonzero_delta(origin, Real::one(), Real::from(-2));
++        assert!(line.endpoints_decided_distinct());
++        for forward in [
++            line.clone(),
++            line.with_endpoint_representations(line.start().clone(), line.end().clone())
++                .unwrap(),
++        ] {
++            assert_eq!(forward.delta(), (Real::one(), Real::from(-2)));
++            for reverse in [forward.reversed(), forward.clone().into_reversed()] {
++                assert_eq!(reverse.delta(), (Real::from(-1), Real::from(2)));
++                assert_eq!(reverse.start(), forward.end());
++                assert_eq!(reverse.end(), forward.start());
++            }
++        }
++    }
++
++    #[test]
++    fn mapped_and_cut_lines_do_not_reuse_the_source_displacement() {
++        let line = LineSeg2::from_certified_nonzero_delta(
++            Point2::from_values(5, 7),
++            Real::from(2),
++            Real::from(4),
++        );
++        let mapped = line
++            .map_points(|point| Point2::new(point.x() * Real::from(3), -point.y()))
++            .unwrap();
++        assert_eq!(mapped.delta(), (Real::from(6), Real::from(-4)));
++        let cut = line.fragment_between_after_distinct_endpoints(
++            Point2::from_values(6, 9),
++            line.end().clone(),
++            line.fragment_support(),
++        );
++        assert_eq!(cut.delta(), (Real::one(), Real::from(2)));
++        assert_eq!(cut.support_delta(), (Real::from(2), Real::from(4)));
++    }
++
++    #[test]
++    fn repeated_parallel_offsets_retain_the_exact_source_displacement() {
++        let origin = Point2::new(Real::pi(), Real::e());
++        let mut line = LineSeg2::from_certified_nonzero_delta(origin, Real::one(), Real::from(2));
++        for distance in [Real::one(), Real::pi(), Real::from(-3)] {
++            let previous = line.clone();
++            line = line.offset_left(distance.clone()).unwrap();
++            assert!(line.endpoints_decided_distinct());
++            assert_eq!(line.delta(), (Real::one(), Real::from(2)));
++            assert_eq!(line.reversed().delta(), (Real::from(-1), Real::from(-2)));
++            let normal_scale = (distance / Real::from(5).sqrt().unwrap()).unwrap();
++            for (before, after) in [
++                (previous.start(), line.start()),
++                (previous.end(), line.end()),
++            ] {
++                for (actual, expected) in [
++                    (after.x(), before.x() - Real::from(2) * &normal_scale),
++                    (after.y(), before.y() + &normal_scale),
++                ] {
++                    assert_eq!(
++                        compare_reals(actual, &expected, &CurveContext::STRICT),
++                        Some(Ordering::Equal)
++                    );
++                }
++            }
++        }
++    }
++
++    #[test]
++    fn equal_endpoint_representations_keep_parallel_offset_certificates() {
++        let source = LineSeg2::from_certified_nonzero_delta(
++            Point2::new(Real::pi(), Real::e()),
++            Real::one(),
++            Real::from(2),
++        );
++        let left = source.offset_left(Real::one()).unwrap();
++        let farther = source.offset_left(Real::from(2)).unwrap();
++        let rebuilt = left
++            .with_endpoint_representations(left.start().clone(), left.end().clone())
++            .unwrap();
++        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++            assert_eq!(
++                rebuilt.retained_offset_relation(&left, &policy),
++                Some(RetainedLineRelation2::Coincident)
++            );
++            assert_eq!(
++                rebuilt.retained_offset_relation(&farther, &policy),
++                Some(RetainedLineRelation2::ParallelDistinct)
++            );
++            assert_eq!(
++                rebuilt.reversed().retained_offset_relation(&left, &policy),
++                Some(RetainedLineRelation2::Coincident)
++            );
++            assert!(
++                rebuilt
++                    .intersect_line_with_policy(&farther, &policy)
++                    .unwrap()
++                    .is_none()
++            );
++        }
++    }
++
++    #[test]
++    fn split_support_preserves_direction_but_arbitrary_maps_recompute_it() {
++        let source = LineSeg2::from_certified_nonzero_delta(
++            Point2::new(Real::pi(), Real::e()),
++            Real::one(),
++            Real::from(2),
++        )
++        .offset_left(Real::one())
++        .unwrap();
++        let cut = source.fragment_between_after_distinct_endpoints(
++            source.point_at((Real::one() / Real::from(2)).unwrap()),
++            source.end().clone(),
++            source.fragment_support(),
++        );
++        assert!(Arc::ptr_eq(
++            cut.support.get().unwrap().retained_delta.as_ref().unwrap(),
++            source.retained_delta().unwrap(),
++        ));
++        assert_eq!(cut.support_delta(), (Real::one(), Real::from(2)));
++        assert_eq!(
++            cut.reversed().directed_support_delta(),
++            (Real::from(-1), Real::from(-2))
++        );
++        let mapped = cut
++            .map_points(|p| Point2::new(p.x() * Real::from(3), -p.y()))
++            .unwrap();
++        assert!(mapped.support.get().unwrap().retained_delta.is_none());
++        assert!(mapped.offset_provenance().is_none());
++        let (dx, dy) = mapped.support_delta();
++        assert_eq!(
++            compare_reals(&dx, &Real::from(3), &CurveContext::STRICT),
++            Some(Ordering::Equal)
++        );
++        assert_eq!(
++            compare_reals(&dy, &Real::from(-2), &CurveContext::STRICT),
++            Some(Ordering::Equal)
++        );
++    }
++}
++
+ #[cfg(test)]
+ mod policy_cache_tests {
+     use super::*;
+diff --git a/crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs b/crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs
+index 186048c79..1f203e625 100644
+--- a/crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs
++++ b/crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs
+@@ -2,9 +2,10 @@ mod support;
+ use hypercurve::{
+     BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierLineImageFitRelation,
+     BezierParallelApproximationCurve2, BezierParallelVerificationOptions, BezierParameter2,
+-    Classification, CubicBezier2, Curve2, CurveError, CurveParameter2, CurveParameterRange2,
+-    CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
+-    PredicatePolicy, QuadraticBezier2, Rational, RationalBezier2, RationalQuadraticBezier2, Real,
++    CircularArc2, Classification, CubicBezier2, Curve2, CurveError, CurveParameter2,
++    CurveParameterRange2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
++    OffsetCornerStyle2, Point2, PredicatePolicy, QuadraticBezier2, Rational, RationalBezier2,
++    RationalQuadraticBezier2, Real, WorkBudget, WorkUsage, evaluate_with_budget,
+ };
+ use num::bigint::{BigInt, BigUint};
+ use proptest::prelude::*;
+@@ -116,6 +117,48 @@ fn rational_quadratic_conic_line_image_fit_offsets_as_exact_line() {
+     assert_eq!(offset.line().end(), &p(2, 1));
+ }
+ 
++#[test]
++fn retained_circular_charts_are_not_lines_after_promotion_and_restriction() {
++    let center = Point2::new(Real::pi(), Real::e());
++    for radius in [q(1, 7), r(2).sqrt().unwrap(), "1e100".parse().unwrap()] {
++        for clockwise in [false, true] {
++            let arc = CircularArc2::try_from_center(
++                Point2::new(center.x() + &radius, center.y().clone()),
++                Point2::new(center.x().clone(), center.y() + &radius),
++                center.clone(),
++                clockwise,
++            )
++            .unwrap();
++            for span in arc.rational_bezier_decomposition().unwrap().spans() {
++                let quadratic = span.curve();
++                let promoted = RationalBezier2::from(quadratic.clone());
++                let variants = [
++                    promoted.clone(),
++                    promoted.reversed(),
++                    promoted.elevated_to_degree(5).unwrap(),
++                    promoted.subcurve_between_exact(&q(1, 3), &q(2, 3)).unwrap(),
++                ];
++                for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
++                    let outcome = evaluate_with_budget(policy, WorkBudget::ZERO, || {
++                        assert!(matches!(
++                            quadratic.fit_exact_line_image().unwrap(),
++                            BezierLineImageFitRelation::NotLine
++                        ));
++                        for curve in &variants {
++                            assert!(matches!(
++                                curve.fit_exact_line_image().unwrap(),
++                                BezierLineImageFitRelation::NotLine
++                            ));
++                        }
++                    });
++                    assert!(outcome.result.unwrap().certified().is_some());
++                    assert_eq!(outcome.usage, WorkUsage::default());
++                }
++            }
++        }
++    }
++}
++
+ #[test]
+ fn bezier_area_prefix_sums_answer_exact_ranges() {
+     let first = QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0));
+diff --git a/crates/hyperdrc/README.md b/crates/hyperdrc/README.md
+index 17295a545..a9e5a2111 100644
+--- a/crates/hyperdrc/README.md
++++ b/crates/hyperdrc/README.md
+@@ -335,6 +335,14 @@ failure instead of manufacturing zero dimensions. Admitted custom primitives
+ need no unused pad size. Other source adapters still need audit. See the
+ [rectangle evidence](PERFORMANCE.md#native-rectangle-construction-2026-10-09).
+ 
++`geometry::line_polygon` likewise imports finite endpoints and width before
++native subtraction, normalization and halving. It preserves its rectangular
++butt-cap contract while retaining construction failures for admitted inputs.
++KiCad straight tracks parse exact decimal endpoints and widths, include round
++caps, and retain malformed-source failures. Coincident endpoints produce a
++disk; zero width is certified empty. Root curved tracks remain unsupported,
++and sampled artwork/custom-pad curves still need source-fidelity work.
++
+ Rounded and chamfered rectangles and trapezoid pads also construct native
+ boundaries before finite corner arithmetic. Rounded corners are circular arcs;
+ their sample count changes only the report view. Radius and chamfer limits are
+diff --git a/crates/hyperdrc/src/checks/differential.rs b/crates/hyperdrc/src/checks/differential.rs
+index 0b680f1eb..63ced29be 100644
+--- a/crates/hyperdrc/src/checks/differential.rs
++++ b/crates/hyperdrc/src/checks/differential.rs
+@@ -958,7 +958,10 @@ mod tests {
+             &crate::scalar::scalar("0.05"),
+         );
+ 
+-        assert_eq!(violations.len(), 1);
++        // The adapter preserves these exact dyadic widths: 0.10_f64 -
++        // 0.05_f64 is strictly greater than the decimal balance limit 0.05.
++        // Rounding translated corners used to erase this second finding.
++        assert_eq!(violations.len(), 2);
+         assert_eq!(violations[0].check, "differential-pair-width-readiness");
+         assert!(
+             violations[0]
+@@ -966,6 +969,13 @@ mod tests {
+                 .as_deref()
+                 .is_some_and(|message| message.contains("below review threshold"))
+         );
++        assert_eq!(violations[1].check, "differential-pair-width-readiness");
++        assert!(
++            violations[1]
++                .message
++                .as_deref()
++                .is_some_and(|message| message.contains("above balance threshold"))
++        );
+     }
+ 
+     #[test]
+diff --git a/crates/hyperdrc/src/checks/layer.rs b/crates/hyperdrc/src/checks/layer.rs
+index 1c7e97a93..3ba71de19 100644
+--- a/crates/hyperdrc/src/checks/layer.rs
++++ b/crates/hyperdrc/src/checks/layer.rs
+@@ -4059,6 +4059,11 @@ fn areas_approximately_equal_scalar(
+     right_area: &Scalar,
+     tolerance: &Scalar,
+ ) -> Result<bool, crate::PcbGeometryUncertainty> {
++    if let Some(decided) =
++        super::area_tolerance::certified_area_tolerance(left_area, right_area, tolerance)
++    {
++        return Ok(decided);
++    }
+     let diff = (left_area - right_area).abs();
+     let mut scale = left_area.abs();
+     if crate::scalar::try_compare(&right_area.abs(), &scale)?.is_gt() {
+diff --git a/crates/hyperdrc/src/checks/mod.rs b/crates/hyperdrc/src/checks/mod.rs
+index 06a0c12f3..2879204c2 100644
+--- a/crates/hyperdrc/src/checks/mod.rs
++++ b/crates/hyperdrc/src/checks/mod.rs
+@@ -19,6 +19,7 @@
+ //! `mechanical` checks focus on chassis, mounting, and keepout intent that uses
+ //! board context but is primarily mechanical production readiness.
+ 
++mod area_tolerance;
+ mod artifact_handoff;
+ mod artifact_table;
+ mod artifacts;
+diff --git a/crates/hyperdrc/src/geometry.rs b/crates/hyperdrc/src/geometry.rs
+index 8261d6bf4..40eaeabc1 100644
+--- a/crates/hyperdrc/src/geometry.rs
++++ b/crates/hyperdrc/src/geometry.rs
+@@ -10,6 +10,7 @@ mod primitives;
+ mod rectangle;
+ mod region;
+ mod source_units;
++mod stroke;
+ mod types;
+ mod violations;
+ 
+@@ -25,8 +26,7 @@ pub(crate) use circle::circle_region;
+ pub use pad::{chamfered_rect_polygon, rounded_rect_polygon, trapezoid_polygon};
+ pub(crate) use pad::{rounded_chamfered_rect_region, trapezoid_region};
+ pub use primitives::{
+-    arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon, polygon_from_points,
+-    transform_polygon,
++    arc_line_polygons, bezier_line_polygons, circle_polygon, polygon_from_points, transform_polygon,
+ };
+ pub use rectangle::rect_polygon;
+ pub(crate) use rectangle::rectangle_region;
+@@ -34,6 +34,8 @@ pub use region::{empty_profile, polygon_to_profile, polygons_to_profile};
+ pub use source_units::{
+     ExactLiftKind, RuleGeometryProvenance, SourceGridFacts, SourceScalar, SourceUnit,
+ };
++pub use stroke::line_polygon;
++pub(crate) use stroke::linear_stroke_region;
+ pub use types::{Coord, LineString, MultiPolygon, Polygon, Rect};
+ #[cfg(test)]
+ pub use violations::multipolygon_to_shapes;
+diff --git a/crates/hyperdrc/src/geometry/README.md b/crates/hyperdrc/src/geometry/README.md
+index d4f3fa4df..4da4875f5 100644
+--- a/crates/hyperdrc/src/geometry/README.md
++++ b/crates/hyperdrc/src/geometry/README.md
+@@ -16,6 +16,13 @@ invalid inputs and exhausted construction remain failures. Finite report corners
+ are separate, even when they collapse or exceed their representable range.
+ Other parser primitives and token-to-float paths still need source-fidelity work.
+ 
++`line_polygon` imports finite endpoints and width before subtraction,
++normalization or halving, then delegates the exact butt-capped stroke to
++Hypercurve. Report corners may collapse or overflow without changing the native
++region. Invalid adapter inputs retain the `None` contract; construction failures
++for admitted inputs remain attached to the returned polygon. KiCad straight
++tracks use exact decimal inputs and round caps through the same native stroker.
++
+ Rounded/chamfered rectangles and trapezoids also build their native outlines
+ before computing report corners. Rounded rectangles retain exact line/arc
+ boundaries regardless of report sampling. Native clamping preserves subnormal
+@@ -68,8 +75,10 @@ This split keeps geometry helpers small and predictable:
+ 
+ - [`../geometry.rs`](../geometry.rs) is the public module facade. It exposes the
+   helpers from this folder and keeps the external API compact.
+-- [`primitives.rs`](primitives.rs) builds circles, finite trace/stroke adapters,
++- [`primitives.rs`](primitives.rs) builds circles, sampled curve-stroke adapters,
+   transforms and polygons from point lists.
++- [`stroke.rs`](stroke.rs) constructs exact linear strokes and keeps their finite
++  report rings separate under the STRICT/shared-budget guard.
+ - [`pad.rs`](pad.rs) constructs native rounded/chamfered rectangles and
+   trapezoids under the shared guard. [`pad/report.rs`](pad/report.rs) holds their
+   separate finite drawing calculations.
+diff --git a/crates/hyperdrc/src/geometry/primitives.rs b/crates/hyperdrc/src/geometry/primitives.rs
+index 7d53f762f..cef48c37f 100644
+--- a/crates/hyperdrc/src/geometry/primitives.rs
++++ b/crates/hyperdrc/src/geometry/primitives.rs
+@@ -6,7 +6,7 @@
+ use std::f64::consts::PI;
+ 
+ use super::types::transform_exact_region;
+-use super::{Coord, LineString, Polygon};
++use super::{Coord, LineString, Polygon, line_polygon};
+ 
+ /// Construct an authoritative native circle and a finite report ring.
+ ///
+@@ -45,29 +45,6 @@ pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon
+     }
+ }
+ 
+-/// Run the `line_polygon` design-readiness check or report helper.
+-pub fn line_polygon(start: [f64; 2], end: [f64; 2], width: f64) -> Option<Polygon<f64>> {
+-    if !all_finite(start) || !all_finite(end) || !width.is_finite() {
+-        return None;
+-    }
+-
+-    let dx = end[0] - start[0];
+-    let dy = end[1] - start[1];
+-    let length = (dx * dx + dy * dy).sqrt();
+-    if length == 0.0 || width <= 0.0 {
+-        return None;
+-    }
+-
+-    let nx = -dy / length * width / 2.0;
+-    let ny = dx / length * width / 2.0;
+-    Some(polygon_from_points(vec![
+-        [start[0] + nx, start[1] + ny],
+-        [end[0] + nx, end[1] + ny],
+-        [end[0] - nx, end[1] - ny],
+-        [start[0] - nx, start[1] - ny],
+-    ]))
+-}
+-
+ /// Run the `polygon_from_points` design-readiness check or report helper.
+ pub fn polygon_from_points(points: Vec<[f64; 2]>) -> Polygon<f64> {
+     if points
+diff --git a/crates/hyperdrc/src/kicad.rs b/crates/hyperdrc/src/kicad.rs
+index d35d9e944..60efeb4ad 100644
+--- a/crates/hyperdrc/src/kicad.rs
++++ b/crates/hyperdrc/src/kicad.rs
+@@ -16,6 +16,7 @@ mod graphics;
+ mod model;
+ mod pads;
+ mod text;
++mod tracks;
+ 
+ use custom_pad::custom_pad_polygons;
+ use footprint_graphics::parse_footprint_graphics;
+@@ -29,8 +30,7 @@ use anyhow::{Context, Result};
+ use hyperreal::Real;
+ 
+ use crate::geometry::{
+-    Polygon, SourceGridFacts, SourceScalar, SourceUnit, line_polygon, polygon_from_points,
+-    polygons_to_profile,
++    Polygon, SourceGridFacts, SourceScalar, SourceUnit, polygon_from_points, polygons_to_profile,
+ };
+ use crate::sexp::{self, Sexp};
+ use crate::{LayerMetadata, Scalar};
+@@ -222,41 +222,7 @@ fn parse_tracks_and_vias(
+     copper: &mut Vec<CopperFeature>,
+     drills: &mut Vec<DrillFeature>,
+ ) {
+-    for segment in root.named_children("segment") {
+-        let Some(start_source) = xy_from_child_source(segment, "start") else {
+-            continue;
+-        };
+-        let Some(end_source) = xy_from_child_source(segment, "end") else {
+-            continue;
+-        };
+-        let start = start_source.approximate;
+-        let end = end_source.approximate;
+-        let width = segment
+-            .named_child("width")
+-            .and_then(|width| width.f64_at(1))
+-            .unwrap_or(0.0);
+-        let Some(polygon) = line_polygon(start, end, width) else {
+-            continue;
+-        };
+-        let layer = segment
+-            .named_child("layer")
+-            .and_then(|layer| layer.atom_at(1))
+-            .unwrap_or("unknown")
+-            .to_string();
+-
+-        copper.push(CopperFeature {
+-            layer,
+-            net: net_name(segment, nets),
+-            kind: CopperKind::Segment,
+-            region: polygons_to_profile(
+-                vec![polygon],
+-                Some(LayerMetadata {
+-                    name: "KiCad segment".to_string(),
+-                }),
+-            ),
+-            location: midpoint_scalar(&start_source.exact, &end_source.exact),
+-        });
+-    }
++    tracks::parse_segments(root, nets, copper);
+ 
+     for via in root.named_children("via") {
+         let Some(location_source) = xy_from_child_source(via, "at") else {
+@@ -1575,7 +1541,7 @@ mod tests {
+     }
+ 
+     #[test]
+-    fn degenerate_and_non_copper_geometry_is_ignored_without_fallback_shapes() {
++    fn coincident_track_keeps_round_caps_while_empty_and_non_copper_shapes_are_ignored() {
+         let path = std::env::temp_dir().join("hyperdrc-degenerate-geometry.kicad_pcb");
+         fs::write(
+             &path,
+@@ -1600,7 +1566,16 @@ mod tests {
+ 
+         let board = load_kicad_pcb(&path).unwrap();
+ 
+-        assert!(board.copper.is_empty());
++        assert_eq!(board.copper.len(), 1);
++        assert_eq!(board.copper[0].kind, CopperKind::Segment);
++        assert_eq!(board.copper[0].location, [Scalar::one(), Scalar::one()]);
++        assert_eq!(
++            crate::scalar::try_compare(
++                &board.copper[0].region.try_area().unwrap(),
++                &(crate::scalar::scalar("0.01") * Scalar::pi()),
++            ),
++            Ok(std::cmp::Ordering::Equal)
++        );
+         assert!(board.panel_features.is_none());
+         let _ = fs::remove_file(path);
+     }
+@@ -1668,7 +1643,7 @@ mod tests {
+     }
+ 
+     #[test]
+-    fn incomplete_objects_retain_failed_pad_geometry_without_panicking() {
++    fn incomplete_objects_retain_failed_pad_and_track_geometry_without_panicking() {
+         let path = std::env::temp_dir().join("hyperdrc-incomplete.kicad_pcb");
+         fs::write(
+             &path,
+@@ -1684,12 +1659,15 @@ mod tests {
+ 
+         let board = load_kicad_pcb(&path).unwrap();
+ 
+-        assert_eq!(board.copper.len(), 1);
++        assert_eq!(board.copper.len(), 2);
+         assert_eq!(board.copper[0].kind, CopperKind::Pad);
+-        assert!(board.copper[0].region.try_area().is_err());
+-        let findings = crate::checks::layer::layer_sanity("F.Cu", &board.copper[0].region, None);
+-        assert_eq!(findings.len(), 1);
+-        assert_eq!(findings[0].check, "geometry-uncertainty");
++        assert_eq!(board.copper[1].kind, CopperKind::Segment);
++        for feature in &board.copper {
++            assert!(feature.region.try_area().is_err());
++            let findings = crate::checks::layer::layer_sanity("F.Cu", &feature.region, None);
++            assert_eq!(findings.len(), 1);
++            assert_eq!(findings[0].check, "geometry-uncertainty");
++        }
+         assert!(board.drills.is_empty());
+         let _ = fs::remove_file(path);
+     }
+diff --git a/crates/hyperdrc/src/kicad/README.md b/crates/hyperdrc/src/kicad/README.md
+index 055a1b10c..210e1ec3d 100644
+--- a/crates/hyperdrc/src/kicad/README.md
++++ b/crates/hyperdrc/src/kicad/README.md
+@@ -21,6 +21,11 @@ Important consequences:
+   on every expanded copper layer. Invalid diameters retain a source-construction
+   error so geometry checks can diagnose them. Report tessellation does not define
+   the via boundary.
++- Root `segment` tracks retain exact decimal endpoints and widths. Their native
++  strokes include both round caps; coincident endpoints produce a disk and zero
++  width is certified empty. Missing, malformed or negative-width source fields
++  retain failed geometry for diagnostics. The midpoint remains exact until a
++  report needs it. See the [track source references](../../../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/reference-sources.json).
+ - Primitive pad centers, sizes, angles, trapezoid deltas, and rounding/chamfer
+   ratios are parsed as exact source decimals. Diameter halving, ratio products,
+   oval decomposition and placement precede any report projection. A nonzero
+@@ -53,6 +58,8 @@ Important consequences:
+ - [`pads.rs`](pads.rs) retains pad source fields and constructs native pad
+   regions with board-frame placement. An oval keeps its body and two cap
+   features, or one circle when its axes are equal.
++- [`tracks.rs`](tracks.rs) parses exact linear-track source fields and delegates
++  round-capped strokes to the native kernel.
+ - [`arcs.rs`](arcs.rs) reconstructs circular arcs from KiCad start/mid/end
+   points for board, footprint, and custom-pad graphics.
+ - [`custom_pad.rs`](custom_pad.rs) parses additive custom-pad graphics such as
+@@ -90,7 +97,7 @@ implemented checks:
+   stroked outlines.
+ - Pad drill declarations, including offset drill centers and conservative
+   handling of oval and rectangular drill declarations.
+-- Tracks, vias, and zones.
++- Straight tracks, vias, and zones.
+ - `Edge.Cuts` lines, arcs, rectangles, circles, polygons, and Bezier strokes.
+ - Panel graphics on common panelization-related layer names.
+ - Legacy `(width ...)` and newer `(stroke (width ...))` graphical width
+@@ -108,8 +115,11 @@ used by the checks. Known limits include exact routed-slot geometry,
+ subtractive custom pad primitive semantics, glyph-accurate text rendering,
+ remaining non-copper KiCad graphical variants, full material stackup/rule
+ parsing beyond copper-layer wildcard expansion, and schematic/PCB parity.
+-Custom-pad local primitives, tracks, and graphics still use finite coordinates
+-or sampled strokes. Custom-pad placement now uses the exact parsed pad frame,
++Root `arc` tracks are currently omitted; the complete CPArti fixture contains
++1,785 such objects. Custom-pad local primitives and graphics still use finite
++source coordinates or sampled curves. Their individual finite line strokes now
++import endpoints and width before native arithmetic, but that does not recover
++source decimals or replace sampling. Custom-pad placement uses the exact parsed pad frame,
+ but footprint graphics still use their legacy placement adapter. Incomplete
+ objects in those paths, including malformed drill fields, can still be skipped
+ or defaulted. A failed pad placement retains failed copper geometry and does
+diff --git a/crates/hyperdrc/src/readiness.rs b/crates/hyperdrc/src/readiness.rs
+index e441e6b9d..92fe9d351 100644
+--- a/crates/hyperdrc/src/readiness.rs
++++ b/crates/hyperdrc/src/readiness.rs
+@@ -12,7 +12,7 @@ use crate::{Check, Violation};
+ pub const CHECK_REGISTRY_VERSION: u32 = 1;
+ 
+ /// Version of shared check execution and geometry-uncertainty reporting semantics.
+-pub const CHECK_IMPLEMENTATION_VERSION: u32 = 20;
++pub const CHECK_IMPLEMENTATION_VERSION: u32 = 21;
+ 
+ /// Opinionated default check plan used by both CLI and native callers.
+ pub fn default_checks() -> &'static [Check] {
+diff --git a/crates/hyperreal/src/computable/node/ring_quotient_tests.rs b/crates/hyperreal/src/computable/node/ring_quotient_tests.rs
+index 38716c689..d2ba89761 100644
+--- a/crates/hyperreal/src/computable/node/ring_quotient_tests.rs
++++ b/crates/hyperreal/src/computable/node/ring_quotient_tests.rs
+@@ -145,4 +145,26 @@ mod ring_quotient_tests {
+             assert_unproved(&value);
+         }
+     }
++
++    #[test]
++    fn shared_quotient_subexpressions_fit_the_existing_expansion_budget() {
++        let denominator = positive_denominator();
++        assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
++        let mut sum = denominator.clone();
++        for _ in 0..7 {
++            sum = raw(Approximation::Add(sum.clone(), sum));
++        }
++        // 128*d/d - 128 = 0, with d > 0. The balanced shared sum contains
++        // only seven new nodes, but unfolding it revisits d 128 times and
++        // exceeds 512 arithmetic visits. Keep the original expansion caps.
++        let value = raw(Approximation::Add(
++            raw(Approximation::Multiply(
++                sum,
++                raw(Approximation::Inverse(denominator)),
++            )),
++            raw(Approximation::Int(BigInt::from(-128))),
++        ));
++        assert_eq!(value.bounded_quotient_rational(), Some(Rational::zero()));
++        assert!(value.cached().is_none());
++    }
+ }
