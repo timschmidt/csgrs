@@ -1,0 +1,61 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/source",
+  "source_files": 10163,
+  "expected_delta_sha256": {
+    "crates/hyperreal/Cargo.toml": "80f1d901af08c712569f7800dffc70a148bfed369e210a32ad2b3e856dfecb14",
+    "crates/hyperreal/fuzz/README.md": "5a861f489d2950a387e311b6c8616526e4a046096e3f1b05fafee4b6571d7cba",
+    "crates/hyperreal/examples/directed_scalar_probe.rs": "4d631bc1f96f822c15d27b5db4ac9bfca00e21c992363d452ca506ec34783383",
+    "crates/hyperreal/examples/directed_scalar_probe/oracle.rs": "10f2badd033169c1ccdb4783c27bb703967565882bb2941cec9d2ed1beac147e",
+    "crates/hyperreal/examples/directed_scalar_probe/recipe.rs": "240fe64ab078ac4081863199e773a2a104f78949087fe55e44bddf67579a617d",
+    "crates/hyperreal/examples/directed_scalar_probe/regressions/near_pi_v1.json": "192527831048e5e1d32577e68ef8901e965e69aa61fbb43eed8666cecc4bb7d7",
+    "crates/hyperreal/fuzz/directed/evidence.py": "d3a90d63b5343ec0ad4320bfe97ccfcc4c96c912d34ecea71d7a0864ab23d269",
+    "crates/hyperreal/fuzz/directed/test_campaign.py": "118246514fab6a58c7316b018d398f36aca58a0fc334a26bf5a14cd8526d113d",
+    "crates/hyperreal/fuzz/directed/campaign.py": "7535573e9abd85c74277b584fbdb6abe71c058f29a0cf19c02d6461656cba160",
+    "crates/hyperreal/fuzz/directed/test_evidence.py": "b301392e5c6cde010f3b1583ad4c3fbd5a1914367024a0a3955f13199b5f4990",
+    "crates/hyperreal/fuzz/directed/test_lexicase.py": "3e7e239eb5c31a4ce6b5ddeadd6c417abcd1530a6d07ab77a58e08df994a2a35",
+    "crates/hyperreal/fuzz/directed/lexicase.py": "e55daf224219f90cad2ebf2fde0304419d0f8cd70d191bcce1069dff33cfe18e"
+  },
+  "commands": 11,
+  "validation": [
+    "Workspace formatting",
+    "Fuzz-manifest formatting",
+    "All Python selector and evidence tests",
+    "Strict Hyperreal all-target Clippy with serde and dispatch-trace",
+    "Strict Hyperreal all-target Clippy with all features",
+    "ASan/LSan example unit tests with serde and dispatch-trace and rebuilt std",
+    "ASan/LSan example unit tests with all features and rebuilt std",
+    "ASan/LSan probe build with serde and dispatch-trace and rebuilt std",
+    "Inventory of all 22 actual private classes",
+    "Three-generation directed campaign with eight candidates and four parent selections per representation per generation",
+    "Independent replay of every selection and mutation from the retained evidence"
+  ],
+  "command_wall_limit_seconds": 1800,
+  "campaign": {
+    "seed": 20261014,
+    "rounds": 3,
+    "population": 8,
+    "parents": 4,
+    "probe_timeout_seconds": 30,
+    "expected_completed_probes": 528,
+    "expected_selection_events": 264
+  },
+  "score_contract": "Median of three instrumented query-body wall-time samples; full samples retained. Search fitness only, no speedup or cross-library timing claim.",
+  "limits": [
+    "Finite scalar campaign only; other layers and the full P38 objective remain open.",
+    "MPFR intervals independently reject contradictions but interval overlap is not proof of exact symbolic identity.",
+    "Native GMP/MPFR code is not claimed sanitizer-instrumented.",
+    "Competitive benchmarking of retained cases is a subsequent required gate; this qualification does not fulfill it.",
+    "No full workspace CI or push-readiness claim."
+  ],
+  "no_extension_retry_filter_or_pooling": true,
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false,
+  "prior_closed_failure": "closure-v1.json",
+  "regressions": [
+    "Exact original pi - 31/10 failed input preserved; corrected actual-class expectation",
+    "Both sides of all 78 near-pi decimal depths retained and independently checked",
+    "All four ConstOffset families at the original scale/parameter boundaries",
+    "Replay rejects omitted buckets/parents, changed random streams/plans, failed probes, incomplete journals and altered retained input inventories even after artifact hashes are refreshed"
+  ]
+}
