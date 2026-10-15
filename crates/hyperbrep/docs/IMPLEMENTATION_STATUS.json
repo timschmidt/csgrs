@@ -96,7 +96,7 @@
         "construction_error_chain_retains_numeric_failure",
         "bernstein_degree_overflow_is_a_range_error"
       ],
-      "validation": "236 all-feature tests passed; strict Clippy, warning-denied rustdoc, WASM build, formatting and all 65 release benchmark rows passed.",
+      "validation": "236 all-feature tests passed; strict Clippy, warning-denied rustdoc, WASM build, formatting and all 66 release benchmark rows passed.",
       "limits": "Partial WP01/P6 progress. No global panic-freedom or work-budget claim; unchecked derivative-order allocation and remaining operation scopes still require work."
     },
     {
@@ -113,7 +113,7 @@
       "change": "Check derivative entry counts and Layout::array before fallible reservation. Borrow intermediate NURBS jet buffers and move the result instead of allocating unguarded copies.",
       "source": "../src/geometry.rs",
       "evidence": "evidence/2026-10-14-derivative-storage/manifest.json",
-      "validation": "Baseline panic reproduced with a replayable negative-control patch. 237 debug tests and the release regression passed; strict Clippy, rustdoc, formatting and WASM build passed. All 65 release benchmark rows preserve iteration counts and checksums.",
+      "validation": "Baseline panic reproduced with a replayable negative-control patch. 237 debug tests and the release regression passed; strict Clippy, rustdoc, formatting and WASM build passed. All 66 release benchmark rows preserve iteration counts and checksums.",
       "limits": "Derivative buffers only; no full-operation memory/time bound or global P6 completion."
     },
     {
@@ -135,8 +135,26 @@
       "change": "Enter a strict Hypercurve evaluation scope at all 140 fallible public BREP entry points. Preserve existing operation bodies; suppress ambient provisional and preview authority and restore caller scopes on exit.",
       "source": "../src/context.rs",
       "evidence": "evidence/2026-10-14-strict-scopes/manifest.json",
-      "validation": "The baseline consumes an approximate terminal in a BREP pcurve query. The regression and all 238 tests now pass; strict Clippy, rustdoc, formatting and WASM build pass. All 65 benchmark rows preserve iteration counts and checksums.",
+      "validation": "The baseline consumes an approximate terminal in a BREP pcurve query. The regression and all 238 tests now pass; strict Clippy, rustdoc, formatting and WASM build pass. All 66 benchmark rows preserve iteration counts and checksums.",
       "limits": "Scope enforcement only. Explicit budgets, detailed receipts and remaining model/API work are still open. Single-run median benchmark cost rose about 10%; exactness takes priority and scope-overhead optimization remains to evaluate."
+    },
+    {
+      "id": "benchmark-receipt-checker-and-rejected-scope-fast-path",
+      "work_packages": [
+        "WP00",
+        "WP01",
+        "WP21"
+      ],
+      "properties": [
+        "P36",
+        "P37"
+      ],
+      "decision": "checker kept; strict-scope fast path rejected",
+      "change": "Check complete benchmark source coverage and receipt equality, including labels with digits. Correct three historical summaries from 65 to 66 rows using unchanged raw logs. Retain all six paired optimization trials and the rejected source patch.",
+      "source": "../tools/benchmark_receipt.py",
+      "evidence": "evidence/2026-10-14-strict-scope-fast-path/manifest.json",
+      "validation": "8 checker tests passed; all 66 rows agree across the three historical logs and six new pinned trials. The rejected candidate also passed its recorded correctness/build checks.",
+      "limits": "Receipt checking is not full geometric equivalence, successful-command evidence or statistical significance. WP00/WP01/WP21 remain incomplete."
     }
   ],
   "work_packages": [
@@ -286,7 +304,7 @@
     },
     {
       "id": "WP21",
-      "status": "open",
+      "status": "in-progress",
       "deliverable": "Representation/dispatch coverage, per-family lexicase, ASan/traces, competitive benchmarks, optimization ledgers and Hyperreal/Hyperlattice/Hyperlimit Verus work",
       "gate": "Every admitted change has proportionate correctness/cost evidence; full-resolution failures remain; exact rows/size/checksums are preserved; proof and 100% coverage gaps remain explicitly tracked until resolved"
     },

@@ -10,6 +10,21 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Rejected strict-scope entry fast path
+
+The [scope-entry experiment](../hyperbrep/docs/evidence/2026-10-14-strict-scope-fast-path/manifest.json)
+skipped frame save/restore when the ambient state was already strict and had
+no preview context. The candidate passed the focused policy and budget tests
+and all 238 HyperBRep tests. Three alternating, CPU-0-pinned trials preserved
+all 66 benchmark rows, iteration counts, units and checksums.
+
+The median of per-case median timing ratios was 0.98947, but rational bilinear
+tensor containment rose from 897 ns to 977 ns, and the benchmark executable
+grew by 22,984 bytes. The candidate was rejected; the patch, all raw trials
+and per-case comparisons remain available. These samples do not establish
+statistical significance or a full-suite regression ceiling. Strict scope
+isolation remains in force without this optimization.
+
 ## Native segment metrics
 
 `Segment2::distance_squared` and `point_distance_squared` measure exact native
