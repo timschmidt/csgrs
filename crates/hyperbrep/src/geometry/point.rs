@@ -7,7 +7,7 @@ use hypercurve::{Axis2, Curve2, CurvePoint2, Point2, RationalBezier2};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
 use super::{Curve3, CurveGeometry3, affine_transform_orientation};
-use crate::{Aabb, GeometryError, GeometryResult, Matrix4, Parameter, Point3, Real};
+use crate::{Aabb, GeometryError, GeometryResult, Matrix4, Parameter, Point3, Real, Vector3};
 
 /// Model-space coordinate axis.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -148,6 +148,30 @@ impl GeometricPoint3 {
         })
     }
 
+    /// Compares `direction · self` with `rhs` under strict predicates.
+    ///
+    /// A selected image evaluates the linear form on its source controls and
+    /// reuses its retained parameter. This proves plane membership and sides
+    /// without constructing independent scalar coordinates or using a bounding
+    /// box as the point. Unresolved proof work returns a typed error.
+    pub fn compare_linear_form(&self, direction: &Vector3, rhs: &Real) -> GeometryResult<Ordering> {
+        crate::context::strict(|| match &self.data {
+            PointData3::Authored(point) => super::decided_order(compare_reals(
+                &direction.dot(&Vector3::from(point.clone())),
+                rhs,
+                crate::STRICT_PREDICATES,
+            )),
+            PointData3::CurveImage(image) => {
+                let curve = image.curve.planar_control_image(|point| {
+                    Point2::new(direction.dot(&Vector3::from(point.clone())), Real::zero())
+                })?;
+                let point = curve.point_at(&image.parameter.curve_parameter())?;
+                Ok(point
+                    .compare_coordinate(&Point2::new(rhs.clone(), Real::zero()).into(), Axis2::X)?)
+            }
+        })
+    }
+
     /// Returns a conservative exact enclosure, which may have nonzero extent.
     ///
     /// This does not promise a requested width or replace retained point evidence
@@ -282,33 +306,38 @@ impl Curve3 {
         };
         crate::cache::get_or_try_init(cache, || {
             let second_axis = if axis == Axis::Z { 2 } else { 1 };
-            let point = |point: &Point3| {
+            self.planar_control_image(|point| {
                 Point2::new(
                     point.x.clone(),
                     super::control_coordinate(point, second_axis).clone(),
                 )
-            };
-            Ok(match &self.data.geometry {
-                CurveGeometry3::Line(line) => RationalBezier2::try_new(
-                    vec![point(&line.start), point(&line.end)],
-                    vec![Real::one(); 2],
-                )?
-                .into(),
-                CurveGeometry3::RationalBezier(curve) => RationalBezier2::try_new(
-                    curve.control_points.iter().map(point).collect(),
-                    curve.weights.clone(),
-                )?
-                .into(),
-                CurveGeometry3::Nurbs(curve) => Curve2::try_nurbs(
-                    curve.degree,
-                    curve.control_points.iter().map(point).collect(),
-                    curve.weights.clone(),
-                    curve.knots.clone(),
-                )?,
-                CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => {
-                    return Err(GeometryError::UnsupportedSelectedEvaluation);
-                }
             })
+        })
+    }
+
+    /// A linear/affine control image preserves the original source parameter.
+    /// Degree-one Beziers also admit constant projections of spatial lines.
+    fn planar_control_image(&self, point: impl Fn(&Point3) -> Point2) -> GeometryResult<Curve2> {
+        Ok(match &self.data.geometry {
+            CurveGeometry3::Line(line) => RationalBezier2::try_new(
+                vec![point(&line.start), point(&line.end)],
+                vec![Real::one(); 2],
+            )?
+            .into(),
+            CurveGeometry3::RationalBezier(curve) => RationalBezier2::try_new(
+                curve.control_points.iter().map(point).collect(),
+                curve.weights.clone(),
+            )?
+            .into(),
+            CurveGeometry3::Nurbs(curve) => Curve2::try_nurbs(
+                curve.degree,
+                curve.control_points.iter().map(point).collect(),
+                curve.weights.clone(),
+                curve.knots.clone(),
+            )?,
+            CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => {
+                return Err(GeometryError::UnsupportedSelectedEvaluation);
+            }
         })
     }
 }

@@ -126,6 +126,7 @@ impl ArenaModelBuilder {
                 }
                 let mut outer = None;
                 let mut holes = Vec::new();
+                let mut projected_sources = HashMap::new();
                 for uses in first_boundary {
                     let curves = uses
                         .iter()
@@ -134,6 +135,40 @@ impl ArenaModelBuilder {
                             let edge = self.edge_ref(edge_use.edge)?;
                             if self.curve_ref(edge.curve)?.kind() == Curve3Kind::Line {
                                 let (start, end) = self.directed_vertices(*edge_use_id)?;
+                                if self.vertex_ref(start)?.point().try_coordinates().is_none()
+                                    || self.vertex_ref(end)?.point().try_coordinates().is_none()
+                                {
+                                    // Project the authored source once; retain each exact trim
+                                    // and its traversal instead of evaluating selected vertices.
+                                    let source = match projected_sources.entry(edge.curve) {
+                                        std::collections::hash_map::Entry::Occupied(entry) => {
+                                            entry.into_mut()
+                                        }
+                                        std::collections::hash_map::Entry::Vacant(entry) => entry
+                                            .insert(
+                                                crate::geometry::project_curve_to_plane_frame(
+                                                    self.curve_ref(edge.curve)?,
+                                                    &origin,
+                                                    &u,
+                                                    &v,
+                                                )?
+                                                .expect("a cap line projects to the cap plane"),
+                                            ),
+                                    };
+                                    let range = hypercurve::CurveParameterRange2::try_new(
+                                        edge.domain.start().curve_parameter(),
+                                        edge.domain.end().curve_parameter(),
+                                    )
+                                    .map_err(GeometryError::from)?;
+                                    let curve = source
+                                        .restrict_source(range)
+                                        .map_err(GeometryError::from)?;
+                                    return Ok(if edge_use.direction == Direction::Reversed {
+                                        curve.reversed().map_err(GeometryError::from)?
+                                    } else {
+                                        curve
+                                    });
+                                }
                                 Ok(Curve2::from(
                                     LineSeg2::try_new(
                                         project_point_to_plane_frame(
@@ -156,7 +191,8 @@ impl ArenaModelBuilder {
                             }
                         })
                         .collect::<Result<Vec<_>, _>>()?;
-                    let path = CurvePath2::try_new(curves).map_err(GeometryError::from)?;
+                    let path = CurvePath2::try_new(wire_geometry::coalesce_restrictions(curves)?)
+                        .map_err(GeometryError::from)?;
                     let area = curve_path_signed_area(&path)?;
                     let positive = decided_model_order(compare_reals(
                         &area,

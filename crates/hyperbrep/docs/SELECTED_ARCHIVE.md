@@ -79,10 +79,27 @@ references, poles, wrong spatial selectors, reversed/out-of-domain pcurve
 ranges, wrong maps, forged proof flags and trailing JSON. Native persistence
 fixtures remain part of the complete HyperBRep test suite.
 
-Selected cuboid graphs can be encoded, but independent solid recertification
-still reaches `UnrepresentablePoint` during validation. Existing in-process
-selected solid queries remain supported by inherited subdivision certificates.
-General selected solid validation, surface/contact/fiber graphs, non-authored
+Independent solid reconstruction now covers cuboid edge subdivisions (each
+edge and all twelve together), their affine shears/reflections, and cylinder
+axial subdivisions (one and all four). The saved topology counts and selected
+vertices survive; exact volume/classification, another split, another reload
+and cold/warm archive-byte equality are exercised. The
+[solid replay qualification](evidence/2026-10-15-selected-solids/README.md)
+records these cases and their measured costs.
+
+Prism extraction projects authored cap sources while retaining exact trim
+ranges. Convex planar validation compares every vertex to the oriented face
+planes using retained linear forms. A scalar triangle fan remains the native
+signed-volume path; selected planar boundaries use
+`6V_face = 2 * (origin · (u × v)) * signed_UV_area`.
+Wire winding already includes face orientation and hole subtraction. Cylinder
+proofs reuse checked reassembled pcurve images to certify their parameter
+rectangles. Optional loft/sweep recognizers that need scalar section profiles
+decline selected inputs, allowing another complete shell proof to decide them.
+No successful selected input bypasses shell closure or geometric validation.
+
+General selected solid validation, selected corners without a reconstructible
+boundary image, void-shell nesting, surface/contact/fiber graphs, non-authored
 Hypercurve support fragments, general Boolean transfer, and selected angular
 conic images remain open. A typed failure is not a successful round trip.
 

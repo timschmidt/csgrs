@@ -151,13 +151,18 @@ impl ArenaModelBuilder {
                 normal = -normal;
             }
             for vertex in &vertices {
-                let value = normal.dot(&(self.vertex_ref(*vertex)?.represented_point()? - origin));
-                if decided_model_order(compare_reals(
-                    &value,
-                    &Real::zero(),
-                    crate::STRICT_PREDICATES,
-                ))? == std::cmp::Ordering::Greater
-                {
+                let point = self.vertex_ref(*vertex)?.point();
+                let order = if let Some(point) = point.try_coordinates() {
+                    decided_model_order(compare_reals(
+                        &normal.dot(&(point - origin)),
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    ))?
+                } else {
+                    point
+                        .compare_linear_form(&normal, &normal.dot(&Vector3::from(origin.clone())))?
+                };
+                if order == std::cmp::Ordering::Greater {
                     return Ok(false);
                 }
             }

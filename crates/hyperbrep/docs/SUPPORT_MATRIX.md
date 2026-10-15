@@ -32,7 +32,7 @@ interval preimage.
 
 `Curve3::point_at(&Parameter)` returns `GeometricPoint3`, retaining selected
 images for lines, rational Béziers and finite NURBS. It supports strict
-coincidence/coordinate comparisons, conservative enclosures and certified
+coincidence/coordinate/linear-form comparisons, conservative enclosures and certified
 invertible affine transforms. NURBS selectors stay in their authored knot
 chart. Scalar parameters expose stored coordinates; selected conic angular
 evaluation returns `UnsupportedSelectedEvaluation`.
@@ -41,8 +41,9 @@ Native coefficient derivatives/subdivision still require stored
 parameters/coordinates. Archive version 9 retains selected geometry graphs. Topology vertices and edge trims now retain selected
 images and parameters; affine pcurve transfers and exact edge splits preserve
 them. A remaining scalar-only path returns `UnrepresentableParameter` or
-`UnrepresentablePoint`. Selected sheet replay is covered; independent selected
-solid recertification and bounded decoding remain open. See the
+`UnrepresentablePoint`. Selected sheet fixtures, cuboid edge subdivisions and
+cylinder axial subdivisions independently replay. General selected solid
+recertification and bounded decoding remain open. See the
 [archive contract](SELECTED_ARCHIVE.md). See the
 [parameter contract](ARCHITECTURE.md#retained-inverse-parameters) and
 [spatial point contract](ARCHITECTURE.md#retained-spatial-points).
@@ -499,7 +500,11 @@ the [qualification cases](evidence/2026-10-15-selected-topology/README.md)
 also exercise rational and NURBS profile sheets. Version 9 archive regressions
 now replay those selected sheet boundaries, reflected rational planar trims,
 and further splits without scalar reconstruction. Independent selected solid
-replay and general selected surface/contact validation remain unsupported.
+replay additionally covers every cuboid edge alone or together, shear/reflection,
+and one/all cylinder axial cuts. Replayed solids classify points, return exact
+volume and can split and reload again. This uses reconstructed geometric proofs,
+not archived solid flags; see the [evidence](evidence/2026-10-15-selected-solids/README.md).
+General selected surface/contact validation remains unsupported.
 
 `FaceRef::split` splits a trimmed planar face along an exact line chord
 between nonadjacent outer-boundary vertices. It authors one identity-shared

@@ -51,3 +51,7 @@ harness = false
 [[bench]]
 name = "selected_archive"
 harness = false
+
+[[bench]]
+name = "selected_solids"
+harness = false

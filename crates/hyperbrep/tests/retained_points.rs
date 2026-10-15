@@ -378,3 +378,127 @@ fn concurrent_selected_queries_share_successful_evidence() {
         }
     });
 }
+
+#[test]
+fn linear_forms_preserve_selected_roots_weights_and_nonunit_knot_charts() {
+    let direction = Vector3::from_xyz(Real::from(2), Real::from(-3), Real::from(5));
+    let weights = (1..=6).map(Real::from).collect::<Vec<_>>();
+    // 2x - 3y + 5z = 20 + P(t)/W(t), with P(root) = 0.
+    // Neither the point nor its individual coordinates are materialized.
+    let controls = quintic_controls()
+        .into_iter()
+        .zip(&weights)
+        .enumerate()
+        .map(|(i, (p, w))| {
+            let x = Real::from(i as i32);
+            let y = &x * &x;
+            let z = ((Real::from(20) + (p.x / w).unwrap() - Real::from(2) * &x
+                + Real::from(3) * &y)
+                / Real::from(5))
+            .unwrap();
+            Point3::new(x, y, z)
+        })
+        .collect::<Vec<_>>();
+    let bezier = Curve3::rational_bezier(controls.clone(), weights.clone()).unwrap();
+    let nurbs = Curve3::nurbs(
+        5,
+        controls,
+        weights,
+        std::iter::repeat_n(Real::from(2), 6)
+            .chain(std::iter::repeat_n(Real::from(5), 6))
+            .collect(),
+    )
+    .unwrap();
+    let root_source = Curve3::nurbs(
+        5,
+        quintic_controls(),
+        vec![Real::one(); 6],
+        std::iter::repeat_n(Real::from(2), 6)
+            .chain(std::iter::repeat_n(Real::from(5), 6))
+            .collect(),
+    )
+    .unwrap();
+    for (source, parameter) in [
+        (bezier, root()),
+        (nurbs, parameters(&root_source).remove(0)),
+    ] {
+        let selected = source.point_at(&parameter).unwrap();
+        for _ in 0..2 {
+            assert_eq!(
+                selected
+                    .compare_linear_form(&direction, &Real::from(20))
+                    .unwrap(),
+                Ordering::Equal
+            );
+            assert_eq!(
+                selected
+                    .compare_linear_form(&direction, &Real::from(19))
+                    .unwrap(),
+                Ordering::Greater
+            );
+            assert_eq!(
+                selected
+                    .compare_linear_form(&direction, &Real::from(21))
+                    .unwrap(),
+                Ordering::Less
+            );
+            assert_eq!(
+                selected
+                    .compare_linear_form(&Vector3::zeros(), &Real::zero())
+                    .unwrap(),
+                Ordering::Equal
+            );
+            assert!(selected.try_coordinates().is_none());
+        }
+    }
+    let line = Curve3::line(point(1, 2, 3), point(4, 4, 3)).unwrap();
+    let selected = line.point_at(&root()).unwrap();
+    assert_eq!(
+        selected
+            .compare_linear_form(&direction, &Real::from(11))
+            .unwrap(),
+        Ordering::Equal
+    );
+    assert_eq!(
+        GeometricPoint3::from_coordinates(point(1, 2, 3))
+            .compare_linear_form(&direction, &Real::from(11))
+            .unwrap(),
+        Ordering::Equal
+    );
+}
+
+#[test]
+fn linear_form_uncertainty_is_strict_and_retries_after_refinement() {
+    let tiny: Real = "1e-2000".parse().unwrap();
+    let delta = (Real::pi() + &tiny + &tiny).exp().unwrap() - (Real::pi() + tiny).exp().unwrap();
+    let selected = Curve3::rational_bezier(
+        vec![
+            Point3::origin(),
+            Point3::new(delta.clone(), Real::one(), Real::zero()),
+        ],
+        vec![Real::one(); 2],
+    )
+    .unwrap()
+    .point_at(&root())
+    .unwrap();
+    assert!(
+        selected
+            .compare_linear_form(&Vector3::x(), &Real::zero())
+            .is_err()
+    );
+    assert!(
+        hypercurve::provisional(|| selected.compare_linear_form(&Vector3::x(), &Real::zero()))
+            .into_unverified()
+            .is_err()
+    );
+    assert_eq!(
+        delta.refine_sign_until(-8192),
+        Some(hyperreal::RealSign::Positive)
+    );
+    assert_eq!(
+        selected
+            .compare_linear_form(&Vector3::x(), &Real::zero())
+            .unwrap(),
+        Ordering::Greater
+    );
+}

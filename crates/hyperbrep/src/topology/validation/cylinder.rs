@@ -3,6 +3,38 @@
 use crate::topology::*;
 
 impl ArenaModelBuilder {
+    /// Native pcurves stay cheap. Selected subdivisions may instead prove the
+    /// same rectangle through reassembled, injective boundary images.
+    fn cylinder_wire_lines(&self, wire: WireId) -> Result<Option<Vec<LineSeg2>>, BuildError> {
+        let native = self
+            .wire_ref(wire)?
+            .edge_uses
+            .iter()
+            .map(|edge_use| {
+                Ok(self
+                    .pcurve_ref(self.edge_use_ref(*edge_use)?.pcurve)?
+                    .line_segment()
+                    .cloned())
+            })
+            .collect::<Result<Option<Vec<_>>, BuildError>>()?;
+        if native.is_some() {
+            return Ok(native);
+        }
+        let contour = match self.build_wire_contour(wire) {
+            Ok(contour) => contour,
+            Err(BuildError::Geometry(GeometryError::UnsupportedPcurveContour)) => return Ok(None),
+            Err(error) => return Err(error),
+        };
+        Ok(contour
+            .segments()
+            .iter()
+            .map(|segment| match segment {
+                Segment2::Line(line) => Some(line.clone()),
+                _ => None,
+            })
+            .collect())
+    }
+
     pub(in crate::topology) fn certified_cylinder_side_faces(
         &self,
         _shell: ShellId,
@@ -46,12 +78,10 @@ impl ArenaModelBuilder {
             }
             let mut face_u = Vec::with_capacity(8);
             let mut face_v = Vec::with_capacity(8);
-            let mut parameter_segments = Vec::with_capacity(wire.edge_uses.len());
-            for edge_use_id in &wire.edge_uses {
-                let pcurve = self.pcurve_ref(self.edge_use_ref(*edge_use_id)?.pcurve)?;
-                let Some(line) = pcurve.line_segment() else {
-                    return Ok(None);
-                };
+            let Some(parameter_segments) = self.cylinder_wire_lines(outer)? else {
+                return Ok(None);
+            };
+            for line in &parameter_segments {
                 let u_constant = real_values_equal(line.start().x(), line.end().x())?;
                 let v_constant = real_values_equal(line.start().y(), line.end().y())?;
                 if u_constant == v_constant {
@@ -59,7 +89,6 @@ impl ArenaModelBuilder {
                 }
                 face_u.extend([line.start().x().clone(), line.end().x().clone()]);
                 face_v.extend([line.start().y().clone(), line.end().y().clone()]);
-                parameter_segments.push(line.clone());
             }
             let (u_min, u_max) = exact_real_min_max(&face_u)?;
             let (v_min, v_max) = exact_real_min_max(&face_v)?;
@@ -135,13 +164,10 @@ impl ArenaModelBuilder {
             return Ok(None);
         };
         let mut values = Vec::new();
-        for edge_use_id in &self.wire_ref(outer)?.edge_uses {
-            let Some(line) = self
-                .pcurve_ref(self.edge_use_ref(*edge_use_id)?.pcurve)?
-                .line_segment()
-            else {
-                return Ok(None);
-            };
+        let Some(lines) = self.cylinder_wire_lines(outer)? else {
+            return Ok(None);
+        };
+        for line in lines {
             values.extend([line.start().y().clone(), line.end().y().clone()]);
         }
         exact_real_min_max(&values).map(Some)

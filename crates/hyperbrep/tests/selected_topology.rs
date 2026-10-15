@@ -359,7 +359,7 @@ fn arbitrary_edits_cannot_reuse_subdivision_certificates() {
 }
 
 #[test]
-fn remaining_scalar_boundaries_fail_explicitly_without_mutating_the_source() {
+fn selected_solid_archive_replays_and_angular_cuts_remain_explicitly_unsupported() {
     let source = builder::cuboid(point(0, 0, 0), point(2, 3, 4)).unwrap();
     let split = source
         .model()
@@ -368,13 +368,11 @@ fn remaining_scalar_boundaries_fail_explicitly_without_mutating_the_source() {
         .unwrap()
         .split(root())
         .unwrap();
-    let archive = split.model().to_raw().unwrap();
-    assert!(matches!(
-        archive.validate(),
-        Err(hyperbrep::PersistenceError::Build(
-            hyperbrep::BuildError::Geometry(GeometryError::UnrepresentablePoint)
-        ))
-    ));
+    let loaded = reload(split.model());
+    assert_eq!(
+        loaded.solids().next().unwrap().volume().unwrap(),
+        Real::from(24)
+    );
     let replayed = split.model().edit().commit().unwrap();
     check_correspondences(&replayed);
     assert!(

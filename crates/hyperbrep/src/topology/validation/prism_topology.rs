@@ -435,13 +435,20 @@ impl ArenaModelBuilder {
             .keys()
             .next()
             .expect("certified cap pair has cross edges");
-        let translation = self
-            .vertex_ref(first_to_second[&first_vertex])?
-            .represented_point()?
-            - self.vertex_ref(first_vertex)?.represented_point()?;
+        let coordinates =
+            |vertex| Ok::<_, BuildError>(self.vertex_ref(vertex)?.point().try_coordinates());
+        let (Some(first_point), Some(second_point)) = (
+            coordinates(first_vertex)?,
+            coordinates(first_to_second[&first_vertex])?,
+        ) else {
+            return Ok(false);
+        };
+        let translation = second_point - first_point;
         for (first, second) in &first_to_second {
-            let candidate = self.vertex_ref(*second)?.represented_point()?
-                - self.vertex_ref(*first)?.represented_point()?;
+            let (Some(first), Some(second)) = (coordinates(*first)?, coordinates(*second)?) else {
+                return Ok(false);
+            };
+            let candidate = second - first;
             if !vectors_equal(&translation, &candidate)? {
                 return Ok(false);
             }
@@ -617,17 +624,17 @@ impl ArenaModelBuilder {
             let face = self.face_ref(*face_id)?;
             for wire_id in face.boundary_wires() {
                 let wire = self.wire_ref(*wire_id)?;
-                let first_use = *wire.edge_uses.first().ok_or(BuildError::EmptyWire)?;
-                let (anchor_id, _) = self.directed_vertices(first_use)?;
-                let anchor = self.vertex_ref(anchor_id)?.represented_point()?;
-                for pair in wire.edge_uses[1..].windows(2) {
-                    let (first_id, _) = self.directed_vertices(pair[0])?;
-                    let (second_id, _) = self.directed_vertices(pair[1])?;
-                    let first = self.vertex_ref(first_id)?.represented_point()?;
-                    let second = self.vertex_ref(second_id)?.represented_point()?;
-                    sum += Vector3::from(anchor.clone())
-                        .dot(&Vector3::from(first.clone()).cross(&Vector3::from(second.clone())));
-                }
+                let points = wire.edge_uses.iter().map(|edge_use| {
+                    let (start, _) = self.directed_vertices(*edge_use)?;
+                    Ok::<_, BuildError>(self.vertex_ref(start)?.point())
+                });
+                sum += match wire_geometry::scalar_fan_six_volume(points)? {
+                    Some(volume) => volume,
+                    None => wire_geometry::planar_wire_six_volume(
+                        self.surface_ref(face.surface)?,
+                        &self.build_wire_curve_path(*wire_id)?,
+                    )?,
+                };
             }
         }
         Ok(sum)

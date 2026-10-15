@@ -40,7 +40,9 @@ or futures. See [operation scopes](docs/ARCHITECTURE.md#operation-scopes).
   an unavailable view does not make the point approximate. Vertices store these
   points, and `ParameterRange` retains selected edge trims. `EdgeRef::split`
   partitions all incident uses while retaining their parameter correspondence.
-  Selected archive replay and general surface/contact images remain open.
+  Archive replay covers selected sheet fixtures, subdivided cuboids and cylinder
+  axial edges. General selected surface/contact images remain open; see the
+  [archive contract](docs/SELECTED_ARCHIVE.md) for the tested boundary.
 - Geometric equality and ordering use Hyperlimit predicates, not structural
   `PartialEq` or an epsilon.
 - An unresolved predicate is a typed error, never `false`.

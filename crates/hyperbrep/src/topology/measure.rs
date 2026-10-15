@@ -727,26 +727,17 @@ impl ArenaModel {
             let face = self.face(*face_id).expect("validated face ID");
             for wire_id in face.boundary_wires() {
                 let wire = self.wire(*wire_id).expect("validated wire ID");
-                let first_use = wire.edge_uses[0];
-                let anchor_id = self.directed_vertices(first_use).0;
-                let anchor = self
-                    .vertex(anchor_id)
-                    .expect("validated vertex ID")
-                    .represented_point()?;
-                for pair in wire.edge_uses[1..].windows(2) {
-                    let first_id = self.directed_vertices(pair[0]).0;
-                    let second_id = self.directed_vertices(pair[1]).0;
-                    let first = self
-                        .vertex(first_id)
-                        .expect("validated vertex ID")
-                        .represented_point()?;
-                    let second = self
-                        .vertex(second_id)
-                        .expect("validated vertex ID")
-                        .represented_point()?;
-                    sum += Vector3::from(anchor.clone())
-                        .dot(&Vector3::from(first.clone()).cross(&Vector3::from(second.clone())));
-                }
+                let points = wire.edge_uses.iter().map(|edge_use| {
+                    let start = self.directed_vertices(*edge_use).0;
+                    Ok::<_, GeometryError>(self.vertex(start).expect("validated vertex ID").point())
+                });
+                sum += match wire_geometry::scalar_fan_six_volume(points)? {
+                    Some(volume) => volume,
+                    None => wire_geometry::planar_wire_six_volume(
+                        self.surface(face.surface).expect("validated surface ID"),
+                        &self.build_model_wire_curve_path(*wire_id)?,
+                    )?,
+                };
             }
         }
         Ok(sum)

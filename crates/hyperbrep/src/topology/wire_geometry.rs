@@ -2,6 +2,53 @@
 
 use crate::topology::*;
 
+/// Scalar fast path for the signed triangle fan. `None` asks the caller to
+/// integrate the retained boundary; it never substitutes selected coordinates.
+pub(super) fn scalar_fan_six_volume<'a, E>(
+    mut points: impl Iterator<Item = Result<&'a GeometricPoint3, E>>,
+) -> Result<Option<Real>, E> {
+    let Some(anchor) = points.next().transpose()? else {
+        return Ok(Some(Real::zero()));
+    };
+    let Some(anchor) = anchor.try_coordinates() else {
+        return Ok(None);
+    };
+    let Some(first) = points.next().transpose()? else {
+        return Ok(Some(Real::zero()));
+    };
+    let Some(mut first) = first.try_coordinates() else {
+        return Ok(None);
+    };
+    let mut sum = Real::zero();
+    for second in points {
+        let Some(second) = second?.try_coordinates() else {
+            return Ok(None);
+        };
+        sum += Vector3::from(anchor.clone())
+            .dot(&Vector3::from(first.clone()).cross(&Vector3::from(second.clone())));
+        first = second;
+    }
+    Ok(Some(sum))
+}
+
+/// Divergence theorem for P(s,t) = origin + u*s + v*t:
+/// 6V = 2 * (origin dot (u cross v)) * signed_UV_area.
+/// The boundary winding includes face orientation and hole subtraction.
+pub(super) fn planar_wire_six_volume(
+    surface: &Surface,
+    path: &CurvePath2,
+) -> Result<Real, GeometryError> {
+    let Some(origin) = surface.plane_origin() else {
+        return Err(GeometryError::UnsupportedMeasurement);
+    };
+    let (u, v) = surface
+        .plane_directions()
+        .expect("plane origin implies plane directions");
+    Ok(Real::from(2)
+        * Vector3::from(origin.clone()).dot(&u.cross(v))
+        * curve_path_signed_area(path)?)
+}
+
 /// Consecutive intervals of one source cover their union exactly once. Keep
 /// the original topology; reuse a simpler image for its region/area proofs.
 pub(super) fn coalesce_restrictions(input: Vec<Curve2>) -> Result<Vec<Curve2>, GeometryError> {

@@ -1,5 +1,44 @@
 # HyperBREP Performance Contract
 
+## 2026-10-15: independent selected solid proofs
+
+Kept for exact selected-solid replay and composition. The
+[qualification](docs/evidence/2026-10-15-selected-solids/README.md) compares
+against `340d51bce` in three alternating process pairs pinned to CPU 0.
+All 66 native receipts preserve case order, iteration count, unit and checksum.
+The median of per-case median timing ratios is 1.011113; the largest is 1.093023
+for `rational_bilinear_tensor_plane_complete_containment` (903 to 987 ns).
+Executable size increases 29,640 bytes to 24,760,536. Median process peak RSS
+is 21,668 KiB for the baseline and 21,424 KiB for the candidate. These descriptive
+samples establish neither a speedup nor a significant memory difference.
+
+`selected_solids` measures independent JSON parsing/proof reconstruction,
+exact volume and two point classifications. Sources and selected roots are
+constructed outside timing. Three processes run 100 iterations per cohort:
+
+| Cohort | Median per iteration |
+| --- | ---: |
+| Native cuboid replay and queries | 868.034 µs |
+| Cuboid with one selected edge split | 1.091859 ms |
+| Cuboid with all twelve edges split | 2.705168 ms |
+| Cylinder with all four axial edges split | 2.127920 ms |
+| All-edge cuboid reload, split, reload and queries | 6.093168 ms |
+| Eight complete all-edge cuboid reload/encode/query cycles | 24.682930 ms |
+
+The native, one-edge, all-edge and cylinder archives are respectively 33,834,
+36,397, 47,138 and 46,999 bytes. Each selected archive retains one root and one
+chart image; pcurve source counts are 2, 12 and 8. Repeated replay preserves
+archive bytes and topology counts. These fixed composition cases are not
+allocation counts or bounds on arbitrary operation chains.
+
+The receipt checker rejected an initial runner mistake that selected the
+integration-test executable sharing the benchmark's name. The corrected runner
+selects Cargo artifacts by target kind. Initial feature metadata also counted
+all parameter records under a `roots` label; the final harness reports roots
+and chart images separately and its three processes were rerun. Both setup
+records are retained in the qualification bundle. No invalid process contributes
+to the reported native comparison or final feature medians.
+
 ## 2026-10-15: selected archive replay
 
 [Evidence and commands](docs/evidence/2026-10-15-selected-archive/README.md)

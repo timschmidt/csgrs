@@ -73,6 +73,14 @@ does not prevent a definite separation in another coordinate from proving
 noncoincidence. Both projections use the same selector; independently chosen
 roots cannot establish a spatial point.
 
+`compare_linear_form(direction, rhs)` compares `direction · point` with `rhs`
+under strict predicates. It maps authored source controls to the scalar linear
+form and reuses the same selected parameter and rational denominator through
+Hypercurve. It certifies oblique plane membership and sides without separate
+coordinate reconstruction. This projection is local to the query; there is no
+unbounded cache keyed by arbitrary plane coefficients. Typed uncertainty can be
+retried after stronger scalar evidence.
+
 The XY and XZ curves and their selected images are prepared independently on
 demand. Successful projection preparation is cached, while failed work remains
 retryable. Cold readers may duplicate preparation before publishing a shared
@@ -122,8 +130,16 @@ covers shared-edge splits, repeated edits, rational/NURBS charts, reflections
 and retained solid queries. [Archive version 9](SELECTED_ARCHIVE.md) now retains
 selected roots, flattened charts, spatial curve images and authored pcurve
 restrictions. Independent replay covers the selected sheet fixtures and exact
-planar area. Selected solid recertification still requires explicit coordinates;
-surface/contact graphs and general Boolean transfer remain open. Native
+planar area, every cuboid edge alone or together (including shear/reflection),
+and cylinder axial subdivisions. Optional prism proofs project selected cap
+sources into the cap frame and retain their trim ranges. Generic convex planar
+proofs use retained linear-form comparisons for vertex half-spaces. When a
+wire lacks scalar vertex coordinates, the planar signed-volume proof integrates
+its checked boundary image; native scalar triangle fans remain the fast path.
+Cylinder proofs reconstruct parameter rectangles from checked boundary images.
+All topology records survive, and archives supply no trusted solid proof flags.
+See [solid replay evidence](evidence/2026-10-15-selected-solids/README.md).
+General selected solid/surface/contact graphs and Boolean transfer remain open. Native
 coefficient subdivision and angular conic evaluation retain their explicit
 scalar requirements. WP02/G1 and WP13 are not complete.
 

@@ -19,6 +19,26 @@ impl ArenaModelBuilder {
             {
                 return Ok(None);
             }
+            for wire in face.boundary_wires() {
+                for edge_use in &self.wire_ref(*wire)?.edge_uses {
+                    let edge = self.edge_ref(self.edge_use_ref(*edge_use)?.edge)?;
+                    if self
+                        .vertex_ref(edge.start)?
+                        .point()
+                        .try_coordinates()
+                        .is_none()
+                        || self
+                            .vertex_ref(edge.end)?
+                            .point()
+                            .try_coordinates()
+                            .is_none()
+                    {
+                        // Scalar sweep profiles are an optional proof, not a
+                        // requirement imposed on generic planar shell validation.
+                        return Ok(None);
+                    }
+                }
+            }
         }
         if let Some(certificate) = self.certified_grouped_curve_sweep_shell(shell)? {
             return Ok(Some(certificate));

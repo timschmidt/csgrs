@@ -379,6 +379,42 @@
       "validation": "243 all-feature core tests, 47 integration tests and four doctests pass; default configuration, five Hypercurve chart/restriction tests, strict Clippy, warning-denied docs, WASM library compilation, release selected regressions, fuzz-bin Clippy, six benchmark builds and formatting pass. Final command and deliberate-fault records are in the evidence bundle.",
       "cost_evidence": "Three alternating pinned process pairs preserve all 66 native benchmark receipts. Median of case median timing ratios 1.00163; largest 1.03629. Executable grows 205,040 bytes; median peak RSS 21,636 to 22,020 KiB. Seven new archive cohorts cover native/selected encode and replay, 16 further cuts and reload/split/area. These are descriptive samples, not allocation counts, statistical significance or general growth bounds.",
       "limits": "Selected cuboid serialization is supported, but its independent solid validation still returns UnrepresentablePoint. General selected solid/surface/contact/fiber validation, non-authored pcurve fragments, semantic provenance and bounded/WASM-safe decoding remain open. No full Hypercurve suite, ASan, runtime fuzz/lexicase, external oracle, WASM execution or full-workspace/pre-push qualification is claimed."
+    },
+    {
+      "id": "selected-solid-replay",
+      "work_packages": [
+        "WP02",
+        "WP07",
+        "WP12",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P4",
+        "P6",
+        "P8",
+        "P11",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39",
+        "T13"
+      ],
+      "decision": "kept as independent selected solid-validation and exact measurement progress; no work-package gate completed",
+      "change": "Compare retained spatial points through strict linear forms, project selected prism cap sources with retained trim charts, integrate selected planar boundary images for signed volume, and reconstruct cylinder rectangle proofs. Optional scalar loft/sweep proofs decline selected inputs so independent complete shell proofs can apply. Preserve every archived topology record.",
+      "source": "../src/topology/wire_geometry.rs",
+      "contract": "SELECTED_ARCHIVE.md",
+      "evidence": "evidence/2026-10-15-selected-solids/manifest.json",
+      "validation": "243 all-feature core tests, 53 integration tests and four doctests; overlapping default configuration; 30 release retained-point/topology/solid tests; strict Clippy, warning-denied docs, WASM library compilation, fuzz-bin Clippy, seven benchmark builds and formatting pass. Two deliberate faults fail runtime assertions and are restored before final checks.",
+      "cost_evidence": "Three alternating pinned pairs preserve all 66 native receipts. Median of case median timing ratios 1.011113; largest 1.093023 (903 to 987 ns). Executable +29,640 bytes; median peak RSS 21,668 to 21,424 KiB. Six final feature cohorts cover native/selected solid replay, classification, volume, further subdivision and eight replay/encode cycles. Setup target-selection and metadata-label mistakes are recorded separately. Descriptive measurements only; no allocation, significance or general growth claim.",
+      "limits": "Coverage is cuboid edge subdivisions (each/all), shear/reflection and cylinder axial subdivisions (one/all), with reload/split/query composition. General selected solid/corner/void-shell validation, surface/contact/fiber graphs, Boolean transfer and bounded/WASM-safe decoding remain open. No full Hypercurve, runtime fuzz/ASan/lexicase, external oracle, WASM execution or full-workspace/pre-push qualification."
     }
   ],
   "work_packages": [
@@ -438,7 +474,7 @@
     },
     {
       "id": "WP07",
-      "status": "open",
+      "status": "in-progress",
       "deliverable": "General curved-shell embedding, material classification and cavity nesting",
       "gate": "Valid mixed curved shells publish without a whole-solid recognizer or closed-form volume; pinches, self-overlap and false cavities fail"
     },
@@ -468,7 +504,7 @@
     },
     {
       "id": "WP12",
-      "status": "open",
+      "status": "in-progress",
       "deliverable": "General queries, certified integration and moment adapter",
       "gate": "Classification/nearest sets include degeneracies; integral bounds enclose independent references; no validity dependency on elementary volume"
     },
@@ -553,7 +589,7 @@
   ],
   "next_actions": [
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
-    "Complete WP02/G1 beyond retained parameter/point/topology and selected sheet archive replay: independently recertify selected solid boundaries and compose reload/split/classification/volume without requiring Real materialization. Add general surface/contact images and selected Boolean transfer while preserving every existing exact behavior.",
+    "Complete WP02/G1 beyond selected sheet, subdivided cuboid and axial-cylinder archive replay. Extend independent solid/void/corner proofs and retained surface/contact images, selected Boolean transfer and repeated selected-cut composition while preserving every existing exact behavior.",
     "Continue WP13 with byte/entity/degree/allocation limits, iterative WASM-safe decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features; version 9 root/source replay is partial progress.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."

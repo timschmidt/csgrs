@@ -660,3 +660,30 @@ solid/resource limits are in the [archive contract](SELECTED_ARCHIVE.md).
 [Measured evidence](evidence/2026-10-15-selected-archive/README.md) covers selected
 sheet replay and composition; it does not close G1 or establish general surface
 intersection feasibility.
+
+## Selected solid proof reconstruction (2026-10-15)
+
+[CGAL's `SignAt_1` concept](https://doc.cgal.org/6.1.1/Algebraic_kernel_d/classAlgebraicKernel__d__1_1_1SignAt__1.html)
+defines polynomial sign evaluation at a retained algebraic real. This supports
+the feasibility of plane-side predicates without independent point coordinates.
+HyperBRep's implementation maps a spatial curve's authored controls through a
+linear form and delegates the selected image comparison to existing Hypercurve
+authority. Rational weights and NURBS parameter charts remain intact. It adds
+no polynomial solver and uses no interval representative as geometry.
+
+[Eberly's mass-properties derivation](https://www.geometrictools.com/Documentation/PolyhedralMassProperties.pdf)
+describes reducing volume integrals to surface integrals with the divergence
+theorem. Our planar specialization uses the vector field `F(p) = p/3` and
+`P(s,t) = origin + u*s + v*t`. Since `P · (u × v)` is constant on the plane,
+six times the signed volume contribution is twice that constant times the
+signed UV area. The existing exact boundary integrator supplies that area;
+native scalar vertices retain their triangle-fan path. This is a mathematical
+specialization, not an imported implementation or a claim about general curved
+surface integration.
+
+[Qualification](evidence/2026-10-15-selected-solids/README.md) covers cuboid
+subdivisions, affine transforms, cylinder axial subdivisions and independent
+reload/split/query composition. It does not prove general selected-solid,
+contact/fiber, Boolean-transfer or resource-boundary closure. The external
+references support the algorithm choices; they are not executed test oracles
+or measured performance comparisons.

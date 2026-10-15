@@ -23,7 +23,20 @@ impl ArenaModelBuilder {
             for wire_id in face.boundary_wires() {
                 for use_id in &self.wire_ref(*wire_id)?.edge_uses {
                     let edge = self.edge_ref(self.edge_use_ref(*use_id)?.edge)?;
-                    if self.curve_ref(edge.curve)?.kind() != Curve3Kind::Line {
+                    if self.curve_ref(edge.curve)?.kind() != Curve3Kind::Line
+                        || self
+                            .vertex_ref(edge.start)?
+                            .point()
+                            .try_coordinates()
+                            .is_none()
+                        || self
+                            .vertex_ref(edge.end)?
+                            .point()
+                            .try_coordinates()
+                            .is_none()
+                    {
+                        // This optional loft proof constructs scalar section profiles.
+                        // Other shell proofs may admit retained selected vertices.
                         return Ok(None);
                     }
                 }
