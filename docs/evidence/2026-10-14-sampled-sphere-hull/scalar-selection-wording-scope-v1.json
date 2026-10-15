@@ -1,0 +1,39 @@
+{
+  "objective": "Correct the inspected benchmark terminology without changing case selection, timings, numeric evidence, or library behavior.",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-selection-wording-v1/source",
+  "source_files": 10153,
+  "expected_delta_sha256": {
+    "crates/hyperreal/benches/adversarial_library.rs": "4a04f30a7cc6d7640feb2421b4143724901a81e30445811b8e03246dc18fb129",
+    "crates/hyperreal/fuzz/README.md": "9933c888a4f25579da0ad1a1660c26170d447274e5f34756be93a548372fcb78"
+  },
+  "literal_replacements": {
+    "crates/hyperreal/benches/adversarial_library.rs": [
+      [
+        "Deterministic lexicase score for the current 100 promoted slow offenders.",
+        "Average timing score for the current 100 promoted slow offenders."
+      ]
+    ],
+    "crates/hyperreal/fuzz/README.md": [
+      [
+        "100-case `promoted_slow_offenders.txt` lexicase set, and updates the score,",
+        "100-case `promoted_slow_offenders.txt` group, and updates the score,"
+      ]
+    ]
+  },
+  "review": "scalar-selection-review-v1.json",
+  "commands": 2,
+  "command_wall_limit_seconds": 1800,
+  "validation": [
+    "Workspace formatting check",
+    "Strict release Clippy for the affected adversarial_library benchmark with its simple feature"
+  ],
+  "limits": [
+    "This corrects wording; the current algorithm still ranks elapsed times and averages best-of-five probes.",
+    "No directed lexicase campaign or per-representation selection is implemented by this change.",
+    "No historic generated report or closed numerical evidence is rewritten.",
+    "No runtime performance, full CI, or push-readiness claim."
+  ],
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false
+}

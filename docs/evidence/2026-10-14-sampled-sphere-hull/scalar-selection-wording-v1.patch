@@ -1,0 +1,27 @@
+diff --git a/crates/hyperreal/benches/adversarial_library.rs b/crates/hyperreal/benches/adversarial_library.rs
+--- a/crates/hyperreal/benches/adversarial_library.rs
++++ b/crates/hyperreal/benches/adversarial_library.rs
+@@ -1118,7 +1118,7 @@
+     out.push_str(SCORE_SECTION_BEGIN);
+     out.push('\n');
+     out.push_str("## `promoted_slow_offender_score`\n\n");
+-    out.push_str("Deterministic lexicase score for the current 100 promoted slow offenders. The score is the average current best-of-five wall-clock probe across the promoted set; lower is better. Delta compares with the previous score recorded in this file, and derivative is the change in delta.\n\n");
++    out.push_str("Average timing score for the current 100 promoted slow offenders. The score is the average current best-of-five wall-clock probe across the promoted set; lower is better. Delta compares with the previous score recorded in this file, and derivative is the change in delta.\n\n");
+     out.push_str(&format!(
+         "{} {} -->\n",
+         SCORE_NANOS_PREFIX, score.average_nanos
+diff --git a/crates/hyperreal/fuzz/README.md b/crates/hyperreal/fuzz/README.md
+--- a/crates/hyperreal/fuzz/README.md
++++ b/crates/hyperreal/fuzz/README.md
+@@ -60,6 +60,10 @@
+ Run `cargo bench --bench adversarial_library --features simple` to refresh the
+ deterministic fuzz timing history in `slow_performers.txt`. The run keeps each
+ case's worst-ever observation, rotates the worst eligible offender into the
+-100-case `promoted_slow_offenders.txt` lexicase set, and updates the score,
++100-case `promoted_slow_offenders.txt` group, and updates the score,
+ delta, and delta derivative in `benchmarks.md`. The promoted set is replayed as
+ dedicated Criterion rows by `adversarial_transcendentals`.
++
++The promotion ranks cases by recorded elapsed time. P38 still requires
++case-by-case lexicase selection and independent populations for each
++representation type; the current timing group does not satisfy those criteria.
