@@ -87,6 +87,10 @@ impl Real {
     /// After that fallback declines, quotient recognition gets a separate
     /// attempt with the same limits. Its charges also count comparisons of
     /// denominator coefficients. Earlier successful proofs remain preferred.
+    /// Within that attempt, shared nodes reuse completed projections. Each hit
+    /// consumes a work charge and checks cancellation, without another node
+    /// expansion. At most 512 temporary projections are retained until return;
+    /// this entry limit is not a heap-byte bound. No cache survives the query.
     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
         if let Some(rational) = self.exact_rational() {
             return Some(rational);

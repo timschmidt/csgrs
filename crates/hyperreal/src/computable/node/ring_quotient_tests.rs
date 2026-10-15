@@ -167,4 +167,32 @@ mod ring_quotient_tests {
         assert_eq!(value.bounded_quotient_rational(), Some(Rational::zero()));
         assert!(value.cached().is_none());
     }
+
+    #[test]
+    fn reused_quotient_proofs_still_charge_work_and_observe_cancellation() {
+        let denominator = positive_denominator();
+        assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
+        let mut value = inverse_identity(&denominator);
+        let signal = Arc::new(AtomicBool::new(false));
+        value.abort(signal.clone());
+        let mut recognition = RingRecognition::new(&value);
+        let first = recognition
+            .expand_quotient(&value, RingRecognition::MAX_DEPTH)
+            .unwrap();
+        assert_eq!(recognition.project_quotient(&first), Some(Rational::zero()));
+        recognition.nodes_left = 0;
+        recognition.operations_left = 0;
+        assert!(recognition.expand_quotient(&value, 1).is_none());
+        recognition.operations_left = 1;
+        signal.store(true, std::sync::atomic::Ordering::Relaxed);
+        assert!(recognition.expand_quotient(&value, 1).is_none());
+        signal.store(false, std::sync::atomic::Ordering::Relaxed);
+        assert!(recognition.expand_quotient(&value, 0).is_none());
+        assert!(recognition.expand_quotient(&value, 1).is_some());
+        assert_eq!(recognition.operations_left, 0);
+        // Local projection reuse alone does not publish any root fact.
+        assert_unproved(&value);
+        drop(recognition);
+        assert_eq!(value.bounded_quotient_rational(), Some(Rational::zero()));
+    }
 }

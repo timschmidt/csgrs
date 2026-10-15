@@ -9343,6 +9343,32 @@
       "remaining": "Investigate shared subexpression proof reuse without raising limits; preserve prior successful proofs, complete original strict drills, semantic/topology/composition acceptance, broad downstream qualification and matched completed-contract costs before retention.",
       "runtime_admitted": false,
       "full_plan_complete": false
+    },
+    "shared_scalar_proof_work": {
+      "status": "candidate: original strict drills and semantic checks pass; full composition and admission remain open",
+      "baseline_commit": "df2dfac1d",
+      "progress": "docs/evidence/2026-10-15-shared-scalar-proofs/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-shared-scalar-proofs/scalar-and-drill-v1/result.json",
+      "model_acceptance": "docs/evidence/2026-10-15-shared-scalar-proofs/model-acceptance-v3/result.json",
+      "model_clippy": "docs/evidence/2026-10-15-shared-scalar-proofs/model-clippy-v1/result.json",
+      "diagnosis": "docs/evidence/2026-10-15-shared-scalar-proofs/composition-algebra-v3.json",
+      "checkpoint": "docs/evidence/2026-10-15-shared-scalar-proofs/checkpoint-v1.json",
+      "implementation_sha256": {
+        "crates/hyperreal/src/computable/node.rs": "8a90c811535f2962993f8978edd285ae080afe619056e2ef3b898818beeda6b9",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "2780131268cd79e776d117723c3c905aac1ae0b9b164c4e9e2b66b7293c115da",
+        "crates/hyperreal/src/computable/node/ring_quotient.rs": "5905c185df863f8dfc40046caa37521610668157bc7e6f17ab1d30a90307d9f8",
+        "crates/hyperreal/src/computable/node/ring_quotient_tests.rs": "7c9042345c4dbc9caa180c5e414cdfaffa9c568cd79104f390a1e6f1f54b0855",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "2640f68cd89d92f2eb087988fa153ced0fcca9efd62b5a16b66065ca57ac5c4c",
+        "crates/hyperreal/tests/quotient_polynomial_cancellation.rs": "a0ce6d3b89e1993aa5250fcc86ab7f504e0d743a560f2b6276e5131c7880ea17",
+        "tests/mesh_boolean_context.rs": "49d8e88febbe7ed8aa234c3ac58add009008f3680250c8c905d4d9e98cc7a307",
+        "tests/strict_drilled_workflows.rs": "1dd8a22959400ca3f4b78e5c6bbed7afecf83b767b832634ef9b55ae523a4abe"
+      },
+      "qualification": "908 default and 1015 all-feature scalar tests, scalar and root-curve Clippy with warnings denied, formatting, 28 scalar doctests. All original 8/16/24/32 drills complete Certified under both contexts and pass Certified manifold checks. Final context tests and independent membership/volume enclosure checks pass. Counts overlap.",
+      "workflow": "8/24 complete the full empty-accumulation/subtraction/reunion chain. New 16/32 composition tests remain failing at empty accumulation with typed Real sign classification Unknown. Their initial drills succeed; full workflows remain incomplete.",
+      "numeric_scope": "Exact membership including +/-1/10^12 hole-boundary offsets and independently derived polygonal six-volume enclosure within 1/10^24. Exact large volume equality and analytic-cylinder fidelity are not claimed.",
+      "remaining": "Confirm the next normalization decline and investigate exact factor cancellation or construction-proof retention. Independent conditional expansion encounters degrees 9/10 versus production cap 8. Preserve all limits and failing full-resolution tests; then run broad downstream qualification, matched cost/allocation evidence and release/user-path validation.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
     }
   },
   "status_meanings": {

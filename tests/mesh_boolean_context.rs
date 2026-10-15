@@ -147,21 +147,19 @@ fn context_booleans_preserve_input_errors() {
 }
 
 #[test]
-fn drill_cylinder_uses_the_requested_context() {
+fn drill_cylinder_completes_certifiably_with_either_context() {
     let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4))
         .expect("valid primitive fixture");
     let drill = solid::cylinder(Real::from(2), Real::from(6), 16)
         .expect("valid primitive fixture")
         .translated(Real::from(6), Real::from(6), Real::from(-1))
         .expect("valid transform fixture");
-    assert!(matches!(
-        body.try_difference(&drill),
-        Err(HypermeshError::PredicateUndecided { .. })
-    ));
+    let strict = body.try_difference(&drill).unwrap();
+    assert!(!strict.triangles.is_empty());
     let outcome = body
         .try_difference_with_context(&drill, &GeometryContext::APPROXIMATE_512)
         .unwrap();
-    assert_eq!(outcome.certainty, GeometryCertainty::Approximate512Consumed);
+    assert_eq!(outcome.certainty, GeometryCertainty::Certified);
     assert!(!outcome.value.triangles.is_empty());
     assert!(
         outcome
@@ -173,8 +171,9 @@ fn drill_cylinder_uses_the_requested_context() {
     let expected_volume = 12.0 * 12.0 * 4.0
         - 4.0 * (16.0 / 2.0) * 2.0_f64.powi(2) * (std::f64::consts::TAU / 16.0).sin();
     assert!((signed_volume(&outcome.value) - expected_volume).abs() < 1e-9);
-    assert!(matches!(
-        body.try_difference_with_context(&drill, &GeometryContext::STRICT),
-        Err(HypermeshError::PredicateUndecided { .. })
-    ));
+    let repeated = body
+        .try_difference_with_context(&drill, &GeometryContext::STRICT)
+        .unwrap();
+    assert_eq!(repeated.certainty, GeometryCertainty::Certified);
+    assert_eq!(repeated.value, strict);
 }

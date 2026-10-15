@@ -1,6 +1,7 @@
 // Rational functions over the same opaque atoms and polynomial arithmetic.
 // A denominator is admitted only with an exact nonzero witness. Products of
 // those denominators remain nonzero; no polynomial independence is assumed.
+#[derive(Clone)]
 struct RingQuotient {
     numerator: RingPolynomial,
     // None represents one. Every explicit denominator is proved nonzero at
@@ -111,6 +112,29 @@ impl<'a> RingRecognition<'a> {
     }
 
     fn expand_quotient(&mut self, value: &'a Computable, depth: usize) -> Option<RingQuotient> {
+        if depth == 0 {
+            return None;
+        }
+        let identity = Arc::as_ptr(&value.internal);
+        if self.quotients.contains_key(&identity) {
+            // A hit reuses a completed exact projection. Charge and check
+            // cancellation before cloning it, without expanding this node
+            // again. Atom IDs belong to this same recognition attempt.
+            self.charge()?;
+            return self.quotients.get(&identity).cloned();
+        }
+        let quotient = self.expand_quotient_uncached(value, depth)?;
+        // At most MAX_NODES entries: each miss consumes a node before it can
+        // succeed. Failed or partial expansions are never inserted.
+        self.quotients.insert(identity, quotient.clone());
+        Some(quotient)
+    }
+
+    fn expand_quotient_uncached(
+        &mut self,
+        value: &'a Computable,
+        depth: usize,
+    ) -> Option<RingQuotient> {
         // Reuse the polynomial leaf/atom admission, with its own single node
         // charge, for every representation without rational arithmetic here.
         if !matches!(
