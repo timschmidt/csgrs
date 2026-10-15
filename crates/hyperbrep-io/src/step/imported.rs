@@ -1,49 +1,116 @@
 use super::ContextUnits;
 use hyperbrep::{
-    EdgeUseKey, EdgeUseRef, FaceKey, FaceRef, Model, SolidKey, SolidRef, VertexKey, VertexRef,
-    WireKey,
+    EdgeKey, EdgeRef, EdgeUseKey, EdgeUseRef, FaceKey, FaceRef, Model, Real, SolidKey, SolidRef,
+    VertexKey, VertexRef, WireKey,
 };
 
-/// A mapped source Cartesian point and its model-bound native vertex.
+/// The source identity authorizing a native vertex.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum VertexSource {
+    /// A faceted polygon point; exact coordinate aliases may share a vertex.
+    CartesianPoint {
+        /// Original CARTESIAN_POINT ID.
+        point: u64,
+    },
+    /// Explicit STEP topology; distinct vertex entities are never welded.
+    VertexPoint {
+        /// Original VERTEX_POINT ID.
+        vertex: u64,
+        /// Referenced CARTESIAN_POINT ID.
+        point: u64,
+    },
+}
+/// A mapped source point/topological vertex and its model-bound native vertex.
 #[derive(Clone, Copy, Debug)]
 pub struct SourceVertex<'a> {
-    /// Original CARTESIAN_POINT ID. Exact aliases share a native vertex.
-    pub source: u64,
+    /// Original point and, when present, explicit topological vertex identity.
+    pub source: VertexSource,
     /// Native vertex in this imported body.
     pub vertex: VertexRef<'a>,
 }
 /// A mapped source face and its model-bound native face.
 #[derive(Clone, Copy, Debug)]
 pub struct SourceFace<'a> {
-    /// Original FACE_SURFACE ID.
+    /// Original FACE_SURFACE or ADVANCED_FACE ID.
     pub source: u64,
     /// Native face in this imported body.
     pub face: FaceRef<'a>,
 }
-/// Source polygon segment and its bound native face-local edge use.
+/// Source description of one directed boundary use.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum EdgeUseSource {
+    /// A segment of a source POLY_LOOP, including its closing segment.
+    PolygonSegment {
+        /// Zero-based segment in the original polygon, including closing segment.
+        segment: usize,
+        /// Directed start CARTESIAN_POINT ID after bound orientation.
+        from_point: u64,
+        /// Directed end CARTESIAN_POINT ID after bound orientation.
+        to_point: u64,
+    },
+    /// An explicit edge use after applying the bound's orientation.
+    OrientedEdge {
+        /// Original ORIENTED_EDGE ID.
+        oriented_edge: u64,
+        /// Referenced EDGE_CURVE ID.
+        edge_curve: u64,
+        /// Directed start VERTEX_POINT ID after bound orientation.
+        from_vertex: u64,
+        /// Directed end VERTEX_POINT ID after bound orientation.
+        to_vertex: u64,
+    },
+}
+/// Source boundary use and its bound native face-local edge use.
 #[derive(Clone, Copy, Debug)]
 pub struct SourceEdgeUse<'a> {
     /// FACE_BOUND or FACE_OUTER_BOUND ID.
     pub bound: u64,
-    /// POLY_LOOP ID.
-    pub polygon: u64,
-    /// Zero-based segment in the original polygon, including its closing segment.
-    pub segment: usize,
-    /// Source point at the start of the directed face traversal.
-    pub from_point: u64,
-    /// Source point at the end of the directed face traversal.
-    pub to_point: u64,
+    /// POLY_LOOP or EDGE_LOOP ID.
+    pub loop_id: u64,
+    /// Original segment/oriented edge with directed source endpoint identities.
+    pub source: EdgeUseSource,
     /// Native face-local use in the imported body.
     pub edge_use: EdgeUseRef<'a>,
 }
 #[derive(Debug)]
 pub(super) struct UseSource {
     pub(super) bound: u64,
-    pub(super) polygon: u64,
-    pub(super) segment: usize,
-    pub(super) from_point: u64,
-    pub(super) to_point: u64,
+    pub(super) loop_id: u64,
+    pub(super) source: EdgeUseSource,
     pub(super) key: EdgeUseKey,
+}
+/// Exact affine map from the imported edge's canonical parameter `s` in `[0,1]`
+/// to a source curve parameter: `start + (end - start) * s`.
+#[derive(Clone, Debug)]
+pub struct SourceCurveParameters {
+    /// Source LINE, PCURVE or SURFACE_CURVE ID.
+    pub curve: u64,
+    /// Parameter at the original EDGE_CURVE start vertex.
+    pub start: Real,
+    /// Parameter at the original EDGE_CURVE end vertex; may be less than start.
+    pub end: Real,
+}
+/// An explicit source EDGE_CURVE and its independently checked representations.
+#[derive(Clone, Copy, Debug)]
+pub struct SourceEdge<'a> {
+    /// Original EDGE_CURVE ID.
+    pub source: u64,
+    /// Original edge_geometry ID.
+    pub geometry: u64,
+    /// Source curve supplying the edge geometry's parameterization.
+    pub master: u64,
+    /// Complete source curve parameter maps, including every supplied pcurve.
+    pub parameters: &'a [SourceCurveParameters],
+    /// Native edge, directed from the original start to the original end vertex.
+    pub edge: EdgeRef<'a>,
+}
+#[derive(Debug)]
+pub(super) struct EdgeSource {
+    pub source: u64,
+    pub geometry: u64,
+    pub master: u64,
+    pub parameters: Vec<SourceCurveParameters>,
+    pub key: EdgeKey,
 }
 /// One strictly validated body, with source ownership retained outside the kernel.
 #[derive(Debug)]
@@ -52,13 +119,14 @@ pub struct ImportedBody {
     pub(super) name: String,
     pub(super) model: Model,
     pub(super) solid: SolidKey,
-    pub(super) vertices: Vec<(u64, VertexKey)>,
+    pub(super) vertices: Vec<(VertexSource, VertexKey)>,
     pub(super) faces: Vec<(u64, FaceKey)>,
     pub(super) loops: Vec<(u64, u64, WireKey)>,
     pub(super) edge_uses: Vec<UseSource>,
+    pub(super) edges: Vec<EdgeSource>,
 }
 impl ImportedBody {
-    /// Source FACETED_BREP ID.
+    /// Source FACETED_BREP or MANIFOLD_SOLID_BREP ID.
     pub fn source(&self) -> u64 {
         self.source
     }
@@ -90,7 +158,7 @@ impl ImportedBody {
             face: self.model.face(key).expect("published key"),
         })
     }
-    /// Bound and poly-loop source IDs with their native wire, including holes.
+    /// Bound and loop source IDs with their native wire, including holes.
     pub fn loops(&self) -> impl ExactSizeIterator<Item = (u64, u64, hyperbrep::WireRef<'_>)> {
         self.loops.iter().map(|(bound, polygon, key)| {
             (
@@ -104,11 +172,20 @@ impl ImportedBody {
     pub fn edge_uses(&self) -> impl ExactSizeIterator<Item = SourceEdgeUse<'_>> {
         self.edge_uses.iter().map(|item| SourceEdgeUse {
             bound: item.bound,
-            polygon: item.polygon,
-            segment: item.segment,
-            from_point: item.from_point,
-            to_point: item.to_point,
+            loop_id: item.loop_id,
+            source: item.source,
             edge_use: self.model.edge_use(&item.key).expect("published key"),
+        })
+    }
+    /// Explicit EDGE_CURVE records in first-use order. Faceted polygons express
+    /// edges implicitly and retain their evidence in [`Self::edge_uses`].
+    pub fn explicit_edges(&self) -> impl ExactSizeIterator<Item = SourceEdge<'_>> {
+        self.edges.iter().map(|item| SourceEdge {
+            source: item.source,
+            geometry: item.geometry,
+            master: item.master,
+            parameters: &item.parameters,
+            edge: self.model.edge(&item.key).expect("published key"),
         })
     }
 }
@@ -127,7 +204,7 @@ pub struct ImportedRepresentation {
     pub(super) placements: Vec<u64>,
 }
 impl ImportedRepresentation {
-    /// Selected FACETED_BREP_SHAPE_REPRESENTATION ID.
+    /// Selected supported shape representation ID.
     pub fn source(&self) -> u64 {
         self.source
     }

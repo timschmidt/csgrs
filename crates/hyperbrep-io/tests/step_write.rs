@@ -24,7 +24,7 @@ fn native_faceted_solids_export_every_body_hole_and_source_use_exactly() {
     ] {
         let file = StepFile::read(source.as_bytes(), &StepReadOptions::default()).unwrap();
         let imported = file
-            .import_faceted_representation(502, &ImportLimits::default(), &context())
+            .import_representation(502, &ImportLimits::default(), &context())
             .result
             .unwrap()
             .unwrap();
@@ -61,7 +61,7 @@ fn native_faceted_solids_export_every_body_hole_and_source_use_exactly() {
                 StepFile::read(output.text().as_bytes(), &StepReadOptions::default()).unwrap();
             assert_eq!(file.syntax().unresolved_references().count(), 0);
             let replay = file
-                .import_faceted_representation(
+                .import_representation(
                     output.representation(),
                     &ImportLimits::default(),
                     &context(),
@@ -218,7 +218,7 @@ fn exact_file_metadata_and_repeated_occurrences_remain_explicit() {
     let file = StepFile::read(output.text().as_bytes(), &StepReadOptions::default()).unwrap();
     assert_eq!(file.header().name, options.file_name);
     let replay = file
-        .import_faceted_representation(
+        .import_representation(
             output.representation(),
             &ImportLimits::default(),
             &context(),

@@ -1,23 +1,28 @@
-//! Typed STEP decoding and exact, unit-aware faceted geometry exchange.
+//! Typed STEP decoding and exact, unit-aware geometry exchange.
 //!
 //! Syntax, header structure, entity interpretation and native model validation
 //! are separate boundaries. Unmapped source records remain in [`StepFile`].
 //! Importing an explicitly selected representation does not claim that every
 //! product or assembly in the file has been converted.
 
+mod advanced;
 mod decode;
 mod error;
 mod faceted;
 mod geometry;
 mod header;
 mod imported;
+mod representation;
 mod text;
 mod units;
 mod write;
 
 pub use error::{Error, ErrorKind, Resource};
 pub use header::Header;
-pub use imported::{ImportedBody, ImportedRepresentation, SourceEdgeUse, SourceFace, SourceVertex};
+pub use imported::{
+    EdgeUseSource, ImportedBody, ImportedRepresentation, SourceCurveParameters, SourceEdge,
+    SourceEdgeUse, SourceFace, SourceVertex, VertexSource,
+};
 pub use units::{ContextUnits, Uncertainty, Unit, UnitKind};
 pub use write::{
     FacetedBody, FacetedStep, StepWriteOptions, WriteError, WriteErrorKind, WriteLengthUnit,
@@ -59,7 +64,7 @@ pub struct ImportLimits {
     pub scalars: usize,
     /// Total UTF-8 bytes emitted by name/metadata decoding.
     pub text_bytes: usize,
-    /// Directed polygon segments admitted to native topology.
+    /// Directed polygon segments or explicit edge uses admitted to native topology.
     pub edge_uses: usize,
     /// Maximum numerator/denominator bit bound for resolved unit scales.
     /// Products are admitted using sums of operand bit lengths before multiplication.
@@ -106,20 +111,20 @@ impl<'a> StepFile<'a> {
         &self.header
     }
 
-    /// Imports every item of one faceted representation into validated native bodies.
+    /// Imports every supported item of one selected shape representation into validated native bodies.
     ///
     /// Model coordinates are metres. Conversion factors are authored exact
     /// rationals; names such as "inch" never override a declared factor.
     /// Unsupported items, missing geometry and inconsistent face/loop senses
     /// fail the whole selected import. No healing, fitting or tolerance merging
     /// occurs. Other file entities remain addressable in [`Self::syntax`].
-    pub fn import_faceted_representation(
+    pub fn import_representation(
         &self,
         representation: u64,
         limits: &ImportLimits,
         context: &OperationContext,
     ) -> BudgetOutcome<Result<ImportedRepresentation, Error>> {
-        context.evaluate(|| faceted::import(self, representation, limits))
+        context.evaluate(|| representation::import(self, representation, limits))
     }
 
     /// Resolves a 3D context's units and uncertainty metadata without geometry.

@@ -5,7 +5,7 @@ const BOX: &str = include_str!("fixtures/faceted-box.step");
 fn rejected(source: &str) -> Error {
     StepFile::read(source.as_bytes(), &StepReadOptions::default())
         .unwrap()
-        .import_faceted_representation(
+        .import_representation(
             502,
             &ImportLimits::default(),
             &OperationContext::strict(WorkBudget {
@@ -144,7 +144,7 @@ fn header_admission_and_schema_scope_are_explicit() {
         assert!(
             StepFile::read(source.as_bytes(), &StepReadOptions::default())
                 .unwrap()
-                .import_faceted_representation(
+                .import_representation(
                     502,
                     &ImportLimits::default(),
                     &OperationContext::strict(WorkBudget {

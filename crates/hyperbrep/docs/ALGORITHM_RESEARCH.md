@@ -870,3 +870,57 @@ curve evidence, units, bound orientation and provenance. Explicit healing is
 separate. This increment implements native rectangular-cylinder certification;
 it does not claim that analytic STEP import or periodic trimmed-surface exchange
 is complete.
+
+## Advanced planar STEP and distinct parameterizations (2026-10-15)
+
+The [ISO 10303-42 geometry schema, sections 4.5.47 and 4.5.49](https://www.steptools.com/stds/smrl/data/resource_docs/geometric_and_topological_representation/sys/4_schema.htm)
+requires pcurves and their spatial curve to describe the same oriented point set,
+but permits different parameterizations. The declared master determines the
+wrapper's parameters. A pcurve's definitional representation contains one 2D
+curve in a parametric context. Thus equal numerical parameters across every
+representation would reject valid exchange data. Conversely, selecting a master
+does not prove the alternate representations agree. Our strict contract requires
+that proof before assigning native authority; approximate reconciliation belongs
+to explicit future healing.
+
+The [`advanced_face` schema](https://www.steptools.com/stds/stp_aim/html/t_advanced_face.html)
+requires surface-curve associations to be pcurves. The
+[`line` definition](https://www.steptools.com/stds/stp_aim/html/t_line.html)
+uses a point and a magnitude-bearing vector, whose direction ratios need not
+already be normalized. These are entity semantics, not a license to weld
+topological vertices or silently repair orientation.
+
+For the implemented planar/linear domain, write a spatial line as `o + t*v`.
+Our whole-image certificate proves that another origin lies on this line and
+that its velocity is an exactly positive multiple of `v`. These conditions
+prove oriented equality for every parameter, including differently scaled and
+translated parameterizations. Exact dot-product projection followed by a full
+vector residual check locates endpoints; projection alone would admit off-line
+points. A finite native edge uses `[0,1]`, with an exact affine parameter map for
+its source geometry, spatial line and every supplied pcurve. The wrapper map
+follows the declared master; `EDGE_CURVE.same_sense` is checked independently
+from each oriented use and face-bound reversal.
+
+Import retains explicit vertex and edge IDs. Caches keyed by those source IDs
+reuse native topology and checked plane frames within a body; no hash iteration
+controls output order. Native pcurves are exact projections into the actual face
+plane. Hypercurve signed area and native containment validation identify the
+outer boundary and holes even when all bounds are `FACE_BOUND` and a hole comes
+first. Reversing a bound reverses both use order and direction. The final native
+shell validation remains mandatory; schema traversal is not a validity proof.
+
+The [advanced STEP evidence](evidence/2026-10-15-step-advanced/README.md) includes
+original independent exporter files, deliberate nonmaster inconsistencies,
+reparameterization, explicit-identity substitutions, coordinates above binary64
+integer precision, directed-use limits, native replay and actual WASM execution.
+An end-to-end example splits and reflects an imported holed solid, exports its
+exact planar geometry and reimports it; OCCT independently reads those exports.
+This does not preserve the original STEP graph or claim exactness from OCCT.
+
+New source-identity caches avoid repeated construction, but exact scalar work,
+native validation and source-report storage still dominate these small cases.
+The evidence measures six new paths and pairs the existing faceted harness with
+its frozen predecessor, preserving all geometry receipts. No complexity bound
+for complete import follows from expected constant-time ID lookup. General
+curved analytic/spline curves, closed-circle edges, periodic trims, assemblies,
+global resource admission and explicit healing remain open work packages.

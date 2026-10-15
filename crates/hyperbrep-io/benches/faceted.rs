@@ -81,7 +81,7 @@ fn faceted(
         let file =
             StepFile::read(black_box(source.as_bytes()), &StepReadOptions::default()).unwrap();
         let imported = file
-            .import_faceted_representation(502, &ImportLimits::default(), &context)
+            .import_representation(502, &ImportLimits::default(), &context)
             .result
             .unwrap()
             .unwrap();

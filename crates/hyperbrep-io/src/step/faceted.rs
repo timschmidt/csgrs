@@ -1,8 +1,8 @@
 use super::{
-    Error, ErrorKind, ImportLimits, StepFile,
+    Error, ErrorKind,
     decode::{Args, Resolver, Site, reference},
     error::{insert, push},
-    imported::{ImportedBody, ImportedRepresentation, UseSource},
+    imported::{EdgeUseSource, ImportedBody, UseSource, VertexSource},
 };
 use hyperbrep::{
     Curve3, Direction, EdgeKey, FaceKey, ModelBuilder, Orientation, ParameterCorrespondence,
@@ -12,98 +12,22 @@ use hypercurve::{Curve2, LineSeg2, Point2};
 use hyperreal::Rational;
 use std::collections::{HashMap, HashSet};
 
-pub(super) fn import(
-    file: &StepFile<'_>,
-    id: u64,
-    limits: &ImportLimits,
-) -> Result<ImportedRepresentation, Error> {
-    if file.header.schemas.iter().any(|name| {
-        !matches!(
-            name.split_whitespace().next(),
-            Some(
-                "CONFIG_CONTROL_DESIGN"
-                    | "AUTOMOTIVE_DESIGN"
-                    | "AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF"
-            )
-        )
-    }) {
-        return Err(Error::at(
-            Some(id),
-            0,
-            ErrorKind::Unsupported("declared schema for the common AP203/AP214/AP242 subset"),
-        ));
-    }
-    let mut resolver = Resolver::new(file, limits);
-    let mut args = resolver.simple(id, "FACETED_BREP_SHAPE_REPRESENTATION")?;
-    let site = args.site;
-    let name = resolver.text(args.next()?, site)?;
-    let items = args.list()?;
-    let units = resolver.context_units(args.reference()?)?;
-    args.finish()?;
-    let mut bodies = Vec::new();
-    let mut placements = Vec::new();
-    let mut item_ids = HashSet::new();
-    for value in items {
-        let item_id = reference(value, site)?;
-        if !insert(&mut item_ids, item_id).map_err(|kind| site.error(kind))? {
-            return Err(site.invalid("duplicate representation item"));
-        }
-        let item = resolver.entity(item_id)?;
-        if item.is_complex() {
-            return Err(
-                Site::entity(item).error(ErrorKind::Unsupported("complex representation item"))
-            );
-        }
-        match item.components().next().expect("syntax component").name() {
-            "FACETED_BREP" => {
-                let body = body(&mut resolver, item_id, &units.length.scale_to_si)?;
-                push(&mut bodies, body).map_err(|kind| site.error(kind))?;
-            }
-            "AXIS2_PLACEMENT_3D" => {
-                resolver.placement(item_id, &units.length.scale_to_si)?;
-                push(&mut placements, item_id).map_err(|kind| site.error(kind))?;
-            }
-            _ => {
-                return Err(
-                    Site::entity(item).error(ErrorKind::Unsupported("faceted representation item"))
-                );
-            }
-        }
-    }
-    if bodies.is_empty() {
-        return Err(site.invalid("faceted representation has no bodies"));
-    }
-    resolver.used.sort_unstable();
-    resolver.used.dedup();
-    let mut retained = Vec::new();
-    for entity in file.syntax.entities() {
-        if resolver.used.binary_search(&entity.id()).is_err() {
-            push(&mut retained, entity.id()).map_err(|kind| site.error(kind))?;
-        }
-    }
-    Ok(ImportedRepresentation {
-        source: id,
-        name,
-        units,
-        bodies,
-        interpreted: resolver.used,
-        retained,
-        placements,
-    })
-}
-
 struct Builder {
     model: ModelBuilder,
     by_source: HashMap<u64, (usize, VertexKey)>,
     by_point: HashMap<(Rational, Rational, Rational), (usize, VertexKey)>,
     points: Vec<Point3>,
-    vertices: Vec<(u64, VertexKey)>,
+    vertices: Vec<(VertexSource, VertexKey)>,
     faces: Vec<(u64, FaceKey)>,
     loops: Vec<(u64, u64, WireKey)>,
     edge_uses: Vec<UseSource>,
     edges: HashMap<(usize, usize), EdgeKey>,
 }
-fn body(resolver: &mut Resolver<'_, '_, '_>, id: u64, scale: &Real) -> Result<ImportedBody, Error> {
+pub(super) fn body(
+    resolver: &mut Resolver<'_, '_, '_>,
+    id: u64,
+    scale: &Real,
+) -> Result<ImportedBody, Error> {
     let mut args = resolver.simple(id, "FACETED_BREP")?;
     let body_site = args.site;
     let name = resolver.text(args.next()?, body_site)?;
@@ -160,6 +84,7 @@ fn body(resolver: &mut Resolver<'_, '_, '_>, id: u64, scale: &Real) -> Result<Im
         faces: builder.faces,
         loops: builder.loops,
         edge_uses: builder.edge_uses,
+        edges: Vec::new(),
     })
 }
 impl Builder {
@@ -205,7 +130,11 @@ impl Builder {
             .try_reserve(1)
             .map_err(|_| site.error(ErrorKind::Allocation))?;
         self.by_source.insert(id, (index, key.clone()));
-        push(&mut self.vertices, (id, key)).map_err(|kind| site.error(kind))?;
+        push(
+            &mut self.vertices,
+            (VertexSource::CartesianPoint { point: id }, key),
+        )
+        .map_err(|kind| site.error(kind))?;
         Ok(index)
     }
     fn face(
@@ -334,10 +263,12 @@ impl Builder {
                     &mut self.edge_uses,
                     UseSource {
                         bound: bound_id,
-                        polygon: loop_id,
-                        segment: if forward { from_segment } else { to_segment },
-                        from_point: from_source,
-                        to_point: to_source,
+                        loop_id,
+                        source: EdgeUseSource::PolygonSegment {
+                            segment: if forward { from_segment } else { to_segment },
+                            from_point: from_source,
+                            to_point: to_source,
+                        },
                         key: edge_use.clone(),
                     },
                 )

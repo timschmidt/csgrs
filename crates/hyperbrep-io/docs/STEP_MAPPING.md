@@ -14,10 +14,11 @@ completeness and performance retain that priority order under
 | `part21::parse(bytes, limits)` | Borrowed, source-scoped syntax; no schema or geometric authority. |
 | `StepFile::read(bytes, options)` | Syntax plus decoded standard header and checked DATA/schema declarations. |
 | `StepFile::context_units(id, limits)` | Exact declared length/angle unit graph and unapplied uncertainty metadata for a 3D context. |
-| `StepFile::import_faceted_representation(id, limits, context)` | Every supported item in one selected representation, or a typed failure; native solids are published only after full builder validation. |
+| `StepFile::import_representation(id, limits, context)` | Every supported item in one selected representation, or a typed failure; native solids are published only after full builder validation. |
 | `ImportedRepresentation::bodies()` | Owned native `Model` values, in representation item order, with model-bound solid/face/vertex/wire/edge-use views. |
 | `interpreted_entities()` / `retained_entities()` | Sorted distinct interpreted IDs and source-order raw-retained IDs; disjoint and together covering every DATA instance. |
-| `ImportedBody::edge_uses()` | Bound ID, polygon ID, original zero-based segment including closing segment, directed source-point IDs and native edge-use reference. |
+| `ImportedBody::edge_uses()` | Bound/loop IDs, typed polygon-segment or oriented-edge source, directed source endpoint identities and native edge-use reference. |
+| `ImportedBody::explicit_edges()` | Explicit EDGE_CURVE identity, source geometry/master IDs, exact parameter maps for every representation and native edge reference. |
 | `write_faceted(bodies, options, context)` | All explicitly selected supported native solid occurrences as one AP214 common faceted representation/product, or a typed failure. |
 | `FacetedStep::bodies()` | Borrowed model-bound source-to-output mappings for every vertex, face, wire and directed edge use. |
 
@@ -71,6 +72,61 @@ return native `Build`/`Validation` errors or an unsupported-domain report.
 Exact authored normal/point inconsistencies are errors even if another CAD
 reader tolerates them. A future explicit repair operation must report its changes.
 
+## Explicit planar advanced BREP
+
+`ADVANCED_BREP_SHAPE_REPRESENTATION` selects `MANIFOLD_SOLID_BREP` bodies and
+optional placement metadata. Each body has a `CLOSED_SHELL` of `ADVANCED_FACE`
+records on `PLANE`. Bounds use `EDGE_LOOP`, `ORIENTED_EDGE`, `EDGE_CURVE`,
+`VERTEX_POINT` and three-dimensional `CARTESIAN_POINT`. A spatial edge uses
+`LINE` or `SURFACE_CURVE` whose 3D curve and all associated pcurves are lines.
+Complex geometry, other curve/surface families, oriented shells, void bodies,
+vertex loops and mapped/assembly instances remain typed unsupported boundaries.
+
+Explicit vertex IDs and edge IDs determine topology. Equal coordinates or equal
+unordered endpoint pairs never merge distinct explicit entities. Caches are
+scoped to one body; repeated bodies sharing source records still own independent
+native models. `VertexSource::VertexPoint` retains both vertex and point IDs;
+the faceted case remains `VertexSource::CartesianPoint`. Every directed use
+records its bound, loop, oriented-edge and edge-curve IDs plus endpoint vertex
+IDs after applying bound orientation. No source-ID array index becomes a native
+public handle.
+
+A line evaluates as its exact source point plus its normalized direction times
+authored vector magnitude and parameter. Length conversion scales both origin
+and velocity. Each endpoint must lie exactly on that support. The parameter
+order must agree with `EDGE_CURVE.same_sense`. Native edges use their authored
+topological start/end with canonical unit parameterization; `SourceCurveParameters`
+reports `source_parameter = start + (end - start) * native_parameter`, including
+negative maps. `ORIENTED_EDGE.orientation` and `FACE_BOUND.orientation` act
+independently; reversing a bound reverses order and every edge use.
+
+Each associated `PCURVE` has a plane basis and a one-item
+`DEFINITIONAL_REPRESENTATION` containing a 2D line. Its context must be parametric;
+an optional geometric-context component must declare integer dimension two.
+Plane parameter coordinates use the selected length unit. The mapped infinite
+line must coincide with the 3D line and have the same direction. Different
+positive affine parameterizations are admitted exactly. The declared
+`CURVE_3D`, `PCURVE_S1` or `PCURVE_S2` selects the surface curve's parameter map;
+all alternate representations are still checked and reported. Advanced-face
+surface-curve associations must all be pcurves. Native local pcurves are exact
+projections reparameterized to the directed edge interval. Native face validation
+independently proves their spatial image on the actual face plane. Source maps
+refer to the immutable imported model, not to later edited revisions.
+
+An explicit `FACE_OUTER_BOUND` must have the material orientation. When only
+`FACE_BOUND` records exist, signed contour area and face sense identify exactly
+one finite material outer loop; all opposite loops become holes. This neither
+reverses author intent nor chooses the first bound. Native validation then proves
+loop simplicity, hole containment, manifold incidence and the supported solid
+domain. General unbounded or disconnected planar face domains remain unsupported.
+
+The API is now `import_representation`; direct callers use the typed source enums.
+There is no legacy import alias or parallel geometry carrier. Full EXPRESS/AP
+conformance, native arbitrary-shell completeness, global arithmetic/work/heap
+admission and curved/periodic STEP exchange remain unfinished. Independent OCCT
+inputs and the exact/rejection/composition evidence are recorded in the
+[advanced mapping qualification](../../hyperbrep/docs/evidence/2026-10-15-step-advanced/README.md).
+
 ## Units and text
 
 Published coordinates use **metres**. Unit categories remain length, plane angle
@@ -121,7 +177,7 @@ Limits are explicit and renewed for each public call:
 - `header_text_bytes`: cumulative decoded HEADER and DATA-argument bytes.
 - `ImportLimits::number`: per-lexeme exact digit/exponent admission.
 - `entity_visits`, `scalars`, `text_bytes`, `edge_uses`: cumulative lookup and
-  numeric-materialization attempts, emitted text bytes and polygon segments.
+  numeric-materialization attempts, emitted text bytes and directed boundary uses.
 - `unit_scale_bits`: maximum numerator/denominator bit bound for SI scales and
   conversion products; sums of operand bit lengths are admitted before multiplying.
   This bound is conservative and may reject a product that would cancel.

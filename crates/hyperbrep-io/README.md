@@ -5,10 +5,10 @@ source-entity accounting and exchange policy; authoritative geometry belongs to
 HyperBRep and exact scalar arithmetic belongs to Hyperreal.
 
 The crate reads and writes bounded Part 21 syntax, imports an explicitly
-selected faceted representation into strictly validated native HyperBRep solids,
-and exports selected planar, straight-edged solids to STEP. Coordinates and
+selected faceted or supported advanced representation into strictly validated
+native HyperBRep solids, and exports selected planar, straight-edged solids to STEP. Coordinates and
 authored unit conversions remain exact. Whole-document/product traversal,
-analytic/spline exchange and approximate export remain unfinished.
+curved analytic/spline exchange and approximate export remain unfinished.
 
 The syntax layer retains numeric lexemes without binary floating-point conversion, unknown
 entity records, complex instances, forward references, multiple DATA sections,
@@ -56,11 +56,19 @@ allows subsequent text decoding to report unsupported/invalid directives without
 losing their source. Numeric lexemes such as `1.E400` survive syntax round trips.
 
 The typed `step` layer adds structurally checked standard headers, decoded text,
-unit-graph resolution and selected `FACETED_BREP_SHAPE_REPRESENTATION` import.
-It preserves all bodies and face holes in that selection, shares exactly equal
-vertices/edges, retains directed-segment provenance, and uses the ordinary native
+unit-graph resolution and selected faceted/advanced representation import.
+It preserves all bodies and face holes in that selection and uses the ordinary native
 model builder and validator. It neither applies source uncertainty as a tolerance
 nor heals orientation, near-coincidence or nonplanarity.
+
+Faceted polygons share exact rational coordinate aliases. Advanced planar faces
+retain explicit `VERTEX_POINT` and `EDGE_CURVE` identity without welding. Their
+spatial lines and every supplied planar pcurve must describe the same oriented
+line exactly. Different parameterizations are supported: `explicit_edges()`
+returns source parameter maps and the declared master representation. Bound
+orientation and edge sense remain distinct; winding identifies finite outer
+bounds even when the file only contains `FACE_BOUND` records. `VertexSource` and
+`EdgeUseSource` distinguish implicit polygons from explicit topology.
 
 ```rust
 use hyperbrep::{OperationContext, WorkBudget};
@@ -72,7 +80,7 @@ let context = OperationContext::strict(WorkBudget {
     refinements: 10_000,
     promotions: 1_000,
 });
-let attempt = file.import_faceted_representation(502, &ImportLimits::default(), &context);
+let attempt = file.import_representation(502, &ImportLimits::default(), &context);
 let imported = attempt.result??; // Solver exhaustion and mapping errors stay distinct.
 assert_eq!(imported.bodies().len(), 1);
 assert_eq!(imported.bodies()[0].model().counts().faces, 10);
@@ -117,7 +125,11 @@ rounds, fits, heals or drops unsupported geometry. `StepWriteOptions` makes unit
 metadata and allowances explicit; the caller supplies the timestamp. Exporting
 metres as inches can itself make a coordinate nonrepresentable. The
 [native export example](examples/faceted_step.rs) writes seven original
-construction recipes for independent readers.
+construction recipes for independent readers. The
+[advanced import example](examples/advanced_step.rs) reads independent planar
+STEP bodies, splits and reflects a holed solid, exports faceted STEP, and
+checks exact native reimport. This changes the exchange encoding while retaining
+the planar line geometry; it is not curved-face tessellation.
 
 ANCHOR, REFERENCE,
 SIGNATURE sections, scoped/value/constant references return explicit blockers.

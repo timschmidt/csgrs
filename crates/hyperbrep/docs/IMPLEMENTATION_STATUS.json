@@ -648,6 +648,44 @@
       "validation": "366 combined native results in each of debug and release (324 HyperBRep; 42 IO; configurations overlap). Three new library tests include exhaustive 2-by-2 coverage, 2000 deterministic multisets, invalid ranges/capacity and 100 million implicit cells. Four new integration tests cover periodic seams, unequal partitions, shifted charts, T-junctions, exact area/volume/classification, replay, subdivision, reflection and coincident-cylinder Booleans. Three restored implementation faults and three receipt-reader faults are rejected. Strict core/IO all-target/all-feature Clippy and docs, three fuzz-target checks, workspace formatting and five actual zero-import Wasmtime groups pass. Initial Clippy and offline-cache failures are preserved with their fixes.",
       "cost_evidence": "Three alternating CPU-0 pairs preserve all 66 kernel receipts against frozen 51d41cc50. Median/max ratios of per-case medians are 1.004237/1.025204; raw first-run variation is retained. Six new instrumented cases over three processes preserve receipts and archive bytes/fingerprints. The 19999-rectangle/100-million-implicit-cell indexed stage takes median 6.482475 ms, two allocation requests and 2239936 requested bytes, excluding input. One-side replay median 1.551462 ms/4913 allocation requests/649349 requested bytes; T-junction replay 2.227024 ms. Kernel executable 24997880 to 25008152 bytes; median peak RSS 22024 to 22028 KiB. New benchmark 22337408 bytes/11396 KiB median RSS; executed WASM 15680891 bytes. No matched baseline or speedup for newly admitted capabilities. Historical archive-admission timing gate remains open.",
       "limits": "Only exact rectangular one-period cylinder partitions are added; scalar ordering/index lookup remains potentially quadratic and global scalar/work/heap admission remains open. Nonrectangular periodic trims, closed single-edge circles, full chart atlas and analytic STEP mapping are unfinished. Original OCCT cylinder/box research inputs are retained; the cylinder has nonzero exact radial residuals and cannot be silently healed. This is feasibility evidence, not successful analytic exchange. No runtime fuzz/ASan/lexicase campaign, full workspace/pre-push or release qualification; all 28 work-package gates remain open."
+    },
+    {
+      "id": "step-advanced",
+      "work_packages": [
+        "WP01",
+        "WP14a",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P1",
+        "P3",
+        "P6",
+        "P8",
+        "P11",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P25",
+        "P26",
+        "P27",
+        "P29",
+        "P35",
+        "P36",
+        "P37",
+        "P39",
+        "T13"
+      ],
+      "decision": "kept as exact planar advanced BREP exchange with independent exporter input; no work-package gate completed",
+      "change": "Unify selected faceted and advanced import under import_representation, directly migrating callers without a shim. Add explicit VERTEX_POINT/EDGE_CURVE identity, oriented-use provenance, exact planar face bounds and spatial/UV line checks. Prove every supplied pcurve has the same oriented image, allow different affine parameterizations and retain all source parameter maps plus the declared master. Resolve outer/inner bounds from winding and native validation; preserve bound order, edge sense, units and all-or-failure selection. Cache checked source topology/plane frames within each body without coordinate welding.",
+      "source": "../../hyperbrep-io/src/step/advanced/mod.rs",
+      "contract": "../../hyperbrep-io/docs/STEP_MAPPING.md",
+      "evidence": "evidence/2026-10-15-step-advanced/manifest.json",
+      "validation": "373 combined native debug results (324 core and 49 IO); all 49 IO results also pass in release. Seven new integration tests exercise original OCCT spatial-only/pcurve boxes and a holed solid, source incidence/maps, all three masters under reparameterization, reverse edge/bound senses, malformed alternate representations and explicit identity substitutions, hole-first bounds, split/reflection/native replay, exact units and coordinates above 2^53, limits and ambient approximate-policy isolation. Strict IO all-target/all-feature Clippy, warning-denied rustdoc, workspace formatting and six executed zero-import Wasmtime groups pass. The public example exactly reimports four native faceted exports; optional OCCT reads all four plus the three original inputs with expected unique topology counts and volumes. Six deliberate implementation faults fail at runtime and are restored; three receipt-reader faults are rejected. The initial incorrect diagnostic-entity assertion and rustdoc link failure are archived and corrected.",
+      "cost_evidence": "Six new allocation-instrumented cases over three CPU-0 processes preserve receipts and complete within-run archive comparisons/fingerprints: median spatial-only box 1.135708 ms/3575 allocation requests/719150 requested bytes; pcurve box 1.390992 ms/4168/899726; hole 3.610197 ms/14625/2262375; two bodies 2.584637 ms; reparameterized master 1.400135 ms; nonmaster-sense rejection 278.801875 microseconds. No previous equivalent importer or speedup is claimed. Seven existing faceted rows run in three alternating pairs against frozen 60e789d04 with only the harness method name changed, preserving every receipt, geometry size/fingerprint and allocation count; timing ratios range 0.832881 to 1.013510. Larger provenance adds 608 to 2528 requested bytes per geometry iteration; unit-only rows unchanged. Faceted executable 20937304 to 21094504 bytes; median process RSS 41252 to 42508 KiB. New benchmark 22221000 bytes/9952 KiB median RSS; WASM 15840629 bytes. Seven kernel source trees and production package versions/sources/checksums unchanged. Historical archive-admission timing gate stays open.",
+      "limits": "Only explicitly selected planar line-edge advanced representations are added. Native source maps live in the interchange report, not in the native archive; faceted re-export preserves geometry rather than original STEP graph/parameterization. Curved analytic/spline families, closed-circle edges, periodic trims, void/mapped/assembly exchange, full EXPRESS/AP validation and explicit healing/approximation remain unfinished. Named import limits do not bound all scalar/work/heap/time costs. OCCT is only a floating-point interoperability oracle. No runtime fuzz/ASan/lexicase campaign, full workspace/pre-push or release qualification; all 28 work-package gates remain open."
     }
   ],
   "work_packages": [
@@ -826,7 +864,7 @@
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
     "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
-    "Continue WP14a from selected exact faceted import/export and native periodic-cylinder certification: implement advanced planar/analytic mapping, exact closed-circle edge refinement and complete source accounting for 3D curves, pcurves, units and bound orientation. Use independent exporter files, diagnose off-carrier decimal vertices, and broaden representation traversal and schema/resource admission. Then WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. Selected-import/native-archive success does not establish whole-document or STEP geometry round-trip support.",
+    "Continue WP14a from selected exact faceted exchange and planar advanced import: implement curved analytic mapping, exact closed-circle edge refinement, periodic trims and complete source accounting for all 3D/UV curve representations. Preserve independently checked source parameterizations and master semantics, diagnose off-carrier decimal vertices, and broaden representation traversal and schema/resource admission. Then WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. The independent planar import/edit/faceted-export/reimport fixtures do not establish whole-document or curved STEP exchange.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
   ]
 }

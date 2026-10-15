@@ -2,7 +2,10 @@ use hyperbrep::{
     ArchiveLimits, Direction, Matrix4, OperationContext, Point3, RawModel, Real,
     SolidPointLocation, WorkBudget,
 };
-use hyperbrep_io::step::{ErrorKind, ImportLimits, Resource, StepFile, StepReadOptions, UnitKind};
+use hyperbrep_io::step::{
+    EdgeUseSource, ErrorKind, ImportLimits, Resource, StepFile, StepReadOptions, UnitKind,
+    VertexSource,
+};
 
 const BOX: &str = include_str!("fixtures/faceted-box.step");
 const TWO_BOXES: &str = include_str!("fixtures/faceted-two-boxes.step");
@@ -26,7 +29,7 @@ fn faceted_boxes_map_exact_units_shared_edges_and_source_ownership() {
     for (source, count) in [(BOX, 1), (TWO_BOXES, 2)] {
         let file = read(source);
         let imported = file
-            .import_faceted_representation(502, &ImportLimits::default(), &context())
+            .import_representation(502, &ImportLimits::default(), &context())
             .result
             .unwrap()
             .unwrap();
@@ -90,6 +93,14 @@ fn faceted_boxes_map_exact_units_shared_edges_and_source_ownership() {
             let uses = body.edge_uses().collect::<Vec<_>>();
             assert_eq!(uses.len(), counts.edge_uses);
             for (i, item) in uses.iter().enumerate() {
+                let EdgeUseSource::PolygonSegment {
+                    from_point,
+                    to_point,
+                    ..
+                } = item.source
+                else {
+                    panic!("polygon provenance");
+                };
                 assert!(
                     !uses[..i]
                         .iter()
@@ -102,14 +113,14 @@ fn faceted_boxes_map_exact_units_shared_edges_and_source_ownership() {
                 };
                 assert_eq!(
                     body.vertices()
-                        .find(|v| v.source == item.from_point)
+                        .find(|v| v.source == VertexSource::CartesianPoint { point: from_point })
                         .unwrap()
                         .vertex,
                     from
                 );
                 assert_eq!(
                     body.vertices()
-                        .find(|v| v.source == item.to_point)
+                        .find(|v| v.source == VertexSource::CartesianPoint { point: to_point })
                         .unwrap()
                         .vertex,
                     to
@@ -141,7 +152,7 @@ fn exact_coordinate_aliases_share_vertices_without_losing_source_ids() {
     );
     let file = read(&source);
     let imported = file
-        .import_faceted_representation(502, &ImportLimits::default(), &context())
+        .import_representation(502, &ImportLimits::default(), &context())
         .result
         .unwrap()
         .unwrap();
@@ -150,8 +161,16 @@ fn exact_coordinate_aliases_share_vertices_without_losing_source_ids() {
     let vertices = body.vertices().collect::<Vec<_>>();
     assert_eq!(vertices.len(), 9);
     assert_eq!(
-        vertices.iter().find(|v| v.source == 1).unwrap().vertex,
-        vertices.iter().find(|v| v.source == 9).unwrap().vertex
+        vertices
+            .iter()
+            .find(|v| v.source == VertexSource::CartesianPoint { point: 1 })
+            .unwrap()
+            .vertex,
+        vertices
+            .iter()
+            .find(|v| v.source == VertexSource::CartesianPoint { point: 9 })
+            .unwrap()
+            .vertex
     );
 }
 
@@ -168,15 +187,22 @@ fn reversed_bound_preserves_the_authored_face_and_bad_sense_is_rejected() {
         );
     let file = read(&reversed);
     let imported = file
-        .import_faceted_representation(502, &ImportLimits::default(), &context())
+        .import_representation(502, &ImportLimits::default(), &context())
         .result
         .unwrap()
         .unwrap();
     assert_eq!(
         imported.bodies()[0]
             .edge_uses()
-            .filter(|u| u.polygon == 104)
-            .map(|u| (u.segment, u.from_point, u.to_point))
+            .filter(|u| u.loop_id == 104)
+            .map(|u| match u.source {
+                EdgeUseSource::PolygonSegment {
+                    segment,
+                    from_point,
+                    to_point,
+                } => (segment, from_point, to_point),
+                _ => panic!("polygon provenance"),
+            })
             .collect::<Vec<_>>(),
         vec![(2, 1, 5), (1, 5, 8), (0, 8, 4), (3, 4, 1)]
     );
@@ -186,7 +212,7 @@ fn reversed_bound_preserves_the_authored_face_and_bad_sense_is_rejected() {
     );
     let file = read(&wrong);
     let error = file
-        .import_faceted_representation(502, &ImportLimits::default(), &context())
+        .import_representation(502, &ImportLimits::default(), &context())
         .result
         .unwrap()
         .unwrap_err();
@@ -197,7 +223,7 @@ fn reversed_bound_preserves_the_authored_face_and_bad_sense_is_rejected() {
         "#100=DIRECTION('',(1.,0.,0.));",
     );
     let consistent = read(&consistent)
-        .import_faceted_representation(502, &ImportLimits::default(), &context())
+        .import_representation(502, &ImportLimits::default(), &context())
         .result
         .unwrap()
         .unwrap();
@@ -241,7 +267,7 @@ fn import_limits_and_unsupported_items_never_publish_partial_bodies() {
     ] {
         let file = read(BOX);
         let error = file
-            .import_faceted_representation(502, &limits, &context())
+            .import_representation(502, &limits, &context())
             .result
             .unwrap()
             .unwrap_err();
@@ -250,7 +276,7 @@ fn import_limits_and_unsupported_items_never_publish_partial_bodies() {
     let source = BOX.replace("('boxes',(#501)", "('boxes',(#501,#9503)");
     let file = read(&source);
     let error = file
-        .import_faceted_representation(502, &ImportLimits::default(), &context())
+        .import_representation(502, &ImportLimits::default(), &context())
         .result
         .unwrap()
         .unwrap_err();
@@ -325,7 +351,7 @@ fn inner_bounds_and_oblique_planes_construct_complete_exact_solids() {
     {
         let file = read(source);
         let imported = file
-            .import_faceted_representation(502, &ImportLimits::default(), &context())
+            .import_representation(502, &ImportLimits::default(), &context())
             .result
             .unwrap()
             .unwrap();
@@ -339,7 +365,7 @@ fn inner_bounds_and_oblique_planes_construct_complete_exact_solids() {
     }
     let file = read(THROUGH_HOLE);
     let imported = file
-        .import_faceted_representation(502, &ImportLimits::default(), &context())
+        .import_representation(502, &ImportLimits::default(), &context())
         .result
         .unwrap()
         .unwrap();
@@ -376,7 +402,7 @@ fn placement_defaults_projection_and_metadata_have_step_semantics() {
     ] {
         let source = BOX.replace(old, new);
         let imported = read(&source)
-            .import_faceted_representation(502, &ImportLimits::default(), &context())
+            .import_representation(502, &ImportLimits::default(), &context())
             .result
             .unwrap()
             .unwrap();
@@ -387,7 +413,7 @@ fn placement_defaults_projection_and_metadata_have_step_semantics() {
     }
     let source = BOX.replace("('boxes',(#501)", "('boxes',(#501,#152)");
     let imported = read(&source)
-        .import_faceted_representation(502, &ImportLimits::default(), &context())
+        .import_representation(502, &ImportLimits::default(), &context())
         .result
         .unwrap()
         .unwrap();
@@ -405,7 +431,7 @@ fn placement_defaults_projection_and_metadata_have_step_semantics() {
             &format!("#101=DIRECTION('',{replacement});"),
         );
         let error = read(&source)
-            .import_faceted_representation(502, &ImportLimits::default(), &context())
+            .import_representation(502, &ImportLimits::default(), &context())
             .result
             .unwrap()
             .unwrap_err();
@@ -420,7 +446,7 @@ fn authored_uncertainty_never_closes_an_exact_gap() {
         "#104=POLY_LOOP('',(#9,#5,#8,#4));\n#9=CARTESIAN_POINT('distinct',(1.E-12,0.,0.));",
     );
     let error = read(&source)
-        .import_faceted_representation(502, &ImportLimits::default(), &context())
+        .import_representation(502, &ImportLimits::default(), &context())
         .result
         .unwrap()
         .unwrap_err();
@@ -439,7 +465,7 @@ fn authored_uncertainty_never_closes_an_exact_gap() {
     );
     let ambient = hypercurve::evaluate_under(hypercurve::PredicatePolicy::APPROXIMATE_512, || {
         read(&source)
-            .import_faceted_representation(502, &ImportLimits::default(), &context())
+            .import_representation(502, &ImportLimits::default(), &context())
             .result
             .unwrap()
             .unwrap_err()
@@ -456,7 +482,7 @@ fn geometry_above_binary64_integer_precision_keeps_its_exact_extent() {
         .replace("POINT('',(0.,", "POINT('',(9007199254740993.,")
         .replace("POINT('',(2.,", "POINT('',(9007199254740995.,");
     let imported = read(&source)
-        .import_faceted_representation(502, &ImportLimits::default(), &context())
+        .import_representation(502, &ImportLimits::default(), &context())
         .result
         .unwrap()
         .unwrap();

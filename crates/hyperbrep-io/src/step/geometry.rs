@@ -1,6 +1,7 @@
 use super::{Error, ErrorKind, decode::Resolver};
 use hyperbrep::{Point3, Real, Surface, Vector3};
 
+#[derive(Clone)]
 pub(super) struct Plane {
     pub surface: Surface,
     pub origin: Point3,

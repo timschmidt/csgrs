@@ -1,4 +1,4 @@
-# Faceted STEP fixtures
+# STEP geometry fixtures
 
 These four files were originally authored for HyperBRep from the elementary
 recipes below. They are distributed under the repository's Apache-2.0 license.
@@ -27,3 +27,21 @@ This is four elementary original fixtures read by an independent tool; it is
 not a corpus of files supplied by independent CAD exporters. The external
 [writer probe](../../../hyperbrep/docs/evidence/2026-10-15-step-faceted/occt-writer-experiment.json)
 records why the attempted OCCT faceted export was not used as an input oracle.
+
+## Independently exported advanced inputs
+
+OCP 7.9.3.1 generated three additional original fixtures using OCCT's general
+STEP writer (`STEPControl_AsIs`). They contain no copied third-party CAD model.
+Units are millimetres and representation #10 is explicitly selected.
+
+| File | Construction | Volume, mm³ | V / E / F |
+| --- | --- | ---: | --- |
+| [occt-advanced-box.step](occt-advanced-box.step) | `BRepPrimAPI_MakeBox(2,3,4)`, surface-curve mode 1 | 24 | 8 / 12 / 6 |
+| [occt-advanced-box-3d.step](occt-advanced-box-3d.step) | Same box, surface-curve mode 0 | 24 | 8 / 12 / 6 |
+| [occt-advanced-hole.step](occt-advanced-hole.step) | `BRepAlgoAPI_Cut(MakeBox(4,3,2), MakeBox((1,1,0),(3,2,2)))`, mode 1 | 20 | 16 / 24 / 10 |
+
+Mode 1 retains the writer's paired planar pcurves. The files retain original
+timestamps, entity order and whitespace. Exact native tests derive expected
+geometry from these dimensional recipes. Mutations operate on copies and test
+master/alternate parameterizations, topology identity, orientation, units and
+strict incidence. Native healing is never inferred from OCCT's tolerance policy.

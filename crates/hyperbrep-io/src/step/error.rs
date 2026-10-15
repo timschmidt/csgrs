@@ -9,7 +9,7 @@ pub enum Resource {
     Scalars,
     /// UTF-8 bytes emitted by text decoding, across an operation.
     DecodedTextBytes,
-    /// Directed polygon edges admitted before topology construction.
+    /// Directed polygon segments or explicit edge uses admitted before construction.
     EdgeUses,
     /// Conservative numerator/denominator bit bound for a unit scale/product.
     UnitScaleBits,

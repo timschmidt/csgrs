@@ -133,3 +133,52 @@ statistically significant speedup or costs on large arbitrary models.
 bind this increment to its exact code. No additional optimization was benchmarked
 and rejected in this increment. The prior archive-admission timing gate remains
 open; new IO evidence does not qualify that historical change.
+
+## Exact planar advanced BREP import — 2026-10-15
+
+**Kept as new functionality:** explicit source topology, whole-line agreement
+for every supplied pcurve, distinct affine parameter maps and winding-derived
+bound roles. Source-ID caches reuse vertices, edges and plane frames within
+each body. This does not claim a speedup for previously unsupported input.
+
+Three fresh allocation-instrumented processes run on CPU 0. Each successful
+iteration parses and imports the file, completes native validation, checks exact
+volume and source counts, serializes a native archive, compares its complete
+bytes and drops the result. It does not decode that archive inside timing.
+A reference import before timing and earlier cases can warm scalar caches.
+The rejection case includes parsing and the partially constructed result's drop.
+
+| Case | Iterations/process | Median per iteration | Allocation requests/iteration | Requested bytes/iteration |
+| --- | ---: | ---: | ---: | ---: |
+| Box, spatial lines only | 100 | 1.135708 ms | 3,575 | 719,150 |
+| Box, both pcurves | 100 | 1.390992 ms | 4,168 | 899,726 |
+| Through-hole | 100 | 3.610197 ms | 14,625 | 2,262,375 |
+| Two bodies sharing source shell | 100 | 2.584637 ms | 8,231 | 1,533,429 |
+| Reparameterized master pcurve | 100 | 1.400135 ms | 4,177 | 900,230 |
+| Reject reversed nonmaster pcurve | 1,000 | 278.801875 µs | 392 | 334,504 |
+
+All six receipts and five complete geometry outputs agree across processes.
+Output sizes are 34,073 / 34,073 / 66,410 / 68,146 / 34,073 bytes; exact
+fingerprints are recorded. Requested bytes sum allocation/reallocation requests,
+not retained memory. The new executable is 22,221,000 bytes; peak process RSS
+samples are 9,848 / 10,216 / 9,952 KiB. The six-group executed WASM probe is
+15,840,629 bytes with zero host imports. Its coverage differs from older probes,
+so the size is not a matched optimization comparison.
+
+The existing seven-case faceted harness changes only the public method name to
+`import_representation`. Three alternating pairs against frozen `60e789d04`
+preserve every receipt, geometry byte count, fingerprint and allocation count.
+Box / two bodies / hole / tetrahedron / 2k units / 20k units / scale-rejection
+median elapsed-total ratios are 0.997463 / 1.000599 / 1.000610 / 1.000465 /
+0.985025 / 1.013510 / 0.832881. These are descriptive samples, not statistically
+established speedups. Larger source-provenance records add 1,248 / 2,400 / 2,528 /
+608 requested bytes per iteration for the four geometry cases; unit-only rows
+are unchanged. The harness executable grows from 20,937,304 to 21,094,504 bytes;
+median process RSS grows from 41,252 to 42,508 KiB. These are admitted costs of
+the broader exact exchange contract, not a memory optimization.
+
+[Source-bound evidence and reproduction](../hyperbrep/docs/evidence/2026-10-15-step-advanced/README.md)
+include six deliberate implementation faults and three receipt-reader controls.
+No further optimization experiment was retained or rejected in this increment.
+Global scalar/work/heap limits and the historical archive-admission timing gate
+remain open.

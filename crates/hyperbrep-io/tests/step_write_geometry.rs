@@ -125,7 +125,7 @@ fn check_solid(solid: SolidRef<'_>) {
     check_graph(&output, &Real::one());
     let file = StepFile::read(output.text().as_bytes(), &StepReadOptions::default()).unwrap();
     let replay = file
-        .import_faceted_representation(
+        .import_representation(
             output.representation(),
             &ImportLimits::default(),
             &context(),
