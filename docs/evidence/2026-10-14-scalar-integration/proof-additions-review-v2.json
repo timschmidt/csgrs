@@ -1,0 +1,83 @@
+{
+  "crates/hyperreal/scripts/check_verification_acceptance.py": {
+    "main_sha256": "04105d2585ca01f57400c3928b6efe738217b51ce3ec538b7fc2baec153b676b",
+    "candidate_sha256": "14a32f0d1aa60499dd583c8210470ebea2e1f61e6259a88cb3e9690e58ad3c65",
+    "shared_ancestor": {
+      "checkpoint": "typed-api-prototype-v2440-state.json",
+      "source_record": "typed-api-prototype-v2433-dependency-binding-verus/source-hashes.json.gz",
+      "sha256": "04105d2585ca01f57400c3928b6efe738217b51ce3ec538b7fc2baec153b676b"
+    },
+    "resolution": "Retain the candidate extension, with full new qualification required."
+  },
+  "crates/hyperreal/scripts/verify_verus.py": {
+    "main_sha256": "d648f8e5e449bef0530f7b199d4bc9ba93d2533e62e08f57f4a11068ca28082d",
+    "candidate_sha256": "eecb21b60ed6c2edd51f6a756a8191516f4a1d3fd0a5dd7c0883b0bc1a2848dd",
+    "shared_ancestor": {
+      "checkpoint": "typed-api-prototype-v2440-state.json",
+      "source_record": "typed-api-prototype-v2433-dependency-binding-verus/source-hashes.json.gz",
+      "sha256": "d648f8e5e449bef0530f7b199d4bc9ba93d2533e62e08f57f4a11068ca28082d"
+    },
+    "resolution": "Retain the candidate extension, with full new qualification required."
+  },
+  "crates/hyperreal/scripts/verus_dependencies.py": {
+    "main_sha256": "6643dd5817af7ed6cc57f5ec6d13e879046909d6232e81614d9504140ab5f10b",
+    "candidate_sha256": "30e83a4df074352ae89cf985b88f55bf617fb41701072150245314a22dc3c357",
+    "shared_ancestor": {
+      "checkpoint": "typed-api-prototype-v2386-state.json",
+      "source_record": "typed-api-prototype-v2380-word-scan-verus/source-hashes.json.gz",
+      "sha256": "6643dd5817af7ed6cc57f5ec6d13e879046909d6232e81614d9504140ab5f10b"
+    },
+    "resolution": "Retain the candidate extension, with full new qualification required."
+  },
+  "crates/hyperreal/verification/scope.json": {
+    "main_sha256": "d9a0f65d17e2c3d0b63505afbf54d3fe8d2e67bd2a2f49594a97bb953d6706e9",
+    "candidate_sha256": "ae453b2eab5cc8966de52fb59c3856c488d99331de481ddd7ddfc58e1b53f75c",
+    "shared_ancestor": null,
+    "resolution": "Retain the candidate extension, with full new qualification required.",
+    "review": "Objective and all 13 obligation groups identical. All 94 executable and 119 model names retained; candidate adds 5 and 59 respectively."
+  },
+  "crates/hyperreal/verification/test_acceptance.py": {
+    "main_sha256": "8ed630dd75e78c1e7fef9994c24c797b09c3d6b8cad1f61acbc9c4b3bcb905d5",
+    "candidate_sha256": "8e98318ab5af1861cbfc32c61d0536ba403cebee308ecd5a30d449cddde90967",
+    "shared_ancestor": {
+      "checkpoint": "typed-api-prototype-v2440-state.json",
+      "source_record": "typed-api-prototype-v2433-dependency-binding-verus/source-hashes.json.gz",
+      "sha256": "8ed630dd75e78c1e7fef9994c24c797b09c3d6b8cad1f61acbc9c4b3bcb905d5"
+    },
+    "resolution": "Retain the candidate extension, with full new qualification required."
+  },
+  "crates/hyperreal/verification/test_bound_rejections.py": {
+    "main_sha256": "0c930efe53b28150af6bb7dd2420821bd89a889e23a2f359352d41670e685045",
+    "candidate_sha256": "c0603d3a5ed49ebace08e14db35c5d92e1e1a381c9b8870ccf10a5d8494ff3bd",
+    "shared_ancestor": null,
+    "resolution": "Retain the candidate extension, with full new qualification required.",
+    "review": "Adapt inverse/square/multiply and exported-magnitude mutation anchors to changed production formulas; add upper-bound, domain and metadata controls. Complete baseline remains verified before targeted mutated-module checks."
+  },
+  "crates/hyperreal/verification/test_cache_rejections.py": {
+    "main_sha256": "1282cbdd6688c9ff769545987461283e33ffdb9e0009d51aa77db7714afbbd5d",
+    "candidate_sha256": "40b24e72b6a1773d370312e5fe37efda696e7c995932c234ec7efbe8a5edf2c2",
+    "shared_ancestor": null,
+    "resolution": "Retain the candidate extension, with full new qualification required.",
+    "review": "Retain every existing mutation; add decoder and finite-real publication controls. Complete baseline remains verified before targeted mutated-module checks."
+  },
+  "crates/hyperreal/verification/test_dependency_identity.py": {
+    "main_sha256": "b85a485d95bbe7999a81cb545562453060c1dc54fd85dcd0f13b45856346d4ca",
+    "candidate_sha256": "2f2100d84b9f058e18fe5b775f477dedb5f2085ec84f47500ee5f1511f9ddf58",
+    "shared_ancestor": {
+      "checkpoint": "typed-api-prototype-v2386-state.json",
+      "source_record": "typed-api-prototype-v2380-word-scan-verus/source-hashes.json.gz",
+      "sha256": "b85a485d95bbe7999a81cb545562453060c1dc54fd85dcd0f13b45856346d4ca"
+    },
+    "resolution": "Retain the candidate extension, with full new qualification required."
+  },
+  "crates/hyperreal/verification/test_rejections.py": {
+    "main_sha256": "fefaa7ccc71e4553c9cc10399811e5535f7fd74a38a086f04519e2e9295944e6",
+    "candidate_sha256": "b7d6db378f8b86fb17f2091c5116382ba2b92da69ee5b69ffbb53dea9d342768",
+    "shared_ancestor": {
+      "checkpoint": "typed-api-prototype-v245-state.json",
+      "source_record": "typed-api-prototype-v234-stack-tests/source-hashes.json.gz",
+      "sha256": "fefaa7ccc71e4553c9cc10399811e5535f7fd74a38a086f04519e2e9295944e6"
+    },
+    "resolution": "Retain the candidate extension, with full new qualification required."
+  }
+}

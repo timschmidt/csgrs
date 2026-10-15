@@ -1,0 +1,29 @@
+{
+  "terminal_exit_code_observed": 1,
+  "failure": "AssertionError: add/add requires explicit handling: crates/hyperreal/scripts/check_verification_acceptance.py",
+  "scope": "Preparation failed before compilation; partial source is frozen and will not be reused or edited.",
+  "source_files": 10170,
+  "changed_from_main_sha256": {
+    "Cargo.toml": "c9716252c634ccf24e6c3447f490d7dfc2f060141b546ba3821d56da998904da",
+    "Cargo.lock": "57fc5bc9e766258a64add01181d0c86bf1ca218ae31ee38e2803bbd1fcf784a3",
+    "crates/hyperreal/README.md": "b768b47a76168167f639e0cf11405d05041a10888299019d89aa7dfc67dfdaef",
+    "crates/hyperlimit/tests/real_representations.rs": "7210110ecb490d1ae336397f3a8d61cbbcd09c2847c1e469e0dfbc1f6b300a96",
+    "crates/hypercurve/src/spline_periodic.rs": "f4513b42d250555cca1cabfbaa62f3aca78d9e9bfb529d1518de0bfbc0069e47",
+    "crates/hyperreal/benches/numerical_micro.rs": "e43dcd9643bb92cc12015e94cf030488b5c033c6556e9f8b9de14b4215c06f48",
+    "crates/hyperreal/benches/gmp_api.rs": "3749edfec05405a07d344c866c543b898080d2a7733526956e75d545e145b9f1",
+    "crates/hyperreal/benches/dispatch_trace.rs": "b256451a7731cf1d514f46318456742e4ed6006593b338c7105f459b5ee5fcd2",
+    "crates/hyperreal/benches/adversarial_transcendentals.rs": "a328ec8e0693ffd4335540f7716cf366373aae371d534cbece16b72cb58b7dce",
+    "crates/hyperreal/benches/library_perf.rs": "cd9dab3fb067689704944d16f3952b95650a8a3fd8acea5a06bbd070d5e0c4df",
+    "crates/hyperreal/benches/scalar_micro.rs": "39a76bd3f9593a160e793c25e141c7cc0c000224b2e505484b3b9401e401ea9f",
+    "crates/hyperreal/benches/adversarial_library.rs": "6ef559b7b35b9231e58a51613e541050b180c4067fc5147aebff756a8fa6b2aa",
+    "crates/hyperreal/examples/computable_refinement_steps.rs": "e6f37d56106a847f0a9c8ca7c16da8c6a5557a9fd2bb7621f9d5216aab034e9f",
+    "crates/hyperreal/examples/computable_graphs.rs": "48f2549b9e5ecd63da345439cb7f2bca98c496fcc6273d5eb167ae20e2fd7522",
+    "crates/hyperreal/fuzz/fuzz_targets/structural_representations.rs": "e749df5716ae067c8c9652790edb60da8efb9e6ae4558328dbe085ca901c93da",
+    "crates/hyperreal/fuzz/fuzz_targets/computable_approximation.rs": "fe8b76cbcb715417d2cffcec38d16c5981beaa34b5193480ad3c39fda5d8c707"
+  },
+  "source_record_sha256": "a29051009889dab92c215839effb3a5f18fa1a143b532e9d4efd9f9fdb239410",
+  "overlay_sha256": "bd5349f56b763b6b071890371b9c96c0159a6118d4979ec77606b2bb54a9c263",
+  "runner_sha256": "6d1d29cd1a87e10320541950f56ef71d12a447561f36bb91f4fbc9538e665911",
+  "main_unchanged": true,
+  "runtime_admitted": false
+}
