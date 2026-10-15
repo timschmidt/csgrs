@@ -5892,6 +5892,363 @@
       "evidence": "docs/evidence/2026-10-15-transform-failures/closure-v1.json",
       "implementation_commit": "fc99c3fb6",
       "plan_complete": false
+    },
+    "bounds_failure_visibility": {
+      "updated_on": "2026-10-15",
+      "status": "Optional bounds and positioning/TPMS failure migration implemented and locally qualified in the recorded scope.",
+      "properties": [
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P18",
+        "P20",
+        "P25",
+        "P30",
+        "P35",
+        "P37"
+      ],
+      "owners": [
+        "Hypermesh indexed bounds",
+        "CSGRS optional bounds and positioning",
+        "native curve bounds bridge",
+        "sampled TPMS extraction",
+        "scalar and language adapters",
+        "HyperCircuit thermal-clearance bounds"
+      ],
+      "domain": "Valid indexed point sets and open or closed meshes, canonical empty meshes, and native curve regions. Absence differs from nonempty zero-size bounds. Bounds queries do not certify closed-solid topology. TPMS numerical certainty applies to sampled geometry, not the continuous field; operation-local receipts do not certify inherited construction provenance.",
+      "migration": "Modeling and scalar-adapter bounds return Result<Option<Aabb>> or optional context receipts. Center/float and all six TPMS constructors return Result. C NO_BOUNDS=10 is additive and leaves output untouched; C++ optional, Python None, Go nil pointer with nil error, WASM undefined or isEmpty/optional endpoints expose absence. Go StatusError retains native category. HyperCircuit uses shared native optional bounds under its existing policy and retains typed curve failures. Resolution below two is deliberately rejected instead of clamped; period must be positive and wall thickness nonnegative.",
+      "semantic_evidence": [
+        "Origin point bounds are Some while canonical empty has None; exact centered/floated cuboids retain coordinate extrema, signed volume 48, required topology and subsequent Boolean composition.",
+        "Native indexed bounds reject malformed or subsequently mutated triangle indices before reusing position facts.",
+        "Strict/approximate/strict bounds and positioning retain policy admissibility and certainty; undecided failures preserve native payloads through adapters and opaque-real C status.",
+        "Empty curves retain absent bounds and completed empty Hilbert output after parameter validation.",
+        "All three TPMS sheet and solid families consume empty bounds; zero-thickness solids remain empty only after validating parameters. Invalid/unknown periods and thicknesses and overflowing resolution remain typed failures.",
+        "The shared sampled-field path preserves SurfaceNetsError and recovers on a subsequent constant field. Existing 10-resolution TPMS solid topology fixtures and other source fixture resolutions are unchanged."
+      ],
+      "baseline_and_failed_trials": "All eight baseline tests failed at 542871237 plus the original in-scope native changes. Candidate v1 failed compilation during migration. Candidate v2 passed 133 focused tests but failed strict Clippy on a WASM getter annotation. Native v1 passed its commands but exposed a minimal-feature unused-import warning and predates the final downstream/WASM call-site corrections; it is retained as historical evidence. Final accepted phases are recorded separately.",
+      "test_totals": {
+        "native-v2/fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/all-feature-tests": {
+          "passed": 202,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/hypermesh-tests": {
+          "passed": 235,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/ffi-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/cc-version": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/c++-version": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/python3-version": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/node-version": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/ffi-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/bounds_failures-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/bounds_failures-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/bounds_failures-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/bounds_failures-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/bounds_failures-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/go-version": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/go-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/go-run": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/wasm": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "downstream-v1/downstream-materialize-unit": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 18
+        },
+        "downstream-v1/downstream-materialize": {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "downstream-v1/downstream-release-models": {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 7
+        },
+        "downstream-v1/downstream-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "bindings": "Actual f64 C, C++, Python, and compiled cgo consumers exercise absence, positioning, error/recovery and composition. Opaque-real FFI tests verify absent/undecided output records remain untouched and failures publish no geometry handle. Generated Node WASM and strict generated TypeScript checks pass. Go toolchain metadata and SHA-256 are retained in go-toolchain.json.",
+      "resources": "Native bounds add an O(triangles) index-validation traversal before position-fact reuse. Primary sample buffers use checked capacity/reservation; secondary allocations, native extraction and scalar expression work remain unbounded internally. No total-work, heap-byte or cancellation contract is claimed. Commands use an external 1800-second wall limit. No performance improvement is claimed.",
+      "limitations": [
+        "Eight existing ignored tests remain unexecuted: one CSGRS rendering case and seven Hypermesh external-fixture/manual scale or memory cases.",
+        "This is not the complete workflow matrix, sanitizer admission, clean external release/MSRV validation, or a performance comparison.",
+        "The separate native JavaScript loader is supplied by consumers and remains unqualified. Go qualification uses the local cgo wrapper and actual native library, not a published Go module.",
+        "HyperCircuit thermal-spoke placement formulas are preserved. Their full geometric fidelity is not established by the bounds migration or the existing report-oriented integration fixtures; independent placement/set-equality coverage remains follow-up work.",
+        "Legacy SDF conveniences, distribution, projection/slicing and other silent fallback migrations remain open, together with end-to-end provenance, internal resource limits, ordinary strict workflow completion and prior scalar/native admission gaps."
+      ],
+      "evidence": "docs/evidence/2026-10-15-bounds-failures/closure-v1.json",
+      "implementation_commit": "6095f177ec586f1bf7091586460f9e5b5d118ae0",
+      "plan_complete": false
     }
   },
   "status_meanings": {
