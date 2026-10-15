@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe",
+    "--list"
+  ],
+  "exit_code": 0,
+  "process_elapsed_ns": 15665776,
+  "status": "exited",
+  "stderr": "inventory.stderr",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "inventory.stdout",
+  "stdout_sha256": "2d96cca25cbb9935d5c02951b11973cc0fb421f867a5f78936b75a73057f463a"
+}

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-directed-scalar-search/qualification-v4/campaign/round-001-Sqrt-a2dc59dfdb38c354d95123aa5552216eb7427ca065bd0cba6df198b3c7eb6704.input.json"
+  ],
+  "exit_code": 0,
+  "process_elapsed_ns": 31592105,
+  "status": "exited",
+  "stderr": "round-001-Sqrt-a2dc59dfdb38c354d95123aa5552216eb7427ca065bd0cba6df198b3c7eb6704.stderr",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "round-001-Sqrt-a2dc59dfdb38c354d95123aa5552216eb7427ca065bd0cba6df198b3c7eb6704.stdout",
+  "stdout_sha256": "7c0491bb0770b5c89c4ce6bb0f90fb4851d60b4602a8e14c6f05422f3fedd49a"
+}

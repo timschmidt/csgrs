@@ -1,0 +1,3542 @@
+{
+  "ConstOffset": [
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          47,
+          128,
+          223,
+          71,
+          133,
+          255,
+          155,
+          107
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "c062ea341e2c50e6e70f99a97e333451814ff2da78462186f5371feb6a070224"
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          48,
+          107,
+          233,
+          211,
+          208,
+          222,
+          120,
+          84
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "4a7f5df22f916085a347664ac2adaaf24cf7cbf34fb62aa3a29f51982511220b"
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          47,
+          68,
+          223,
+          71,
+          133,
+          255,
+          155,
+          107
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 196
+      },
+      "origin": "mutation",
+      "parent_id": "c062ea341e2c50e6e70f99a97e333451814ff2da78462186f5371feb6a070224"
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          47,
+          128,
+          223,
+          71,
+          133,
+          255,
+          11,
+          107
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 144
+      },
+      "origin": "mutation",
+      "parent_id": "c062ea341e2c50e6e70f99a97e333451814ff2da78462186f5371feb6a070224"
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          57,
+          128,
+          223,
+          71,
+          133,
+          255,
+          155,
+          107
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 22
+      },
+      "origin": "mutation",
+      "parent_id": "c062ea341e2c50e6e70f99a97e333451814ff2da78462186f5371feb6a070224"
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          47,
+          75,
+          223,
+          71,
+          133,
+          255,
+          155,
+          107
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 203
+      },
+      "origin": "mutation",
+      "parent_id": "c062ea341e2c50e6e70f99a97e333451814ff2da78462186f5371feb6a070224"
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          47,
+          128,
+          223,
+          71,
+          133,
+          255,
+          155,
+          120
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 19
+      },
+      "origin": "mutation",
+      "parent_id": "c062ea341e2c50e6e70f99a97e333451814ff2da78462186f5371feb6a070224"
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          47,
+          128,
+          223,
+          71,
+          133,
+          222,
+          155,
+          107
+        ]
+      },
+      "mutation": {
+        "index": 5,
+        "xor_mask": 33
+      },
+      "origin": "mutation",
+      "parent_id": "c062ea341e2c50e6e70f99a97e333451814ff2da78462186f5371feb6a070224"
+    }
+  ],
+  "ConstProduct": [
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          37,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "5729ce0b7ab40198094fd31ed7184af49ed6a93753fdbe51a8847a43df2141d5"
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          223,
+          187,
+          18,
+          239,
+          39,
+          106,
+          253,
+          117
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "04cf1f215b8614ecbc218bb17629be0a4b8934ef91c11700914612c1334abd8d"
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "af39d77c5a836491f2139241b0f5ae16ac764999ec358a0be87766d67fd47182"
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          37,
+          2,
+          128,
+          174
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 227
+      },
+      "origin": "mutation",
+      "parent_id": "5729ce0b7ab40198094fd31ed7184af49ed6a93753fdbe51a8847a43df2141d5"
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          0,
+          1,
+          113,
+          3,
+          37,
+          2,
+          128,
+          77
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 14
+      },
+      "origin": "mutation",
+      "parent_id": "5729ce0b7ab40198094fd31ed7184af49ed6a93753fdbe51a8847a43df2141d5"
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          0,
+          1,
+          127,
+          145,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 146
+      },
+      "origin": "mutation",
+      "parent_id": "af39d77c5a836491f2139241b0f5ae16ac764999ec358a0be87766d67fd47182"
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          223,
+          187,
+          18,
+          239,
+          192,
+          106,
+          253,
+          117
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 231
+      },
+      "origin": "mutation",
+      "parent_id": "04cf1f215b8614ecbc218bb17629be0a4b8934ef91c11700914612c1334abd8d"
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          163,
+          2,
+          128,
+          77
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 134
+      },
+      "origin": "mutation",
+      "parent_id": "5729ce0b7ab40198094fd31ed7184af49ed6a93753fdbe51a8847a43df2141d5"
+    }
+  ],
+  "ConstProductSqrt": [
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          155,
+          157,
+          46,
+          247,
+          59,
+          157,
+          19,
+          73
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "dc0ee3360fb81b181e1b8a02a1121b907f0459fe26c150f1850240b43945ae41"
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          7,
+          88,
+          233,
+          198,
+          35,
+          235,
+          72,
+          235
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "dcd3f589b4b7a31654732b3e0680eb2d7c5847498e391460d99746807ebc7776"
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          155,
+          157,
+          39,
+          247,
+          59,
+          157,
+          19,
+          73
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 9
+      },
+      "origin": "mutation",
+      "parent_id": "dc0ee3360fb81b181e1b8a02a1121b907f0459fe26c150f1850240b43945ae41"
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          155,
+          157,
+          46,
+          120,
+          59,
+          157,
+          19,
+          73
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 143
+      },
+      "origin": "mutation",
+      "parent_id": "dc0ee3360fb81b181e1b8a02a1121b907f0459fe26c150f1850240b43945ae41"
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          7,
+          36,
+          233,
+          198,
+          35,
+          235,
+          72,
+          235
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 124
+      },
+      "origin": "mutation",
+      "parent_id": "dcd3f589b4b7a31654732b3e0680eb2d7c5847498e391460d99746807ebc7776"
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          42,
+          157,
+          46,
+          247,
+          59,
+          157,
+          19,
+          73
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 177
+      },
+      "origin": "mutation",
+      "parent_id": "dc0ee3360fb81b181e1b8a02a1121b907f0459fe26c150f1850240b43945ae41"
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          57,
+          88,
+          233,
+          198,
+          35,
+          235,
+          72,
+          235
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 62
+      },
+      "origin": "mutation",
+      "parent_id": "dcd3f589b4b7a31654732b3e0680eb2d7c5847498e391460d99746807ebc7776"
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          155,
+          157,
+          46,
+          247,
+          185,
+          157,
+          19,
+          73
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 130
+      },
+      "origin": "mutation",
+      "parent_id": "dc0ee3360fb81b181e1b8a02a1121b907f0459fe26c150f1850240b43945ae41"
+    }
+  ],
+  "Exp": [
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          22,
+          128,
+          98,
+          35,
+          36,
+          1,
+          227,
+          119
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "049666ee478843d6878f1f7d706f9c84a3beb1a600adc25800d0fce18beb98d8"
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          22,
+          128,
+          98,
+          35,
+          36,
+          1,
+          1,
+          119
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 226
+      },
+      "origin": "mutation",
+      "parent_id": "049666ee478843d6878f1f7d706f9c84a3beb1a600adc25800d0fce18beb98d8"
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          22,
+          128,
+          98,
+          35,
+          40,
+          1,
+          227,
+          119
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 12
+      },
+      "origin": "mutation",
+      "parent_id": "049666ee478843d6878f1f7d706f9c84a3beb1a600adc25800d0fce18beb98d8"
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          87,
+          128,
+          98,
+          35,
+          36,
+          1,
+          227,
+          119
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 65
+      },
+      "origin": "mutation",
+      "parent_id": "049666ee478843d6878f1f7d706f9c84a3beb1a600adc25800d0fce18beb98d8"
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          113,
+          128,
+          98,
+          35,
+          36,
+          1,
+          227,
+          119
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 103
+      },
+      "origin": "mutation",
+      "parent_id": "049666ee478843d6878f1f7d706f9c84a3beb1a600adc25800d0fce18beb98d8"
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          22,
+          128,
+          98,
+          35,
+          36,
+          67,
+          227,
+          119
+        ]
+      },
+      "mutation": {
+        "index": 5,
+        "xor_mask": 66
+      },
+      "origin": "mutation",
+      "parent_id": "049666ee478843d6878f1f7d706f9c84a3beb1a600adc25800d0fce18beb98d8"
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          22,
+          128,
+          98,
+          35,
+          36,
+          1,
+          29,
+          119
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 254
+      },
+      "origin": "mutation",
+      "parent_id": "049666ee478843d6878f1f7d706f9c84a3beb1a600adc25800d0fce18beb98d8"
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          22,
+          128,
+          98,
+          147,
+          36,
+          1,
+          227,
+          119
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 176
+      },
+      "origin": "mutation",
+      "parent_id": "049666ee478843d6878f1f7d706f9c84a3beb1a600adc25800d0fce18beb98d8"
+    }
+  ],
+  "Irrational": [
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          183,
+          101,
+          130,
+          186,
+          46,
+          137,
+          24,
+          41
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "760a9accad415640958e58ac3ca1d67650e19aea149e00bacd00a3dec14ee15e"
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "aa14e62b467788e04b13df55626fdf95a3ba0274a1c50b0c2b8237fe61800715"
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          183,
+          101,
+          130,
+          186,
+          46,
+          137,
+          24,
+          186
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 147
+      },
+      "origin": "mutation",
+      "parent_id": "760a9accad415640958e58ac3ca1d67650e19aea149e00bacd00a3dec14ee15e"
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          35,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 220
+      },
+      "origin": "mutation",
+      "parent_id": "aa14e62b467788e04b13df55626fdf95a3ba0274a1c50b0c2b8237fe61800715"
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          255,
+          255,
+          111,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 144
+      },
+      "origin": "mutation",
+      "parent_id": "aa14e62b467788e04b13df55626fdf95a3ba0274a1c50b0c2b8237fe61800715"
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          255,
+          255,
+          255,
+          7,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 248
+      },
+      "origin": "mutation",
+      "parent_id": "aa14e62b467788e04b13df55626fdf95a3ba0274a1c50b0c2b8237fe61800715"
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          183,
+          101,
+          130,
+          189,
+          46,
+          137,
+          24,
+          41
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 7
+      },
+      "origin": "mutation",
+      "parent_id": "760a9accad415640958e58ac3ca1d67650e19aea149e00bacd00a3dec14ee15e"
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          181,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 74
+      },
+      "origin": "mutation",
+      "parent_id": "aa14e62b467788e04b13df55626fdf95a3ba0274a1c50b0c2b8237fe61800715"
+    }
+  ],
+  "Ln": [
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          117,
+          207,
+          57,
+          158,
+          115,
+          53,
+          232,
+          49
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "8145f7fb1afab73662b26b64d94ce6f5a255eac9a44feb775eb9b5903fba529f"
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "d083b68e49e1450381c9349fdcab8064d4743408024f90f46e0afd1634f6f0a3"
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "9480eb9f37c884395dcc3a165417db7f64b1ee819f4260abf02f09ff9adf1cc2"
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          255,
+          255,
+          97,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "7e2ef425937d2ad21f073ec1c2fce06070e5adb3cbf270f171cf89b28e042e2f"
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          117,
+          230,
+          57,
+          158,
+          115,
+          53,
+          232,
+          49
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 41
+      },
+      "origin": "mutation",
+      "parent_id": "8145f7fb1afab73662b26b64d94ce6f5a255eac9a44feb775eb9b5903fba529f"
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          255,
+          255,
+          97,
+          255,
+          255,
+          61,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 5,
+        "xor_mask": 194
+      },
+      "origin": "mutation",
+      "parent_id": "7e2ef425937d2ad21f073ec1c2fce06070e5adb3cbf270f171cf89b28e042e2f"
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          117,
+          207,
+          57,
+          158,
+          126,
+          53,
+          232,
+          49
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 13
+      },
+      "origin": "mutation",
+      "parent_id": "8145f7fb1afab73662b26b64d94ce6f5a255eac9a44feb775eb9b5903fba529f"
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          255,
+          179,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 76
+      },
+      "origin": "mutation",
+      "parent_id": "9480eb9f37c884395dcc3a165417db7f64b1ee819f4260abf02f09ff9adf1cc2"
+    }
+  ],
+  "LnAffine": [
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          133,
+          133,
+          33,
+          11,
+          51,
+          176,
+          221,
+          255
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "1325c46b4cce697e7555bdca9eea8bf3c86ceded0ff2e056d5255c1605253abe"
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "792436d893b7938b1886625c65696b5d3d1b16240e5d12d2ae7d1ff47534e00d"
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          108,
+          226,
+          187,
+          24,
+          238,
+          6,
+          126,
+          181
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "09914c4e03a630bc9fa497c0eed5ef252e498336a0ef37d748954a55d01155cb"
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          108,
+          226,
+          187,
+          24,
+          238,
+          6,
+          126,
+          99
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "17b5f8a1e711ca29bd4320276212f0bd345c4f61828ada4ac13ee7e42af18d52"
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          108,
+          178,
+          187,
+          24,
+          238,
+          6,
+          126,
+          99
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 80
+      },
+      "origin": "mutation",
+      "parent_id": "17b5f8a1e711ca29bd4320276212f0bd345c4f61828ada4ac13ee7e42af18d52"
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          238
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 17
+      },
+      "origin": "mutation",
+      "parent_id": "792436d893b7938b1886625c65696b5d3d1b16240e5d12d2ae7d1ff47534e00d"
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          255,
+          255,
+          255,
+          13,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 242
+      },
+      "origin": "mutation",
+      "parent_id": "792436d893b7938b1886625c65696b5d3d1b16240e5d12d2ae7d1ff47534e00d"
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          108,
+          226,
+          187,
+          24,
+          238,
+          6,
+          97,
+          99
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 31
+      },
+      "origin": "mutation",
+      "parent_id": "17b5f8a1e711ca29bd4320276212f0bd345c4f61828ada4ac13ee7e42af18d52"
+    }
+  ],
+  "LnProduct": [
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          241,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "9b02ca39ae219446a7d32a0fa5afea3524e4d945d233ba4685cca77fe785a64b"
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "5f507572659622c5defb9302035c923b7e0b51a4e496e3031e1757c51c4b3efd"
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          255,
+          255,
+          255,
+          99,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 156
+      },
+      "origin": "mutation",
+      "parent_id": "5f507572659622c5defb9302035c923b7e0b51a4e496e3031e1757c51c4b3efd"
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          4,
+          31,
+          39,
+          0,
+          241,
+          1,
+          0,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 39
+      },
+      "origin": "mutation",
+      "parent_id": "9b02ca39ae219446a7d32a0fa5afea3524e4d945d233ba4685cca77fe785a64b"
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          83,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 172
+      },
+      "origin": "mutation",
+      "parent_id": "5f507572659622c5defb9302035c923b7e0b51a4e496e3031e1757c51c4b3efd"
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          76,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 179
+      },
+      "origin": "mutation",
+      "parent_id": "5f507572659622c5defb9302035c923b7e0b51a4e496e3031e1757c51c4b3efd"
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          91,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 164
+      },
+      "origin": "mutation",
+      "parent_id": "5f507572659622c5defb9302035c923b7e0b51a4e496e3031e1757c51c4b3efd"
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          78,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 177
+      },
+      "origin": "mutation",
+      "parent_id": "5f507572659622c5defb9302035c923b7e0b51a4e496e3031e1757c51c4b3efd"
+    }
+  ],
+  "Log10": [
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          4,
+          199,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "5ab15489b11d965d78c4caf918c9bedf6f88bf03f69ae1c259d63b9a0a8c03a0"
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          4,
+          199,
+          0,
+          0,
+          122,
+          1,
+          0,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 122
+      },
+      "origin": "mutation",
+      "parent_id": "5ab15489b11d965d78c4caf918c9bedf6f88bf03f69ae1c259d63b9a0a8c03a0"
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          4,
+          199,
+          0,
+          232,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 232
+      },
+      "origin": "mutation",
+      "parent_id": "5ab15489b11d965d78c4caf918c9bedf6f88bf03f69ae1c259d63b9a0a8c03a0"
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          4,
+          199,
+          0,
+          0,
+          0,
+          1,
+          74,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 74
+      },
+      "origin": "mutation",
+      "parent_id": "5ab15489b11d965d78c4caf918c9bedf6f88bf03f69ae1c259d63b9a0a8c03a0"
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          121,
+          199,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 125
+      },
+      "origin": "mutation",
+      "parent_id": "5ab15489b11d965d78c4caf918c9bedf6f88bf03f69ae1c259d63b9a0a8c03a0"
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          4,
+          65,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 134
+      },
+      "origin": "mutation",
+      "parent_id": "5ab15489b11d965d78c4caf918c9bedf6f88bf03f69ae1c259d63b9a0a8c03a0"
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          4,
+          199,
+          0,
+          0,
+          0,
+          1,
+          151,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 151
+      },
+      "origin": "mutation",
+      "parent_id": "5ab15489b11d965d78c4caf918c9bedf6f88bf03f69ae1c259d63b9a0a8c03a0"
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          4,
+          199,
+          77,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 77
+      },
+      "origin": "mutation",
+      "parent_id": "5ab15489b11d965d78c4caf918c9bedf6f88bf03f69ae1c259d63b9a0a8c03a0"
+    }
+  ],
+  "Log2": [
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          9
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "0ee64799ac3b143e30762c98600f3c226caa0ab15db40d27748c34c9aebf8966"
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          255,
+          195,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "95ee84bba5e1f5336a3ba914a9eb00102f1b29728cbdfaa7ce94b03db309958d"
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          255,
+          195,
+          255,
+          101,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 154
+      },
+      "origin": "mutation",
+      "parent_id": "95ee84bba5e1f5336a3ba914a9eb00102f1b29728cbdfaa7ce94b03db309958d"
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          255,
+          195,
+          255,
+          255,
+          255,
+          255,
+          255,
+          7
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 248
+      },
+      "origin": "mutation",
+      "parent_id": "95ee84bba5e1f5336a3ba914a9eb00102f1b29728cbdfaa7ce94b03db309958d"
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          255,
+          195,
+          255,
+          255,
+          255,
+          255,
+          255,
+          152
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 103
+      },
+      "origin": "mutation",
+      "parent_id": "95ee84bba5e1f5336a3ba914a9eb00102f1b29728cbdfaa7ce94b03db309958d"
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          255,
+          165,
+          255,
+          255,
+          255,
+          255,
+          255,
+          9
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 90
+      },
+      "origin": "mutation",
+      "parent_id": "0ee64799ac3b143e30762c98600f3c226caa0ab15db40d27748c34c9aebf8966"
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          255,
+          233,
+          255,
+          255,
+          255,
+          255,
+          255,
+          9
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 22
+      },
+      "origin": "mutation",
+      "parent_id": "0ee64799ac3b143e30762c98600f3c226caa0ab15db40d27748c34c9aebf8966"
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          255,
+          255,
+          29,
+          255,
+          255,
+          255,
+          255,
+          9
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 226
+      },
+      "origin": "mutation",
+      "parent_id": "0ee64799ac3b143e30762c98600f3c226caa0ab15db40d27748c34c9aebf8966"
+    }
+  ],
+  "One": [
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          230,
+          34,
+          207,
+          170,
+          145,
+          239,
+          200,
+          208
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "fb9436b0119907242e21c5c417411213364c5a93f346c7e96323f35fac0119fe"
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          255,
+          171,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "76df71af9c0353585f3c7905d3d1999775a4be31f8c02dbabf23264ef9e54a27"
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "bd3c7930305996e1074cab914625f40270be68d979aa30ab6a83491115bcc2cc"
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          230,
+          34,
+          229,
+          170,
+          145,
+          239,
+          200,
+          208
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 42
+      },
+      "origin": "mutation",
+      "parent_id": "fb9436b0119907242e21c5c417411213364c5a93f346c7e96323f35fac0119fe"
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          255,
+          171,
+          255,
+          255,
+          154,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 101
+      },
+      "origin": "mutation",
+      "parent_id": "76df71af9c0353585f3c7905d3d1999775a4be31f8c02dbabf23264ef9e54a27"
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          255,
+          171,
+          255,
+          255,
+          255,
+          255,
+          143,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 112
+      },
+      "origin": "mutation",
+      "parent_id": "76df71af9c0353585f3c7905d3d1999775a4be31f8c02dbabf23264ef9e54a27"
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          230,
+          34,
+          207,
+          194,
+          145,
+          239,
+          200,
+          208
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 104
+      },
+      "origin": "mutation",
+      "parent_id": "fb9436b0119907242e21c5c417411213364c5a93f346c7e96323f35fac0119fe"
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          244,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 244
+      },
+      "origin": "mutation",
+      "parent_id": "bd3c7930305996e1074cab914625f40270be68d979aa30ab6a83491115bcc2cc"
+    }
+  ],
+  "Pi": [
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          88,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "ad2a94b9fc5a0f25e1c47cdc86067d888332d78b0b718e5ae4bdfbac6c8786cf"
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          102,
+          9,
+          44,
+          49,
+          56,
+          157,
+          177,
+          178
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "daf4635c7e033c28a97ae1e1ee9ea1a0e19f65525a7df99cd1852cf4954c2c64"
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          224,
+          1,
+          0,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 184
+      },
+      "origin": "mutation",
+      "parent_id": "ad2a94b9fc5a0f25e1c47cdc86067d888332d78b0b718e5ae4bdfbac6c8786cf"
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          88,
+          1,
+          0,
+          166
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 166
+      },
+      "origin": "mutation",
+      "parent_id": "ad2a94b9fc5a0f25e1c47cdc86067d888332d78b0b718e5ae4bdfbac6c8786cf"
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          4,
+          31,
+          0,
+          177,
+          88,
+          1,
+          0,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 177
+      },
+      "origin": "mutation",
+      "parent_id": "ad2a94b9fc5a0f25e1c47cdc86067d888332d78b0b718e5ae4bdfbac6c8786cf"
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          102,
+          9,
+          44,
+          8,
+          56,
+          157,
+          177,
+          178
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 57
+      },
+      "origin": "mutation",
+      "parent_id": "daf4635c7e033c28a97ae1e1ee9ea1a0e19f65525a7df99cd1852cf4954c2c64"
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          155,
+          1,
+          0,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 195
+      },
+      "origin": "mutation",
+      "parent_id": "ad2a94b9fc5a0f25e1c47cdc86067d888332d78b0b718e5ae4bdfbac6c8786cf"
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          88,
+          1,
+          201,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 201
+      },
+      "origin": "mutation",
+      "parent_id": "ad2a94b9fc5a0f25e1c47cdc86067d888332d78b0b718e5ae4bdfbac6c8786cf"
+    }
+  ],
+  "PiExp": [
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          80,
+          188,
+          168,
+          242,
+          65,
+          182,
+          255,
+          71
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "30c9b76773167f442aa5378b7dba1f30eed5703f4fdb6fc50a17df2d52dba642"
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          15,
+          255,
+          255
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "f5552e68a7756c768e581d3d9b4c31128fcd326115370b3d233954147025c892"
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          177,
+          188,
+          168,
+          242,
+          65,
+          182,
+          255,
+          71
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 225
+      },
+      "origin": "mutation",
+      "parent_id": "30c9b76773167f442aa5378b7dba1f30eed5703f4fdb6fc50a17df2d52dba642"
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          15,
+          255,
+          230
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 25
+      },
+      "origin": "mutation",
+      "parent_id": "f5552e68a7756c768e581d3d9b4c31128fcd326115370b3d233954147025c892"
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          255,
+          118,
+          255,
+          255,
+          255,
+          15,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 137
+      },
+      "origin": "mutation",
+      "parent_id": "f5552e68a7756c768e581d3d9b4c31128fcd326115370b3d233954147025c892"
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          49,
+          15,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 206
+      },
+      "origin": "mutation",
+      "parent_id": "f5552e68a7756c768e581d3d9b4c31128fcd326115370b3d233954147025c892"
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          15,
+          42,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 213
+      },
+      "origin": "mutation",
+      "parent_id": "f5552e68a7756c768e581d3d9b4c31128fcd326115370b3d233954147025c892"
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          80,
+          188,
+          168,
+          242,
+          65,
+          182,
+          227,
+          71
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 28
+      },
+      "origin": "mutation",
+      "parent_id": "30c9b76773167f442aa5378b7dba1f30eed5703f4fdb6fc50a17df2d52dba642"
+    }
+  ],
+  "PiInv": [
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          50,
+          207,
+          181,
+          78,
+          39,
+          244,
+          164,
+          253
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "3d0ab5762e6502cc7b7a3fefd904d4f22218c54daf576b2f2a459f2afaf2a01f"
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          50,
+          207,
+          181,
+          78,
+          39,
+          244,
+          23,
+          253
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "d5f3f5d729c480c1b0d8758377b84fc6a3ccbd083ff0f0f460705bc6d536cc79"
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          50,
+          97,
+          181,
+          78,
+          39,
+          244,
+          164,
+          253
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 174
+      },
+      "origin": "mutation",
+      "parent_id": "3d0ab5762e6502cc7b7a3fefd904d4f22218c54daf576b2f2a459f2afaf2a01f"
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          91,
+          207,
+          181,
+          78,
+          39,
+          244,
+          23,
+          253
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 105
+      },
+      "origin": "mutation",
+      "parent_id": "d5f3f5d729c480c1b0d8758377b84fc6a3ccbd083ff0f0f460705bc6d536cc79"
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          50,
+          236,
+          181,
+          78,
+          39,
+          244,
+          164,
+          253
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 35
+      },
+      "origin": "mutation",
+      "parent_id": "3d0ab5762e6502cc7b7a3fefd904d4f22218c54daf576b2f2a459f2afaf2a01f"
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          50,
+          207,
+          181,
+          78,
+          39,
+          24,
+          164,
+          253
+        ]
+      },
+      "mutation": {
+        "index": 5,
+        "xor_mask": 236
+      },
+      "origin": "mutation",
+      "parent_id": "3d0ab5762e6502cc7b7a3fefd904d4f22218c54daf576b2f2a459f2afaf2a01f"
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          50,
+          207,
+          181,
+          78,
+          52,
+          244,
+          164,
+          253
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 19
+      },
+      "origin": "mutation",
+      "parent_id": "3d0ab5762e6502cc7b7a3fefd904d4f22218c54daf576b2f2a459f2afaf2a01f"
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          50,
+          207,
+          181,
+          78,
+          39,
+          244,
+          121,
+          253
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 221
+      },
+      "origin": "mutation",
+      "parent_id": "3d0ab5762e6502cc7b7a3fefd904d4f22218c54daf576b2f2a459f2afaf2a01f"
+    }
+  ],
+  "PiInvExp": [
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          188,
+          109,
+          210,
+          162,
+          7,
+          10,
+          115,
+          159
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "fffa5357784e0d9791bef22e53885fa2195f678fbcf5a8506b9de78af88f936d"
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          255,
+          59,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "19d6975a6c7022fb4e29ec2fd83d12990940ab20a24dbe0c40afd191ee594c75"
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          188,
+          133,
+          210,
+          162,
+          7,
+          10,
+          115,
+          55
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "eddba1dd08ca9fec1e31362562bad597ef9bb3076f91f7ce1d9290375a73f71d"
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          255,
+          59,
+          255,
+          255,
+          255,
+          255,
+          255,
+          57
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 198
+      },
+      "origin": "mutation",
+      "parent_id": "19d6975a6c7022fb4e29ec2fd83d12990940ab20a24dbe0c40afd191ee594c75"
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          255,
+          59,
+          146,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 109
+      },
+      "origin": "mutation",
+      "parent_id": "19d6975a6c7022fb4e29ec2fd83d12990940ab20a24dbe0c40afd191ee594c75"
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          188,
+          109,
+          210,
+          162,
+          7,
+          10,
+          115,
+          187
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 36
+      },
+      "origin": "mutation",
+      "parent_id": "fffa5357784e0d9791bef22e53885fa2195f678fbcf5a8506b9de78af88f936d"
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          238,
+          109,
+          210,
+          162,
+          7,
+          10,
+          115,
+          159
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 82
+      },
+      "origin": "mutation",
+      "parent_id": "fffa5357784e0d9791bef22e53885fa2195f678fbcf5a8506b9de78af88f936d"
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          255,
+          7,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 60
+      },
+      "origin": "mutation",
+      "parent_id": "19d6975a6c7022fb4e29ec2fd83d12990940ab20a24dbe0c40afd191ee594c75"
+    }
+  ],
+  "PiPow": [
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          3
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "6b957adf3c4b1f9ec27f63fbdc4b306aa2dae7e11a9e38870c01cf0301765915"
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          72,
+          199,
+          178,
+          209,
+          68,
+          123,
+          49,
+          77
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "e245caa2169565d54562b8bf3e927643e76675a50a63feaaae8f23819e10baba"
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          72,
+          199,
+          178,
+          209,
+          68,
+          123,
+          234,
+          77
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "895f2d2b77eb23d4a2493d003d4abca9bfd335386be0ced6d4a8bd5e4ac6594b"
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          72,
+          199,
+          178,
+          209,
+          68,
+          123,
+          234,
+          65
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 12
+      },
+      "origin": "mutation",
+      "parent_id": "895f2d2b77eb23d4a2493d003d4abca9bfd335386be0ced6d4a8bd5e4ac6594b"
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          0,
+          1,
+          57,
+          3,
+          5,
+          2,
+          128,
+          3
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 70
+      },
+      "origin": "mutation",
+      "parent_id": "6b957adf3c4b1f9ec27f63fbdc4b306aa2dae7e11a9e38870c01cf0301765915"
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          26,
+          199,
+          178,
+          209,
+          68,
+          123,
+          49,
+          77
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 82
+      },
+      "origin": "mutation",
+      "parent_id": "e245caa2169565d54562b8bf3e927643e76675a50a63feaaae8f23819e10baba"
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          72,
+          199,
+          178,
+          209,
+          68,
+          78,
+          49,
+          77
+        ]
+      },
+      "mutation": {
+        "index": 5,
+        "xor_mask": 53
+      },
+      "origin": "mutation",
+      "parent_id": "e245caa2169565d54562b8bf3e927643e76675a50a63feaaae8f23819e10baba"
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          0,
+          1,
+          106,
+          3,
+          5,
+          2,
+          128,
+          3
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 21
+      },
+      "origin": "mutation",
+      "parent_id": "6b957adf3c4b1f9ec27f63fbdc4b306aa2dae7e11a9e38870c01cf0301765915"
+    }
+  ],
+  "PiSqrt": [
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          133,
+          30,
+          90,
+          209,
+          48,
+          89,
+          129,
+          217
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "6c887c12f75f6826e221bce30fcf84e9a37e9766f2b7c81eaf561892bc81e433"
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          197,
+          30,
+          90,
+          209,
+          48,
+          3,
+          129,
+          217
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "c8c94ffee68af71494f68e0a9707c0183baeef2d3c615f9212cf65241d3ab826"
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          197,
+          156,
+          90,
+          209,
+          48,
+          3,
+          129,
+          217
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 130
+      },
+      "origin": "mutation",
+      "parent_id": "c8c94ffee68af71494f68e0a9707c0183baeef2d3c615f9212cf65241d3ab826"
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          133,
+          30,
+          90,
+          78,
+          48,
+          89,
+          129,
+          217
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 159
+      },
+      "origin": "mutation",
+      "parent_id": "6c887c12f75f6826e221bce30fcf84e9a37e9766f2b7c81eaf561892bc81e433"
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          133,
+          30,
+          90,
+          209,
+          48,
+          89,
+          129,
+          227
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 58
+      },
+      "origin": "mutation",
+      "parent_id": "6c887c12f75f6826e221bce30fcf84e9a37e9766f2b7c81eaf561892bc81e433"
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          197,
+          30,
+          90,
+          209,
+          48,
+          141,
+          129,
+          217
+        ]
+      },
+      "mutation": {
+        "index": 5,
+        "xor_mask": 142
+      },
+      "origin": "mutation",
+      "parent_id": "c8c94ffee68af71494f68e0a9707c0183baeef2d3c615f9212cf65241d3ab826"
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          197,
+          148,
+          90,
+          209,
+          48,
+          3,
+          129,
+          217
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 138
+      },
+      "origin": "mutation",
+      "parent_id": "c8c94ffee68af71494f68e0a9707c0183baeef2d3c615f9212cf65241d3ab826"
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          66,
+          30,
+          90,
+          209,
+          48,
+          89,
+          129,
+          217
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 199
+      },
+      "origin": "mutation",
+      "parent_id": "6c887c12f75f6826e221bce30fcf84e9a37e9766f2b7c81eaf561892bc81e433"
+    }
+  ],
+  "Pow10": [
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          116,
+          128,
+          77
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "23eefdb5d48932a8185976d1c59559ba00d54607e80d6e2a238fb9684aa00cf8"
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          239,
+          28,
+          112,
+          133,
+          47,
+          137,
+          96,
+          52
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "397a0d7bd6389b008a82a6216968ba4b0110b3c7c64b3f413d8689c5ba0eaf96"
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          0,
+          1,
+          127,
+          220,
+          5,
+          116,
+          128,
+          77
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 223
+      },
+      "origin": "mutation",
+      "parent_id": "23eefdb5d48932a8185976d1c59559ba00d54607e80d6e2a238fb9684aa00cf8"
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          0,
+          1,
+          199,
+          3,
+          5,
+          116,
+          128,
+          77
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 184
+      },
+      "origin": "mutation",
+      "parent_id": "23eefdb5d48932a8185976d1c59559ba00d54607e80d6e2a238fb9684aa00cf8"
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          239,
+          28,
+          150,
+          133,
+          47,
+          137,
+          96,
+          52
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 230
+      },
+      "origin": "mutation",
+      "parent_id": "397a0d7bd6389b008a82a6216968ba4b0110b3c7c64b3f413d8689c5ba0eaf96"
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          0,
+          1,
+          254,
+          3,
+          5,
+          116,
+          128,
+          77
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 129
+      },
+      "origin": "mutation",
+      "parent_id": "23eefdb5d48932a8185976d1c59559ba00d54607e80d6e2a238fb9684aa00cf8"
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          73,
+          28,
+          112,
+          133,
+          47,
+          137,
+          96,
+          52
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 166
+      },
+      "origin": "mutation",
+      "parent_id": "397a0d7bd6389b008a82a6216968ba4b0110b3c7c64b3f413d8689c5ba0eaf96"
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          98,
+          28,
+          112,
+          133,
+          47,
+          137,
+          96,
+          52
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 141
+      },
+      "origin": "mutation",
+      "parent_id": "397a0d7bd6389b008a82a6216968ba4b0110b3c7c64b3f413d8689c5ba0eaf96"
+    }
+  ],
+  "Pow2": [
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          181,
+          221,
+          75,
+          99,
+          15,
+          126,
+          55,
+          219
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "acebec36d4bd1781310b519d1a0fe8d866338cd54b88a5bb070d696ce0a31a96"
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          169,
+          55,
+          131,
+          119,
+          245,
+          127,
+          162,
+          46
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "2570ce2abfac98925267a1695c987c74ca65bd747012b822ae8990369a4cf51e"
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          169,
+          55,
+          131,
+          119,
+          245,
+          127,
+          72,
+          46
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "63610868235aebafebf80a6957b495b7bc4ae3c54cc7285865d40a9cfc0164ed"
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          169,
+          55,
+          131,
+          119,
+          245,
+          127,
+          96,
+          46
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 40
+      },
+      "origin": "mutation",
+      "parent_id": "63610868235aebafebf80a6957b495b7bc4ae3c54cc7285865d40a9cfc0164ed"
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          181,
+          221,
+          75,
+          99,
+          15,
+          126,
+          55,
+          58
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 225
+      },
+      "origin": "mutation",
+      "parent_id": "acebec36d4bd1781310b519d1a0fe8d866338cd54b88a5bb070d696ce0a31a96"
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          181,
+          98,
+          75,
+          99,
+          15,
+          126,
+          55,
+          219
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 191
+      },
+      "origin": "mutation",
+      "parent_id": "acebec36d4bd1781310b519d1a0fe8d866338cd54b88a5bb070d696ce0a31a96"
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          181,
+          53,
+          75,
+          99,
+          15,
+          126,
+          55,
+          219
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 232
+      },
+      "origin": "mutation",
+      "parent_id": "acebec36d4bd1781310b519d1a0fe8d866338cd54b88a5bb070d696ce0a31a96"
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          245,
+          221,
+          75,
+          99,
+          15,
+          126,
+          55,
+          219
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 64
+      },
+      "origin": "mutation",
+      "parent_id": "acebec36d4bd1781310b519d1a0fe8d866338cd54b88a5bb070d696ce0a31a96"
+    }
+  ],
+  "SinPi": [
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          64,
+          126,
+          164,
+          19,
+          124,
+          5,
+          179,
+          201
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "03cc234bd82e41df08571078f75eb2bf21d6b43c19fcdb326049a41d50366b8b"
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          64,
+          126,
+          164,
+          19,
+          124,
+          5,
+          48,
+          201
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "15e0d407e7964b62df199c10c05a14b905dbcd2fb9b4fa2aebdea4f27c293643"
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          64,
+          126,
+          164,
+          19,
+          124,
+          176,
+          179,
+          201
+        ]
+      },
+      "mutation": {
+        "index": 5,
+        "xor_mask": 181
+      },
+      "origin": "mutation",
+      "parent_id": "03cc234bd82e41df08571078f75eb2bf21d6b43c19fcdb326049a41d50366b8b"
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          64,
+          126,
+          164,
+          19,
+          124,
+          95,
+          179,
+          201
+        ]
+      },
+      "mutation": {
+        "index": 5,
+        "xor_mask": 90
+      },
+      "origin": "mutation",
+      "parent_id": "03cc234bd82e41df08571078f75eb2bf21d6b43c19fcdb326049a41d50366b8b"
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          64,
+          126,
+          65,
+          19,
+          124,
+          5,
+          48,
+          201
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 229
+      },
+      "origin": "mutation",
+      "parent_id": "15e0d407e7964b62df199c10c05a14b905dbcd2fb9b4fa2aebdea4f27c293643"
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          64,
+          80,
+          164,
+          19,
+          124,
+          5,
+          179,
+          201
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 46
+      },
+      "origin": "mutation",
+      "parent_id": "03cc234bd82e41df08571078f75eb2bf21d6b43c19fcdb326049a41d50366b8b"
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          5,
+          126,
+          164,
+          19,
+          124,
+          5,
+          48,
+          201
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 69
+      },
+      "origin": "mutation",
+      "parent_id": "15e0d407e7964b62df199c10c05a14b905dbcd2fb9b4fa2aebdea4f27c293643"
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          64,
+          126,
+          164,
+          19,
+          124,
+          5,
+          145,
+          201
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 34
+      },
+      "origin": "mutation",
+      "parent_id": "03cc234bd82e41df08571078f75eb2bf21d6b43c19fcdb326049a41d50366b8b"
+    }
+  ],
+  "Sqrt": [
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          177,
+          0
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "91a9b1877a54e7547bf4f7ca7477b10ea3478e78581151cdf0204d9ff0ad1065"
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          217,
+          1,
+          177,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 217
+      },
+      "origin": "mutation",
+      "parent_id": "91a9b1877a54e7547bf4f7ca7477b10ea3478e78581151cdf0204d9ff0ad1065"
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          177,
+          243
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 243
+      },
+      "origin": "mutation",
+      "parent_id": "91a9b1877a54e7547bf4f7ca7477b10ea3478e78581151cdf0204d9ff0ad1065"
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          115,
+          31,
+          0,
+          0,
+          0,
+          1,
+          177,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 0,
+        "xor_mask": 119
+      },
+      "origin": "mutation",
+      "parent_id": "91a9b1877a54e7547bf4f7ca7477b10ea3478e78581151cdf0204d9ff0ad1065"
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          4,
+          63,
+          0,
+          0,
+          0,
+          1,
+          177,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 32
+      },
+      "origin": "mutation",
+      "parent_id": "91a9b1877a54e7547bf4f7ca7477b10ea3478e78581151cdf0204d9ff0ad1065"
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          4,
+          134,
+          0,
+          0,
+          0,
+          1,
+          177,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 153
+      },
+      "origin": "mutation",
+      "parent_id": "91a9b1877a54e7547bf4f7ca7477b10ea3478e78581151cdf0204d9ff0ad1065"
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          160,
+          1,
+          177,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 4,
+        "xor_mask": 160
+      },
+      "origin": "mutation",
+      "parent_id": "91a9b1877a54e7547bf4f7ca7477b10ea3478e78581151cdf0204d9ff0ad1065"
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          4,
+          31,
+          152,
+          0,
+          0,
+          1,
+          177,
+          0
+        ]
+      },
+      "mutation": {
+        "index": 2,
+        "xor_mask": 152
+      },
+      "origin": "mutation",
+      "parent_id": "91a9b1877a54e7547bf4f7ca7477b10ea3478e78581151cdf0204d9ff0ad1065"
+    }
+  ],
+  "TanPi": [
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          235,
+          21,
+          197,
+          189,
+          45,
+          157,
+          86,
+          165
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "9724edaf2c8bf2d8c78a9fa2eea209dc0126162851003d0f0352e745974fbf6c"
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          235,
+          32,
+          197,
+          189,
+          45,
+          251,
+          86,
+          165
+        ]
+      },
+      "origin": "retained",
+      "parent_id": "41080ef35d1bcd19cacbe9eb3b902d07596bdb5513c9d4b592e1f6089285574b"
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          235,
+          21,
+          197,
+          189,
+          45,
+          7,
+          86,
+          165
+        ]
+      },
+      "mutation": {
+        "index": 5,
+        "xor_mask": 154
+      },
+      "origin": "mutation",
+      "parent_id": "9724edaf2c8bf2d8c78a9fa2eea209dc0126162851003d0f0352e745974fbf6c"
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          235,
+          21,
+          197,
+          67,
+          45,
+          157,
+          86,
+          165
+        ]
+      },
+      "mutation": {
+        "index": 3,
+        "xor_mask": 254
+      },
+      "origin": "mutation",
+      "parent_id": "9724edaf2c8bf2d8c78a9fa2eea209dc0126162851003d0f0352e745974fbf6c"
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          235,
+          21,
+          197,
+          189,
+          45,
+          157,
+          86,
+          131
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 38
+      },
+      "origin": "mutation",
+      "parent_id": "9724edaf2c8bf2d8c78a9fa2eea209dc0126162851003d0f0352e745974fbf6c"
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          235,
+          191,
+          197,
+          189,
+          45,
+          251,
+          86,
+          165
+        ]
+      },
+      "mutation": {
+        "index": 1,
+        "xor_mask": 159
+      },
+      "origin": "mutation",
+      "parent_id": "41080ef35d1bcd19cacbe9eb3b902d07596bdb5513c9d4b592e1f6089285574b"
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          235,
+          32,
+          197,
+          189,
+          45,
+          251,
+          25,
+          165
+        ]
+      },
+      "mutation": {
+        "index": 6,
+        "xor_mask": 79
+      },
+      "origin": "mutation",
+      "parent_id": "41080ef35d1bcd19cacbe9eb3b902d07596bdb5513c9d4b592e1f6089285574b"
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          235,
+          32,
+          197,
+          189,
+          45,
+          251,
+          86,
+          81
+        ]
+      },
+      "mutation": {
+        "index": 7,
+        "xor_mask": 244
+      },
+      "origin": "mutation",
+      "parent_id": "41080ef35d1bcd19cacbe9eb3b902d07596bdb5513c9d4b592e1f6089285574b"
+    }
+  ]
+}

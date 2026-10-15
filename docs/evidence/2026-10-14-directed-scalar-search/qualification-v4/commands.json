@@ -1,0 +1,244 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 10.469087542966008,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "fuzz-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "crates/hyperreal/fuzz/Cargo.toml",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.05373559892177582,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "python-tests",
+    "command": [
+      "python3",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "crates/hyperreal/fuzz/directed",
+      "-p",
+      "test_*.py",
+      "-v"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 12.372860276140273,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "ff2d289eddd5804598845a82d4406cb10771a65323c40489529518a2f0187cc1"
+  },
+  {
+    "name": "probe-features-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--features",
+      "serde,dispatch-trace",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 11.474971269723028,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "709bbf0ab6c0460eadf8fcc45d14d7de1417744fda088cb87b906658a5cb9c32"
+  },
+  {
+    "name": "all-features-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--all-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 4.9146250411868095,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "ca6695f245a015ecb64425abe5be0ced25e2f340e752cd98b9cb858c29f48ef3"
+  },
+  {
+    "name": "probe-features-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-Zbuild-std",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--example",
+      "directed_scalar_probe",
+      "--features",
+      "serde,dispatch-trace",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 36.62654664879665,
+    "stdout_sha256": "dcc40f7f8ca490c71022a6da3a9b29a8724b1cf15372ff9a7a2bb0b7b0fcae51",
+    "stderr_sha256": "183b6bcc16012e33ed66fe4a7b6b668d91ceb4d6b419d23f4682a5d790c11253"
+  },
+  {
+    "name": "all-features-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-Zbuild-std",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--example",
+      "directed_scalar_probe",
+      "--all-features",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 13.446176162920892,
+    "stdout_sha256": "eb974e9a5b6bbbcf7b63b78b2e12a7a753652a48d64ef5d7154abe7b2b90fcba",
+    "stderr_sha256": "49fcf74a4f763d2bbc932b354cd699fd781525fd62ed6d95ff861ed60893066a"
+  },
+  {
+    "name": "probe-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-Zbuild-std",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--example",
+      "directed_scalar_probe",
+      "--features",
+      "serde,dispatch-trace",
+      "--verbose"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 19.510626630857587,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "3cbc937a86fca085570a547f0ccd5ec2f41850d3ea8a51a7b82358fc063982bb"
+  },
+  {
+    "name": "inventory",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe",
+      "--list"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.025537170935422182,
+    "stdout_sha256": "2d96cca25cbb9935d5c02951b11973cc0fb421f867a5f78936b75a73057f463a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "mixed-number-regression",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v4/source/crates/hyperreal/examples/directed_scalar_probe/regressions/mixed_number_v2.input.json"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.02577876439318061,
+    "stdout_sha256": "cdd476c4104d62fefb8f1778fa7c68373a450a39e1a03d03338ae87aee6bc508",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "mixed-number-wire-validation",
+    "command": [
+      "python3",
+      "-B",
+      "crates/hyperreal/fuzz/directed/evidence.py",
+      "--input",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v4/source/crates/hyperreal/examples/directed_scalar_probe/regressions/mixed_number_v2.input.json",
+      "--response",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-directed-scalar-search/qualification-v4/mixed-number-regression.stdout",
+      "--inventory",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-directed-scalar-search/qualification-v4/inventory.stdout"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.05997468112036586,
+    "stdout_sha256": "efbf8190d8ae72323a4107acc806b1210d36302e28b1891c7b29eeb3cd3d579f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "campaign",
+    "command": [
+      "python3",
+      "-B",
+      "crates/hyperreal/fuzz/directed/campaign.py",
+      "run",
+      "--binary",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe",
+      "--output",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-directed-scalar-search/qualification-v4/campaign",
+      "--seed",
+      "20261014",
+      "--rounds",
+      "3",
+      "--population",
+      "8",
+      "--parents",
+      "4",
+      "--timeout",
+      "30"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 20.262799717951566,
+    "stdout_sha256": "2e5958e73fece9855d58e559fa2ab3154e78b49a701c009108d328e9d83b47d8",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "campaign-replay",
+    "command": [
+      "python3",
+      "-B",
+      "crates/hyperreal/fuzz/directed/campaign.py",
+      "verify",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-directed-scalar-search/qualification-v4/campaign"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.32920892909169197,
+    "stdout_sha256": "234dfa29bd4d6148e5285c8e773a3ec4d2787b7d57bc1470630f9d0d070b3bea",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

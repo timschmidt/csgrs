@@ -1,0 +1,97 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v4/source",
+  "source_files": 10166,
+  "inputs_sha256": {
+    "qualify_v4.py": "96f3028dba4fca7122b39695894f1b8608a2625db1772dec3d82d91024e494d9",
+    "contract-v4.json": "cb2206cfe4c2b601e239b717a570ad4aecab2ea1b6099cf8cfb4b407330011a7",
+    "qualification-scope-v4.json": "6595003b8d6cdcb339f7452cc911f701c3a3570ca6c885f5ff672960e43b7ec9",
+    "prototype-v4.patch": "d9d505d3db0753c2d6df8bf9fd29b03db4aaa9672b49178b5d9fd4d3dd852bb6",
+    "main-source-before.json.gz": "7637ab09a08c15e3ac7c239f1fad7a59c26ea93dfc6075b147f6da74b09cb92c",
+    "source-hashes-v4.json.gz": "ab9ca44d55fae7975e5e90c2c0fbe76cea5576dcb942441273dc403548cfa09c",
+    "closure-v1.json": "3bc60179a0d02e982c16c9bd9729bd4cc0e2136e02a1f0ba9a70a1afbe8b4b6a",
+    "closure-v2.json": "5de143715a40227ae2b15d5d7c561414d05d786e3267ac61ff55d549173c6c28",
+    "closure-v3.json": "9b01ed51ea476e57de9866a74dff3506761cd8bff9cff0fd26670227dbc79cfc"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "base_environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "RUSTUP_TOOLCHAIN": "stable",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v4/check-target",
+    "RUSTFLAGS": "",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "RUSTC_BOOTSTRAP": "1"
+  },
+  "sanitizer_environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "RUSTUP_TOOLCHAIN": "stable",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v4/sanitizer-target",
+    "RUSTFLAGS": "-Zsanitizer=address -Cforce-frame-pointers=yes",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "RUSTC_BOOTSTRAP": "1",
+    "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1:abort_on_error=0:exitcode=66",
+    "LSAN_OPTIONS": ""
+  },
+  "stdlib_source": "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library",
+  "stdlib_source_mapping_sha256": "28292f3cdfeff912a6ceab877e119fa19732e77725e719e5ea3b70355dae24e0",
+  "preserved_binaries": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/qualification-target/x86_64-unknown-linux-gnu/release/deps/real_representations-4cfc6a52c9a097d4",
+      "sha256": "e1d44f0752dcd38b63495f2356015d64516931f27a768ebc4abc2636ce6e4eae",
+      "bytes": 2735464
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/qualification-target/x86_64-unknown-linux-gnu/release/deps/real_representations-7fffae914936c8dc",
+      "sha256": "9f85cc8202da0b1c655de249f052598342488a4bd5b997fe7c375568c1b79abc",
+      "bytes": 3855048
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/fuzz-target/x86_64-unknown-linux-gnu/release/structural_representations",
+      "sha256": "f8ce7e0b311c19c9dd5df504d938b61dc02cc85b235587af0796bb186de7f1d8",
+      "bytes": 40462072
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v1/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe-b4e29e084f4e51cb",
+      "sha256": "fefed31776da4d38d0d259a60b284b811e0801a044ad183b32202c6b6172854c",
+      "bytes": 9457928
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe-b4e29e084f4e51cb",
+      "sha256": "52ac64031f35b73e405337c4acf81b5136d32ca4f162082dc9a5bb5bdeed789b",
+      "bytes": 9505920
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe-899de66a86f70001",
+      "sha256": "7c2ea3c7d94122a0372346470e9e99ac2495a8b735a0dd9f405a256e050bd9e5",
+      "bytes": 9512296
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe",
+      "sha256": "c63b776a2546b8ae4eebcbe3060f75e07db61ea8c52dc5be507323b650ea89be",
+      "bytes": 7800680
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v3/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe-b4e29e084f4e51cb",
+      "sha256": "e78c8740d5b334cedf4b5207a4247d8455d70c7707489909e42163da6a9ec246",
+      "bytes": 9700424
+    }
+  ],
+  "commands": 13,
+  "campaign": {
+    "seed": 20261014,
+    "rounds": 3,
+    "population": 8,
+    "parents": 4,
+    "probe_timeout_seconds": 30,
+    "expected_completed_probes": 528,
+    "expected_selection_events": 264
+  },
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false
+}
