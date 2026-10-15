@@ -1,0 +1,15 @@
+{
+  "runner_sha256": "b61ee0d18ca091918d8c9b8822856455d9d92e38349d18c445393ef4a8d757a5",
+  "manifest_sha256": "2564b64389b00a4d800e650696848e02e1d5aaa237e161758df9845d33bf47f2",
+  "linked_paths": 912,
+  "duplicate_bytes_consolidated": 640423559,
+  "protected_artifacts_verified": 8478,
+  "closed_targets": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v4",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/native-v1"
+  ],
+  "scope": "Only non-executable compiler artifacts in terminal recent trials on the repository filesystem. Every path and byte retained. Executables, unique files, logs and source snapshots untouched. These targets remain immutable; new phases copy seeds with independent inodes."
+}

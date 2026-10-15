@@ -1,0 +1,216 @@
+
+running 32 tests
+test adapter::tests::exact_and_integer_graphics_adapters_keep_generic_conversion ... ok
+test adapter::tests::f32_graphics_adapter_preserves_strict_overflow_error ... ok
+test adapter::tests::f64_mesh_adapter_converts_at_edges ... ok
+test adapter::tests::i128_adapter_rejects_fractional_output ... ok
+test adapter::tests::primitive_graphics_adapters_match_core_gpu_buffers ... ok
+test context::tests::contexts_and_certainty_remain_one_byte ... ok
+test context::tests::one_context_derives_matching_kernel_policies ... ok
+test parts::assembly::tests::parent_explode_keeps_child_step_seated ... ok
+test parts::assembly::tests::suppressed_explode_stays_put ... ok
+test parts::attachment::tests::mate_matches_origin_and_axis ... ok
+test parts::attachment::tests::zero_axis_is_rejected ... ok
+test parts::blueprint::tests::nearer_box_hides_a_covered_edge_and_no_explode_still_occludes ... ok
+test parts::blueprint::tests::overlapping_depth_splits_an_edge_into_visible_and_unknown ... ok
+test parts::blueprint::tests::svg_export_records_hidden_dashes ... ok
+test parts::bom::tests::quantities_merge_and_sort ... ok
+test parts::dimension::tests::dimension_x_keeps_the_exact_length ... ok
+test parts::dimension::tests::zero_and_negative_lengths_are_rejected ... ok
+test parts::manual::tests::manual_contains_instructions_and_reports_gaps ... ok
+test parts::occlude::tests::cube_feature_edges_are_visible ... ok
+test parts::occlude::tests::front_box_hides_rear_feature_edges ... ok
+test parts::occlude::tests::half_covered_edge_splits ... ok
+test parts::occlude::tests::suppressed_front_box_still_hides_the_rear_box ... ok
+test parts::occlude::tests::svg_snapshot_mentions_a_rear_coordinate ... ok
+test parts::occlude::tests::undecided_depth_stays_unknown ... ok
+test solid::tests::arrows_and_orientation_reversing_transforms_keep_outward_manifold_winding ... ok
+test solid::tests::constructors_return_native_hypermesh_geometry ... ok
+test solid::tests::fluent_boolean_returns_reusable_native_geometry ... ok
+test solid::tests::loft_uses_each_cap_plane_and_rejects_nonplanar_sections ... ok
+test solid::tests::nominal_direct_solid_catalog_is_closed_and_consistently_indexed ... ok
+test solid::tests::polyhedron_certifies_symbolically_planar_faces_before_normalization ... ok
+test solid::tests::primitive_sample_count_arithmetic_is_checked ... ok
+test solid::tests::sampled_circle_retains_exact_cardinal_angles ... ok
+
+test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+
+running 1 test
+test adversarial_regression_fixtures_are_recorded ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 6 tests
+test bounds_reject_malformed_indices ... ok
+test cached_position_bounds_do_not_validate_mutated_indices ... ok
+test empty_bounds_are_absent_rather_than_a_point_at_the_origin ... ok
+test placement_preserves_exact_box_geometry_and_empty_composition ... ok
+test undecided_bounds_do_not_become_an_origin_box_or_empty_model ... ok
+test undecided_bounds_retain_their_category_through_the_adapter ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 10 tests
+test accumulation_and_complete_subtraction_can_continue ... ok
+test empty_identities_remain_composable_under_both_policies ... ok
+test empty_identity_keeps_symbolic_coordinates ... ok
+test empty_operand_does_not_erase_uncertainty_in_input_validation ... ok
+test empty_rows_from_a_shared_boolean_batch_can_be_composed ... ok
+test empty_shortcuts_preserve_invalid_operand_diagnostics_and_indices ... ok
+test holes_and_disconnected_components_survive_empty_composition ... ok
+test identity_regularizes_winding_multiplicity_and_cancellation ... ok
+test scalar_adapter_reuses_empty_composition_and_visible_errors ... ok
+test warming_then_mutating_an_operand_cannot_hide_invalid_topology ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 6 tests
+test bounds_and_positioning_propagate_policy_and_certainty ... ok
+test distributions_do_not_reuse_approximate_results_for_strict_calls ... ok
+test hulls_and_queries_accept_terminal_equality ... ok
+test polyhedron_and_loft_use_context_for_planarity_and_caps ... ok
+test scalar_mesh_booleans_expose_context_without_losing_certainty ... ok
+test transformation_policy_does_not_allow_collapsed_geometry ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+
+running 4 tests
+test context_booleans_preserve_input_errors ... ok
+test drill_cylinder_uses_the_requested_context ... ok
+test every_boolean_reports_approximation_without_affecting_later_strict_calls ... ok
+test rational_booleans_stay_certified_with_either_context ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test disjoint_distributions_preserve_every_native_copy ... ok
+test sampled_sphere_at_fifteen_degree_steps_has_a_certified_convex_hull ... ok
+test sphere_diameter_ray_reports_only_surface_hits ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.43s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 12 tests
+test all_native_primitive_families_expose_invalid_parameters ... ok
+test capacity_overflow_is_an_error_through_the_public_adapter ... ok
+test directed_negative_height_keeps_its_exact_solid ... ok
+test failed_construction_is_not_retained_and_does_not_poison_recovery ... ok
+test invalid_resolution_is_an_error_even_for_zero_radius ... ok
+test native_errors_remain_structured_through_adapters ... ok
+test negative_dimensions_are_errors_through_the_public_adapter ... ok
+test proven_degeneracies_are_composable_empty_sets ... ok
+test representable_counts_with_unrepresentable_byte_sizes_fail_before_allocation ... ok
+test stronger_scalar_proof_can_recover_the_same_constructor ... ok
+test undecided_dimensions_are_errors_through_the_public_adapter ... ok
+test zero_size_does_not_conceal_invalid_or_undecided_parameters ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 9 tests
+test all_active_caches_obey_their_limits_and_release_entries ... ok
+test approximate_distribution_cannot_satisfy_a_strict_request ... ok
+test each_distribution_family_preserves_geometry_and_certainty ... ok
+test every_cached_primitive_family_replays_the_same_exact_rows ... ok
+test fifo_hits_do_not_refresh_insertion_order ... ok
+test merge_keys_include_input_order_and_both_storage_identities ... ok
+test nested_scopes_shrink_immediately_and_restore_after_unwinding ... ok
+test primitives_preserve_scalar_structure_with_and_without_retention ... ok
+test workers_have_independent_policy_and_retained_storage ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 11 tests
+test a_vertex_at_infinity_is_a_typed_unbounded_result ... ok
+test adapter_preserves_the_native_validation_payload ... ok
+test canonical_empty_transforms_compose_and_mutated_indices_still_fail ... ok
+test exact_transforms_preserve_topology_volume_and_subsequent_composition ... ok
+test invalid_plane_does_not_become_empty_geometry ... ok
+test modeling_transforms_reject_invalid_indices ... ok
+test native_transforms_reject_invalid_indices ... ok
+test projective_triangle_cannot_cross_infinity_between_finite_vertices ... ok
+test separate_components_may_have_opposite_projective_scale_signs ... ok
+test singular_transform_is_a_failure_even_for_empty_input ... ok
+test unknown_transform_is_not_invalid_input_or_empty_success ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

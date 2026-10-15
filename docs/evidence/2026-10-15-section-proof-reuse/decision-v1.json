@@ -1,0 +1,25 @@
+{
+  "status": "kept",
+  "owning_layer": "CSGRS modeling composition",
+  "baseline_commit": "3a2d3fd1b",
+  "assessment": "assessment-v1.json",
+  "contract": "An exact equality of ordered directed segment indices and closed flags within one MeshSectionZ establishes the same winding input and source records under the same policy. Reuse its first proof. Native input classification and coplanar admission execute; unequal section lists retain their former path. No tolerances, predicate changes, alternate fill algorithm, cross-call key or new cache.",
+  "preserved": "25 independent semantic regressions; 43 byte-identical public snapshots; 512 exact cube dump variants per revision; unchanged native dependency bytes and compiled metadata; all 231 curve-only and 96 minimal Cargo tests; both all-target Clippy configurations deny warnings; workspace formatting.",
+  "cost": "Middle-section varied and disabled-cache medians improve 42.1% and 40.4%; allocation calls fall 43.6% (3300 to 1862), requested bytes fall 43.8%. All 9216 timed operations complete with matching exact rows, output sizes and checksums. Full 43-case corpus snapshots also complete three times per revision.",
+  "tradeoffs": [
+    "Bottom disabled median +2.8%; top varied +3.9%; top disabled +2.1%; all control samples retained. Other allocation counts and requested bytes are identical. No monotone or universal latency guarantee.",
+    "Middle-section retained-byte delta after 128 operations rises by 1376 bytes. Peak live allocation above warmup falls 3504 bytes. This does not bound total native memory.",
+    "CSGRS probe rlib grows 15304 bytes; the cost executable shrinks 2880 bytes. No shipped distribution size claim.",
+    "Shared unpinned host, three samples and allocator instrumentation. Full-corpus process wall approximately 0.067 seconds in both revisions, with overhead and slightly higher RSS range after; no corpus-wide speedup claimed."
+  ],
+  "rationale": "Preserve the exact completed contract first. The repeated middle-section cost reduction and reduced allocation work justify retaining this narrow reuse, with the smaller control-latency, retained-memory and archive-size costs explicitly accepted under the declared priority order. There is no fixture, policy, validation or provenance regression in the exercised domain.",
+  "interactions": "The signed-winding correctness repair remains intact. This only removes construction and proof of an identical second operand; Hypercurve already supports union idempotence. The 35 pending native files used by both versions are byte-identical and remain unadmitted; this decision does not admit them or any rejected prototype. The initial serialization-disabled probe compile failure is preserved.",
+  "limitations": [
+    "Shared unpinned host, three samples per case and allocation instrumentation. Short controls can vary. No universal or cross-library speedup claim; all unfavorable results retained.",
+    "Exact native library bytes are shared by both direct-rustc probe builds; separate Cargo tests cover feature isolation. Prior E4 timing used a different configuration and is not a matched cost baseline for this probe.",
+    "Operation-local certainty and exposed boundary evidence are preserved; this does not establish inherited mesh-construction provenance or analytic-surface fidelity.",
+    "No internal total-work, retained-byte or cancellation bounds. Trials use external 1800-second wall and 8 GiB per-process address-space containment.",
+    "Full workflow matrix, clean external release, broad strict completion and the 35 pending native files remain open. No push. Previously reproduced Hypercircuit fixture failures are not re-run here."
+  ],
+  "full_plan_complete": false
+}

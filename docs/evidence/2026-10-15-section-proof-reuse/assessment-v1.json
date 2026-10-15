@@ -1,0 +1,1875 @@
+{
+  "baseline_commit": "3a2d3fd1b",
+  "idea": "Reuse one signed-winding fill when both native one-sided section lists have identical directed segment indices and closure flags.",
+  "owning_layer": "CSGRS modeling composition; Hypermesh owns section records, Hypercurve owns winding proof and already supports union idempotence. No native algorithm, tolerance, policy, test or fixture changed.",
+  "properties": [
+    "P4",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P25",
+    "P27",
+    "P35",
+    "P36",
+    "P37",
+    "P39"
+  ],
+  "semantic_oracles": "Unchanged 25 regressions use independently derived exact area, membership and determinant volume, separate topology checks, invalid-input diagnostics, cancellation/multiplicity and cache/policy sequences. Cost probes independently prove square area, containment and every boundary edge. Snapshot agreement alone is not a semantic oracle.",
+  "phase_results": {
+    "baseline-v1": {
+      "passed": false,
+      "commands": 4,
+      "sha256": "ff82a0e8811a3b89e39d08d4b8adaaa7e266d5d3c7797dcdc7c0d50369309382"
+    },
+    "baseline-v2": {
+      "passed": true,
+      "commands": 6,
+      "sha256": "e5588ed3b33a49ad98416c6e83769562419352a90c919591e934f70886133e29"
+    },
+    "candidate-v1": {
+      "passed": true,
+      "commands": 7,
+      "sha256": "1ba30659da08ed6c93c56cc4e907e00bf45116717619bf0264005f78dba9bfb8"
+    },
+    "cargo-v1": {
+      "passed": true,
+      "commands": 5,
+      "sha256": "5ed8beb1f5332484d8804a6620df821a466daa038d07ac5c548ce1a0160f0bb2"
+    }
+  },
+  "compiled_dependency_identity": {
+    "passed": true,
+    "records": {
+      "baseline": {
+        "command": [
+          "rustc",
+          "-Zls=root",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/section-proof-reuse/baseline-v2/libcsgrs.rlib"
+        ],
+        "exit_code": 0,
+        "library_sha256": "140b80af3bd2c05ecaa6e019c5577086838f211fb212a8c57c3e46a2ea9cbe95",
+        "metadata_sha256": "ab6577d75e0a8424009832dfb6b9c4b72211f7b6dd58c6bd7020a5c1edb3b6c1"
+      },
+      "candidate": {
+        "command": [
+          "rustc",
+          "-Zls=root",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/section-proof-reuse/candidate-v1/libcsgrs.rlib"
+        ],
+        "exit_code": 0,
+        "library_sha256": "c076864f96fbe4cf2eec7ce7250c2a3666db2a57184e2f40eb534eeba14d4acf",
+        "metadata_sha256": "18d80a397b8c92b86376fa89782982ba5e4d15c28447640a92f8ea0477dcd440"
+      }
+    },
+    "claim": "The complete actual external-dependency metadata matches byte for byte, including crate names, encoded hashes, host hashes, kinds and visibility. Inputs also hash-guard the exact native library bytes and both source/command records. The CSGRS root library itself intentionally changes."
+  },
+  "tests_passed_failed_ignored": {
+    "baseline-v1/regressions": [
+      25,
+      0,
+      0
+    ],
+    "baseline-v2/regressions": [
+      25,
+      0,
+      0
+    ],
+    "candidate-v1/regressions": [
+      25,
+      0,
+      0
+    ],
+    "cargo-v1/curve-tests": [
+      231,
+      0,
+      0
+    ],
+    "cargo-v1/minimal-tests": [
+      96,
+      0,
+      0
+    ]
+  },
+  "baseline_harness_failure": "baseline-v1 passes all 25 regressions but cannot compile the JSON snapshot against serialization-disabled minimal native libraries. No runtime finding; trial retained. baseline-v2 and candidate-v1 directly compile the same CSGRS curve feature against identical serialization-enabled native paths/bytes. Cargo curve-only and minimal boundaries are independently validated in cargo-v1.",
+  "cost": {
+    "commands": 88,
+    "fresh_process_timing_samples": 72,
+    "completed_timed_operations": 9216,
+    "dump_variants_per_revision": 512,
+    "statistics": {
+      "slice_middle": {
+        "warm": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 8849.078125,
+              "samples": [
+                8849.078125,
+                7081.9296875,
+                9014.5390625
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 57.0,
+              "samples": [
+                57.0,
+                57.0,
+                57.0
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 8975.0,
+              "samples": [
+                8975.0,
+                8975.0,
+                8975.0
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 0,
+              "samples": [
+                0,
+                0,
+                0
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 4159,
+              "samples": [
+                4159,
+                4159,
+                4159
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 725.0,
+              "samples": [
+                725.0,
+                725.0,
+                725.0
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 8648.234375,
+              "samples": [
+                8648.234375,
+                8982.2734375,
+                7410.5
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 57.0,
+              "samples": [
+                57.0,
+                57.0,
+                57.0
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 8975.0,
+              "samples": [
+                8975.0,
+                8975.0,
+                8975.0
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 0,
+              "samples": [
+                0,
+                0,
+                0
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 4159,
+              "samples": [
+                4159,
+                4159,
+                4159
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 725.0,
+              "samples": [
+                725.0,
+                725.0,
+                725.0
+              ]
+            }
+          },
+          "median_latency_change_percent": -2.2696573265929887
+        },
+        "varied": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 313519.8984375,
+              "samples": [
+                317333.625,
+                305883.234375,
+                313519.8984375
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 3300.03125,
+              "samples": [
+                3300.03125,
+                3300.03125,
+                3300.03125
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 370358.15625,
+              "samples": [
+                370358.15625,
+                370358.15625,
+                370358.15625
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 272,
+              "samples": [
+                272,
+                272,
+                272
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 57496,
+              "samples": [
+                57496,
+                57496,
+                57496
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 181635.3515625,
+              "samples": [
+                181635.3515625,
+                179448.78125,
+                198931.8203125
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 1861.6328125,
+              "samples": [
+                1861.6328125,
+                1861.6328125,
+                1861.6328125
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 208153.96875,
+              "samples": [
+                208153.96875,
+                208153.96875,
+                208153.96875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 1648,
+              "samples": [
+                1648,
+                1648,
+                1648
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 53992,
+              "samples": [
+                53992,
+                53992,
+                53992
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "median_latency_change_percent": -42.06576601111368
+        },
+        "disabled": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 305607.0,
+              "samples": [
+                311073.5078125,
+                305607.0,
+                298602.09375
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 3300.03125,
+              "samples": [
+                3300.03125,
+                3300.03125,
+                3300.03125
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 370358.15625,
+              "samples": [
+                370358.15625,
+                370358.15625,
+                370358.15625
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 272,
+              "samples": [
+                272,
+                272,
+                272
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 61712,
+              "samples": [
+                61712,
+                61712,
+                61712
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 182083.1328125,
+              "samples": [
+                174657.3125,
+                182083.1328125,
+                184601.328125
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 1861.6328125,
+              "samples": [
+                1861.6328125,
+                1861.6328125,
+                1861.6328125
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 208153.96875,
+              "samples": [
+                208153.96875,
+                208153.96875,
+                208153.96875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 1648,
+              "samples": [
+                1648,
+                1648,
+                1648
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 58208,
+              "samples": [
+                58208,
+                58208,
+                58208
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "median_latency_change_percent": -40.41918777629439
+        }
+      },
+      "slice_bottom": {
+        "warm": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 7293.015625,
+              "samples": [
+                7293.015625,
+                7237.0,
+                8721.0390625
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 57.0,
+              "samples": [
+                57.0,
+                57.0,
+                57.0
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 8975.0,
+              "samples": [
+                8975.0,
+                8975.0,
+                8975.0
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 0,
+              "samples": [
+                0,
+                0,
+                0
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 4159,
+              "samples": [
+                4159,
+                4159,
+                4159
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 725.0,
+              "samples": [
+                725.0,
+                725.0,
+                725.0
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 7132.953125,
+              "samples": [
+                8703.703125,
+                7132.953125,
+                6991.859375
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 57.0,
+              "samples": [
+                57.0,
+                57.0,
+                57.0
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 8975.0,
+              "samples": [
+                8975.0,
+                8975.0,
+                8975.0
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 0,
+              "samples": [
+                0,
+                0,
+                0
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 4159,
+              "samples": [
+                4159,
+                4159,
+                4159
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 725.0,
+              "samples": [
+                725.0,
+                725.0,
+                725.0
+              ]
+            }
+          },
+          "median_latency_change_percent": -2.194736830829158
+        },
+        "varied": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 426634.484375,
+              "samples": [
+                426634.484375,
+                449168.6484375,
+                409034.8359375
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 4151.2421875,
+              "samples": [
+                4151.2421875,
+                4151.2421875,
+                4151.2421875
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 477184.21875,
+              "samples": [
+                477184.21875,
+                477184.21875,
+                477184.21875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3328,
+              "samples": [
+                3328,
+                3328,
+                3328
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 59906,
+              "samples": [
+                59906,
+                59906,
+                59906
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 421739.1171875,
+              "samples": [
+                422902.5546875,
+                421739.1171875,
+                413235.484375
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 4151.2421875,
+              "samples": [
+                4151.2421875,
+                4151.2421875,
+                4151.2421875
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 477184.21875,
+              "samples": [
+                477184.21875,
+                477184.21875,
+                477184.21875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3328,
+              "samples": [
+                3328,
+                3328,
+                3328
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 59906,
+              "samples": [
+                59906,
+                59906,
+                59906
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "median_latency_change_percent": -1.1474382326762678
+        },
+        "disabled": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 407211.9921875,
+              "samples": [
+                417873.8359375,
+                403085.3984375,
+                407211.9921875
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 4151.2421875,
+              "samples": [
+                4151.2421875,
+                4151.2421875,
+                4151.2421875
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 477184.21875,
+              "samples": [
+                477184.21875,
+                477184.21875,
+                477184.21875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3328,
+              "samples": [
+                3328,
+                3328,
+                3328
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 64978,
+              "samples": [
+                64978,
+                64978,
+                64978
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 418512.390625,
+              "samples": [
+                427776.671875,
+                418512.390625,
+                405535.7734375
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 4151.2421875,
+              "samples": [
+                4151.2421875,
+                4151.2421875,
+                4151.2421875
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 477184.21875,
+              "samples": [
+                477184.21875,
+                477184.21875,
+                477184.21875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3328,
+              "samples": [
+                3328,
+                3328,
+                3328
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 64978,
+              "samples": [
+                64978,
+                64978,
+                64978
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "median_latency_change_percent": 2.7750652373461415
+        }
+      },
+      "slice_top": {
+        "warm": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 9771.828125,
+              "samples": [
+                9446.3046875,
+                9771.828125,
+                10244.7578125
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 57.0,
+              "samples": [
+                57.0,
+                57.0,
+                57.0
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 8975.0,
+              "samples": [
+                8975.0,
+                8975.0,
+                8975.0
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 0,
+              "samples": [
+                0,
+                0,
+                0
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 4159,
+              "samples": [
+                4159,
+                4159,
+                4159
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 725.0,
+              "samples": [
+                725.0,
+                725.0,
+                725.0
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 9527.9453125,
+              "samples": [
+                9679.8046875,
+                9527.9453125,
+                9472.4765625
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 57.0,
+              "samples": [
+                57.0,
+                57.0,
+                57.0
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 8975.0,
+              "samples": [
+                8975.0,
+                8975.0,
+                8975.0
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 0,
+              "samples": [
+                0,
+                0,
+                0
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 4159,
+              "samples": [
+                4159,
+                4159,
+                4159
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 725.0,
+              "samples": [
+                725.0,
+                725.0,
+                725.0
+              ]
+            }
+          },
+          "median_latency_change_percent": -2.4957746839207706
+        },
+        "varied": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 266913.9609375,
+              "samples": [
+                284187.3828125,
+                266913.9609375,
+                261213.3359375
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 2168.5,
+              "samples": [
+                2168.5,
+                2168.5,
+                2168.5
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 239877.21875,
+              "samples": [
+                239877.21875,
+                239877.21875,
+                239877.21875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3600,
+              "samples": [
+                3600,
+                3600,
+                3600
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 60650,
+              "samples": [
+                60650,
+                60650,
+                60650
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 277355.1953125,
+              "samples": [
+                263842.296875,
+                277355.1953125,
+                288285.5390625
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 2168.5,
+              "samples": [
+                2168.5,
+                2168.5,
+                2168.5
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 239877.21875,
+              "samples": [
+                239877.21875,
+                239877.21875,
+                239877.21875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3600,
+              "samples": [
+                3600,
+                3600,
+                3600
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 60650,
+              "samples": [
+                60650,
+                60650,
+                60650
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "median_latency_change_percent": 3.9118352364659215
+        },
+        "disabled": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 266309.6171875,
+              "samples": [
+                266309.6171875,
+                269681.5,
+                260283.3203125
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 2168.5,
+              "samples": [
+                2168.5,
+                2168.5,
+                2168.5
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 239877.21875,
+              "samples": [
+                239877.21875,
+                239877.21875,
+                239877.21875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3600,
+              "samples": [
+                3600,
+                3600,
+                3600
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 65554,
+              "samples": [
+                65554,
+                65554,
+                65554
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 271936.1171875,
+              "samples": [
+                274226.96875,
+                271936.1171875,
+                255820.4140625
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 2168.5,
+              "samples": [
+                2168.5,
+                2168.5,
+                2168.5
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 239877.21875,
+              "samples": [
+                239877.21875,
+                239877.21875,
+                239877.21875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3600,
+              "samples": [
+                3600,
+                3600,
+                3600
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 65554,
+              "samples": [
+                65554,
+                65554,
+                65554
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "median_latency_change_percent": 2.1127663579789457
+        }
+      },
+      "flatten": {
+        "warm": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 9060.3984375,
+              "samples": [
+                9192.578125,
+                8622.140625,
+                9060.3984375
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 57.0,
+              "samples": [
+                57.0,
+                57.0,
+                57.0
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 8975.0,
+              "samples": [
+                8975.0,
+                8975.0,
+                8975.0
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 0,
+              "samples": [
+                0,
+                0,
+                0
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 4159,
+              "samples": [
+                4159,
+                4159,
+                4159
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 725.0,
+              "samples": [
+                725.0,
+                725.0,
+                725.0
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 8759.4765625,
+              "samples": [
+                8350.8359375,
+                8972.5078125,
+                8759.4765625
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 57.0,
+              "samples": [
+                57.0,
+                57.0,
+                57.0
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 8975.0,
+              "samples": [
+                8975.0,
+                8975.0,
+                8975.0
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 0,
+              "samples": [
+                0,
+                0,
+                0
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 4159,
+              "samples": [
+                4159,
+                4159,
+                4159
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 725.0,
+              "samples": [
+                725.0,
+                725.0,
+                725.0
+              ]
+            }
+          },
+          "median_latency_change_percent": -3.3212874364831113
+        },
+        "varied": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 621956.484375,
+              "samples": [
+                621956.484375,
+                640324.125,
+                611905.6875
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 5685.3515625,
+              "samples": [
+                5685.3515625,
+                5685.3515625,
+                5685.3515625
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 660911.71875,
+              "samples": [
+                660911.71875,
+                660911.71875,
+                660911.71875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3328,
+              "samples": [
+                3328,
+                3328,
+                3328
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 37129,
+              "samples": [
+                37129,
+                37129,
+                37129
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 609506.0078125,
+              "samples": [
+                605855.234375,
+                609506.0078125,
+                630323.40625
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 5685.3515625,
+              "samples": [
+                5685.3515625,
+                5685.3515625,
+                5685.3515625
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 660911.71875,
+              "samples": [
+                660911.71875,
+                660911.71875,
+                660911.71875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3328,
+              "samples": [
+                3328,
+                3328,
+                3328
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 37129,
+              "samples": [
+                37129,
+                37129,
+                37129
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "median_latency_change_percent": -2.001824384066264
+        },
+        "disabled": {
+          "baseline": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 655812.046875,
+              "samples": [
+                655812.046875,
+                644577.5078125,
+                662222.78125
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 5685.3515625,
+              "samples": [
+                5685.3515625,
+                5685.3515625,
+                5685.3515625
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 660911.71875,
+              "samples": [
+                660911.71875,
+                660911.71875,
+                660911.71875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3328,
+              "samples": [
+                3328,
+                3328,
+                3328
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 42353,
+              "samples": [
+                42353,
+                42353,
+                42353
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "candidate": {
+            "nanos": {
+              "unit": "per operation",
+              "median": 637999.28125,
+              "samples": [
+                668916.1484375,
+                637999.28125,
+                611734.8359375
+              ]
+            },
+            "allocations": {
+              "unit": "per operation",
+              "median": 5685.3515625,
+              "samples": [
+                5685.3515625,
+                5685.3515625,
+                5685.3515625
+              ]
+            },
+            "requested_bytes": {
+              "unit": "per operation",
+              "median": 660911.71875,
+              "samples": [
+                660911.71875,
+                660911.71875,
+                660911.71875
+              ]
+            },
+            "retained_byte_delta": {
+              "unit": "bytes per sample",
+              "median": 3328,
+              "samples": [
+                3328,
+                3328,
+                3328
+              ]
+            },
+            "peak_live_bytes_above_start": {
+              "unit": "bytes per sample",
+              "median": 42353,
+              "samples": [
+                42353,
+                42353,
+                42353
+              ]
+            },
+            "output_bytes": {
+              "unit": "per operation",
+              "median": 729.6875,
+              "samples": [
+                729.6875,
+                729.6875,
+                729.6875
+              ]
+            }
+          },
+          "median_latency_change_percent": -2.7161388251221275
+        }
+      }
+    },
+    "corpus_process_samples": {
+      "baseline": {
+        "process_wall_seconds": [
+          0.0675363577902317,
+          0.06766382930800319,
+          0.06741190608590841
+        ],
+        "maximum_rss_kib": [
+          11604,
+          11372,
+          11496
+        ]
+      },
+      "candidate": {
+        "process_wall_seconds": [
+          0.06774188298732042,
+          0.06737260892987251,
+          0.06750553008168936
+        ],
+        "maximum_rss_kib": [
+          11752,
+          11388,
+          11696
+        ]
+      }
+    },
+    "exact_rows": {
+      "slice_middle": {
+        "rows": 128,
+        "identical": true,
+        "baseline_sha256": "530e2c1675ec9b559cc7c412f0c0aa508ba8bc805d060365e760ad53f0ac4c41",
+        "candidate_sha256": "530e2c1675ec9b559cc7c412f0c0aa508ba8bc805d060365e760ad53f0ac4c41",
+        "bytes": [
+          93657,
+          93657
+        ]
+      },
+      "slice_bottom": {
+        "rows": 128,
+        "identical": true,
+        "baseline_sha256": "530e2c1675ec9b559cc7c412f0c0aa508ba8bc805d060365e760ad53f0ac4c41",
+        "candidate_sha256": "530e2c1675ec9b559cc7c412f0c0aa508ba8bc805d060365e760ad53f0ac4c41",
+        "bytes": [
+          93657,
+          93657
+        ]
+      },
+      "slice_top": {
+        "rows": 128,
+        "identical": true,
+        "baseline_sha256": "530e2c1675ec9b559cc7c412f0c0aa508ba8bc805d060365e760ad53f0ac4c41",
+        "candidate_sha256": "530e2c1675ec9b559cc7c412f0c0aa508ba8bc805d060365e760ad53f0ac4c41",
+        "bytes": [
+          93657,
+          93657
+        ]
+      },
+      "flatten": {
+        "rows": 128,
+        "identical": true,
+        "baseline_sha256": "3ebd44568244325518145fa6028ad8384198579c5a0785205b0259e66f0c2961",
+        "candidate_sha256": "3ebd44568244325518145fa6028ad8384198579c5a0785205b0259e66f0c2961",
+        "bytes": [
+          93657,
+          93657
+        ]
+      },
+      "0-baseline-corpus": {
+        "identical": true
+      },
+      "0-candidate-corpus": {
+        "identical": true
+      },
+      "1-candidate-corpus": {
+        "identical": true
+      },
+      "1-baseline-corpus": {
+        "identical": true
+      },
+      "2-baseline-corpus": {
+        "identical": true
+      },
+      "2-candidate-corpus": {
+        "identical": true
+      }
+    },
+    "artifacts": {
+      "target/section-proof-reuse/cost-v1/baseline": {
+        "sha256": "d075324a05cdf96fc8682a93fbd9704de0b7c709971b73b122a98a3f527650d8",
+        "bytes": 22351640
+      },
+      "target/section-proof-reuse/cost-v1/candidate": {
+        "sha256": "5207f2e2e42a87e1cdbbbd611e18c8c472249db4cf5f5de68a35d9c8b0eb94b9",
+        "bytes": 22348760
+      },
+      "target/section-proof-reuse/baseline-v2/libcsgrs.rlib": {
+        "sha256": "140b80af3bd2c05ecaa6e019c5577086838f211fb212a8c57c3e46a2ea9cbe95",
+        "bytes": 4517840
+      },
+      "target/section-proof-reuse/candidate-v1/libcsgrs.rlib": {
+        "sha256": "c076864f96fbe4cf2eec7ce7250c2a3666db2a57184e2f40eb534eeba14d4acf",
+        "bytes": 4533144
+      }
+    }
+  },
+  "snapshot": {
+    "inputs": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/baseline-v2/snapshot.stdout": {
+        "sha256": "e30944e6f7fed7b5c49ce96351c73d1e4a3db4e756a032a97f458a060d7df898",
+        "bytes": 344125
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/candidate-v1/snapshot.stdout": {
+        "sha256": "e30944e6f7fed7b5c49ce96351c73d1e4a3db4e756a032a97f458a060d7df898",
+        "bytes": 344125
+      }
+    },
+    "case_names_match": true,
+    "cases": {
+      "case cube-0: Certified": {
+        "identical": true,
+        "baseline_lines": 12,
+        "candidate_lines": 12
+      },
+      "case cube-1: Certified": {
+        "identical": true,
+        "baseline_lines": 12,
+        "candidate_lines": 12
+      },
+      "case cube-2: Certified": {
+        "identical": true,
+        "baseline_lines": 12,
+        "candidate_lines": 12
+      },
+      "case hollow-0: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case hollow-1: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case hollow-2: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case hollow-reversed-0: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case hollow-reversed-1: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case hollow-reversed-2: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case duplicate-0: Certified": {
+        "identical": true,
+        "baseline_lines": 12,
+        "candidate_lines": 12
+      },
+      "case duplicate-1: Certified": {
+        "identical": true,
+        "baseline_lines": 12,
+        "candidate_lines": 12
+      },
+      "case duplicate-2: Certified": {
+        "identical": true,
+        "baseline_lines": 12,
+        "candidate_lines": 12
+      },
+      "case cancelled-0: Certified": {
+        "identical": true,
+        "baseline_lines": 2,
+        "candidate_lines": 2
+      },
+      "case cancelled-1: Certified": {
+        "identical": true,
+        "baseline_lines": 2,
+        "candidate_lines": 2
+      },
+      "case cancelled-2: Certified": {
+        "identical": true,
+        "baseline_lines": 2,
+        "candidate_lines": 2
+      },
+      "case multiplicity-0: Certified": {
+        "identical": true,
+        "baseline_lines": 12,
+        "candidate_lines": 12
+      },
+      "case multiplicity-1: Certified": {
+        "identical": true,
+        "baseline_lines": 12,
+        "candidate_lines": 12
+      },
+      "case multiplicity-2: Certified": {
+        "identical": true,
+        "baseline_lines": 12,
+        "candidate_lines": 12
+      },
+      "case disconnected: Certified": {
+        "identical": true,
+        "baseline_lines": 42,
+        "candidate_lines": 42
+      },
+      "case shared-plane: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case touching: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case nested: Certified": {
+        "identical": true,
+        "baseline_lines": 12,
+        "candidate_lines": 12
+      },
+      "case empty: Certified": {
+        "identical": true,
+        "baseline_lines": 2,
+        "candidate_lines": 2
+      },
+      "case outside: Certified": {
+        "identical": true,
+        "baseline_lines": 2,
+        "candidate_lines": 2
+      },
+      "case unindexed: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-0: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-1: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-2: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-3: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-4: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-5: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-6: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-7: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-8: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-9: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-10: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-11: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-12: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-13: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-14: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case shuffled-15: Certified": {
+        "identical": true,
+        "baseline_lines": 22,
+        "candidate_lines": 22
+      },
+      "case benchmark-sphere: Certified": {
+        "identical": true,
+        "baseline_lines": 52,
+        "candidate_lines": 52
+      },
+      "case readme-frustum: Certified": {
+        "identical": true,
+        "baseline_lines": 28,
+        "candidate_lines": 28
+      }
+    },
+    "passed": true,
+    "scope": "Exact ordered boundary/profile endpoints, roles, area expressions, curve families, native-carrier availability, scalar parameter domains, arrangement-source flags and operation certainty. Shared-kernel agreement is not an independent set oracle; the separately executed 25 regressions and snapshot exact-area assertions establish those semantics. No analytic-fidelity or inherited mesh-provenance claim."
+  },
+  "implementation_sha256": {
+    "src/solid.rs": "1fb6e2a668bab6c41cf1462a7d64403af0bbf31ca677f0227029ecd99a9127ca"
+  },
+  "pending_native_sha256": {
+    "crates/hypercurve/src/bbox.rs": "c145ab30c68433690f8827b7de7cc9c30c1707a1cdb7793cb81e33b3dba0ae4c",
+    "crates/hypercurve/src/bezier.rs": "257dc8fb654fa86f7d2d47089bd5137f5a1f53d3336127e76baf4cf7d05b8840",
+    "crates/hypercurve/src/bezier_fit.rs": "cbba8129249d814c997629e7d8373a985b6bf9b77ab2774dff4afff1bed4d762",
+    "crates/hypercurve/src/bezier_region.rs": "6ea7d9bb3bd2fadc96cb8736b59fc66b5f576460eee83ee5fb306b43a227bb1e",
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/src/bezier_region/offset_spans.rs": "4c6ffb8e36b5dfd3d9d030c016d96af7964f9a9e56f1b9c1abbbf91553f29ee6",
+    "crates/hypercurve/src/bezier_region/point_location.rs": "2d915ac75cd5d7a61b3440fecf0f0ffae8c6c25687e5c4f382077f8de3908672",
+    "crates/hypercurve/src/bezier_region/tests.rs": "c78ab04298572d06d51eec08aa3201e392a6fb663a0b1a65d5ce81e5c06c6318",
+    "crates/hypercurve/src/classify.rs": "6997d26ebfe4c50d3abf7ed296cb9cc121ab70754421172e21693bde005e81df",
+    "crates/hypercurve/src/contour.rs": "a6ef94566c3c68d6311f7fc7bd47f55e129858cb4d381ec6a8acde157fe4141c",
+    "crates/hypercurve/src/curve.rs": "5e9e1457cd9c7f875f0c730ef8ea88ce2f78a8eab1cd93b8e59463f57327468d",
+    "crates/hypercurve/src/curve_intersection.rs": "2d5b2566186174ed2cfc53de0c276560bc647c6f9a39004ffedcdd90f91f78f4",
+    "crates/hypercurve/src/curve_region_boolean.rs": "5d0a87272791632d128731c4ed78971fdac5717b594f33bd8513389401606471",
+    "crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs": "385a1080d7972a08a5082bb6c47ad19e2cfcc1012b4f6c45bfd618796b848344",
+    "crates/hypercurve/src/curve_region_boolean/regularization.rs": "5a542169b7e0dfe99e520da867a907303485a56b03b13491af4970044e9ca866",
+    "crates/hypercurve/src/offset.rs": "b83ee4f648f9ae4b0bcfc5b52f2553eaaf87f1c57c67e340d9ab101053bcffda",
+    "crates/hypercurve/src/policy.rs": "abbadb4d1345eb2ccdf50df57337e991abb999e479067851c5bb2e75f9f34202",
+    "crates/hypercurve/src/rational_bezier_general.rs": "372d81688c5c6e061ad62cff408dd974c7f4bc771dccb19389823e6edd8886ef",
+    "crates/hypercurve/src/segment.rs": "d253abef3276d8b56a99ad9a7273227d3c823b6f01a7b01a0ce3959b32057213",
+    "crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs": "ef2d56e6e5dcec355eb776a8218fba2c797db5b14eda9c1e2dd5ec79224b4fd0",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b",
+    "crates/hyperdrc/README.md": "3af373486b7b51887db4cbfd17b50c7f01c2c64b018a342b3ac970484c0acd9d",
+    "crates/hyperdrc/src/checks/area_tolerance.rs": "d659ed532de0f81477afaa00df6521f4625bb7ddf4af3e08d158f8300cc00d5b",
+    "crates/hyperdrc/src/checks/differential.rs": "90e491f2578abdb07a7c922058d0b579c1cbb1f3ccea872ffcdb9deb373a6951",
+    "crates/hyperdrc/src/checks/layer.rs": "df442cd2614061fadcb0a5a8019410aa36afa9999a5ccf128d91e52cd1ef6f06",
+    "crates/hyperdrc/src/checks/mod.rs": "7f085ea070136481b6a1550f1589ddf15d4dfec657e68679059a05fc93f05ca1",
+    "crates/hyperdrc/src/geometry.rs": "18826a139f20f4fa047ecf83b864ad8311c26e0965835d8df0c42412fdd37fc2",
+    "crates/hyperdrc/src/geometry/README.md": "f8145f2c515a5b35b70815c7b68d8fc50e893f9d41072d0913d00b22133c2eb0",
+    "crates/hyperdrc/src/geometry/primitives.rs": "a753ce71223326c4b1d92467ec64ce2ad1a7528bd2c3822135a62e0990b13070",
+    "crates/hyperdrc/src/geometry/stroke.rs": "193422c60cd9a6e86efb7d8f61cfd9baae4e7ce130d136a881c1150d270e212f",
+    "crates/hyperdrc/src/kicad.rs": "598c62dfddbb7cbc8840b5a31b02ddcb408b4e35771ee33d03994084ccd16f59",
+    "crates/hyperdrc/src/kicad/README.md": "01e8aca6832bce80152306ad74cfb20fae6ef7258ed833ff1c6692e842c204a7",
+    "crates/hyperdrc/src/kicad/tracks.rs": "6ea5c63821f0f79b7f548bdaf613e9fdce273dc42be5d2597070f7195f2ba227",
+    "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+    "crates/hyperdrc/tests/native_linear_strokes.rs": "84f86db87c666e019b54bad7bff57cbbb290fe23960cc891966134cddd0a7b74"
+  },
+  "limitations": [
+    "Shared unpinned host, three samples per case and allocation instrumentation. Short controls can vary. No universal or cross-library speedup claim; all unfavorable results retained.",
+    "Exact native library bytes are shared by both direct-rustc probe builds; separate Cargo tests cover feature isolation. Prior E4 timing used a different configuration and is not a matched cost baseline for this probe.",
+    "Operation-local certainty and exposed boundary evidence are preserved; this does not establish inherited mesh-construction provenance or analytic-surface fidelity.",
+    "No internal total-work, retained-byte or cancellation bounds. Trials use external 1800-second wall and 8 GiB per-process address-space containment.",
+    "Full workflow matrix, clean external release, broad strict completion and the 35 pending native files remain open. No push. Previously reproduced Hypercircuit fixture failures are not re-run here."
+  ],
+  "full_plan_complete": false
+}

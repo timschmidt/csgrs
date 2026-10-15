@@ -1,0 +1,14 @@
+{
+  "runner_sha256": "e62adac415a8d902bdc77b678732af7731a330d949595ad3a07e85602b00a8b6",
+  "manifest_sha256": "39f905bbad7fe6d8863bdb050436625ca2cac08526a4a4525c254082a3ee34d4",
+  "linked_paths": 1351,
+  "duplicate_bytes_consolidated": 639541488,
+  "protected_artifacts_verified": 8539,
+  "all_prior_link_manifests_verified": [
+    "docs/evidence/2026-10-15-slice-projection-contract/linked-compiler-duplicates-v1.json.gz",
+    "docs/evidence/2026-10-15-slice-projection-contract/linked-compiler-duplicates-v2.json.gz",
+    "docs/evidence/2026-10-15-section-proof-reuse/linked-compiler-duplicates-v1.json.gz",
+    "docs/evidence/2026-10-15-section-proof-reuse/linked-compiler-duplicates-v2.json.gz"
+  ],
+  "scope": "Closed non-executable compiler artifacts only; all paths and bytes preserved. Reconciles the ineffective v2 linking order and verifies every old alias relationship. New mutable trials still require independent inodes."
+}

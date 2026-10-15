@@ -1,0 +1,11 @@
+{
+  "target/section-proof-reuse/baseline-v2/snapshot": "306ac00b66db12281fc792e6b6b45e7e7911a34e0a173376a23b5ca0912319d1",
+  "target/section-proof-reuse/baseline-v2/libcsgrs.rlib": "140b80af3bd2c05ecaa6e019c5577086838f211fb212a8c57c3e46a2ea9cbe95",
+  "target/section-proof-reuse/baseline-v2/regressions": "da93d0073416106f398efce08a5d6581654a9247d8f2506b675548f2735c5cfc",
+  "target/section-proof-reuse/candidate-v1/snapshot": "16bfe193a987e89d306d74b9d5cd5754da79051d0be8654e4684dfdcef8b3bf6",
+  "target/section-proof-reuse/candidate-v1/libcsgrs.rlib": "c076864f96fbe4cf2eec7ce7250c2a3666db2a57184e2f40eb534eeba14d4acf",
+  "target/section-proof-reuse/candidate-v1/regressions": "429a08115d88fde1309975b741822d0780e7797a7cf288ca4a926e10318c66d4",
+  "docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs": "6209d3b48effeb5d6ecd6e7336da081707d4dfd21ed551d115f04e16a7a4a797",
+  "docs/evidence/2026-10-15-section-proof-reuse/validate_v1.py": "d8a540024874afdbd29fe0a048925b67ceb6feb7099e922f8f8c7630100a1408",
+  "docs/evidence/2026-10-15-section-proof-reuse/cargo-v1.json": "183d474a5b5f7b771efe74ba7ef68c401604b17d87fa03e29639ff4f495da469"
+}

@@ -1,0 +1,23 @@
+	Command being timed: "rustc --edition=2024 -C opt-level=3 -D warnings --extern csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v4/release/deps/libcsgrs.rlib --extern hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v4/release/deps/libhypercurve-f7214a8040d64bde.rlib --extern hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v4/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib -L dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v4/release/deps --test --cfg feature="curve" /home/tim/Documents/GitHub/workspace/csgrs/tests/slice_projection_contract.rs -o /home/tim/Documents/GitHub/workspace/csgrs/target/section-proof-reuse/baseline-v1/regressions"
+	User time (seconds): 4.46
+	System time (seconds): 0.44
+	Percent of CPU this job got: 314%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.55
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 250276
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 2876
+	Minor (reclaiming a frame) page faults: 93747
+	Voluntary context switches: 4923
+	Involuntary context switches: 1460
+	Swaps: 0
+	File system inputs: 265120
+	File system outputs: 55728
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

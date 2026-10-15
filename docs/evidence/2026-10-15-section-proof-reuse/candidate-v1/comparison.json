@@ -1,0 +1,232 @@
+{
+  "inputs": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/baseline-v2/snapshot.stdout": {
+      "sha256": "e30944e6f7fed7b5c49ce96351c73d1e4a3db4e756a032a97f458a060d7df898",
+      "bytes": 344125
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/candidate-v1/snapshot.stdout": {
+      "sha256": "e30944e6f7fed7b5c49ce96351c73d1e4a3db4e756a032a97f458a060d7df898",
+      "bytes": 344125
+    }
+  },
+  "case_names_match": true,
+  "cases": {
+    "case cube-0: Certified": {
+      "identical": true,
+      "baseline_lines": 12,
+      "candidate_lines": 12
+    },
+    "case cube-1: Certified": {
+      "identical": true,
+      "baseline_lines": 12,
+      "candidate_lines": 12
+    },
+    "case cube-2: Certified": {
+      "identical": true,
+      "baseline_lines": 12,
+      "candidate_lines": 12
+    },
+    "case hollow-0: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case hollow-1: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case hollow-2: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case hollow-reversed-0: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case hollow-reversed-1: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case hollow-reversed-2: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case duplicate-0: Certified": {
+      "identical": true,
+      "baseline_lines": 12,
+      "candidate_lines": 12
+    },
+    "case duplicate-1: Certified": {
+      "identical": true,
+      "baseline_lines": 12,
+      "candidate_lines": 12
+    },
+    "case duplicate-2: Certified": {
+      "identical": true,
+      "baseline_lines": 12,
+      "candidate_lines": 12
+    },
+    "case cancelled-0: Certified": {
+      "identical": true,
+      "baseline_lines": 2,
+      "candidate_lines": 2
+    },
+    "case cancelled-1: Certified": {
+      "identical": true,
+      "baseline_lines": 2,
+      "candidate_lines": 2
+    },
+    "case cancelled-2: Certified": {
+      "identical": true,
+      "baseline_lines": 2,
+      "candidate_lines": 2
+    },
+    "case multiplicity-0: Certified": {
+      "identical": true,
+      "baseline_lines": 12,
+      "candidate_lines": 12
+    },
+    "case multiplicity-1: Certified": {
+      "identical": true,
+      "baseline_lines": 12,
+      "candidate_lines": 12
+    },
+    "case multiplicity-2: Certified": {
+      "identical": true,
+      "baseline_lines": 12,
+      "candidate_lines": 12
+    },
+    "case disconnected: Certified": {
+      "identical": true,
+      "baseline_lines": 42,
+      "candidate_lines": 42
+    },
+    "case shared-plane: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case touching: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case nested: Certified": {
+      "identical": true,
+      "baseline_lines": 12,
+      "candidate_lines": 12
+    },
+    "case empty: Certified": {
+      "identical": true,
+      "baseline_lines": 2,
+      "candidate_lines": 2
+    },
+    "case outside: Certified": {
+      "identical": true,
+      "baseline_lines": 2,
+      "candidate_lines": 2
+    },
+    "case unindexed: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-0: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-1: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-2: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-3: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-4: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-5: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-6: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-7: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-8: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-9: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-10: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-11: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-12: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-13: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-14: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case shuffled-15: Certified": {
+      "identical": true,
+      "baseline_lines": 22,
+      "candidate_lines": 22
+    },
+    "case benchmark-sphere: Certified": {
+      "identical": true,
+      "baseline_lines": 52,
+      "candidate_lines": 52
+    },
+    "case readme-frustum: Certified": {
+      "identical": true,
+      "baseline_lines": 28,
+      "candidate_lines": 28
+    }
+  },
+  "passed": true,
+  "scope": "Exact ordered boundary/profile endpoints, roles, area expressions, curve families, native-carrier availability, scalar parameter domains, arrangement-source flags and operation certainty. Shared-kernel agreement is not an independent set oracle; the separately executed 25 regressions and snapshot exact-area assertions establish those semantics. No analytic-fidelity or inherited mesh-provenance claim."
+}

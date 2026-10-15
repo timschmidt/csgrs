@@ -2219,8 +2219,21 @@ pub fn slice_z_with_context(
         }
         points
     };
+    // Equal directed segment records refer to the same native points and
+    // sources under this policy. Reuse their winding proof: union(A, A) = A.
+    let identical_limits = section.above.len() == section.below.len()
+        && section
+            .above
+            .iter()
+            .zip(&section.below)
+            .all(|(above, below)| {
+                above.closed == below.closed && above.segments == below.segments
+            });
     let mut region = CurveRegion2::empty();
-    for chains in [&section.above, &section.below] {
+    for chains in [&section.above, &section.below]
+        .into_iter()
+        .take(if identical_limits { 1 } else { 2 })
+    {
         let contours = chains
             .iter()
             .map(|chain| {

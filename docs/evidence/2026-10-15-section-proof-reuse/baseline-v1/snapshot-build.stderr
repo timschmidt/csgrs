@@ -1,0 +1,93 @@
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:21:34
+   |
+21 |                 edge.start().x().to_json(),
+   |                                  ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:22:34
+   |
+22 |                 edge.start().y().to_json(),
+   |                                  ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:23:32
+   |
+23 |                 edge.end().x().to_json(),
+   |                                ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:24:32
+   |
+24 |                 edge.end().y().to_json()
+   |                                ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for struct `csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:34:55
+   |
+34 |         region.filled_area().unwrap().map(|area| area.to_json())
+   |                                                       ^^^^^^^ method not found in `csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:53:38
+   |
+53 |                     .map(|(a, b)| (a.to_json(), b.to_json())),
+   |                                      ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:53:51
+   |
+53 |                     .map(|(a, b)| (a.to_json(), b.to_json())),
+   |                                                   ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:54:27
+   |
+54 |                 start.x().to_json(),
+   |                           ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:55:27
+   |
+55 |                 start.y().to_json(),
+   |                           ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:56:25
+   |
+56 |                 end.x().to_json(),
+   |                         ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:57:25
+   |
+57 |                 end.y().to_json()
+   |                         ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:70:38
+   |
+70 |                     edge.start().x().to_json(),
+   |                                      ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:71:38
+   |
+71 |                     edge.start().y().to_json(),
+   |                                      ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:72:36
+   |
+72 |                     edge.end().x().to_json(),
+   |                                    ^^^^^^^ method not found in `&csgrs::Real`
+
+error[E0599]: no method named `to_json` found for reference `&csgrs::Real` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-section-proof-reuse/section_snapshot_v1.rs:73:36
+   |
+73 |                     edge.end().y().to_json()
+   |                                    ^^^^^^^ method not found in `&csgrs::Real`
+
+error: aborting due to 15 previous errors
+
+For more information about this error, try `rustc --explain E0599`.

@@ -1,0 +1,30 @@
+
+running 25 tests
+test approximate_slice_never_certifies_a_later_strict_request ... ok
+test cache_states_and_mutation_preserve_section_meaning ... ok
+test canonical_empty_and_outside_slices_remain_consumable ... ok
+test contextual_invalid_indices_preserve_the_native_diagnostic ... ok
+test coplanar_bottom_slice_keeps_hole_and_composes ... ok
+test coplanar_top_slice_keeps_hole_and_composes ... ok
+test disconnected_hollow_components_preserve_both_voids ... ok
+test duplicate_material_shells_do_not_cancel ... ok
+test face_permutation_and_global_reversal_preserve_hollow_set ... ok
+test hollow_interior_slice_keeps_hole_and_composes ... ok
+test independent_position_rows_preserve_the_same_section ... ok
+test interleaved_opposite_faces_preserve_winding_after_permutation ... ok
+test malformed_projection_is_an_error_not_empty_geometry ... ok
+test malformed_slice_is_an_error_not_empty_geometry ... ok
+test nested_material_shells_do_not_become_parity_holes ... ok
+test open_triangle_intersection_remains_an_open_wire ... ok
+test opposite_shells_cancel_interior_and_coplanar_sections ... ok
+test projection_of_hollow_prism_keeps_void ... ok
+test shared_on_plane_edges_do_not_change_hole_winding ... ok
+test shuffled_coincident_shell_faces_preserve_signed_set ... ok
+test signed_multiplicity_is_preserved_interior_and_coplanar ... ok
+test thread_local_cache_modes_preserve_hollow_sections ... ok
+test undecided_projection_is_an_error_not_empty_geometry ... ok
+test undecided_slice_is_an_error_not_empty_geometry ... ok
+test vertex_touching_components_retain_both_material_regions ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--reflink=auto",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v4/release",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/section-proof-reuse/cargo-v1/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "d8a540024874afdbd29fe0a048925b67ceb6feb7099e922f8f8c7630100a1408",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

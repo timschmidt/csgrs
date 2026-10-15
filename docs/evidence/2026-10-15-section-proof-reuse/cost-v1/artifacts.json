@@ -1,0 +1,18 @@
+{
+  "target/section-proof-reuse/cost-v1/baseline": {
+    "sha256": "d075324a05cdf96fc8682a93fbd9704de0b7c709971b73b122a98a3f527650d8",
+    "bytes": 22351640
+  },
+  "target/section-proof-reuse/cost-v1/candidate": {
+    "sha256": "5207f2e2e42a87e1cdbbbd611e18c8c472249db4cf5f5de68a35d9c8b0eb94b9",
+    "bytes": 22348760
+  },
+  "target/section-proof-reuse/baseline-v2/libcsgrs.rlib": {
+    "sha256": "140b80af3bd2c05ecaa6e019c5577086838f211fb212a8c57c3e46a2ea9cbe95",
+    "bytes": 4517840
+  },
+  "target/section-proof-reuse/candidate-v1/libcsgrs.rlib": {
+    "sha256": "c076864f96fbe4cf2eec7ce7250c2a3666db2a57184e2f40eb534eeba14d4acf",
+    "bytes": 4533144
+  }
+}
