@@ -1,0 +1,2 @@
+segments=16 context=GeometryContext { predicates: PredicatePolicy(0) } body_faces=12 drill_faces=64
+outcome=PredicateUndecided { predicate: "3D coordinate equality" }

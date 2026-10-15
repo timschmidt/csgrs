@@ -1,0 +1,27 @@
+{
+  "commands": [
+    {
+      "name": "workspace-fmt",
+      "exit_code": 0,
+      "seconds": 12.24615257466212,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "03cf86fc824921ae5a4e08d8714638773096fb2a895eb8aaf3cc13ea61264fc5"
+    },
+    {
+      "name": "scalar-default",
+      "exit_code": 101,
+      "seconds": 61.382200457155704,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v1/release/deps/hyperreal-4234254b1d45f4c0": "9bd9f721074c5fe6b6d32e497d6e7277dbdb90b2dd2e5d0c66beeefa44bc125d"
+      },
+      "stdout_sha256": "3266ccf0c36f6eff458e09cfc04f31cf6f2dc9d699e29899262bc899a4c10b0d",
+      "stderr_sha256": "6c829775b62fe483ae4c37ef229ca9ee6a4e11fae7ee60c2478d0d1ce104bbfb",
+      "resources_sha256": "c55b0c7897ac978437314f9d91c14751a15ed7b294292688bbb1e89fc9b77ae5"
+    }
+  ],
+  "passed": false
+}

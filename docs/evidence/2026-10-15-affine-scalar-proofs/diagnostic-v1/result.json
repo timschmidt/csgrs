@@ -1,0 +1,75 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.849219239782542,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "bab5669069c50c756ad371a2552fd09e39c18c442eeb475d34833b2e76c6dd52"
+    },
+    {
+      "name": "native-build",
+      "exit_code": 0,
+      "seconds": 6.019582039210945,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "68a6a22da7bdbc4b646f20bd56c3f3246f5197f971bf875d4cb67d57b2cac64a"
+    },
+    {
+      "name": "physics-build",
+      "exit_code": 0,
+      "seconds": 3.2747553195804358,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "6de31b25d732088193252b05d02c7fd7465cd32d6e722366c971b69a983e1cb4"
+    },
+    {
+      "name": "root-build",
+      "exit_code": 0,
+      "seconds": 4.922108585014939,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "c73f2d0e385e12250b4430e2101c819f8e64d4234298de20b2e9e35349bd508f"
+    },
+    {
+      "name": "probe-build",
+      "exit_code": 0,
+      "seconds": 2.3963839882053435,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "b5a05c2dded95d73f1c099473e955da715dc05395ce35dde44e47781036c5560"
+    },
+    {
+      "name": "drill-16-strict",
+      "exit_code": 0,
+      "seconds": 2.0104767377488315,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "ec81443088bdabf57ab283f6c4722c3185f863f100df3d414cd076921adbc6d2",
+      "stderr_sha256": "2d2476fff241b41cbd7bf0870287f7511c611801f2727fa55b5b5277fd5c0691",
+      "resources_sha256": "97cb533726317a7acab147736ce109b8b841d7c15cec445f220b37d59fd4ea04"
+    },
+    {
+      "name": "drill-32-strict",
+      "exit_code": 0,
+      "seconds": 2.1468933620490134,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "90ed952e4238e844368d497c2f4e8d3b4d1b89cc2baf6eaaa18b3c45468a114e",
+      "stderr_sha256": "3ba8850bdc0ff635061795d9e095e79ed0b3aaf7f1c86059cb4cc4dfdee0118a",
+      "resources_sha256": "548683a019e9a1273e5ac5f1e19ba14e75b7b4757781917592aecf6f8cf088b5"
+    }
+  ],
+  "passed": true
+}

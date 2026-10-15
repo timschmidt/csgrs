@@ -73,13 +73,24 @@ impl Real {
     ///
     /// Unlike [`Real::exact_rational`], this query may inspect a retained
     /// rational/π/quadratic expression or cancel structurally identical opaque
-    /// nonlinear atoms in a bounded affine form. It never approximates: `None`
-    /// means only that the bounded normal form does not cover the expression.
+    /// atoms in a rational polynomial. It never approximates: `None` means only
+    /// that recognition did not establish a rational value. Polynomial expansion
+    /// has separate node, depth, term, degree, coefficient and work limits;
+    /// these do not bound the existing structural comparisons or the entire
+    /// query's heap use. A declined attempt is not retained as negative evidence.
+    /// The polynomial fallback permits 512 node visits, depth 64, 32 atoms,
+    /// 64 monomials, degree 8 and 4096 stored coefficient bits. Its 8192 work
+    /// charges count node visits, coefficient operations, term insertion and
+    /// structural comparisons; one comparison can inspect a larger opaque DAG.
     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
         if let Some(rational) = self.exact_rational() {
             return Some(rational);
         }
-        Some(self.computable_ref().bounded_laurent_rational(64)? * &self.rational)
+        let computable = self.computable_ref();
+        let rational = computable
+            .bounded_laurent_rational(64)
+            .or_else(|| computable.bounded_ring_rational())?;
+        Some(rational * &self.rational)
     }
 
     /// Returns `(a, b, d)` when bounded symbolic normalization proves that

@@ -1,0 +1,17 @@
+--- crates/hypermesh/src/predicate.rs
++++ diagnostic-v1-source/predicate.rs
+@@ -588,7 +588,13 @@
+         match decisions.probe(hyperlimit::compare_reals(left, right, decisions.policy())) {
+             Some(Ordering::Equal) => {}
+             Some(_) => return Ok(false),
+-            None => saw_unknown = true,
++            None => {
++                eprintln!("unresolved_coordinate_left={left:?}");
++                eprintln!("unresolved_coordinate_right={right:?}");
++                eprintln!("unresolved_coordinate_difference={:?}", left - right);
++                eprintln!("{}", std::backtrace::Backtrace::force_capture());
++                saw_unknown = true;
++            },
+         }
+     }
+     if saw_unknown {

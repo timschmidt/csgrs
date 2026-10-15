@@ -86,3 +86,21 @@ fn a_proved_identity_survives_precision_changes_and_concurrent_queries() {
         }
     });
 }
+
+#[cfg(feature = "serde")]
+#[test]
+fn a_polynomial_proof_preserves_the_authoritative_serialized_expression() {
+    let value = affine_residual();
+    let before = serde_json::to_string(&value).unwrap();
+    assert_eq!(value.exact_rational_normal_form(), Some(Rational::zero()));
+    assert_eq!(serde_json::to_string(&value).unwrap(), before);
+    let restored: Real = serde_json::from_str(&before).unwrap();
+    assert_eq!(
+        restored.exact_rational_normal_form(),
+        Some(Rational::zero())
+    );
+    assert_eq!(
+        restored.certified_sign_until(0).sign(),
+        Some(RealSign::Zero)
+    );
+}

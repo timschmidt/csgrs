@@ -1,0 +1,10 @@
+
+running 5 tests
+test affine_plane_identity_has_an_exact_rational_proof ... ok
+test a_proved_identity_survives_precision_changes_and_concurrent_queries ... ok
+test exact_displacements_survive_affine_cancellation ... ok
+test an_unproved_trigonometric_relation_is_not_a_ring_proof ... ok
+test independently_rebuilt_atoms_obey_distributivity ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

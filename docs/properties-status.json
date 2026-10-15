@@ -9302,6 +9302,26 @@
       ],
       "next_step": "Extend the scalar proof of the captured affine coplanarity identity under a declared resource contract, preserving original 16/32-segment fixtures, all certified controls and genuine undecided/approximate outcomes. This scalar unit does not deliver strict drilling.",
       "full_plan_complete": false
+    },
+    "affine_scalar_proof_work": {
+      "status": "candidate: polynomial proof tests pass; quotient frontier and full admission remain open",
+      "baseline_commit": "c35179831",
+      "progress": "docs/evidence/2026-10-15-affine-scalar-proofs/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-affine-scalar-proofs/scalar-and-drill-v2/result.json",
+      "diagnosis": "docs/evidence/2026-10-15-affine-scalar-proofs/coordinate-algebra-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-affine-scalar-proofs/checkpoint-v1.json",
+      "implementation_sha256": {
+        "crates/hyperreal/src/computable/node.rs": "a5ebefe11ed3134bdeb94f12e9ab537b105d208003f74e73f02ebe954f99241b",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "3354960258e06e4f1ec91388edb24b2f46f48ab02f9ec50a8bb06d79bc214dd5",
+        "crates/hyperreal/src/computable/node/ring_polynomial_tests.rs": "6f1d61fcd80886129fc83ff7698f8d9d98b32b17530aa90158698bf9275c2963",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "96ef44fc7ece7126ea6fff87e84b76029602a20689c8d4289ebf7928233a9161",
+        "crates/hyperreal/tests/affine_polynomial_cancellation.rs": "c26c3ddf35169a24d2f49772793b5835d811d816d7563c710483f9911370f166"
+      },
+      "qualification": "15 commands pass; 895 default and 1001 all-feature scalar results, strict scalar Clippy, formatting, 28 doctests, CSGRS curve build and eight original drill observations. Configurations overlap; probe success is not strict geometry completion.",
+      "workflow": "8/24 segments remain Certified. 16/32 strict now stop at 3D coordinate equality; approximate results remain qualified. No full-drill completion or exact-volume claim.",
+      "remaining": "Prove quotient identities with nonzero-denominator evidence, preserve prior successful proof domains, run semantic/topology/repeated-composition acceptance, broad downstream checks and matched completed-contract costs before retention.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
     }
   },
   "status_meanings": {

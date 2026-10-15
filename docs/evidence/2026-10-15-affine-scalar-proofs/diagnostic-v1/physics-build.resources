@@ -1,0 +1,23 @@
+	Command being timed: "rustc --crate-name hyperphysics --crate-type rlib --edition=2024 -C opt-level=3 -C debuginfo=1 -C force-frame-pointers=yes -D warnings /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics/src/lib.rs -L dependency=/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps -L dependency=/tmp/csgrs-affine-scalar-proofs/diagnostic-v1 -o /tmp/csgrs-affine-scalar-proofs/diagnostic-v1/libhyperphysics.rlib --extern hyperreal=/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/libhyperreal-bd1ab828184ac69a.rlib --extern hyperlattice=/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/libhyperlattice-5ffa110827bfce9d.rlib --extern hyperlimit=/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/libhyperlimit-6781fa9073ad42e6.rlib --extern hypersolve=/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/libhypersolve-6a859fb6248d7ef3.rlib --extern hypermesh=/tmp/csgrs-affine-scalar-proofs/diagnostic-v1/libhypermesh.rlib"
+	User time (seconds): 4.50
+	System time (seconds): 0.27
+	Percent of CPU this job got: 342%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.39
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 274684
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 97431
+	Voluntary context switches: 170
+	Involuntary context switches: 574
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

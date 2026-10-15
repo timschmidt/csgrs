@@ -1,0 +1,10 @@
+{
+  "failed_trial": "scalar-and-drill-v1",
+  "retry": "scalar-and-drill-v2",
+  "failure": "The new resource test incorrectly required a process-wide pi cache to be empty after other scalar tests had warmed it.",
+  "correction": "Retain the pi resource-limit case and the exact same caps. Also exercise a fresh private sine node, and require its cache to remain empty. Production code, mathematical assertions, unsupported control and all prior fixtures remain unchanged.",
+  "previous_result": {
+    "passed": 784,
+    "failed": 1
+  }
+}

@@ -1,0 +1,314 @@
+{
+  "scope": "Independent diagnostic rational-function identities, conditional on proving each denominator nonzero. No transcendental identities or completed-geometry claim.",
+  "records": [
+    {
+      "segments": 16,
+      "coordinate_index": 0,
+      "arithmetic_visits": 303,
+      "operations": {
+        "Multiply": 33,
+        "Q": 1,
+        "Add": 73,
+        "Int": 62,
+        "Negate": 66,
+        "Offset": 22,
+        "PrescaledSin": 22,
+        "Constant": 22,
+        "Inverse": 2
+      },
+      "zero_numerator": true,
+      "numerator": [],
+      "denominator": [
+        {
+          "powers_as_atom_ids": [
+            0,
+            0
+          ],
+          "coefficient": "20736"
+        },
+        {
+          "powers_as_atom_ids": [
+            0,
+            2
+          ],
+          "coefficient": "-41472"
+        },
+        {
+          "powers_as_atom_ids": [
+            2,
+            2
+          ],
+          "coefficient": "20736"
+        }
+      ],
+      "nonzero_denominator_obligations": [
+        [
+          {
+            "powers_as_atom_ids": [
+              0
+            ],
+            "coefficient": "144"
+          },
+          {
+            "powers_as_atom_ids": [
+              2
+            ],
+            "coefficient": "-144"
+          }
+        ],
+        [
+          {
+            "powers_as_atom_ids": [
+              0
+            ],
+            "coefficient": "144"
+          },
+          {
+            "powers_as_atom_ids": [
+              2
+            ],
+            "coefficient": "-144"
+          }
+        ]
+      ],
+      "opaque_atoms": {
+        "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 0,
+        "[\"Constant\",[\"Sqrt2\"]]": 1,
+        "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 2
+      },
+      "source_sha256": "2d2476fff241b41cbd7bf0870287f7511c611801f2727fa55b5b5277fd5c0691"
+    },
+    {
+      "segments": 16,
+      "coordinate_index": 1,
+      "arithmetic_visits": 303,
+      "operations": {
+        "Multiply": 33,
+        "Q": 1,
+        "Add": 73,
+        "Int": 62,
+        "Negate": 66,
+        "Offset": 22,
+        "PrescaledSin": 22,
+        "Constant": 22,
+        "Inverse": 2
+      },
+      "zero_numerator": true,
+      "numerator": [],
+      "denominator": [
+        {
+          "powers_as_atom_ids": [
+            0,
+            0
+          ],
+          "coefficient": "20736"
+        },
+        {
+          "powers_as_atom_ids": [
+            0,
+            2
+          ],
+          "coefficient": "-41472"
+        },
+        {
+          "powers_as_atom_ids": [
+            2,
+            2
+          ],
+          "coefficient": "20736"
+        }
+      ],
+      "nonzero_denominator_obligations": [
+        [
+          {
+            "powers_as_atom_ids": [
+              0
+            ],
+            "coefficient": "144"
+          },
+          {
+            "powers_as_atom_ids": [
+              2
+            ],
+            "coefficient": "-144"
+          }
+        ],
+        [
+          {
+            "powers_as_atom_ids": [
+              0
+            ],
+            "coefficient": "144"
+          },
+          {
+            "powers_as_atom_ids": [
+              2
+            ],
+            "coefficient": "-144"
+          }
+        ]
+      ],
+      "opaque_atoms": {
+        "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,8]]]]": 0,
+        "[\"Constant\",[\"Sqrt2\"]]": 1,
+        "[\"PrescaledSin\",[\"Offset\",[\"Constant\",[\"Pi\"]],-3]]": 2
+      },
+      "source_sha256": "2d2476fff241b41cbd7bf0870287f7511c611801f2727fa55b5b5277fd5c0691"
+    },
+    {
+      "segments": 32,
+      "coordinate_index": 0,
+      "arithmetic_visits": 303,
+      "operations": {
+        "Multiply": 33,
+        "Q": 1,
+        "Add": 73,
+        "Int": 62,
+        "Negate": 66,
+        "Offset": 22,
+        "PrescaledSin": 22,
+        "Constant": 22,
+        "Inverse": 2
+      },
+      "zero_numerator": true,
+      "numerator": [],
+      "denominator": [
+        {
+          "powers_as_atom_ids": [
+            0,
+            0
+          ],
+          "coefficient": "20736"
+        },
+        {
+          "powers_as_atom_ids": [
+            0,
+            2
+          ],
+          "coefficient": "-41472"
+        },
+        {
+          "powers_as_atom_ids": [
+            2,
+            2
+          ],
+          "coefficient": "20736"
+        }
+      ],
+      "nonzero_denominator_obligations": [
+        [
+          {
+            "powers_as_atom_ids": [
+              0
+            ],
+            "coefficient": "144"
+          },
+          {
+            "powers_as_atom_ids": [
+              2
+            ],
+            "coefficient": "-144"
+          }
+        ],
+        [
+          {
+            "powers_as_atom_ids": [
+              0
+            ],
+            "coefficient": "144"
+          },
+          {
+            "powers_as_atom_ids": [
+              2
+            ],
+            "coefficient": "-144"
+          }
+        ]
+      ],
+      "opaque_atoms": {
+        "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 0,
+        "[\"Constant\",[\"Sqrt2\"]]": 1,
+        "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 2
+      },
+      "source_sha256": "3ba8850bdc0ff635061795d9e095e79ed0b3aaf7f1c86059cb4cc4dfdee0118a"
+    },
+    {
+      "segments": 32,
+      "coordinate_index": 1,
+      "arithmetic_visits": 303,
+      "operations": {
+        "Multiply": 33,
+        "Q": 1,
+        "Add": 73,
+        "Int": 62,
+        "Negate": 66,
+        "Offset": 22,
+        "PrescaledSin": 22,
+        "Constant": 22,
+        "Inverse": 2
+      },
+      "zero_numerator": true,
+      "numerator": [],
+      "denominator": [
+        {
+          "powers_as_atom_ids": [
+            0,
+            0
+          ],
+          "coefficient": "20736"
+        },
+        {
+          "powers_as_atom_ids": [
+            0,
+            2
+          ],
+          "coefficient": "-41472"
+        },
+        {
+          "powers_as_atom_ids": [
+            2,
+            2
+          ],
+          "coefficient": "20736"
+        }
+      ],
+      "nonzero_denominator_obligations": [
+        [
+          {
+            "powers_as_atom_ids": [
+              0
+            ],
+            "coefficient": "144"
+          },
+          {
+            "powers_as_atom_ids": [
+              2
+            ],
+            "coefficient": "-144"
+          }
+        ],
+        [
+          {
+            "powers_as_atom_ids": [
+              0
+            ],
+            "coefficient": "144"
+          },
+          {
+            "powers_as_atom_ids": [
+              2
+            ],
+            "coefficient": "-144"
+          }
+        ]
+      ],
+      "opaque_atoms": {
+        "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",5,16]]]]": 0,
+        "[\"Constant\",[\"Sqrt2\"]]": 1,
+        "[\"PrescaledSin\",[\"Multiply\",[\"Constant\",[\"Pi\"]],[\"Ratio\",[\"Q\",3,16]]]]": 2
+      },
+      "source_sha256": "3ba8850bdc0ff635061795d9e095e79ed0b3aaf7f1c86059cb4cc4dfdee0118a"
+    }
+  ],
+  "script_sha256": "6a3453526507024132075fbe70580c6bf006cdea102c0d9fac5706ce2a049bcc"
+}

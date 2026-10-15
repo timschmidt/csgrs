@@ -1,0 +1,202 @@
+{
+  "commands": [
+    {
+      "name": "workspace-fmt",
+      "exit_code": 0,
+      "seconds": 12.242301468737423,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "1842b0fdb427bc0031a709b4f8e82136eb30e8cbc4429ba58bba79cba3980ac7"
+    },
+    {
+      "name": "scalar-default",
+      "exit_code": 0,
+      "seconds": 43.477312869858,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/hyperreal-4234254b1d45f4c0": "055956bbdf625141b5e3f0f9826a7a5fe0583c842bcbc8130189c17f3ef81135",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/adversarial_props-23fbfb7cef5ee581": "91c73740c1102f54c7f4e2b26c9db4b2930659219c9c8b19554d65b7f3dcb1b2",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/adversarial_regressions-5d04d217656421b6": "4fd9af873733c82dc596598cd12e1797467bdadcace77197c294176058d6b8d6",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/adversarial_semantics-58675a723c625f67": "e6ec3c4967281116c0ca82cd4013251d49df826bbd09a55d350c6a09e1a77eae",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/affine_polynomial_cancellation-4b3d1b2dfbba5a35": "74ab3ddc46ba74792513a081dc43f605c88904b2c5c71c82d2425b3588785642",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/calculator_diagnostics-ef064cc07ef2d04f": "f9b86d69981e3e08bf5f0ca74d9bb97bf4bc453b7eeffae50e39675cf4ff9149",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/checked_decimal-70cdb742d44f70fc": "781deaadec93e58e32876af57380e32e579c25f781a683a09f62f2c06496e0ab",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/checked_scientific-c0a643059fb8dee3": "92fa3697f928d1fadeecb2712c37898103e040b734628cf16e14c023babca752",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/cli-2de71b6772144cd0": "3f13e07f28e86472146934d9bad2f2cb2dc3d135cf542f7a5bfaa5a6c972205c",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/determinant_product_cancellation-e600622a4bab9527": "bb8d0a6aab1da0e6eeb0a8752c7c3a93cecba1b411d73a559c39d261f99633a1",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/exact_quadratic_normal_form-2b06dd32d996fe94": "14530a15aed49bfcbe138d08ef9347d9fb40e418a3c8f298137977c5c3a72134",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/fixed_decimal-851c01731054de6e": "acddfc8f7ed98658107690f453d5be2777abe71a17af37147d7842ee582c2669",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/gmp_api_coverage-d2fe8e97878365c4": "bdabf9bd0de1c8d20a0ed9f0d4466e4e539e5347ea7163a825425fb9b249235b",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/multiquadratic_normal_form-5a8898b00f5a2c4f": "d0fe29d69c0a781882f00ca6b03eaa417e7ece9f62db2bf98e96534b370e3339",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/numeric_roundtrip_formats-67b8aa72c4c5f7ba": "cf455efed27f1e056173d2fc85124409c1a82c264057101121742c61b7bde532",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/numerical_cross_reference-af795541e14f3ef3": "263ddb660fdda54ace4b7f9c78b517abcce2ede9d7dd9562f4c611996a6d1f51",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/precision_limits-6feea55c62b10a74": "d221b05fbe9f369e855d7328b17155452f50d3b0e3795439b7513ef6d072527b",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/public_numeric_semantics-957b7ccaec5dc726": "db0db1fb76ec28042ddc841c971fa8a6cf8301f6a0c954a146483a9751321b9d",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/rational_oracle-523dc6e3ab602e66": "e7370c2e0e48bdf0a8564ecf8d9b147b47f8f6c33c58d1e60f59548eafb38897",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/readme-07bcd81331b412f5": "5ce7b2949973c54f05f05d8c98a9ff7bc05b91981d353f4b409f74b1f98a5923",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/readme_metadata-c60fc91560bcc0ff": "e28650d139b61478e672153edb8ae4939cb2dc72dc13af7463a4aa7626fca5af",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/real_representations-f48380d1329521e3": "a62f40c574b4a3a434975acb664307084df01eda3263d1425db0f432a0fa9568"
+      },
+      "stdout_sha256": "b3f11fce798e093a688e940d8445a8c5db51d87c30ae15f38756d9889ad99ada",
+      "stderr_sha256": "4435fb0432a4b3f5348363ced97f4693eb67b0e29b13439c4ae79f5fd8211d1c",
+      "resources_sha256": "c5c7a76f5d0e96f75def84f45fc2bb3004c6e1cdbd104bbceb8a116f9f453c2b"
+    },
+    {
+      "name": "scalar-all-features",
+      "exit_code": 0,
+      "seconds": 67.62697677128017,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/hyperreal-c4ce5bbc6487bbcc": "7ea3280d6f40e2c715fc33e46c6ac9aea132a18c2e94fa3c611094fbb79c7d5b",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/hyperreal-87f8ffbf1b6d3d7d": "fbb7a1ce56b6c114f7cf8e9fded350b09aa69c305feb2f092b48f050db504f1b",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/adversarial_props-b2df4244a2be7046": "db15fd6de174fad2cfd4a06750b0ec00d77335d215f2e31643910c9b8f71f62a",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/adversarial_regressions-a2370f1bc476be5c": "af0067df0463d243db5047a22d5da7e69ea131a91fbb3826a5794ee28e27d7de",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/adversarial_semantics-772cfe9fd6c49175": "c2a044b524d5584e92a6bbccb6aa3dfafa34d371d11b0ebd00b55150df4f4077",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/affine_polynomial_cancellation-f136bd1ae7778a12": "bdce8a5d9e927e74325f5759aa1789700db67a24e314cf6ac3b4d094c57a8bbf",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/calculator_diagnostics-f4de7f2df586345e": "c9783fde66d2c8b0b2f3b8c56fe25d5ecb7b5b533b694e15bce9d0c4ed5ed9ad",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/checked_decimal-eaf657b48704c6c0": "55b9910a396f57d391036d8361002793969e06a362743b70cb57c3451622701e",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/checked_scientific-ec92ee1f4e21310b": "0a876d334951c42779c270e12871ece0cd60938d5e95582a23239f02d3de188d",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/cli-a07596aa07a74f9f": "c14556633b14b879ee1dbe55192432a333c67c8c84e37068b0495166cdd7ad63",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/determinant_product_cancellation-deb76c121b9f0e0c": "fd4142d1ca5696510e5756feca8bd6e9d2bb1558da66474a43cc6ce5166bb119",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/exact_quadratic_normal_form-b8aa58d0f6956f83": "44c5d5877129f4e47e9ea2febeca31955bb50d51f3924061bcd399442af9e919",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/fixed_decimal-e384c2439cc7d7af": "e8f724612a7b11cebe1ee275b7b07c3cb9993c2be04493ad917204040593404d",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/gmp_api_coverage-bb7769b6ee1db20a": "5cce372b980a777b14ab35cb05d8a631ee2ba85324c1769b7d5e2685dff34f90",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/multiquadratic_normal_form-68cfa5d8ab51b25f": "1fb224d9d8adc7ec674ce606ffbe0b0e32b76eaa40af73b69d4a655e60a92275",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/numeric_roundtrip_formats-1490f2ba30313dc2": "df163a021186d0afa9a368f144797de1e9cc8e1d4c6c72b453d51937fba36b2d",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/numerical_cross_reference-993f4002c933107a": "8be47b92669238eb1be841b73a6c657064b6231c09eedc5b4c2c372f5dcecb79",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/precision_limits-26b129af62be481f": "c4df076c035b390effc215fa3bcc192ae32ee071c9569b19a8e8036de301e0bc",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/public_numeric_semantics-8fa3758efe94dca0": "44e840b5f227df8e459e595b7f01d77283e54193df310f06a203a1336ac03369",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/rational_oracle-ceb4312bcb7faa4a": "a9a93359985345381c51cb9a6fd72d4151c930ec1a467b2fb8d28988e90f72d3",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/readme-1ac495475795a7f2": "dc0def88757467165ad39738ac0206a97a75ad1cb7e8262cd1d7307919a672a5",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/readme_metadata-40cef18327edcaa1": "e0a4028d5684f62f7b9e189dcbf67b63596bb255d4004cb6a47ba63b298beb8c",
+        "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/real_representations-ca445881b4a05174": "e66b5460a7dfa7380362e3df107843d6174d46ec404fd30ced3cb6c4b643e774"
+      },
+      "stdout_sha256": "b8f3102848319160b76fd7f7fce6edcafc0dfe4455b1f54c786653c91487db5e",
+      "stderr_sha256": "e8887fd8949e0e13e0ee62e9cf81f3577018a6c83279140c5ca1ea982eda8b7c",
+      "resources_sha256": "e4de83e43035c10a7f1afc3c5f557d9b1f4beed28da91ca25971e75f47b5bb5b"
+    },
+    {
+      "name": "scalar-clippy",
+      "exit_code": 0,
+      "seconds": 16.29628508212045,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e91620e49d6421c687a467e3937f7fa20de7916f79c1497ef39189c97ca05a98",
+      "resources_sha256": "248d9d6c6f650fbe732e587dd5cb05740a8baa1c0ba9c38b59699f1c09d81f26"
+    },
+    {
+      "name": "root-library",
+      "exit_code": 0,
+      "seconds": 117.34588475385681,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "746b69f9633cb78bd82bbfdd6e194ba5c0d314de313382860f5268940ab5acc6",
+      "resources_sha256": "4673c516175568126f12f7a14ba4bc381846daaf2b57563d07d7f3cbd12c5b60"
+    },
+    {
+      "name": "probe-build",
+      "exit_code": 0,
+      "seconds": 2.3473573620431125,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "a3f7dd911244ec24cbb584a1397383800e3731b5eb0e4ac0edbb6fa0f2b7d42c"
+    },
+    {
+      "name": "drill-16-strict",
+      "exit_code": 0,
+      "seconds": 1.887203074991703,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "ec81443088bdabf57ab283f6c4722c3185f863f100df3d414cd076921adbc6d2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "2ac6475e24ff635c136a801f1873cefbd1651a4aa3c2233d1b5f97beaeb8ff3b"
+    },
+    {
+      "name": "drill-16-approximate",
+      "exit_code": 0,
+      "seconds": 2.1400693808682263,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "43f0f925a927d5bcb48ac0f728cf7f38bd826397007b91d88453b6fd3a351853",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "9519e16e96a2ad94e0bcbbae9986e49710043887199223ef38d43d14997753db"
+    },
+    {
+      "name": "drill-8-strict",
+      "exit_code": 0,
+      "seconds": 1.915530001744628,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "02c2d7e2c1331914d8c0ba7aebf895c8bf9b0ba0efcbbe73986cb36486995508",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "efd58346c9954337c0325e3f98842585372b4bb4acd42c9c3d7eaa238e492654"
+    },
+    {
+      "name": "drill-8-approximate",
+      "exit_code": 0,
+      "seconds": 1.8912692563608289,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "72a565dcb2554196181053d4df073bcfd74bdb67516368e4f91edf4072867aac",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "1225fce750a2f87d615f5a9a9cd7a01a6284e57e83056912d56df5d5ec5e064a"
+    },
+    {
+      "name": "drill-24-strict",
+      "exit_code": 0,
+      "seconds": 2.409270965028554,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "9ffae3af03e777f50f99befba7fcdc1e9c2ffb9997318b0c460d4d74b2b51065",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "27f2e0efead8b5089233077daf6412eaad5b839056033d3af61c4ef9ae4dd9a7"
+    },
+    {
+      "name": "drill-24-approximate",
+      "exit_code": 0,
+      "seconds": 2.3780397358350456,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "a5a308e59ccc7bdb11e934bb5098a8701f1aff216e74c69c4b47f84d0f3a41d3",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "5c50100aba2fb1b1f20e7e677638dcbd9d4aac2509aa15b118731da64e71f3ef"
+    },
+    {
+      "name": "drill-32-strict",
+      "exit_code": 0,
+      "seconds": 1.988427490927279,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "90ed952e4238e844368d497c2f4e8d3b4d1b89cc2baf6eaaa18b3c45468a114e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "52711dbecbcf839ead2dea4ed478cab013a39e61ce4e3cdf4d82dfad8f9e0487"
+    },
+    {
+      "name": "drill-32-approximate",
+      "exit_code": 0,
+      "seconds": 2.6558435121551156,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "c9a7c7523f63d7ec9f69fd441288f33fc1de95f70417ee12a4a6eab5a5f0ca81",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "cec6ce1921ae108e36037b4b15c77c665883c2808aca2c3c8552341b7a05272a"
+    },
+    {
+      "name": "scalar-docs",
+      "exit_code": 0,
+      "seconds": 2.653419317677617,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "8a021dce41739ef630322cbc15c19d47b2f5d626452409e190cb309c56f53a5a",
+      "stderr_sha256": "0ff47345db01a2a4c13b6866b4338fcd08af4d44cadd9bb1113e9aa9c85f21d5",
+      "resources_sha256": "16ee896d0c1538388d0c8af948ffb99c428c81c29a9257f20db22890bc8088c4"
+    }
+  ],
+  "passed": true
+}
