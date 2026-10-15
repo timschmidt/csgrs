@@ -1,0 +1,521 @@
+{
+  "commands": [
+    {
+      "reference_phase": "typed-api-prototype-v2280-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_retained_unit_proofs_precede_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2281-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_retained_lower_proofs_precede_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2282-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_required_domain_reuses_available_proofs",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2283-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_upper_estimates_do_not_prove_lower_bounds",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2284-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_endpoints_and_invalid_descendants_remain_typed",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2285-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_asin_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2286-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_acos_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2287-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_atanh_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2288-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_fine_retries_preserve_cached_facts",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2289-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_canonical_leaves_need_no_coefficient_copy",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2290-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_retained_child_proof_precedes_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2291-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_invalid_descendants_remain_undefined",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2292-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_zero_and_negative_boundaries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2293-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_public_queries_reuse_cheap_leaf_domains",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2294-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_computed_leaf_proof_is_retained",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2295-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_stored_budget_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2296-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_public_construction_routes",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2297-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_stored_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2298-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_asinh_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2299-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_real_serialized_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2300-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::private_kernel_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 7,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2301-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 5,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2302-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 7,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2303-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 5,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2304-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2305-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::private_trig_range_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 5,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2306-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::trig_lattice_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 5,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2307-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::trig_periodic_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 6,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2308-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::trig_operands_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 6,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2309-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::evaluation_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 7,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2310-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 4,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2311-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::normal_form_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 8,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2312-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::inverse_trig_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 9,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2313-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_leaf_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 6,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2314-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::inverse_trig_dag_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 10,
+        "child_process_passed": 1
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2315-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::structural_comparison_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 14,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2316-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 10,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2317-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::rational_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 10,
+        "child_process_passed": 0
+      }
+    },
+    {
+      "reference_phase": "typed-api-prototype-v2318-eager-bound-decoder-retained-cap",
+      "arguments": [
+        "computable::node::inverse_constructor_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "reference_test_counts": {
+        "top_level_passed": 11,
+        "child_process_passed": 0
+      }
+    }
+  ],
+  "inputs_sha256": {
+    "docs/evidence/2026-10-10-scalar-evaluation-failure/eager-bound-decoder-retention-v2335.json": "b75ab5ee20c71fbc61d130f92ba8f9354461642ade9dde4d56ee1519c798089b",
+    "docs/evidence/2026-10-10-scalar-evaluation-failure/run_limited_unit_test.py": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+    "docs/evidence/2026-10-14-scalar-integration/replay_caps_v4.py": "c427c8e11c6a4d32fc75888a2f1ef4b224ad9998b0bdc8f9833606973dd64d71",
+    "docs/evidence/2026-10-14-scalar-integration/extended-v4/result.json": "88c123b24cff3e86dce8261f0aa5495ab4da8ce11227c0a8788943c77229f1f2"
+  },
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+  "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "RUSTUP_TOOLCHAIN": "stable",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target",
+    "RUSTFLAGS": "",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1"
+  },
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/source",
+  "address_space_bytes": 201326592,
+  "cpu_seconds_soft_hard": [
+    2,
+    3
+  ],
+  "wall_seconds_limit": 4,
+  "scope": "All 39 unchanged historical unit-test schedules, with the same helper and process caps. The separate algebraic cost-process SIGXCPU failures, numerical/public replay matrix, native geometry and full-board gates remain open.",
+  "stop_on_failure": true,
+  "no_retry_resume_filter_or_pool": true
+}

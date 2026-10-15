@@ -1,0 +1,7 @@
+
+running 1 test
+test computable::node::log_range_probe_tests::log_range_stored_successful_retries ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1087 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde", "computable::node::log_range_probe_tests::log_range_stored_successful_retries", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.02099998202174902}

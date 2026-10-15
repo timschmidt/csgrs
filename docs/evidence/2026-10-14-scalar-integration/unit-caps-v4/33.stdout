@@ -1,0 +1,12 @@
+
+running 6 tests
+test computable::node::algebraic_leaf_tests::algebraic_leaf_integer_metadata_avoids_coefficient_copies ... ok
+test computable::node::algebraic_leaf_tests::algebraic_leaf_interrupted_copy_allocates_nothing ... ok
+test computable::node::algebraic_leaf_tests::algebraic_leaf_interruption_cannot_append_a_generator ... ok
+test computable::node::algebraic_leaf_tests::algebraic_leaf_metadata_budget_preserves_local_limit_rejection ... ok
+test computable::node::algebraic_leaf_tests::algebraic_leaf_rejected_bases_add_no_allocation ... ok
+test computable::node::algebraic_leaf_tests::algebraic_leaf_rejections_do_not_allocate_coefficient_storage ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1082 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde", "computable::node::algebraic_leaf_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.0222222781740129}

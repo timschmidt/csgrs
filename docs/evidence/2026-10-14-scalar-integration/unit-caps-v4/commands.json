@@ -1,0 +1,1270 @@
+[
+  {
+    "index": 0,
+    "reference_phase": "typed-api-prototype-v2280-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_bound_tests::domain_bound_retained_unit_proofs_precede_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.021419751923531294
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "8ce8cc8e7d5e9fddfa4ec33b421ea3352c6ee60bba047c79bcb7df8bfc8d8f1b",
+    "stderr_sha256": "70a0449f1a9822b347884571419090194a00f6229959a5e3ee6ddf471d1d48d1"
+  },
+  {
+    "index": 1,
+    "reference_phase": "typed-api-prototype-v2281-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_bound_tests::domain_bound_retained_lower_proofs_precede_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.016481060069054365
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "e89e86fd36b8553743c90087d2f0ffc03bdacdc699b0f56ce89986b9a41170a0",
+    "stderr_sha256": "d0353f68723829610e6aa47063bbbb173f583cd65fe1a45acf54c87c42f0cb8d"
+  },
+  {
+    "index": 2,
+    "reference_phase": "typed-api-prototype-v2282-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_bound_tests::domain_bound_required_domain_reuses_available_proofs",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01645924337208271
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "756384502064053ddc92107186cef667e7b11f7d9bb8a2ab9cb510cbc1566f26",
+    "stderr_sha256": "1aa047b62a7669539bdc676ad89a2beb0c169e2d65591af4c4ed154b827aaba2"
+  },
+  {
+    "index": 3,
+    "reference_phase": "typed-api-prototype-v2283-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_bound_tests::domain_bound_upper_estimates_do_not_prove_lower_bounds",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.016873544082045555
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "cb2e7732d0b409750c0eb933f0cacc88a6daacbd33cc29579cfd2ac6fca4f294",
+    "stderr_sha256": "f7cd1f9b29ff38dd4dfa0cc4333229539327469a3ed36bffc682d0864f463e5a"
+  },
+  {
+    "index": 4,
+    "reference_phase": "typed-api-prototype-v2284-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_bound_tests::domain_bound_endpoints_and_invalid_descendants_remain_typed",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.017857865896075964
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "769200b07d5e62edc5f368976abcaf2adc6aff50f1b5ada74f64538113482230",
+    "stderr_sha256": "d3630e0993dfa4333eee4ae3c522c271d0847b2a304d1e1f82565899a6214379"
+  },
+  {
+    "index": 5,
+    "reference_phase": "typed-api-prototype-v2285-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_bound_tests::domain_bound_public_asin_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.04539563972502947
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "618317755850662ed72f59b0e8f50548e2a908b2f85f3d3d5393f178a2c9e841",
+    "stderr_sha256": "3e99c7f795509308de4793a7aee588461ca42b1745dc7f98f6cd14c4ff40adea"
+  },
+  {
+    "index": 6,
+    "reference_phase": "typed-api-prototype-v2286-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_bound_tests::domain_bound_public_acos_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.0457963733933866
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "71eb0a7b892f45560ea1d3f46f4b0bb140894be1344bd5e512d0a08d7b2913ad",
+    "stderr_sha256": "548265aa7b928efa66c5c2ad85874609f4a804dc77fd0e5ababe479d6dc5417c"
+  },
+  {
+    "index": 7,
+    "reference_phase": "typed-api-prototype-v2287-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_bound_tests::domain_bound_public_atanh_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.044478333089500666
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "b2fed8081d478087cd43816d69974c8beb3512a91815c7738a19f284fd7514e5",
+    "stderr_sha256": "058a773abf7756489684ccf1c577e670c4faa15abaf3387ccf78bab0e43140df"
+  },
+  {
+    "index": 8,
+    "reference_phase": "typed-api-prototype-v2288-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_bound_tests::domain_bound_public_fine_retries_preserve_cached_facts",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02013644017279148
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "c95a78b41e3da192e5ae3601d602dac44d10fec1707384697e3ba6c01f770e3d",
+    "stderr_sha256": "52c6a37560d4009772adf9686857d79674e585f46ec4df66f27860743a423e27"
+  },
+  {
+    "index": 9,
+    "reference_phase": "typed-api-prototype-v2289-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_sign_tests::domain_sign_canonical_leaves_need_no_coefficient_copy",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.029084918089210987
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "243d6f43b0bddbcd0b62a8682c85aba1b87d34d1b5108d1a3ea1e05d22692a99",
+    "stderr_sha256": "f4883c0d7ba8f651b79b2ff36c9faa5888ec365905ce90b6c9ec844af4742522"
+  },
+  {
+    "index": 10,
+    "reference_phase": "typed-api-prototype-v2290-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_sign_tests::domain_sign_retained_child_proof_precedes_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.016763790976256132
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "e4c58d0bae580eb60fba7711d15d3b27bc1c08b8ebca9a70b13206755ca6606f",
+    "stderr_sha256": "842f178683825bd05cf89f778117c392fe1db86a44906f2f3d53b12ecedd0c8f"
+  },
+  {
+    "index": 11,
+    "reference_phase": "typed-api-prototype-v2291-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_sign_tests::domain_sign_invalid_descendants_remain_undefined",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.017217279877513647
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "7a305d9c8961907106799dbf53842b9aab97fdb486e0de047462645f5aad0a6d",
+    "stderr_sha256": "5f0b27c982135e2d935703c5e30f5f04bae732c390601ce2cb84d0db2e6612df"
+  },
+  {
+    "index": 12,
+    "reference_phase": "typed-api-prototype-v2292-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_sign_tests::domain_sign_zero_and_negative_boundaries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.015961385797709227
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "d6492b649425fada6bbd92bcd91624bcffaf71593a2d7dc143c7cc7d581b94b2",
+    "stderr_sha256": "69054e2935eeb300941ba97c1e9771f4ab89817f4f7a9f3cf5fe249eac718929"
+  },
+  {
+    "index": 13,
+    "reference_phase": "typed-api-prototype-v2293-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_sign_tests::domain_sign_public_queries_reuse_cheap_leaf_domains",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02098527317866683
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "3ec18766c03d1616d47113ba4d1a60cd319e9ca3315c0320b965230b8d1d1d38",
+    "stderr_sha256": "5973e420ff4c1955da7f1bc5bcc9964bb1e7bb83d3f8b3f5c1758836d7361f8a"
+  },
+  {
+    "index": 14,
+    "reference_phase": "typed-api-prototype-v2294-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::domain_sign_tests::domain_sign_computed_leaf_proof_is_retained",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.020948715042322874
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "56f57bf214151fb0aa64bc57801ac94735c041b0317f9f122d80852b4d198419",
+    "stderr_sha256": "32f7a62330e05e3aa39a2d7feff3fbf1a64ca70445fbc5191a0497ff86992393"
+  },
+  {
+    "index": 15,
+    "reference_phase": "typed-api-prototype-v2295-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::log_range_probe_tests::log_range_stored_budget_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.04527460923418403
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "5a4bf0084a521fe03fbe5a559ef72bdc61bcc8bee3cd1a28e80c00b1d5322a40",
+    "stderr_sha256": "2ac393967ae868ba1fa9517566a0ccfe99f2baec3a1c007de5e5edc256dac2b6"
+  },
+  {
+    "index": 16,
+    "reference_phase": "typed-api-prototype-v2296-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::log_range_probe_tests::log_range_public_construction_routes",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.0766168013215065
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "1f76754503c20ced905151acb772e4652638af0733674da25ec09760a01bc4d2",
+    "stderr_sha256": "764a2ab2c53bda1ffa426720c173f659ea2945292e58c128f0b8282ca4c7e8e2"
+  },
+  {
+    "index": 17,
+    "reference_phase": "typed-api-prototype-v2297-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::log_range_probe_tests::log_range_stored_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02099998202174902
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "ca8efbf045c6f65cc0a7b248a8dccf7406856aa7fa026dd511e2fcc25d34ae35",
+    "stderr_sha256": "c1fe5b6d410f8bc47a545127d4174db6108c95f94bbee613a0afda6a6abb770f"
+  },
+  {
+    "index": 18,
+    "reference_phase": "typed-api-prototype-v2298-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::log_range_probe_tests::log_range_asinh_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07934580510482192
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "75cb0ba52f2e8efe2ccc5d162ed7cc8e14addbfe2f17f8f0bcad02ea0891ad21",
+    "stderr_sha256": "cd0c3ab4331aae17881c8e831b5f6437f745e64b0bd8b53d4e2cac5449ed2152"
+  },
+  {
+    "index": 19,
+    "reference_phase": "typed-api-prototype-v2299-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::log_range_probe_tests::log_range_real_serialized_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02954596607014537
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "24bf146e2fb4f8aa7aebbbedbf11f3aab2a9cfaf60b7f5a0c805e6dba64cb477",
+    "stderr_sha256": "c4e56381d05c45c2d2d6463b19271e0d98985fd1d91ca1860e7435a95608c1cc"
+  },
+  {
+    "index": 20,
+    "reference_phase": "typed-api-prototype-v2300-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::private_kernel_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.044680589344352484
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 7,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "025f23313508977f7ee68e2960b99fa3da5abc715857d5586763603dd86d98cf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "index": 21,
+    "reference_phase": "typed-api-prototype-v2301-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.020549412816762924
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 5,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "09288848eb989b44b8d0ca0ede415f3d4d63a887d144c722a14b49938191a16f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "index": 22,
+    "reference_phase": "typed-api-prototype-v2302-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.020970323123037815
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 7,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "8ac615a595f86a4c39f5fd21acc3d9fd0514a7e219f712acd83d90dad83bd5d7",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "index": 23,
+    "reference_phase": "typed-api-prototype-v2303-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07704620203003287
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 5,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "d2f44c6e0e4c95e7801086f55588b4e68872994cb6a94385d0e3e236075d05fe",
+    "stderr_sha256": "26955b620ab17a4db80cdfe401c49b011bc6354d5c72535d4456ece4097bd88b"
+  },
+  {
+    "index": 24,
+    "reference_phase": "typed-api-prototype-v2304-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.016445832792669535
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 1,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "bb840b759f4a1a49074e2be3f031de79fbdf30e42949e22c1f798ba5cd2e02bf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "index": 25,
+    "reference_phase": "typed-api-prototype-v2305-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::private_trig_range_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07704911194741726
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 5,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "37254293a79b8ad8148e52426c7836e744b8ea3b78cea6e58d5b7b61e22410ff",
+    "stderr_sha256": "b101bf0a9121042ebbbaf6e33ca8563e816e78b8c1499d58d303515c8984364a"
+  },
+  {
+    "index": 26,
+    "reference_phase": "typed-api-prototype-v2306-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::trig_lattice_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.044954219833016396
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 5,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "c5106e5d3f3784ba095abed523c5940d9e6fb64a1d833257466f21c17b7beefe",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "index": 27,
+    "reference_phase": "typed-api-prototype-v2307-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::trig_periodic_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 1.0799153009429574
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 6,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "c8d1b4b32ef07e931280bcba651c83f75197d01db09f94db93d1931514b6f956",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "index": 28,
+    "reference_phase": "typed-api-prototype-v2308-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::trig_operands_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.47726505482569337
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 6,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "c06a4cd03f6e4914f4348eea386091cad536d4b1da80fb2a4d0f4af443e889a0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "index": 29,
+    "reference_phase": "typed-api-prototype-v2309-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::evaluation_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02182473475113511
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 7,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "a897aa5bddf5d79c959423a9af6b33f013ad9e34712b2969034e6f52902b7998",
+    "stderr_sha256": "653b8f4be5a55fd2a942405458c2536cf120c176a869b891f54c3003ab88e418"
+  },
+  {
+    "index": 30,
+    "reference_phase": "typed-api-prototype-v2310-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::algebraic_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.04445898486301303
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 4,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "186e0cc9e3ae5309464d9d9037c59c3133a621432db2b319d7832712fb5ed2fa",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "index": 31,
+    "reference_phase": "typed-api-prototype-v2311-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::normal_form_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02104684803634882
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 8,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "ebe3e31c1368cdaa2dc035d008c441ddf2f39c7c96860da86c4cb5e6dd31fc56",
+    "stderr_sha256": "2078cd2ce48c0592a0f20b9e082321ddc330dfb8e1d26e9c57d3ac016a5e09db"
+  },
+  {
+    "index": 32,
+    "reference_phase": "typed-api-prototype-v2312-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::inverse_trig_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02158090192824602
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 9,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "89e4db1af1229b27e2f7bfb00d4f3f5b27838e84bfabb2dff740bd4835b24aa2",
+    "stderr_sha256": "d5127fa418325f3c9d135f6d0d3384a806066681d76a8a0930ce19b3e647375b"
+  },
+  {
+    "index": 33,
+    "reference_phase": "typed-api-prototype-v2313-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::algebraic_leaf_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.0222222781740129
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 6,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "e291d07e3550cc0cb70d176efa3221fda3eab1c261bcd9bff2b0e49762b41be5",
+    "stderr_sha256": "03c53715d640dc8a6eed15982915070303a058138452c17e35498c08ded0018d"
+  },
+  {
+    "index": 34,
+    "reference_phase": "typed-api-prototype-v2314-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::inverse_trig_dag_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.020836832001805305
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 10,
+      "child_process_passed": 1
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "974fbcae70d9ef911cef895f35017b773da921e6e7ef8a7091d57a9f9dedf45d",
+    "stderr_sha256": "7253b5833f46b9cb9f7e9cd1168b7a8e4faae7d72daf2a8bb9577e1278009584"
+  },
+  {
+    "index": 35,
+    "reference_phase": "typed-api-prototype-v2315-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::structural_comparison_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.04497572872787714
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 14,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "9872ba5a7bd6148944962e624c1bd12aba494f048fce7edc37dc9c1f79d75f3c",
+    "stderr_sha256": "5a988e7b0ebb5656ca7479fb79e9ab243f888e858b487c420f0f85dd6ef5de25"
+  },
+  {
+    "index": 36,
+    "reference_phase": "typed-api-prototype-v2316-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::algebraic_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.0453222650103271
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 10,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "46a0730c0bd30cbb439750a943fc5ceed0445d53d63d3518b4012061cfb88e67",
+    "stderr_sha256": "a9ad75feac449d2a0ea02f2eabf68290644292a5883cfda58a69a568ada287b5"
+  },
+  {
+    "index": 37,
+    "reference_phase": "typed-api-prototype-v2317-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::rational_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.027964144945144653
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 10,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "b716461170faad8f692acd73024de9d6cde342811945f45d32b0bcf554d2a7d5",
+    "stderr_sha256": "77221139b4fdb63651987202c139d8235d9eb8f5a6729dd8ed4b2496d16fdec9"
+  },
+  {
+    "index": 38,
+    "reference_phase": "typed-api-prototype-v2318-eager-bound-decoder-retained-cap",
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde",
+        "computable::node::inverse_constructor_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.27751917904242873
+    },
+    "helper_process_exit_code": 0,
+    "test_counts": {
+      "top_level_passed": 11,
+      "child_process_passed": 0
+    },
+    "test_counts_match_reference": true,
+    "passed": true,
+    "stdout_sha256": "308174e7a0c063b9079231a1fa51791609da27080705f01eeba4c971a4015f09",
+    "stderr_sha256": "96f220ffb42f5a459dda847e014f37e50aa187bf3f62eb6e28f41c3ba34fbd6b"
+  }
+]

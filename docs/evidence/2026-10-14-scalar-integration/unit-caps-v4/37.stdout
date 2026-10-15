@@ -1,0 +1,16 @@
+
+running 10 tests
+test computable::node::rational_preflight_tests::rational_preflight_cheap_rejections_and_sign_domains_stay_cheap ... ok
+test computable::node::rational_preflight_tests::rational_preflight_child_domains_stop_before_reduction ... ok
+test computable::node::rational_preflight_tests::rational_preflight_domain_errors_and_root_identities_are_preserved ... ok
+test computable::node::rational_preflight_tests::rational_preflight_every_recognition_cutpoint_preserves_retry ... ok
+test computable::node::rational_preflight_tests::rational_preflight_generous_boundaries_preserve_exact_values ... ok
+test computable::node::rational_preflight_tests::rational_preflight_lazy_boundaries_stop_before_reduction ... ok
+test computable::node::rational_preflight_tests::rational_preflight_lazy_leaf_stops_before_reduction ... ok
+test computable::node::rational_preflight_tests::rational_preflight_literal_domains_stop_before_reduction ... ok
+test computable::node::rational_preflight_tests::rational_preflight_public_exhaustion_has_no_width_dependent_allocation ... ok
+test computable::node::rational_preflight_tests::rational_preflight_public_retries_preserve_completed_proofs ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 1078 filtered out; finished in 0.01s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde", "computable::node::rational_preflight_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.027964144945144653}

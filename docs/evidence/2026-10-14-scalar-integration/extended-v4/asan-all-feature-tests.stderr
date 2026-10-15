@@ -1,0 +1,39 @@
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling serde_json v1.0.149
+   Compiling num-bigint v0.4.6 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/source/crates/hyperreal/vendor/num-bigint)
+   Compiling num-complex v0.4.6
+   Compiling ciborium v0.2.2
+   Compiling tinytemplate v1.2.1
+   Compiling criterion v0.5.1
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 33.67s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/hyperreal-0ce539d4d04e44a0)
+inverse-trig DAG allocation kind=0, depth=6, allocations=Allocations { calls: 22, bytes: 2316, largest: 472 }
+inverse-trig DAG allocation kind=0, depth=12, allocations=Allocations { calls: 27, bytes: 3708, largest: 928 }
+inverse-trig DAG allocation kind=1, depth=6, allocations=Allocations { calls: 14, bytes: 1004, largest: 472 }
+inverse-trig DAG allocation kind=1, depth=12, allocations=Allocations { calls: 27, bytes: 2220, largest: 928 }
+inverse-trig DAG allocation kind=2, depth=6, allocations=Allocations { calls: 2, bytes: 716, largest: 472 }
+inverse-trig DAG allocation kind=2, depth=12, allocations=Allocations { calls: 3, bytes: 1644, largest: 928 }
+     Running unittests src/main.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/hyperreal-d7aacdce40f2a772)
+     Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-1eb4952864fef4b2)
+     Running tests/adversarial_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/adversarial_regressions-dd659909df49ce36)
+     Running tests/adversarial_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/adversarial_semantics-eb7c49ff294c7b85)
+     Running tests/calculator_diagnostics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/calculator_diagnostics-33e976779d33d3a9)
+     Running tests/checked_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/checked_decimal-2d2e16f56fc5989a)
+     Running tests/checked_scientific.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/checked_scientific-bc2d71f6646f03d3)
+     Running tests/cli.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/cli-ea875c30677778de)
+     Running tests/exact_quadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/exact_quadratic_normal_form-1fd885fbbc7f05aa)
+     Running tests/fixed_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/fixed_decimal-33643d98c1c28853)
+     Running tests/gmp_api_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/gmp_api_coverage-7e7b23b93c2eaf17)
+     Running tests/multiquadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/multiquadratic_normal_form-69ebc4dcc91f474c)
+     Running tests/numeric_roundtrip_formats.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/numeric_roundtrip_formats-7a5d08c945cd652c)
+     Running tests/numerical_cross_reference.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/numerical_cross_reference-3416e1f2434fde00)
+     Running tests/precision_limits.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/precision_limits-b96aabe76d1979a2)
+     Running tests/public_numeric_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/public_numeric_semantics-c9efa560857e2cfb)
+     Running tests/rational_oracle.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/rational_oracle-5729186544f82ca1)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/readme-b48c8377e2a7e393)
+     Running tests/readme_metadata.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/readme_metadata-69b851350fae1066)
+     Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/sanitizer-target/x86_64-unknown-linux-gnu/release/deps/real_representations-0bac6fb3870b10f8)

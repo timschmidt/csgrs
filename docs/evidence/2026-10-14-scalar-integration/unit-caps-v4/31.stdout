@@ -1,0 +1,14 @@
+
+running 8 tests
+test computable::node::normal_form_budget_tests::normal_form_budget_atom_comparison_declines_without_false_inequality ... ok
+test computable::node::normal_form_budget_tests::normal_form_budget_coefficient_sizes_increase_required_work ... ok
+test computable::node::normal_form_budget_tests::normal_form_budget_laurent_allowance_sweep_preserves_retry_and_facts ... ok
+test computable::node::normal_form_budget_tests::normal_form_budget_never_certifies_undefined_cancellation ... ok
+test computable::node::normal_form_budget_tests::normal_form_budget_prevents_unbounded_coefficient_expansion ... ok
+test computable::node::normal_form_budget_tests::normal_form_budget_public_sign_retry_does_not_cache_tentative_unknown ... ok
+test computable::node::normal_form_budget_tests::normal_form_budget_rational_recognition_and_domain_retries ... ok
+test computable::node::normal_form_budget_tests::normal_form_budget_rejects_unsupported_shifts_before_allocation_charge ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 1080 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/qualification-target/release/deps/hyperreal-85892b5461cd5cde", "computable::node::normal_form_budget_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "e93dbed4be713ff90c28923f8cb6fb92ffb1e1758ba7db87c112817f723a00a2", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.02104684803634882}
