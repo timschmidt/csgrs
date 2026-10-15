@@ -33,6 +33,7 @@ include!("node/algebra.rs");
 include!("node/ring_polynomial.rs");
 include!("node/ring_polynomial_tests.rs");
 include!("node/ring_quotient.rs");
+include!("node/ring_quotient_reduction.rs");
 include!("node/ring_quotient_tests.rs");
 include!("node/ring_quotient_reduction_tests.rs");
 include!("node/quadratic_tower.rs");

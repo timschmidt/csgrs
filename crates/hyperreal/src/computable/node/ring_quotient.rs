@@ -145,7 +145,16 @@ impl<'a> RingRecognition<'a> {
             self.charge()?;
             return self.quotients.get(&identity).cloned();
         }
-        let quotient = self.expand_quotient_uncached(value, depth)?;
+        let node_available = self.nodes_left != 0;
+        let quotient = match self.expand_quotient_uncached(value, depth) {
+            Some(quotient) => quotient,
+            // Retry arithmetic only after the existing path declines. Its
+            // children must already have completed domain-checked projections.
+            // Reuse the remaining budget, including the parent's node debit;
+            // neither cached children nor reduction bypass child depth zero.
+            None if node_available && depth > 1 => self.recover_quotient(value)?,
+            None => return None,
+        };
         // At most MAX_NODES entries: each miss consumes a node before it can
         // succeed. Failed or partial expansions are never inserted.
         self.quotients.insert(identity, quotient.clone());
