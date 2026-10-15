@@ -1,0 +1,72 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-bench-v2/source",
+  "source_files": 10170,
+  "expected_delta_sha256": {
+    "crates/hyperreal/Cargo.toml": "a0102ee8ae4871d75f1a0528fdea9bdc83e48a5ad1bba42c1d198419802bd38c",
+    "crates/hyperreal/fuzz/README.md": "8a38cf789a7f8660c09d010d86875d7dad6d2d1ceeee071a1feb7670916fac30",
+    "crates/hyperreal/examples/directed_scalar_bench.rs": "2237b52ff3b5a63c2c61510303ff57462a890f7b6202a90c80512c9eaeab164a",
+    "crates/hyperreal/examples/directed_scalar_probe.rs": "376378deacc2a23ceec875e9795fc68623c28cd5c0640c28206e9ae59e87d812",
+    "crates/hyperreal/examples/directed_scalar_probe/wire.rs": "e43b236bc34e2eb513aa4740ae33abdbeb7da9f601f89d655207bd77743efa99",
+    "crates/hyperreal/examples/directed_scalar_probe/oracle.rs": "10f2badd033169c1ccdb4783c27bb703967565882bb2941cec9d2ed1beac147e",
+    "crates/hyperreal/examples/directed_scalar_probe/recipe.rs": "240fe64ab078ac4081863199e773a2a104f78949087fe55e44bddf67579a617d",
+    "crates/hyperreal/examples/directed_scalar_bench/mpfr.rs": "f92a60ac34a963084dabaccb33f0a116faecbe08e2f65c8bebe13e9596cbac7d",
+    "crates/hyperreal/examples/directed_scalar_probe/regressions/mixed_number_v2.input.json": "22213673b2938195e88ccbfc60ca521ecb0023ef4c1d16398d5009f66613bb76",
+    "crates/hyperreal/examples/directed_scalar_probe/regressions/near_pi_v1.json": "192527831048e5e1d32577e68ef8901e965e69aa61fbb43eed8666cecc4bb7d7",
+    "crates/hyperreal/examples/directed_scalar_probe/regressions/mixed_number_v2.response.json": "4ee85a6e1ea0b47f2cb4436efd796edc3cdd6a8b292ae69683108d167eb2cffb",
+    "crates/hyperreal/fuzz/directed/evidence.py": "8c64eb217286964bee25343d0af0c8c74789a5dc2bdda7c84107021b05f88e80",
+    "crates/hyperreal/fuzz/directed/test_competitive.py": "c82a4ec4def837ae4c6def88725b76f64325eaa2078b5915ddbf23e8b3e39253",
+    "crates/hyperreal/fuzz/directed/test_campaign.py": "118246514fab6a58c7316b018d398f36aca58a0fc334a26bf5a14cd8526d113d",
+    "crates/hyperreal/fuzz/directed/campaign.py": "7535573e9abd85c74277b584fbdb6abe71c058f29a0cf19c02d6461656cba160",
+    "crates/hyperreal/fuzz/directed/test_evidence.py": "98a78be44d8a921b4a51b5ae5360bb5d49ff433dc00be0af76b76e2377719585",
+    "crates/hyperreal/fuzz/directed/test_lexicase.py": "3e7e239eb5c31a4ce6b5ddeadd6c417abcd1530a6d07ab77a58e08df994a2a35",
+    "crates/hyperreal/fuzz/directed/lexicase.py": "e55daf224219f90cad2ebf2fde0304419d0f8cd70d191bcce1069dff33cfe18e",
+    "crates/hyperreal/fuzz/directed/competitive.py": "153c9d8fecbae154d5516652880018c85fe4a80692c0b3fbb9f2d36308b432f5"
+  },
+  "changes_relative_to_qualified_search": {
+    "crates/hyperreal/Cargo.toml": "a0102ee8ae4871d75f1a0528fdea9bdc83e48a5ad1bba42c1d198419802bd38c",
+    "crates/hyperreal/fuzz/README.md": "8a38cf789a7f8660c09d010d86875d7dad6d2d1ceeee071a1feb7670916fac30",
+    "crates/hyperreal/examples/directed_scalar_bench.rs": "2237b52ff3b5a63c2c61510303ff57462a890f7b6202a90c80512c9eaeab164a",
+    "crates/hyperreal/examples/directed_scalar_bench/mpfr.rs": "f92a60ac34a963084dabaccb33f0a116faecbe08e2f65c8bebe13e9596cbac7d",
+    "crates/hyperreal/fuzz/directed/test_competitive.py": "c82a4ec4def837ae4c6def88725b76f64325eaa2078b5915ddbf23e8b3e39253",
+    "crates/hyperreal/fuzz/directed/competitive.py": "153c9d8fecbae154d5516652880018c85fe4a80692c0b3fbb9f2d36308b432f5"
+  },
+  "qualified_search_result_sha256": "75c08a74a1b49e8889191dfced69003a6212f951e26c567b01a200bce2a1ba3b",
+  "qualified_search_closure_sha256": "11f1b9cc4ef3c845afd4f12999514808d40b7de5c4d90563ba3308a9617daf5c",
+  "selected_inputs_sha256": "00926c66fb4e615fb7595aa65265edcf467eccac1333e2c8e8869e1ef574c6b4",
+  "representations": 22,
+  "selected_inputs": 59,
+  "samples_per_backend_per_input": 11,
+  "backends": [
+    "hyperreal",
+    "mpfr"
+  ],
+  "expected_native_samples": 1298,
+  "seed": 20261014,
+  "process_timeout_seconds": 30,
+  "command_wall_limit_seconds": 1800,
+  "commands": 13,
+  "validation": [
+    "Workspace formatting",
+    "Fuzz manifest formatting",
+    "All Python selector, campaign, fraction and competitive evidence tests",
+    "All-target strict Clippy with serde",
+    "All-target strict Clippy with serde and dispatch-trace",
+    "All-target strict Clippy with all features",
+    "ASan/LSan native-adapter example tests with serde and rebuilt std",
+    "ASan/LSan native-adapter example tests with all features and rebuilt std",
+    "Native release benchmark build with serde only",
+    "Inspect defined binary symbols and reject ASan/LSan instrumentation",
+    "Measure all 1298 frozen native samples",
+    "Replay every raw numeric result and timing sample",
+    "Record native executable sections and binary bytes"
+  ],
+  "limits": [
+    "This compares interval enclosure operations on selected scalar inputs; it does not compare structural certificate APIs or establish whole-library rankings.",
+    "No warm-result performance claim, cross-machine generalization or matched cross-library allocation claim.",
+    "Native GMP/MPFR code is not claimed ASan-instrumented.",
+    "Other stack layers, exhaustive coverage, formal obligations and complete P38 remain open."
+  ],
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false
+}

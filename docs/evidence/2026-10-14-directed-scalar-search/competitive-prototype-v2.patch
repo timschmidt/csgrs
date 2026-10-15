@@ -1,0 +1,2552 @@
+--- a/crates/hyperreal/Cargo.toml
++++ b/crates/hyperreal/Cargo.toml
+@@ -44,6 +44,14 @@
+ [[example]]
+ name = "readme_quickstart"
+ 
++[[example]]
++name = "directed_scalar_bench"
++required-features = ["serde"]
++
++[[example]]
++name = "directed_scalar_probe"
++required-features = ["serde", "dispatch-trace"]
++
+ [[bench]]
+ name = "borrowed_ops"
+ harness = false
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_bench.rs
+@@ -0,0 +1,251 @@
++//! Fresh-process comparison at a matching absolute enclosure-width contract.
++use hyperreal::Rational;
++use num::BigUint;
++use rug::Rational as Mpq;
++use serde_json::{Value, json};
++use std::{path::Path, time::Instant};
++
++#[cfg(test)]
++#[path = "../tests/support/representations.rs"]
++mod inventory;
++#[path = "directed_scalar_bench/mpfr.rs"]
++mod mpfr;
++#[cfg(test)]
++#[path = "../tests/support/mpfr.rs"]
++mod mpfr_test;
++#[path = "directed_scalar_probe/oracle.rs"]
++mod oracle;
++#[path = "directed_scalar_probe/recipe.rs"]
++mod recipe;
++#[path = "directed_scalar_probe/wire.rs"]
++mod wire;
++
++use recipe::{Input, Recipe};
++
++enum Bounds {
++    Hyperreal([Rational; 2]),
++    Mpfr([Mpq; 2]),
++}
++
++struct Step {
++    bits: u32,
++    bounds: Bounds,
++}
++
++fn precision_schedule() -> impl Iterator<Item = u32> {
++    (256..=2048).step_by(128)
++}
++
++fn evaluate_hyperreal(recipe: &Recipe, target: &Rational) -> Result<Vec<Step>, String> {
++    let value = recipe.real()?;
++    let mut steps = Vec::new();
++    for bits in precision_schedule() {
++        let bounds = value
++            .certified_rational_interval(-(bits as i32))
++            .ok_or("Hyperreal enclosure evaluation aborted")?;
++        let width = &bounds[1] - &bounds[0];
++        if width < Rational::zero() {
++            return Err("Hyperreal interval endpoints are reversed".into());
++        }
++        let sufficient = &width <= target;
++        steps.push(Step {
++            bits,
++            bounds: Bounds::Hyperreal(bounds),
++        });
++        if sufficient {
++            return Ok(steps);
++        }
++    }
++    Err("Hyperreal absolute-width budget exhausted at 2048 bits".into())
++}
++
++fn evaluate_mpfr(recipe: &Recipe, target: &Mpq) -> Result<Vec<Step>, String> {
++    let mut steps = Vec::new();
++    for bits in precision_schedule() {
++        let bounds = mpfr::bounds(recipe, bits)?;
++        let width = Mpq::from(&bounds[1] - &bounds[0]);
++        if width < 0 {
++            return Err("MPFR interval endpoints are reversed".into());
++        }
++        let sufficient = &width <= target;
++        steps.push(Step {
++            bits,
++            bounds: Bounds::Mpfr(bounds),
++        });
++        if sufficient {
++            return Ok(steps);
++        }
++    }
++    Err("MPFR absolute-width budget exhausted at 2048 bits".into())
++}
++
++fn mpq_wire(value: &Mpq) -> String {
++    format!("{}/{}", value.numer(), value.denom())
++}
++
++fn checked_steps(
++    steps: Vec<Step>,
++    target: &Rational,
++    reference: &[Rational; 2],
++) -> Result<Vec<Value>, String> {
++    if steps.is_empty() {
++        return Err("missing adaptive enclosure steps".into());
++    }
++    let final_index = steps.len() - 1;
++    steps.into_iter().enumerate().map(|(index, step)| {
++        let text = match step.bounds {
++            Bounds::Hyperreal(bounds) => bounds.each_ref().map(wire::rational),
++            Bounds::Mpfr(bounds) => bounds.each_ref().map(mpq_wire),
++        };
++        let [lo, hi] = text.each_ref().map(|s| s.parse::<Rational>().expect("exact fraction encoding"));
++        if lo > hi || hi < reference[0] || lo > reference[1] {
++            return Err("native enclosure contradicts independent reference".into());
++        }
++        let width = &hi - &lo;
++        let sufficient = &width <= target;
++        if sufficient != (index == final_index) {
++            return Err("adaptive evaluation stopped at the wrong absolute width".into());
++        }
++        Ok(json!({"precision_bits": step.bits, "interval": text, "width": wire::rational(&width)}))
++    }).collect()
++}
++
++fn run() -> Result<Value, String> {
++    if cfg!(feature = "dispatch-trace") || cfg!(debug_assertions) {
++        return Err("benchmark requires a release build without dispatch-trace".into());
++    }
++    let args = std::env::args().skip(1).collect::<Vec<_>>();
++    if args.len() != 2 || !["hyperreal", "mpfr"].contains(&args[0].as_str()) {
++        return Err("usage: directed_scalar_bench hyperreal|mpfr INPUT.json".into());
++    }
++    let path = Path::new(&args[1]);
++    if path.metadata().map_err(|e| e.to_string())?.len() > 4096 {
++        return Err("input exceeds 4096 bytes".into());
++    }
++    let input: Input =
++        serde_json::from_str(&std::fs::read_to_string(path).map_err(|e| e.to_string())?)
++            .map_err(|e| format!("invalid input: {e}"))?;
++    let recipe = Recipe::new(input);
++    let width_text = format!("1/{}", BigUint::from(1_u8) << 256_usize);
++    let target = width_text.parse::<Rational>().expect("positive width");
++    let mpfr_target = width_text.parse::<Mpq>().expect("positive width");
++    let start = Instant::now();
++    let steps = match args[0].as_str() {
++        "hyperreal" => evaluate_hyperreal(&recipe, &target),
++        "mpfr" => evaluate_mpfr(&recipe, &mpfr_target),
++        _ => unreachable!("validated backend"),
++    };
++    let elapsed_ns = start.elapsed().as_nanos();
++    let steps = steps?;
++    // Everything below is untimed. In particular the reference cannot warm
++    // MPFR caches before its measured operation in this fresh process.
++    let value = recipe.real()?;
++    let actual_class = recipe::private_class(&value)?;
++    if actual_class != recipe.input.bucket {
++        return Err("benchmark recipe did not reach its declared class".into());
++    }
++    let reference = oracle::bounds(&recipe)?;
++    let expected_sign = oracle::sign(&reference)?;
++    let steps = checked_steps(steps, &target, &reference)?;
++    Ok(
++        json!({"schema": 1, "status": "ok", "backend": args[0], "recipe": recipe,
++        "actual_class": actual_class, "rational_encoding": "signed-numerator/positive-denominator-v1",
++        "elapsed_ns": elapsed_ns, "maximum_absolute_width": width_text, "steps": steps,
++        "oracle": {"precision_bits": 1024, "interval": reference.each_ref().map(wire::rational),
++                   "sign": format!("{expected_sign:?}")},
++        "dispatch_trace_enabled": cfg!(feature = "dispatch-trace"), "debug_assertions": cfg!(debug_assertions),
++        "timing_contract": "Fresh-process construction and adaptive enclosure to absolute width <= 2^-256; input decoding, output encoding and reference validation excluded."}),
++    )
++}
++
++fn main() {
++    let result = run();
++    rug::float::free_cache(rug::float::FreeCache::All);
++    match result {
++        Ok(value) => println!("{value}"),
++        Err(error) => {
++            println!(
++                "{}",
++                json!({"schema": 1, "status": "error", "error": error})
++            );
++            std::process::exit(2);
++        }
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn all_representation_boundaries_meet_the_same_absolute_width() {
++        mpfr_test::cleanup_on_thread_exit();
++        let target_text = format!("1/{}", BigUint::from(1_u8) << 256_usize);
++        let target = target_text.parse::<Rational>().unwrap();
++        let mpfr_target = target_text.parse::<Mpq>().unwrap();
++        for case in inventory::optimized_certificate_representatives() {
++            assert_eq!(
++                recipe::private_class(&case.value).unwrap(),
++                case.certificate
++            );
++            assert_eq!(case.value.detailed_facts().symbolic.kind, case.public_kind);
++            for genome in [
++                [0; 8],
++                [255; 8],
++                [0, 1, 127, 3, 5, 2, 128, 77],
++                [4, 31, 0, 0, 0, 1, 0, 0],
++            ] {
++                let recipe = Recipe::new(Input {
++                    bucket: case.certificate.into(),
++                    genome,
++                });
++                let reference = oracle::bounds(&recipe).unwrap();
++                checked_steps(
++                    evaluate_hyperreal(&recipe, &target).unwrap(),
++                    &target,
++                    &reference,
++                )
++                .unwrap();
++                checked_steps(
++                    evaluate_mpfr(&recipe, &mpfr_target).unwrap(),
++                    &target,
++                    &reference,
++                )
++                .unwrap();
++                let direct = mpfr::bounds(&recipe, 1024).unwrap();
++                assert_eq!(
++                    direct.each_ref().map(mpq_wire),
++                    reference.each_ref().map(wire::rational)
++                );
++            }
++        }
++    }
++
++    #[test]
++    fn wide_scaled_regression_requires_refinement_and_preserves_the_full_input() {
++        mpfr_test::cleanup_on_thread_exit();
++        let input: Input = serde_json::from_str(include_str!(
++            "directed_scalar_probe/regressions/mixed_number_v2.input.json"
++        ))
++        .unwrap();
++        assert_eq!(input.genome, [47, 128, 223, 71, 133, 255, 155, 107]);
++        let recipe = Recipe::new(input);
++        let target_text = format!("1/{}", BigUint::from(1_u8) << 256_usize);
++        let target = target_text.parse::<Rational>().unwrap();
++        let mpfr_target = target_text.parse::<Mpq>().unwrap();
++        let reference = oracle::bounds(&recipe).unwrap();
++        for steps in [
++            evaluate_hyperreal(&recipe, &target).unwrap(),
++            evaluate_mpfr(&recipe, &mpfr_target).unwrap(),
++        ] {
++            assert!(steps.last().unwrap().bits > 256);
++            checked_steps(steps, &target, &reference).unwrap();
++        }
++        assert_eq!(
++            precision_schedule().collect::<Vec<_>>(),
++            (0..15).map(|n| 256 + n * 128).collect::<Vec<_>>()
++        );
++        assert!(mpfr::bounds(&recipe, 63).is_err());
++        assert!(mpfr::bounds(&recipe, 4097).is_err());
++    }
++}
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_bench/mpfr.rs
+@@ -0,0 +1,167 @@
++//! Native MPFR enclosure adapter with an explicit significand precision.
++
++use super::recipe::{OffsetFamily, Recipe};
++use rug::{
++    Float, Rational as Mpq,
++    float::{Constant, Round},
++};
++use std::cmp::Ordering;
++
++struct Interval {
++    lo: Float,
++    hi: Float,
++}
++
++impl Interval {
++    fn rational(text: &str, precision: u32) -> Self {
++        let value = text.parse::<Mpq>().expect("exact generated rational");
++        Self {
++            lo: Float::with_val_round(precision, &value, Round::Down).0,
++            hi: Float::with_val_round(precision, &value, Round::Up).0,
++        }
++    }
++
++    fn pi(precision: u32) -> Self {
++        Self {
++            lo: Float::with_val_round(precision, Constant::Pi, Round::Down).0,
++            hi: Float::with_val_round(precision, Constant::Pi, Round::Up).0,
++        }
++    }
++
++    fn sub(self, other: Self) -> Self {
++        let precision = self.lo.prec();
++        assert_eq!(other.lo.prec(), precision);
++        Self {
++            lo: Float::with_val_round(precision, &self.lo - &other.hi, Round::Down).0,
++            hi: Float::with_val_round(precision, &self.hi - &other.lo, Round::Up).0,
++        }
++    }
++
++    fn add(self, other: Self) -> Self {
++        let precision = self.lo.prec();
++        assert_eq!(other.lo.prec(), precision);
++        Self {
++            lo: Float::with_val_round(precision, &self.lo + &other.lo, Round::Down).0,
++            hi: Float::with_val_round(precision, &self.hi + &other.hi, Round::Up).0,
++        }
++    }
++
++    fn mul(self, other: Self) -> Self {
++        let precision = self.lo.prec();
++        assert_eq!(other.lo.prec(), precision);
++        let corners = [
++            (&self.lo, &other.lo),
++            (&self.lo, &other.hi),
++            (&self.hi, &other.lo),
++            (&self.hi, &other.hi),
++        ];
++        let lo = corners
++            .iter()
++            .map(|(a, b)| Float::with_val_round(precision, *a * *b, Round::Down).0)
++            .min_by(|a, b| a.partial_cmp(b).expect("finite interval corner"))
++            .unwrap();
++        let hi = corners
++            .iter()
++            .map(|(a, b)| Float::with_val_round(precision, *a * *b, Round::Up).0)
++            .max_by(|a, b| a.partial_cmp(b).expect("finite interval corner"))
++            .unwrap();
++        Self { lo, hi }
++    }
++
++    fn inverse(self) -> Self {
++        let precision = self.lo.prec();
++        assert!(
++            self.lo > 0 || self.hi < 0,
++            "oracle denominator contains zero"
++        );
++        let one = Float::with_val(precision, 1);
++        Self {
++            lo: Float::with_val_round(precision, &one / &self.hi, Round::Down).0,
++            hi: Float::with_val_round(precision, &one / &self.lo, Round::Up).0,
++        }
++    }
++
++    // All selected transcendental functions are increasing on their generated
++    // domains. Trigonometric inputs are checked below against an independent
++    // directed lower bound for pi/2 before this method is used.
++    fn increasing(mut self, operation: fn(&mut Float, Round) -> Ordering) -> Self {
++        operation(&mut self.lo, Round::Down);
++        operation(&mut self.hi, Round::Up);
++        assert!(self.lo.is_finite() && self.hi.is_finite() && self.lo <= self.hi);
++        self
++    }
++
++    fn positive_trig(self, operation: fn(&mut Float, Round) -> Ordering) -> Self {
++        let half_pi = Self::pi(self.lo.prec()).mul(Self::rational("1/2", self.lo.prec()));
++        assert!(
++            self.lo > 0 && self.hi < half_pi.lo,
++            "oracle trig domain is not monotone"
++        );
++        self.increasing(operation)
++    }
++
++    fn rational_bounds(self) -> [Mpq; 2] {
++        [self.lo, self.hi].map(|x| x.to_rational().expect("finite MPFR endpoint"))
++    }
++}
++
++pub fn bounds(recipe: &Recipe, precision: u32) -> Result<[Mpq; 2], String> {
++    if !(64..=4096).contains(&precision) {
++        return Err("MPFR precision is outside the declared 64..4096-bit domain".into());
++    }
++    let rational = |n: u32, d: u32| Interval::rational(&format!("{n}/{d}"), precision);
++    let prime = || rational(recipe.prime, 1);
++    let exponent = || rational(recipe.exponent_numerator, recipe.exponent_denominator);
++    let angle = || rational(recipe.angle_numerator, recipe.angle_denominator);
++    let pi_power = || {
++        (1..recipe.pi_power).fold(Interval::pi(precision), |x, _| {
++            x.mul(Interval::pi(precision))
++        })
++    };
++    let exp = || exponent().increasing(Float::exp_round);
++    let root = || prime().increasing(Float::sqrt_round);
++    let log = || prime().increasing(Float::ln_round);
++    let value = match recipe.input.bucket.as_str() {
++        "One" => rational(1, 1),
++        "Pi" => Interval::pi(precision),
++        "PiPow" => pi_power(),
++        "PiInv" => Interval::pi(precision).inverse(),
++        "PiExp" => Interval::pi(precision).mul(exp()),
++        "PiInvExp" => exp().mul(Interval::pi(precision).inverse()),
++        "PiSqrt" => Interval::pi(precision).mul(root()),
++        "ConstProduct" => pi_power().mul(exp()),
++        "ConstOffset" => {
++            let base = match recipe.offset_family {
++                OffsetFamily::PiSubtract => Interval::pi(precision),
++                OffsetFamily::ESubtract => rational(1, 1).increasing(Float::exp_round),
++                OffsetFamily::ProductAdd => pi_power().mul(exp()),
++                OffsetFamily::InverseProductAdd => exp().mul(Interval::pi(precision).inverse()),
++            };
++            base.add(Interval::rational(&recipe.constant_offset, precision))
++        }
++        "ConstProductSqrt" => pi_power().mul(exp()).mul(root()),
++        "Sqrt" => root(),
++        "Exp" => exp(),
++        "Ln" => log(),
++        "LnAffine" => prime().mul(exp()).increasing(Float::ln_round),
++        "LnProduct" => log().mul(rational(recipe.other_prime, 1).increasing(Float::ln_round)),
++        "Log10" => prime().increasing(Float::log10_round),
++        "Log2" => rational(recipe.angle_denominator, 1).increasing(Float::log2_round),
++        "Pow10" => angle().increasing(Float::exp10_round),
++        "Pow2" => angle().increasing(Float::exp2_round),
++        "SinPi" => angle()
++            .mul(Interval::pi(precision))
++            .positive_trig(Float::sin_round),
++        "TanPi" => angle()
++            .mul(Interval::pi(precision))
++            .positive_trig(Float::tan_round),
++        "Irrational" if recipe.generic_near_pi => {
++            Interval::pi(precision).sub(Interval::rational(&recipe.pi_offset, precision))
++        }
++        "Irrational" => angle().positive_trig(Float::sin_round),
++        other => return Err(format!("unsupported oracle representation: {other}")),
++    };
++    Ok(value
++        .mul(Interval::rational(&recipe.scale, precision))
++        .rational_bounds())
++}
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_probe.rs
+@@ -0,0 +1,421 @@
++//! Development-only process probe for representation-bucketed adversarial search.
++
++use hyperreal::{CertifiedRealSign, Rational, Real, RealSign, dispatch_trace};
++use serde_json::{Value, json};
++use std::{path::Path, time::Instant};
++
++#[path = "../tests/support/representations.rs"]
++mod inventory;
++#[path = "../tests/support/mpfr.rs"]
++mod mpfr;
++#[path = "directed_scalar_probe/oracle.rs"]
++mod oracle;
++#[path = "directed_scalar_probe/recipe.rs"]
++mod recipe;
++#[path = "directed_scalar_probe/wire.rs"]
++mod wire;
++
++use recipe::{Input, Recipe};
++
++const QUERIES: [&str; 6] = [
++    "normal_form",
++    "affine_det3",
++    "sign_zero",
++    "sign_256",
++    "interval_64",
++    "interval_256",
++];
++
++enum Answer {
++    Normal(Option<Rational>),
++    Sign(Option<RealSign>),
++    Interval([Rational; 2]),
++}
++
++fn sign(value: &Real, floor: i32) -> Option<RealSign> {
++    match value.certified_sign_until(floor) {
++        CertifiedRealSign::Known { sign, .. } => Some(sign),
++        CertifiedRealSign::Unknown { .. } => None,
++    }
++}
++
++fn affine(value: &Real) -> Option<RealSign> {
++    let zero = Real::zero();
++    let one = Real::one();
++    Real::certified_affine_det3_sign(
++        [value, &zero, &zero],
++        [&zero, &one, &zero],
++        [&zero, &zero, &one],
++        [&zero, &zero, &zero],
++    )
++}
++
++fn query(value: &Real, name: &str) -> Result<Answer, String> {
++    Ok(match name {
++        "normal_form" => Answer::Normal(value.exact_rational_normal_form()),
++        "affine_det3" => Answer::Sign(affine(value)),
++        "sign_zero" => Answer::Sign(sign(value, 0)),
++        "sign_256" => Answer::Sign(sign(value, -256)),
++        "interval_64" | "interval_256" => Answer::Interval(
++            value
++                .certified_rational_interval(if name == "interval_64" { -64 } else { -256 })
++                .ok_or("bounded interval query exhausted")?,
++        ),
++        _ => return Err("unknown query".into()),
++    })
++}
++
++fn checked_answer(
++    answer: Answer,
++    reference: &[Rational; 2],
++    expected_sign: RealSign,
++) -> Result<Value, String> {
++    match answer {
++        Answer::Normal(value) => {
++            if value
++                .as_ref()
++                .is_some_and(|x| x < &reference[0] || x > &reference[1])
++            {
++                return Err("rational normal form contradicts independent MPFR enclosure".into());
++            }
++            Ok(json!({"normal_form": value.as_ref().map(wire::rational)}))
++        }
++        Answer::Sign(value) => {
++            if value.is_some_and(|x| x != expected_sign) {
++                return Err("certified sign contradicts independent MPFR enclosure".into());
++            }
++            Ok(json!({"sign": value.map(|x| format!("{x:?}"))}))
++        }
++        Answer::Interval([lo, hi]) => {
++            if lo > hi || hi < reference[0] || lo > reference[1] {
++                return Err(
++                    "certified interval is disjoint from independent MPFR enclosure".into(),
++                );
++            }
++            Ok(json!({"interval": [wire::rational(&lo), wire::rational(&hi)]}))
++        }
++    }
++}
++
++fn check_cache(
++    recipe: &Recipe,
++    reference: &[Rational; 2],
++    expected_sign: RealSign,
++) -> Result<Value, String> {
++    let value = recipe.real()?;
++    let cold_normal = value.exact_rational_normal_form();
++    let cold_affine = affine(&value);
++    let cold_sign = sign(&value, 0);
++    let _ = checked_answer(query(&value, "interval_256")?, reference, expected_sign)?;
++    let fine_sign = sign(&value, -256);
++    let warm_normal = value.exact_rational_normal_form();
++    let warm_affine = affine(&value);
++    let warm_sign = sign(&value, 0);
++    if cold_normal
++        .as_ref()
++        .is_some_and(|x| warm_normal.as_ref() != Some(x))
++        || cold_affine.is_some_and(|x| warm_affine != Some(x))
++        || cold_sign.is_some_and(|x| fine_sign != Some(x))
++        || fine_sign.is_some_and(|x| warm_sign != Some(x))
++    {
++        return Err("cache warming weakened or contradicted a definite fact".into());
++    }
++    let record = json!({
++        "cold": {"normal": cold_normal.as_ref().map(wire::rational),
++                 "affine": cold_affine.map(|x| format!("{x:?}")), "sign": cold_sign.map(|x| format!("{x:?}"))},
++        "refined_sign": fine_sign.map(|x| format!("{x:?}")),
++        "warm": {"normal": warm_normal.as_ref().map(wire::rational),
++                 "affine": warm_affine.map(|x| format!("{x:?}")), "sign": warm_sign.map(|x| format!("{x:?}"))},
++    });
++    for answer in [
++        Answer::Normal(warm_normal),
++        Answer::Sign(warm_affine),
++        Answer::Sign(warm_sign),
++    ] {
++        let _ = checked_answer(answer, reference, expected_sign)?;
++    }
++    Ok(record)
++}
++
++fn probe(input: Input) -> Result<Value, String> {
++    mpfr::cleanup_on_thread_exit();
++    let recipe = Recipe::new(input);
++    let oracle_start = Instant::now();
++    let reference = oracle::bounds(&recipe)?;
++    let oracle_ns = oracle_start.elapsed().as_nanos();
++    let expected_sign = oracle::sign(&reference)?;
++    let mut rows = Vec::new();
++    for name in QUERIES {
++        let mut samples = Vec::new();
++        for sample in 0..3 {
++            let value = recipe.real()?;
++            let actual = recipe::private_class(&value)?;
++            if actual != recipe.input.bucket {
++                return Err(format!(
++                    "unexpected representation normalization: {} -> {actual}",
++                    recipe.input.bucket
++                ));
++            }
++            dispatch_trace::reset();
++            let start = Instant::now();
++            let answer = dispatch_trace::with_recording(|| query(&value, name));
++            let elapsed_ns = start.elapsed().as_nanos();
++            let trace = dispatch_trace::take_trace();
++            let answer = checked_answer(answer?, &reference, expected_sign)?;
++            samples.push(json!({
++                "sample": sample, "elapsed_ns": elapsed_ns, "answer": answer,
++                "dispatch": trace.dispatch.iter().map(|row| json!({
++                    "layer": row.layer, "operation": row.operation, "path": row.path, "count": row.count,
++                })).collect::<Vec<_>>(),
++                "rational": {"temporaries": trace.rational.temporary_rationals,
++                             "reductions": trace.rational.reductions, "gcds": trace.rational.gcds,
++                             "peak_operand_bits": trace.rational.peak_operand_bits},
++            }));
++        }
++        let mut nanos = samples
++            .iter()
++            .map(|row| row["elapsed_ns"].as_u64().expect("bounded probe duration"))
++            .collect::<Vec<_>>();
++        nanos.sort_unstable();
++        rows.push(json!({"query": name, "score_ns": nanos[1], "samples": samples}));
++    }
++    let cache = check_cache(&recipe, &reference, expected_sign)?;
++    Ok(json!({
++        "schema": 1, "status": "ok", "recipe": recipe,
++        "rational_encoding": "signed-numerator/positive-denominator-v1",
++        "oracle": {"precision_bits": 1024, "interval": reference.each_ref().map(wire::rational),
++                   "sign": format!("{expected_sign:?}"), "diagnostic_elapsed_ns": oracle_ns},
++        "queries": rows, "cache_contract": cache, "cache_contract_checked": true,
++        "score_contract": "Median of three query-body elapsed times; every sample and trace is retained. This is search fitness, not a competitive benchmark.",
++    }))
++}
++
++fn run() -> Result<Value, String> {
++    let args = std::env::args().skip(1).collect::<Vec<_>>();
++    if args == ["--list"] {
++        return Ok(
++            json!({"representations": inventory::optimized_certificate_representatives().iter()
++            .map(|case| json!({"name": case.certificate, "kind": format!("{:?}", case.public_kind),
++                             "actual_class": recipe::private_class(&case.value).expect("inventory serializes")}))
++            .collect::<Vec<_>>(), "queries": QUERIES}),
++        );
++    }
++    if args.len() != 1 {
++        return Err("usage: directed_scalar_probe INPUT.json | --list".into());
++    }
++    let path = Path::new(&args[0]);
++    if path.metadata().map_err(|e| e.to_string())?.len() > 4096 {
++        return Err("input exceeds 4096 bytes".into());
++    }
++    let input = serde_json::from_str(&std::fs::read_to_string(path).map_err(|e| e.to_string())?)
++        .map_err(|e| format!("invalid input: {e}"))?;
++    probe(input)
++}
++
++fn main() {
++    let result = run();
++    // This standalone process is single-threaded; all oracle Float values have
++    // dropped before releasing its local and shared MPFR caches.
++    rug::float::free_cache(rug::float::FreeCache::All);
++    match result {
++        Ok(value) => println!("{value}"),
++        Err(error) => {
++            println!(
++                "{}",
++                json!({"schema": 1, "status": "error", "error": error})
++            );
++            std::process::exit(2);
++        }
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn original_mixed_number_failure_uses_exact_fraction_wire_output() {
++        mpfr::cleanup_on_thread_exit();
++        let input: Input = serde_json::from_str(include_str!(
++            "directed_scalar_probe/regressions/mixed_number_v2.input.json"
++        ))
++        .unwrap();
++        assert_eq!(input.genome, [47, 128, 223, 71, 133, 255, 155, 107]);
++        let previous: Value = serde_json::from_str(include_str!(
++            "directed_scalar_probe/regressions/mixed_number_v2.response.json"
++        ))
++        .unwrap();
++        let response = probe(input).unwrap();
++        for (old, new) in previous["oracle"]["interval"]
++            .as_array()
++            .unwrap()
++            .iter()
++            .zip(response["oracle"]["interval"].as_array().unwrap())
++        {
++            let old = old.as_str().unwrap();
++            let new = new.as_str().unwrap();
++            assert!(old.contains(' ') && !new.contains(' ') && new.contains('/'));
++            let (whole, remainder) = old.split_once(' ').unwrap();
++            let whole = whole.parse::<rug::Rational>().unwrap();
++            let remainder = remainder.parse::<rug::Rational>().unwrap();
++            let expected = if old.starts_with('-') {
++                whole - remainder
++            } else {
++                whole + remainder
++            };
++            assert_eq!(expected, new.parse::<rug::Rational>().unwrap());
++        }
++    }
++
++    fn check_recipe(recipe: &Recipe, expected_class: &str) {
++        let value = recipe.real().unwrap();
++        assert_eq!(
++            recipe::private_class(&value).unwrap(),
++            expected_class,
++            "{recipe:?}"
++        );
++        let bounds = oracle::bounds(recipe).unwrap();
++        let expected = oracle::sign(&bounds).unwrap();
++        for name in QUERIES {
++            checked_answer(query(&value, name).unwrap(), &bounds, expected).unwrap();
++        }
++        check_cache(recipe, &bounds, expected).unwrap();
++    }
++
++    #[test]
++    fn original_near_pi_failure_is_preserved_with_its_actual_class() {
++        mpfr::cleanup_on_thread_exit();
++        let mut input: Input = serde_json::from_str(include_str!(
++            "directed_scalar_probe/regressions/near_pi_v1.json"
++        ))
++        .unwrap();
++        assert_eq!(input.bucket, "ConstOffset");
++        assert_eq!(input.genome, [0; 8]);
++        // The failed expectation is retained in the fixture. The same exact
++        // expression belongs to Irrational under the documented constructor.
++        input.bucket = "Irrational".into();
++        let recipe = Recipe::new(input);
++        assert_eq!(recipe.pi_offset, "31/10");
++        assert_eq!(recipe.scale, "1/1");
++        assert!(recipe.generic_near_pi);
++        check_recipe(&recipe, "Irrational");
++    }
++
++    #[test]
++    fn both_sides_of_all_near_pi_depths_and_all_offset_families_are_checked() {
++        mpfr::cleanup_on_thread_exit();
++        for depth in 0..78 {
++            for side in [0, 2] {
++                let mut genome = [0; 8];
++                genome[5] = side;
++                genome[7] = depth;
++                check_recipe(
++                    &Recipe::new(Input {
++                        bucket: "Irrational".into(),
++                        genome,
++                    }),
++                    "Irrational",
++                );
++            }
++        }
++        for family in 0..4 {
++            for mut genome in [
++                [0; 8],
++                [255; 8],
++                [0, 1, 127, 3, 5, 2, 128, 77],
++                [4, 31, 0, 0, 0, 1, 0, 0],
++            ] {
++                genome[5] = (genome[5] & 7) | (family << 3);
++                check_recipe(
++                    &Recipe::new(Input {
++                        bucket: "ConstOffset".into(),
++                        genome,
++                    }),
++                    "ConstOffset",
++                );
++            }
++        }
++    }
++
++    #[test]
++    fn parameter_extremes_keep_every_private_class_and_agree_with_mpfr() {
++        mpfr::cleanup_on_thread_exit();
++        let cases = inventory::optimized_certificate_representatives();
++        assert_eq!(cases.len(), 22);
++        for genome in [
++            [0; 8],
++            [255; 8],
++            [0, 1, 127, 3, 5, 2, 128, 77],
++            [4, 31, 0, 0, 0, 1, 0, 0],
++        ] {
++            for case in &cases {
++                let recipe = Recipe::new(Input {
++                    bucket: case.certificate.into(),
++                    genome,
++                });
++                let value = recipe.real().unwrap();
++                assert_eq!(
++                    recipe::private_class(&value).unwrap(),
++                    case.certificate,
++                    "{recipe:?}"
++                );
++                assert_eq!(value.detailed_facts().symbolic.kind, case.public_kind);
++                let bounds = oracle::bounds(&recipe).unwrap();
++                let expected = oracle::sign(&bounds).unwrap();
++                for name in QUERIES {
++                    checked_answer(query(&value, name).unwrap(), &bounds, expected).unwrap();
++                }
++                check_cache(&recipe, &bounds, expected).unwrap();
++            }
++        }
++    }
++
++    #[test]
++    fn unknown_representations_and_malformed_genomes_are_rejected() {
++        assert!(
++            Recipe::new(Input {
++                bucket: "not-a-class".into(),
++                genome: [0; 8]
++            })
++            .real()
++            .is_err()
++        );
++        for input in [
++            r#"{"bucket":"Pi","genome":[]}"#,
++            r#"{"bucket":"Pi","genome":[256,0,0,0,0,0,0,0]}"#,
++            r#"{"bucket":"Pi","genome":[0,0,0,0,0,0,0,0],"extra":true}"#,
++        ] {
++            assert!(serde_json::from_str::<Input>(input).is_err());
++        }
++    }
++
++    #[test]
++    fn independent_oracle_rejects_opposite_sign_and_disjoint_intervals() {
++        let bounds = [Rational::new(1), Rational::new(2)];
++        assert!(
++            checked_answer(
++                Answer::Sign(Some(RealSign::Negative)),
++                &bounds,
++                RealSign::Positive
++            )
++            .is_err()
++        );
++        assert!(
++            checked_answer(
++                Answer::Normal(Some(Rational::new(3))),
++                &bounds,
++                RealSign::Positive
++            )
++            .is_err()
++        );
++        assert!(
++            checked_answer(
++                Answer::Interval([Rational::new(3), Rational::new(4)]),
++                &bounds,
++                RealSign::Positive
++            )
++            .is_err()
++        );
++        assert!(checked_answer(Answer::Sign(None), &bounds, RealSign::Positive).is_ok());
++    }
++}
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_probe/oracle.rs
+@@ -0,0 +1,168 @@
++//! Independent directed MPFR evaluation of the exact generated recipe.
++
++use super::recipe::{OffsetFamily, Recipe};
++use hyperreal::{Rational, RealSign};
++use rug::{
++    Float, Rational as Mpq,
++    float::{Constant, Round},
++};
++use std::cmp::Ordering;
++
++const PRECISION: u32 = 1024;
++
++struct Interval {
++    lo: Float,
++    hi: Float,
++}
++
++impl Interval {
++    fn rational(text: &str) -> Self {
++        let value = text.parse::<Mpq>().expect("exact generated rational");
++        Self {
++            lo: Float::with_val_round(PRECISION, &value, Round::Down).0,
++            hi: Float::with_val_round(PRECISION, &value, Round::Up).0,
++        }
++    }
++
++    fn pi() -> Self {
++        Self {
++            lo: Float::with_val_round(PRECISION, Constant::Pi, Round::Down).0,
++            hi: Float::with_val_round(PRECISION, Constant::Pi, Round::Up).0,
++        }
++    }
++
++    fn sub(self, other: Self) -> Self {
++        Self {
++            lo: Float::with_val_round(PRECISION, &self.lo - &other.hi, Round::Down).0,
++            hi: Float::with_val_round(PRECISION, &self.hi - &other.lo, Round::Up).0,
++        }
++    }
++
++    fn add(self, other: Self) -> Self {
++        Self {
++            lo: Float::with_val_round(PRECISION, &self.lo + &other.lo, Round::Down).0,
++            hi: Float::with_val_round(PRECISION, &self.hi + &other.hi, Round::Up).0,
++        }
++    }
++
++    fn mul(self, other: Self) -> Self {
++        let corners = [
++            (&self.lo, &other.lo),
++            (&self.lo, &other.hi),
++            (&self.hi, &other.lo),
++            (&self.hi, &other.hi),
++        ];
++        let lo = corners
++            .iter()
++            .map(|(a, b)| Float::with_val_round(PRECISION, *a * *b, Round::Down).0)
++            .min_by(|a, b| a.partial_cmp(b).expect("finite interval corner"))
++            .unwrap();
++        let hi = corners
++            .iter()
++            .map(|(a, b)| Float::with_val_round(PRECISION, *a * *b, Round::Up).0)
++            .max_by(|a, b| a.partial_cmp(b).expect("finite interval corner"))
++            .unwrap();
++        Self { lo, hi }
++    }
++
++    fn inverse(self) -> Self {
++        assert!(
++            self.lo > 0 || self.hi < 0,
++            "oracle denominator contains zero"
++        );
++        let one = Float::with_val(PRECISION, 1);
++        Self {
++            lo: Float::with_val_round(PRECISION, &one / &self.hi, Round::Down).0,
++            hi: Float::with_val_round(PRECISION, &one / &self.lo, Round::Up).0,
++        }
++    }
++
++    // All selected transcendental functions are increasing on their generated
++    // domains. Trigonometric inputs are checked below against an independent
++    // directed lower bound for pi/2 before this method is used.
++    fn increasing(mut self, operation: fn(&mut Float, Round) -> Ordering) -> Self {
++        operation(&mut self.lo, Round::Down);
++        operation(&mut self.hi, Round::Up);
++        assert!(self.lo.is_finite() && self.hi.is_finite() && self.lo <= self.hi);
++        self
++    }
++
++    fn positive_trig(self, operation: fn(&mut Float, Round) -> Ordering) -> Self {
++        let half_pi = Self::pi().mul(Self::rational("1/2"));
++        assert!(
++            self.lo > 0 && self.hi < half_pi.lo,
++            "oracle trig domain is not monotone"
++        );
++        self.increasing(operation)
++    }
++
++    fn rational_bounds(self) -> [Rational; 2] {
++        [self.lo, self.hi].map(|x| {
++            x.to_rational()
++                .expect("finite MPFR endpoint")
++                .to_string()
++                .parse()
++                .expect("exact rational MPFR endpoint")
++        })
++    }
++}
++
++pub fn bounds(recipe: &Recipe) -> Result<[Rational; 2], String> {
++    let rational = |n: u32, d: u32| Interval::rational(&format!("{n}/{d}"));
++    let prime = || rational(recipe.prime, 1);
++    let exponent = || rational(recipe.exponent_numerator, recipe.exponent_denominator);
++    let angle = || rational(recipe.angle_numerator, recipe.angle_denominator);
++    let pi_power = || (1..recipe.pi_power).fold(Interval::pi(), |x, _| x.mul(Interval::pi()));
++    let exp = || exponent().increasing(Float::exp_round);
++    let root = || prime().increasing(Float::sqrt_round);
++    let log = || prime().increasing(Float::ln_round);
++    let value = match recipe.input.bucket.as_str() {
++        "One" => rational(1, 1),
++        "Pi" => Interval::pi(),
++        "PiPow" => pi_power(),
++        "PiInv" => Interval::pi().inverse(),
++        "PiExp" => Interval::pi().mul(exp()),
++        "PiInvExp" => exp().mul(Interval::pi().inverse()),
++        "PiSqrt" => Interval::pi().mul(root()),
++        "ConstProduct" => pi_power().mul(exp()),
++        "ConstOffset" => {
++            let base = match recipe.offset_family {
++                OffsetFamily::PiSubtract => Interval::pi(),
++                OffsetFamily::ESubtract => rational(1, 1).increasing(Float::exp_round),
++                OffsetFamily::ProductAdd => pi_power().mul(exp()),
++                OffsetFamily::InverseProductAdd => exp().mul(Interval::pi().inverse()),
++            };
++            base.add(Interval::rational(&recipe.constant_offset))
++        }
++        "ConstProductSqrt" => pi_power().mul(exp()).mul(root()),
++        "Sqrt" => root(),
++        "Exp" => exp(),
++        "Ln" => log(),
++        "LnAffine" => prime().mul(exp()).increasing(Float::ln_round),
++        "LnProduct" => log().mul(rational(recipe.other_prime, 1).increasing(Float::ln_round)),
++        "Log10" => prime().increasing(Float::log10_round),
++        "Log2" => rational(recipe.angle_denominator, 1).increasing(Float::log2_round),
++        "Pow10" => angle().increasing(Float::exp10_round),
++        "Pow2" => angle().increasing(Float::exp2_round),
++        "SinPi" => angle().mul(Interval::pi()).positive_trig(Float::sin_round),
++        "TanPi" => angle().mul(Interval::pi()).positive_trig(Float::tan_round),
++        "Irrational" if recipe.generic_near_pi => {
++            Interval::pi().sub(Interval::rational(&recipe.pi_offset))
++        }
++        "Irrational" => angle().positive_trig(Float::sin_round),
++        other => return Err(format!("unsupported oracle representation: {other}")),
++    };
++    Ok(value
++        .mul(Interval::rational(&recipe.scale))
++        .rational_bounds())
++}
++
++pub fn sign(bounds: &[Rational; 2]) -> Result<RealSign, String> {
++    if bounds[0] > Rational::zero() {
++        Ok(RealSign::Positive)
++    } else if bounds[1] < Rational::zero() {
++        Ok(RealSign::Negative)
++    } else {
++        Err("independent oracle inconclusive at 1024 bits".into())
++    }
++}
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_probe/recipe.rs
+@@ -0,0 +1,172 @@
++use hyperreal::{Rational, Real};
++use num::{BigInt, BigUint};
++use serde::{Deserialize, Serialize};
++
++#[derive(Clone, Debug, Deserialize, Serialize)]
++#[serde(deny_unknown_fields)]
++pub struct Input {
++    pub bucket: String,
++    pub genome: [u8; 8],
++}
++
++#[derive(Clone, Copy, Debug, Serialize)]
++pub enum OffsetFamily {
++    PiSubtract,
++    ESubtract,
++    ProductAdd,
++    InverseProductAdd,
++}
++
++#[derive(Clone, Debug, Serialize)]
++pub struct Recipe {
++    pub input: Input,
++    pub scale: String,
++    pub prime: u32,
++    pub other_prime: u32,
++    pub exponent_numerator: u32,
++    pub exponent_denominator: u32,
++    pub angle_numerator: u32,
++    pub angle_denominator: u32,
++    pub pi_power: u32,
++    pub pi_offset: String,
++    pub offset_family: OffsetFamily,
++    pub constant_offset: String,
++    pub generic_near_pi: bool,
++}
++
++impl Recipe {
++    pub fn new(input: Input) -> Self {
++        const PRIMES: [u32; 8] = [2, 3, 5, 7, 11, 13, 17, 19];
++        const ODD_PRIMES: [u32; 8] = [5, 7, 11, 13, 17, 19, 23, 29];
++        const PI_DIGITS: &str =
++            "314159265358979323846264338327950288419716939937510582097494459230781640628620899";
++        let g = input.genome;
++        let numerator = BigInt::from(2 * u32::from(g[3]) + 1) << usize::from(g[2]);
++        let numerator = if g[5] & 1 == 0 { numerator } else { -numerator };
++        let denominator = BigUint::from(2 * u32::from(g[4]) + 1) << usize::from(g[6]);
++        let places = 1 + usize::from(g[7]) % 78;
++        let mut offset: BigUint = PI_DIGITS[..=places].parse().expect("decimal pi prefix");
++        if g[5] & 2 != 0 {
++            offset += 1_u8;
++        }
++        let angle_denominator = ODD_PRIMES[usize::from(g[0]) % ODD_PRIMES.len()];
++        // ConstOffset's inner value must have a cheap positive certificate.
++        // Keep near-pi cancellation in the generic Irrational population;
++        // these four families exercise the actual ConstOffset constructor.
++        let offset_family = match (g[5] >> 3) % 4 {
++            0 => OffsetFamily::PiSubtract,
++            1 => OffsetFamily::ESubtract,
++            2 => OffsetFamily::ProductAdd,
++            _ => OffsetFamily::InverseProductAdd,
++        };
++        let offset_denominator = 1 + u32::from(g[1]) + u32::from(g[7]);
++        let constant_offset = match offset_family {
++            OffsetFamily::PiSubtract | OffsetFamily::ESubtract => {
++                let bound = if matches!(offset_family, OffsetFamily::PiSubtract) {
++                    3
++                } else {
++                    2
++                };
++                let numerator = bound * (1 + u32::from(g[1]));
++                format!("-{numerator}/{offset_denominator}")
++            }
++            OffsetFamily::ProductAdd | OffsetFamily::InverseProductAdd => {
++                let numerator = BigUint::from(2 * u32::from(g[1]) + 1) << usize::from(g[7]);
++                format!("{numerator}/{offset_denominator}")
++            }
++        };
++        Self {
++            scale: format!("{numerator}/{denominator}"),
++            prime: PRIMES[usize::from(g[0]) % PRIMES.len()],
++            other_prime: PRIMES[(usize::from(g[0]) + 1) % PRIMES.len()],
++            exponent_numerator: 1 + u32::from(g[1]) % 16,
++            exponent_denominator: 2 + u32::from(g[0]) % 17,
++            angle_numerator: 1 + u32::from(g[1]) % ((angle_denominator - 1) / 2),
++            angle_denominator,
++            pi_power: 2 + u32::from(g[6]) % 5,
++            pi_offset: format!("{offset}/1{}", "0".repeat(places)),
++            offset_family,
++            constant_offset,
++            generic_near_pi: g[5] & 4 == 0,
++            input,
++        }
++    }
++
++    pub fn real(&self) -> Result<Real, String> {
++        let rational = |n: u32, d: u32| {
++            Real::new(Rational::fraction(i64::from(n), u64::from(d)).expect("positive denominator"))
++        };
++        let exponent = || rational(self.exponent_numerator, self.exponent_denominator);
++        let angle = || rational(self.angle_numerator, self.angle_denominator);
++        let pi_power = || {
++            let pi = Real::pi();
++            (1..self.pi_power).fold(pi.clone(), |value, _| value * &pi)
++        };
++        let exponential = || exponent().exp().expect("finite positive exponential input");
++        let root = || Real::from(self.prime).sqrt().expect("positive prime");
++        let log = || Real::from(self.prime).ln().expect("positive prime");
++        let value = match self.input.bucket.as_str() {
++            "One" => Real::one(),
++            "Pi" => Real::pi(),
++            "PiPow" => pi_power(),
++            "PiInv" => Real::pi().inverse().expect("pi is nonzero"),
++            "PiExp" => Real::pi() * exponential(),
++            "PiInvExp" => (exponential() / Real::pi()).expect("pi is nonzero"),
++            "PiSqrt" => Real::pi() * root(),
++            "ConstProduct" => pi_power() * exponential(),
++            "ConstOffset" => {
++                let base = match self.offset_family {
++                    OffsetFamily::PiSubtract => Real::pi(),
++                    OffsetFamily::ESubtract => Real::e(),
++                    OffsetFamily::ProductAdd => pi_power() * exponential(),
++                    OffsetFamily::InverseProductAdd => {
++                        (exponential() / Real::pi()).expect("pi is nonzero")
++                    }
++                };
++                base + self
++                    .constant_offset
++                    .parse::<Real>()
++                    .expect("exact constant offset")
++            }
++            "ConstProductSqrt" => pi_power() * exponential() * root(),
++            "Sqrt" => root(),
++            "Exp" => exponential(),
++            "Ln" => log(),
++            "LnAffine" => (Real::from(self.prime) * exponential())
++                .ln()
++                .expect("positive logarithm input"),
++            "LnProduct" => log() * Real::from(self.other_prime).ln().expect("positive prime"),
++            "Log10" => Real::from(self.prime).log10().expect("positive prime"),
++            "Log2" => Real::from(self.angle_denominator)
++                .log2()
++                .expect("odd prime"),
++            "Pow10" => angle().exp10().expect("finite exponent"),
++            "Pow2" => angle().exp2().expect("finite exponent"),
++            "SinPi" => angle().sin_pi(),
++            "TanPi" => angle()
++                .tan_pi()
++                .expect("angle is strictly between zero and one half"),
++            "Irrational" if self.generic_near_pi => {
++                Real::pi() - self.pi_offset.parse::<Real>().expect("exact pi offset")
++            }
++            "Irrational" => angle().sin(),
++            other => return Err(format!("unsupported representation: {other}")),
++        };
++        Ok(value
++            * self
++                .scale
++                .parse::<Real>()
++                .expect("nonzero exact rational scale"))
++    }
++}
++
++pub fn private_class(value: &Real) -> Result<String, String> {
++    let serialized = serde_json::to_value(value).map_err(|error| error.to_string())?;
++    match &serialized["class"] {
++        serde_json::Value::String(name) => Ok(name.clone()),
++        serde_json::Value::Object(fields) if fields.len() == 1 => {
++            Ok(fields.keys().next().unwrap().clone())
++        }
++        _ => Err("unexpected private-class serialization".into()),
++    }
++}
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_probe/regressions/mixed_number_v2.input.json
+@@ -0,0 +1,13 @@
++{
++  "bucket": "ConstOffset",
++  "genome": [
++    47,
++    128,
++    223,
++    71,
++    133,
++    255,
++    155,
++    107
++  ]
++}
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_probe/regressions/mixed_number_v2.response.json
+@@ -0,0 +1 @@
++{"cache_contract":{"cold":{"affine":null,"normal":null,"sign":"Negative"},"refined_sign":"Negative","warm":{"affine":null,"normal":null,"sign":"Negative"}},"cache_contract_checked":true,"oracle":{"diagnostic_elapsed_ns":1355597,"interval":["-27931556500330433803049226533637006274590649963619668 925885374414150898765336872457256625242233613556347683983128124055594640483009157988897323896623413842844844379525894964387151983399682997532864595227954734660591504291488880247295459932217901826462320870738852806221550773867167559789549404623228305490833/3753758414402350114985578847754628430655879796774751768338949695381315781309615853973705099290165690424277009592352731309591345333151121630880730453319952580019863461295451288668314174944572706159989883958951313077165169522342308559632306943619798833037312","-27931556500330433803049226533637006274590649963619668 925885374414150898765336872457256625242233613556347683983128124055594640483009157988897323896623413842844844379525894964387151983399682997532864595227954734660591504291488880247295459932217901826462320870738852806221550773867167559789549404623228305490829/3753758414402350114985578847754628430655879796774751768338949695381315781309615853973705099290165690424277009592352731309591345333151121630880730453319952580019863461295451288668314174944572706159989883958951313077165169522342308559632306943619798833037312"],"precision_bits":1024,"sign":"Negative"},"queries":[{"query":"normal_form","samples":[{"answer":{"normal_form":null},"dispatch":[],"elapsed_ns":54397,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":4},"sample":0},{"answer":{"normal_form":null},"dispatch":[],"elapsed_ns":25358,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":4},"sample":1},{"answer":{"normal_form":null},"dispatch":[],"elapsed_ns":26368,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":4},"sample":2}],"score_ns":26368},{"query":"affine_det3","samples":[{"answer":{"sign":null},"dispatch":[{"count":1,"layer":"real","operation":"constructor","path":"one"},{"count":1,"layer":"real","operation":"constructor","path":"zero"}],"elapsed_ns":9000,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":2},"sample":0},{"answer":{"sign":null},"dispatch":[{"count":1,"layer":"real","operation":"constructor","path":"one"},{"count":1,"layer":"real","operation":"constructor","path":"zero"}],"elapsed_ns":3650,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":2},"sample":1},{"answer":{"sign":null},"dispatch":[{"count":1,"layer":"real","operation":"constructor","path":"one"},{"count":1,"layer":"real","operation":"constructor","path":"zero"}],"elapsed_ns":3660,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":2},"sample":2}],"score_ns":3660},{"query":"sign_zero","samples":[{"answer":{"sign":"Negative"},"dispatch":[{"count":1,"layer":"computable","operation":"structural_facts","path":"exact-sign-cache"},{"count":1,"layer":"real","operation":"certified_sign_until","path":"structural-facts"},{"count":1,"layer":"real","operation":"structural_facts","path":"symbolic-nonzero-scale"}],"elapsed_ns":6770,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":0},"sample":0},{"answer":{"sign":"Negative"},"dispatch":[{"count":1,"layer":"computable","operation":"structural_facts","path":"exact-sign-cache"},{"count":1,"layer":"real","operation":"certified_sign_until","path":"structural-facts"},{"count":1,"layer":"real","operation":"structural_facts","path":"symbolic-nonzero-scale"}],"elapsed_ns":5819,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":0},"sample":1},{"answer":{"sign":"Negative"},"dispatch":[{"count":1,"layer":"computable","operation":"structural_facts","path":"exact-sign-cache"},{"count":1,"layer":"real","operation":"certified_sign_until","path":"structural-facts"},{"count":1,"layer":"real","operation":"structural_facts","path":"symbolic-nonzero-scale"}],"elapsed_ns":6069,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":0},"sample":2}],"score_ns":6069},{"query":"sign_256","samples":[{"answer":{"sign":"Negative"},"dispatch":[{"count":1,"layer":"computable","operation":"structural_facts","path":"exact-sign-cache"},{"count":1,"layer":"real","operation":"certified_sign_until","path":"structural-facts"},{"count":1,"layer":"real","operation":"structural_facts","path":"symbolic-nonzero-scale"}],"elapsed_ns":5500,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":0},"sample":0},{"answer":{"sign":"Negative"},"dispatch":[{"count":1,"layer":"computable","operation":"structural_facts","path":"exact-sign-cache"},{"count":1,"layer":"real","operation":"certified_sign_until","path":"structural-facts"},{"count":1,"layer":"real","operation":"structural_facts","path":"symbolic-nonzero-scale"}],"elapsed_ns":9680,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":0},"sample":1},{"answer":{"sign":"Negative"},"dispatch":[{"count":1,"layer":"computable","operation":"structural_facts","path":"exact-sign-cache"},{"count":1,"layer":"real","operation":"certified_sign_until","path":"structural-facts"},{"count":1,"layer":"real","operation":"structural_facts","path":"symbolic-nonzero-scale"}],"elapsed_ns":5240,"rational":{"gcds":0,"peak_operand_bits":0,"reductions":0,"temporaries":0},"sample":2}],"score_ns":5500},{"query":"interval_64","samples":[{"answer":{"interval":["-27931556500330433803049226533637006274590649963619675 13/89","-27931556500330433803049226533637006274590649963619658 2/267"]},"dispatch":[{"count":1,"layer":"computable","operation":"constructor","path":"cached-pi"},{"count":1,"layer":"computable","operation":"constructor","path":"shared-constant-wrapper"},{"count":2,"layer":"rational","operation":"mul","path":"dyadic-general-cross-cancel"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-hit"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-learned"},{"count":1,"layer":"rational","operation":"retained-facts","path":"non-dyadic-hit"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"binary-word"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"euclidean-wide-word"},{"count":2,"layer":"rational_algorithm","operation":"multiplication-dyadic-general","path":"backend-basecase"}],"elapsed_ns":941075,"rational":{"gcds":4,"peak_operand_bits":172,"reductions":2,"temporaries":4},"sample":0},{"answer":{"interval":["-27931556500330433803049226533637006274590649963619675 13/89","-27931556500330433803049226533637006274590649963619658 2/267"]},"dispatch":[{"count":2,"layer":"rational","operation":"mul","path":"dyadic-general-cross-cancel"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-hit"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-learned"},{"count":1,"layer":"rational","operation":"retained-facts","path":"non-dyadic-hit"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"binary-word"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"euclidean-wide-word"},{"count":2,"layer":"rational_algorithm","operation":"multiplication-dyadic-general","path":"backend-basecase"}],"elapsed_ns":156539,"rational":{"gcds":4,"peak_operand_bits":172,"reductions":2,"temporaries":4},"sample":1},{"answer":{"interval":["-27931556500330433803049226533637006274590649963619675 13/89","-27931556500330433803049226533637006274590649963619658 2/267"]},"dispatch":[{"count":2,"layer":"rational","operation":"mul","path":"dyadic-general-cross-cancel"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-hit"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-learned"},{"count":1,"layer":"rational","operation":"retained-facts","path":"non-dyadic-hit"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"binary-word"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"euclidean-wide-word"},{"count":2,"layer":"rational_algorithm","operation":"multiplication-dyadic-general","path":"backend-basecase"}],"elapsed_ns":133001,"rational":{"gcds":4,"peak_operand_bits":172,"reductions":2,"temporaries":4},"sample":2}],"score_ns":156539},{"query":"interval_256","samples":[{"answer":{"interval":["-27931556500330433803049226533637006274590649963619668 1076539847599543699373155163193720739571943744914861824325/4364547300386051468604572333324080554946169019978898997248","-27931556500330433803049226533637006274590649963619668 12918478171194524392477861958324648874863324938978341891757/52374567604632617623254867999888966659354028239746787966976"]},"dispatch":[{"count":1,"layer":"computable","operation":"constructor","path":"cached-pi"},{"count":1,"layer":"computable","operation":"constructor","path":"shared-constant-wrapper"},{"count":2,"layer":"rational","operation":"mul","path":"dyadic-general-cross-cancel"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-hit"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-learned"},{"count":1,"layer":"rational","operation":"retained-facts","path":"non-dyadic-hit"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"binary-word"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"euclidean-wide-word"},{"count":2,"layer":"rational_algorithm","operation":"multiplication-dyadic-general","path":"backend-basecase"}],"elapsed_ns":590770,"rational":{"gcds":4,"peak_operand_bits":364,"reductions":2,"temporaries":4},"sample":0},{"answer":{"interval":["-27931556500330433803049226533637006274590649963619668 1076539847599543699373155163193720739571943744914861824325/4364547300386051468604572333324080554946169019978898997248","-27931556500330433803049226533637006274590649963619668 12918478171194524392477861958324648874863324938978341891757/52374567604632617623254867999888966659354028239746787966976"]},"dispatch":[{"count":2,"layer":"rational","operation":"mul","path":"dyadic-general-cross-cancel"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-hit"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-learned"},{"count":1,"layer":"rational","operation":"retained-facts","path":"non-dyadic-hit"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"binary-word"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"euclidean-wide-word"},{"count":2,"layer":"rational_algorithm","operation":"multiplication-dyadic-general","path":"backend-basecase"}],"elapsed_ns":173278,"rational":{"gcds":4,"peak_operand_bits":364,"reductions":2,"temporaries":4},"sample":1},{"answer":{"interval":["-27931556500330433803049226533637006274590649963619668 1076539847599543699373155163193720739571943744914861824325/4364547300386051468604572333324080554946169019978898997248","-27931556500330433803049226533637006274590649963619668 12918478171194524392477861958324648874863324938978341891757/52374567604632617623254867999888966659354028239746787966976"]},"dispatch":[{"count":2,"layer":"rational","operation":"mul","path":"dyadic-general-cross-cancel"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-hit"},{"count":2,"layer":"rational","operation":"retained-facts","path":"dyadic-learned"},{"count":1,"layer":"rational","operation":"retained-facts","path":"non-dyadic-hit"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"binary-word"},{"count":2,"layer":"rational_algorithm","operation":"gcd","path":"euclidean-wide-word"},{"count":2,"layer":"rational_algorithm","operation":"multiplication-dyadic-general","path":"backend-basecase"}],"elapsed_ns":265061,"rational":{"gcds":4,"peak_operand_bits":364,"reductions":2,"temporaries":4},"sample":2}],"score_ns":265061}],"recipe":{"angle_denominator":29,"angle_numerator":3,"constant_offset":"41700634145107834391635548644048896/236","exponent_denominator":15,"exponent_numerator":1,"generic_near_pi":false,"input":{"bucket":"ConstOffset","genome":[47,128,223,71,133,255,155,107]},"offset_family":"InverseProductAdd","other_prime":2,"pi_offset":"3141592653589793238462643383280/1000000000000000000000000000000","pi_power":2,"prime":19,"scale":"-1927636186701270745318691578721903593165055826211650932398908132818944/12194404286479721223761995322976486445254187155456"},"schema":1,"score_contract":"Median of three query-body elapsed times; every sample and trace is retained. This is search fitness, not a competitive benchmark.","status":"ok"}
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_probe/regressions/near_pi_v1.json
+@@ -0,0 +1 @@
++{"bucket":"ConstOffset","genome":[0,0,0,0,0,0,0,0]}
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_probe/wire.rs
+@@ -0,0 +1,37 @@
++//! Machine-readable fractions; Rational's human Display may use mixed numbers.
++use hyperreal::Rational;
++use num::bigint::Sign;
++
++pub fn rational(value: &Rational) -> String {
++    let sign = if value.sign() == Sign::Minus { "-" } else { "" };
++    format!("{sign}{}/{}", value.numerator(), value.denominator())
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn signed_and_mixed_fractions_round_trip_through_independent_readers() {
++        for text in [
++            "0/1",
++            "1/1",
++            "-1/1",
++            "7/3",
++            "-7/3",
++            "1/17",
++            "-1/17",
++            "-10000000000000000000000000000000000000001/3",
++        ] {
++            let value = text.parse::<Rational>().unwrap();
++            let encoded = rational(&value);
++            assert_eq!(encoded, text);
++            assert_eq!(encoded.parse::<Rational>().unwrap(), value);
++            assert_eq!(
++                encoded.parse::<rug::Rational>().unwrap(),
++                text.parse::<rug::Rational>().unwrap()
++            );
++        }
++        assert_eq!(Rational::fraction(-7, 3).unwrap().to_string(), "-2 1/3");
++    }
++}
+--- a/crates/hyperreal/fuzz/README.md
++++ b/crates/hyperreal/fuzz/README.md
+@@ -67,3 +67,74 @@
+ The promotion ranks cases by recorded elapsed time. P38 still requires
+ case-by-case lexicase selection and independent populations for each
+ representation type; the current timing group does not satisfy those criteria.
++
++## Directed scalar search
++
++The `directed_scalar_probe` example and `directed/campaign.py` implement a
++separate adaptive search over all 22 private scalar representations. Each
++representation owns its population and random stream. Selection shuffles the
++query cases, retains the slowest current candidates on each successive case,
++and breaks remaining ties randomly. Selected parents produce byte mutations
++for the next generation; every filtering and mutation step can be replayed.
++
++From `crates/hyperreal`, build and run into a new output directory:
++
++```sh
++cargo build --release --example directed_scalar_probe --features serde,dispatch-trace --target-dir /tmp/hyperreal-directed-build
++python3 fuzz/directed/campaign.py run --binary /tmp/hyperreal-directed-build/release/examples/directed_scalar_probe --output /tmp/hyperreal-directed-run --seed 20261014 --rounds 3 --population 8 --parents 4 --timeout 30
++python3 fuzz/directed/campaign.py verify /tmp/hyperreal-directed-run
++```
++
++Each input varies the parameters inside its representation, including exact
++rational widths, exponents, prime roots and logarithms, rational angles, and
++decimal rational offsets near pi. A probe checks the actual private class,
++retains three timing samples and raw dispatch paths per query, checks numeric
++answers against directed MPFR intervals, and checks cold/warm proof retention.
++Timing fitness guides exploration; it is not a competitive benchmark result.
++Each sample rebuilds its query object; shared constants may already be warm
++within that input's process. These are not claims that every cache is empty.
++
++Near-pi cancellation belongs to the generic `Irrational` population, alongside
++non-special sine inputs. The full one-to-78-digit decimal-offset range is
++retained. `ConstOffset` separately varies subtraction from pi or e within the
++constructor's certified positive range, and positive offsets from products
++containing exponentials and positive or reciprocal powers of pi. The first
++generator's incorrect `ConstOffset` expectation for `pi - 31/10` is retained
++as an exact regression fixture.
++
++Numeric response fields use explicit signed numerators and positive denominators
++(`-7/3`), independently of the human-readable mixed-number `Rational` display.
++The complete input and response that exposed the first wire-format mismatch
++remain regression fixtures; the qualification also checks a fresh Rust response
++through the Python exact-fraction validator before starting a campaign.
++
++Campaign outputs include every generated input, process result, raw response,
++population, selection trace, and mutation lineage. A failure or timeout closes
++the run with its evidence intact. Completed campaigns can be verified from
++their retained scores and exact rational endpoints. Existing outputs are never
++overwritten or resumed.
++
++P38 still requires sanitizer qualification and competitive benchmarks for the
++retained cases, as well as directed populations in the other stack layers.
++The bounded scalar campaign is not an exhaustive-input or cross-stack claim.
++
++The `directed_scalar_bench` example and `directed/competitive.py` compare every
++final selected input with native directed MPFR interval evaluation. Both must
++produce an exact-rational enclosure with absolute width at most `2^-256`.
++Both follow the recorded 256-to-2048-bit precision schedule, stopping when an
++exact width check succeeds. All intermediate enclosures, all samples, and the
++seeded execution order are retained. Each measured operation runs in a new
++process; numeric oracle checks and text encoding occur after its timer.
++
++```sh
++cargo build --release --example directed_scalar_bench --features serde --target-dir /tmp/hyperreal-directed-native
++python3 fuzz/directed/competitive.py run --binary /tmp/hyperreal-directed-native/release/examples/directed_scalar_bench --campaign /tmp/hyperreal-directed-run --output /tmp/hyperreal-directed-comparison --seed 20261014 --samples 11 --timeout 30
++python3 fuzz/directed/competitive.py verify /tmp/hyperreal-directed-comparison
++```
++
++The comparison requires Linux CPU affinity support, a release build without
++`dispatch-trace`, and a completed campaign from the same search implementation.
++Qualify the adapters with sanitizers before collecting native timings. The
++native benchmark build must exclude sanitizers. These results concern the
++enclosure operation on the retained scalar inputs; they do not rank whole
++libraries or compare symbolic certificate APIs or warm-result performance.
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/campaign.py
+@@ -0,0 +1,308 @@
++"""Bounded adaptive scalar search; every probe, selection, and mutation is retained."""
++import argparse
++import hashlib
++import json
++import os
++from pathlib import Path
++import random
++import re
++import subprocess
++import sys
++import time
++
++from evidence import validate_response
++from lexicase import select_buckets, verify_selection
++
++
++def digest(path):
++    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
++
++
++def write(path, value):
++    with path.open('x') as output:
++        output.write(json.dumps(value, indent=2, sort_keys=True) + '\n')
++
++
++def identity(input_value):
++    return hashlib.sha256(json.dumps(input_value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
++
++
++def execute(binary, arguments, prefix, timeout, expected_hash):
++    if digest(binary) != expected_hash:
++        raise ValueError('probe executable changed during the campaign')
++    stdout, stderr = prefix.with_suffix('.stdout'), prefix.with_suffix('.stderr')
++    start = time.monotonic_ns()
++    with stdout.open('xb') as out, stderr.open('xb') as err:
++        try:
++            code = subprocess.run([str(binary), *map(str, arguments)], stdout=out, stderr=err,
++                                  timeout=timeout, check=False).returncode
++            status = 'exited'
++        except subprocess.TimeoutExpired:
++            code, status = None, 'timeout'
++    record = {'command': [str(binary), *map(str, arguments)], 'status': status, 'exit_code': code,
++              'process_elapsed_ns': time.monotonic_ns() - start,
++              'stdout': stdout.name, 'stderr': stderr.name,
++              'stdout_sha256': digest(stdout), 'stderr_sha256': digest(stderr)}
++    write(prefix.with_suffix('.process.json'), record)
++    if code != 0 or status != 'exited':
++        raise ValueError(f'probe {status} with exit code {code}; retained at {prefix}')
++    if stderr.stat().st_size:
++        raise ValueError(f'probe emitted diagnostics; retained at {stderr}')
++    if stdout.stat().st_size > 32 * 1024 * 1024:
++        raise ValueError('probe response exceeds 32 MiB')
++    return json.loads(stdout.read_text()), record
++
++
++def next_population(bucket, rows, selections, rng, size):
++    by_id = {row['id']: row for row in rows}
++    chosen = [by_id[selection['selected']] for selection in selections]
++    output = {}
++    for parent in chosen:
++        payload = {'bucket': bucket, 'genome': parent['genome']}
++        output[parent['id']] = {'input': payload, 'origin': 'retained', 'parent_id': parent['id']}
++    attempts = 0
++    while len(output) < size:
++        attempts += 1
++        if attempts > 128 * size:
++            raise ValueError('distinct mutation budget exhausted')
++        parent = rng.choice(chosen)
++        genome = parent['genome'].copy()
++        index, mask = rng.randrange(8), rng.randrange(1, 256)
++        genome[index] ^= mask
++        payload = {'bucket': bucket, 'genome': genome}
++        key = identity(payload)
++        if key not in output:
++            output[key] = {'input': payload, 'origin': 'mutation', 'parent_id': parent['id'],
++                           'mutation': {'index': index, 'xor_mask': mask}}
++    return list(output.values())
++
++
++def initial_populations(buckets, rngs, size):
++    populations = {}
++    boundary = [[0] * 8, [255] * 8, [0, 1, 127, 3, 5, 2, 128, 77], [4, 31, 0, 0, 0, 1, 0, 0]]
++    for bucket in buckets:
++        values = {tuple(genome) for genome in boundary}
++        attempts = 0
++        while len(values) < size:
++            attempts += 1
++            if attempts > 128 * size:
++                raise ValueError('distinct initial-population budget exhausted')
++            values.add(tuple(rngs[bucket].randrange(256) for _ in range(8)))
++        populations[bucket] = [{'input': {'bucket': bucket, 'genome': list(genome)},
++                                'origin': 'initial', 'parent_id': None} for genome in sorted(values)]
++    return populations
++
++
++def run(args):
++    if not 4 <= args.population <= 1024 or not 1 <= args.parents < args.population:
++        raise ValueError('population must be 4..1024 and parents must be 1..population-1')
++    if not 1 <= args.rounds <= 1000 or not 1 <= args.timeout <= 3600:
++        raise ValueError('rounds must be 1..1000 and timeout 1..3600 seconds')
++    binary, output = args.binary.resolve(), args.output.resolve()
++    output.mkdir(parents=True, exist_ok=False)
++    binary_hash = digest(binary)
++    protocol = {'schema': 1, 'binary': str(binary), 'binary_sha256': binary_hash,
++                'python': sys.version, 'seed': args.seed, 'rounds': args.rounds,
++                'population_per_representation': args.population, 'parents_per_representation': args.parents,
++                'process_timeout_seconds': args.timeout,
++                'sanitizer_environment': {name: os.environ.get(name) for name in ['ASAN_OPTIONS', 'LSAN_OPTIONS']},
++                'sources_sha256': {name: digest(Path(__file__).with_name(name))
++                                   for name in ['campaign.py', 'lexicase.py', 'evidence.py']},
++                'score_contract': 'Maximize median query-body elapsed nanoseconds within each independent representation population.',
++                'no_resumption_or_extension': True, 'competitive_benchmark': False,
++                'P38_complete': False, 'plan_complete': False}
++    write(output / 'protocol.json', protocol)
++    completed, generations = 0, []
++    try:
++        listing, _ = execute(binary, ['--list'], output / 'inventory', args.timeout, binary_hash)
++        cases = listing['queries']
++        buckets = sorted(row['name'] for row in listing['representations'])
++        if len(set(buckets)) != 22 or any(not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', b) for b in buckets):
++            raise ValueError('expected all 22 distinct representation buckets')
++        if any(row['name'] != row['actual_class'] for row in listing['representations']):
++            raise ValueError('fixture inventory did not reach its declared private classes')
++        seeds = {bucket: int(hashlib.sha256(f'{args.seed}:{bucket}'.encode()).hexdigest(), 16) for bucket in buckets}
++        rngs = {bucket: random.Random(seed) for bucket, seed in seeds.items()}
++        write(output / 'bucket-seeds.json', seeds)
++        populations = initial_populations(buckets, rngs, args.population)
++        for generation in range(args.rounds):
++            write(output / f'round-{generation:03}-planned.json', populations)
++            measured, selection = {}, {}
++            for bucket in buckets:
++                measured[bucket] = []
++                for member in populations[bucket]:
++                    payload = member['input']
++                    key = identity(payload)
++                    stem = output / f'round-{generation:03}-{bucket}-{key}'
++                    input_path = stem.with_suffix('.input.json')
++                    write(input_path, payload)
++                    response, process = execute(binary, [input_path], stem, args.timeout, binary_hash)
++                    scores = validate_response(response, payload, cases)
++                    row = {'id': key, 'bucket': bucket, 'genome': payload['genome'], 'scores': scores,
++                           'input_file': input_path.name, 'input_sha256': digest(input_path),
++                           'response_file': process['stdout'], 'response_sha256': process['stdout_sha256']}
++                    measured[bucket].append(row)
++                    completed += 1
++                    with (output / 'completed-probes.jsonl').open('a') as journal:
++                        journal.write(json.dumps({'round': generation, **row}, sort_keys=True) + '\n')
++                selection[bucket] = select_buckets({bucket: measured[bucket]}, cases, rngs[bucket], args.parents)[bucket]
++                for record in selection[bucket]:
++                    verify_selection(measured[bucket], cases, record)
++            record = {'round': generation, 'populations': measured, 'selections': selection}
++            write(output / f'round-{generation:03}-selection.json', record)
++            generations.append(record)
++            if generation + 1 < args.rounds:
++                populations = {bucket: next_population(bucket, measured[bucket], selection[bucket], rngs[bucket], args.population)
++                               for bucket in buckets}
++        final = generations[-1]
++        retained = {}
++        for bucket in buckets:
++            rows = {row['id']: row for row in final['populations'][bucket]}
++            retained[bucket] = [{'bucket': bucket, 'genome': rows[key]['genome']}
++                                for key in sorted({r['selected'] for r in final['selections'][bucket]})]
++        write(output / 'selected-inputs.json', retained)
++        result = {'complete': True, 'rounds': args.rounds, 'representations': len(buckets),
++                  'completed_probes': completed, 'selection_events': args.rounds * len(buckets) * args.parents,
++                  'all_selection_traces_replayed': True,
++                  'artifacts_sha256': {p.name: digest(p) for p in output.iterdir() if p.is_file()},
++                  'competitive_benchmark_complete': False, 'P38_complete': False, 'plan_complete': False}
++        write(output / 'result.json', result)
++        print(json.dumps({key: value for key, value in result.items() if key != 'artifacts_sha256'}))
++    except Exception as error:
++        write(output / 'failure.json', {'complete': False, 'error': str(error), 'completed_probes': completed,
++                                       'artifacts_sha256': {p.name: digest(p) for p in output.iterdir() if p.is_file()},
++                                       'P38_complete': False, 'plan_complete': False})
++        raise
++
++
++def verify(output):
++    result = json.loads((output / 'result.json').read_text())
++    if not result['complete'] or (output / 'failure.json').exists():
++        raise ValueError('campaign did not complete')
++    actual_artifacts = {p.name for p in output.iterdir() if p.is_file() and p.name != 'result.json'}
++    if set(result['artifacts_sha256']) != actual_artifacts:
++        raise ValueError('campaign artifact inventory changed')
++    for name, expected in result['artifacts_sha256'].items():
++        if digest(output / name) != expected:
++            raise ValueError(f'changed campaign artifact: {name}')
++    protocol = json.loads((output / 'protocol.json').read_text())
++    listing = json.loads((output / 'inventory.stdout').read_text())
++    cases = listing['queries']
++    buckets = sorted(row['name'] for row in listing['representations'])
++    if len(buckets) != 22 or len(set(buckets)) != 22 or any(
++            row['name'] != row['actual_class'] for row in listing['representations']):
++        raise ValueError('representation inventory changed')
++    if result['rounds'] != protocol['rounds'] or result['representations'] != 22:
++        raise ValueError('declared campaign dimensions changed')
++    for name, expected_hash in protocol['sources_sha256'].items():
++        if digest(Path(__file__).with_name(name)) != expected_hash:
++            raise ValueError('campaign source differs from its recorded version')
++    seeds = {bucket: int(hashlib.sha256(f"{protocol['seed']}:{bucket}".encode()).hexdigest(), 16)
++             for bucket in buckets}
++    if json.loads((output / 'bucket-seeds.json').read_text()) != seeds:
++        raise ValueError('independent representation seeds changed')
++    rngs = {bucket: random.Random(seed) for bucket, seed in seeds.items()}
++    expected_plan = initial_populations(buckets, rngs, protocol['population_per_representation'])
++    count = 0
++    selection_count = 0
++    journal = []
++    prior = None
++    for generation in range(protocol['rounds']):
++        planned = json.loads((output / f'round-{generation:03}-planned.json').read_text())
++        record = json.loads((output / f'round-{generation:03}-selection.json').read_text())
++        if planned != expected_plan:
++            raise ValueError('planned population does not replay from independent random streams')
++        if record['round'] != generation or any(set(value) != set(buckets) for value in [
++                planned, record['populations'], record['selections']]):
++            raise ValueError('generation omitted or replaced a representation bucket')
++        for bucket, rows in record['populations'].items():
++            if len(rows) != protocol['population_per_representation']:
++                raise ValueError('population was shrunk')
++            for member, row in zip(planned[bucket], rows, strict=True):
++                payload = json.loads((output / row['input_file']).read_text())
++                if payload != member['input'] or identity(payload) != row['id']:
++                    raise ValueError('input identity changed')
++                if row['bucket'] != bucket or row['genome'] != payload['genome']:
++                    raise ValueError('measured candidate identity differs from its input')
++                if digest(output / row['input_file']) != row['input_sha256'] or digest(
++                        output / row['response_file']) != row['response_sha256']:
++                    raise ValueError('candidate input or response digest changed')
++                stem = row['input_file'].removesuffix('.input.json')
++                process = json.loads((output / (stem + '.process.json')).read_text())
++                if process['status'] != 'exited' or process['exit_code'] != 0:
++                    raise ValueError('retained probe did not exit successfully')
++                if process['stdout'] != row['response_file'] or process['stdout_sha256'] != row['response_sha256']:
++                    raise ValueError('probe process output differs from its recorded response')
++                if (output / process['stderr']).read_bytes() or digest(output / process['stderr']) != process['stderr_sha256']:
++                    raise ValueError('retained probe diagnostics changed or were ignored')
++                response = json.loads((output / row['response_file']).read_text())
++                if validate_response(response, payload, cases) != row['scores']:
++                    raise ValueError('retained fitness differs from raw samples')
++                if prior is not None:
++                    parent = {r['id']: r for r in prior['populations'][bucket]}[member['parent_id']]
++                    selected = {r['selected'] for r in prior['selections'][bucket]}
++                    if parent['id'] not in selected:
++                        raise ValueError('mutation or retention ignored selected parents')
++                    genome = parent['genome'].copy()
++                    if member['origin'] == 'mutation':
++                        mutation = member['mutation']
++                        if not 0 <= mutation['index'] < 8 or not 1 <= mutation['xor_mask'] <= 255:
++                            raise ValueError('mutation is outside its declared domain')
++                        genome[mutation['index']] ^= mutation['xor_mask']
++                    elif member['origin'] != 'retained':
++                        raise ValueError('unknown descendant origin')
++                    if genome != payload['genome']:
++                        raise ValueError('descendant does not replay from selected parent')
++                count += 1
++                journal.append({'round': generation, **row})
++            if len(record['selections'][bucket]) != protocol['parents_per_representation']:
++                raise ValueError('parent-selection budget was not completed exactly')
++            for selection in record['selections'][bucket]:
++                verify_selection(rows, cases, selection)
++                selection_count += 1
++            expected_selection = select_buckets({bucket: rows}, cases, rngs[bucket],
++                                                protocol['parents_per_representation'])[bucket]
++            if record['selections'][bucket] != expected_selection:
++                raise ValueError('selection does not replay from its independent random stream')
++        prior = record
++        if generation + 1 < protocol['rounds']:
++            expected_plan = {bucket: next_population(bucket, record['populations'][bucket],
++                             record['selections'][bucket], rngs[bucket], protocol['population_per_representation'])
++                             for bucket in buckets}
++    expected = protocol['rounds'] * 22 * protocol['population_per_representation']
++    if count != expected or result['completed_probes'] != count:
++        raise ValueError('campaign budget was not completed exactly')
++    if selection_count != protocol['rounds'] * 22 * protocol['parents_per_representation'] or result['selection_events'] != selection_count:
++        raise ValueError('selection-event inventory changed')
++    actual_journal = [json.loads(line) for line in (output / 'completed-probes.jsonl').read_text().splitlines()]
++    if actual_journal != journal:
++        raise ValueError('completed-probe journal differs from the generation records')
++    selected = {}
++    for bucket in buckets:
++        rows = {row['id']: row for row in prior['populations'][bucket]}
++        selected[bucket] = [{'bucket': bucket, 'genome': rows[key]['genome']}
++                            for key in sorted({r['selected'] for r in prior['selections'][bucket]})]
++    if json.loads((output / 'selected-inputs.json').read_text()) != selected:
++        raise ValueError('retained input inventory differs from final selected parents')
++    print(json.dumps({'verified': True, 'completed_probes': count,
++                      'selection_events': selection_count, 'rounds': protocol['rounds']}))
++
++
++if __name__ == '__main__':
++    parser = argparse.ArgumentParser(description=__doc__)
++    sub = parser.add_subparsers(dest='command', required=True)
++    run_parser = sub.add_parser('run')
++    run_parser.add_argument('--binary', type=Path, required=True)
++    run_parser.add_argument('--output', type=Path, required=True)
++    run_parser.add_argument('--seed', type=int, required=True)
++    run_parser.add_argument('--rounds', type=int, required=True)
++    run_parser.add_argument('--population', type=int, required=True)
++    run_parser.add_argument('--parents', type=int, required=True)
++    run_parser.add_argument('--timeout', type=int, required=True)
++    verify_parser = sub.add_parser('verify')
++    verify_parser.add_argument('output', type=Path)
++    args = parser.parse_args()
++    if args.command == 'run':
++        run(args)
++    else:
++        verify(args.output)
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/competitive.py
+@@ -0,0 +1,235 @@
++"""Retain native enclosure comparisons for every final selected scalar input."""
++import argparse
++from fractions import Fraction
++import json
++import os
++from pathlib import Path
++import platform
++import random
++import statistics
++import sys
++
++from campaign import digest, execute, identity, verify as verify_campaign, write
++from evidence import ENCODING, fraction
++
++BACKENDS = ('hyperreal', 'mpfr')
++TARGET = Fraction(1, 2 ** 256)
++PRECISIONS = list(range(256, 2049, 128))
++
++
++def validate(response, payload, backend):
++    if response.get('schema') != 1 or response.get('status') != 'ok' or response.get('backend') != backend:
++        raise ValueError('benchmark backend or response status changed')
++    if response.get('rational_encoding') != ENCODING or response['recipe']['input'] != payload:
++        raise ValueError('benchmark encoding or exact input identity changed')
++    if response['actual_class'] != payload['bucket']:
++        raise ValueError('benchmark changed the representation')
++    if response['dispatch_trace_enabled'] is not False or response['debug_assertions'] is not False:
++        raise ValueError('benchmark was instrumented or not a release build')
++    if fraction(response['maximum_absolute_width']) != TARGET:
++        raise ValueError('benchmark weakened the absolute-width contract')
++    lo, hi = map(fraction, response['oracle']['interval'])
++    if lo > hi or not (lo > 0 or hi < 0) or response['oracle']['precision_bits'] != 1024:
++        raise ValueError('reference interval failed to isolate the expected nonzero value')
++    if response['oracle']['sign'] != ('Positive' if lo > 0 else 'Negative'):
++        raise ValueError('reference sign contradicts its interval')
++    steps = response['steps']
++    if not 1 <= len(steps) <= len(PRECISIONS) or [step['precision_bits'] for step in steps] != PRECISIONS[:len(steps)]:
++        raise ValueError('precision schedule changed or was not completed in order')
++    for i, step in enumerate(steps):
++        a, b = map(fraction, step['interval'])
++        if a > b or b < lo or a > hi:
++            raise ValueError('native interval contradicts the reference')
++        if fraction(step['width']) != b - a:
++            raise ValueError('reported width differs from exact endpoint subtraction')
++        if (b - a <= TARGET) != (i == len(steps) - 1):
++            raise ValueError('adaptive evaluation did not stop at the required width')
++    elapsed = response['elapsed_ns']
++    if type(elapsed) is not int or elapsed <= 0:
++        raise ValueError('invalid native timing sample')
++    return elapsed
++
++
++def make_schedule(inputs, samples, seed):
++    if type(samples) is not int or not 3 <= samples <= 101 or samples % 2 != 1:
++        raise ValueError('samples must be an odd count in 3..101')
++    rng = random.Random(seed)
++    keys = sorted(inputs)
++    indices = {key: i for i, key in enumerate(keys)}
++    schedule = []
++    for sample in range(samples):
++        order = keys.copy()
++        rng.shuffle(order)
++        for key in order:
++            backends = BACKENDS if (sample + indices[key]) % 2 == 0 else tuple(reversed(BACKENDS))
++            for backend in backends:
++                schedule.append({'sequence': len(schedule), 'sample': sample, 'id': key, 'backend': backend})
++    return schedule
++
++
++def summarize(inputs, journal, samples):
++    output = []
++    for key, payload in sorted(inputs.items()):
++        row = {'id': key, 'input': payload, 'samples': samples, 'backends': {}}
++        for backend in BACKENDS:
++            selected = sorted((item for item in journal if item['id'] == key and item['backend'] == backend),
++                              key=lambda item: item['sample'])
++            if [item['sample'] for item in selected] != list(range(samples)):
++                raise ValueError('missing or duplicate native timing samples')
++            values = [item['elapsed_ns'] for item in selected]
++            row['backends'][backend] = {'raw_elapsed_ns': values, 'median_ns': statistics.median(values),
++                                       'minimum_ns': min(values), 'maximum_ns': max(values)}
++        row['hyperreal_over_mpfr_median_ratio'] = row['backends']['hyperreal']['median_ns'] / row['backends']['mpfr']['median_ns']
++        output.append(row)
++    return output
++
++
++def selected_inputs(campaign):
++    selected = json.loads((campaign / 'selected-inputs.json').read_text())
++    if len(selected) != 22 or any(not rows for rows in selected.values()):
++        raise ValueError('all 22 representation buckets must retain selected inputs')
++    inputs = {}
++    for bucket, rows in selected.items():
++        for payload in rows:
++            if payload['bucket'] != bucket:
++                raise ValueError('selected input is in the wrong representation bucket')
++            key = identity(payload)
++            if key in inputs:
++                raise ValueError('duplicate final selected input')
++            inputs[key] = payload
++    return inputs
++
++
++def artifacts(output):
++    return {str(p.relative_to(output)): digest(p) for p in output.rglob('*') if p.is_file()}
++
++
++def run(args):
++    make_schedule({}, args.samples, args.seed)
++    if not 1 <= args.timeout <= 3600:
++        raise ValueError('timeout must be 1..3600 seconds')
++    output, campaign, binary = args.output.resolve(), args.campaign.resolve(), args.binary.resolve()
++    output.mkdir(parents=True, exist_ok=False)
++    original_affinity = os.sched_getaffinity(0)
++    journal = []
++    try:
++        verify_campaign(campaign)
++        inputs = selected_inputs(campaign)
++        cpu = min(original_affinity)
++        protocol = {'schema': 1, 'campaign': str(campaign), 'campaign_result_sha256': digest(campaign / 'result.json'),
++                    'selected_inputs_sha256': digest(campaign / 'selected-inputs.json'),
++                    'binary': str(binary), 'binary_sha256': digest(binary), 'python': sys.version,
++                    'platform': platform.platform(), 'cpu': cpu, 'original_cpu_affinity': sorted(original_affinity),
++                    'samples_per_backend': args.samples, 'seed': args.seed, 'process_timeout_seconds': args.timeout,
++                    'input_count': len(inputs), 'representations': 22, 'maximum_absolute_width': str(TARGET),
++                    'sources_sha256': {name: digest(Path(__file__).with_name(name)) for name in [
++                        'competitive.py', 'campaign.py', 'lexicase.py', 'evidence.py']},
++                    'no_resumption_extension_filtering_or_pooling': True, 'P38_complete': False, 'plan_complete': False}
++        write(output / 'protocol.json', protocol)
++        (output / 'cpuinfo.txt').write_text(Path('/proc/cpuinfo').read_text())
++        write(output / 'inputs.json', inputs)
++        (output / 'inputs').mkdir()
++        for key, payload in inputs.items():
++            write(output / 'inputs' / (key + '.json'), payload)
++        schedule = make_schedule(inputs, args.samples, args.seed)
++        write(output / 'schedule.json', schedule)
++        os.sched_setaffinity(0, {cpu})
++        for planned in schedule:
++            key, backend = planned['id'], planned['backend']
++            stem = f"case-{key}-sample-{planned['sample']:03}-{backend}"
++            response, process = execute(binary, [backend, output / 'inputs' / (key + '.json')],
++                                        output / stem, args.timeout, protocol['binary_sha256'])
++            elapsed = validate(response, inputs[key], backend)
++            record = planned | {'elapsed_ns': elapsed, 'response_file': process['stdout'],
++                                'response_sha256': process['stdout_sha256'], 'process_file': stem + '.process.json'}
++            journal.append(record)
++            with (output / 'samples.jsonl').open('a') as log:
++                log.write(json.dumps(record, sort_keys=True) + '\n')
++        if selected_inputs(campaign) != inputs or digest(campaign / 'result.json') != protocol['campaign_result_sha256']:
++            raise ValueError('source campaign changed during benchmarking')
++        write(output / 'summary.json', summarize(inputs, journal, args.samples))
++        result = {'complete': True, 'input_count': len(inputs), 'representations': 22,
++                  'samples_per_backend_per_input': args.samples, 'completed_samples': len(journal),
++                  'artifacts_sha256': artifacts(output), 'interval_comparison_complete': True,
++                  'structural_certificate_api_comparison': False, 'P38_complete': False, 'plan_complete': False}
++        write(output / 'result.json', result)
++        print(json.dumps({key: value for key, value in result.items() if key != 'artifacts_sha256'}))
++    except Exception as error:
++        write(output / 'failure.json', {'complete': False, 'error': str(error), 'completed_samples': len(journal),
++                                       'artifacts_sha256': artifacts(output), 'P38_complete': False, 'plan_complete': False})
++        raise
++    finally:
++        os.sched_setaffinity(0, original_affinity)
++
++
++def verify(output):
++    result = json.loads((output / 'result.json').read_text())
++    if not result['complete'] or (output / 'failure.json').exists():
++        raise ValueError('benchmark did not complete')
++    actual = artifacts(output)
++    actual.pop('result.json')
++    if actual != result['artifacts_sha256']:
++        raise ValueError('benchmark artifacts changed')
++    protocol = json.loads((output / 'protocol.json').read_text())
++    if (protocol['representations'] != 22 or result['representations'] != 22
++            or result['input_count'] != protocol['input_count']
++            or result['samples_per_backend_per_input'] != protocol['samples_per_backend']
++            or fraction(protocol['maximum_absolute_width']) != TARGET):
++        raise ValueError('benchmark result dimensions or accuracy contract changed')
++    campaign = Path(protocol['campaign'])
++    verify_campaign(campaign)
++    if digest(campaign / 'result.json') != protocol['campaign_result_sha256'] or digest(
++            campaign / 'selected-inputs.json') != protocol['selected_inputs_sha256']:
++        raise ValueError('source campaign digest changed')
++    inputs = json.loads((output / 'inputs.json').read_text())
++    if inputs != selected_inputs(campaign) or len(inputs) != protocol['input_count']:
++        raise ValueError('benchmark omitted or changed a final selected input')
++    for name, expected in protocol['sources_sha256'].items():
++        if digest(Path(__file__).with_name(name)) != expected:
++            raise ValueError('benchmark source differs from its frozen version')
++    for key, payload in inputs.items():
++        if identity(payload) != key or json.loads((output / 'inputs' / (key + '.json')).read_text()) != payload:
++            raise ValueError('benchmark input identity changed')
++    schedule = make_schedule(inputs, protocol['samples_per_backend'], protocol['seed'])
++    if json.loads((output / 'schedule.json').read_text()) != schedule:
++        raise ValueError('native execution order changed')
++    journal = [json.loads(line) for line in (output / 'samples.jsonl').read_text().splitlines()]
++    if len(journal) != len(schedule) or result['completed_samples'] != len(schedule):
++        raise ValueError('native sample budget was not completed exactly')
++    for planned, actual in zip(schedule, journal, strict=True):
++        if {key: actual[key] for key in planned} != planned:
++            raise ValueError('native sample journal changed order or identity')
++        process = json.loads((output / actual['process_file']).read_text())
++        if process['status'] != 'exited' or process['exit_code'] != 0:
++            raise ValueError('native probe did not exit successfully')
++        if (output / process['stderr']).read_bytes() or digest(output / process['stderr']) != process['stderr_sha256']:
++            raise ValueError('native diagnostics were ignored or changed')
++        if actual['response_file'] != process['stdout'] or actual['response_sha256'] != process['stdout_sha256'] or digest(
++                output / actual['response_file']) != actual['response_sha256']:
++            raise ValueError('native response hash changed')
++        response = json.loads((output / actual['response_file']).read_text())
++        if validate(response, inputs[planned['id']], planned['backend']) != actual['elapsed_ns']:
++            raise ValueError('native sample differs from its raw response')
++    summary = summarize(inputs, journal, protocol['samples_per_backend'])
++    if json.loads((output / 'summary.json').read_text()) != summary:
++        raise ValueError('native statistics differ from the complete raw samples')
++    print(json.dumps({'verified': True, 'inputs': len(inputs), 'samples': len(journal)}))
++
++
++if __name__ == '__main__':
++    parser = argparse.ArgumentParser(description=__doc__)
++    sub = parser.add_subparsers(dest='command', required=True)
++    run_parser = sub.add_parser('run')
++    run_parser.add_argument('--binary', type=Path, required=True)
++    run_parser.add_argument('--campaign', type=Path, required=True)
++    run_parser.add_argument('--output', type=Path, required=True)
++    run_parser.add_argument('--seed', type=int, required=True)
++    run_parser.add_argument('--samples', type=int, default=11)
++    run_parser.add_argument('--timeout', type=int, default=30)
++    verify_parser = sub.add_parser('verify')
++    verify_parser.add_argument('output', type=Path)
++    args = parser.parse_args()
++    if args.command == 'run':
++        run(args)
++    else:
++        verify(args.output)
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/evidence.py
+@@ -0,0 +1,90 @@
++"""Independent exact-rational checks of retained scalar-probe responses."""
++from fractions import Fraction
++import re
++
++
++ENCODING = 'signed-numerator/positive-denominator-v1'
++
++
++def fraction(text):
++    if not isinstance(text, str) or not re.fullmatch(r'-?(?:0|[1-9][0-9]*)/[1-9][0-9]*', text):
++        raise ValueError('invalid signed-numerator/positive-denominator fraction')
++    return Fraction(text)
++
++
++def validate_response(response, input_value, cases):
++    if response.get('status') != 'ok' or response.get('schema') != 1:
++        raise ValueError('probe did not report a successful schema-1 response')
++    if response.get('rational_encoding') != ENCODING:
++        raise ValueError('probe rational wire encoding is missing or unsupported')
++    if response['recipe']['input'] != input_value:
++        raise ValueError('probe changed the retained input identity')
++    lo, hi = map(fraction, response['oracle']['interval'])
++    if not lo <= hi or not (lo > 0 or hi < 0):
++        raise ValueError('independent oracle did not isolate a nonzero sign')
++    expected_sign = 'Positive' if lo > 0 else 'Negative'
++    if response['oracle']['sign'] != expected_sign:
++        raise ValueError('oracle sign disagrees with its exact rational bounds')
++    if response['oracle']['precision_bits'] != 1024 or response.get('cache_contract_checked') is not True:
++        raise ValueError('probe omitted a declared correctness check')
++    if [row['query'] for row in response['queries']] != list(cases):
++        raise ValueError('probe query inventory changed')
++    scores = {}
++    for row in response['queries']:
++        samples = row['samples']
++        if len(samples) != 3 or [sample['sample'] for sample in samples] != [0, 1, 2]:
++            raise ValueError('missing or reordered timing samples')
++        times = [sample['elapsed_ns'] for sample in samples]
++        if any(type(value) is not int or value < 0 for value in times):
++            raise ValueError('invalid timing sample')
++        if row['score_ns'] != sorted(times)[1]:
++            raise ValueError('fitness is not the retained three-sample median')
++        scores[row['query']] = row['score_ns']
++        for sample in samples:
++            answer = sample['answer']
++            expected_key = ('normal_form' if row['query'] == 'normal_form' else
++                            'interval' if row['query'].startswith('interval_') else 'sign')
++            if set(answer) != {expected_key}:
++                raise ValueError('answer does not match its declared query')
++            if 'sign' in answer and answer['sign'] not in [None, expected_sign]:
++                raise ValueError('certificate contradicts the independent sign')
++            if answer.get('normal_form') is not None and not lo <= fraction(answer['normal_form']) <= hi:
++                raise ValueError('normal form contradicts the independent interval')
++            if 'interval' in answer:
++                a, b = map(fraction, answer['interval'])
++                if a > b or b < lo or a > hi:
++                    raise ValueError('certified interval contradicts independent enclosure')
++            for trace in sample['dispatch']:
++                if type(trace['count']) is not int or trace['count'] < 0:
++                    raise ValueError('invalid dispatch count')
++    cache = response['cache_contract']
++    for name in ['normal', 'affine', 'sign']:
++        cold, warm = cache['cold'][name], cache['warm'][name]
++        if cold is not None and warm != cold:
++            raise ValueError('available cold fact was weakened or contradicted')
++        if name == 'normal':
++            if warm is not None and not lo <= fraction(warm) <= hi:
++                raise ValueError('warm normal form contradicts independent enclosure')
++        elif warm not in [None, expected_sign]:
++            raise ValueError('warm sign contradicts independent enclosure')
++    fine = cache['refined_sign']
++    if cache['cold']['sign'] is not None and fine != cache['cold']['sign']:
++        raise ValueError('refinement discarded a known sign')
++    if fine is not None and cache['warm']['sign'] != fine:
++        raise ValueError('zero-refinement query discarded a prior finer proof')
++    return scores
++
++
++if __name__ == '__main__':
++    import argparse
++    import json
++    from pathlib import Path
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--input', type=Path, required=True)
++    parser.add_argument('--response', type=Path, required=True)
++    parser.add_argument('--inventory', type=Path, required=True)
++    args = parser.parse_args()
++    scores = validate_response(json.loads(args.response.read_text()),
++                               json.loads(args.input.read_text()),
++                               json.loads(args.inventory.read_text())['queries'])
++    print(json.dumps({'verified': True, 'query_scores': scores}))
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/lexicase.py
+@@ -0,0 +1,82 @@
++"""Worst-case lexicase selection with independent, replayable representation buckets."""
++
++
++def validate(population, cases):
++    if not population or not isinstance(cases, (list, tuple)) or not cases:
++        raise ValueError('population and cases must be nonempty sequences')
++    if any(not isinstance(case, str) or not case for case in cases):
++        raise ValueError('case names must be nonempty strings')
++    if len(set(cases)) != len(cases):
++        raise ValueError('case names must be distinct')
++    if any(not isinstance(row, dict) or not {'id', 'bucket', 'scores'} <= set(row)
++           or not isinstance(row['scores'], dict) for row in population):
++        raise ValueError('malformed candidate record')
++    if any(not isinstance(row['id'], str) or not row['id'] for row in population):
++        raise ValueError('candidate identifiers must be nonempty strings')
++    rows = sorted(population, key=lambda row: row['id'])
++    if len({row['id'] for row in rows}) != len(rows):
++        raise ValueError('duplicate candidate identifier')
++    if len({row['bucket'] for row in rows}) != 1:
++        raise ValueError('representation buckets cannot share a selection pool')
++    for row in rows:
++        if not isinstance(row['bucket'], str) or not row['bucket']:
++            raise ValueError('bucket names must be nonempty strings')
++        if set(row['scores']) != set(cases):
++            raise ValueError('every candidate needs every declared case score')
++        if any(type(score) is not int or score < 0 for score in row['scores'].values()):
++            raise ValueError('scores must be nonnegative integers')
++    return rows
++
++
++def select(population, cases, random):
++    """Maximize observed cost on successive shuffled cases, then break ties."""
++    survivors = validate(population, cases)
++    order = list(cases)
++    random.shuffle(order)
++    steps = []
++    for case in order:
++        worst = max(row['scores'][case] for row in survivors)
++        survivors = [row for row in survivors if row['scores'][case] == worst]
++        steps.append({'case': case, 'worst_score': worst,
++                      'survivors': [row['id'] for row in survivors]})
++        if len(survivors) == 1:
++            break
++    chosen = random.choice(survivors)
++    return {'bucket': chosen['bucket'], 'case_order': order, 'steps': steps,
++            'selected': chosen['id']}
++
++
++def select_buckets(populations, cases, random, parents_per_bucket):
++    if type(parents_per_bucket) is not int or parents_per_bucket <= 0:
++        raise ValueError('parent count must be a positive integer')
++    if not populations:
++        raise ValueError('representation populations cannot be empty')
++    for bucket, rows in populations.items():
++        validate(rows, cases)
++        if any(row['bucket'] != bucket for row in rows):
++            raise ValueError('candidate is stored in the wrong representation bucket')
++    return {bucket: [select(rows, cases, random) for _ in range(parents_per_bucket)]
++            for bucket, rows in sorted(populations.items())}
++
++
++def verify_selection(population, cases, record):
++    """Replay all filtering steps from retained scores, independent of PRNG state."""
++    survivors = validate(population, cases)
++    if record['bucket'] != survivors[0]['bucket']:
++        raise ValueError('selection bucket mismatch')
++    order = record['case_order']
++    if len(order) != len(cases) or set(order) != set(cases):
++        raise ValueError('case order is not a complete permutation')
++    expected = []
++    for case in order:
++        worst = max(row['scores'][case] for row in survivors)
++        survivors = [row for row in survivors if row['scores'][case] == worst]
++        expected.append({'case': case, 'worst_score': worst,
++                         'survivors': [row['id'] for row in survivors]})
++        if len(survivors) == 1:
++            break
++    if expected != record['steps']:
++        raise ValueError('selection filtering trace does not replay')
++    if record['selected'] not in {row['id'] for row in survivors}:
++        raise ValueError('selected candidate did not survive')
++
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/test_campaign.py
+@@ -0,0 +1,103 @@
++"""Exercise journal replay with synthetic probe data, including rehashed tampering."""
++import argparse
++import contextlib
++import io
++import json
++from pathlib import Path
++import shutil
++import tempfile
++import unittest
++
++from campaign import digest, run, verify
++
++
++class CampaignTests(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.temporary = tempfile.TemporaryDirectory()
++        cls.addClassCleanup(cls.temporary.cleanup)
++        cls.root = Path(cls.temporary.name)
++        binary = cls.root / 'synthetic-probe'
++        # These tests exercise campaign bookkeeping, not arithmetic accuracy.
++        binary.write_text('''#!/usr/bin/env python3
++import json,sys
++from pathlib import Path
++sys.path.insert(0, ''' + repr(str(Path(__file__).resolve().parent)) + ''')
++from test_evidence import CASES,response
++if sys.argv[1] == '--list':
++    print(json.dumps({'queries': CASES, 'representations': [
++        {'name': 'Bucket'+str(i), 'actual_class': 'Bucket'+str(i)} for i in range(22)]}))
++else:
++    payload = json.loads(Path(sys.argv[1]).read_text())
++    result = response()
++    result['recipe']['input'] = payload
++    for i, query in enumerate(result['queries']):
++        score = 1 + payload['genome'][i]
++        query['score_ns'] = score
++        for sample in query['samples']:
++            sample['elapsed_ns'] = score
++    print(json.dumps(result))
++''')
++        binary.chmod(0o700)
++        cls.original = cls.root / 'complete'
++        args = argparse.Namespace(binary=binary, output=cls.original, seed=916,
++                                  rounds=2, population=4, parents=2, timeout=10)
++        with contextlib.redirect_stdout(io.StringIO()):
++            run(args)
++
++    def setUp(self):
++        self.output = self.root / self.id().rsplit('.', 1)[-1]
++        shutil.copytree(self.original, self.output)
++
++    def rewrite(self, name, edit):
++        path = self.output / name
++        value = json.loads(path.read_text())
++        edit(value)
++        path.write_text(json.dumps(value) + '\n')
++
++    def rehash_and_reject(self, message):
++        # Recompute artifact hashes to make the semantic check decisive.
++        self.rewrite('result.json', lambda result: result.update(artifacts_sha256={
++            p.name: digest(p) for p in self.output.iterdir() if p.name != 'result.json'}))
++        with self.assertRaisesRegex(ValueError, message):
++            verify(self.output)
++
++    def test_complete_campaign_replays(self):
++        with contextlib.redirect_stdout(io.StringIO()):
++            verify(self.output)
++
++    def test_missing_bucket_is_rejected(self):
++        self.rewrite('round-000-selection.json', lambda record: record['populations'].pop('Bucket0'))
++        self.rehash_and_reject('representation bucket')
++
++    def test_missing_parent_selection_is_rejected(self):
++        self.rewrite('round-000-selection.json', lambda record: record['selections']['Bucket0'].pop())
++        self.rehash_and_reject('parent-selection budget')
++
++    def test_changed_random_stream_is_rejected(self):
++        self.rewrite('bucket-seeds.json', lambda seeds: seeds.update(Bucket0=0))
++        self.rehash_and_reject('representation seeds')
++
++    def test_changed_plan_is_rejected(self):
++        def edit(plan):
++            genome = plan['Bucket0'][0]['input']['genome']
++            genome[0] ^= 1
++        self.rewrite('round-001-planned.json', edit)
++        self.rehash_and_reject('planned population')
++
++    def test_failed_probe_cannot_be_ignored(self):
++        name = next(self.output.glob('round-000-Bucket0-*.process.json')).name
++        self.rewrite(name, lambda process: process.update(exit_code=1))
++        self.rehash_and_reject('exit successfully')
++
++    def test_incomplete_journal_is_rejected(self):
++        (self.output / 'completed-probes.jsonl').write_text('')
++        self.rehash_and_reject('completed-probe journal')
++
++    def test_selected_input_inventory_is_checked(self):
++        self.rewrite('selected-inputs.json', lambda selected: selected.update(Bucket0=[]))
++        self.rehash_and_reject('retained input inventory')
++
++
++if __name__ == '__main__':
++    unittest.main()
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/test_competitive.py
+@@ -0,0 +1,146 @@
++"""Accuracy-contract and evidence tests; synthetic timings are not benchmarks."""
++import argparse
++import contextlib
++import io
++import json
++from pathlib import Path
++import shutil
++import tempfile
++import unittest
++from unittest.mock import patch
++
++from campaign import digest
++from competitive import BACKENDS, TARGET, artifacts, make_schedule, run, summarize, validate, verify
++from evidence import ENCODING
++
++
++def response(payload, backend, elapsed=9):
++    return {'schema': 1, 'status': 'ok', 'backend': backend, 'recipe': {'input': payload},
++            'actual_class': payload['bucket'], 'rational_encoding': ENCODING,
++            'dispatch_trace_enabled': False, 'debug_assertions': False,
++            'maximum_absolute_width': str(TARGET), 'elapsed_ns': elapsed,
++            'oracle': {'precision_bits': 1024, 'interval': ['3/4', '5/4'], 'sign': 'Positive'},
++            'steps': [{'precision_bits': 256, 'interval': ['1/1', '1/1'], 'width': '0/1'}]}
++
++
++class ContractTests(unittest.TestCase):
++    def setUp(self):
++        self.payload = {'bucket': 'One', 'genome': [0] * 8}
++
++    def test_both_backends_have_the_same_width_contract(self):
++        for backend in BACKENDS:
++            self.assertEqual(validate(response(self.payload, backend), self.payload, backend), 9)
++
++    def test_width_and_precision_steps_cannot_be_relaxed(self):
++        for field, value in [('interval', ['1/1', '9/8']), ('width', '1/1'), ('precision_bits', 384)]:
++            bad = response(self.payload, 'hyperreal')
++            bad['steps'][0][field] = value
++            with self.assertRaises(ValueError):
++                validate(bad, self.payload, 'hyperreal')
++        bad = response(self.payload, 'mpfr')
++        bad['steps'].append({'precision_bits': 384, 'interval': ['1/1', '1/1'], 'width': '0/1'})
++        with self.assertRaisesRegex(ValueError, 'stop at the required width'):
++            validate(bad, self.payload, 'mpfr')
++
++    def test_input_build_and_backend_mismatches_are_rejected(self):
++        for field, value in [('actual_class', 'Pi'), ('backend', 'mpfr'), ('debug_assertions', True),
++                             ('dispatch_trace_enabled', True), ('maximum_absolute_width', '1/1')]:
++            bad = response(self.payload, 'hyperreal'); bad[field] = value
++            with self.assertRaises(ValueError):
++                validate(bad, self.payload, 'hyperreal')
++
++    def test_schedule_preserves_every_case_and_alternates_backend_order(self):
++        inputs = {'a': self.payload, 'b': self.payload}
++        schedule = make_schedule(inputs, 11, 29)
++        self.assertEqual(len(schedule), 44)
++        self.assertEqual(schedule, make_schedule(inputs, 11, 29))
++        for key in inputs:
++            for sample in range(11):
++                pair = [row['backend'] for row in schedule if row['id'] == key and row['sample'] == sample]
++                self.assertEqual(set(pair), set(BACKENDS))
++                if sample:
++                    previous = [row['backend'] for row in schedule if row['id'] == key and row['sample'] == sample - 1]
++                    self.assertEqual(pair, previous[::-1])
++
++    def test_statistics_retain_the_slow_outlier_and_all_repetitions(self):
++        inputs = {'a': self.payload}
++        values = [1] * 5 + [10] * 5 + [10000]
++        journal = [{'id': 'a', 'backend': backend, 'sample': i, 'elapsed_ns': value}
++                   for backend in BACKENDS for i, value in enumerate(values)]
++        result = summarize(inputs, journal, 11)[0]
++        for backend in BACKENDS:
++            self.assertEqual(result['backends'][backend]['raw_elapsed_ns'], values)
++            self.assertEqual(result['backends'][backend]['median_ns'], 10)
++            self.assertEqual(result['backends'][backend]['maximum_ns'], 10000)
++        with self.assertRaisesRegex(ValueError, 'missing or duplicate'):
++            summarize(inputs, journal[:-1], 11)
++
++
++class ReplayTests(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.temporary = tempfile.TemporaryDirectory()
++        cls.addClassCleanup(cls.temporary.cleanup)
++        cls.root = Path(cls.temporary.name)
++        campaign = cls.root / 'campaign'; campaign.mkdir()
++        selected = {f'Bucket{i}': [{'bucket': f'Bucket{i}', 'genome': [0] * 8}] for i in range(22)}
++        (campaign / 'selected-inputs.json').write_text(json.dumps(selected))
++        (campaign / 'result.json').write_text(json.dumps({'complete': True}))
++        binary = cls.root / 'synthetic-binary'; binary.write_bytes(b'not an executed binary')
++        cls.original = cls.root / 'complete'
++
++        def synthetic_execute(binary, arguments, prefix, timeout, expected_hash):
++            backend, input_path = arguments
++            payload = json.loads(Path(input_path).read_text())
++            data = response(payload, backend, 1 + len(prefix.name))
++            out, err = prefix.with_suffix('.stdout'), prefix.with_suffix('.stderr')
++            out.write_text(json.dumps(data)); err.write_bytes(b'')
++            record = {'status': 'exited', 'exit_code': 0, 'stdout': out.name, 'stderr': err.name,
++                      'stdout_sha256': digest(out), 'stderr_sha256': digest(err)}
++            prefix.with_suffix('.process.json').write_text(json.dumps(record))
++            return data, record
++
++        args = argparse.Namespace(binary=binary, campaign=campaign, output=cls.original,
++                                  samples=3, seed=29, timeout=30)
++        with patch('competitive.verify_campaign'), patch('competitive.execute', synthetic_execute), contextlib.redirect_stdout(io.StringIO()):
++            run(args)
++
++    def setUp(self):
++        self.output = self.root / self.id().rsplit('.', 1)[-1]
++        shutil.copytree(self.original, self.output)
++
++    def rewrite(self, name, edit):
++        path = self.output / name; value = json.loads(path.read_text())
++        edit(value); path.write_text(json.dumps(value))
++
++    def reject_rehashed(self, message):
++        updated = artifacts(self.output); updated.pop('result.json')
++        self.rewrite('result.json', lambda result: result.update(artifacts_sha256=updated))
++        with patch('competitive.verify_campaign'), self.assertRaisesRegex(ValueError, message):
++            verify(self.output)
++
++    def test_complete_synthetic_evidence_replays(self):
++        with patch('competitive.verify_campaign'), contextlib.redirect_stdout(io.StringIO()):
++            verify(self.output)
++
++    def test_omitted_selected_input_is_rejected(self):
++        self.rewrite('inputs.json', lambda inputs: inputs.pop(next(iter(inputs))))
++        self.reject_rehashed('omitted or changed')
++
++    def test_missing_sample_is_rejected(self):
++        path = self.output / 'samples.jsonl'
++        path.write_text('\n'.join(path.read_text().splitlines()[:-1]) + '\n')
++        self.reject_rehashed('sample budget')
++
++    def test_failed_process_cannot_be_ignored(self):
++        name = next(self.output.glob('case-*.process.json')).name
++        self.rewrite(name, lambda process: process.update(exit_code=1))
++        self.reject_rehashed('exit successfully')
++
++    def test_changed_summary_cannot_drop_an_unfavorable_result(self):
++        self.rewrite('summary.json', lambda rows: rows.pop())
++        self.reject_rehashed('statistics differ')
++
++
++if __name__ == '__main__':
++    unittest.main()
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/test_evidence.py
+@@ -0,0 +1,119 @@
++import copy
++from fractions import Fraction
++import json
++from pathlib import Path
++import unittest
++
++from evidence import ENCODING, fraction, validate_response
++
++
++INPUT = {'bucket': 'One', 'genome': [0] * 8}
++CASES = ['normal_form', 'affine_det3', 'sign_zero', 'sign_256', 'interval_64', 'interval_256']
++
++
++def response():
++    queries = []
++    for case in CASES:
++        answer = ({'normal_form': '1/1'} if case == 'normal_form' else
++                  {'interval': ['1/2', '3/2']} if case.startswith('interval_') else
++                  {'sign': None if case == 'sign_zero' else 'Positive'})
++        queries.append({'query': case, 'score_ns': 7,
++                        'samples': [{'sample': i, 'elapsed_ns': ns, 'answer': copy.deepcopy(answer),
++                                     'dispatch': [{'layer': 'real', 'operation': case, 'path': 'fixture', 'count': 1}]}
++                                    for i, ns in enumerate([1, 11, 7])]})
++    return {'schema': 1, 'status': 'ok', 'recipe': {'input': copy.deepcopy(INPUT)},
++            'rational_encoding': ENCODING,
++            'oracle': {'precision_bits': 1024, 'interval': ['3/4', '5/4'], 'sign': 'Positive'},
++            'queries': queries, 'cache_contract_checked': True,
++            'cache_contract': {'cold': {'normal': None, 'affine': None, 'sign': None},
++                               'refined_sign': 'Positive',
++                               'warm': {'normal': '1/1', 'affine': 'Positive', 'sign': 'Positive'}}}
++
++
++class EvidenceTests(unittest.TestCase):
++    def test_fraction_wire_format_has_explicit_sign_and_denominator(self):
++        for text in ['0/1', '-1/1', '7/3', '-7/3', '-10000000000000000000000000000000000000001/3']:
++            self.assertEqual(fraction(text), Fraction(text))
++        for text in ['-2 1/3', '1', '1/-3', '1/0', '1.5', '1 / 3', '+1/3', '01/3', None]:
++            with self.assertRaises(ValueError):
++                fraction(text)
++
++    def test_full_original_mixed_number_response_is_preserved(self):
++        base = Path(__file__).resolve().parents[2] / 'examples/directed_scalar_probe/regressions'
++        original = json.loads((base / 'mixed_number_v2.response.json').read_text())
++        payload = json.loads((base / 'mixed_number_v2.input.json').read_text())
++        self.assertEqual(payload['genome'], [47, 128, 223, 71, 133, 255, 155, 107])
++        self.assertEqual(original['recipe']['input'], payload)
++        self.assertIn(' ', original['oracle']['interval'][0])
++
++        def convert(text):
++            if text is None:
++                return None
++            if ' ' in text:
++                whole, remainder = text.lstrip('-').split(' ')
++                value = int(whole) + Fraction(remainder)
++                if text.startswith('-'):
++                    value = -value
++            else:
++                value = Fraction(text)
++            return f'{value.numerator}/{value.denominator}'
++
++        converted = copy.deepcopy(original)
++        converted['rational_encoding'] = ENCODING
++        converted['oracle']['interval'] = list(map(convert, original['oracle']['interval']))
++        for query in converted['queries']:
++            for sample in query['samples']:
++                answer = sample['answer']
++                if 'normal_form' in answer:
++                    answer['normal_form'] = convert(answer['normal_form'])
++                if 'interval' in answer:
++                    answer['interval'] = list(map(convert, answer['interval']))
++        for state in ['cold', 'warm']:
++            cache = converted['cache_contract'][state]
++            cache['normal'] = convert(cache['normal'])
++        self.assertEqual(validate_response(converted, payload, CASES),
++                         {query['query']: query['score_ns'] for query in original['queries']})
++
++    def test_unknown_may_become_certified(self):
++        self.assertEqual(validate_response(response(), INPUT, CASES), dict.fromkeys(CASES, 7))
++
++    def test_wrong_sign_and_disjoint_interval_are_rejected(self):
++        wrong = response(); wrong['queries'][1]['samples'][0]['answer']['sign'] = 'Negative'
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++        wrong = response(); wrong['queries'][4]['samples'][0]['answer']['interval'] = ['2/1', '3/1']
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++
++    def test_available_facts_cannot_be_dropped(self):
++        for field, value in [('normal', '1/1'), ('affine', 'Positive'), ('sign', 'Positive')]:
++            wrong = response()
++            wrong['cache_contract']['cold'][field] = value
++            wrong['cache_contract']['warm'][field] = None
++            with self.assertRaises(ValueError):
++                validate_response(wrong, INPUT, CASES)
++
++    def test_fine_proof_survives_a_zero_refinement_query(self):
++        wrong = response(); wrong['cache_contract']['warm']['sign'] = None
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++
++    def test_timing_samples_cannot_be_replaced_by_a_best_case(self):
++        wrong = response(); wrong['queries'][0]['score_ns'] = 1
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++
++    def test_identity_query_inventory_and_answer_types_are_checked(self):
++        wrong = response(); wrong['recipe']['input']['genome'][0] = 1
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++        wrong = response(); wrong['queries'].pop()
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++        wrong = response(); wrong['queries'][1]['samples'][0]['answer'] = {'normal_form': '1/1'}
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++
++
++if __name__ == '__main__':
++    unittest.main()
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/test_lexicase.py
+@@ -0,0 +1,93 @@
++import copy
++import itertools
++import random
++import unittest
++
++from lexicase import select, select_buckets, verify_selection
++
++
++def candidate(name, scores, bucket='Pi'):
++    return {'id': name, 'bucket': bucket, 'scores': dict(zip(['left', 'right'], scores))}
++
++
++class FixedOrder:
++    def __init__(self, reverse=False):
++        self.reverse = reverse
++
++    def shuffle(self, values):
++        if self.reverse:
++            values.reverse()
++
++    @staticmethod
++    def choice(values):
++        return values[0]
++
++
++class LexicaseTests(unittest.TestCase):
++    def test_specialists_survive_instead_of_the_average_winner(self):
++        rows = [candidate('left-specialist', [10, 0]), candidate('right-specialist', [0, 10]),
++                candidate('average-winner', [9, 9])]
++        self.assertEqual(select(rows, ['left', 'right'], FixedOrder())['selected'], 'left-specialist')
++        self.assertEqual(select(rows, ['left', 'right'], FixedOrder(True))['selected'], 'right-specialist')
++
++    def test_later_case_breaks_a_tie_among_current_survivors(self):
++        rows = [candidate('a', [5, 2]), candidate('b', [5, 3]), candidate('c', [4, 9])]
++        record = select(rows, ['left', 'right'], FixedOrder())
++        self.assertEqual(record['selected'], 'b')
++        self.assertEqual([step['survivors'] for step in record['steps']], [['a', 'b'], ['b']])
++        verify_selection(rows, ['left', 'right'], record)
++
++    def test_exhaustive_small_matrices_match_lexicographic_maxima(self):
++        cases = ['left', 'right']
++        for scores in itertools.product(range(3), repeat=6):
++            rows = [candidate(str(i), scores[2*i:2*i+2]) for i in range(3)]
++            for reverse in [False, True]:
++                record = select(rows, cases, FixedOrder(reverse))
++                ordered = cases[::-1] if reverse else cases
++                vectors = {row['id']: tuple(row['scores'][case] for case in ordered) for row in rows}
++                self.assertEqual(vectors[record['selected']], max(vectors.values()))
++                verify_selection(rows, cases, record)
++
++    def test_independent_representation_buckets_have_independent_parents(self):
++        populations = {'Pi': [candidate('pi', [1, 2])],
++                       'Exp': [candidate('exp', [1000000, 2000000], 'Exp')]}
++        selected = select_buckets(populations, ['left', 'right'], random.Random(7), 3)
++        self.assertEqual([x['selected'] for x in selected['Pi']], ['pi'] * 3)
++        self.assertEqual([x['selected'] for x in selected['Exp']], ['exp'] * 3)
++        with self.assertRaises(ValueError):
++            select(populations['Pi'] + populations['Exp'], ['left', 'right'], random.Random(7))
++
++    def test_seeded_ties_and_population_permutations_replay(self):
++        rows = [candidate('a', [0, 0]), candidate('b', [0, 0]), candidate('c', [0, 0])]
++        first = select(rows, ['left', 'right'], random.Random(91))
++        self.assertEqual(first, select(rows[::-1], ['left', 'right'], random.Random(91)))
++        self.assertEqual(len(first['steps']), 2)
++        verify_selection(rows, ['left', 'right'], first)
++
++    def test_invalid_scores_and_incomplete_records_are_rejected(self):
++        for invalid in [-1, 1.5, True, None, '1']:
++            with self.subTest(score=invalid), self.assertRaises(ValueError):
++                select([candidate('a', [invalid, 0])], ['left', 'right'], random.Random(0))
++        for rows, cases in [([], ['left', 'right']), ([candidate('a', [1, 2])], []),
++                            ([candidate('a', [1, 2])], ['left', 'left']),
++                            ([candidate('a', [1, 2]), candidate('a', [3, 4])], ['left', 'right']),
++                            ([candidate('a', [1])], ['left', 'right'])]:
++            with self.assertRaises(ValueError):
++                select(rows, cases, random.Random(0))
++
++    def test_tampered_selection_evidence_is_rejected(self):
++        rows = [candidate('a', [5, 1]), candidate('b', [4, 8])]
++        original = select(rows, ['left', 'right'], FixedOrder())
++        variants = []
++        wrong = copy.deepcopy(original); wrong['selected'] = 'b'; variants.append(wrong)
++        wrong = copy.deepcopy(original); wrong['steps'][0]['worst_score'] += 1; variants.append(wrong)
++        wrong = copy.deepcopy(original); wrong['case_order'] = ['left', 'left']; variants.append(wrong)
++        wrong = copy.deepcopy(original); wrong['steps'][0]['survivors'].append('b'); variants.append(wrong)
++        wrong = copy.deepcopy(original); wrong['bucket'] = 'Exp'; variants.append(wrong)
++        for wrong in variants:
++            with self.assertRaises(ValueError):
++                verify_selection(rows, ['left', 'right'], wrong)
++
++
++if __name__ == '__main__':
++    unittest.main()
