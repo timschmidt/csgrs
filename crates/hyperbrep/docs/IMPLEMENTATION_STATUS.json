@@ -577,6 +577,43 @@
       "validation": "348 combined native results: 317 existing all-feature HyperBRep and 31 IO results (29 integration tests and two doctests). All 31 IO results pass in release. Strict all-feature/all-target Clippy for both crates, warning-denied IO docs, workspace formatting, and nine actual Wasmtime groups with zero host imports pass. Four original box/multi-body/through-hole/oblique-tetrahedron recipes are independently read and validated by pinned OCCT. Native cases cover exact volume, source incidence, archive replay/transforms, coordinates above 2^53, unhealed sub-uncertainty gaps, face/loop senses, unit dimensions and all twenty SI prefixes. A 20,000-link unit chain resolves/cycle-checks on a 64 KiB native stack and in WASM. Five deliberate faults fail runtime regressions; the initial text decoder separately fails the added physical-control regression and is corrected. Compile-time rustdoc recursion and a moved link are repaired before final checks.",
       "cost_evidence": "Three allocation-instrumented CPU-0 processes preserve seven complete receipts and all geometry output sizes/fingerprints. Absolute parse/import/validate/volume/native-archive medians are 1.144366 ms box, 2.323810 ms two bodies, 3.566425 ms through-hole and 925.084 microseconds oblique tetrahedron. The 2k/20k unit graph medians are 6.715144/66.116269 ms. No equivalent former importer or optimization speedup is claimed. Three alternating syntax pairs against cd1cc8d42 preserve four receipts and allocation counts; elapsed-total median ratios 0.992636/1.044287/1.002761/1.020947. Syntax executable grows 656008 to 3020240 bytes; new importer benchmark 20928888 bytes; native RSS median 43268 KiB; executed WASM probe 14721483 bytes. Earlier text-decoder costs remain separate. Historical archive-admission timing qualification remains open.",
       "limits": "Only explicitly selected supported faceted representations in the current native planar-shell domain are admitted. This is not complete AP conformance, whole-document/product/assembly traversal, an independent-exporter corpus or edited geometry STEP round trip. Analytic/spline/void/mapped entities, STEP geometry writing, explicit healing/approximation, complete text/lexical rules and global scalar/work/heap admission remain open. External OCCT faceted writing faults on the tested box; its successful advanced-BREP writer is outside this mapping. No runtime fuzz/ASan/lexicase, full workspace/pre-push or release qualification. All 28 work-package gates stay open."
+    },
+    {
+      "id": "step-export",
+      "work_packages": [
+        "WP01",
+        "WP14a",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P1",
+        "P3",
+        "P6",
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P25",
+        "P26",
+        "P27",
+        "P29",
+        "P35",
+        "P36",
+        "P37",
+        "P39",
+        "T13"
+      ],
+      "decision": "kept as new exact selected geometry exchange; no work-package gate completed",
+      "change": "Add native planar straight-edged solid export to the AP214 common faceted subset. Admit exact finite decimals and explicit rational units; preserve every selected body, hole, shared native vertex and directed edge use. Reparameterize planes from complete oriented polygon area vectors and primitive integer directions, with model-bound source-to-entity reports. Emit deterministic metadata/text, product shape association and explicit byte/entity/segment/numeric limits. Refuse nonrepresentable values, unmaterialized selected points, curved carriers and cavity shells without a partial artifact.",
+      "source": "../../hyperbrep-io/src/step/write/mod.rs",
+      "contract": "../../hyperbrep-io/docs/STEP_MAPPING.md",
+      "evidence": "evidence/2026-10-15-step-export/manifest.json",
+      "validation": "359 combined native results (317 existing all-feature HyperBRep; 42 IO comprising one unit test, 38 integration tests and three doctests); all 42 IO results also pass in release. Strict IO all-target/all-feature Clippy, warning-denied rustdoc, workspace formatting and five actual Wasmtime groups with zero host imports pass. Native tests inspect emitted exact points, directed endpoints, plane normals and source mappings independently of geometric import, with edge splits, shear/reflection, coordinates beyond 2^53, a 1e-12 gap, holes, repeated occurrences, unit representability and inclusive limits. Seven original native constructor/edit/transform exports are read and validated by OCCT with expected topology counts and volumes. Six deliberate implementation faults fail focused runtime tests and are restored; three receipt-checker faults are rejected.",
+      "cost_evidence": "Six new allocation-instrumented export cases over three CPU-0 processes preserve all receipts, complete text and fingerprints: median box 75.507363 microseconds/736 allocation requests/21780 requested bytes; hole 134.104006 microseconds/1356.002/44732.352; concave 117.505948 microseconds; split 79.357272 microseconds; 32 occurrences 2.2138392 ms; nonterminating rejection 4.152168 microseconds. No previous equivalent exporter or speedup is claimed. Seven unchanged importer cases run in three alternating pairs against a frozen executable bound to 25a48c202, preserving all receipts and allocation counts; median ratios range 0.970498 to 1.024714. Export executable 21808416 bytes, process RSS median 9644 KiB; executed WASM probe 14514067 bytes. Six core source trees and dependency versions are unchanged. Historical archive-admission timing qualification remains open.",
+      "limits": "Selected planar line-edge solids only; newly derived exact plane charts and implicit edges do not serialize original pcurves/domains/history. No complete EXPRESS/AP conformance, document/assembly traversal, analytic/spline/void exchange or explicit approximate export. NonRational diagnoses a missing retained rational view, not proven irrationality. Numeric encoder bounds do not precharge native unit/plane arithmetic or bound all scalar work/heap/time. OCCT is floating-point interoperability evidence only. No new fuzz/ASan/lexicase campaign, full workspace/pre-push or release qualification; all 28 work-package gates remain open."
     }
   ],
   "work_packages": [

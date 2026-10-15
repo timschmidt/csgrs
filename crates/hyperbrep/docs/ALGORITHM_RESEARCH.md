@@ -791,3 +791,39 @@ tested box in the pinned distribution; the general writer succeeds, but its
 advanced-BREP output is outside this mapping. Neither result is treated as an
 exactness proof or grounds to relax the native contract. Independent exporter
 corpora, native STEP geometry output and complete AP traversal remain WP14 work.
+
+## Exact faceted STEP output (2026-10-15)
+
+The [Part 21 numeric encoding](https://www.steptools.com/stds/step/IS_final_p21e3.html)
+uses decimal significands and exponents. Our representability test follows from
+that encoding: a reduced rational needs only factors two and five in its
+denominator to have a finite decimal. This supports an exact writer with typed
+rejection, rather than an implicit float conversion. The input unit conversion is
+part of this test; a representable metre coordinate may cease to be representable
+in another output unit.
+
+The published [`poly_loop`](https://www.steptools.com/stds/stp_aim/html/t_poly_loop.html)
+and [`axis2_placement_3d`](https://www.steptools.com/stds/stp_aim/html/t_axis2_placement_3d.html)
+definitions permit a useful exact encoding for native planar straight-edged faces.
+Our construction chooses a boundary point as origin, sums the polygon's signed
+triangle-fan area vectors, and reduces rational normal/reference components to
+primitive integer direction ratios. It avoids serializing normalized irrational
+vectors and preserves orientation for concave loops and split edges. This is a
+new exact plane parameterization, explicitly reported with its original face.
+It does not preserve original pcurve/domain encodings; native archives do.
+
+Vertex identity maps avoid repeated coordinate encoding across adjacent faces;
+deterministic traversal, rather than hash-map iteration, assigns entity IDs.
+The area-vector work is linear in directed outer-loop uses, aside from exact
+scalar cost. A safe ASCII string path appends common metadata without per-character
+temporary strings. Decimal conversion and integer direction reduction still have
+coefficient-dependent costs. Pre-product integer admission bounds those encoders,
+not all native arithmetic or memory. Further optimization needs matched receipts
+and measured allocation evidence under the governing property ladder.
+
+The [export evidence](evidence/2026-10-15-step-export/README.md) records original
+native box, split-edge, holed, reflected, concave, multi-body and inch-unit files
+read by OCCT, native exact graph checks and actual WASM execution. OCCT is an
+independent floating-point interoperability check, not an exactness proof.
+Analytic/spline/void exchange, full AP validation, assemblies, explicit approximation
+and the remaining global resource accounting remain open.

@@ -90,3 +90,46 @@ geometry dependencies. This is a measured dependency cost, not a code-size win.
 support this selected-domain increment. Generic STEP documents, independent
 exporter corpora, all native validation domains and global work/memory admission
 remain open. The earlier archive-admission timing gate is unchanged.
+
+## Exact native faceted export — 2026-10-15
+
+**Kept as new functionality:** exact decimal admission, boundary-derived plane
+frames with primitive integer direction ratios, native-identity point reuse,
+complete directed-use accounting and ASCII metadata append. No equivalent old
+geometry writer exists, so the following are absolute costs, not speedups.
+Three fresh allocation-instrumented processes run on CPU 0. Native construction
+and source-volume assertions are outside timing; each timed iteration includes
+export, output/provenance counts, complete text comparison and drop. A first
+reference export can warm scalar caches. The rejection row includes creating
+then discarding the partial internal buffer, with no returned artifact.
+
+| Case | Iterations/process | Median per iteration | Allocation requests/iteration | Requested bytes/iteration |
+| --- | ---: | ---: | ---: | ---: |
+| Box | 1,000 | 75.507363 µs | 736 | 21,780 |
+| Through-hole prism | 500 | 134.104006 µs | 1,356.002 | 44,732.352 |
+| Concave prism | 500 | 117.505948 µs | 1,131.002 | 39,850.352 |
+| Split box edge | 1,000 | 79.357272 µs | 770 | 29,000 |
+| 32 repeated body occurrences | 30 | 2.2138392 ms | 22,075 | 692,181 |
+| Reject coordinate `1/3` | 1,000 | 4.152168 µs | 42 | 2,606 |
+
+All six receipts and all complete output comparisons agree. Geometry output
+sizes are 2,965 / 4,396 / 3,620 / 3,021 / 63,172 bytes, with stable recorded FNV
+fingerprints. Requested bytes sum allocator requests, not retained/peak heap.
+The export benchmark is 21,808,416 bytes; process peak RSS samples are
+9,628 / 9,648 / 9,644 KiB, including untimed construction. The executed WASM
+probe is 14,514,067 bytes with zero host imports. That probe has different code
+coverage from the previous importer probe; its size is not a matched improvement.
+
+The unchanged seven-row importer harness also runs in three alternating CPU-0
+pairs against a frozen executable bound to the preceding `25a48c202` evidence.
+Box / two bodies / hole / tetrahedron / 2k units / 20k units / scale-rejection
+median elapsed-total ratios are 1.000413 / 1.007029 / 1.024714 / 1.005463 /
+0.978652 / 0.970498 / 0.987288. Every receipt, output fingerprint and allocation
+count is preserved. Importer executable sizes are 20,928,888 → 20,927,880 bytes;
+median process RSS is 41,772 → 41,628 KiB. These samples do not establish a
+statistically significant speedup or costs on large arbitrary models.
+
+[Sources, raw trials, checks and reproduction](../hyperbrep/docs/evidence/2026-10-15-step-export/README.md)
+bind this increment to its exact code. No additional optimization was benchmarked
+and rejected in this increment. The prior archive-admission timing gate remains
+open; new IO evidence does not qualify that historical change.

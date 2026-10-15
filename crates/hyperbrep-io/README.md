@@ -4,10 +4,11 @@ Pure Rust CAD exchange for the Hyper geometry stack. This crate owns syntax,
 source-entity accounting and exchange policy; authoritative geometry belongs to
 HyperBRep and exact scalar arithmetic belongs to Hyperreal.
 
-The crate reads and writes bounded Part 21 syntax and imports an explicitly
-selected faceted representation into strictly validated native HyperBRep solids.
-Coordinates and authored unit conversions remain exact. Whole-document/product
-traversal, analytic/spline exchange and STEP geometry export remain unfinished.
+The crate reads and writes bounded Part 21 syntax, imports an explicitly
+selected faceted representation into strictly validated native HyperBRep solids,
+and exports selected planar, straight-edged solids to STEP. Coordinates and
+authored unit conversions remain exact. Whole-document/product traversal,
+analytic/spline exchange and approximate export remain unfinished.
 
 The syntax layer retains numeric lexemes without binary floating-point conversion, unknown
 entity records, complex instances, forward references, multiple DATA sections,
@@ -85,7 +86,38 @@ import an assembly. The [mapping contract and frontier](docs/STEP_MAPPING.md)
 list accepted entities, exact unit conventions, budgets and remaining work.
 Unselected/unsupported records remain in the source exchange, with every entity
 listed as interpreted or retained. `Model::to_json` is native archival replay;
-`Exchange::to_step` is syntax serialization. Neither exports edited geometry to STEP.
+`Exchange::to_step` is syntax serialization.
+
+`step::write_faceted` exports selected native geometry, including edited edges,
+holes, reflected solids and multiple body occurrences. It emits the common AP214
+faceted subset and reports every source face, wire, vertex and directed edge use.
+Shared points follow native identity within each body. Plane charts are rebuilt
+exactly from directed boundaries; original pcurves/history require a native archive.
+
+```rust
+use hyperbrep::{builder, OperationContext, Point3, Real, WorkBudget};
+use hyperbrep_io::step::{FacetedBody, StepWriteOptions, write_faceted};
+
+// Native exchange coordinates are metres. An eighth is exactly decimal-representable.
+let eighth = (Real::one() / Real::from(8))?;
+let bodies = builder::cuboid(Point3::origin(),
+    Point3::new(eighth, Real::one(), Real::one()))?;
+let input = FacetedBody { solid: bodies.bodies().next().unwrap(), name: "Block" };
+let context = OperationContext::strict(WorkBudget { refinements: 0, promotions: 0 });
+let options = StepWriteOptions::new("block.step", "2026-10-15T00:00:00");
+let artifact = write_faceted(&[input], &options, &context).result??;
+assert_eq!(artifact.bodies()[0].edge_uses().len(), 24);
+assert!(artifact.text().contains("FACETED_BREP"));
+# Ok::<(), Box<dyn std::error::Error>>(())
+```
+
+The writer rejects `1/3`, irrational coordinates, unmaterialized selected points,
+curved families and cavity shells with typed source-addressable errors. It never
+rounds, fits, heals or drops unsupported geometry. `StepWriteOptions` makes units,
+metadata and allowances explicit; the caller supplies the timestamp. Exporting
+metres as inches can itself make a coordinate nonrepresentable. The
+[native export example](examples/faceted_step.rs) writes seven original
+construction recipes for independent readers.
 
 ANCHOR, REFERENCE,
 SIGNATURE sections, scoped/value/constant references return explicit blockers.

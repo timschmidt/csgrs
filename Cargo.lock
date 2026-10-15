@@ -2644,6 +2644,7 @@ dependencies = [
  "hyperbrep",
  "hypercurve",
  "hyperreal",
+ "num",
 ]
 
 [[package]]

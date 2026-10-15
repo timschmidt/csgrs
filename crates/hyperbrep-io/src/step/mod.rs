@@ -1,4 +1,4 @@
-//! Typed STEP decoding and strict, unit-aware faceted representation import.
+//! Typed STEP decoding and exact, unit-aware faceted geometry exchange.
 //!
 //! Syntax, header structure, entity interpretation and native model validation
 //! are separate boundaries. Unmapped source records remain in [`StepFile`].
@@ -13,11 +13,17 @@ mod header;
 mod imported;
 mod text;
 mod units;
+mod write;
 
 pub use error::{Error, ErrorKind, Resource};
 pub use header::Header;
 pub use imported::{ImportedBody, ImportedRepresentation, SourceEdgeUse, SourceFace, SourceVertex};
 pub use units::{ContextUnits, Uncertainty, Unit, UnitKind};
+pub use write::{
+    FacetedBody, FacetedStep, StepWriteOptions, WriteError, WriteErrorKind, WriteLengthUnit,
+    WriteLimits, WriteResource, WrittenBody, WrittenEdgeUse, WrittenFace, WrittenVertex,
+    WrittenWire, write_faceted,
+};
 
 use crate::part21::{self, Exchange, NumberLimits, ReadLimits};
 use hyperbrep::{BudgetOutcome, OperationContext};

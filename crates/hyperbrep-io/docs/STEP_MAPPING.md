@@ -18,6 +18,8 @@ completeness and performance retain that priority order under
 | `ImportedRepresentation::bodies()` | Owned native `Model` values, in representation item order, with model-bound solid/face/vertex/wire/edge-use views. |
 | `interpreted_entities()` / `retained_entities()` | Sorted distinct interpreted IDs and source-order raw-retained IDs; disjoint and together covering every DATA instance. |
 | `ImportedBody::edge_uses()` | Bound ID, polygon ID, original zero-based segment including closing segment, directed source-point IDs and native edge-use reference. |
+| `write_faceted(bodies, options, context)` | All explicitly selected supported native solid occurrences as one AP214 common faceted representation/product, or a typed failure. |
+| `FacetedStep::bodies()` | Borrowed model-bound source-to-output mappings for every vertex, face, wire and directed edge use. |
 
 The file borrows its original input; imported bodies own their geometry and remain
 usable after the file is dropped. Source references are file-local numeric IDs,
@@ -132,16 +134,88 @@ native/scalar allocation remains governed by its own implementation. A 20,000-li
 unit graph exercises iterative traversal and drop on a 64 KiB native stack and
 in an actual WASM runtime; this is not an arbitrary-hostile-input safety proof.
 
+## Exact native faceted export
+
+`FacetedBody` explicitly selects a validated native `SolidRef` and output name.
+Native coordinates are interpreted as metres. `StepWriteOptions` supplies a
+positive rational metres-per-output-unit factor, unit name, file/product metadata,
+caller-authored timestamp and `WriteLimits`. The writer emits `AUTOMOTIVE_DESIGN`
+with implementation level `2;1`, a product/definition/shape association and one
+`FACETED_BREP_SHAPE_REPRESENTATION`. Repeating the same input solid produces a
+distinct body occurrence with its own point definitions; this is not an assembly.
+
+All outer-shell faces must use native `Plane` surfaces and all spatial edges must
+use native `Line` carriers. The writer traverses every outer/inner wire in its
+native directed order and emits `POLY_LOOP`, `FACE_OUTER_BOUND`/`FACE_BOUND`,
+`FACE_SURFACE`, `PLANE`, `CLOSED_SHELL` and `FACETED_BREP`. Point entities are shared
+by native vertex identity within each body, without coordinate welding. Every
+directed use, including the closing segment, receives a polygon/segment mapping.
+The two uses of a shared native edge reference the same endpoint entities in
+opposite directions. Faceted STEP encodes these spatial edges implicitly.
+
+The plane origin is the first outer-loop point, the reference direction is its
+first directed edge, and the oriented normal is the complete polygon area vector
+computed relative to that origin. This handles concave loops and collinear split
+vertices without guessing orientation from the first three points. Both directions
+are reduced to primitive integer ratios, so exact normalization would recover the
+same axes without requiring serialized square roots. Bounds and face same-sense
+flags are true because the frame follows the directed outer loop. The immutable
+native model supplies planarity, incidence and orientation authority.
+
+This changes parameterization explicitly: `WrittenFace` identifies the native
+face and its newly emitted plane; `WrittenWire` identifies the polygon/bound;
+`WrittenEdgeUse` identifies the native edge use and directed implicit segment.
+Native curve domains, pcurves, authored charts, history and unrelated document
+records are not encoded by selected geometry export. Keep native persistence
+when those representations must remain unchanged.
+
+Finite STEP decimal reals preserve a reduced rational only when its denominator
+contains no prime other than two or five. The writer factors that denominator,
+forms an integer coefficient, removes decimal trailing zeros and writes a signed
+mantissa/exponent without binary floating point. `NonTerminatingDecimal` and
+`NonRational` are explicit refusals; the latter means no retained exact rational
+view, not a proof of mathematical irrationality. The declared unit factor must
+also be exactly representable. A one-metre coordinate expressed in inches is `5000/127` and is
+rejected. Neither an approximate predicate scope nor a display projection can
+authorize rounding. Future approximation is a separate operation/report.
+
+Text emits ASCII with doubled apostrophes/backslashes and X/X2/X4 escapes for
+controls and Unicode. Every encoded string, including quotes, is bounded by
+32,769 bytes. Metadata never obtains a current clock or process identifier.
+Calendar validity and full EXPRESS/AP conformance remain unproved.
+
+`WriteError` carries the zero-based selected body occurrence and native entity
+kind/position when available; these are diagnostics scoped to that source model.
+Global metadata/unit errors have no body. `UnmaterializedPoint`,
+`UnsupportedSurface`, `UnsupportedCurve`, `VoidShells`, invalid inputs, numeric
+causes, resource limits and allocation errors are distinct. All selected bodies
+succeed together; no partial artifact escapes failure or solver-budget exhaustion.
+
+`WriteLimits` bounds total output bytes, all DATA entities, all directed segments,
+source/converted rational component bits, decimal significand/exponent sizes and
+the integer buffers used by decimal/direction encoding. Denominator factor counts
+also charge the exponent limit. Integer products in these encoders check a
+conservative bound before multiplication; it may reject a product that would fit
+after cancellation. IO collection reservations are fallible. Native unit-conversion
+arithmetic, polygon area-vector arithmetic, scalar backend allocations and total
+heap/time are **not** bounded by these allowances. The explicit solver scope
+retains its existing instrumented-work meaning.
+
 ## Remaining exchange work
 
-WP14a still requires native geometry STEP writing and independent exported-file
-checks, simple analytic entities, broad independent exporter fixtures, representation
+WP14a still requires simple analytic entities, broad independent exporter fixtures, representation
 root selection, and more complete schema/resource admission. WP14b retains
 spline/trim/seam/void exchange, assembly/mapped representation traversal and
 explicit healing/export approximation. Header/text completeness, generic planar
 shell validation, coefficient/work bounds, fuzz/ASan/lexicase qualification,
 full workspace checks and release work are also open. A source syntax round trip
 and native JSON replay do not count as an edited geometry STEP round trip.
+
+The [export qualification](../../hyperbrep/docs/evidence/2026-10-15-step-export/README.md)
+checks edited geometry STEP round trips, raw emitted coordinates/edge uses/oriented
+normals, representability and admission, executed WASM, original native examples
+read independently by OCCT, fault controls and export/import costs. These are
+selected-domain observations, not a completed work package or general CAD release.
 
 Four original fixture recipes (box, two bodies, through-hole and oblique
 tetrahedron) are read by OCCT and mapped natively with exact volume and incidence
