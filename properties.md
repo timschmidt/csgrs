@@ -1,12 +1,24 @@
 # The Hyper Stack: Striven-For Properties
 
-A precise statement of the properties the Hyper geometry stack strives for, written to make each one targetable: every property has a name, a definition, and a criterion that future work can be checked against. Ordered by the governing preference ladder.
+A precise statement of the properties the Hyper geometry stack strives for and the acceptance contract for changes. Each property names a requirement and a criterion for checking it; the normative evidence protocol is in [`docs/admission.md`](docs/admission.md). These requirements are not a claim that the implementation already satisfies them. Ordered by the governing preference ladder.
+
+> A result is not complete until the next supported operation can consume it without losing mathematical meaning, evidence, or control of resources.
 
 ## 0. Governing ladder
 
 **Exactness &gt; completeness &gt; performance &gt; memory &gt; binary size &gt; source size.**
 
-A change may never improve a lower rung by demoting a higher one. Performance work must preserve exact rows, output size, and checksums; memory work must not introduce approximation; size work must not change answers.
+A change may never improve a lower rung by demoting a higher one within the declared input domain and resource contract. Silently changing answers, reducing supported inputs, discarding evidence, or weakening policy is not an optimization. A deliberate contract change requires an explicit migration. Performance-only work must preserve the declared exact-output and deterministic-artifact contracts, including exact rows, output size, and checksums; memory work must not introduce approximation; size work must not change answers.
+
+Every construction and conversion must distinguish three independent claims:
+
+| Contract | Question |
+| --- | --- |
+| Numerical certainty | Were the decisions justified under the selected policy? |
+| Topological validity | Does this representation satisfy the required topology? |
+| Geometric fidelity | How does this representation relate to the intended source? |
+
+A certified predicate does not establish manifoldness; a valid closed mesh does not establish fidelity to an analytic surface; certification of a sampled field does not certify the underlying continuous field. Test each promised claim separately. The closure requirements P17–P20 apply across supported modeling operations, not only within the curve kernel.
 
 ---
 
@@ -18,11 +30,11 @@ A change may never improve a lower rung by demoting a higher one. Performance wo
 
 **P3. Conservative, honest facts.** Structural facts are cheap-or-Unknown: "Unknown" means "not cheaply proven," never "false." Equality is structural, not theorem-proving, and says so. *Criterion:* no fact API returns a definite answer without a certificate behind it.
 
-**P4. Monotone refinement caches.** Cached approximations and facts must preserve mathematical semantics and never weaken a later request, at any precision. Warming may strengthen Unknown into Certified and reuse prior proofs, including proofs obtained at higher precision; it must never introduce contradictions or weaken an available certificate. *Criterion:* cold and warm queries preserve the same value and error contracts; every definite fact agrees, and warming retains or strengthens all available facts.
+**P4. Monotone refinement caches.** Cached approximations and facts must preserve mathematical semantics and never weaken a later request, at any precision. Warming may strengthen Unknown into Certified and reuse prior proofs, including proofs obtained at higher precision; it must never introduce contradictions or weaken an available certificate. Reuse accounts for geometry identity, mutation, policy admissibility, precision, and proof scope; an approximate fact is never a strict proof. Exhaustion is not permanent evidence of undecidability. *Criterion:* cold, warm, evicted, disabled, mutated, and concurrent states, where applicable, preserve value and error contracts and agree on definite facts, including strict→approximate→strict and low→high→low precision sequences. Execution paths and failure histories need not be identical.
 
-**P5. Bounded explosion.** Growth is prevented at the earliest layer with enough information: dyadic recognition, shared-denominator reducers, product-sum shapes, perfect-root collapsing. `Computable` is the fallback, never the default container. *Criterion:* repeated operand chains do not force GCD work per term or build avoidable expression trees.
+**P5. Bounded explosion.** Growth is prevented at the earliest layer with enough information: dyadic recognition, shared-denominator reducers, product-sum shapes, perfect-root collapsing. `Computable` is the fallback, never the default container. Input-controlled work has an explicit resource contract: precision, total work, retained memory, and cancellation are distinct. *Criterion:* repeated operand chains do not force GCD work per term or build avoidable expression trees; adversarial compositions exercise typed exhaustion, cleanup, and recovery. Missing internal bounds are disclosed and dangerous tests use external containment, not an unsupported claim of bounded execution.
 
-**P6. Typed failure, never silent wrongness.** All known domain errors return `Problem`; `expect` only for invariants proven by construction; invalid float imports (NaN/Inf) are rejected at conversion. *Criterion:* no public API can panic on ordinary numeric domain failure.
+**P6. Typed failure, never silent wrongness.** All known scalar domain errors return `Problem`; `expect` only for invariants proven by construction; invalid float imports (NaN/Inf) are rejected at conversion. Across the stack, successful empty geometry, invalid input, unsupported representation, undecided predicate, exhausted budget, and unbounded result are distinct outcomes. *Criterion:* ordinary domain failures neither panic nor become empty meshes, zero coordinates, false classifications, unchanged inputs, or incomplete successes; typed diagnostics survive the public API, wrappers, and bindings.
 
 **P7. Stable forms built in.** Cancellation-prone compositions (`ln_1p`, `expm1`, `diff_of_products`, `sqrt1pm1`, `logsubexp`, `hypot2/3`...) are public primitives so callers cannot spell them unstably. *Criterion:* geometry code never hand-rolls a numerically unstable composition the scalar layer already owns.
 
@@ -30,9 +42,9 @@ A change may never improve a lower rung by demoting a higher one. Performance wo
 
 ## 2. Predicate-layer properties (`hyperlimit`)
 
-**P8. Policy-explicit decisions.** Every predicate-bearing operation receives an explicit policy (`STRICT`, `APPROXIMATE_512`); no internal default changes predicate semantics. *Criterion:* the same query under the same policy always answers through the same decision stratum.
+**P8. Policy-explicit decisions.** Every predicate-bearing operation receives an explicit policy (`STRICT`, `APPROXIMATE_512`); no internal default changes predicate semantics. *Criterion:* every consumed fact is admissible under the selected policy and proof scope. A reusable strict proof may satisfy multiple policies; P4 permits a stronger cached proof to change the decision path without changing meaning.
 
-**P9. Certainty receipts.** Results carry `Certified` vs. `Approximate512Consumed` — the *cost class of the proof* is a return value. *Criterion:* a consumer can always distinguish exact from fallback-decided without inspecting internals.
+**P9. Certainty receipts.** Results carry `Certified` vs. `Approximate512Consumed`, bound to the claim and the evidence actually consumed. Selecting an approximate policy does not itself make an answer approximate. Keep operation-local certainty separate from end-to-end provenance: a later strict operation does not certify the intent of an earlier approximate construction. *Criterion:* a consumer can distinguish local proof from inherited qualification, and upgrading a claim requires a new proof of that claim, never a wrapper conversion, cache hit alone, serialization step, or discarded outcome object.
 
 **P10. Least-cost proof search.** The decision cascade (structural shortcut → rational reducer → bounded refinement → deterministic terminal) finds the cheapest sufficient certificate, JIT-like for repeated queries. *Criterion:* repeated queries amortize; prepared objects beat one-shot paths on measured benches.
 
@@ -52,13 +64,14 @@ A change may never improve a lower rung by demoting a higher one. Performance wo
 
 **P16. Lossless promotion, typed blockers.** Exact line/arc promotes losslessly to downstream consumers; anything uncertifiable (e.g. a general cubic) fails with a typed blocker rather than borrowing lossy display chords — unless a distinct bounded certificate admits it. *Criterion:* no display approximation ever feeds an exact downstream decision.
 
-**P17. Semantic closure: every supported operation returns the intended exact regularized set, with consistent winding, boundary ownership, tangency, overlap, and degeneracy semantics.
+**P17. Semantic closure.** Every supported exact operation returns the intended exact regularized set, with consistent winding, boundary ownership, tangency, overlap, and degeneracy semantics. Policy-qualified outcomes retain their declared uncertainty and do not replace a required exact success. *Criterion:* valid-set identities and independently derived expectations establish equality of represented sets, not just triangle counts, checksums, or agreement between wrappers of one kernel. Preconditions and the equality criterion are explicit.
 
-**P18. Representational closure: every exact result needed by the next operation remains representable.
+**P18. Representational closure.** The output of a supported operation remains valid input to the next supported operation whenever the mathematical composition is defined, including empty results, disconnected components, holes, symbolic coordinates, and qualified uncertainty. The public modeling layer bridges documented kernel restrictions without changing meaning. *Criterion:* exercise empty-set identities, union accumulation from empty, and subtraction chains that remove everything, then consume their results in further operations. Canonical empty geometry remains distinct from malformed operands; identity shortcuts must not conceal invalid input.
 
-**P19. Evidentiary closure: roots, selected fibers, parameters, signs, and topology decisions retain enough identity and proof information to be reused or replayed.
+**P19. Evidentiary closure.** Roots, selected fibers, parameters, signs, and topology decisions retain enough identity and proof information to be reused or replayed. Every claim carries the certainty of its dependencies. *Criterion:* approximate construction → transform → Boolean → export → import → validation never silently promotes the original claim to certified. A proof about a reimported quantized mesh is distinct from preservation of the original exact geometry.
 
-**P20. Computational closure: the output may be mathematically valid, but repeated operations must not cause uncontrolled expression depth, coefficient growth, redundant refinement, allocation traffic, or reconstruction cost
+**P20. Computational closure.** A mathematically valid output must remain consumable under the declared resource contract through repeated operations. Precision limits do not bound total computation or expression growth; cache entry limits do not bound heap bytes. Exhaustion is typed before publishing a complete result; useful partial results have a separate provisional contract. *Criterion:* small-budget compositions test exhaustion, cancellation, retained-state cleanup, and recovery, with expression depth, coefficient growth, allocation, and peak-memory evidence where affected.
+
 ---
 
 ## 4. Mesh-layer properties (`hypermesh`)
@@ -75,11 +88,11 @@ A change may never improve a lower rung by demoting a higher one. Performance wo
 
 ## 5. Grammar-layer properties (`csgrs`)
 
-**P25. Vocabulary, not a second kernel.** CSGRS composes native Hyper types — it never introduces another mesh, region, or polygon carrier. *Criterion:* every public type is a re-export or adapter of a kernel type.
+**P25. Vocabulary, not a second kernel.** CSGRS composes native Hyper types — it never introduces another mesh, region, or polygon carrier. Enforce each invariant in its lowest owning layer and share that implementation across public entry points; modeling composition belongs here, scalar identities and predicate proofs in their respective layers, topology in the mesh kernel, and quantization at format boundaries. The primary modeling interface preserves typed failure; deliberately lossy convenience interfaces require explicit, intentional use. *Criterion:* adapters bridge documented representation restrictions without duplicated formulas, caller-specific tolerances, a hidden second kernel, or forcing applications to reconstruct discarded evidence.
 
-**P26. Intent-preserving interchange.** IO and scalar adapters are lossy only at their documented boundaries; floats appear only at explicit rendering, serialization, adapter, FFI, and wasm edges. *Criterion:* round-trips through every supported format preserve exact geometry where the format allows.
+**P26. Intent-preserving interchange.** IO and scalar adapters are lossy only at their documented boundaries; floats appear only at explicit rendering, serialization, adapter, FFI, and wasm edges. Lossless interchange preserves representable values. Lossy interchange exposes its loss model and validates any topology or error bound it promises. *Criterion:* format-specific round trips distinguish numerical certainty, topology, and fidelity to the source; reimport cannot certify preservation of exact source geometry merely by validating the quantized mesh.
 
-**P27. Deterministic, checksum-auditable outputs.** Repeated serialized runs are deterministic for geometry and checksums; performance changes must preserve rows, output size, and checksums to be retained. *Criterion:* every retained optimization in PERFORMANCE.md cites its preserved evidence.
+**P27. Deterministic, checksum-auditable outputs.** Repeated serialized runs are deterministic for geometry and checksums; performance-only changes must preserve the declared rows, output size, and checksum contracts to be retained. Intentional representation or serialization changes require a separately identified migration. *Criterion:* every retained optimization in PERFORMANCE.md cites its preserved evidence; semantic equality is tested separately from deterministic serialization.
 
 ---
 
@@ -89,7 +102,7 @@ A change may never improve a lower rung by demoting a higher one. Performance wo
 
 **P29. Display is a projection, never a source.** Exact source, canonical machine, and lossy display values live in separate domains; GPU/export boundaries are the only f32/f64 demotion points and own their own checks. *Criterion:* changing display fidelity can never change a classified or computed result.
 
-**P30. The certainty receipt survives every boundary.** `Certified`/`Uncertain`/`Unknown` must remain queryable at each ABI — including wasm/JS. *Target:* any boundary that currently flattens certainty (e.g. JS) should surface it.
+**P30. The certainty receipt survives every boundary.** `Certified`/`Uncertain`/`Unknown`, typed failures, and the provenance needed to interpret each claim remain queryable at each ABI — including wasm/JS. *Criterion:* real binding consumers can distinguish successful empty geometry from failure and inspect certainty through a downstream pipeline. Any boundary that currently flattens this evidence remains an open target.
 
 ---
 
@@ -107,24 +120,28 @@ A change may never improve a lower rung by demoting a higher one. Performance wo
 
 ## 8. Process properties (how the properties are kept true)
 
-**P35. Failure promotion.** Every minimized, license-clean fuzz/adversarial failure becomes a deterministic regression fixture; full-resolution hard cases are never replaced with reduced proxies. *Criterion:* no fixture shrinks without explicit justification.
+**P35. Failure promotion.** Every minimized, license-clean fuzz/adversarial failure becomes a deterministic regression fixture alongside the original full-scale hard case. *Criterion:* no passing result is obtained by weakening policies, accepting a new Unknown, removing difficult geometry, or reducing fixture resolution; an intentional contract change is explicitly recorded as a migration, not a fix or optimization.
 
-**P36. Evidence-gated retention.** A change is retained only after focused correctness tests plus proportionate benchmark/allocation/size evidence; rejected experiments are recorded with decisive data. *Criterion:* the ledgers name kept, rejected, already-satisfied, or architecture-inapplicable for every idea.
+**P36. Evidence-gated retention.** A change is retained only after focused correctness tests plus proportionate benchmark/allocation/size evidence for the same completed contract. A faster error, lower resolution, missing provenance, weaker certainty, skipped validation, or omitted output materialization changes the workload. *Criterion:* ledgers name kept, rejected, already-satisfied, or architecture-inapplicable for every idea; retained source/dependency/toolchain/hardware/input/policy/cache/timing records and raw samples report completion and certainty beside cost. Keep unfavorable results and supported-corpus regressions, not only favorable isolated measurements.
 
-**P37. No overclaiming.** Completion claims state their coverage precisely; inventory is not credited as reading; probes are not claimed as matched benchmarks. *Criterion:* every public claim names its evidence artifact.
+**P37. No overclaiming.** Completion claims state their coverage precisely; inventory is not credited as reading; probes are not claimed as matched benchmarks; a specification or ledger update does not establish implementation compliance. The shipped user path is the final acceptance boundary. *Criterion:* every public claim names its evidence artifact; a clean external project exercises the documented package through construction, transform, composition, certainty inspection, required topology validation, export, reimport, and format-specific checks. Releases, dependencies, examples, API docs, features, minimum supported compiler, and affected bindings describe one coherent system without hidden workspace patches, local paths, undeclared assets, or development-only configuration.
 
 **P38. Selection-pressure verification.** Fuzzing is directed by lexicase worst-performer selection across the stack, with asan, path tracing, and competitive benches as gates. *Criterion:* the adversarial campaign demonstrably hunts its own weakest cases.
 
-**P39. Legible frontier.** The completeness boundary is typed (Unknown, blockers, receipts), the admission protocol for new certificates/families is written in one normative place, and the open-problem list is a published, queryable corpus. *Target:* extensions convert Unknowns to Certified; nothing else changes.
+**P39. Legible frontier.** Capability is measured by completed, validated workflows in a named corpus: drilled bodies, transformed primitives, profile extrusion, holes, repeated cuts, touching and coplanar surfaces, and supported symbolic representations. Record certified completion, qualified approximate completion, undecided, unsupported, invalid input, resource exhaustion, and incorrect result separately. The strict supported domain and open problems are explicit and queryable; [`docs/admission.md`](docs/admission.md) defines how extensions earn acceptance. *Criterion:* preserve the certified-success corpus while resolving unsupported or undecided cases and add regressions for expanded capability. Counts of constructors, tests, and API entries do not establish completeness.
 
 ---
 
 ## 9. Known open targets (from the review)
 
+Implement the review gaps in this order: **empty-result composition and visible failures first; ordinary strict-mode completion next; complete user-path and release validation next**. Reproduce each finding on the target revision before changing code. Performance work proceeds against the preserved contracts and cannot substitute for these milestones.
+
+For every patch, ask: **does it let users complete more trustworthy work, or complete the same trustworthy work at lower cost?**
+
 1. **Cache policy as contract** - `solid.rs` thread-local caches should acquire the same explicitness as the scalar caches: caller-visible budget/semantics (P4 applied at the grammar layer).
-2. **JS certainty surface** - wasm boundary currently flattens `MeshCertainty`/`Classification`; expose it (P26).
+2. **JS certainty surface** - audit the target revision for flattened `MeshCertainty`/`Classification` and expose any missing receipt and provenance through real consumers (P9/P19/P30).
 3. **Refinement budget for curves** - make "undecidable in bounded time" an explicit, documented per-operation budget (the `APPROXIMATE_512` analog for curve queries) rather than emergent behavior (P11/P14).
-4. **One normative admission spec** - consolidate the distributed invariants (P1–P35) into the single documented protocol future extenders program against.
+4. **One normative admission spec** - keep [`docs/admission.md`](docs/admission.md) aligned with P1–P39 and apply its acceptance evidence to each change; documenting the protocol does not discharge implementation gaps.
 5. **Industry standard terminology** - wherever possible the codebase should favor unambiguous industry standard naming and terminology.  Names should be regularized across the stack such that functions and types are consistent and can be referenced directly.
 6. **Exhaustive testing** - 100% coverage with unit tests including adversarial inputs and all possible representations, benchmarks, competitive library benchmarks, asan, fuzzing including all representation types, and lexicase worst performers with independent buckets for each representation type, https://github.com/timschmidt/exactcore-hyper-comparison integrated under crates/comparisons with consolidated and re-validated logs and organized and complete code for all claims for reference in a future paper.  Verus coverage for hyperreal, hyperlattice, and hyperlimit.
 7. **Idiomatic bindings** - For C / C++, Python, Javascript / Typescript via WASM
@@ -132,6 +149,6 @@ A change may never improve a lower rung by demoting a higher one. Performance wo
 9. **Documentation** - should synthesize the best aspects of current crates documentation, with hyperreal and csgrs being the flagship examples - the readme should explain what the crate does, why, and provide a quick entry into how along with an index of available types and functions which dive into deep educational-quality references in  rustdoc via good doc comments in the code and additional markdown documents in git where appropriate.
 10. **Paper** - A scientific paper detailing important aspects of the project suitable for publication and education of others should be prepared.
 11. **Optimization** - Opportunities for reducing the amount of code and complexity throughout the stack while preserving or enhancing the exactness > completeness > performance > memory > binary > code priority ladder should be logged, prototyped, evaluated, considered in combination with previously evaluated and rejected ideas, and so on.  Only keeping changes which improve without significant regression.  APIs should be as narrow and thin as possible while retaining honesty and the priorities.  Consider the use of parallelism through fearless_simd and multithreading.
-12. **Release** - All crates in the monorepo should be prepared for release.  With all that entails.
+12. **Release** - All crates in the monorepo should be prepared for release, including the clean external consumer pipeline, documented feature configurations, minimum supported compiler, package dependencies, examples, and real affected bindings required by P37 and the admission protocol.
 13. **File organization** - Files should be organized, sized, and split / combined semantically such that finding relevant code is easy and no file is too long for reading.
 14. **Future work** - each crate may have documentation discussing crate-specific future work which is also in scope.
