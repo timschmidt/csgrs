@@ -836,7 +836,7 @@ pub(super) fn selected_fiber_parameters_on_incident_ray(
         let mapped = authority.parameter(IsolatedRootInterval {
             lower,
             upper,
-            exact_root: compact.root().exact_root.as_ref().map(&map).transpose()?,
+            exact_root: compact.root().exact_root.as_ref().map(map).transpose()?,
             distinct_root_count: compact.root().distinct_root_count,
         });
         if let Some(barrier) = barrier {

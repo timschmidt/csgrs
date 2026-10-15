@@ -9949,8 +9949,8 @@ fn represented_chord_direction_tensor(
     let reduce = |polynomial| dense_reduce_selected_root_relations(polynomial, &sources);
     let Some((mut dx, mut dy)) = end_x
         .subtract(&start_x)
-        .and_then(&reduce)
-        .zip(end_y.subtract(&start_y).and_then(&reduce))
+        .and_then(reduce)
+        .zip(end_y.subtract(&start_y).and_then(reduce))
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
@@ -9958,8 +9958,8 @@ fn represented_chord_direction_tensor(
     {
         let Some((reversed_x, reversed_y)) = dx
             .scale(&Real::from(-1_i8))
-            .and_then(&reduce)
-            .zip(dy.scale(&Real::from(-1_i8)).and_then(&reduce))
+            .and_then(reduce)
+            .zip(dy.scale(&Real::from(-1_i8)).and_then(reduce))
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
