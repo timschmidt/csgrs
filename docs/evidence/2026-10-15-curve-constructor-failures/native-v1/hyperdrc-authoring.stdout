@@ -1,0 +1,9 @@
+
+running 4 tests
+test authoring_intent::tests::authoritative_decoupling_role_checks_target_and_return_distance ... ok
+test authoring_intent::tests::incomplete_authoritative_role_is_a_structured_error ... ok
+test authoring_intent::tests::native_component_envelopes_check_side_and_component_keepouts ... ok
+test authoring_intent::tests::native_keepouts_and_slots_produce_source_addressable_readiness_findings ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1558 filtered out; finished in 0.00s
+

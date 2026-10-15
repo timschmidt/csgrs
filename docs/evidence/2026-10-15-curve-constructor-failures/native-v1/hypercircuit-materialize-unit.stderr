@@ -1,0 +1,141 @@
+   Compiling syn v2.0.117
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.46
+   Compiling libc v0.2.186
+   Compiling getrandom v0.3.4
+   Compiling num-iter v0.1.45
+   Compiling chrono v0.4.44
+   Compiling serde_derive v1.0.228
+   Compiling serde v1.0.228
+   Compiling zerocopy-derive v0.8.48
+   Compiling num-bigint v0.4.6
+   Compiling zerocopy v0.8.48
+   Compiling num-complex v0.4.6
+   Compiling num-rational v0.4.2
+   Compiling half v2.7.1
+   Compiling ciborium-ll v0.2.2
+   Compiling ciborium v0.2.2
+   Compiling num v0.4.3
+   Compiling foldhash v0.2.0
+   Compiling hashbrown v0.16.1
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling bytes v1.11.1
+   Compiling arrow-buffer v57.3.1
+   Compiling memchr v2.8.0
+   Compiling arrow-schema v57.3.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling lexical-util v1.0.7
+   Compiling arrow-data v57.3.1
+   Compiling aho-corasick v1.1.4
+   Compiling ahash v0.8.12
+   Compiling simd-adler32 v0.3.9
+   Compiling log v0.4.29
+   Compiling semver v1.0.28
+   Compiling regex-automata v0.4.14
+   Compiling rustc_version v0.4.1
+   Compiling rustix v1.1.4
+   Compiling arrow-array v57.3.1
+   Compiling typenum v1.20.1
+   Compiling miniz_oxide v0.8.9
+   Compiling generic-array v0.14.7
+   Compiling arrow-select v57.3.1
+   Compiling thiserror v2.0.21
+   Compiling regex v1.12.3
+   Compiling flatbuffers v25.12.19
+   Compiling lexical-parse-integer v1.0.6
+   Compiling lexical-write-integer v1.0.6
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling zlib-rs v0.6.8
+   Compiling utf8parse v0.2.2
+   Compiling anstyle-parse v1.0.0
+   Compiling indexmap v2.14.0
+   Compiling flate2 v1.1.9
+   Compiling gltf-derive v1.4.1
+   Compiling zopfli v0.8.3
+   Compiling lexical-write-float v1.0.6
+   Compiling lexical-parse-float v1.0.6
+   Compiling lazy-regex-proc_macros v3.6.0
+   Compiling strum_macros v0.27.2
+   Compiling rand_core v0.9.5
+   Compiling anstyle v1.0.14
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling uuid v1.23.1
+   Compiling colorchoice v1.0.5
+   Compiling anstyle-query v1.1.5
+   Compiling anstream v1.0.0
+   Compiling gerber-types v0.7.0
+   Compiling lazy-regex v3.6.0
+   Compiling lexical-core v1.0.6
+   Compiling gltf-json v1.4.1
+   Compiling getrandom v0.4.2
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling arrow-ord v57.3.1
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling ordered-float v2.10.1
+   Compiling atoi v2.0.0
+   Compiling strsim v0.11.1
+   Compiling typed-path v0.12.3
+   Compiling integer-encoding v3.0.4
+   Compiling debug_unsafe v0.1.4
+   Compiling ryu v1.0.23
+   Compiling clap_lex v1.1.1
+   Compiling clap_builder v4.6.7
+   Compiling arrow-cast v57.3.1
+   Compiling atoi_simd v0.17.0
+   Compiling doc-image-embed v0.2.1
+   Compiling thrift v0.17.0
+   Compiling tempfile v3.27.0
+   Compiling zip v7.2.0
+   Compiling gltf v1.4.1
+   Compiling digest v0.10.7
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling libsqlite3-sys v0.37.0
+   Compiling gerber_parser v0.4.0
+   Compiling arrow-ipc v57.3.1
+   Compiling codepage v0.1.3
+   Compiling quick-xml v0.39.4
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling xattr v1.6.1
+   Compiling hashlink v0.11.1
+   Compiling ppv-lite86 v0.2.21
+   Compiling wait-timeout v0.2.1
+   Compiling filetime v0.2.29
+   Compiling fast-float2 v0.2.4
+   Compiling fallible-iterator v0.3.0
+   Compiling tinyvec_macros v0.1.1
+   Compiling cpufeatures v0.2.17
+   Compiling winnow v1.0.2
+   Compiling smallvec v1.15.1
+   Compiling twox-hash v2.1.5
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling rusqlite v0.39.0
+   Compiling parquet v57.3.1
+   Compiling rusty-fork v0.3.1
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling sha2 v0.10.9
+   Compiling tinyvec v1.11.0
+   Compiling calamine v0.35.0
+   Compiling tar v0.4.46
+   Compiling rand_chacha v0.9.0
+   Compiling zip v2.4.2
+   Compiling clap v4.6.7
+   Compiling rand v0.9.4
+   Compiling rand_xorshift v0.4.0
+   Compiling hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+   Compiling getrandom v0.2.17
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling serde_spanned v1.1.1
+   Compiling toml_writer v1.1.2+spec-1.1.0
+   Compiling untrusted v0.9.0
+   Compiling proptest v1.11.0
+   Compiling ring v0.17.14
+   Compiling toml v1.1.6+spec-1.1.0
+   Compiling unicode-normalization v0.1.25
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+   Compiling hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Finished `release` profile [optimized] target(s) in 5m 37s
+     Running unittests src/lib.rs (target/curve-constructor-failures/native-v1/release/deps/hypercircuit-b169ddc8551970da)

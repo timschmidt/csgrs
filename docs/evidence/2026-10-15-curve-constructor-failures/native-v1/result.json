@@ -1,0 +1,246 @@
+{
+  "commands": [
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 13.25462543219328,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "f9e3fd99794626841ac7b26eabcc3dd56a4663a315628717c45263fbb675fda8"
+    },
+    {
+      "name": "fuzz-fmt",
+      "exit_code": 0,
+      "seconds": 2.2527334932237864,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "80873358c500916b3463e685a1f2243f7a840f56748ab75e43b29b5031ba109d"
+    },
+    {
+      "name": "strict-clippy",
+      "exit_code": 0,
+      "seconds": 82.55646064318717,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "d762b8d5193ab4576894d2cebd6f24567f08dc843881ef9bdec57a5ccf242fe5",
+      "resources_sha256": "c97800220ed446c89d42b8b7d2fde6e3c1b72b5737f5635d7a9e998ddc4b76c0"
+    },
+    {
+      "name": "all-feature-tests",
+      "exit_code": 0,
+      "seconds": 452.64149856520817,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-constructor-failures/native-v1/release/deps/csgrs-7cb2efc2751cd581": "c86b962c2025cc9ecca36c33f86a097de187b2894cf63a11da053c237616fe5d",
+        "target/curve-constructor-failures/native-v1/release/deps/adversarial-aa8f7eb900ff711d": "374115a418942cee29033079dc00f16c830c1e849e48177d72e0eb39e123a4af",
+        "target/curve-constructor-failures/native-v1/release/deps/adversarial_deep-5118e0b6d7de3ea6": "7f0daaa547f1d2a2804afb449f3feb20c9d5f72adab2ed95029056a5ac16a565",
+        "target/curve-constructor-failures/native-v1/release/deps/adversarial_extrusions-aa8048fe0de3f594": "681e4a016376270956f2f0be050a5b7f1c4df783fd786b0c7fca8565de6f11aa",
+        "target/curve-constructor-failures/native-v1/release/deps/adversarial_fixtures-cf11e31630975ad0": "c400bcbea9d9b820e96cfb3968b34ec99629883b9a902ebf794273e6f628cc3e",
+        "target/curve-constructor-failures/native-v1/release/deps/adversarial_stress-d6d56cc4aa09a158": "21e5100da20305834f6c47c0d9e44468202a20fc633bbf344654f3386b80ff22",
+        "target/curve-constructor-failures/native-v1/release/deps/bounds_failures-1de96205ff2a5e07": "035ad1f905db461b34b287f287d36e3fabd7e07c7921735c45be7b87e450317e",
+        "target/curve-constructor-failures/native-v1/release/deps/competitive-0b8b38c506725d57": "0722108bf3030b89709acd300ca863580982432d3073dcd5efc19bc446d18506",
+        "target/curve-constructor-failures/native-v1/release/deps/curve_constructor_failures-e22c3b5ab72457a8": "7110ba43a4758fd2a243556943eb1c82aeae8c29a8836d5d774d192aadfb4ae1",
+        "target/curve-constructor-failures/native-v1/release/deps/curve_metaball_failures-cdc5511c980183da": "c6ee4ffa70cb50a81105bd443e8c3430e6fec9723a1f314492f5e8b5f9e263b0",
+        "target/curve-constructor-failures/native-v1/release/deps/curve_metaball_workloads-37ab722afd06f275": "692880859715be18ce0715a9defe791673fac6f7c77d7b1791da2ec73659d1ef",
+        "target/curve-constructor-failures/native-v1/release/deps/empty_composition-3a7164c2b9d5044a": "86a0babc3fca4911e46f22aa7c1e302a4ad3c9b56fa9260bc9818f6a2433cefb",
+        "target/curve-constructor-failures/native-v1/release/deps/exact_linear_modeling-26d44c8491c2f7a7": "ffa93137d0bf80e67c7f172f3ccbe63704d6c6a04896045a017860988cc70a2e",
+        "target/curve-constructor-failures/native-v1/release/deps/generated_benchmark_corpus-b45922908131dfbd": "2c3a5bf8e5ef6d2dba233562b0fd9f96239b4ced0bfdccd617036aa2b2c61932",
+        "target/curve-constructor-failures/native-v1/release/deps/geometry_context-e14123ad7d9b5126": "410961ab05ac3dde8f1273228f7b95767ec10c5d7d4ad373dd7365c259280534",
+        "target/curve-constructor-failures/native-v1/release/deps/mesh_boolean_context-9d9c68938c3691af": "7bcd14e0b89bc772a00dcd7512f07ab8454247b95a87beacca36d68d6ed5c23f",
+        "target/curve-constructor-failures/native-v1/release/deps/metaball_failures-043b72a00404a6ff": "8cccdf5d422115a98b6f37f53bff05cca0e5dddfbbacca58016048adcdbdc462",
+        "target/curve-constructor-failures/native-v1/release/deps/metaball_workloads-4d7fe7b802e9560f": "4770bb86a19a6995c78e78f0103c9734246502e0b9fbba63fdf7d47132938080",
+        "target/curve-constructor-failures/native-v1/release/deps/metaballs_diagnostics-8dfd6522763c319c": "67ec7c3c6dae66134213f8aa610362c8931409f5122049891774671bd3068aac",
+        "target/curve-constructor-failures/native-v1/release/deps/native_queries-f108d89258947ff9": "3c3045091bfd5c502222a5f097121e49a6cfb93d486090c441f929314733dfa5",
+        "target/curve-constructor-failures/native-v1/release/deps/primitive_failures-aadd0e4e093d5243": "9e060a397e0a9d18db94e47adfd30b7ce798729ceb28e9ec5b831091ac416dcb",
+        "target/curve-constructor-failures/native-v1/release/deps/readme-14ff37358f039d13": "740c42dab7da9f8b421badc596d1d5bf4602a80720c4ae1b14c4e8e6fdd57297",
+        "target/curve-constructor-failures/native-v1/release/deps/readme_render_regression-c73ca6dc64fc3820": "db16bd93c8b2d221c5bb2e52ef2d683e66aff6e9d62ebbbfec13bab3802a820a",
+        "target/curve-constructor-failures/native-v1/release/deps/sdf_failures-0e01156f99592da3": "39b94ef702903394ecfbd03fe83e2aa683aca01e6992d239791d302e71777f56",
+        "target/curve-constructor-failures/native-v1/release/deps/sdf_tpms_diagnostics-5aa3ece71b49182c": "cc9a2433f0e050775897e554a0a1e270930817d1dcb0bbd764fde49f4cabbc3b",
+        "target/curve-constructor-failures/native-v1/release/deps/solid_cache-d34731e0e95db92a": "f2380f4a23047ad8c1f84bb95f0983ff22323715ab467446062a78a11ae5a926",
+        "target/curve-constructor-failures/native-v1/release/deps/transform_failures-74f1159cb89f11ba": "5895110bacf3bd103a8e10ae65aa33c9c002781d2afd95938ceff30080e60e5e",
+        "target/curve-constructor-failures/native-v1/release/deps/wasm_certainty-d7c6e3b405f88647": "0d9ca15f6ade4141c14000af0883060efa05f611ef351e48a3c007e6eff66fe3"
+      },
+      "stdout_sha256": "d95bf90cae291cf84d6982efc492c97667a346d2e98838ebb2c5475322337c84",
+      "stderr_sha256": "3ae8dae81973d91ad02ff5a51e26880996f02a9e2dd9cb7eafe5d0854f69692f",
+      "resources_sha256": "de12e649fe5afe5166bc20960e09345c0cd7f011be362a475d6093cd9f5d7385"
+    },
+    {
+      "name": "hypercircuit-materialize-unit",
+      "exit_code": 0,
+      "seconds": 343.4457042366266,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-constructor-failures/native-v1/release/deps/hypercircuit-b169ddc8551970da": "28a7d8d67c4aac9bccbc3c37e66e2598bbfa7e9b906db78f83951261027968ec"
+      },
+      "stdout_sha256": "d0bab41d11ff42a04e2b8e080da2db114da0d1cd7d54d829c93d2d1254e51747",
+      "stderr_sha256": "cb3c8e506824ced038a1b0d499ed5049d20f68628e9dc8ea412c97c2c2192187",
+      "resources_sha256": "fe465a84f009a58f9736b79b7fb6010d859d657d65e27988feeb84b6ed271aea"
+    },
+    {
+      "name": "hypercircuit-drc-unit",
+      "exit_code": 0,
+      "seconds": 2.178354986011982,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-constructor-failures/native-v1/release/deps/hypercircuit-b169ddc8551970da": "28a7d8d67c4aac9bccbc3c37e66e2598bbfa7e9b906db78f83951261027968ec"
+      },
+      "stdout_sha256": "e01f578cab26fa26b716c4affa2a73960b72cfef3139d44fb1d2b8edfdf61bc0",
+      "stderr_sha256": "9c4c1507fc6604af12d17b2d4eb3c851182324f08a534c5672adc425d25aad96",
+      "resources_sha256": "292e6400c5e5094a3d43482ee074a1cc8d043b8b5385f0584da7cf2e9eb702e9"
+    },
+    {
+      "name": "hypercircuit-materialize-integration",
+      "exit_code": 0,
+      "seconds": 89.78812900092453,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-constructor-failures/native-v1/release/deps/materialize-46301fe00d108f43": "4dd20b28c3f31bb342ad18a23e7fa63fb1887843ccce8bed2b133f4a2989bb83"
+      },
+      "stdout_sha256": "eae053ebb1ae49cef95811cefc3d2c0e2dcb8f85624a61aab4652738e4932092",
+      "stderr_sha256": "7a8bc2811c18284f1a3a625981bd2826a748887dcfb5db0ebcb491199847748b",
+      "resources_sha256": "1b4cd994de8d55b2ca37891ff7332e6298b8d70b2e49f4d21a67979d2e312c63"
+    },
+    {
+      "name": "hypercircuit-curved-outline",
+      "exit_code": 0,
+      "seconds": 6.796147548127919,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-constructor-failures/native-v1/release/deps/curved_outline-603a16d56b3218ff": "881d7d7cd55255b5a165d116dbd65a6f37fda94ec33ce25bfdb6bbc048cd052d"
+      },
+      "stdout_sha256": "1e3f00fead003dad6a80078bbe282ae345c0c99eaa4ab657cbaaaf27c3ae3683",
+      "stderr_sha256": "72661704e24c1a26a98848ee3a6ded45ad9855d63538405c59295229e03d94f5",
+      "resources_sha256": "6c329aa20bcbb45e8d9973a583018e8f2ef3252a69d610dcc6189f3fc5f21a56"
+    },
+    {
+      "name": "hyperdrc-authoring",
+      "exit_code": 0,
+      "seconds": 202.6938414867036,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-constructor-failures/native-v1/release/deps/hyperdrc-f2524bbb15bdb74d": "0fdca1ebcd3286c70224ebb22aeb0c37c61262e1d11f99a4e235cb15ef73cacf"
+      },
+      "stdout_sha256": "1f42a7b3e21076f853e2baaae292f690f3e9f5a28f2a5a0408ca4bd224f7a0f0",
+      "stderr_sha256": "1fb5309c41ff7388adc9da4f74b1be8a090c59aa664b7a28418a1243920c131b",
+      "resources_sha256": "155157a69aedf74b748ea2271985613f39770e8e34ca8ce7977fc1cf780d208b"
+    },
+    {
+      "name": "hyperdrc-constraints",
+      "exit_code": 0,
+      "seconds": 3.092216805089265,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-constructor-failures/native-v1/release/deps/hyperdrc-f2524bbb15bdb74d": "0fdca1ebcd3286c70224ebb22aeb0c37c61262e1d11f99a4e235cb15ef73cacf"
+      },
+      "stdout_sha256": "0b6cd31515c25dfff1432e5c9a5f8d07505f7397cd300e6498db4b25782bc34b",
+      "stderr_sha256": "68832470c964d33006e5c1ba582d061dc4395e06c2d4c87a357eed52d5a509f6",
+      "resources_sha256": "ee68309737537cab2023ea30c2d2e80df609b9473725d020b78b45009a46b8a4"
+    },
+    {
+      "name": "ffi-tests",
+      "exit_code": 0,
+      "seconds": 130.26520080678165,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-constructor-failures/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "94207e310c09c280144435487a8bdd7e7ded1623d95b100d5691f3a75b07f82d"
+      },
+      "stdout_sha256": "13027cbdc612c72bf124a3999a5ceb98920b94dabff001ef3dcdb2dda7d4a9f4",
+      "stderr_sha256": "487a484f94573b5a265c1ea678d4a0a7c0ebc43e2bddef597e5cb3d837fd7340",
+      "resources_sha256": "2f489d667980b05f8f9d794fc252652480916c0880563974c384b0d5f4cca1ed"
+    },
+    {
+      "name": "minimal-clippy",
+      "exit_code": 0,
+      "seconds": 23.664982235990465,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "a8a2d80d67c98b7c8f99cdfb2079641ec9b35e82a1f0c7f411c66b6cd1dc6b2b",
+      "resources_sha256": "21a46f81b86dfd42be42adfc712768b996c48c46c73f407b63517c569eec0a75"
+    },
+    {
+      "name": "minimal-tests",
+      "exit_code": 0,
+      "seconds": 128.98618251504377,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-constructor-failures/native-v1/release/deps/csgrs-12b72f0ccdd38706": "d7dd08d83ef936f284d5639a438fee417e50ac2e8001cf12b258d7a501a25817",
+        "target/curve-constructor-failures/native-v1/release/deps/bounds_failures-c661a92a5b4c7962": "8d1aad3635349979573787b80c2a009854f3bd30e1969f2cc3b34a57c4f50b13",
+        "target/curve-constructor-failures/native-v1/release/deps/curve_constructor_failures-fd8f13d67d2561c4": "6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd"
+      },
+      "stdout_sha256": "b3d2cb33dd24ccf06ff8a373fb68d142ef05c1cfd9f6d655d5a6bdf62b4bb07c",
+      "stderr_sha256": "6c8813e300593e9f494134d515247c9f26753f29de0a0f77ed5c06d5ef1f36a5",
+      "resources_sha256": "ec4ef70f11617fe834eea448a012942d54c03b6f55be11a184f6ec52b4998e7e"
+    },
+    {
+      "name": "curve-clippy",
+      "exit_code": 0,
+      "seconds": 3.811732469126582,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "7617da350ad66580a6f737233d01f95ef42d8fce0263764269e417cab6c3db07",
+      "resources_sha256": "5b69e88578f5ef9a84cc157ada5abdc43c5d4669a41fc85a2cca9e5a868ea1f2"
+    },
+    {
+      "name": "curve-tests",
+      "exit_code": 0,
+      "seconds": 16.143430921714753,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-constructor-failures/native-v1/release/deps/csgrs-fbfb4e9daf55c3e5": "f4672ba2cb6f9399bba9ea5542b46ece85c9141f9d0eff63f6cc23b776365918",
+        "target/curve-constructor-failures/native-v1/release/deps/bounds_failures-1388f390547a412c": "677ea081b8341751cb35b1ef9d1bdf49b794e0485b430ccf6c32c2b1f6dfa0b2",
+        "target/curve-constructor-failures/native-v1/release/deps/curve_constructor_failures-526a2455ed7f2aed": "e19e2020c9812f968c049853395d7676313b4fddf812f4b58d9ccac8d1b92d09"
+      },
+      "stdout_sha256": "1bb0c0702ae9aeee9500d67a7bb33f9d4ff3532c9372f5d738eb4ecf044d400c",
+      "stderr_sha256": "1312ffd2d40ae95621d9eb26da9ee32bd595df189f4eae92816c6a6222416b98",
+      "resources_sha256": "318b145a7d00e3cd36b1e945ad255d58706fd5227312f6872dece9413d30515a"
+    },
+    {
+      "name": "fuzz-clippy",
+      "exit_code": 0,
+      "seconds": 36.81847444130108,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "fcdf2ba98c758f46f1ef0a69c530a93cd17884333b62a61593d6ff950e3a39f3",
+      "resources_sha256": "16e3d46d9a7843de1bd16a2e8bf319f7acfce9933dbc90e3b6ccf76eb95a7180"
+    },
+    {
+      "name": "docs",
+      "exit_code": 0,
+      "seconds": 226.33885212196037,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "6e0e594e4ed55176fe97c25ee4dd61840df2cd762f009be7840ccf7e5ba55f21",
+      "resources_sha256": "08e4c02977f6f02e4d4eea62405dd4d4a826b432497562e550657d9b91aa1de2"
+    },
+    {
+      "name": "doctests",
+      "exit_code": 0,
+      "seconds": 315.9509250628762,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e1ba688ae6bd3d031d2e4449d6dc016f63ba31d4520195edec27165f3ba402a8",
+      "stderr_sha256": "a666c705d99adf4dfba9ff9edced7b70eb8c7ce7fada224397d2f4827a20e4cb",
+      "resources_sha256": "2dcfc3af8bab8cd3ab9e7e6d869c2e2d644c455efb1541df94cd4ac77467e43e"
+    },
+    {
+      "name": "ffi-build",
+      "exit_code": 0,
+      "seconds": 10.80761504266411,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "1a14957d782b687edbbf85348e9d263fdc5742c307f144c00eca6d62c8fca184",
+      "resources_sha256": "5536b40577602b9e458b8c34900192e40fbf5f73246dc4e27528223412fa1288"
+    }
+  ],
+  "passed": true
+}

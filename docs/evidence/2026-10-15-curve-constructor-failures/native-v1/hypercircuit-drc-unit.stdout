@@ -1,0 +1,10 @@
+
+running 5 tests
+test drc::tests::heterogeneous_dielectrics_are_not_collapsed_into_false_precision ... ok
+test drc::tests::hyperphysics_material_graph_enables_hyperdrc_impedance_estimate ... ok
+test drc::tests::keepout_constructor_failure_survives_the_public_handoff_and_recovers ... ok
+test drc::tests::placed_polygon_retains_constructor_failure_instead_of_an_empty_envelope ... ok
+test drc::tests::unresolved_material_properties_remain_release_auditable ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.00s
+

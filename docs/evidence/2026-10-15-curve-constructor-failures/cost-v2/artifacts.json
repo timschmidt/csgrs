@@ -1,0 +1,14 @@
+{
+  "target/curve-constructor-failures/cost-v2/baseline": {
+    "sha256": "5db591fda55995cf7338120670d45e9c09cb5f9e758cd09b2bbd87177861dd13",
+    "bytes": 21130456
+  },
+  "target/curve-constructor-failures/cost-v2/candidate": {
+    "sha256": "4a011fc0842c2f7e25196c1a08f244c8ca744611d94e4129f620e5a526ad75ca",
+    "bytes": 21131696
+  },
+  "target/curve-constructor-failures/native-v1/release/deps/libcsgrs.rlib": {
+    "sha256": "6ec6d5b820dac754d1de740165e88267244786fa982dea333f09e8b0e06c1036",
+    "bytes": 4422696
+  }
+}

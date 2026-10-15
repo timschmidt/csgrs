@@ -1,0 +1,59 @@
+    Checking half v2.7.1
+    Checking rand_core v0.9.5
+    Checking rand v0.9.4
+    Checking ciborium-ll v0.2.2
+    Checking ciborium v0.2.2
+    Checking glam v0.30.10
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking bevy_reflect v0.18.1
+   Compiling rustix v1.1.4
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking bevy_ecs v0.18.1
+   Compiling getrandom v0.3.4
+    Checking arrow-buffer v57.3.1
+    Checking arrow-data v57.3.1
+    Checking ahash v0.8.12
+    Checking polling v3.11.0
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking rand_distr v0.5.1
+    Checking bevy_app v0.18.1
+    Checking exr v1.74.0
+    Checking bevy_time v0.18.1
+    Checking bevy_diagnostic v0.18.1
+    Checking bevy_log v0.18.1
+    Checking tiff v0.11.3
+    Checking bevy_math v0.18.1
+    Checking async-io v2.6.0
+   Compiling lazy-regex-proc_macros v3.6.0
+    Checking arrow-array v57.3.1
+    Checking bevy_asset v0.18.1
+    Checking bevy_transform v0.18.1
+    Checking image v0.25.10
+    Checking lazy-regex v3.6.0
+    Checking arrow-select v57.3.1
+    Checking hexasphere v16.0.0
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking bevy_mesh v0.18.1
+    Checking dxf v0.6.1
+    Checking gerber_parser v0.4.0
+    Checking hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+    Checking flatbuffers v25.12.19
+    Checking arrow-ord v57.3.1
+    Checking arrow-cast v57.3.1
+    Checking arrow-ipc v57.3.1
+    Checking xattr v1.6.1
+    Checking parquet v57.3.1
+    Checking tar v0.4.46
+    Checking hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+ Documenting csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+ Documenting hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+ Documenting hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+ Documenting csgrs-ffi v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/csgrs-ffi)
+    Finished `release` profile [optimized] target(s) in 3m 44s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/curve-constructor-failures/native-v1/doc/csgrs/index.html and 3 other files

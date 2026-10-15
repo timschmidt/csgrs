@@ -1,0 +1,3 @@
+   Compiling hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Finished `release` profile [optimized] target(s) in 1m 26s
+     Running tests/materialize.rs (target/curve-constructor-failures/native-v1/release/deps/materialize-46301fe00d108f43)

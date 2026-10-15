@@ -1,0 +1,1527 @@
+{
+  "commands": [
+    {
+      "name": "baseline-build",
+      "exit_code": 0,
+      "seconds": 0.417688034940511,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "617353864104591f73eae89d5c4d6597d22c142d3af66b7080b757f0a18d9fec"
+      }
+    },
+    {
+      "name": "candidate-build",
+      "exit_code": 0,
+      "seconds": 0.417932219337672,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "a6df8516a73dbdddc7268adcefd5e00cbcdc4a43f88b4ff98bf3b28a6e6aeb9f"
+      }
+    },
+    {
+      "name": "0-rectangle-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.010755143128335476,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "2601636bfec0ad57aeebe0217c5ab65406a555a6de542e0c447acfca7586d879",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "03741af7fb9006b014e7440a7544f4de61e283717bf5f1b79359bc86d6425b7c"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1283852,
+        "allocations": 2048,
+        "requested_bytes": 50176,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 49
+      }
+    },
+    {
+      "name": "0-rectangle-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.011025914922356606,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "0ad456caca75fbac04ddbe884db7d8b9a72fce780ad992409866bf41f74e58d7",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "ed23f141912e0fe5a4ed5b63177f48ad6f96ded0cd84513ddceedc02e93b9e1f"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1590651,
+        "allocations": 2048,
+        "requested_bytes": 50176,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 49
+      }
+    },
+    {
+      "name": "0-rectangle-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.06706145731732249,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "0267f4f65f66597d49294cdb8ad8e699a31ab89e2e7373b3b53d7ce50e884f96",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "4cb4b9bd7ce8fa8095a4446100ac7b187952883681c9bfba60b3295fc8e04b49"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 32156568,
+        "allocations": 323456,
+        "requested_bytes": 40734912,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 19680
+      }
+    },
+    {
+      "name": "0-rectangle-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.06792125897482038,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "557ea5812d96e66466f0a8898da2033025cb98feeda82875cc8880b3f5f6d2c8",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "7b869c787753f7e8fb4a0a6d09fb3a4e87b44f5eca3ce7d8673204ebd3aa7f9f"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 31696329,
+        "allocations": 323456,
+        "requested_bytes": 40734912,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 19680
+      }
+    },
+    {
+      "name": "0-circle4-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.019233023282140493,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "620652b593cd466f91df19c3780703396aeb892ccb21b0143c5974d9ba914492",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "17d3b79d67a9d6c88c1f003483841c03c70d3857b81987f623112aedc95582c5"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 6785215,
+        "allocations": 94208,
+        "requested_bytes": 4711424,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 744
+      }
+    },
+    {
+      "name": "0-circle4-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.01896038232371211,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "9dc9ec95213a229c1b3691b4a6d19c52d8d9243d9bafbd41d5f7ed340bd52169",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "f16158459d70a22c49c3e630e695c0fa80194c689feb764e4473d8be25770aed"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 5855979,
+        "allocations": 94208,
+        "requested_bytes": 4711424,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 744
+      }
+    },
+    {
+      "name": "0-circle4-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.1173844407312572,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "e9ee94fd0b6b9d5cbcc6cc3166ce77f9fa2173cf4656e834f1285e979c50e06a",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "38c47226d48fdc0900b2ed153489ae09c2940e5b9b25fbe340d2a7d043123ed5"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 73529835,
+        "allocations": 701500,
+        "requested_bytes": 76657816,
+        "retained_byte_delta": 344,
+        "peak_live_bytes_above_start": 32552
+      }
+    },
+    {
+      "name": "0-circle4-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.1170138861052692,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "572c4457c2215aacfb989d97caa80c4f65830610bf715eb52251b23b83acc969",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "eb14a3df82cf4999525cf7c1bf558145ddbfa8bb40480ff04b53461d1f65ab82"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 67151761,
+        "allocations": 701500,
+        "requested_bytes": 76657816,
+        "retained_byte_delta": 344,
+        "peak_live_bytes_above_start": 32552
+      }
+    },
+    {
+      "name": "0-polygon-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.011587285902351141,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "5f20960256c1808e95bba0eb619d0d7b7284de4eda64af3f2a9617a087958abd",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "4975b4f4a740510ac3100bf87f4a68ab1f63b8cbac9997afa10d991476d83a53"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1901350,
+        "allocations": 3072,
+        "requested_bytes": 443392,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 384
+      }
+    },
+    {
+      "name": "0-polygon-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.010901433881372213,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "57ee4a36e06b156fd1d56ef5f3eaa7530e72daa815753d098b110ccb22360b82",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "9bb3a8bd2da4d999b2aaa7c036f39a59d63c455286af0ee4166535ff2d68c398"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1771538,
+        "allocations": 3072,
+        "requested_bytes": 443392,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 384
+      }
+    },
+    {
+      "name": "0-polygon-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.06777454912662506,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "55c0f921ed1e1a15f98a3242e5358ce176ac8a28c501dacc58e15c0e0ccd239e",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "71bd50ab5c5f3a8ef3ac97605fe9db0ef4ac5142d4d5a5f2971185b57bed42af"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 30827309,
+        "allocations": 324480,
+        "requested_bytes": 41128128,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 20064
+      }
+    },
+    {
+      "name": "0-polygon-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.06767050502821803,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "b35dc69ec6d93a5368e07ec05ddfffa84075ee80afc58f040bc6df53d59155bc",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "dd95024d7a9f4056c973a8a57bae60255a0e2dea521062339c0074e1450ea6bb"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 33763138,
+        "allocations": 324480,
+        "requested_bytes": 41128128,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 20064
+      }
+    },
+    {
+      "name": "1-rectangle-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.010892854072153568,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "de2321e2d2d50492afab29f9ee89f10ac7007c586fc4f36bf37152c235afb96b",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "f6823851a40bdd0fd3831706747d5d7b3129d90ec6626fff5a38d1ebb93975ed"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1631359,
+        "allocations": 2048,
+        "requested_bytes": 50176,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 49
+      }
+    },
+    {
+      "name": "1-rectangle-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.011254779063165188,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "ff012fe4c4282cf8d990c6e5df4c4a6f33911bdc8eea554e14e9d8b30bde04de",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "3fe19e1d7ca04e521545b6c5acc3d976188bf3ad468b776672170d8904ec2884"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1512386,
+        "allocations": 2048,
+        "requested_bytes": 50176,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 49
+      }
+    },
+    {
+      "name": "1-rectangle-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.06701334100216627,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "73eca22a88f13bdf3f54f937c51582db438a876b03923f9abd83238383777c24",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "c7b62b8d5ed204cf7f2dbb410823ebebc9a3c1cdff78ba37951975f114db86e6"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 30610033,
+        "allocations": 323456,
+        "requested_bytes": 40734912,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 19680
+      }
+    },
+    {
+      "name": "1-rectangle-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.06704980786889791,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "f50d01b96abd17dcdfeb427c813a3102c80c6d0dbcb2a6ca6ef3ad53f2fd3b31",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "516d91172632f2327eafc49e6fe1da5ae2d0030fb6ef84899d0bc624580323da"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 31631654,
+        "allocations": 323456,
+        "requested_bytes": 40734912,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 19680
+      }
+    },
+    {
+      "name": "1-circle4-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.018713048193603754,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "6d29f24cc1b5738a17fbf07d3ee97741a3dac2e1e536fb519521e511db792e60",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "0bb84145862f6d469081a331a533e102cb4ed1e308aece8639e90ad11ad0cfdb"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 6566771,
+        "allocations": 94208,
+        "requested_bytes": 4711424,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 744
+      }
+    },
+    {
+      "name": "1-circle4-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.019049055874347687,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "49f9e12a5513c39eb5ec86abaf34368a79d4803525762742e9df2584d0b6abab",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "f9a3c156afe6035563e6be11e191d255721b1ce04ea25e8985178aaa5b4cacda"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 6971942,
+        "allocations": 94208,
+        "requested_bytes": 4711424,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 744
+      }
+    },
+    {
+      "name": "1-circle4-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.11724095093086362,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "621497ba4e0c5509e63b7fea82f5445beb6f6817732f8a7a0d43a3189e2beaa5",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "55399957e623df331125139cb18aec81738e11c6e29a331774002d0b186d2377"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 66858282,
+        "allocations": 701500,
+        "requested_bytes": 76657816,
+        "retained_byte_delta": 344,
+        "peak_live_bytes_above_start": 32552
+      }
+    },
+    {
+      "name": "1-circle4-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.11782132089138031,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "88bae489724442e46a833e67a75bd50efd54d6734153b57579eac3540ea3b4d4",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "40397e90cf2d635a36cd4899bd596f2a41509dbbdb44c9e3ed8953ab4e0b0fb2"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 69996977,
+        "allocations": 701500,
+        "requested_bytes": 76657816,
+        "retained_byte_delta": 344,
+        "peak_live_bytes_above_start": 32552
+      }
+    },
+    {
+      "name": "1-polygon-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.011129748076200485,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "dbd5792d7979065f6c3f96d88a2d29eb9f8fee4487fe5f2833b7df19ee2d2031",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "2da655a32df8111261dd97d4439e1dae82bfaa547204e2abc01176f7f97d3ca6"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1929138,
+        "allocations": 3072,
+        "requested_bytes": 443392,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 384
+      }
+    },
+    {
+      "name": "1-polygon-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.010976267978549004,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "7428ff86c6dd81ea1ca91c5480da89557e91b26bfac6ca95889ffca566ddcdd1",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "d2717b42033a6c2901afec63038a0830c67ef7aaa4c287d2f04e54881c7eb5c6"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1802706,
+        "allocations": 3072,
+        "requested_bytes": 443392,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 384
+      }
+    },
+    {
+      "name": "1-polygon-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.06705925799906254,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "1e92e2e504b43716a9e828647ce7123a33d38aa9d6aead36406146fef8c14058",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "dc5c32cb81db056f976df25a90f35c7684b73748b32f731d54b28cc6ec011f6a"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 31288077,
+        "allocations": 324480,
+        "requested_bytes": 41128128,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 20064
+      }
+    },
+    {
+      "name": "1-polygon-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.06743813119828701,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "3704caa9d16233f7f613ca8e2936a9734b4c3fa566c123e2e5815a187e55fe24",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "69d82194088d3c91c53a42d7bebdd9e7408a27fc4e93ad8956945c4119e90bb6"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 31892866,
+        "allocations": 324480,
+        "requested_bytes": 41128128,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 20064
+      }
+    },
+    {
+      "name": "2-rectangle-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.010947519913315773,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "dbe88dacc4dc42687f3f7cbe6ea4d2f25f85fae922d6b066368c2c7a4f05399c",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "e96e467fe4fe5a7d63ddd9feb1bd26bfb20dd05e24e540197e62beed2dc55488"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1307331,
+        "allocations": 2048,
+        "requested_bytes": 50176,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 49
+      }
+    },
+    {
+      "name": "2-rectangle-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.010910033248364925,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "518239d482003bb9ed36e10520daf6d72a4267e23481c0698d2d8a5badeb5f7d",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "2f456e0f7052b73f858019333fa4996f823b658207209c02b23d774bae6cd7c0"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1573472,
+        "allocations": 2048,
+        "requested_bytes": 50176,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 49
+      }
+    },
+    {
+      "name": "2-rectangle-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.06727579282596707,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "9581a881537caf71fcc096762b596fb0786db1fcafae5073243c05d1473c5d24",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "4a9e23c354af7b07a4facbfc66aec8d12f9422be51e4c954b9e8db44bfe74d99"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 30388079,
+        "allocations": 323456,
+        "requested_bytes": 40734912,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 19680
+      }
+    },
+    {
+      "name": "2-rectangle-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.06714694201946259,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "a86cd6608ef2bb6b7dcbe797347430552d7f64e7a91c0dea11c042e41154f704",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "c4b86a1f5ff874ba9e2a1fd4c3e29f1322f4e506d8ae14bf3f69e57baa87dd32"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 30275107,
+        "allocations": 323456,
+        "requested_bytes": 40734912,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 19680
+      }
+    },
+    {
+      "name": "2-circle4-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.01861029490828514,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "550d54f5a012b0e148ef86e6ddb3780b7a96d3442b442067b102ef77a3635cbf",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "55a3931b3d1b6a827a0dbcebaf4b406c9acb2ff882a1f16124c5bdcddb3acbd4"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 7005110,
+        "allocations": 94208,
+        "requested_bytes": 4711424,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 744
+      }
+    },
+    {
+      "name": "2-circle4-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.019107551779597998,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "95470309e13a9c72273400a32d23e431c7f36564b9b05e91f8f224c4323009bf",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "6210a27b7f21b7996e4d973d95ad03652565254833a98d6ff3e55cefb9414de3"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 6040386,
+        "allocations": 94208,
+        "requested_bytes": 4711424,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 744
+      }
+    },
+    {
+      "name": "2-circle4-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.11728058801963925,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "cb3102e73dab0fefc67b782cdeb914dac1af3b2ae476780f93a0d6e5d04757ad",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "06b5abc23c86e51c5f0c3c1425a6952470899a28c8f4fcc89bd239caeb284ba2"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 67738311,
+        "allocations": 701500,
+        "requested_bytes": 76657816,
+        "retained_byte_delta": 344,
+        "peak_live_bytes_above_start": 32552
+      }
+    },
+    {
+      "name": "2-circle4-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.11711641866713762,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "605ceb1f24b3fa6b6b93f2a737eed3f9b105769a5aeb1316aa49b8bcf6e8afa2",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "7c0e964e19250a89856c7010e359e8d99442f560a12fd653edc8d3291b6a9191"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 68729803,
+        "allocations": 701500,
+        "requested_bytes": 76657816,
+        "retained_byte_delta": 344,
+        "peak_live_bytes_above_start": 32552
+      }
+    },
+    {
+      "name": "2-polygon-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.010774391703307629,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "e86a5c2a539576c34fe87e838bec1a46b4018410c99277ef6aa9f2534a433e0b",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "de77e77b13af8bbfc92a8925c0d0135d6ef81b5d40f14d036414188707bf8366"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1900630,
+        "allocations": 3072,
+        "requested_bytes": 443392,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 384
+      }
+    },
+    {
+      "name": "2-polygon-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.010923591908067465,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "88dd71ebe725ae09991d53a09a2c5de71674f2a8dec69368871aacbc69ec4d1a",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "373f9c196c20866ce15611654df5333ccb9032afbc73c821f2e38f4f34210aba"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1886711,
+        "allocations": 3072,
+        "requested_bytes": 443392,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 384
+      }
+    },
+    {
+      "name": "2-polygon-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.07584841502830386,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "f0607dc3ab64baf8a1b03b0ee07279326957a0d6466bbb28703e413dc8118701",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "3ad4fe2089dec51668d3c6be6514d9134b174db635c887bf85a819e554724f0b"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 32433779,
+        "allocations": 324480,
+        "requested_bytes": 41128128,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 20064
+      }
+    },
+    {
+      "name": "2-polygon-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.06769002508372068,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "ee01507ae9d034baf148956e8c745266aedd29b2177d7b936c6c85cd46eaebc6",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "a0ca24b24527d2bfa21ef20d313de9f1bc4534a2fb167379036210bb4f2fc98a"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 31383241,
+        "allocations": 324480,
+        "requested_bytes": 41128128,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 20064
+      }
+    },
+    {
+      "name": "3-rectangle-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.010837437119334936,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "0a5869a62e654d62e4eeb44426151b9644fd0bd508785f49e3e515eeaac5347b",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "ed1b467c0bc8f916ee5ce9ac7261d139d727e4e213fa7770cdf866ae97058cc3"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1374435,
+        "allocations": 2048,
+        "requested_bytes": 50176,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 49
+      }
+    },
+    {
+      "name": "3-rectangle-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.011312155053019524,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "079a6debb913c40189247b9cc4176f5811425c7ed0d4c8d15f35c7211285ef3a",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "d799190c6ab5f91c176302e27894b5f1c743a8ccbc3c321d40d38728d6d604b8"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1306380,
+        "allocations": 2048,
+        "requested_bytes": 50176,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 49
+      }
+    },
+    {
+      "name": "3-rectangle-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.06719006784260273,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "ab40e4e9b680ba52ba2c5aef17468a0bc7b5065c2c49702e5ba5eb413cff9edb",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "ca49383ffc16278d3c8b6bde0e3c6758f8d82823e44d4abf9d7faf2e659f8cb0"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 30695838,
+        "allocations": 323456,
+        "requested_bytes": 40734912,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 19680
+      }
+    },
+    {
+      "name": "3-rectangle-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.06709000514820218,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "7b646e7634174f8f2ee7850c1e735e491ae3fadcd1cc9ab44006f26b3a6f075e",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "b461bcf5cf9b4cf5d0a0bcbdbcf4da3e519f7010f6755f1fa0bf68964c5989d4"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 30584336,
+        "allocations": 323456,
+        "requested_bytes": 40734912,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 19680
+      }
+    },
+    {
+      "name": "3-circle4-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.01892334409058094,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "928167dc8d31a5d92d535b51bfdd2e6f42b6576f8acbece3fc416d4d8cb16140",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "f1d40400e5500f3b22a85055e470d3a2ce6da16dbaabc9639a36fb9b14f55827"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 6100073,
+        "allocations": 94208,
+        "requested_bytes": 4711424,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 744
+      }
+    },
+    {
+      "name": "3-circle4-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.018933494109660387,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "da224931584527f50aabbbb5aca38fbee1ba115f7ba58566fd95baa02b21993f",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "37b8d351229ae4b808bb316623e52a621c9755cc9948f073af481e481e267cd1"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 6830792,
+        "allocations": 94208,
+        "requested_bytes": 4711424,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 744
+      }
+    },
+    {
+      "name": "3-circle4-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.11705077392980456,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "dea1ef2e6cc4a368856f42ba9c9f556b1444261ee6a8afdf2bf2c19646461157",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "dba5bdc36ebef3a830b8fe78ae1518fa9576a11a465ba86413f8ad8d3bdfd361"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 67616329,
+        "allocations": 701500,
+        "requested_bytes": 76657816,
+        "retained_byte_delta": 344,
+        "peak_live_bytes_above_start": 32552
+      }
+    },
+    {
+      "name": "3-circle4-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.11747388495132327,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "6c91e626bf25bfc3dda432af6eb91c90f55e4d013a74d245312cc5b327f845a8",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "5fe6d48bd332de48caa1a9c9ccfd6885a72979ecdb1b50626170046f31d61cc7"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 67622939,
+        "allocations": 701500,
+        "requested_bytes": 76657816,
+        "retained_byte_delta": 344,
+        "peak_live_bytes_above_start": 32552
+      }
+    },
+    {
+      "name": "3-polygon-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.010869184974581003,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "2c285ae3d717825eba522f2d9594dc0fbe5c00df638ab33191c5d81728221ad3",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "a667a99b490dc093903c950fcdc1f4091653d62648f5abcb8c9101bae6762cea"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1916318,
+        "allocations": 3072,
+        "requested_bytes": 443392,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 384
+      }
+    },
+    {
+      "name": "3-polygon-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.010810848791152239,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "f0c9d92a84f4aac8ed7c33e37cef0aa3ff0378a5d18fba50667d3079525d8a99",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "34db9ab4c6c79b676d5beb4dd9713f377cc88bd97c8defb674b4998c36635eba"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1631638,
+        "allocations": 3072,
+        "requested_bytes": 443392,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 384
+      }
+    },
+    {
+      "name": "3-polygon-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.0676564872264862,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "55e12b2c0568eb4c917666c7458044f88643e9804e1a3bdc7f1cd614018aa7d8",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "a2f7cb96b0f02d14a58b227328288eb645866dc277cef75585ef952840311231"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 33082594,
+        "allocations": 324480,
+        "requested_bytes": 41128128,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 20064
+      }
+    },
+    {
+      "name": "3-polygon-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.06747151957824826,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "83749c93c22ef3d59cc6b6f973356b4ea5a5f476206ed379e43d7c7cc4a8c20f",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "b4b7535e32f7b42c369e0441c5ed82c912cef7b8492a6341646cf80161adc190"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 32538831,
+        "allocations": 324480,
+        "requested_bytes": 41128128,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 20064
+      }
+    },
+    {
+      "name": "4-rectangle-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.011085601057857275,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "711cc4ea0fc442a8f95110770833fb7191068be1d55fd400081f4c67615a44dc",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "98ed938efc5912440aab9d6a19feb315e85e31f737dee4abff25acd2462f97f7"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1656806,
+        "allocations": 2048,
+        "requested_bytes": 50176,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 49
+      }
+    },
+    {
+      "name": "4-rectangle-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.010689887683838606,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "cbbf0d7522569e77c9f9b0ff22a04fe09efe9b7760e57d1b48ea979ee34eed25",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "7ff70c24734df3f81d4d67a00a0340b201e3a5e6e035057f73164fce2fe65d49"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1585791,
+        "allocations": 2048,
+        "requested_bytes": 50176,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 49
+      }
+    },
+    {
+      "name": "4-rectangle-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.06732208887115121,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "105e2c80a60f72ce010adb0287017685172ecf0c0f285d7aa53da44c4251bdd4",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "2910e1e00be5ae235fd083d62d01ec474251593f9a9acb91e59398dc46623253"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 33347566,
+        "allocations": 323456,
+        "requested_bytes": 40734912,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 19680
+      }
+    },
+    {
+      "name": "4-rectangle-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.06693256599828601,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "7b7a289529779cdc455845b80197856cf1695ea8ee5a455520c33af5fcf7d999",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "6930b3a50f7555a5c318b99669443d397c4c5e3ad029f90319ba60db90408953"
+      },
+      "sample": {
+        "shape": "rectangle",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 29560325,
+        "allocations": 323456,
+        "requested_bytes": 40734912,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 19680
+      }
+    },
+    {
+      "name": "4-circle4-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.018747596070170403,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "74b8981df077447bf5caf80dc66b9397f33d4163c09179294017f1f92772b549",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "63cb804403ccbe9f3e628d6d0388a7f1917012428ace143f484a88e8569c1c55"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 5709609,
+        "allocations": 94208,
+        "requested_bytes": 4711424,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 744
+      }
+    },
+    {
+      "name": "4-circle4-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.01895706169307232,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "b9c39bfe5d8132c95444e5d808485ef124975e1e66aa87c21c2c7e52a4147d66",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "af9963c4250f18fc7e352b532190858ae9891ad0af29119698d8aa3a09ea85d8"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 7286191,
+        "allocations": 94208,
+        "requested_bytes": 4711424,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 744
+      }
+    },
+    {
+      "name": "4-circle4-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.11728301923722029,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "269e2348e61efb1d58895b068b27bf33926a28d0804523c8b2ce3323855da6f6",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "7e3fc49f4f92f6007a74b5ef01a8efee648a15dec5ebb2156f41690762baedf4"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 69765873,
+        "allocations": 701500,
+        "requested_bytes": 76657816,
+        "retained_byte_delta": 344,
+        "peak_live_bytes_above_start": 32552
+      }
+    },
+    {
+      "name": "4-circle4-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.11716559575870633,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "253cad450ff2b837e7936f123d1ed3f282cfc257dd3512f6cb1a620eef67758d",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "a45804b2538454031e7e4759ff2065b254aeb22983f9864bc5e262e584419ab8"
+      },
+      "sample": {
+        "shape": "circle4",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 69828498,
+        "allocations": 701500,
+        "requested_bytes": 76657816,
+        "retained_byte_delta": 344,
+        "peak_live_bytes_above_start": 32552
+      }
+    },
+    {
+      "name": "4-polygon-warm-baseline",
+      "exit_code": 0,
+      "seconds": 0.010857075918465853,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "35270330ddd65a4b89e956f66867dc40c822eb81c2e39d83d7619dfa1543f425",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "1a58b5d283cdd4bc78763afb5d795ca638e17304c54f6959da60dada032f256f"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1999263,
+        "allocations": 3072,
+        "requested_bytes": 443392,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 384
+      }
+    },
+    {
+      "name": "4-polygon-warm-candidate",
+      "exit_code": 0,
+      "seconds": 0.010511890053749084,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "b7b50579bc540a84be1ad447807a90505d42325ddc5c7891e7133e5f2ea3977f",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "dec2b927a448863043adead2b8a4869b4633c6a5f68a5456f7aa05a9925a8917"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "warm",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 1637718,
+        "allocations": 3072,
+        "requested_bytes": 443392,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 384
+      }
+    },
+    {
+      "name": "4-polygon-miss-baseline",
+      "exit_code": 0,
+      "seconds": 0.06676660710945725,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "a358981d8f866bd323a5b1da0dcc266ef3781291b7d4435054ed230f75398419",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "dedcf2644213e9fa9e3251a518270309a7a1550885d699afc57b2cb333f9dd67"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 31192364,
+        "allocations": 324480,
+        "requested_bytes": 41128128,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 20064
+      }
+    },
+    {
+      "name": "4-polygon-miss-candidate",
+      "exit_code": 0,
+      "seconds": 0.06722958525642753,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "6f33cf2eb2c65fda13134898f8d25500d396d291c6463bdb9bfbfcd2d43c3502",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "32880af3576feb4633c7e56107f8a68be5ecdec64b9bd3f1c3bd4e5accd26981"
+      },
+      "sample": {
+        "shape": "polygon",
+        "cache": "miss",
+        "iterations": 1024,
+        "completed": 1024,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact area",
+        "nanos": 31846439,
+        "allocations": 324480,
+        "requested_bytes": 41128128,
+        "retained_byte_delta": 2992,
+        "peak_live_bytes_above_start": 20064
+      }
+    }
+  ],
+  "passed": true
+}

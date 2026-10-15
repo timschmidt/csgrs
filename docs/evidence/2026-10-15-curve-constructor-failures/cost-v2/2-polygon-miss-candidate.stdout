@@ -1,0 +1,1 @@
+{"shape":"polygon","cache":"miss","iterations":1024,"completed":1024,"policy":"strict","certainty":"Certified","oracle":"exact area","nanos":31383241,"allocations":324480,"requested_bytes":41128128,"retained_byte_delta":2992,"peak_live_bytes_above_start":20064}

@@ -1,0 +1,23 @@
+	Command being timed: "cargo clippy --locked --release --manifest-path fuzz/Cargo.toml --bins -- -D warnings"
+	User time (seconds): 50.70
+	System time (seconds): 8.27
+	Percent of CPU this job got: 168%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:35.05
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1400300
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1693
+	Minor (reclaiming a frame) page faults: 2867089
+	Voluntary context switches: 16568
+	Involuntary context switches: 6287
+	Swaps: 0
+	File system inputs: 295672
+	File system outputs: 398464
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

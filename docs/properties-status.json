@@ -6811,6 +6811,285 @@
       "implementation_head": "4af09da67d1c1e2aaa34e351b8cbe3d2b168ad83",
       "evidence": "docs/evidence/2026-10-15-curve-metaball-failures/closure-v1.json",
       "plan_complete": false
+    },
+    "curve_constructor_failures": {
+      "updated_on": "2026-10-15",
+      "decision": "kept: restores typed failure and reusable empties. The focused warm-rectangle median increased from 1.277 to 1.549 microseconds; median allocation counts/byte requests match. The correctness migration is not a performance-only optimization.",
+      "status": "Foundational planar constructors and existing context compounds preserve typed failure and reusable canonical empties; locally qualified API migration.",
+      "properties": [
+        "P1",
+        "P3",
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P13",
+        "P17",
+        "P18",
+        "P20",
+        "P25",
+        "P28",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "owners": [
+        "CSGRS modeling parameter validation and composition",
+        "Hypercurve native contour/region validity",
+        "Scalar adapters, Gerber, Hypercircuit and language boundaries"
+      ],
+      "domain": "Nonnegative rectangle/square/right-triangle dimensions; sampled circle/ellipse/ngon require at least three samples including zero area; valid nonempty polygon rings; nonnegative rounded rectangle dimensions/radius with checked sampling capacity and existing clamp. Keyhole, Reuleaux, ring, crescent and circle-cut compounds retain the positive/range restrictions detailed in the evidence README.",
+      "migration": "Basic constructors return Result<CurveRegion2, ValidationError>; context variants and existing compounds preserve GeometryOutcome with ValidationError. Negative, malformed, undecided and capacity failures no longer publish empty success. Every relevant argument is checked before canonical zero-area success. Native causes survive scalar/binding/IO/downstream wrappers. Hypercircuit materialization/handoff diagnostic enums retain PartialEq but lose Eq. Language binding signatures are unchanged.",
+      "semantic_evidence": [
+        "Nine baseline failures reproduced; 14 expanded regressions establish typed categories, cause preservation, recovery, empty union/subtraction/extrusion composition and invalid companions to zero dimensions.",
+        "Independent rectangle area 35/6, triangle area 35/12, sampled circle area 2 and ellipse area 4; exact triangulated area and height-three signed volume, with separate closed manifold checks.",
+        "Strict/approximate/strict sequences distinguish selecting policy from consuming terminal evidence. Cache admits only successful strict proofs, with owned structural keys, cloned values and 64-entry thread-local FIFO; cold/warm, failure, eviction, reset, transformed-output and thread isolation tests pass.",
+        "HyperCircuit rectangle materialization retains cause and consumed certainty; the public keepout handoff records typed construction omission and recovers after corrected geometry. Actual C/C++/Python/Go/WASM consumers exercise invalid constructors, canonical empties and recovery.",
+        "Existing strict shape/gear catalog, README inputs, adversarial fixtures and sampling resolutions are preserved; no ignored test was added."
+      ],
+      "test_totals": {
+        "fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "all-feature-tests": {
+          "passed": 253,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypercircuit-materialize-unit": {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 20
+        },
+        "hypercircuit-drc-unit": {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 26
+        },
+        "hypercircuit-materialize-integration": {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypercircuit-curved-outline": {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hyperdrc-authoring": {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 1558
+        },
+        "hyperdrc-constraints": {
+          "passed": 31,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 1531
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-tests": {
+          "passed": 70,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "doctests": {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "validation": "All 19 native and 39 binding commands passed after the final implementation edit. Includes formatting, all-target/all-feature strict Clippy for four affected crates, CSGRS library/integration, affected Hypercircuit/HyperDRC tests, feature-minimal/curve configurations, fuzz-target Clippy, warning-free docs/doctests and real binding consumers. Failed quota and missing-import trials remain preserved.",
+      "cost_probe": {
+        "kind": "focused cost probe; not a supported-corpus performance or optimization claim",
+        "median_samples": {
+          "rectangle-warm-baseline": {
+            "nanos": 1307331,
+            "allocations": 2048,
+            "requested_bytes": 50176,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 49
+          },
+          "rectangle-warm-candidate": {
+            "nanos": 1585791,
+            "allocations": 2048,
+            "requested_bytes": 50176,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 49
+          },
+          "rectangle-miss-baseline": {
+            "nanos": 31631654,
+            "allocations": 323456,
+            "requested_bytes": 40734912,
+            "retained_byte_delta": 2992,
+            "peak_live_bytes_above_start": 19680
+          },
+          "rectangle-miss-candidate": {
+            "nanos": 30610033,
+            "allocations": 323456,
+            "requested_bytes": 40734912,
+            "retained_byte_delta": 2992,
+            "peak_live_bytes_above_start": 19680
+          },
+          "circle4-warm-baseline": {
+            "nanos": 6830792,
+            "allocations": 94208,
+            "requested_bytes": 4711424,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 744
+          },
+          "circle4-warm-candidate": {
+            "nanos": 6100073,
+            "allocations": 94208,
+            "requested_bytes": 4711424,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 744
+          },
+          "circle4-miss-baseline": {
+            "nanos": 69765873,
+            "allocations": 701500,
+            "requested_bytes": 76657816,
+            "retained_byte_delta": 344,
+            "peak_live_bytes_above_start": 32552
+          },
+          "circle4-miss-candidate": {
+            "nanos": 67616329,
+            "allocations": 701500,
+            "requested_bytes": 76657816,
+            "retained_byte_delta": 344,
+            "peak_live_bytes_above_start": 32552
+          },
+          "polygon-warm-baseline": {
+            "nanos": 1900630,
+            "allocations": 3072,
+            "requested_bytes": 443392,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 384
+          },
+          "polygon-warm-candidate": {
+            "nanos": 1886711,
+            "allocations": 3072,
+            "requested_bytes": 443392,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 384
+          },
+          "polygon-miss-baseline": {
+            "nanos": 31892866,
+            "allocations": 324480,
+            "requested_bytes": 41128128,
+            "retained_byte_delta": 2992,
+            "peak_live_bytes_above_start": 20064
+          },
+          "polygon-miss-candidate": {
+            "nanos": 31846439,
+            "allocations": 324480,
+            "requested_bytes": 41128128,
+            "retained_byte_delta": 2992,
+            "peak_live_bytes_above_start": 20064
+          }
+        },
+        "raw_evidence": "docs/evidence/2026-10-15-curve-constructor-failures/cost-v2",
+        "library_sizes": {
+          "/tmp/csgrs-curve-constructor-failures/baseline-v1/release/deps/libcsgrs.rlib": 4394348,
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/curve-constructor-failures/native-v1/release/deps/libcsgrs.rlib": 4422696
+        },
+        "claim": "Proportionate measurement on three small successful strict workloads, with exact-area assertions and materialized output. Instrumented allocation counts and binary sizes; no supported-corpus speedup or native heap bound claim."
+      },
+      "resources": "Checked primary capacities/reservations. Serial validation with two Cargo jobs, offline resolution, external 1800-second wall and 8-GiB per-process address-space containment; Node/WASM exempts the address-space limit. Primary scalar growth, secondary allocations, total work, retained heap bytes and cancellation remain internally unbounded or unmeasured. Closed compiler targets are immutable; seed copies have separate inodes.",
+      "limitations": [
+        "Other sampled shapes, gear/text constructors and legacy transforms still need typed-failure migration. Operation-local certainty is not end-to-end provenance; sampled polygons do not carry analytic-fidelity bounds.",
+        "This is worktree evidence including the unchanged original 35 pending native files, not a clean-checkout or published-package qualification. Their separate admission and original scalar/native gaps remain open.",
+        "Full CI/pre-push, release/MSRV/external-package validation, directed fuzz/sanitizer campaigns and regenerated image/export artifacts remain open. No push occurred.",
+        "The focused cost probe uses a shared host and instrumented Rust allocation wrapper. It does not count every native allocation or qualify performance across the supported corpus."
+      ],
+      "implementation_commit": "fd83df3075042d3d8210f3604885f50811c80214",
+      "evidence": "docs/evidence/2026-10-15-curve-constructor-failures/closure-v1.json",
+      "plan_complete": false
     }
   },
   "status_meanings": {

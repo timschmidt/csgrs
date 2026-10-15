@@ -1,0 +1,36 @@
+
+running 31 tests
+test checks::constraints::native_width_regressions::denied_native_width_cannot_become_zero_or_a_cached_value ... ok
+test checks::constraints::native_width_regressions::native_width_does_not_require_parser_cached_bounds ... ok
+test checks::constraints::tests::net_constraint_clearance_culls_sparse_same_layer_fields ... ok
+test checks::constraints::tests::net_constraint_differential_pair_max_spacing_reports_nearest_side_gap ... ok
+test checks::constraints::tests::net_constraint_differential_pair_spacing_culls_sparse_side_fields ... ok
+test checks::constraints::tests::net_constraint_readiness_allows_centered_stripline_impedance_inside_target ... ok
+test checks::constraints::tests::net_constraint_readiness_allows_declared_balanced_differential_pair ... ok
+test checks::constraints::tests::net_constraint_readiness_allows_explicit_plane_and_stackup_metadata ... ok
+test checks::constraints::tests::net_constraint_readiness_allows_microstrip_impedance_inside_target ... ok
+test checks::constraints::tests::net_constraint_readiness_allows_unmatched_or_compliant_nets ... ok
+test checks::constraints::tests::net_constraint_readiness_checks_preferred_via_geometry_and_names_style ... ok
+test checks::constraints::tests::net_constraint_readiness_estimates_supported_differential_target ... ok
+test checks::constraints::tests::net_constraint_readiness_reports_centered_stripline_impedance_outside_target ... ok
+test checks::constraints::tests::net_constraint_readiness_reports_current_voltage_plane_and_impedance_rules ... ok
+test checks::constraints::tests::net_constraint_readiness_reports_declared_differential_pair_rules ... ok
+test checks::constraints::tests::net_constraint_readiness_reports_inheritance_diagnostics ... ok
+test checks::constraints::tests::net_constraint_readiness_reports_invalid_region_scopes ... ok
+test checks::constraints::tests::net_constraint_readiness_reports_microstrip_impedance_outside_target ... ok
+test checks::constraints::tests::net_constraint_readiness_reports_unsupported_impedance_geometry ... ok
+test checks::constraints::tests::net_constraint_readiness_reports_width_clearance_and_via_rules ... ok
+test checks::constraints::tests::net_constraint_readiness_resolves_inherited_net_class_rules ... ok
+test checks::constraints::tests::net_constraint_readiness_scopes_net_class_rules_to_regions ... ok
+test checks::constraints::tests::net_constraint_readiness_uses_segment_edge_length_for_diagonal_traces ... ok
+test checks::constraints::tests::stackup_readiness_accepts_complete_process_metadata ... ok
+test checks::constraints::tests::stackup_readiness_reports_fabricator_capability_thresholds ... ok
+test checks::constraints::tests::stackup_readiness_reports_hasl_controlled_impedance_finish_risk ... ok
+test checks::constraints::tests::stackup_readiness_reports_layer_count_and_missing_metadata ... ok
+test checks::constraints::tests::stackup_readiness_reports_material_property_ranges ... ok
+test checks::constraints::tests::stackup_readiness_reports_vendor_service_class_thresholds ... ok
+test checks::constraints::tests::stackup_readiness_uses_custom_fabrication_capability_overrides ... ok
+test checks::constraints::tests::stackup_readiness_uses_custom_preferred_and_cost_thresholds ... ok
+
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 1531 filtered out; finished in 1.07s
+

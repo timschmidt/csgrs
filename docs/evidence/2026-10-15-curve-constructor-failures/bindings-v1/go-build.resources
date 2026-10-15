@@ -1,0 +1,23 @@
+	Command being timed: "env GO111MODULE=off GOTOOLCHAIN=local GOCACHE=/tmp/csgrs-bounds-go-cache GOPATH=/tmp/csgrs-bounds-go-path CGO_LDFLAGS=-L/home/tim/Documents/GitHub/workspace/csgrs/target/curve-constructor-failures/native-v1/release -Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/curve-constructor-failures/native-v1/release -lcsgrs_ffi /tmp/csgrs-bounds-go-toolchain/go/bin/go test -c -o /home/tim/Documents/GitHub/workspace/csgrs/target/curve-constructor-failures/bindings-v1/go-bindings.test ./bindings/go"
+	User time (seconds): 2.15
+	System time (seconds): 0.86
+	Percent of CPU this job got: 171%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.76
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 100968
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 78
+	Minor (reclaiming a frame) page faults: 187950
+	Voluntary context switches: 7386
+	Involuntary context switches: 1020
+	Swaps: 0
+	File system inputs: 9016
+	File system outputs: 9376
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

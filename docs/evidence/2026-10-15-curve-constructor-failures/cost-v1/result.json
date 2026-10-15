@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "baseline-build",
+      "exit_code": 1,
+      "seconds": 0.1173620829358697,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "4df4f9b7667305053ee0abd05520afaadbc0c90070e78c7a4f01b9290275d255",
+        "resources": "2c5ed5829702b6cce74dad64e3b902575fe29dea2d08d75ebb7d3b56b6f532dd"
+      }
+    }
+  ],
+  "passed": false
+}
