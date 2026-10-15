@@ -1,0 +1,2 @@
+segments=32 mode=direct initial=Certified
+difference_body=PredicateUndecided { predicate: "Real sign classification" }

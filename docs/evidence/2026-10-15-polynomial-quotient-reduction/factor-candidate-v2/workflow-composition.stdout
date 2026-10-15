@@ -1,0 +1,21 @@
+
+running 4 tests
+test strict_drill_16_composes_through_empty_and_complete_subtraction ... ok
+test strict_drill_24_composes_through_empty_and_complete_subtraction ... ok
+test strict_drill_8_composes_through_empty_and_complete_subtraction ... ok
+test strict_drill_32_composes_through_empty_and_complete_subtraction ... FAILED
+
+failures:
+
+---- strict_drill_32_composes_through_empty_and_complete_subtraction stdout ----
+
+thread 'strict_drill_32_composes_through_empty_and_complete_subtraction' (1665) panicked at tests/strict_drilled_workflows.rs:99:10:
+called `Result::unwrap()` on an `Err` value: PredicateUndecided { predicate: "Real sign classification" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    strict_drill_32_composes_through_empty_and_complete_subtraction
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 1 filtered out; finished in 3.38s
+

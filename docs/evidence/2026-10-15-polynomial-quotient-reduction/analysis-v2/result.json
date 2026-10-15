@@ -1,0 +1,15 @@
+{
+  "commands": [
+    {
+      "name": "remaining-algebra",
+      "exit_code": 0,
+      "seconds": 2.0485083712264895,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "3efdc62e0eec671b4515de279f05b58dd09a2422e3d872be570fc094727ac81a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "3fd56c9bc897298c806bcfa1e44dfa2a62987a9b4af5e19ca59db048c0685c19"
+    }
+  ],
+  "passed": true
+}

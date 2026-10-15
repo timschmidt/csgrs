@@ -1,0 +1,4 @@
+segments=8 mode=chain initial=Certified
+empty_union=Certified membership=true
+difference_body=Certified canonical_empty=true
+reunion=Certified

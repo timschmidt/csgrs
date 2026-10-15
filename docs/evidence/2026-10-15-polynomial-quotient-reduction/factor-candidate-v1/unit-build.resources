@@ -1,0 +1,24 @@
+Command exited with non-zero status 1
+	Command being timed: "env TMPDIR=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v1 CARGO_MANIFEST_DIR=/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal CARGO_PKG_VERSION=0.13.1 rustc --crate-name hyperreal --test --edition=2024 -C opt-level=3 -C embed-bitcode=no -D warnings --check-cfg cfg(test) --check-cfg cfg(verus_keep_ghost) --check-cfg cfg(feature, values("cached-f32-approx","cached-f64-approx","default","dispatch-trace","serde","simple")) --cfg feature="default" -L dependency=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps --extern criterion=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libcriterion-5f457bd23124a537.rlib --extern rug=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/librug-3d33bb73cd141873.rlib --extern proptest=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libproptest-5b9232ea59dd59b0.rlib --extern num=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libnum-4e6167d0c6b63d8a.rlib --extern serde_json=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libserde_json-009c5ce345acb49f.rlib -L native=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/build/gmp-mpfr-sys-25524afcd7bfb404/out/lib /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/lib.rs -o /home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v1/units"
+	User time (seconds): 2.99
+	System time (seconds): 0.26
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.27
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 533168
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 114990
+	Voluntary context switches: 33
+	Involuntary context switches: 68
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 1

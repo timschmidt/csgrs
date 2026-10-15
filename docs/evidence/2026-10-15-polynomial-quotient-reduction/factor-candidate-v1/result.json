@@ -1,0 +1,35 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.8442486519925296,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "b66fab6e51e0d9c04f3d4db907373aac656abcf47688b12e72c3d68c027d918e"
+    },
+    {
+      "name": "workspace-fmt",
+      "exit_code": 0,
+      "seconds": 12.307575827930123,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "2d6eb470a74c6b4b4a08aecc5e6a992b5aab5cb492e36a0975c1444a01896d1c"
+    },
+    {
+      "name": "unit-build",
+      "exit_code": 1,
+      "seconds": 5.170925932005048,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ec012b43a32e577200c86f73b1338402802759ed9902b7509a72bd69ce0df53f",
+      "resources_sha256": "54c0d1c32263e858e5f450bc192af61a784d4ad9997de3650a3482d6dfef4589"
+    }
+  ],
+  "passed": false
+}

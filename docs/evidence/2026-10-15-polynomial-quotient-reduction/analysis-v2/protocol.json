@@ -1,0 +1,75 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/analyze_remaining_v1.py": "69bc8cba63b84b20f503f37209b476ba671c942bad8f303b398dede19f678474",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/diagnostic-v3/compose-32-chain.stderr": "98b3fe9faeae2996f2934ac00ac3a76dcc8c3e2bec7ce3db9ed7bcf6f3277986",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/diagnostic-v3/compose-32-direct.stderr": "98b3fe9faeae2996f2934ac00ac3a76dcc8c3e2bec7ce3db9ed7bcf6f3277986"
+  },
+  "base_commit": "cfcd736409f2f43d6ab881a00922bbf3207aee5b",
+  "runner_sha256": "cb583cf5472903e6d8b4935ce4622246eae7c1f4f9ee730c0f89b4eaa4213ced",
+  "phase": "analysis-v2",
+  "commands": [
+    [
+      "remaining-algebra",
+      [
+        "python3",
+        "docs/evidence/2026-10-15-polynomial-quotient-reduction/analyze_remaining_v1.py"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/analysis-v2",
+    "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/analysis-v2"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P7",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P20",
+    "P21",
+    "P24",
+    "P25",
+    "P27",
+    "P35",
+    "P36",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "Hyperreal rational polynomial identities over opaque atoms",
+    "Hypermesh plane predicates and Boolean topology",
+    "CSGRS modeling composition and certainty"
+  ],
+  "domain": "Exact polynomial division may recover quotient arithmetic only after the original expansion declines. It uses already completed strict-domain projections and the same remaining node, depth, term, degree, coefficient and work limits. Existing successful proofs keep their original work path. Root certainty is published only after complete rational projection and cancellation checks. The downstream corpus retains all original 8/16/24/32 drills and complete empty/subtraction/reunion chains.",
+  "consumers": [
+    "Real::exact_rational_normal_form",
+    "Hyperlimit shared sign resolvers",
+    "Hypermesh planes and Boolean arrangement",
+    "CSGRS strict drilled-body workflow"
+  ],
+  "missing_acceptance_test": [
+    "Original strict_drilled_workflows 32 full composition test still fails at subtraction after polynomial-factor recovery; 8/16/24 pass. Retain every original assertion",
+    "Add exact polynomial quotient regressions and invalid-domain/resource controls after reproducing the current decline"
+  ],
+  "semantic_oracle": "Independent quotient and distributive identities with nonzero-denominator obligations, exact nonzero displacements and typed unresolved-denominator controls. Downstream acceptance additionally needs independent point membership, polygonal volume and a separate topology check; program exit zero alone is not certified completion.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison. Historical /tmp artifact loss is recorded in external-artifact-loss-v1.json; this phase guards its available pinned inputs but cannot claim complete historical artifact preservation.",
+  "previous_goal_turn": "Progress: 12b3319dd certifies original strict drills and empty accumulation at every original resolution. Full 16/32 subtraction chains remain failing. Reproduce current predicates and preserve all acceptance limits; full admission and the 35 native files remain open."
+}

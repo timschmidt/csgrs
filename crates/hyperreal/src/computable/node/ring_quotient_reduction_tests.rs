@@ -113,6 +113,13 @@ mod ring_quotient_reduction_tests {
         // Cached children must not let a recovery bypass a zero child depth.
         assert!(recognition.expand_quotient(&eighth, 1).is_none());
         assert_unproved(&eighth);
+        recognition.nodes_left = 0;
+        assert!(
+            recognition
+                .expand_quotient(&eighth, RingRecognition::MAX_DEPTH)
+                .is_none()
+        );
+        assert_unproved(&eighth);
         let sixteenth = repeated_square(quotient, 4);
         assert!(
             RingRecognition::new(&sixteenth)
@@ -143,5 +150,21 @@ mod ring_quotient_reduction_tests {
         signal.store(false, std::sync::atomic::Ordering::Relaxed);
         assert_eq!(value.bounded_quotient_rational(), Some(Rational::zero()));
         assert!(value.cached().is_none());
+    }
+
+    #[test]
+    fn polynomial_division_preserves_the_coefficient_limit() {
+        let root = raw(Approximation::One);
+        let large = Rational::from_bigint(BigInt::one() << 2048_usize);
+        let small = large.clone().inverse().unwrap();
+        let numerator = RingRecognition::constant(large).unwrap();
+        let denominator = RingRecognition::constant(small).unwrap();
+        // Both inputs fit; their ratio 2^4096 exceeds 4096 stored bits.
+        assert!(
+            RingRecognition::new(&root)
+                .divide_exact_polynomial(&numerator, &denominator)
+                .is_none()
+        );
+        assert_unproved(&root);
     }
 }

@@ -1,0 +1,23 @@
+	Command being timed: "env TMPDIR=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2 CARGO_PKG_NAME=hypercurve CARGO_PKG_VERSION=0.3.1 CARGO_MANIFEST_DIR=/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve rustc --crate-name hypercurve --crate-type rlib --edition=2024 -C opt-level=3 -C debuginfo=1 -C force-frame-pointers=yes -D warnings /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/src/lib.rs -L dependency=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v3/external -L dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2 -o /home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhypercurve.rlib --cfg feature="default" --cfg feature="triangulation" --extern hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhyperlimit.rlib --extern hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhyperreal.rlib --extern hypersolve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhypersolve.rlib --extern hypertri=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhypertri.rlib --extern num=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libnum-dbc9a5d22d09e40c.rlib"
+	User time (seconds): 181.09
+	System time (seconds): 6.36
+	Percent of CPU this job got: 337%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:55.59
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2892496
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 2409063
+	Voluntary context switches: 217
+	Involuntary context switches: 33484
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 1020136
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

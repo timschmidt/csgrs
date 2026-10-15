@@ -1,0 +1,25 @@
+error[E0277]: the trait bound `rational::arithmetic::Rational: From<num::BigInt>` is not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/computable/node/ring_quotient_reduction_tests.rs:158:21
+    |
+158 |         let large = Rational::from(BigInt::one() << 2048_usize);
+    |                     ^^^^^^^^ unsatisfied trait bound
+    |
+help: the trait `From<num::BigInt>` is not implemented for `rational::arithmetic::Rational`
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/rational/arithmetic/representation.rs:42:1
+    |
+ 42 | pub struct Rational(Arc<RationalData>);
+    | ^^^^^^^^^^^^^^^^^^^
+    = help: `rational::arithmetic::Rational` implements trait `From<T>`:
+              From<i128>
+              From<i16>
+              From<i32>
+              From<i64>
+              From<i8>
+              From<u128>
+              From<u16>
+              From<u32>
+            and 2 others
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0277`.

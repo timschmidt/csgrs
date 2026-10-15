@@ -1,0 +1,23 @@
+	Command being timed: "env TMPDIR=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2 rustc --test --edition=2024 -C opt-level=3 -D warnings --extern hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhyperreal.rlib -L dependency=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v3/external /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/quotient_polynomial_cancellation.rs -o /home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/public -L dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2"
+	User time (seconds): 0.76
+	System time (seconds): 0.09
+	Percent of CPU this job got: 181%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.47
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 150096
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 83
+	Minor (reclaiming a frame) page faults: 31109
+	Voluntary context switches: 979
+	Involuntary context switches: 75
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 32072
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

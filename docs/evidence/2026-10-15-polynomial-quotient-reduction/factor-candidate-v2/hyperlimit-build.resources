@@ -1,0 +1,23 @@
+	Command being timed: "env TMPDIR=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2 CARGO_PKG_NAME=hyperlimit CARGO_PKG_VERSION=0.4.1 CARGO_MANIFEST_DIR=/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit rustc --crate-name hyperlimit --crate-type rlib --edition=2024 -C opt-level=3 -C debuginfo=1 -C force-frame-pointers=yes -D warnings /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit/src/lib.rs -L dependency=/run/user/1000/csgrs-quotient-factor-proofs/diagnostic-v3/external -L dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2 -o /home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhyperlimit.rlib --cfg feature="default" --cfg feature="std" --extern hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhyperlattice.rlib --extern hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhyperreal.rlib"
+	User time (seconds): 9.13
+	System time (seconds): 0.43
+	Percent of CPU this job got: 369%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.58
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 415212
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 150226
+	Voluntary context switches: 164
+	Involuntary context switches: 1562
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 63200
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
