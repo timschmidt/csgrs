@@ -9195,6 +9195,113 @@
         "Full workflow matrix, clean external release, broad strict completion and the 35 pending native files remain open. No push. Previously reproduced Hypercircuit fixture failures are not re-run here."
       ],
       "full_plan_complete": false
+    },
+    "scalar_product_cancellation": {
+      "status": "kept: opposite identical symbolic products construct certified exact zero",
+      "baseline_commit": "f1092edb1",
+      "implementation_commit": "775af8774",
+      "evidence": "docs/evidence/2026-10-15-strict-drilled-workflows/scalar-assessment-v1.json",
+      "decision": "docs/evidence/2026-10-15-strict-drilled-workflows/scalar-decision-v1.json",
+      "acceptance_record": "docs/evidence/2026-10-15-strict-drilled-workflows/scalar-acceptance.md",
+      "next_scalar_frontier": "docs/evidence/2026-10-15-strict-drilled-workflows/affine-baseline-v1/frontier.stdout",
+      "closure": "docs/evidence/2026-10-15-strict-drilled-workflows/scalar-closure-v1.json",
+      "validation": {
+        "scalar-default": {
+          "passed": 886,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 23
+        },
+        "scalar-all-features": {
+          "passed": 991,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 24
+        },
+        "foundations": {
+          "passed": 1544,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 46
+        },
+        "native-mesh": {
+          "passed": 240,
+          "failed": 0,
+          "ignored": 7,
+          "test_executables_or_doc_groups": 8
+        },
+        "root-curve": {
+          "passed": 231,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 28
+        },
+        "curve-native": {
+          "passed": 2493,
+          "failed": 0,
+          "ignored": 33,
+          "test_executables_or_doc_groups": 51
+        },
+        "root-minimal": {
+          "passed": 96,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 24
+        },
+        "root-all-features": {
+          "passed": 338,
+          "failed": 0,
+          "ignored": 1,
+          "test_executables_or_doc_groups": 32
+        },
+        "scalar-docs": {
+          "passed": 28,
+          "failed": 0,
+          "ignored": 0,
+          "test_executables_or_doc_groups": 1
+        }
+      },
+      "scope": "Exactly two opposite-sign two-factor products with structural factor matches. Other signs, arities and factors retain the original arithmetic path. Near-distinct 1e-12 controls remain strictly nonzero.",
+      "cost": {
+        "scope": "Instrumented scalar construction and sign proof, prepared and rebuilt inputs, three APIs. Shared unpinned host; no application speedup or statistical-significance claim.",
+        "short_batches": "Three fixed process pairs, 128 operations per row. Baseline: 6912 certified and 2304 Unknown; candidate: 9216 certified and zero Unknown. All 18 completed-control medians were slower by 0.15% to 31.29%. These observations and every raw sample remain preserved.",
+        "long_batches": "Five fixed process pairs using the same frozen binaries, 4096 operations per row. Baseline: 368640 certified and 122880 Unknown; candidate: 491520 certified and zero Unknown. Completed-control median changes range from -10.54% to +4.66%; individual pair ratios remain available and include larger adverse variation.",
+        "adverse_completed_controls": "Long-batch prepared positive-sum controls are 1.50% to 4.66% slower; prepared unequal-factor controls are 0.88% to 1.76% slower. The prepared rational active-product-sum median is 3.39% slower. These costs are retained as a tradeoff for the higher-priority certified completion extension.",
+        "memory": "Existing controls have unchanged allocation-call counts and peak live bytes. All measured rows retain zero additional live bytes. Newly certified prepared cancellation uses zero allocations; rebuilt cancellation uses 124 allocations per operation. The undecided baseline used 233 and 1479 respectively, which is not a comparison of equally completed contracts.",
+        "size": "Probe executable increases by 656 bytes and direct-rustc Hyperreal archive by 4382 bytes. These are focused artifacts, not release-distribution size estimates.",
+        "representation": "New opposite identical products construct rational zero and may serialize differently from the previously retained expression. No signature or wire-schema change; existing encoded expressions remain valid. Canonical artifact expectations must distinguish source revisions. This is not a serialization-preserving optimization.",
+        "evidence": [
+          "docs/evidence/2026-10-15-strict-drilled-workflows/scalar-assessment-v1.json",
+          "docs/evidence/2026-10-15-strict-drilled-workflows/cost-confirmation-assessment-v1.json"
+        ]
+      },
+      "workflow_frontier": {
+        "strict_certified_segments": [
+          8,
+          24
+        ],
+        "strict_undecided_segments": [
+          16,
+          32
+        ],
+        "qualified_approximate_segments": [
+          16,
+          32
+        ],
+        "original_16_segment_fixture_unchanged": true,
+        "exact_volume_comparison_16_segments": "unresolved",
+        "next_blocker": "The second neighboring-triangle coplanarity test retains the affine identity h(v-o)u-h(u-o)v-[h(v-o)o-h(u-o)o]=0 as an opaque expression. Diagnostic-v3 preserves the current trace. No trigonometric identity is required for that cancellation."
+      },
+      "limitations": [
+        "Current ordinary strict drill is still undecided; successful scalar completion does not establish completed mesh geometry.",
+        "Existing 35 native curve/DRC edits remain unadmitted and byte-identical; original full-board cost failures and circuit fixture differences were not rerun here.",
+        "Structural comparisons use the existing DAG walk. Four factor comparisons bound the number of equality calls, not their input-dependent work or heap bytes. No new total-work, cancellation or retained-memory contract is claimed.",
+        "Eight GiB address-space and 1800-second wall limits are external containment, not kernel budgets.",
+        "No full CI/pre-push, released-package, MSRV, binding, sanitizer, formal-proof or whole-stack admission is claimed. No push performed.",
+        "Scalar cost samples are instrumented on a shared unpinned host. Baseline Unknown latency is not a successful-operation comparison; no downstream speedup or full mesh artifact equality claim."
+      ],
+      "next_step": "Extend the scalar proof of the captured affine coplanarity identity under a declared resource contract, preserving original 16/32-segment fixtures, all certified controls and genuine undecided/approximate outcomes. This scalar unit does not deliver strict drilling.",
+      "full_plan_complete": false
     }
   },
   "status_meanings": {
