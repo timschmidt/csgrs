@@ -145,4 +145,26 @@ mod ring_quotient_tests {
             assert_unproved(&value);
         }
     }
+
+    #[test]
+    fn shared_quotient_subexpressions_fit_the_existing_expansion_budget() {
+        let denominator = positive_denominator();
+        assert_eq!(denominator.sign_until(-64), Some(RealSign::Positive));
+        let mut sum = denominator.clone();
+        for _ in 0..7 {
+            sum = raw(Approximation::Add(sum.clone(), sum));
+        }
+        // 128*d/d - 128 = 0, with d > 0. The balanced shared sum contains
+        // only seven new nodes, but unfolding it revisits d 128 times and
+        // exceeds 512 arithmetic visits. Keep the original expansion caps.
+        let value = raw(Approximation::Add(
+            raw(Approximation::Multiply(
+                sum,
+                raw(Approximation::Inverse(denominator)),
+            )),
+            raw(Approximation::Int(BigInt::from(-128))),
+        ));
+        assert_eq!(value.bounded_quotient_rational(), Some(Rational::zero()));
+        assert!(value.cached().is_none());
+    }
 }
