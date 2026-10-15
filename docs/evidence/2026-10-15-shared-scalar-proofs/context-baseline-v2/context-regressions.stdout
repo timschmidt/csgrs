@@ -1,0 +1,22 @@
+
+running 4 tests
+test context_booleans_preserve_input_errors ... ok
+test every_boolean_reports_approximation_without_affecting_later_strict_calls ... ok
+test rational_booleans_stay_certified_with_either_context ... ok
+test drill_cylinder_uses_the_requested_context ... FAILED
+
+failures:
+
+---- drill_cylinder_uses_the_requested_context stdout ----
+
+thread 'drill_cylinder_uses_the_requested_context' (97) panicked at tests/mesh_boolean_context.rs:157:5:
+assertion failed: matches!(body.try_difference(&drill),
+    Err(HypermeshError::PredicateUndecided { .. }))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    drill_cylinder_uses_the_requested_context
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.29s
+

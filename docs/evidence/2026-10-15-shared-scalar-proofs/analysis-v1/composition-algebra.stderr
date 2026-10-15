@@ -1,0 +1,84 @@
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 135, in <module>
+    expr = expression(parsed); expansion = Expansion(); numerator, denominator = expansion.expand(expr)
+                                                                                 ~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 111, in expand
+    a, b = self.expand(args[0])
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 111, in expand
+    a, b = self.expand(args[0])
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 111, in expand
+    a, b = self.expand(args[0])
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 111, in expand
+    a, b = self.expand(args[0])
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 111, in expand
+    a, b = self.expand(args[0])
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 111, in expand
+    a, b = self.expand(args[0])
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+           ~~~~~~~~~~~^^^^^^^^^
+  [Previous line repeated 1 more time]
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 111, in expand
+    a, b = self.expand(args[0])
+           ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 107, in expand
+    a, b = self.expand(args[0]); c, d = self.expand(args[1])
+                                        ~~~~~~~~~~~^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-shared-scalar-proofs/analyze_composition_v1.py", line 99, in expand
+    self.visits += 1; assert self.visits <= 4096
+                             ^^^^^^^^^^^^^^^^^^^
+AssertionError

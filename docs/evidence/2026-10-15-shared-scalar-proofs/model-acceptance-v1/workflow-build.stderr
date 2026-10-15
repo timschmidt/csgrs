@@ -1,0 +1,50 @@
+error[E0277]: the trait bound `Real: From<usize>` is not satisfied
+  --> tests/strict_drilled_workflows.rs:68:51
+   |
+68 |         let angle = (Real::from(2) * Real::pi() / Real::from(segments)).unwrap();
+   |                                                   ^^^^ the trait `From<usize>` is not implemented for `Real`
+   |
+   = help: `Real` implements trait `From<T>`:
+             From<Rational>
+             From<i128>
+             From<i16>
+             From<i32>
+             From<i64>
+             From<i8>
+             From<u128>
+             From<u16>
+           and 3 others
+
+error[E0277]: the trait bound `Real: From<usize>` is not satisfied
+  --> tests/strict_drilled_workflows.rs:69:43
+   |
+69 |         let expected = Real::from(3456) - Real::from(48 * segments) * angle.sin();
+   |                                           ^^^^ the trait `From<usize>` is not implemented for `Real`
+   |
+   = help: `Real` implements trait `From<T>`:
+             From<Rational>
+             From<i128>
+             From<i16>
+             From<i32>
+             From<i64>
+             From<i8>
+             From<u128>
+             From<u16>
+           and 3 others
+
+error[E0599]: no variant, associated function, or constant named `KnownZero` found for enum `ZeroKnowledge` in the current scope
+   --> tests/strict_drilled_workflows.rs:111:39
+    |
+111 |             hyperreal::ZeroKnowledge::KnownZero
+    |                                       ^^^^^^^^^ variant, associated function, or constant not found in `ZeroKnowledge`
+    |
+help: there is a variant with a similar name
+    |
+111 -             hyperreal::ZeroKnowledge::KnownZero
+111 +             hyperreal::ZeroKnowledge::NonZero
+    |
+
+error: aborting due to 3 previous errors
+
+Some errors have detailed explanations: E0277, E0599.
+For more information about an error, try `rustc --explain E0277`.

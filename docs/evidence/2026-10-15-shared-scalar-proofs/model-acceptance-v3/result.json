@@ -1,0 +1,75 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.8903580866754055,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "ae31e5fe4934913f7578fa3a8540cb3a94a7039f769afdd11333da6bd65f2bed"
+    },
+    {
+      "name": "workspace-fmt",
+      "exit_code": 0,
+      "seconds": 12.410575116053224,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "215a1d3ca55f8839968c43ceda77281bd0bdd12c8578dd1c62f647c93e1b6a7b"
+    },
+    {
+      "name": "context-build",
+      "exit_code": 0,
+      "seconds": 2.2385497367940843,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "f8d5a27c01d8d43d9c92db6b7c0ae2d5ed026a3677eb168600d9278dca8b83af"
+    },
+    {
+      "name": "context-regressions",
+      "exit_code": 0,
+      "seconds": 2.7027578516863286,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "9b8ae180b11f2722ae320cfa493dc597ebce69b67b292401b75943aae03a1ee9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "14f10849b910fab8b33ff3af0f7ecf7485b0efd60de9ff57f922d0b82784dffb"
+    },
+    {
+      "name": "workflow-build",
+      "exit_code": 0,
+      "seconds": 2.3469942500814795,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "6d4ad72f5f573eeff4b6990c19aab7b424c18710300255c71c149793c0794d8e"
+    },
+    {
+      "name": "workflow-semantics",
+      "exit_code": 0,
+      "seconds": 3.898158439435065,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "a2c939057f200c276e4edfe3e02f43cf7619f9f00317406212e06a0b06c812c3",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "f70ff48202d6ee31241ba727f682463724272ce5f57bbd8613cb55ac27f05472"
+    },
+    {
+      "name": "workflow-composition",
+      "exit_code": 101,
+      "seconds": 4.350029548164457,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "230bdb8ac2c36127b4fd1db641ee93583a4afd12a31274875109b920bc73df87",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "f17d28bc7fb13069cebaf7e34fdd93ba05bdd2ad6c323087cdf94f670c79eb3f"
+    }
+  ],
+  "passed": false
+}

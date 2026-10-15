@@ -1,0 +1,18 @@
+--- crates/hypermesh/src/predicate.rs
++++ diagnostic-v1-source/predicate.rs
+@@ -645,7 +645,14 @@
+     crate::trace_dispatch!("classify-real", "hyperlimit");
+     decisions
+         .decide(
+-            classify_real_sign(value, decisions.policy()),
++            {
++                let outcome = classify_real_sign(value, decisions.policy());
++                if matches!(outcome, hyperlimit::PredicateOutcome::Unknown { .. }) {
++                    eprintln!("unresolved_composition_scalar={value:?}");
++                    eprintln!("{}", std::backtrace::Backtrace::force_capture());
++                }
++                outcome
++            },
+             "Real sign classification",
+         )
+         .map(|sign| match sign {

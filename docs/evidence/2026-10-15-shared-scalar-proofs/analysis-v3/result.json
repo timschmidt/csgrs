@@ -1,0 +1,15 @@
+{
+  "commands": [
+    {
+      "name": "composition-algebra",
+      "exit_code": 0,
+      "seconds": 2.2313213529996574,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "0aad3fc8c29c17dc8f7ab049bb9288833b0e5979d2b3bd8e2aa2b1ec67ebfea0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "f3a3db64a154a54028cff98275b77ab2686773c337218098ab4b5758c36d497f"
+    }
+  ],
+  "passed": true
+}

@@ -11,6 +11,9 @@ struct RingPolynomial {
 
 struct RingRecognition<'a> {
     atoms: Vec<&'a Computable>,
+    // Used only by quotient recognition. The borrowed root keeps these node
+    // identities alive for the attempt; no entry survives the query.
+    quotients: std::collections::HashMap<*const Node, RingQuotient>,
     nodes_left: usize,
     operations_left: usize,
     signal: &'a Option<Signal>,
@@ -28,6 +31,7 @@ impl<'a> RingRecognition<'a> {
     fn new(value: &'a Computable) -> Self {
         Self {
             atoms: Vec::new(),
+            quotients: std::collections::HashMap::new(),
             nodes_left: Self::MAX_NODES,
             operations_left: Self::MAX_OPERATIONS,
             signal: &value.signal,

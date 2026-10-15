@@ -1,0 +1,15 @@
+{
+  "commands": [
+    {
+      "name": "model-clippy",
+      "exit_code": 0,
+      "seconds": 25.671739955898374,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "bc59a5983230b06cb38de5d0000d02c3373fb7311ec752933d7720c26ccb9f0c",
+      "resources_sha256": "c40a13570e1479c5ecb5426dbc00bdfb56881478d91ba5fddc31dc824cf1f30a"
+    }
+  ],
+  "passed": true
+}

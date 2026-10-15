@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--no-preserve=links",
+    "--reflink=auto",
+    "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release",
+    "/run/user/1000/csgrs-shared-scalar-proofs/model-clippy-v1/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "9d29515e2d133e38c2ffcf01b5e85aa8b45ded783ad0dfae3678c1f4aa7f85cd",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

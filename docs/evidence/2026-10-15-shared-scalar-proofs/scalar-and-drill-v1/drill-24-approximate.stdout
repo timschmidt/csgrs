@@ -1,0 +1,3 @@
+segments=24 context=GeometryContext { predicates: PredicatePolicy(1) } body_faces=12 drill_faces=96
+outcome=Certified positions=104 triangles=208
+topology=Ok(MeshOutcome { value: true, certainty: Certified })

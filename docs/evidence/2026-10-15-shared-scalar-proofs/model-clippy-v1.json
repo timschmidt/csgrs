@@ -1,0 +1,20 @@
+[
+  [
+    "model-clippy",
+    [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "curve",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ]
+  ]
+]

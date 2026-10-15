@@ -1,0 +1,38 @@
+[
+  {
+    "segments": 16,
+    "composition_index": 0,
+    "unique_structural_expansions": 85,
+    "calls": 128,
+    "zero_numerator": true,
+    "inverse_count": 1,
+    "opaque_atoms": 3
+  },
+  {
+    "segments": 16,
+    "composition_index": 1,
+    "unique_structural_expansions": 65,
+    "calls": 94,
+    "zero_numerator": true,
+    "inverse_count": 1,
+    "opaque_atoms": 3
+  },
+  {
+    "segments": 32,
+    "composition_index": 0,
+    "unique_structural_expansions": 85,
+    "calls": 128,
+    "zero_numerator": true,
+    "inverse_count": 1,
+    "opaque_atoms": 3
+  },
+  {
+    "segments": 32,
+    "composition_index": 1,
+    "unique_structural_expansions": 61,
+    "calls": 88,
+    "zero_numerator": true,
+    "inverse_count": 1,
+    "opaque_atoms": 3
+  }
+]

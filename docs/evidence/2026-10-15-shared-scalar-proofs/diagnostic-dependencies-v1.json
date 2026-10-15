@@ -1,0 +1,58 @@
+{
+  "hyperphysics": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhyperphysics-0af5d41bb0516a81.rlib",
+    "sha256": "db6a42ba5e32b8ca93aaf18cf7f317bdbec6704d20e233a6d9a6ab2e819de051",
+    "cargo_fingerprint": 7840547903255617490,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hyperphysics-0af5d41bb0516a81/lib-hyperphysics.json",
+    "features": "[\"default\"]"
+  },
+  "hyperreal": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+    "sha256": "90afa148485a5e1334c83dcd0b53d442b0cc95c665fe7b1c126db547fdbc7c65",
+    "cargo_fingerprint": 3136259652572598114,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hyperreal-bd1ab828184ac69a/lib-hyperreal.json",
+    "features": "[\"cached-f64-approx\", \"default\"]"
+  },
+  "hyperlattice": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhyperlattice-5ffa110827bfce9d.rlib",
+    "sha256": "7c68be85c2fd79d853bb5f225d1783d83cd1350992cdf5751c3c01b0c78fb67d",
+    "cargo_fingerprint": 12504825391106515845,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hyperlattice-5ffa110827bfce9d/lib-hyperlattice.json",
+    "features": "[\"default\"]"
+  },
+  "hyperlimit": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhyperlimit-6781fa9073ad42e6.rlib",
+    "sha256": "ea2f334ed6faeb1be996f4b741050c8a3da8c6481a6bde89ffda42ff692e226d",
+    "cargo_fingerprint": 1286121115990307312,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hyperlimit-6781fa9073ad42e6/lib-hyperlimit.json",
+    "features": "[\"default\", \"std\"]"
+  },
+  "hypertri": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhypertri-2f991b7c287fd1c7.rlib",
+    "sha256": "786034e9aed2bf2c19e9352394d5995ff9140a489439412a6845c577f29c7d0e",
+    "cargo_fingerprint": 4864871657189394175,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hypertri-2f991b7c287fd1c7/lib-hypertri.json",
+    "features": "[\"cdt\", \"earcut\"]"
+  },
+  "hypersolve": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhypersolve-6a859fb6248d7ef3.rlib",
+    "sha256": "589e1b357cbd562c07818ea59965e03edba8aa9aa651fec565b5fc52be85cf12",
+    "cargo_fingerprint": 535290879437999810,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hypersolve-6a859fb6248d7ef3/lib-hypersolve.json",
+    "features": "[\"default\"]"
+  },
+  "hypercurve": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhypercurve-ddc651da5358133b.rlib",
+    "sha256": "372f97f8071b2cbc26891ae6d5f5a704487e4b33828a66f3352c452471e7f8cf",
+    "cargo_fingerprint": 7834463048767811618,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/hypercurve-ddc651da5358133b/lib-hypercurve.json",
+    "features": "[\"default\", \"triangulation\"]"
+  },
+  "thiserror": {
+    "path": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libthiserror-5e8fef11be9f720a.rlib",
+    "sha256": "510fe3bc63de93d77ea01da7decb9d8fe294edbf9a872b8e5f2a0513872f5942",
+    "cargo_fingerprint": 5710547343531768766,
+    "fingerprint_json": "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/.fingerprint/thiserror-5e8fef11be9f720a/lib-thiserror.json",
+    "features": "[\"default\", \"std\"]"
+  }
+}

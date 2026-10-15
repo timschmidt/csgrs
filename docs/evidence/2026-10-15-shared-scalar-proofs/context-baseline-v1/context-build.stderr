@@ -1,0 +1,11 @@
+error[E0433]: cannot find module or crate `hyperlattice` in this scope
+   --> tests/mesh_boolean_context.rs:127:14
+    |
+127 |         vec![hyperlattice::Point3::origin()],
+    |              ^^^^^^^^^^^^ use of unresolved module or unlinked crate `hyperlattice`
+    |
+    = help: you might be missing a crate named `hyperlattice`
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0433`.

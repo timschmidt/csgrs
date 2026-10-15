@@ -1,0 +1,23 @@
+	Command being timed: "rustc --test --edition=2024 -C opt-level=3 -D warnings --extern csgrs=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/libcsgrs.rlib --extern hypermesh=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhypermesh-ae6470a5143cc580.rlib -L dependency=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps tests/strict_drilled_workflows.rs -o /tmp/csgrs-shared-scalar-proofs/model-acceptance-v2/workflows --extern hyperlattice=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhyperlattice-5ffa110827bfce9d.rlib --extern hyperreal=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhyperreal-bd1ab828184ac69a.rlib"
+	User time (seconds): 0.77
+	System time (seconds): 0.15
+	Percent of CPU this job got: 190%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.48
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 173064
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 42035
+	Voluntary context switches: 2093
+	Involuntary context switches: 76
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

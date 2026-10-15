@@ -1,0 +1,95 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.8477891427464783,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "69d52b128da814abf339dfe148e59a96853d4b1716b08f49da1999a51287f5aa"
+    },
+    {
+      "name": "native-build",
+      "exit_code": 0,
+      "seconds": 5.932192631997168,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "aafee19c247f0455774a0473312721ddd56e5ea904dc6769f69d6290b933cb4f"
+    },
+    {
+      "name": "physics-build",
+      "exit_code": 0,
+      "seconds": 3.268953056074679,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "c2b463bedd30e4cf7375b8090a68198143a136b704dc3c7f403dc7342aca7aa4"
+    },
+    {
+      "name": "root-build",
+      "exit_code": 0,
+      "seconds": 4.994471560232341,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "91b4237b1f6d281aab9f32e4fcc04e9064031c050599c2c4aeea02d0aca3f669"
+    },
+    {
+      "name": "probe-build",
+      "exit_code": 0,
+      "seconds": 2.0950920549221337,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "91f0fe28e9c31726276334acacbf55cf22d2efd96c868727150478f757d71ff4"
+    },
+    {
+      "name": "compose-8-strict",
+      "exit_code": 0,
+      "seconds": 2.0911709452047944,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "6cce518ed12a7ad07ac7b74f35c5ceb3055f4b6b4c70b49abcc41bd847bb0cd3",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "4293d31c5d135c1bf32c46d714919bbea06436aa3c457c53acc5d5ae41f853d0"
+    },
+    {
+      "name": "compose-16-strict",
+      "exit_code": 0,
+      "seconds": 2.7013635761104524,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "2b58bd39a87579dc06c5a3756335c39f43539f4f911c6884ed4c1d3bc3e946a3",
+      "stderr_sha256": "6eda48ca40e52d05f1a9a5846ccbace580606cae3d51467c5d9e953ece4288d2",
+      "resources_sha256": "b283f1e3eb1b0df11e65a57c8f085108e7b1e64bb4cba442c343207e5c472e2e"
+    },
+    {
+      "name": "compose-24-strict",
+      "exit_code": 0,
+      "seconds": 4.106486710719764,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "479b2bd83312f1a75c92cd916e8c740e116732d2bf523c5c473e0821424f703a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "9ba3272177f0c48d3ae18ff2d0f25df1d73b7f63984876143207cf7f73449485"
+    },
+    {
+      "name": "compose-32-strict",
+      "exit_code": 0,
+      "seconds": 3.623507944867015,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "238317d19eb39688cf5883e53e1ee1daa7897c8e7c2bcc944b2335878ee25316",
+      "stderr_sha256": "2103ac5c4b106edb374851b0bc1a04b63a54745c22ffa21815692523093576d7",
+      "resources_sha256": "c022c07c61af88ec4544663c62282491aba842409617afd34d0fb70747bee134"
+    }
+  ],
+  "passed": true
+}

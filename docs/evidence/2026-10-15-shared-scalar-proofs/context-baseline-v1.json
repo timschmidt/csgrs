@@ -1,0 +1,37 @@
+[
+  [
+    "prepare-target",
+    [
+      "mkdir",
+      "/tmp/csgrs-shared-scalar-proofs/context-baseline-v1"
+    ]
+  ],
+  [
+    "context-build",
+    [
+      "rustc",
+      "--test",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-D",
+      "warnings",
+      "--extern",
+      "csgrs=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "-L",
+      "dependency=/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps",
+      "tests/mesh_boolean_context.rs",
+      "-o",
+      "/tmp/csgrs-shared-scalar-proofs/context-baseline-v1/context"
+    ]
+  ],
+  [
+    "context-regressions",
+    [
+      "/tmp/csgrs-shared-scalar-proofs/context-baseline-v1/context",
+      "--test-threads=2"
+    ]
+  ]
+]
