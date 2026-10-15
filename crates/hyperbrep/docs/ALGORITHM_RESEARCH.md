@@ -749,3 +749,45 @@ schemas. The [experiment and final evidence](evidence/2026-10-15-archive-structu
 retain all observations and allocation counts. Scalar bit/work limits, iterative
 WASM-safe decoding and the inherited controlled-host timing follow-up remain
 open; these counters alone cannot certify hostile-input runtime safety.
+
+## Exact faceted STEP mapping (2026-10-15)
+
+The published STEP Tools definitions for
+[`faceted_brep_shape_representation`](https://www.steptools.com/stds/stp_aim/html/t_faceted_brep_shape_representation.html)
+require planar face surfaces and one explicitly marked outer bound per faceted
+face. They also permit mapped and placement items, so a reader cannot equate
+“one representation” with “one body” or silently skip unimplemented item types.
+The implementation rejects unsupported selected items, preserves inner loops and
+maps every selected body through the existing native builder. This demonstrates
+feasibility for the admitted planar shell domains, not arbitrary STEP BREP.
+
+[`axis2_placement_3d`](https://www.steptools.com/stds/stp_aim/html/t_axis2_placement_3d.html)
+and [`first_proj_axis`](https://www.steptools.com/stds/stp_aim/html/t_first_proj_axis.html)
+define the frame and reference-axis projection/defaults. Hyperreal supplies exact
+normalization; the oblique tetrahedron fixture exercises radicals without a
+binary64 intermediate. The
+[`conversion_based_unit` definition](https://www.steptools.com/stds/stp_aim/html/t_conversion_based_unit.html)
+ties conversion to an authored measure and matching dimensions. Names therefore
+remain metadata, not a license to substitute a different factor or infer π.
+The [Part 21 text](https://www.steptools.com/stds/step/IS_final_p21e3.html),
+sections 5.2, 6.4.3 and 8, informs header and string decoding; unsupported code
+pages remain typed blockers. No standard text/schema was copied into the crate.
+
+The resource design is our inference from graph structure: resolve unit chains
+iteratively, cache resolved units and source points, detect cycles with an active
+set, and admit the sum of rational operand bit lengths before multiplying unit
+scales. Hash sets check duplicate memberships; rational coordinate triples and
+unordered canonical vertex pairs intern exact shared topology. Hash-table
+iteration never controls output order. These avoid explicit recursive descent
+and repeated linear membership scans, but arithmetic and native validation can
+still dominate runtime. No global linear-time or hostile-input memory guarantee
+is inferred from the graph design.
+
+The [qualification](evidence/2026-10-15-step-faceted/README.md) includes native
+and executed WASM cases, a 20,000-link chain, restored semantic faults, independent
+OCCT reader checks, and allocation-instrumented import/validation/archive costs.
+OCCT is only an optional test oracle. Its faceted writer probe faults on the
+tested box in the pinned distribution; the general writer succeeds, but its
+advanced-BREP output is outside this mapping. Neither result is treated as an
+exactness proof or grounds to relax the native contract. Independent exporter
+corpora, native STEP geometry output and complete AP traversal remain WP14 work.

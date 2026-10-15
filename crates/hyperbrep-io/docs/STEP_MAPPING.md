@@ -1,0 +1,149 @@
+# Typed STEP mapping
+
+This is the normative contract for the first geometric `hyperbrep-io::step`
+boundary. It implements part of WP14a in the
+[development plan](../../hyperbrep/docs/DEVELOPMENT_PLAN.md). Exactness,
+completeness and performance retain that priority order under
+[properties.md](../../../properties.md). New mappings follow the shared
+[admission protocol](../../../docs/admission.md).
+
+## Public boundaries and ownership
+
+| API | Result and authority |
+| --- | --- |
+| `part21::parse(bytes, limits)` | Borrowed, source-scoped syntax; no schema or geometric authority. |
+| `StepFile::read(bytes, options)` | Syntax plus decoded standard header and checked DATA/schema declarations. |
+| `StepFile::context_units(id, limits)` | Exact declared length/angle unit graph and unapplied uncertainty metadata for a 3D context. |
+| `StepFile::import_faceted_representation(id, limits, context)` | Every supported item in one selected representation, or a typed failure; native solids are published only after full builder validation. |
+| `ImportedRepresentation::bodies()` | Owned native `Model` values, in representation item order, with model-bound solid/face/vertex/wire/edge-use views. |
+| `interpreted_entities()` / `retained_entities()` | Sorted distinct interpreted IDs and source-order raw-retained IDs; disjoint and together covering every DATA instance. |
+| `ImportedBody::edge_uses()` | Bound ID, polygon ID, original zero-based segment including closing segment, directed source-point IDs and native edge-use reference. |
+
+The file borrows its original input; imported bodies own their geometry and remain
+usable after the file is dropped. Source references are file-local numeric IDs,
+not global identities. Keep the file alongside the result to inspect retained
+records and their spans. No native model carrier is duplicated in the IO crate.
+All modeled topology goes through HyperBRep's `ModelBuilder`. Native queries,
+transforms, edits and exact archives consume its ordinary `Model`.
+
+Import is an explicit selection, not root/product/assembly traversal. A supported
+selection can coexist with unknown entity types or unrelated broken
+references in raw syntax, but this mapping currently requires all declared
+schema names to identify the common AP203/AP214/AP242 subset. Recognized names
+are `CONFIG_CONTROL_DESIGN`, `AUTOMOTIVE_DESIGN` and
+`AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF`, optionally followed by a
+whitespace-separated suffix. Recognizing a schema name is not conformance proof.
+
+## Implemented mapping
+
+The selected simple `FACETED_BREP_SHAPE_REPRESENTATION` contains one or more
+simple `FACETED_BREP` items and optional `AXIS2_PLACEMENT_3D` items. Placement
+items are checked metadata; they do not transform sibling items. Each body uses
+one `CLOSED_SHELL`, `FACE_SURFACE` faces on `PLANE`, exactly one
+`FACE_OUTER_BOUND` per face, optional inner `FACE_BOUND` records, `POLY_LOOP`
+boundaries, and three-coordinate `CARTESIAN_POINT` records. Simple records have
+their required inherited attributes; extra/missing attributes are errors.
+Other representation items, complex geometric instances, oriented shells,
+void-body entities and mapped instances are explicit unsupported boundaries.
+
+Plane placements normalize the authored axis and the projection of the reference
+direction perpendicular to it. Omitted axis defaults to Z; omitted reference
+defaults to X, or Y when the axis is parallel to X. Zero and parallel supplied
+directions fail. Normalization uses exact native scalar operations, including
+radicals; it does not pass through binary floating point. The resulting frame
+defines each face's exact local line pcurves.
+
+`FACE_BOUND.orientation` reverses the polygon traversal when false.
+`FACE_SURFACE.same_sense` controls the native face orientation independently.
+Neither flag is guessed or repaired from a volume sign. All inner bounds are
+constructed and validated. Within one body, equal rational coordinate triples
+share a vertex and equal unordered vertex pairs share a spatial straight edge;
+every source point alias and every directed use remains recorded. No epsilon
+is used. Near-equal coordinates remain distinct and may make an authored shell
+invalid. Sharing does not cross body boundaries.
+
+Native validation currently admits specific planar-shell domains, including
+convex shells and supported prismatic shells with holes; this importer does not
+extend that domain. A syntactically valid arbitrary faceted body can therefore
+return native `Build`/`Validation` errors or an unsupported-domain report.
+Exact authored normal/point inconsistencies are errors even if another CAD
+reader tolerates them. A future explicit repair operation must report its changes.
+
+## Units and text
+
+Published coordinates use **metres**. Unit categories remain length, plane angle
+and solid angle even though both angle categories have zero SI dimensions.
+Supported units combine `NAMED_UNIT` and the category marker with `SI_UNIT` or
+`CONVERSION_BASED_UNIT`. SI names are metre, radian and steradian; all twenty
+STEP prefixes from yocto through yotta are supported. Conversion-based units
+validate seven `DIMENSIONAL_EXPONENTS`, a positive typed measure, matching
+category and an acyclic conversion chain. Simple measure subtypes and supported
+complex `MEASURE_WITH_UNIT` instances are accepted. Forward references and
+shared chains resolve iteratively with a per-operation cache.
+
+The exact authored factor controls conversion: the label “inch” never substitutes
+a different value. A decimal degree-to-radian factor stays that rational value;
+no symbolic π is inferred from a name. Context length units are mandatory;
+plane/solid-angle units are optional until a mapping needs them. Duplicate
+categories, missing/unsupported units and dimension mismatches fail explicitly.
+Uncertainty records retain exact SI magnitude, name and description; they never
+authorize vertex merging, healing, fitting or predicate approximation.
+
+`StepFile::read` checks the initial FILE_DESCRIPTION / FILE_NAME / FILE_SCHEMA
+order, types and cardinalities, duplicate standard records, implementation levels
+2;1 / 3;1 / 4;1, and section/schema declarations. Extra header records remain
+raw. Calendar validity, complete schema identifiers and edition-specific rules
+remain unvalidated. Accepted decoded text includes raw UTF-8, doubled apostrophes,
+doubled backslashes, default/explicit ISO-8859-1 S/P directives, X octets and
+X2/X4 UCS scalar groups. Surrogates, nonhex payloads and out-of-range scalars fail.
+Physical ASCII control bytes are ignored inside text and its directives; encoded
+control scalars survive. Explicit N/F print-layout directives between string
+content units contribute no content. The syntax lexer still requires contiguous
+keywords/numbers and doubled-quote escapes; general physical-control splitting
+of those tokens and print directives outside strings remain unimplemented.
+ISO-8859 alphabets B–I are typed unsupported; their tokens remain in raw syntax.
+
+## Failure and resource contract
+
+`Error` retains an entity ID when available, a byte offset (zero when no closer
+site is available), and a typed cause. Missing targets include the first matching
+source-reference site. Syntax/numeric admission, missing entities, invalid versus
+unsupported constructs, unit cycles, limits, allocation failures, numeric causes,
+native construction and native validation remain distinguishable. No error variant
+publishes a partial selected representation. Solver exhaustion is the outer
+`BudgetOutcome` failure and is not reclassified as geometric invalidity.
+
+Limits are explicit and renewed for each public call:
+
+- `StepReadOptions::syntax`: bounded input, lexemes, nesting and flat syntax storage.
+- `header_text_bytes`: cumulative decoded HEADER and DATA-argument bytes.
+- `ImportLimits::number`: per-lexeme exact digit/exponent admission.
+- `entity_visits`, `scalars`, `text_bytes`, `edge_uses`: cumulative lookup and
+  numeric-materialization attempts, emitted text bytes and polygon segments.
+- `unit_scale_bits`: maximum numerator/denominator bit bound for SI scales and
+  conversion products; sums of operand bit lengths are admitted before multiplying.
+  This bound is conservative and may reject a product that would cancel.
+- `OperationContext`: strict predicate authority and shared instrumented solver work.
+
+These allowances do **not** bound all scalar work, coefficient growth outside
+unit products, native validation, aggregate heap use or elapsed time. Cache hits
+still charge entity lookup attempts. Dynamic IO collections reserve fallibly;
+native/scalar allocation remains governed by its own implementation. A 20,000-link
+unit graph exercises iterative traversal and drop on a 64 KiB native stack and
+in an actual WASM runtime; this is not an arbitrary-hostile-input safety proof.
+
+## Remaining exchange work
+
+WP14a still requires native geometry STEP writing and independent exported-file
+checks, simple analytic entities, broad independent exporter fixtures, representation
+root selection, and more complete schema/resource admission. WP14b retains
+spline/trim/seam/void exchange, assembly/mapped representation traversal and
+explicit healing/export approximation. Header/text completeness, generic planar
+shell validation, coefficient/work bounds, fuzz/ASan/lexicase qualification,
+full workspace checks and release work are also open. A source syntax round trip
+and native JSON replay do not count as an edited geometry STEP round trip.
+
+Four original fixture recipes (box, two bodies, through-hole and oblique
+tetrahedron) are read by OCCT and mapped natively with exact volume and incidence
+checks. The [qualification](../../hyperbrep/docs/evidence/2026-10-15-step-faceted/README.md)
+retains tests, runtime probes, fault controls, source hashes and cost observations.

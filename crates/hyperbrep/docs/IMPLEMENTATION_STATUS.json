@@ -542,6 +542,41 @@
       "cost_evidence": "Three fresh alternating CPU-0 pairs preserve four syntax receipts and independently authored expected output. The retained frame reuse and lexical corrections change small/wide/deep/byte-reject median ratios to 0.881671/0.828410/0.965182/1.000000. Wide 10,000-entity allocation requests fall from 20,078 to 74 per cycle; requested allocator bytes from 18,508,330 to 16,908,010. Executable +280 bytes; median RSS 12,416 to 13,148 KiB. These are allocation-instrumented descriptive costs, not geometry-import or uninstrumented speedup claims. Earlier measurements before lexical corrections remain separately recorded.",
       "dependency_decision": "Pinned Ruststep and step-p21 snapshots pass four shared syntax fixtures, but both round 9007199254740993.0, overflow/underflow 1.E\u00b1400 to infinity/zero, and panic on two tested oversized integers. Neither is adopted; no external schemas or fixtures copied. Their probes are not matched performance evidence.",
       "limits": "Syntax success does not validate header/schema semantics, decoded string directives, EXPRESS entities, units, placements, geometry, topology or assembly ownership. Extended exchange sections/scopes/value references return typed blockers. Scalar total-work/allocation budgets, external CAD interoperability, runtime fuzz/ASan/lexicase and release/pre-push qualification remain open. The inherited archive-admission timing gate is unchanged."
+    },
+    {
+      "id": "step-faceted",
+      "work_packages": [
+        "WP01",
+        "WP14a",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39",
+        "T13"
+      ],
+      "decision": "kept; exact selected faceted representation import with native/WASM and external-reader evidence; no work-package gate completed",
+      "change": "Add checked STEP headers/text, iterative dimension-aware SI/conversion unit graphs with pre-product scale admission, exact placements and FACETED_BREP_SHAPE_REPRESENTATION mapping through the native model builder. Preserve all selected bodies, face holes and orientation, exact source-point aliases, per-segment provenance and every raw source entity. Keep unapplied uncertainty metadata and typed mapping/resource/native-validation failures; coordinates use metres.",
+      "source": "../../hyperbrep-io/src/step/mod.rs",
+      "contract": "../../hyperbrep-io/docs/STEP_MAPPING.md",
+      "evidence": "evidence/2026-10-15-step-faceted/manifest.json",
+      "validation": "348 combined native results: 317 existing all-feature HyperBRep and 31 IO results (29 integration tests and two doctests). All 31 IO results pass in release. Strict all-feature/all-target Clippy for both crates, warning-denied IO docs, workspace formatting, and nine actual Wasmtime groups with zero host imports pass. Four original box/multi-body/through-hole/oblique-tetrahedron recipes are independently read and validated by pinned OCCT. Native cases cover exact volume, source incidence, archive replay/transforms, coordinates above 2^53, unhealed sub-uncertainty gaps, face/loop senses, unit dimensions and all twenty SI prefixes. A 20,000-link unit chain resolves/cycle-checks on a 64 KiB native stack and in WASM. Five deliberate faults fail runtime regressions; the initial text decoder separately fails the added physical-control regression and is corrected. Compile-time rustdoc recursion and a moved link are repaired before final checks.",
+      "cost_evidence": "Three allocation-instrumented CPU-0 processes preserve seven complete receipts and all geometry output sizes/fingerprints. Absolute parse/import/validate/volume/native-archive medians are 1.144366 ms box, 2.323810 ms two bodies, 3.566425 ms through-hole and 925.084 microseconds oblique tetrahedron. The 2k/20k unit graph medians are 6.715144/66.116269 ms. No equivalent former importer or optimization speedup is claimed. Three alternating syntax pairs against cd1cc8d42 preserve four receipts and allocation counts; elapsed-total median ratios 0.992636/1.044287/1.002761/1.020947. Syntax executable grows 656008 to 3020240 bytes; new importer benchmark 20928888 bytes; native RSS median 43268 KiB; executed WASM probe 14721483 bytes. Earlier text-decoder costs remain separate. Historical archive-admission timing qualification remains open.",
+      "limits": "Only explicitly selected supported faceted representations in the current native planar-shell domain are admitted. This is not complete AP conformance, whole-document/product/assembly traversal, an independent-exporter corpus or edited geometry STEP round trip. Analytic/spline/void/mapped entities, STEP geometry writing, explicit healing/approximation, complete text/lexical rules and global scalar/work/heap admission remain open. External OCCT faceted writing faults on the tested box; its successful advanced-BREP writer is outside this mapping. No runtime fuzz/ASan/lexicase, full workspace/pre-push or release qualification. All 28 work-package gates stay open."
     }
   ],
   "work_packages": [
@@ -720,7 +755,7 @@
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
     "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
-    "Advance WP14a from bounded Part 21 syntax to explicit header/text validation, typed entity graphs, exact units/placements and analytic/faceted BREP mapping; add independent STEP fixtures and an external reader before claiming geometry exchange. Keep source-entity diagnostics and exact-versus-approximate export policy explicit.",
+    "Continue WP14a from selected exact faceted import: implement native STEP geometry writing and simple analytic exchange, use independently generated exporter files, broaden representation traversal and schema/resource admission, and retain source accounting. Then WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. Selected-import/native-archive success does not establish whole-document or STEP geometry round-trip support.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
   ]
 }

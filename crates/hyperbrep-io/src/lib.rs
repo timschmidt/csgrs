@@ -7,5 +7,8 @@
 #![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
+// Rustdoc's auto-trait traversal includes the native model's retained carriers.
+#![recursion_limit = "256"]
 
 pub mod part21;
+pub mod step;

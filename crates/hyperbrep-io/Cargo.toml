@@ -11,8 +11,14 @@ keywords = ["step", "cad", "geometry", "exact"]
 categories = ["parser-implementations", "graphics"]
 
 [dependencies]
+hyperbrep = { version = "0.2.0", path = "../hyperbrep", default-features = false }
+hypercurve = { version = "0.3.1", path = "../hypercurve", default-features = false }
 hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
 
 [[bench]]
 name = "part21"
+harness = false
+
+[[bench]]
+name = "faceted"
 harness = false

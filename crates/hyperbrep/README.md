@@ -474,9 +474,12 @@ source assumptions, prototype gates and performance experiments for that plan.
 The [implementation ledger](docs/IMPLEMENTATION_STATUS.json) tracks work
 packages, landed increments, verification and the remaining capability gaps.
 
-The downstream [HyperBRep IO crate](../hyperbrep-io/README.md) now provides bounded
-Part 21 syntax, exact numeric lexemes and source-entity accounting. STEP geometry
-and document mapping remain on the plan; syntax success does not validate a solid.
+The downstream [HyperBRep IO crate](../hyperbrep-io/README.md) provides bounded
+Part 21 syntax and strict, unit-aware import of selected faceted representations
+through the native builder. It preserves holes, multiple bodies and source
+provenance. [Its mapping contract](../hyperbrep-io/docs/STEP_MAPPING.md) records
+the supported entities and validation domain. Analytic/spline exchange, STEP
+geometry writing and whole-document/assembly mapping remain on the plan.
 
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.

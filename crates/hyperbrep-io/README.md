@@ -4,8 +4,12 @@ Pure Rust CAD exchange for the Hyper geometry stack. This crate owns syntax,
 source-entity accounting and exchange policy; authoritative geometry belongs to
 HyperBRep and exact scalar arithmetic belongs to Hyperreal.
 
-The initial implementation reads and writes a bounded Part 21 syntax subset.
-It retains numeric lexemes without binary floating-point conversion, unknown
+The crate reads and writes bounded Part 21 syntax and imports an explicitly
+selected faceted representation into strictly validated native HyperBRep solids.
+Coordinates and authored unit conversions remain exact. Whole-document/product
+traversal, analytic/spline exchange and STEP geometry export remain unfinished.
+
+The syntax layer retains numeric lexemes without binary floating-point conversion, unknown
 entity records, complex instances, forward references, multiple DATA sections,
 empty aggregates, typed parameters and encoded string tokens. Every view is
 scoped to its source exchange. Nested values use flat storage and explicit
@@ -50,10 +54,40 @@ control directives are preserved, not decoded or semantically validated. This
 allows subsequent text decoding to report unsupported/invalid directives without
 losing their source. Numeric lexemes such as `1.E400` survive syntax round trips.
 
-This is not yet a STEP-to-BREP importer or AP conformance claim. Header/schema
-requirements, EXPRESS types, units, placements, topology, geometry, decoded text,
-assemblies and exact/approximated geometry export remain on the
-[development plan](../hyperbrep/docs/DEVELOPMENT_PLAN.md). ANCHOR, REFERENCE,
+The typed `step` layer adds structurally checked standard headers, decoded text,
+unit-graph resolution and selected `FACETED_BREP_SHAPE_REPRESENTATION` import.
+It preserves all bodies and face holes in that selection, shares exactly equal
+vertices/edges, retains directed-segment provenance, and uses the ordinary native
+model builder and validator. It neither applies source uncertainty as a tolerance
+nor heals orientation, near-coincidence or nonplanarity.
+
+```rust
+use hyperbrep::{OperationContext, WorkBudget};
+use hyperbrep_io::step::{ImportLimits, StepFile, StepReadOptions};
+
+let input = include_bytes!("../tests/fixtures/faceted-through-hole.step");
+let file = StepFile::read(input, &StepReadOptions::default())?;
+let context = OperationContext::strict(WorkBudget {
+    refinements: 10_000,
+    promotions: 1_000,
+});
+let attempt = file.import_faceted_representation(502, &ImportLimits::default(), &context);
+let imported = attempt.result??; // Solver exhaustion and mapping errors stay distinct.
+assert_eq!(imported.bodies().len(), 1);
+assert_eq!(imported.bodies()[0].model().counts().faces, 10);
+assert!(imported.retained_entities().contains(&9503)); // Product remains in the source.
+# Ok::<(), Box<dyn std::error::Error>>(())
+```
+
+Successful import certifies the selected native bodies within HyperBRep's current
+validation domain. It does not establish complete EXPRESS/AP conformance or
+import an assembly. The [mapping contract and frontier](docs/STEP_MAPPING.md)
+list accepted entities, exact unit conventions, budgets and remaining work.
+Unselected/unsupported records remain in the source exchange, with every entity
+listed as interpreted or retained. `Model::to_json` is native archival replay;
+`Exchange::to_step` is syntax serialization. Neither exports edited geometry to STEP.
+
+ANCHOR, REFERENCE,
 SIGNATURE sections, scoped/value/constant references return explicit blockers.
 Schema-independent syntax success grants no geometric authority.
 

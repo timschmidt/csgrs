@@ -2641,6 +2641,8 @@ dependencies = [
 name = "hyperbrep-io"
 version = "0.1.0"
 dependencies = [
+ "hyperbrep",
+ "hypercurve",
  "hyperreal",
 ]
 
