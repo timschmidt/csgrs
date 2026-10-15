@@ -1333,28 +1333,73 @@ pub fn inverse(mesh: &TriangleMesh) -> TriangleMesh {
     mesh.reversed_winding()
 }
 
-/// Samples a native metaball surface.
+/// Samples inverse-square metaballs through the native exact-coordinate sampler.
+///
+/// This uses the continuous normalized field `(iso-I)/(iso+I)`, extended to -1
+/// at centers, with I the sum of exact inverse-square influences. Numerical
+/// certainty concerns the sampled proposal, not its fidelity to the analytic
+/// field. Radii and iso must be positive, padding nonnegative, and each grid
+/// dimension at least two. Invalid or undecided input and sampling failures are
+/// typed errors; an empty source list succeeds only after parameter validation.
 #[cfg(feature = "metaballs")]
 pub fn metaballs(
     balls: &[MetaBall],
     resolution: (usize, usize, usize),
     iso_value: Real,
     padding: Real,
-) -> TriangleMesh {
-    crate::implicit::metaballs::metaballs(balls, resolution, iso_value, padding)
+) -> Result<TriangleMesh, ValidationError> {
+    metaballs_with_context(
+        balls,
+        resolution,
+        iso_value,
+        padding,
+        &GeometryContext::STRICT,
+    )
+    .map(|outcome| outcome.value)
 }
 
-/// Samples a native metaball surface and returns boundary diagnostics.
+/// Samples the normalized metaball field and returns diagnostics with typed failure.
 #[cfg(feature = "metaballs")]
 pub fn metaballs_with_diagnostics(
     balls: &[MetaBall],
     resolution: (usize, usize, usize),
     iso_value: Real,
     padding: Real,
-) -> (TriangleMesh, MetaballDiagnostics) {
-    crate::implicit::metaballs::metaballs_with_diagnostics(
-        balls, resolution, iso_value, padding,
+) -> Result<(TriangleMesh, MetaballDiagnostics), ValidationError> {
+    metaballs_with_diagnostics_and_context(
+        balls,
+        resolution,
+        iso_value,
+        padding,
+        &GeometryContext::STRICT,
     )
+    .map(|outcome| outcome.value)
+}
+
+/// Samples metaballs with the selected meshing policy, retaining local certainty.
+/// Native field construction and its conservative bounds remain strict.
+#[cfg(feature = "metaballs")]
+pub fn metaballs_with_context(
+    balls: &[MetaBall],
+    resolution: (usize, usize, usize),
+    iso_value: Real,
+    padding: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    crate::implicit::metaballs::sample(balls, resolution, iso_value, padding, false, context)
+        .map(|outcome| outcome.map(|(mesh, _)| mesh))
+}
+
+/// Samples metaballs and retains diagnostics together with consumed certainty.
+#[cfg(feature = "metaballs")]
+pub fn metaballs_with_diagnostics_and_context(
+    balls: &[MetaBall],
+    resolution: (usize, usize, usize),
+    iso_value: Real,
+    padding: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<(TriangleMesh, MetaballDiagnostics)>, ValidationError> {
+    crate::implicit::metaballs::sample(balls, resolution, iso_value, padding, true, context)
 }
 
 /// Samples an exact scalar field with native-real Surface Nets.

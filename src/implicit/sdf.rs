@@ -9,10 +9,11 @@ use hyperlattice::{Point3, Real};
 use hyperlimit::Point3 as HPoint3;
 use hypermesh::{SurfaceNetsGrid, TriangleMesh, surface_nets_standalone};
 use hyperreal::RealSign;
+#[cfg(feature = "sdf")]
+use hypersdf::{Sdf, SdfExpr};
 use hypersdf::{
-    Sdf, SdfExpr, SdfGridSamplingReport, SdfMeshPreviewReport, SdfMetricStatus,
-    SdfPreviewGrid, SdfPreviewSample, SdfSampleTopologyStatus, SdfSamplingPrecision,
-    SdfSamplingReport,
+    SdfGridSamplingReport, SdfMeshPreviewReport, SdfMetricStatus, SdfPreviewGrid,
+    SdfPreviewSample, SdfSampleTopologyStatus, SdfSamplingPrecision, SdfSamplingReport,
 };
 
 /// Diagnostics captured while sampling and meshing an SDF.
@@ -102,7 +103,7 @@ impl SdfPreviewSamples {
     }
 }
 
-fn validated_resolution(
+pub(super) fn validated_resolution(
     resolution: (usize, usize, usize),
 ) -> Result<(u32, u32, u32, usize), ValidationError> {
     for (name, actual) in [
@@ -130,6 +131,7 @@ fn validated_resolution(
     Ok((nx, ny, nz, count))
 }
 
+#[cfg(feature = "sdf")]
 pub(crate) fn sample_expr_with_context(
     expression: SdfExpr,
     resolution: (usize, usize, usize),
@@ -165,6 +167,7 @@ pub(crate) fn sample_expr_with_context(
     )
 }
 
+#[cfg(feature = "sdf")]
 pub(crate) fn sample_with_context(
     mut field: impl FnMut(&Point3) -> Result<Real, ValidationError>,
     resolution: (usize, usize, usize),

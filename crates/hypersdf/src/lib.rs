@@ -20,6 +20,7 @@ mod hypervoxel_adapter;
 mod interval;
 mod lipschitz;
 mod mesh;
+mod metaball;
 mod policy;
 mod primitive;
 mod sampling;
@@ -55,6 +56,7 @@ pub use mesh::{
     SdfMeshPreviewBackend, SdfMeshPreviewReport, SdfPreviewNormalStatus, SdfPreviewTriangle,
     SdfPreviewVertex,
 };
+pub use metaball::{Metaball, MetaballField};
 pub use primitive::SdfPrimitive;
 pub use sampling::{
     SdfGridSamplingError, SdfGridSamplingReport, SdfPreviewGrid, SdfPreviewSample,

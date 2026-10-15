@@ -205,7 +205,7 @@ Functions in `csgrs::solid` return `TriangleMesh`:
 | <img src="docs/spur_gear_involute.png" width="144" alt="Involute spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_involute(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/spur_gear_cycloid.png" width="144" alt="Cycloidal spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_cycloid(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, thickness: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/helical_involute_gear.png" width="144" alt="Helical involute gear with visible faces, edges, and vertices"/> | `solid::helical_involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_degrees: Real, slices: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
-| <img src="docs/metaballs_3d.png" width="144" alt="Sampled metaball solid with visible faces, edges, and vertices"/> | `solid::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real) -> TriangleMesh` |
+| <img src="docs/metaballs_3d.png" width="144" alt="Sampled metaball solid with visible faces, edges, and vertices"/> | `solid::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/sdf.png" width="144" alt="Sampled signed-distance-field solid with visible faces, edges, and vertices"/> | `solid::sdf(field: impl Fn(&Point3) -> Real, resolution: (usize, usize, usize), min: Point3, max: Point3, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/gyroid.png" width="144" alt="Bounded gyroid solid with visible faces, edges, and vertices"/> | `solid::gyroid_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/schwarz_p.png" width="144" alt="Bounded Schwarz-P solid with visible faces, edges, and vertices"/> | `solid::schwarz_p_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
@@ -243,9 +243,28 @@ source expression when that distinction matters.
 
 The SDF sampling path checks primary buffer capacities and reservations. Scalar
 expression growth, secondary extraction/preview allocations, total work and
-cancellation do not yet have internal bounds. The separate metaball convenience
-APIs still have their existing fallback and approximation behavior; this SDF
-migration does not qualify them.
+cancellation do not yet have internal bounds. The 3D metaball constructors now share this native sampler and return `Result`.
+`MetaBall` reexports Hypersdf's retained `Metaball`; its `influence` returns a
+fallible exact inverse-square value, with no distant cutoff and a typed pole
+error at the center. `metaballs_with_context` and
+`metaballs_with_diagnostics_and_context` retain the certainty actually consumed.
+Radii and iso values must be positive, padding nonnegative, and every requested
+grid dimension at least two, including for empty inputs.
+
+This is an explicit geometry migration: extraction samples
+`F = (iso - I)/(iso + I)`, where `I = sum(r² / distance²)`, and uses the exact
+continuous limit `F = -1` at centers. The normalization preserves the intended
+level set while making finite interpolation well-defined, including for
+coincident centers. The former cutoff, finite singularity sentinel and hidden
+`f32` vertex construction are removed from 3D modeling. Grid locations retain
+the existing conservative bounds and one-cell exterior border. Diagnostic sign
+counts and extrema describe F, with negative meaning inside. Output coordinates
+and serialized artifacts change; this is not a performance-only change or an
+analytic-surface fidelity guarantee.
+
+The separate 2D `curve::metaballs` field and contour migration remains open; its
+existing cutoff, singularity and failure behavior is not qualified by the 3D
+migration.
 
 Sampling arguments such as segments, stacks, slices, and resolution are
 explicit tessellation choices; CSGRS has no global tolerance setting.
@@ -385,6 +404,7 @@ report. The existing convenience entry points retain their strict default.
 | Mesh bounds and queries | `solid::try_bounding_box_with_context`, `contains_point_with_context`, `polyline_intersections_with_context`, `dihedral_angle_with_context` |
 | Hulls, copies, and polygon caps | `solid::convex_hull_with_context`, `minkowski_sum_with_context`, `distribute_linear_with_context`, `distribute_grid_with_context`, `distribute_arc_with_context`, `polyhedron_with_context`, `loft_with_context` |
 | Projection and slicing | `solid::flatten_with_context`, `slice_z_with_context` |
+| Native Real metaball meshing | `solid::metaballs_with_context`, `metaballs_with_diagnostics_and_context` |
 | Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context`, `sdf_expr_with_diagnostics_and_context` |
 | Curve construction | `curve::polygon_with_context`, `rectangle_with_context`, `square_with_context`, `circle_with_context`, `ellipse_with_context`, `regular_ngon_with_context`, `rounded_rectangle_with_context`, `bezier_region_with_context`, `bspline_path_with_context` |
 | Curve transforms and queries | `curve::try_transformed_with_context`, `try_translated_with_context`, `try_rotated_with_context`, `try_scaled_with_context`, `try_bounding_box_with_context`, `contains_xy_with_context`, `hilbert_strings_with_context` |

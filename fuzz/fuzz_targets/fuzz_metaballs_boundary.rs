@@ -77,13 +77,16 @@ fuzz_target!(|bytes: &[u8]| {
 
     let iso_value = decode_real(bytes, &mut idx);
     let padding = decode_real(bytes, &mut idx);
-    let (mesh, diagnostics) = csgrs::solid::metaballs_with_diagnostics(
+    let result = csgrs::solid::metaballs_with_diagnostics(
         &balls,
         (resolution, resolution, resolution),
         iso_value,
         padding,
     );
 
+    let Ok((mesh, diagnostics)) = result else {
+        return;
+    };
     assert_mesh_finite(&mesh);
     assert_diagnostics_consistent(&diagnostics);
     assert_eq!(diagnostics.emitted_triangle_count, mesh.triangles.len());

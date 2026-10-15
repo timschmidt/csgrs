@@ -313,7 +313,6 @@ dependencies = [
  "chrono",
  "doc-image-embed",
  "dxf",
- "fast-surface-nets",
  "gerber-types",
  "gerber_parser",
  "gltf",

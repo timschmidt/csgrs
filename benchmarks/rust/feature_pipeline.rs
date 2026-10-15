@@ -633,7 +633,8 @@ fn main() {
             ),
         ];
         mesh_measurement(
-            &solid::metaballs(&balls, (20, 20, 20), Real::one(), Real::one()),
+            &solid::metaballs(&balls, (20, 20, 20), Real::one(), Real::one())
+                .expect("valid metaball fixture"),
             20 * 20 * 20,
         )
     });
