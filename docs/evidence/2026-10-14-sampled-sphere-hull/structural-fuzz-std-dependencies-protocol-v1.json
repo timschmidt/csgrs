@@ -1,0 +1,25 @@
+{
+  "purpose": "Populate the temporary Cargo cache from the installed toolchain lockfile, without changing the installed toolchain or any closed candidate.",
+  "installed_source": "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library",
+  "copied_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-std-dependencies-v1/library",
+  "source_files": 3539,
+  "source_hashes": "structural-fuzz-std-dependencies-source-v1.json.gz",
+  "command": [
+    "cargo",
+    "fetch",
+    "--locked",
+    "--manifest-path",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-std-dependencies-v1/library/Cargo.toml",
+    "--target",
+    "x86_64-unknown-linux-gnu"
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "false",
+    "CARGO_TERM_COLOR": "never",
+    "RUSTUP_TOOLCHAIN": "stable",
+    "RUSTC_BOOTSTRAP": "1"
+  },
+  "wall_limit_seconds": 600,
+  "not_a_qualification_or_benchmark": true
+}

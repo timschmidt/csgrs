@@ -1,0 +1,13 @@
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling serde_json v1.0.149
+   Compiling num-bigint v0.4.6
+   Compiling ciborium v0.2.2
+   Compiling num-complex v0.4.6
+   Compiling tinytemplate v1.2.1
+   Compiling criterion v0.5.1
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v4/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 13.35s
+     Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v4/qualification-target/x86_64-unknown-linux-gnu/release/deps/real_representations-7fffae914936c8dc)

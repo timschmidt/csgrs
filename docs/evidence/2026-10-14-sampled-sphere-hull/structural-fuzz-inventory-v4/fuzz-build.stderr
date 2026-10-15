@@ -1,0 +1,6 @@
+error: no matching package named `wasip1` found
+location searched: crates.io index
+required by package `std v0.0.0 (/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std)`
+note: offline mode (via `--offline`) can sometimes cause surprising resolution failures
+help: if this error is too confusing you may wish to retry without `--offline`
+Error: failed to build fuzz script: ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:abort_on_error=0:exitcode=66:detect_odr_violation=0" RUSTFLAGS=" -Cpasses=sancov-module -Cllvm-args=-sanitizer-coverage-level=4 -Cllvm-args=-sanitizer-coverage-inline-8bit-counters -Cllvm-args=-sanitizer-coverage-pc-table -Cllvm-args=-sanitizer-coverage-trace-compares --cfg fuzzing -Cllvm-args=-simplifycfg-branch-fold-threshold=0 -Zsanitizer=address -Cllvm-args=-sanitizer-coverage-stack-depth -Cdebug-assertions -Ccodegen-units=1 -Cforce-frame-pointers=yes" "cargo" "build" "--manifest-path" "crates/hyperreal/fuzz/Cargo.toml" "--target" "x86_64-unknown-linux-gnu" "--release" "--config" "profile.release.debug=\"line-tables-only\"" "--verbose" "-Z" "build-std" "--bin" "structural_representations" "--target-dir" "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v4/fuzz-target"

@@ -1,0 +1,17 @@
+
+running 4 tests
+test cache_scale_and_abort_state_space_preserves_certificates ... ok
+test exact_rational_storage_and_primitive_status_matrix_is_exhaustive ... ok
+test ownership_float_assignment_and_iterator_forms_match_borrowed_arithmetic ... ok
+test every_public_kind_and_private_optimized_certificate_crosses_scalar_dispatch ... ok
+
+successes:
+
+successes:
+    cache_scale_and_abort_state_space_preserves_certificates
+    every_public_kind_and_private_optimized_certificate_crosses_scalar_dispatch
+    exact_rational_storage_and_primitive_status_matrix_is_exhaustive
+    ownership_float_assignment_and_iterator_forms_match_borrowed_arithmetic
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

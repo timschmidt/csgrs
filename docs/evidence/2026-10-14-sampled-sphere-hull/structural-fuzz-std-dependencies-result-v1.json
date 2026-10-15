@@ -1,0 +1,9 @@
+{
+  "exit_code": 0,
+  "wall_seconds": 0.8410268519073725,
+  "installed_and_copied_sources_unchanged": true,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "aeace97807610323e8c794d85c805352fd3d169a3e0431083f1d6d82178f24ec",
+  "protocol_sha256": "a92463d58e7d8a831cb95aa15278a7d5390387f8551b41112407d68e15a7258a",
+  "not_a_qualification_or_benchmark": true
+}

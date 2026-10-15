@@ -1,0 +1,12 @@
+{
+  "default-tests/real_representations-4cfc6a52c9a097d4": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v4/qualification-target/x86_64-unknown-linux-gnu/release/deps/real_representations-4cfc6a52c9a097d4",
+    "sha256": "e1d44f0752dcd38b63495f2356015d64516931f27a768ebc4abc2636ce6e4eae",
+    "bytes": 2735464
+  },
+  "all-features-tests/real_representations-7fffae914936c8dc": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v4/qualification-target/x86_64-unknown-linux-gnu/release/deps/real_representations-7fffae914936c8dc",
+    "sha256": "9f85cc8202da0b1c655de249f052598342488a4bd5b997fe7c375568c1b79abc",
+    "bytes": 3855048
+  }
+}

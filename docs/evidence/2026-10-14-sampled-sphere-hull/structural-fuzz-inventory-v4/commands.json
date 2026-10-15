@@ -1,0 +1,165 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 10.48441778915003,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "fuzz-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "crates/hyperreal/fuzz/Cargo.toml",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.054223205894231796,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "default-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 10.778452520258725,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "5c79ccdbf94e98f1fc77406e29c8fd588b86d2cba7b8461911ed2155128ca6e1"
+  },
+  {
+    "name": "all-features-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--all-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 7.090067372191697,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "52b53472754aa8b574d595183c1136c9aba0a93dbc8d06cd6f16a35ce6313652"
+  },
+  {
+    "name": "fuzz-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "--manifest-path",
+      "crates/hyperreal/fuzz/Cargo.toml",
+      "--bins",
+      "--all-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 8.823818694800138,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e69caa595fe3fbbbdc8329b51dbcbfc82be059c7c38723fe07ec5af03116f6e3"
+  },
+  {
+    "name": "default-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--test",
+      "real_representations",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 13.219723278656602,
+    "stdout_sha256": "13a3d7ba5f6c4773160ebb7ce26f67e2ec4a2b955e123805b181f8e7318a029e",
+    "stderr_sha256": "e2203baa0249e5dbd77e38f529e6d662c0e5de5c7ed4ca62e5a53ef4e698650e"
+  },
+  {
+    "name": "all-features-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--test",
+      "real_representations",
+      "--all-features",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 13.400884829927236,
+    "stdout_sha256": "2797a5230381f70e483ca6d0d5c60d9153bb013348a25c116651f179c4c5105c",
+    "stderr_sha256": "580ff1e6c110060b4c85b45b3dd2a852f6974677d50802988cdd432a438c1017"
+  },
+  {
+    "name": "fuzz-build",
+    "command": [
+      "cargo",
+      "fuzz",
+      "build",
+      "structural_representations",
+      "--fuzz-dir",
+      "crates/hyperreal/fuzz",
+      "--target-dir",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v4/fuzz-target",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "--sanitizer",
+      "address",
+      "--build-std",
+      "--debug-assertions",
+      "--verbose"
+    ],
+    "exit_code": 1,
+    "process_wall_seconds": 0.16263509960845113,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "cb0299fa7d329081c6f9caeea99690a76437a0b28b3173287b6d4b3ac3c9fe38"
+  }
+]
