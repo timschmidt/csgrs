@@ -2,7 +2,7 @@
 
 #[cfg(feature = "metaballs")]
 pub(crate) mod metaballs;
-#[cfg(feature = "sdf")]
+#[cfg(any(feature = "sdf", feature = "metaballs"))]
 pub(crate) mod sdf;
 #[cfg(feature = "sdf")]
 pub(crate) mod tpms;

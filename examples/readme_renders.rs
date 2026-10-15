@@ -417,7 +417,7 @@ fn render_metaballs_mesh() {
     ];
     render_mesh(
         "metaballs_3d",
-        &solid::metaballs(&balls, (8, 8, 8), r(0.7), r(0.25)),
+        &solid::metaballs(&balls, (8, 8, 8), r(0.7), r(0.25)).expect("valid metaball fixture"),
     );
 }
 

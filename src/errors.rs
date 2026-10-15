@@ -60,8 +60,12 @@ pub enum ValidationError {
     /// Native sampled-field extraction failed, retaining its typed diagnostic.
     #[error("{0}")]
     SurfaceNets(#[from] hypermesh::SurfaceNetsError),
+    /// A retained implicit-field construction failed before grid sampling.
+    #[cfg(any(feature = "sdf", feature = "metaballs"))]
+    #[error("{0}")]
+    SdfEvaluation(#[from] hypersdf::SdfEvaluationError),
     /// A retained expression could not be evaluated at this grid sample.
-    #[cfg(feature = "sdf")]
+    #[cfg(any(feature = "sdf", feature = "metaballs"))]
     #[error("SDF sample {sample:?}: {source}")]
     SdfSample {
         sample: [usize; 3],
@@ -114,8 +118,8 @@ impl ValidationErrorKind {
 impl ValidationError {
     pub const fn kind(&self) -> ValidationErrorKind {
         match self {
-            #[cfg(feature = "sdf")]
-            Self::SdfSample { source, .. } => match source {
+            #[cfg(any(feature = "sdf", feature = "metaballs"))]
+            Self::SdfSample { source, .. } | Self::SdfEvaluation(source) => match source {
                 hypersdf::SdfEvaluationError::InvalidDomain { .. } => {
                     ValidationErrorKind::InvalidInput
                 },

@@ -54,7 +54,8 @@ fn metaballs_generate_mesh_from_hyperreal_centers() {
         MetaBall::new(p3(0.35, 0.0, 0.0), r(0.6)),
     ];
     let (mesh, diagnostics) =
-        solid::metaballs_with_diagnostics(&balls, (6, 6, 6), r(0.35), r(0.2));
+        solid::metaballs_with_diagnostics(&balls, (6, 6, 6), r(0.35), r(0.2))
+            .expect("valid metaball fixture");
 
     assert!(diagnostics.crossing_cell_count > 0);
     assert!(diagnostics.surface_nets_vertex_count > 0);
@@ -68,23 +69,27 @@ fn metaballs_generate_mesh_from_hyperreal_centers() {
 }
 
 #[test]
-fn metaball_influence_at_center_is_finite_hyperreal_value() {
+fn metaball_influence_preserves_its_pole_and_positive_finite_values() {
     let ball = MetaBall::new(p3(0.0, 0.0, 0.0), r(1.0));
-    let influence = ball
-        .influence(&p3(0.0, 0.0, 0.0))
-        .expect("valid metaball influence");
-
+    assert!(matches!(
+        ball.influence(&p3(0.0, 0.0, 0.0)),
+        Err(hypersdf::SdfEvaluationError::Scalar {
+            source: hyperreal::Problem::DivideByZero,
+            ..
+        })
+    ));
+    let influence = ball.influence(&p3(2.0, 0.0, 0.0)).expect("nonzero distance");
     assert_eq!(
-        hyperlimit::compare_reals(&influence, &r(0.0), PredicatePolicy::STRICT).value(),
-        Some(std::cmp::Ordering::Greater)
+        hyperlimit::compare_reals(&influence, &r(0.25), PredicatePolicy::STRICT).value(),
+        Some(std::cmp::Ordering::Equal)
     );
 }
 
 #[test]
 fn metaballs_reject_unrepresentable_grid_dimensions() {
     let ball = MetaBall::new(p3(0.0, 0.0, 0.0), r(1.0));
-    let (mesh, diagnostics) =
-        solid::metaballs_with_diagnostics(&[ball], (usize::MAX, 2, 2), r(1.0), r(0.0));
-    assert!(mesh.triangles.is_empty());
-    assert_eq!(diagnostics.sample_count, 0);
+    assert!(matches!(
+        solid::metaballs_with_diagnostics(&[ball], (usize::MAX, 2, 2), r(1.0), r(0.0)),
+        Err(csgrs::errors::ValidationError::CapacityOverflow)
+    ));
 }
