@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/qualify_structural_fuzz_inventory_v1.py", line 225, in <module>
+    {'prepare': prepare, 'qualify': qualify}[args.phase]()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/qualify_structural_fuzz_inventory_v1.py", line 76, in prepare
+    assert set(seeds) == {'seed'} | {f'stride-{i:02}' for i in range(22)}
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

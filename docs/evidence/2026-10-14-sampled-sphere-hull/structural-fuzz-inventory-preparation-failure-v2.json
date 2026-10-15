@@ -1,0 +1,17 @@
+{
+  "complete": false,
+  "preparation_closed": true,
+  "driver_exit_code": 1,
+  "qualification_commands_executed": 0,
+  "cause": "The unchanged original seed is 34 bytes, exceeding the proposed 32-byte input bound. Preparation stopped before creating the trial directory or compiling/running code.",
+  "source_changed_during_preparation": false,
+  "preserved_artifacts_sha256": {
+    "qualify_structural_fuzz_inventory_v2.py": "106afe3903436d341c8a8915f0fae0a7970025c4d19112b2c09b232a96bfe8a7",
+    "structural-fuzz-inventory-scope-v2.json": "57d87553d3a753c3732d36ad742b239fc8406086d25957f9726215a6648c96ce",
+    "structural-fuzz-inventory-prepare-v2.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "structural-fuzz-inventory-prepare-v2.stderr": "50bb5676e539eb6b76a0aafa6ed66308f1a9127e88aaf8ffc44792bd11f1e198"
+  },
+  "correction": "A new v3 protocol sets its byte bound to 34 and preserves the complete original seed. The existing 32-node graph bound remains unchanged. No qualification was started under either preceding preparation.",
+  "admitted": false,
+  "plan_complete": false
+}

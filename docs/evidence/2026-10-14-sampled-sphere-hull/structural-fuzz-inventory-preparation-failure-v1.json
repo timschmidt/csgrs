@@ -1,0 +1,41 @@
+{
+  "complete": false,
+  "preparation_closed": true,
+  "driver_exit_code": 1,
+  "qualification_commands_executed": 0,
+  "cause": "The preflight assumed one original corpus file; the preserved parent actually has the seed and 20 underscore-named stride files. The equality guard stopped before creating the trial directory or compiling/running code.",
+  "source_changed_during_preparation": false,
+  "original_corpus_files_sha256": {
+    "stride_02": "cdbcae15105d6b781e620813c79c7e868740d4e9cc53ce6f5fcbbc12387adf4b",
+    "stride_19": "d8a957038679125d4840554fc43375697e662283121561afdefc2c3fbecaf729",
+    "stride_09": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "stride_18": "f3743a0a18e53d13922cc21a70d783d875a12560c22ff8d28bda5f5ca9fe05c3",
+    "stride_01": "fafba0527c3953c4b6e0e5b5739ba83612f8053bcdc9466730193cd1d590b408",
+    "stride_12": "7de1555df0c2700329e815b93b32c571c3ea54dc967b89e81ab73b9972b72d1d",
+    "stride_00": "ac96469638e152a73cadbf62d44e2f39517e1c31d41eb6206f138d0206444d7b",
+    "stride_07": "f465c3739385890c221dff1a05e578c6cae0d0430e46996d319db7439f884336",
+    "stride_10": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "seed": "e4fbc0c2fd920b718ff85603731d90df12d689796641593d7aaab1f294103dab",
+    "stride_15": "10159baf262b43a92d95db59dae1f72c645127301661e0a3ce4e38b295a97c58",
+    "stride_16": "aa67a169b0bba217aa0aa88a65346920c84c42447c36ba5f7ea65f422c1fe5d8",
+    "stride_03": "4e3cf60495dca6411d155372c42aa62f07a6f0c5792f016cff361dd7a3965b20",
+    "stride_04": "beadba836315747fc95ae304452514b72fe122a6e345974638d70c4e8ebace6a",
+    "stride_17": "2e6d31a5983a91251bfae5aefa1c0a19d8ba3cf601d0e8a706b4cfa9661a6b8a",
+    "stride_06": "eb4bd64f7014f7d42e9d358035802242741b974e8dfcd37c59f9c21ce29d781e",
+    "stride_11": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2",
+    "stride_13": "f0b5c2c2211c8d67ed15e75e656c7862d086e9245420892a7de62cd9ec582a06",
+    "stride_08": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "stride_14": "06e9d52c1720fca412803e3b07c4b228ff113e303f4c7ab94665319d832bbfb7",
+    "stride_05": "61d1954b9aba0c9aedb8d1338804e817c7262cfc36da94161dab8e3ed7a3a43a"
+  },
+  "preserved_artifacts_sha256": {
+    "qualify_structural_fuzz_inventory_v1.py": "cd82aa52174bb02f4b8f88cff7e7a2b44f0f366ef7bdc3d1fdb88db8f052e31b",
+    "structural-fuzz-inventory-scope-v1.json": "7d2a955075562f19b1fe586d8f10c9f61f4007509d672da86ecf2847548f910c",
+    "structural-fuzz-inventory-prepare-v1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "structural-fuzz-inventory-prepare-v1.stderr": "d35e1020a0d6f053c654f56dfc1de7dfbf35e3d6264bf346db73a3cf6cca8497",
+    "structural-fuzz-inventory-v1.patch": "89a42afe0e2ad14ef8bc8579a748ae33c3398cc9ff73c1f1db8c1a72de0cf400"
+  },
+  "correction": "A new v2 protocol replays all 21 original and 22 new corpus files. No input is removed or changed.",
+  "admitted": false,
+  "plan_complete": false
+}

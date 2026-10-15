@@ -1,0 +1,291 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v1/source",
+  "source_files": 10153,
+  "root_source_files": 10130,
+  "inputs_sha256": {
+    "qualify_structural_fuzz_inventory_v3.py": "dfad29944fe0c8306c755abb3c98018a9bfb1cd4bfcfb8b02965398ea84d6d4d",
+    "structural-fuzz-inventory-scope-v3.json": "545ec0dbb17eec358291e1f517310f5d3952c3ff3ff4d0c92d002f901f573f6b",
+    "structural-fuzz-inventory-v1.patch": "89a42afe0e2ad14ef8bc8579a748ae33c3398cc9ff73c1f1db8c1a72de0cf400",
+    "structural-fuzz-inventory-preparation-failure-v1.json": "e51bcac0afb7cba7d60fe9d81fd1e2983e2f65f2cb60cb0db1830364e1700705",
+    "structural-fuzz-inventory-preparation-failure-v2.json": "7250fbfc6d20f2bd50efbf37a36543239202d45214d55e785bbb29b14532e1e4",
+    "mpfr-test-cleanup-main-admission-v1/admission.json": "7949db0e61694749f133bded3220da5e1e04af1e45b25284cbcc2e49286c2832",
+    "mpfr-test-cleanup-main-admission-v1/source-hashes-after.json.gz": "2e939368a26e94ba517e61e413282ed191b48d4e6159ddafbbeec5f85780b317",
+    "mpfr-test-cleanup-main-v1/source-hashes.json.gz": "3f09d401f4753b342b96a02db7b99816d51cadfa2287a605a8425ed37751ba08",
+    "mpfr-test-cleanup-main-v1/result.json": "e6098e1f7a45ce969a5c0fa6b1d0781e35add3471b523b4c7c4fe666dde474fa"
+  },
+  "seed_sha256": {
+    "stride-06": "ceb827ad3d3884fd4d50ae6099d6d50c09a21e72ebd309708e8b69d93df19e55",
+    "stride_02": "cdbcae15105d6b781e620813c79c7e868740d4e9cc53ce6f5fcbbc12387adf4b",
+    "stride_19": "d8a957038679125d4840554fc43375697e662283121561afdefc2c3fbecaf729",
+    "stride-18": "08da7c45cb204377e7e42249cda5713fa865116ddbb4cb5a1949b2e5b438a6ab",
+    "stride_09": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "stride-12": "bf60e4349cace6bce0d552e8d783428db66d0d649bd9e430a3627e2ee14ac839",
+    "stride_18": "f3743a0a18e53d13922cc21a70d783d875a12560c22ff8d28bda5f5ca9fe05c3",
+    "stride_01": "fafba0527c3953c4b6e0e5b5739ba83612f8053bcdc9466730193cd1d590b408",
+    "stride-19": "38ac7bda3d1c2bebaee514c7bf472ec10c12ee6bd464d5e75ea8b09ff9425fcb",
+    "stride-21": "78b4be1f9eeef9da65c393e4385f67edd142709b400ca7d900bd952e0c3cf727",
+    "stride_12": "7de1555df0c2700329e815b93b32c571c3ea54dc967b89e81ab73b9972b72d1d",
+    "stride-05": "2921a11f25dadaa24aa79a548e4e81508c2e5e56af2d833d65e2bcce448ce2f5",
+    "stride_00": "ac96469638e152a73cadbf62d44e2f39517e1c31d41eb6206f138d0206444d7b",
+    "stride_07": "f465c3739385890c221dff1a05e578c6cae0d0430e46996d319db7439f884336",
+    "stride_10": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+    "seed": "e4fbc0c2fd920b718ff85603731d90df12d689796641593d7aaab1f294103dab",
+    "stride_15": "10159baf262b43a92d95db59dae1f72c645127301661e0a3ce4e38b295a97c58",
+    "stride-03": "9b4fb24edd6d1d8830e272398263cdbf026b97392cc35387b991dc0248a628f9",
+    "stride-02": "99be5efb88ca2013bd8e4eb035fd42d5245468fe9afa70d8ba9c1c419a48c4e8",
+    "stride-13": "f566cc6fccc657365c0197accf3a7d6f80f85209ff666ff774f4dcbc524aa842",
+    "stride_16": "aa67a169b0bba217aa0aa88a65346920c84c42447c36ba5f7ea65f422c1fe5d8",
+    "stride-08": "e545d395bb3fd971f91bf9a2b6722831df704efae6c1aa9da0989ed0970b77bb",
+    "stride_03": "4e3cf60495dca6411d155372c42aa62f07a6f0c5792f016cff361dd7a3965b20",
+    "stride-20": "5aeca385d8b781825b07bbec7c858b7170426c88088935850bc13dd6402368a5",
+    "stride-09": "a2c4aed1cf757cd9a509734a267ffc7b1166b55f4c8f9c3e3550c56e743328fc",
+    "stride-17": "d94e7f1e9bb1f8a9b90996ba12c461b84956f0e7f230145cc594c2f80b067aa0",
+    "stride-11": "cbe2268747c9c8072c7f9926f2288f270637dc55bb9d14d3368361d5e47d25be",
+    "stride_04": "beadba836315747fc95ae304452514b72fe122a6e345974638d70c4e8ebace6a",
+    "stride_17": "2e6d31a5983a91251bfae5aefa1c0a19d8ba3cf601d0e8a706b4cfa9661a6b8a",
+    "stride_06": "eb4bd64f7014f7d42e9d358035802242741b974e8dfcd37c59f9c21ce29d781e",
+    "stride-04": "c0ba8a33ac67f44abff5984dfbb6f56c46b880ac2b86e1f23e7fa9c402c53ae7",
+    "stride-16": "707bf0b938f307b5c222e670598b865d5e1f8a8003df82c7abbf7c9f8fa4d720",
+    "stride_11": "1121cfccd5913f0a63fec40a6ffd44ea64f9dc135c66634ba001d10bcf4302a2",
+    "stride_13": "f0b5c2c2211c8d67ed15e75e656c7862d086e9245420892a7de62cd9ec582a06",
+    "stride-10": "102b51b9765a56a3e899f7cf0ee38e5251f9c503b357b330a49183eb7b155604",
+    "stride_08": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "stride-01": "47dc540c94ceb704a23875c11273e16bb0b8a87aed84de911f2133568115f254",
+    "stride-15": "46e04d129d7b45d054469ce34e24069a1426b3e34f1b68a3d1bff1e070aee192",
+    "stride-14": "7a2a7c0a81d1bd595dff09b918f8ecb5b5e8493654a4f83496956ed8eb017674",
+    "stride-00": "96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7",
+    "stride_14": "06e9d52c1720fca412803e3b07c4b228ff113e303f4c7ab94665319d832bbfb7",
+    "stride-07": "0a6361b3a802f55cd5ae06101c88a1e216320fe11cc0cfe1d791eed08a1200fd",
+    "stride_05": "61d1954b9aba0c9aedb8d1338804e817c7262cfc36da94161dab8e3ed7a3a43a"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v1/qualification-target",
+    "RUSTUP_TOOLCHAIN": "stable",
+    "RUSTC_BOOTSTRAP": "1",
+    "RUSTFLAGS": "-Cforce-frame-pointers=yes",
+    "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1:abort_on_error=0:exitcode=66",
+    "LSAN_OPTIONS": ""
+  },
+  "cargo_fuzz": {
+    "path": "/home/tim/.cargo/bin/cargo-fuzz",
+    "sha256": "d21240d68d00527ab7cf7ecbb2c6aac29b5df9e9c05dbe223544692939333f1b",
+    "version": "cargo-fuzz 0.13.1\n"
+  },
+  "preserved_binaries": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-604035958dfa7d8e",
+      "sha256": "7182ca45b7bac824c3dc29fd68fdd63eb4e749e028a93dfaef98481dd61cfa7a",
+      "bytes": 16899512
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-8fdae5353da25b66",
+      "sha256": "b3cd73362b05e068979afcc6bd7038c2bf371559bb80db0eb20f1e4b309037f7",
+      "bytes": 6432360
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_regressions-343c282611aecf4e",
+      "sha256": "a99488e91e8afce4be1ade9a49218bf1a7ec0794a97853b26d4ba519cc1efda6",
+      "bytes": 5582832
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_semantics-df19d7f209940ebd",
+      "sha256": "4e0598455235f04a621ad6d9b6b2de3090561c6516d4e8608dc45630b35f1679",
+      "bytes": 5518048
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/calculator_diagnostics-b290acfb9a293d03",
+      "sha256": "b385ef526a45d8fe6fcb2213185f21e6503929ed4c10265f860cd72011e597b2",
+      "bytes": 2309440
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_decimal-29abdbb057ddb765",
+      "sha256": "167beb4f66996c4d026c3d348e6ca6ce1b1b67957abe832195daa9c95c038af5",
+      "bytes": 5339992
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_scientific-a5e25f4358ca277f",
+      "sha256": "c092670e4adf604c1604025ef1006c025ce93c92992fa9513a038daa7b40c820",
+      "bytes": 5998952
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/cli-287650fe932e682e",
+      "sha256": "465dfd32e9f6750a27c704f7c1d1f6a78b338193f932d6e8249a207f4508c07d",
+      "bytes": 2309304
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/exact_quadratic_normal_form-a3a5a1046e8616f3",
+      "sha256": "bd42c8ade6aee8db97f55406973ada94ff38e6a6ba5d46f74a6e0aab632e3424",
+      "bytes": 5176608
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/fixed_decimal-8ae1a889e68a25a4",
+      "sha256": "4e281e7250dcffb83e4e2be5fe24f55f8b8080954bbb8e2fad10219bfbe03f16",
+      "bytes": 5302616
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/gmp_api_coverage-93a9dfaff28741d1",
+      "sha256": "c1ac841db3e249f6cd16593d94b496374edf4eacc943fd95aff13550e13cf3ea",
+      "bytes": 2488456
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/multiquadratic_normal_form-e26d67b62f65a0f6",
+      "sha256": "a81481fe5c0ddf67aeb9b736216447dd76db131a5b24b4c721ab996851ae5be9",
+      "bytes": 5296648
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/numeric_roundtrip_formats-a87890b14d7a77eb",
+      "sha256": "f848b6efd47514d1ac8781661298e90ad98aeb73d3e7fd076de750400ba2f3c6",
+      "bytes": 2309456
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/numerical_cross_reference-fd0c277dffe4f0a1",
+      "sha256": "d51da6b9db3d98d12c03d840130ff5fe455cef795da17eb663694a8fa8fdb787",
+      "bytes": 6591088
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/precision_limits-026fd354335a069c",
+      "sha256": "4da70cdfe80dd958453a3e1051c0ab5969d705de0e239a063d766e79e7489d29",
+      "bytes": 4409552
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/public_numeric_semantics-79050a1fa8be66b3",
+      "sha256": "e7e492624337cd070e62d15ada4fd8c15cbfe93bbba2bea50fe7cb9e27fb2bed",
+      "bytes": 6029400
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/rational_oracle-98509b40ddbb41b3",
+      "sha256": "9fda9b97aa51a03719d0afb0c50ac5069147ab6170246048ee9e88d03f138258",
+      "bytes": 4548992
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-9977fa3b279481ea",
+      "sha256": "0c1331a0295fdbf6a8ccc79fd87a31e73ce29288f83da30e044781df27c0e12c",
+      "bytes": 2362984
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/readme_metadata-de999852b75c3fa1",
+      "sha256": "4bcfdf197022375400f6b4314a15bcc02eb7e06d14f1b199cb7d9b142be088cc",
+      "bytes": 2378008
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/real_representations-6ec8c8b8de17caff",
+      "sha256": "9ff1d8308d887819d4b1a61f93173a3270f778d78d21f415b982fae45bffe811",
+      "bytes": 5814056
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-61b50bb7db741757",
+      "sha256": "2b1bb8938ef436eb79bbd5c6d8f2c892f7f012c3156e96c9fe0c91a2af82c760",
+      "bytes": 22202400
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-73125c70e07fabf4",
+      "sha256": "dd5a3c14cd4ca29835e584d06fb835f0104359606f786d2758804d6f5f7d779b",
+      "bytes": 2309336
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-d53331f10ba3ce60",
+      "sha256": "9d5aac4c49d209330663ac247aec4c2cbd264b97ad5ee0b883e0ce3386374cc9",
+      "bytes": 8202576
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_regressions-ff20b3beacc7b07b",
+      "sha256": "ed7c92befb73ef7780ed4fa62ccc3dc38c5b4de466348cac38b584d443dede43",
+      "bytes": 7541952
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_semantics-b58129b0af8377ab",
+      "sha256": "7c4539c7bf42e3d2e30958779d3fabd44be338dd5d8ae1ca19cdbe94d1a0aae2",
+      "bytes": 6049936
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/calculator_diagnostics-e64554b161e59732",
+      "sha256": "536e81f925ab8e9fc4fb9e07758dfbdf87fe1a8eb42efd94f7650eab3a9aeb3e",
+      "bytes": 2362560
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_decimal-64d990a89a2221e7",
+      "sha256": "75c754797c2df8846beb240faadb062d24c5af1d8c7793d3f0820c78f82d9d5a",
+      "bytes": 5789336
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_scientific-91fee2362c925a1b",
+      "sha256": "1444f3ca42af2ad4ce2004641762978d0db11d0ae9c08383dc102776ad0edf55",
+      "bytes": 6468600
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/cli-62b48c56edc70ea4",
+      "sha256": "e389177425e5d65024e655a954391bed5a535d41add232a954a40fa9c675b297",
+      "bytes": 2625984
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/exact_quadratic_normal_form-f1031eed85a2e1b0",
+      "sha256": "ffbe034af4782242d5bcd8fcb607ed2b759a5edf8f7fd25d88b36d30c60b9ded",
+      "bytes": 5598616
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/fixed_decimal-21ed26d2ddbef4b1",
+      "sha256": "c0cdba9a96520039da2ba2787a34d4078d47a0ec4885aff2995444fc29101682",
+      "bytes": 5776240
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/gmp_api_coverage-5ccac0aabf30b17c",
+      "sha256": "f37e5114ed18a9ef8cfbe99fc5cb9fc4a0b9b1344015c3bcc614d939af89649d",
+      "bytes": 2488456
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/multiquadratic_normal_form-9645396986c81d9e",
+      "sha256": "1b029dd8b6834db624606cf6c9a7e87b1685f7727a1927b8caec8b9e91d9a8d3",
+      "bytes": 5759584
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/numeric_roundtrip_formats-6b3f19521ef535bc",
+      "sha256": "2acefb98259918037978d84dc96611968e985c0bec5cafa7d226fa0c2bdb9307",
+      "bytes": 7882800
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/numerical_cross_reference-2234dcca5971be3c",
+      "sha256": "dd2a359ad85b77cf00d7cba1b5380b31e0e7a0e8a2c14aa3f13b9533f85002d8",
+      "bytes": 7318168
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/precision_limits-4c435f65d18dece1",
+      "sha256": "35938b9987d144f83a5ac2505e1014934bd8bb61c624a8accf635cd898c2dca2",
+      "bytes": 4666904
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/public_numeric_semantics-cb093f54eb43b1f7",
+      "sha256": "9790662fb269fdb10c87fdab2f0a47cf6ba6b325f77460e9b6e6c908a630fc4d",
+      "bytes": 6674368
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/rational_oracle-22aaaf93af38211b",
+      "sha256": "88c2747569e1601225aa0d4b026072325c928fb21736b9b77f078e4260c4d86c",
+      "bytes": 4706744
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-ed44010ff36970d1",
+      "sha256": "65eca1e02368518805602598cfa8ba050f97bac4223fa8fe364450ce4331a94d",
+      "bytes": 2362984
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/readme_metadata-75e69ce0f3ca211f",
+      "sha256": "055fb489040a7c15c25a7a0fbe9775e0e34b2d5bddac8d09396219713364c59c",
+      "bytes": 2378008
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mpfr-test-cleanup-main-v1/target/x86_64-unknown-linux-gnu/release/deps/real_representations-39730d63fe46c0e3",
+      "sha256": "21bcba9bfe904e8a250423dfbf36049abfc80710d833329f2c755364f0649888",
+      "bytes": 8585400
+    }
+  ],
+  "command_wall_limit_seconds": 1800,
+  "commands": 10,
+  "test_only": true,
+  "admitted": false,
+  "plan_complete": false
+}
