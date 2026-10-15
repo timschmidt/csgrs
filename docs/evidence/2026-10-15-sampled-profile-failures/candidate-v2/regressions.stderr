@@ -1,0 +1,3 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 16.56s
+     Running tests/sampled_profile_failures.rs (target/sampled-profile-failures/candidate-v2/release/deps/sampled_profile_failures-41fee3c75c404f62)

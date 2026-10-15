@@ -1,0 +1,128 @@
+
+running 24 tests
+test arrow_rejects_nonpositive_dimensions ... FAILED
+test checked_count_overflows_do_not_become_empty_geometry ... FAILED
+test egg_rejects_invalid_dimensions ... FAILED
+test equal_arrow_widths_preserve_the_shaft_and_head ... FAILED
+test extruded_teardrop_does_not_certify_a_failed_profile ... FAILED
+test heart_rejects_invalid_resolution ... FAILED
+test native_degenerate_sample_failure_does_not_become_geometry ... FAILED
+test original_readme_arrow ... ok
+test original_readme_egg ... ok
+test original_readme_heart ... ok
+test original_readme_sector ... ok
+test original_readme_squircle ... ok
+test original_readme_star ... ok
+test original_readme_supershape ... ok
+test original_readme_teardrop ... ok
+test original_readme_trapezoid ... ok
+test scalar_domain_failure_does_not_become_empty_geometry ... FAILED
+test sector_rejects_excessive_sweep ... FAILED
+test squircle_rejects_invalid_resolution ... FAILED
+test star_rejects_invalid_resolution ... FAILED
+test supershape_rejects_nonpositive_axes ... FAILED
+test teardrop_rejects_invalid_dimensions ... FAILED
+test trapezoid_rejects_nonpositive_dimensions ... FAILED
+test undecided_dimensions_do_not_become_empty_geometry ... FAILED
+
+failures:
+
+---- arrow_rejects_nonpositive_dimensions stdout ----
+
+thread 'arrow_rejects_nonpositive_dimensions' (104) panicked at tests/sampled_profile_failures.rs:25:34:
+invalid input became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- checked_count_overflows_do_not_become_empty_geometry stdout ----
+
+thread 'checked_count_overflows_do_not_become_empty_geometry' (105) panicked at tests/sampled_profile_failures.rs:99:9:
+assertion failed: matches!(result, Err(ValidationError::CapacityOverflow))
+
+---- egg_rejects_invalid_dimensions stdout ----
+
+thread 'egg_rejects_invalid_dimensions' (106) panicked at tests/sampled_profile_failures.rs:25:34:
+invalid input became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- equal_arrow_widths_preserve_the_shaft_and_head stdout ----
+
+thread 'equal_arrow_widths_preserve_the_shaft_and_head' (107) panicked at tests/sampled_profile_failures.rs:124:5:
+assertion `left == right` failed
+  left: Some(Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 5, denominator: 2 }, class: One, computable: None, primitive_approx_cache: Empty })
+
+---- extruded_teardrop_does_not_certify_a_failed_profile stdout ----
+
+thread 'extruded_teardrop_does_not_certify_a_failed_profile' (108) panicked at tests/sampled_profile_failures.rs:114:5:
+assertion failed: solid::teardrop_cylinder((-1).into(), 2.into(), 3.into(), 4,
+        &GeometryContext::STRICT).is_err()
+
+---- heart_rejects_invalid_resolution stdout ----
+
+thread 'heart_rejects_invalid_resolution' (109) panicked at tests/sampled_profile_failures.rs:25:34:
+invalid input became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- native_degenerate_sample_failure_does_not_become_geometry stdout ----
+
+thread 'native_degenerate_sample_failure_does_not_become_geometry' (110) panicked at tests/sampled_profile_failures.rs:106:10:
+degenerate sampling became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- scalar_domain_failure_does_not_become_empty_geometry stdout ----
+
+thread 'scalar_domain_failure_does_not_become_empty_geometry' (120) panicked at tests/sampled_profile_failures.rs:83:14:
+scalar domain failure became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- sector_rejects_excessive_sweep stdout ----
+
+thread 'sector_rejects_excessive_sweep' (121) panicked at tests/sampled_profile_failures.rs:25:34:
+invalid input became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- squircle_rejects_invalid_resolution stdout ----
+
+thread 'squircle_rejects_invalid_resolution' (122) panicked at tests/sampled_profile_failures.rs:25:34:
+invalid input became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- star_rejects_invalid_resolution stdout ----
+
+thread 'star_rejects_invalid_resolution' (123) panicked at tests/sampled_profile_failures.rs:25:34:
+invalid input became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- supershape_rejects_nonpositive_axes stdout ----
+
+thread 'supershape_rejects_nonpositive_axes' (124) panicked at tests/sampled_profile_failures.rs:25:34:
+invalid input became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- teardrop_rejects_invalid_dimensions stdout ----
+
+thread 'teardrop_rejects_invalid_dimensions' (125) panicked at tests/sampled_profile_failures.rs:25:34:
+invalid input became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- trapezoid_rejects_nonpositive_dimensions stdout ----
+
+thread 'trapezoid_rejects_nonpositive_dimensions' (126) panicked at tests/sampled_profile_failures.rs:25:34:
+invalid input became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- undecided_dimensions_do_not_become_empty_geometry stdout ----
+
+thread 'undecided_dimensions_do_not_become_empty_geometry' (127) panicked at tests/sampled_profile_failures.rs:90:10:
+undecided input became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+
+failures:
+    arrow_rejects_nonpositive_dimensions
+    checked_count_overflows_do_not_become_empty_geometry
+    egg_rejects_invalid_dimensions
+    equal_arrow_widths_preserve_the_shaft_and_head
+    extruded_teardrop_does_not_certify_a_failed_profile
+    heart_rejects_invalid_resolution
+    native_degenerate_sample_failure_does_not_become_geometry
+    scalar_domain_failure_does_not_become_empty_geometry
+    sector_rejects_excessive_sweep
+    squircle_rejects_invalid_resolution
+    star_rejects_invalid_resolution
+    supershape_rejects_nonpositive_axes
+    teardrop_rejects_invalid_dimensions
+    trapezoid_rejects_nonpositive_dimensions
+    undecided_dimensions_do_not_become_empty_geometry
+
+test result: FAILED. 9 passed; 15 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+

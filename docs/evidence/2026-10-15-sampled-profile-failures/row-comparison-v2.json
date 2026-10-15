@@ -1,0 +1,56 @@
+{
+  "original_readme_arrow.json": {
+    "rows": 7,
+    "sha256": "cf71579f02896296c8f35fc6517e8b8a75de89e4183afec0456c658aa85de29d",
+    "baseline": "docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/rows/original_readme_arrow.json",
+    "candidate": "docs/evidence/2026-10-15-sampled-profile-failures/candidate-v2/rows/original_readme_arrow.json"
+  },
+  "original_readme_egg.json": {
+    "rows": 96,
+    "sha256": "2acac0c091ee45d85aeeb65aca6f957caa7cff6a17cf8213ff775a022836f86f",
+    "baseline": "docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/rows/original_readme_egg.json",
+    "candidate": "docs/evidence/2026-10-15-sampled-profile-failures/candidate-v2/rows/original_readme_egg.json"
+  },
+  "original_readme_heart.json": {
+    "rows": 160,
+    "sha256": "22f7af2cb327986eb4c4d9261754a5cfd8a2a8f3e9a1cd4571b19c310f7df3eb",
+    "baseline": "docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/rows/original_readme_heart.json",
+    "candidate": "docs/evidence/2026-10-15-sampled-profile-failures/candidate-v2/rows/original_readme_heart.json"
+  },
+  "original_readme_sector.json": {
+    "rows": 66,
+    "sha256": "4674f83aa7cc2ab85270488aa5519e9962fd63569e1428014eb1e4c743a7c6fd",
+    "baseline": "docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/rows/original_readme_sector.json",
+    "candidate": "docs/evidence/2026-10-15-sampled-profile-failures/candidate-v2/rows/original_readme_sector.json"
+  },
+  "original_readme_squircle.json": {
+    "rows": 128,
+    "sha256": "ee9d454923e9c838df679513216cfb831053a3e5aa75f16a65597bc25c904795",
+    "baseline": "docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/rows/original_readme_squircle.json",
+    "candidate": "docs/evidence/2026-10-15-sampled-profile-failures/candidate-v2/rows/original_readme_squircle.json"
+  },
+  "original_readme_star.json": {
+    "rows": 10,
+    "sha256": "97152d87af1440685f58a6b4687f4746a6a2f3250e850a4072e766f881698e6c",
+    "baseline": "docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/rows/original_readme_star.json",
+    "candidate": "docs/evidence/2026-10-15-sampled-profile-failures/candidate-v2/rows/original_readme_star.json"
+  },
+  "original_readme_supershape.json": {
+    "rows": 160,
+    "sha256": "c543a23354db6214c5af03e1549ee1af6a83f7ab193cbb7cbba84aa8dc65538d",
+    "baseline": "docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/rows/original_readme_supershape.json",
+    "candidate": "docs/evidence/2026-10-15-sampled-profile-failures/candidate-v2/rows/original_readme_supershape.json"
+  },
+  "original_readme_teardrop.json": {
+    "rows": 98,
+    "sha256": "466da063cc2c1374129baa718b7a7d26533177010e665fa716002b019fe569b2",
+    "baseline": "docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/rows/original_readme_teardrop.json",
+    "candidate": "docs/evidence/2026-10-15-sampled-profile-failures/candidate-v2/rows/original_readme_teardrop.json"
+  },
+  "original_readme_trapezoid.json": {
+    "rows": 4,
+    "sha256": "19de24e24f09e8bfa33f59e789da7342172b84f6f28f7b76c7334e6fe830a0ec",
+    "baseline": "docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/rows/original_readme_trapezoid.json",
+    "candidate": "docs/evidence/2026-10-15-sampled-profile-failures/candidate-v2/rows/original_readme_trapezoid.json"
+  }
+}

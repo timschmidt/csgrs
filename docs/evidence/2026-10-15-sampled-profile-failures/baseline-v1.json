@@ -1,0 +1,20 @@
+[
+  [
+    "regressions",
+    [
+      "env",
+      "CSGRS_SAMPLED_PROFILE_ARTIFACTS=docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/rows",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--test",
+      "sampled_profile_failures",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]

@@ -1,0 +1,5 @@
+{
+  "target": "target/sampled-profile-failures/baseline-v1",
+  "record": "docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/result.json",
+  "release_only": true
+}

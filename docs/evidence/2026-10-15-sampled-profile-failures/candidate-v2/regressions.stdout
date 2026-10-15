@@ -1,0 +1,35 @@
+
+running 30 tests
+test approximate_shoulder_equality_stays_qualified_across_cache_hits ... ok
+test arrow_rejects_nonpositive_dimensions ... ok
+test checked_count_overflows_do_not_become_empty_geometry ... ok
+test clockwise_and_full_turn_sectors_retain_their_sampling_contract ... ok
+test egg_rejects_invalid_dimensions ... ok
+test equal_arrow_widths_preserve_the_shaft_and_head ... ok
+test every_input_controlled_sampling_buffer_checks_capacity ... ok
+test extruded_teardrop_does_not_certify_a_failed_profile ... ok
+test heart_rejects_invalid_resolution ... ok
+test independent_sampled_areas_and_context_receipts_agree ... ok
+test original_readme_arrow ... ok
+test original_readme_egg ... ok
+test original_readme_heart ... ok
+test original_readme_sector ... ok
+test original_readme_squircle ... ok
+test original_readme_star ... ok
+test original_readme_supershape ... ok
+test original_readme_teardrop ... ok
+test original_readme_trapezoid ... ok
+test positive_shape_ranges_and_zero_dimensions_are_explicit_errors ... ok
+test profile_hole_extrusion_and_dyadic_interchange_keep_exact_volume ... ok
+test scalar_domain_failure_does_not_become_empty_geometry ... ok
+test sector_rejects_excessive_sweep ... ok
+test squircle_rejects_invalid_resolution ... ok
+test star_rejects_invalid_resolution ... ok
+test supershape_rejects_nonpositive_axes ... ok
+test teardrop_rejects_invalid_dimensions ... ok
+test trapezoid_rejects_nonpositive_dimensions ... ok
+test undecided_dimensions_do_not_become_empty_geometry ... ok
+test zero_area_sampled_sector_is_a_completed_empty_set ... ok
+
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+

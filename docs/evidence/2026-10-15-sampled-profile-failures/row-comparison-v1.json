@@ -1,0 +1,56 @@
+{
+  "original_readme_arrow.json": {
+    "exact_rows": 7,
+    "baseline_sha256": "cf71579f02896296c8f35fc6517e8b8a75de89e4183afec0456c658aa85de29d",
+    "candidate_sha256": "cf71579f02896296c8f35fc6517e8b8a75de89e4183afec0456c658aa85de29d",
+    "same_bytes": true
+  },
+  "original_readme_egg.json": {
+    "exact_rows": 96,
+    "baseline_sha256": "2acac0c091ee45d85aeeb65aca6f957caa7cff6a17cf8213ff775a022836f86f",
+    "candidate_sha256": "2acac0c091ee45d85aeeb65aca6f957caa7cff6a17cf8213ff775a022836f86f",
+    "same_bytes": true
+  },
+  "original_readme_heart.json": {
+    "exact_rows": 160,
+    "baseline_sha256": "22f7af2cb327986eb4c4d9261754a5cfd8a2a8f3e9a1cd4571b19c310f7df3eb",
+    "candidate_sha256": "22f7af2cb327986eb4c4d9261754a5cfd8a2a8f3e9a1cd4571b19c310f7df3eb",
+    "same_bytes": true
+  },
+  "original_readme_sector.json": {
+    "exact_rows": 66,
+    "baseline_sha256": "4674f83aa7cc2ab85270488aa5519e9962fd63569e1428014eb1e4c743a7c6fd",
+    "candidate_sha256": "4674f83aa7cc2ab85270488aa5519e9962fd63569e1428014eb1e4c743a7c6fd",
+    "same_bytes": true
+  },
+  "original_readme_squircle.json": {
+    "exact_rows": 128,
+    "baseline_sha256": "ee9d454923e9c838df679513216cfb831053a3e5aa75f16a65597bc25c904795",
+    "candidate_sha256": "ee9d454923e9c838df679513216cfb831053a3e5aa75f16a65597bc25c904795",
+    "same_bytes": true
+  },
+  "original_readme_star.json": {
+    "exact_rows": 10,
+    "baseline_sha256": "97152d87af1440685f58a6b4687f4746a6a2f3250e850a4072e766f881698e6c",
+    "candidate_sha256": "97152d87af1440685f58a6b4687f4746a6a2f3250e850a4072e766f881698e6c",
+    "same_bytes": true
+  },
+  "original_readme_supershape.json": {
+    "exact_rows": 160,
+    "baseline_sha256": "c543a23354db6214c5af03e1549ee1af6a83f7ab193cbb7cbba84aa8dc65538d",
+    "candidate_sha256": "c543a23354db6214c5af03e1549ee1af6a83f7ab193cbb7cbba84aa8dc65538d",
+    "same_bytes": true
+  },
+  "original_readme_teardrop.json": {
+    "exact_rows": 98,
+    "baseline_sha256": "466da063cc2c1374129baa718b7a7d26533177010e665fa716002b019fe569b2",
+    "candidate_sha256": "466da063cc2c1374129baa718b7a7d26533177010e665fa716002b019fe569b2",
+    "same_bytes": true
+  },
+  "original_readme_trapezoid.json": {
+    "exact_rows": 4,
+    "baseline_sha256": "19de24e24f09e8bfa33f59e789da7342172b84f6f28f7b76c7334e6fe830a0ec",
+    "candidate_sha256": "19de24e24f09e8bfa33f59e789da7342172b84f6f28f7b76c7334e6fe830a0ec",
+    "same_bytes": true
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/rounded-rectangle-fidelity/native-v1",
+  "preserved_prior_executables_sha256": {
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/csgrs-7cb2efc2751cd581": "c1a814cf58b5e836fe3e1c87b2729078c5cf5bf822d33735ceea12853adf5261",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/adversarial-aa8f7eb900ff711d": "3e46105f685b437d1727d2500efa66577ff79633dc7e126665758285d6d5d691",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/adversarial_deep-5118e0b6d7de3ea6": "aff9f795a5be3c4a6ef71fb3cbf8801bd35300b720bfd2ac271364abbae9da04",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/adversarial_extrusions-aa8048fe0de3f594": "7a43d64a3dece2798c1d470f766b072d901df5af87ff8cd00b3d63e65688a434",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/adversarial_fixtures-cf11e31630975ad0": "c400bcbea9d9b820e96cfb3968b34ec99629883b9a902ebf794273e6f628cc3e",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/adversarial_stress-d6d56cc4aa09a158": "092b9caa03b01304b4d765edb73083a4f42daa828473b9fb552c40641838d680",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/bounds_failures-1de96205ff2a5e07": "da94cdf3af74aafe7a24e63c0f1e299aa9cefd2c251cf7c0485a74d1e57bcfa2",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/competitive-0b8b38c506725d57": "103c5dcd6310a59ae1dda4762780cee048ec2e79e62f43aab5e6883bdb649eaf",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/curve_constructor_failures-e22c3b5ab72457a8": "f2b1a863d1aa0ad5f48b4b8d5b8a5bfb9421e600fb11db66a13148b273f50f81",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/curve_metaball_failures-cdc5511c980183da": "e1caa8f3165b92836b4c9772d443a69fc4a366a292b72f9417e427007339596b",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/curve_metaball_workloads-37ab722afd06f275": "3346d1fc2a9ab641fc80bc35db19a1ef8bfb6e96184d1ff182d60d3d21d55c58",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/empty_composition-3a7164c2b9d5044a": "4b5021df95ca69dc2da86dc91bceb49ecc3e8626e7c6745849f32666545f11fe",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/exact_linear_modeling-26d44c8491c2f7a7": "b9c52052de4b78151ff35bf7e2a3f3770dced213d9a592235699aae3365f2667",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/generated_benchmark_corpus-b45922908131dfbd": "3efcd2fc1337d6cdce519237fa62d703fc32123ebf9ef6a74f3ae133ec8d78ce",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/geometry_context-e14123ad7d9b5126": "aeacb5fbc807502b109361783fde6d1852d1c6228e750fff42fa1bcec321e93d",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/mesh_boolean_context-9d9c68938c3691af": "a113db667e202af7411a021364339077aff41c6c49173d530e7e56c5ed17dce8",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/metaball_failures-043b72a00404a6ff": "78a7dc41495711a344d7881a69e7d6b262c87cda8098abfabe8078324369bc88",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/metaball_workloads-4d7fe7b802e9560f": "17523009ae3bde859f5e73b47a9348004eba9c9e4a65bbd89a6043d0ecad0bd5",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/metaballs_diagnostics-8dfd6522763c319c": "b20f2e69389d43a5dea4970a8050b5bb7e1c835148661741ba2d39e2afdd7f91",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/native_queries-f108d89258947ff9": "d06f0625bc10237c0ca711770df25c9034f8db03d3cc5d41203e8b84f426c7f5",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/primitive_failures-aadd0e4e093d5243": "7536b6c9fa27403730d204822ea35ca96a5302009783e7975eb93194386ede76",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/readme-14ff37358f039d13": "32ada0033fc8746afb1c0966d4c1c81860b5e1c0c472278efb9d75efce03f1fe",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/readme_render_regression-c73ca6dc64fc3820": "db16bd93c8b2d221c5bb2e52ef2d683e66aff6e9d62ebbbfec13bab3802a820a",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/rounded_rectangle_fidelity-ec164e77ee6b2ff4": "ab0f23e583efdd43a00dd484239d216046b6ed0b58d39c3c00d5c5c3178910ee",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/sdf_failures-0e01156f99592da3": "cd3aadb768306a159f77257615a1149e2960a6252375f6807f0e539aa5a5441a",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/sdf_tpms_diagnostics-5aa3ece71b49182c": "48dbc8cc74c1f958c303594ef8d8f3a88bbd2c81430e35ff76a1040b50846bb1",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/solid_cache-d34731e0e95db92a": "8b5407a8bf823e3cdadc24f920133f14ded9f94f1ced45da74f8d77e318f010e",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/transform_failures-74f1159cb89f11ba": "4e57730eb95ca00029c43e57da2050c6f3bc6f45ba3f14a65857c46a4d5b2b16",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/wasm_certainty-d7c6e3b405f88647": "55ebae9c6661cdb8859d70f32857fde941b6843c0d24c7a5550b6c0a5636eaef",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/csgrs-12b72f0ccdd38706": "d7dd08d83ef936f284d5639a438fee417e50ac2e8001cf12b258d7a501a25817",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/bounds_failures-c661a92a5b4c7962": "8d1aad3635349979573787b80c2a009854f3bd30e1969f2cc3b34a57c4f50b13",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/curve_constructor_failures-fd8f13d67d2561c4": "6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/rounded_rectangle_fidelity-1435e79a4c8f8808": "0326a0c9f5da56b219cf3c0db28ed85672d53d140696d7927b40ea9590d6844a",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/csgrs-fbfb4e9daf55c3e5": "996ac6a71d3911b970c8a087a1629900ee8f0c3451ef701545c5de059191c72b",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/bounds_failures-1388f390547a412c": "ec990051c90e16b8084b31b481eae034bd1672a314c64a58ab0cf6f90ede7b6f",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/curve_constructor_failures-526a2455ed7f2aed": "13a880b48064cc37b4d5004dda3049f9642d6ef57d03e56d7ec57812864a1e81",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/rounded_rectangle_fidelity-fedfafd26a0fcb2d": "941bba176794ecdf7cc5162a2db428c3f1f4f29b469fb58725b77919ddace160",
+    "target/rounded-rectangle-fidelity/native-v1/release/deps/profile_primitives-a860b8425128ee3e": "c977d3924abc621e1bfa1037e486839078351b85ec95ae3c7638afcfa546c927"
+  },
+  "base_commit": "2271ad6c5805ad32bcaede4fad9a033ca0d70bbb",
+  "runner_sha256": "80cc0e8db993409487e87a47ccf55d209c189ebde4d0ea7eab28b299e0df9d36",
+  "phase": "baseline-v1",
+  "commands": [
+    [
+      "regressions",
+      [
+        "env",
+        "CSGRS_SAMPLED_PROFILE_ARTIFACTS=docs/evidence/2026-10-15-sampled-profile-failures/baseline-v1/rows",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--test",
+        "sampled_profile_failures",
+        "--",
+        "--test-threads=1"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-profile-failures/baseline-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P1",
+    "P3",
+    "P4",
+    "P6",
+    "P8",
+    "P9",
+    "P13",
+    "P17",
+    "P18",
+    "P20",
+    "P25",
+    "P28",
+    "P30",
+    "P35",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "CSGRS sampled-profile parameter validation and sample construction",
+    "Hypercurve contour/topology ownership",
+    "Teardrop solid composition and WASM boundaries"
+  ],
+  "prior_rounded_domain": "Nonnegative width, height and radius, clamped to half the smaller positive dimension. Zero dimensions remain canonical empty after argument validation. Zero radius or zero corner-segment count selects the sharp rectangle. For n>=1 and positive radius, the intended polygon contains n uniform chords per quarter-circle and every nonzero tangent straight side. Coincident endpoints may be omitted only with evidence. Capacity checks cover the complete point count; internal scalar/work/heap/cancellation bounds remain open.",
+  "domain": "Retain positive dimensional/range preconditions and existing sample formulas for arrow, trapezoid, star, teardrop, egg, squircle, pie_slice, heart and supershape. Errors become typed; successful strict cases remain successful. Equal-width positive arrows must omit only proven duplicate shoulders and represent the shaft plus triangular head. Failed construction cannot become certified empty extrusion. No internal total-work, scalar-growth, heap-byte or cancellation bound.",
+  "consumers": [
+    "Public Rust constructors and new context variants",
+    "Teardrop cylinder",
+    "WASM star/teardrop/egg/heart",
+    "README, benchmark, test and fuzz fixtures"
+  ],
+  "missing_acceptance_test": [
+    "tests/sampled_profile_failures.rs"
+  ],
+  "semantic_oracle": "Typed invalid, undecided, scalar, native and capacity errors through constructors and consumers. Independent small rational/algebraic areas and volumes; original README and benchmark resolutions and exact expression rows supplement semantic assertions. Exact scalar serialization omits accelerator caches and does not demote to floats.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: d41fc3601, 573bdcb8f and 2271ad6c5 commit corrected rounded-rectangle geometry, regressions, preview and acceptance evidence. The full properties goal remains active."
+}

@@ -1,0 +1,41 @@
+
+running 24 tests
+test arrow_rejects_nonpositive_dimensions ... ok
+test checked_count_overflows_do_not_become_empty_geometry ... ok
+test egg_rejects_invalid_dimensions ... ok
+test equal_arrow_widths_preserve_the_shaft_and_head ... ok
+test extruded_teardrop_does_not_certify_a_failed_profile ... ok
+test heart_rejects_invalid_resolution ... ok
+test native_degenerate_sample_failure_does_not_become_geometry ... FAILED
+test original_readme_arrow ... ok
+test original_readme_egg ... ok
+test original_readme_heart ... ok
+test original_readme_sector ... ok
+test original_readme_squircle ... ok
+test original_readme_star ... ok
+test original_readme_supershape ... ok
+test original_readme_teardrop ... ok
+test original_readme_trapezoid ... ok
+test scalar_domain_failure_does_not_become_empty_geometry ... ok
+test sector_rejects_excessive_sweep ... ok
+test squircle_rejects_invalid_resolution ... ok
+test star_rejects_invalid_resolution ... ok
+test supershape_rejects_nonpositive_axes ... ok
+test teardrop_rejects_invalid_dimensions ... ok
+test trapezoid_rejects_nonpositive_dimensions ... ok
+test undecided_dimensions_do_not_become_empty_geometry ... ok
+
+failures:
+
+---- native_degenerate_sample_failure_does_not_become_geometry stdout ----
+
+thread 'native_degenerate_sample_failure_does_not_become_geometry' (171) panicked at tests/sampled_profile_failures.rs:106:10:
+degenerate sampling became geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    native_degenerate_sample_failure_does_not_become_geometry
+
+test result: FAILED. 23 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+

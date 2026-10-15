@@ -1,0 +1,4 @@
+[[{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}],
+[{"rational":{"sign":1,"numerator":[3435973837,576716],"denominator":[0,262144]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}],
+[{"rational":{"sign":1,"numerator":[2576980377,6920601],"denominator":[0,4194304]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[858993459,734003],"denominator":[0,524288]},"class":"One","computable":null}],
+[{"rational":{"sign":1,"numerator":[3435973837,1887436],"denominator":[0,4194304]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[858993459,734003],"denominator":[0,524288]},"class":"One","computable":null}]]
