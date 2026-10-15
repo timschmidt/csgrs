@@ -9133,6 +9133,24 @@
       "evidence": "docs/evidence/2026-10-15-planar-operation-failures/closure-v1.json",
       "turn_outcome": "progress",
       "plan_complete": false
+    },
+    "slice_projection_contract": {
+      "status": "qualified correctness repair; broader resource/provenance/release admission remains pending",
+      "implementation_commit": "07258a70d",
+      "evidence": "docs/evidence/2026-10-15-slice-projection-contract/qualification-v1.json",
+      "closure": "docs/evidence/2026-10-15-slice-projection-contract/closure-v1.json",
+      "baseline": "16 tests: 6 pass, 10 fail; expanded 21 tests: 8 pass, 13 fail",
+      "regressions": "25 modeling tests pass; candidate-v3 unindexed-input failure retained and corrected in candidate-v4",
+      "validation": "14 native commands and full renderer pass; root test totals 338/96/231; Hypermesh default/all-feature totals 237/238; Clippy and docs deny warnings; 73 rendered images",
+      "cost": "82 commands, 9216 completed timed operations; exact semantic oracles, raw unfavorable samples and actual serialization differences retained. Rebuild artifact discrepancy documented; no optimization claim.",
+      "remaining": [
+        "End-to-end construction provenance is not established; native section source indices/parameters refer to the call input and the planar result does not expose these mesh-source records.",
+        "No internal total-work, retained-byte or cancellation bound; trials use external 1800-second wall and 8 GiB per-process address-space limits.",
+        "Clean external release/package admission and full CI matrix remain pending. No push performed.",
+        "Thirty-five pre-existing native files remain byte-identical and unadmitted. Seven previously reproduced Hypercircuit snapshot/golden failures remain unresolved; they were not re-executed by this slice.",
+        "Seven existing Hypermesh tests and one existing all-feature CSGRS test remain ignored under their original conditions."
+      ],
+      "full_plan_complete": false
     }
   },
   "status_meanings": {
