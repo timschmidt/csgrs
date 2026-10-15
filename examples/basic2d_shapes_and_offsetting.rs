@@ -10,8 +10,8 @@ const PATH: &str = "stl/examples/basic2d_shapes";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let square = curve::square(r(2.0));
-    let circle = curve::circle(r(1.0), 64);
+    let square = curve::square(r(2.0)).expect("valid planar fixture");
+    let circle = curve::circle(r(1.0), 64).expect("valid planar fixture");
     let ring = curve::ring(r(2.0), r(0.25), 64, &GeometryContext::APPROXIMATE_512)
         .expect("ring Boolean")
         .into_value();

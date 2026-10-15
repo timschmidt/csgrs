@@ -56,7 +56,8 @@ fuzz_target!(|bytes: &[u8]| {
             &csgrs::curve::rectangle(
                 size_b.clone(),
                 (size_b.clone() / Real::from(2_u8)).expect("two is nonzero"),
-            ),
+            )
+            .expect("valid planar fixture"),
             size_a,
             &csgrs::GeometryContext::STRICT,
         )

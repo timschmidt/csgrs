@@ -1043,9 +1043,9 @@ fn flash_to_curve(
                 &GeometryContext::new(decisions.predicate_policy()),
             )
             .map(|outcome| decisions.consume_geometry(outcome))
-            .map_err(|error| IoError::Geometry {
+            .map_err(|error| IoError::Construction {
                 format: "Gerber",
-                detail: error.to_string(),
+                source: error,
             })?;
             if let Some(hole_diameter) = circle.hole_diameter {
                 let hole_diameter = positive(
@@ -1065,9 +1065,9 @@ fn flash_to_curve(
                         &GeometryContext::new(decisions.predicate_policy()),
                     )
                     .map(|outcome| decisions.consume_geometry(outcome))
-                    .map_err(|error| IoError::Geometry {
+                    .map_err(|error| IoError::Construction {
                         format: "Gerber",
-                        detail: error.to_string(),
+                        source: error,
                     })?,
                     decisions,
                 )?;
@@ -1098,9 +1098,9 @@ fn flash_to_curve(
                     &GeometryContext::new(decisions.predicate_policy()),
                 )
                 .map(|outcome| decisions.consume_geometry(outcome))
-                .map_err(|error| IoError::Geometry {
+                .map_err(|error| IoError::Construction {
                     format: "Gerber",
-                    detail: error.to_string(),
+                    source: error,
                 })?,
                 required_real(rotation, "polygon rotation")?,
                 &GeometryContext::new(decisions.predicate_policy()),
@@ -1128,9 +1128,9 @@ fn flash_to_curve(
                         &GeometryContext::new(decisions.predicate_policy()),
                     )
                     .map(|outcome| decisions.consume_geometry(outcome))
-                    .map_err(|error| IoError::Geometry {
+                    .map_err(|error| IoError::Construction {
                         format: "Gerber",
-                        detail: error.to_string(),
+                        source: error,
                     })?,
                     decisions,
                 )?;
@@ -1203,9 +1203,9 @@ fn aperture_rect_curve(
                 &GeometryContext::new(decisions.predicate_policy()),
             )
             .map(|outcome| decisions.consume_geometry(outcome))
-            .map_err(|error| IoError::Geometry {
+            .map_err(|error| IoError::Construction {
                 format: "Gerber",
-                detail: error.to_string(),
+                source: error,
             })?
         } else {
             curve::rectangle_with_context(
@@ -1214,9 +1214,9 @@ fn aperture_rect_curve(
                 &GeometryContext::new(decisions.predicate_policy()),
             )
             .map(|outcome| decisions.consume_geometry(outcome))
-            .map_err(|error| IoError::Geometry {
+            .map_err(|error| IoError::Construction {
                 format: "Gerber",
-                detail: error.to_string(),
+                source: error,
             })?
         },
         required_real(-width * 0.5, "rectangular aperture x origin")?,
@@ -1247,9 +1247,9 @@ fn aperture_rect_curve(
                 &GeometryContext::new(decisions.predicate_policy()),
             )
             .map(|outcome| decisions.consume_geometry(outcome))
-            .map_err(|error| IoError::Geometry {
+            .map_err(|error| IoError::Construction {
                 format: "Gerber",
-                detail: error.to_string(),
+                source: error,
             })?,
             decisions,
         )?;

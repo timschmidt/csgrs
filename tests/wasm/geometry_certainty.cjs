@@ -14,6 +14,35 @@ const keep = (value) => { owned.push(value); return value; };
 try {
   const empty = keep(new CurveRegionJs());
   const square = keep(CurveRegionJs.square(1));
+  for (const [construct, code] of [
+    [() => CurveRegionJs.square(-1), "invalid_input"],
+    [() => CurveRegionJs.rectangle(0, -1), "invalid_input"],
+    [() => CurveRegionJs.circle(0, 2), "invalid_input"],
+    [() => CurveRegionJs.ellipse(0, -1, 4), "invalid_input"],
+    [() => CurveRegionJs.rightTriangle(1, -1), "invalid_input"],
+    [() => CurveRegionJs.regularNgon(2, 1), "invalid_input"],
+    [() => CurveRegionJs.circle(1, 0xffffffff), "resource_exhausted"],
+    [() => CurveRegionJs.square(NaN), "invalid_input"],
+    [() => CurveRegionJs.ellipse(1, Infinity, 4), "invalid_input"],
+  ]) {
+    assert.throws(construct, (error) => error instanceof Error
+      && error.name === "GeometryError" && error.code === code
+      && error.message.length > 0);
+  }
+  for (const approximate of [false, true]) {
+    assert.throws(() => CurveRegionJs.ring(1, -1, 4, approximate), (error) =>
+      error instanceof Error && error.code === "invalid_input");
+    assert.throws(() => CurveRegionJs.crescent(1, 2, 0, 6, approximate), (error) =>
+      error instanceof Error && error.code === "invalid_input");
+  }
+  const zeroSquare = keep(CurveRegionJs.square(0));
+  const recoveredCurve = keep(zeroSquare.union(square, false));
+  assert.equal(recoveredCurve.certainty, Certainty.Certified);
+  // intoRegion consumes the wrapper; unregister it before transferring ownership.
+  owned.pop();
+  const recoveredRegion = keep(recoveredCurve.intoRegion());
+  assert.equal(recoveredRegion.containsXY(0.5, 0.5), true);
+  assert.equal(recoveredRegion.containsXY(2, 0.5), false);
   for (const approximate of [false, true]) {
     for (const [x, y, value, status] of [
       [0.5, 0.5, true, Status.Decided],

@@ -5,7 +5,7 @@
 //! combine those distinct native meanings in a public profile facade.
 
 use crate::context::GeometryDecisions;
-use crate::errors::{CurveBooleanError, ValidationError};
+use crate::errors::ValidationError;
 use crate::solid;
 use crate::{GeometryContext, GeometryOutcome};
 use hypercurve::{
@@ -25,82 +25,86 @@ thread_local! {
 }
 
 fn region_from_ring(points: &[[Real; 2]]) -> CurveRegion2 {
-    if let Some(region) = REGION_RING_CACHE.with_borrow(|entries| {
-        entries
-            .iter()
-            .rev()
-            .find(|(cached_points, _)| cached_points == points)
-            .map(|(_, region)| region.clone())
-    }) {
-        return region;
-    }
-    let Ok(contour) = Contour2::from_real_ring(points) else {
-        return CurveRegion2::empty();
-    };
-    let region = CurveRegion2::try_from_native_material_contours(vec![contour])
-        .unwrap_or_else(|_| CurveRegion2::empty());
-    REGION_RING_CACHE.with_borrow_mut(|entries| {
-        const CAPACITY: usize = 64;
-        if entries.len() == CAPACITY {
-            entries.remove(0);
-        }
-        entries.push((points.to_vec(), region.clone()));
-    });
-    region
-}
-
-fn curve_validation(error: ValidationError) -> CurveBooleanError {
-    hypercurve::CurveError::Topology(error.to_string()).into()
+    // Remaining legacy sampled shape constructors still have an infallible
+    // API. Their migration is separate; even that path must not cache failure
+    // or allow an ambient approximate scope to create a strict cache entry.
+    polygon(points).unwrap_or_else(|_| empty())
 }
 
 fn positive_with(
     value: &Real,
+    name: &'static str,
     decisions: &GeometryDecisions,
-) -> Result<bool, CurveBooleanError> {
-    decisions
-        .sign(value, "positive curve dimension")
-        .map(|sign| sign == hyperreal::RealSign::Positive)
-        .map_err(curve_validation)
+) -> Result<(), ValidationError> {
+    match decisions.sign(value, name)? {
+        hyperreal::RealSign::Positive => Ok(()),
+        _ => Err(ValidationError::NonPositiveParameter { name }),
+    }
 }
 
 fn nonnegative_with(
     value: &Real,
+    name: &'static str,
     decisions: &GeometryDecisions,
-) -> Result<bool, CurveBooleanError> {
-    decisions
-        .sign(value, "nonnegative curve dimension")
-        .map(|sign| sign != hyperreal::RealSign::Negative)
-        .map_err(curve_validation)
+) -> Result<hyperreal::RealSign, ValidationError> {
+    match decisions.sign(value, name)? {
+        hyperreal::RealSign::Negative => Err(ValidationError::NegativeParameter { name }),
+        sign => Ok(sign),
+    }
 }
 
 fn compare_with(
     left: &Real,
     right: &Real,
     decisions: &GeometryDecisions,
-) -> Result<Ordering, CurveBooleanError> {
-    decisions
-        .decide(
-            hyperlimit::compare_reals(left, right, decisions.predicate_policy()),
-            "curve dimensions",
-        )
-        .map_err(curve_validation)
+) -> Result<Ordering, ValidationError> {
+    decisions.decide(
+        hyperlimit::compare_reals(left, right, decisions.predicate_policy()),
+        "curve dimensions",
+    )
 }
 
 fn ring_with(
     points: &[[Real; 2]],
     decisions: &GeometryDecisions,
-) -> Result<CurveRegion2, CurveBooleanError> {
-    let contour = Contour2::from_real_ring(points)?;
-    Ok(decisions
-        .exact_curve(|| CurveRegion2::try_from_native_material_contours(vec![contour]))?)
+) -> Result<CurveRegion2, ValidationError> {
+    if let Some(region) = REGION_RING_CACHE.with_borrow(|entries| {
+        entries
+            .iter()
+            .rev()
+            .find(|(key, _)| key == points)
+            .map(|(_, region)| region.clone())
+    }) {
+        return Ok(region);
+    }
+    let region = decisions.exact_curve(|| -> Result<_, ValidationError> {
+        let contour = Contour2::from_real_ring(points)?;
+        Ok(CurveRegion2::try_from_native_material_contours(vec![
+            contour,
+        ])?)
+    })?;
+    // Only successful strict proofs enter this thread-local, 64-entry FIFO.
+    // Owned exact coordinate keys and cloned regions preserve input identity.
+    // Approximate requests may reuse a strict proof, but never populate it.
+    if decisions.predicate_policy() == hyperlimit::PredicatePolicy::STRICT {
+        REGION_RING_CACHE.with_borrow_mut(|entries| {
+            if entries.len() == 64 {
+                entries.remove(0);
+            }
+            entries.push((points.to_vec(), region.clone()));
+        });
+    }
+    Ok(region)
 }
 
 fn rectangle_with(
     width: Real,
     height: Real,
     decisions: &GeometryDecisions,
-) -> Result<CurveRegion2, CurveBooleanError> {
-    if !positive_with(&width, decisions)? || !positive_with(&height, decisions)? {
+) -> Result<CurveRegion2, ValidationError> {
+    let width_sign = nonnegative_with(&width, "width", decisions)?;
+    let height_sign = nonnegative_with(&height, "height", decisions)?;
+    if width_sign == hyperreal::RealSign::Zero || height_sign == hyperreal::RealSign::Zero {
         return Ok(empty());
     }
     ring_with(
@@ -114,30 +118,22 @@ fn rectangle_with(
     )
 }
 
-fn ellipse_with(
+fn ellipse_points_with(
     radius_x: Real,
     radius_y: Real,
     segments: usize,
     decisions: &GeometryDecisions,
-) -> Result<CurveRegion2, CurveBooleanError> {
-    if segments < 3
-        || !positive_with(&radius_x, decisions)?
-        || !positive_with(&radius_y, decisions)?
-    {
-        return Ok(empty());
-    }
+) -> Result<CurveRegion2, ValidationError> {
     let denominator = Real::from(segments as u64);
-    let points = (0..segments)
-        .map(|index| {
-            let fraction = (Real::from(index as u64) / &denominator)
-                .expect("validated nonzero segment count");
-            let angle = Real::tau() * fraction;
-            [
-                radius_x.clone() * angle.clone().cos(),
-                radius_y.clone() * angle.sin(),
-            ]
-        })
-        .collect::<Vec<_>>();
+    let mut points = solid::reserved(segments)?;
+    for index in 0..segments {
+        let fraction = (Real::from(index as u64) / &denominator)?;
+        let angle = Real::tau() * fraction;
+        points.push([
+            radius_x.clone() * angle.clone().cos(),
+            radius_y.clone() * angle.sin(),
+        ]);
+    }
     ring_with(&points, decisions)
 }
 
@@ -145,8 +141,13 @@ fn circle_with(
     radius: Real,
     segments: usize,
     decisions: &GeometryDecisions,
-) -> Result<CurveRegion2, CurveBooleanError> {
-    ellipse_with(radius.clone(), radius, segments, decisions)
+) -> Result<CurveRegion2, ValidationError> {
+    solid::sample_minimum(segments, 3, "segments")?;
+    solid::capacity::<[Real; 2]>(Some(segments))?;
+    if nonnegative_with(&radius, "radius", decisions)? == hyperreal::RealSign::Zero {
+        return Ok(empty());
+    }
+    ellipse_points_with(radius.clone(), radius, segments, decisions)
 }
 
 fn translate_with(
@@ -154,7 +155,7 @@ fn translate_with(
     x: Real,
     y: Real,
     decisions: &GeometryDecisions,
-) -> Result<CurveRegion2, CurveBooleanError> {
+) -> Result<CurveRegion2, ValidationError> {
     Ok(decisions.exact_curve(|| {
         region.transform_affine(
             &Real::one(),
@@ -257,32 +258,28 @@ pub fn empty() -> CurveRegion2 {
 }
 
 /// Axis-aligned rectangle with its minimum corner at the origin.
-pub fn rectangle(width: Real, length: Real) -> CurveRegion2 {
-    if !matches!(
-        crate::hyper_math::hreal_sign(&width),
-        Some(hyperreal::RealSign::Positive)
-    ) || !matches!(
-        crate::hyper_math::hreal_sign(&length),
-        Some(hyperreal::RealSign::Positive)
-    ) {
-        return empty();
-    }
-    region_from_ring(&[
-        [Real::zero(), Real::zero()],
-        [width.clone(), Real::zero()],
-        [width, length.clone()],
-        [Real::zero(), length],
-    ])
+///
+/// Dimensions must be nonnegative. A certified zero dimension produces the
+/// canonical empty set after both arguments are validated. Negative or
+/// undecided dimensions fail; they never become successful empty geometry.
+pub fn rectangle(width: Real, length: Real) -> Result<CurveRegion2, ValidationError> {
+    rectangle_with_context(width, length, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
 }
 
 /// Axis-aligned square with its minimum corner at the origin.
-pub fn square(width: Real) -> CurveRegion2 {
+pub fn square(width: Real) -> Result<CurveRegion2, ValidationError> {
     rectangle(width.clone(), width)
 }
 
 /// Regular sampled circle.
-pub fn circle(radius: Real, segments: usize) -> CurveRegion2 {
-    sampled_ellipse(radius.clone(), radius, segments)
+///
+/// The radius is nonnegative and at least three segments are required, even
+/// for zero radius. Certification concerns the sampled polygon; no analytic
+/// circle fidelity bound is implied.
+pub fn circle(radius: Real, segments: usize) -> Result<CurveRegion2, ValidationError> {
+    circle_with_context(radius, segments, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
 }
 
 /// Constructs a rectangle with the selected policy and retains predicate certainty.
@@ -290,7 +287,7 @@ pub fn rectangle_with_context(
     width: Real,
     height: Real,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let region = rectangle_with(width, height, &decisions)?;
     Ok(decisions.finish(region))
@@ -300,7 +297,7 @@ pub fn rectangle_with_context(
 pub fn square_with_context(
     width: Real,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     rectangle_with_context(width.clone(), width, context)
 }
 
@@ -309,7 +306,7 @@ pub fn circle_with_context(
     radius: Real,
     segments: usize,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let region = circle_with(radius, segments, &decisions)?;
     Ok(decisions.finish(region))
@@ -321,10 +318,17 @@ pub fn ellipse_with_context(
     height: Real,
     segments: usize,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
+    solid::sample_minimum(segments, 3, "segments")?;
+    solid::capacity::<[Real; 2]>(Some(segments))?;
+    let width_sign = nonnegative_with(&width, "width", &decisions)?;
+    let height_sign = nonnegative_with(&height, "height", &decisions)?;
+    if width_sign == hyperreal::RealSign::Zero || height_sign == hyperreal::RealSign::Zero {
+        return Ok(decisions.finish(empty()));
+    }
     let two = Real::from(2_u8);
-    let region = ellipse_with(
+    let region = ellipse_points_with(
         (width / &two).expect("two is nonzero"),
         (height / two).expect("two is nonzero"),
         segments,
@@ -338,25 +342,45 @@ pub fn regular_ngon_with_context(
     sides: usize,
     radius: Real,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     circle_with_context(radius, sides, context)
 }
 
 /// Right triangle with its right-angle corner at the origin.
-pub fn right_triangle(width: Real, height: Real) -> CurveRegion2 {
-    if !positive_real(&width) || !positive_real(&height) {
-        return empty();
+pub fn right_triangle(width: Real, height: Real) -> Result<CurveRegion2, ValidationError> {
+    right_triangle_with_context(width, height, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Constructs a right triangle, retaining the certainty of dimension and topology decisions.
+pub fn right_triangle_with_context(
+    width: Real,
+    height: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let width_sign = nonnegative_with(&width, "width", &decisions)?;
+    let height_sign = nonnegative_with(&height, "height", &decisions)?;
+    if width_sign == hyperreal::RealSign::Zero || height_sign == hyperreal::RealSign::Zero {
+        return Ok(decisions.finish(empty()));
     }
-    region_from_ring(&[
-        [Real::zero(), Real::zero()],
-        [width, Real::zero()],
-        [Real::zero(), height],
-    ])
+    let region = ring_with(
+        &[
+            [Real::zero(), Real::zero()],
+            [width, Real::zero()],
+            [Real::zero(), height],
+        ],
+        &decisions,
+    )?;
+    Ok(decisions.finish(region))
 }
 
 /// Closed polygon from exact coordinate rows.
-pub fn polygon(points: &[[Real; 2]]) -> CurveRegion2 {
-    region_from_ring(points)
+///
+/// Requires a valid ring with at least three vertices. Use [`empty`] for
+/// canonical absence; an empty or malformed ring is an error.
+pub fn polygon(points: &[[Real; 2]]) -> Result<CurveRegion2, ValidationError> {
+    polygon_with_context(points, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Publishes a filled ring with the selected policy and aggregate certainty.
@@ -365,38 +389,35 @@ pub fn polygon_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let contour = Contour2::from_real_ring(points)
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
-    let region = decisions
-        .exact_curve(|| CurveRegion2::try_from_native_material_contours(vec![contour]))
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+    let region = ring_with(points, &decisions)?;
     Ok(decisions.finish(region))
 }
 
 /// Closed polygon from native Hypercurve points.
-pub fn polygon_points(points: &[Point2]) -> CurveRegion2 {
-    let points = points
-        .iter()
-        .map(|point| [point.x().clone(), point.y().clone()])
-        .collect::<Vec<_>>();
-    region_from_ring(&points)
+pub fn polygon_points(points: &[Point2]) -> Result<CurveRegion2, ValidationError> {
+    let mut rows = solid::reserved(points.len())?;
+    rows.extend(
+        points
+            .iter()
+            .map(|point| [point.x().clone(), point.y().clone()]),
+    );
+    polygon(&rows)
 }
 
 /// Sampled ellipse.
-pub fn ellipse(width: Real, height: Real, segments: usize) -> CurveRegion2 {
-    if !positive_real(&width) || !positive_real(&height) {
-        return empty();
-    }
-    let two = Real::from(2_u8);
-    let (Ok(radius_x), Ok(radius_y)) = (width / &two, height / &two) else {
-        return empty();
-    };
-    sampled_ellipse(radius_x, radius_y, segments)
+pub fn ellipse(
+    width: Real,
+    height: Real,
+    segments: usize,
+) -> Result<CurveRegion2, ValidationError> {
+    ellipse_with_context(width, height, segments, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
 }
 
 /// Regular polygon.
-pub fn regular_ngon(sides: usize, radius: Real) -> CurveRegion2 {
-    sampled_ellipse(radius.clone(), radius, sides)
+pub fn regular_ngon(sides: usize, radius: Real) -> Result<CurveRegion2, ValidationError> {
+    regular_ngon_with_context(sides, radius, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
 }
 
 /// Filled arrow.
@@ -588,7 +609,7 @@ pub fn rounded_rectangle(
     height: Real,
     corner_radius: Real,
     corner_segments: usize,
-) -> CurveRegion2 {
+) -> Result<CurveRegion2, ValidationError> {
     rounded_rectangle_with_context(
         width,
         height,
@@ -597,7 +618,6 @@ pub fn rounded_rectangle(
         &GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
-    .unwrap_or_else(|_| empty())
 }
 
 /// Constructs a rounded rectangle with the selected policy and aggregate certainty.
@@ -607,12 +627,13 @@ pub fn rounded_rectangle_with_context(
     corner_radius: Real,
     corner_segments: usize,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if !positive_with(&width, &decisions)?
-        || !positive_with(&height, &decisions)?
-        || !nonnegative_with(&corner_radius, &decisions)?
-    {
+    let point_capacity = solid::capacity::<[Real; 2]>(corner_segments.checked_mul(4))?;
+    let width_sign = nonnegative_with(&width, "width", &decisions)?;
+    let height_sign = nonnegative_with(&height, "height", &decisions)?;
+    nonnegative_with(&corner_radius, "corner_radius", &decisions)?;
+    if width_sign == hyperreal::RealSign::Zero || height_sign == hyperreal::RealSign::Zero {
         return Ok(decisions.finish(empty()));
     }
     let half_width = (&width / Real::from(2_u8)).expect("two is nonzero");
@@ -625,7 +646,9 @@ pub fn rounded_rectangle_with_context(
         Ordering::Greater => half_height,
         Ordering::Equal | Ordering::Less => radius,
     };
-    if corner_segments == 0 || !positive_with(&radius, &decisions)? {
+    if corner_segments == 0
+        || decisions.sign(&radius, "corner radius")? == hyperreal::RealSign::Zero
+    {
         return Ok(decisions.finish(rectangle_with(width, height, &decisions)?));
     }
     let half_pi = (Real::pi() / Real::from(2_u8)).expect("two is nonzero");
@@ -643,10 +666,7 @@ pub fn rounded_rectangle_with_context(
         ),
         (radius.clone(), height - radius.clone(), half_pi.clone()),
     ];
-    let Some(point_capacity) = corner_segments.checked_mul(4) else {
-        return Ok(decisions.finish(empty()));
-    };
-    let mut points = Vec::with_capacity(point_capacity);
+    let mut points = solid::reserved(point_capacity)?;
     let corner_count = centers.len();
     for (corner_index, (cx, cy, start)) in centers.into_iter().enumerate() {
         for index in 0..=corner_segments {
@@ -659,11 +679,7 @@ pub fn rounded_rectangle_with_context(
             {
                 continue;
             }
-            let Some(fraction) =
-                (Real::from(index as u64) / Real::from(corner_segments as u64)).ok()
-            else {
-                return Ok(decisions.finish(empty()));
-            };
+            let fraction = (Real::from(index as u64) / Real::from(corner_segments as u64))?;
             let angle = start.clone() + half_pi.clone() * fraction;
             points.push([
                 cx.clone() + radius.clone() * angle.clone().cos(),
@@ -721,15 +737,13 @@ pub fn keyhole(
     handle_height: Real,
     segments: usize,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if segments < 3
-        || !positive_with(&circle_radius, &decisions)?
-        || !positive_with(&handle_width, &decisions)?
-        || !positive_with(&handle_height, &decisions)?
-    {
-        return Ok(decisions.finish(empty()));
-    }
+    solid::sample_minimum(segments, 3, "segments")?;
+    solid::capacity::<[Real; 2]>(Some(segments))?;
+    positive_with(&circle_radius, "circle_radius", &decisions)?;
+    positive_with(&handle_width, "handle_width", &decisions)?;
+    positive_with(&handle_height, "handle_height", &decisions)?;
     let handle_x = -(handle_width.clone() / Real::from(2_u8)).expect("two is nonzero");
     let handle = translate_with(
         &rectangle_with(handle_width, handle_height, &decisions)?,
@@ -749,25 +763,20 @@ pub fn reuleaux(
     diameter: Real,
     circle_segments: usize,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if sides < 3
-        || sides.is_multiple_of(2)
-        || circle_segments < 6
-        || !positive_with(&diameter, &decisions)?
-    {
-        return Ok(decisions.finish(empty()));
+    solid::sample_minimum(sides, 3, "sides")?;
+    solid::sample_minimum(circle_segments, 6, "circle_segments")?;
+    solid::capacity::<[Real; 2]>(Some(circle_segments))?;
+    if sides.is_multiple_of(2) {
+        return Err(ValidationError::InvalidArguments);
     }
-    let Some(double_sides) = sides.checked_mul(2) else {
-        return Ok(decisions.finish(empty()));
-    };
-    let Some(half_angle) = (Real::pi() / Real::from(double_sides as u64)).ok() else {
-        return Ok(decisions.finish(empty()));
-    };
-    let Some(circumradius) = (diameter.clone() / (Real::from(2_u8) * half_angle.cos())).ok()
-    else {
-        return Ok(decisions.finish(empty()));
-    };
+    let double_sides = sides
+        .checked_mul(2)
+        .ok_or(ValidationError::CapacityOverflow)?;
+    positive_with(&diameter, "diameter", &decisions)?;
+    let half_angle = (Real::pi() / Real::from(double_sides as u64))?;
+    let circumradius = (diameter.clone() / (Real::from(2_u8) * half_angle.cos()))?;
     let denominator = Real::from(sides as u64);
     let mut result: Option<CurveRegion2> = None;
     for index in 0..sides {
@@ -795,17 +804,13 @@ pub fn ring(
     thickness: Real,
     segments: usize,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if segments < 3
-        || !positive_with(&inner_diameter, &decisions)?
-        || !positive_with(&thickness, &decisions)?
-    {
-        return Ok(decisions.finish(empty()));
-    }
-    let Some(inner_radius) = (inner_diameter / Real::from(2_u8)).ok() else {
-        return Ok(decisions.finish(empty()));
-    };
+    solid::sample_minimum(segments, 3, "segments")?;
+    solid::capacity::<[Real; 2]>(Some(segments))?;
+    positive_with(&inner_diameter, "inner_diameter", &decisions)?;
+    positive_with(&thickness, "thickness", &decisions)?;
+    let inner_radius = (inner_diameter / Real::from(2_u8))?;
     let inner = circle_with(inner_radius.clone(), segments, &decisions)?;
     let operand = circle_with(inner_radius + thickness, segments, &decisions)?;
     let region =
@@ -830,7 +835,9 @@ pub fn pie_slice(
     }
     match real_cmp(&absolute_sweep, &Real::from(360_u16)) {
         Some(Ordering::Greater) | None => return empty(),
-        Some(Ordering::Equal) => return circle(radius, segments.max(3)),
+        Some(Ordering::Equal) => {
+            return sampled_ellipse(radius.clone(), radius, segments.max(3));
+        },
         Some(Ordering::Less) => {},
     }
     let (Some(start), Some(sweep)) = (
@@ -921,13 +928,13 @@ pub fn crescent(
     offset: Real,
     segments: usize,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if segments < 6
-        || !positive_with(&inner_radius, &decisions)?
-        || compare_with(&outer_radius, &inner_radius, &decisions)? != Ordering::Greater
-    {
-        return Ok(decisions.finish(empty()));
+    solid::sample_minimum(segments, 6, "segments")?;
+    solid::capacity::<[Real; 2]>(Some(segments))?;
+    positive_with(&inner_radius, "inner_radius", &decisions)?;
+    if compare_with(&outer_radius, &inner_radius, &decisions)? != Ordering::Greater {
+        return Err(ValidationError::InvalidArguments);
     }
     let outer = circle_with(outer_radius, segments, &decisions)?;
     let inner = translate_with(
@@ -986,17 +993,18 @@ pub fn circle_with_keyway(
     key_width: Real,
     key_depth: Real,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
+    solid::sample_minimum(segments, 3, "segments")?;
+    solid::capacity::<[Real; 2]>(Some(segments))?;
+    positive_with(&radius, "radius", &decisions)?;
+    positive_with(&key_width, "key_width", &decisions)?;
+    positive_with(&key_depth, "key_depth", &decisions)?;
     let diameter = Real::from(2_u8) * radius.clone();
-    if segments < 3
-        || !positive_with(&radius, &decisions)?
-        || !positive_with(&key_width, &decisions)?
-        || !positive_with(&key_depth, &decisions)?
-        || compare_with(&key_width, &diameter, &decisions)? != Ordering::Less
+    if compare_with(&key_width, &diameter, &decisions)? != Ordering::Less
         || compare_with(&key_depth, &diameter, &decisions)? != Ordering::Less
     {
-        return Ok(decisions.finish(empty()));
+        return Err(ValidationError::InvalidArguments);
     }
     let key_y = -(key_width.clone() / Real::from(2_u8)).expect("two is nonzero");
     let cutter = translate_with(
@@ -1017,14 +1025,14 @@ pub fn circle_with_flat(
     segments: usize,
     flat_distance: Real,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if segments < 3
-        || !positive_with(&radius, &decisions)?
-        || !nonnegative_with(&flat_distance, &decisions)?
-        || compare_with(&flat_distance, &radius, &decisions)? != Ordering::Less
-    {
-        return Ok(decisions.finish(empty()));
+    solid::sample_minimum(segments, 3, "segments")?;
+    solid::capacity::<[Real; 2]>(Some(segments))?;
+    positive_with(&radius, "radius", &decisions)?;
+    nonnegative_with(&flat_distance, "flat_distance", &decisions)?;
+    if compare_with(&flat_distance, &radius, &decisions)? != Ordering::Less {
+        return Err(ValidationError::InvalidArguments);
     }
     let diameter = Real::from(2_u8) * radius.clone();
     let clip = translate_with(
@@ -1045,14 +1053,14 @@ pub fn circle_with_two_flats(
     segments: usize,
     flat_distance: Real,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<CurveRegion2>, CurveBooleanError> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if segments < 3
-        || !positive_with(&radius, &decisions)?
-        || !nonnegative_with(&flat_distance, &decisions)?
-        || compare_with(&flat_distance, &radius, &decisions)? != Ordering::Less
-    {
-        return Ok(decisions.finish(empty()));
+    solid::sample_minimum(segments, 3, "segments")?;
+    solid::capacity::<[Real; 2]>(Some(segments))?;
+    positive_with(&radius, "radius", &decisions)?;
+    nonnegative_with(&flat_distance, "flat_distance", &decisions)?;
+    if compare_with(&flat_distance, &radius, &decisions)? != Ordering::Less {
+        return Err(ValidationError::InvalidArguments);
     }
     let clip = translate_with(
         &rectangle_with(
@@ -3037,6 +3045,47 @@ pub fn translated_solid(
 mod tests {
     use super::*;
 
+    #[test]
+    fn ring_cache_keeps_only_strict_success_and_owned_identity() {
+        REGION_RING_CACHE.with_borrow_mut(Vec::clear);
+        for _ in 0..2 {
+            assert!(polygon(&[]).is_err());
+            assert!(square(terminally_unresolved_zero()).is_err());
+            assert_eq!(REGION_RING_CACHE.with_borrow(Vec::len), 0);
+        }
+        let unit = square(Real::one()).unwrap();
+        assert_eq!(REGION_RING_CACHE.with_borrow(Vec::len), 1);
+        let warm =
+            square_with_context(Real::one(), &GeometryContext::APPROXIMATE_512).unwrap();
+        assert_eq!(warm.certainty, crate::GeometryCertainty::Certified);
+        let scaled = try_scaled(&warm.value, Real::from(2), Real::one()).unwrap();
+        assert_eq!(scaled.filled_area().unwrap(), Some(Real::from(2)));
+        assert_eq!(unit.filled_area().unwrap(), Some(Real::one()));
+        for width in 2..=66 {
+            let region = rectangle(Real::from(width), Real::one()).unwrap();
+            assert_eq!(region.filled_area().unwrap(), Some(Real::from(width)));
+        }
+        assert_eq!(REGION_RING_CACHE.with_borrow(Vec::len), 64);
+        assert_eq!(
+            square(Real::one()).unwrap().filled_area().unwrap(),
+            Some(Real::one())
+        );
+        REGION_RING_CACHE.with_borrow_mut(Vec::clear);
+        let outcome =
+            square_with_context(Real::one(), &GeometryContext::APPROXIMATE_512).unwrap();
+        assert_eq!(outcome.certainty, crate::GeometryCertainty::Certified);
+        assert_eq!(REGION_RING_CACHE.with_borrow(Vec::len), 0);
+        let child = std::thread::spawn(|| {
+            assert_eq!(REGION_RING_CACHE.with_borrow(Vec::len), 0);
+            assert_eq!(
+                square(Real::one()).unwrap().filled_area().unwrap(),
+                Some(Real::one())
+            );
+        });
+        child.join().unwrap();
+        assert_eq!(REGION_RING_CACHE.with_borrow(Vec::len), 0);
+    }
+
     fn terminally_unresolved_zero() -> Real {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
@@ -3105,7 +3154,7 @@ mod tests {
 
     #[test]
     fn filled_constructor_and_extrusion_remain_native() {
-        let region: CurveRegion2 = circle(Real::from(2_u8), 32);
+        let region: CurveRegion2 = circle(Real::from(2_u8), 32).expect("valid planar fixture");
         assert!(!region.is_empty());
         let mesh: TriangleMesh =
             try_extrude(&region, Real::from(3_u8), &GeometryContext::STRICT)
@@ -3119,7 +3168,7 @@ mod tests {
 
     #[test]
     fn profile_solid_constructors_share_closed_indexed_topology() {
-        let square = square(Real::from(2_u8));
+        let square = square(Real::from(2_u8)).expect("valid planar fixture");
         let linear = try_extrude(&square, Real::from(2_u8), &GeometryContext::STRICT)
             .expect("linear extrusion")
             .into_value();
@@ -3186,7 +3235,7 @@ mod tests {
 
     #[test]
     fn sweep_rejects_revisited_open_path_vertices() {
-        let square = square(Real::from(2_u8));
+        let square = square(Real::from(2_u8)).expect("valid planar fixture");
         let a = Point3::new(Real::from(-1_i8), Real::one(), Real::from(-1_i8));
         let b = Point3::new(Real::one(), Real::one(), Real::from(-1_i8));
         let path = [
@@ -3203,7 +3252,7 @@ mod tests {
 
     #[test]
     fn degenerate_profile_solid_requests_do_not_claim_solids() {
-        let square = square(Real::from(2_u8));
+        let square = square(Real::from(2_u8)).expect("valid planar fixture");
         assert!(try_extrude(&square, Real::zero(), &GeometryContext::STRICT).is_err());
         assert!(
             try_extrude_vector(
@@ -3239,7 +3288,7 @@ mod tests {
 
     #[test]
     fn approximate_sweep_reports_consumed_terminal_point_equality() {
-        let square = square(Real::from(2_u8));
+        let square = square(Real::from(2_u8)).expect("valid planar fixture");
         let symbolic_zero = terminally_unresolved_zero();
         let path = [
             Point3::origin(),
@@ -3259,8 +3308,9 @@ mod tests {
 
     #[test]
     fn native_region_boolean_does_not_construct_a_public_facade() {
-        let left = square(Real::from(2_u8));
-        let right = rectangle(Real::from(1_u8), Real::from(3_u8));
+        let left = square(Real::from(2_u8)).expect("valid planar fixture");
+        let right =
+            rectangle(Real::from(1_u8), Real::from(3_u8)).expect("valid planar fixture");
         let union: CurveRegion2 = left
             .boolean_region(&right, BooleanOp::Union)
             .expect("region union");
@@ -3270,55 +3320,50 @@ mod tests {
     #[test]
     fn planar_constructors_reject_invalid_dimensions_and_ranges() {
         let negative = -Real::one();
-        let empty_compound =
-            |result: Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>| {
-                result
-                    .expect("invalid compound input remains empty")
-                    .value
-                    .is_empty()
-            };
-        assert!(circle(negative.clone(), 16).is_empty());
-        assert!(right_triangle(negative.clone(), Real::one()).is_empty());
-        assert!(ellipse(Real::one(), negative.clone(), 16).is_empty());
-        assert!(regular_ngon(5, negative.clone()).is_empty());
+        let invalid_compound =
+            |result: Result<GeometryOutcome<CurveRegion2>, ValidationError>| result.is_err();
+        assert!(circle(negative.clone(), 16).is_err());
+        assert!(right_triangle(negative.clone(), Real::one()).is_err());
+        assert!(ellipse(Real::one(), negative.clone(), 16).is_err());
+        assert!(regular_ngon(5, negative.clone()).is_err());
         assert!(
             trapezoid(Real::one(), negative.clone(), Real::one(), Real::zero()).is_empty()
         );
         assert!(star(5, Real::one(), Real::from(2_u8)).is_empty());
-        assert!(empty_compound(keyhole(
+        assert!(invalid_compound(keyhole(
             Real::one(),
             Real::zero(),
             Real::one(),
             16,
             &GeometryContext::STRICT,
         )));
-        assert!(empty_compound(ring(
+        assert!(invalid_compound(ring(
             Real::one(),
             negative.clone(),
             16,
             &GeometryContext::STRICT,
         )));
-        assert!(empty_compound(crescent(
+        assert!(invalid_compound(crescent(
             Real::one(),
             Real::from(2_u8),
             Real::zero(),
             16,
             &GeometryContext::STRICT,
         )));
-        assert!(empty_compound(circle_with_keyway(
+        assert!(invalid_compound(circle_with_keyway(
             Real::one(),
             16,
             Real::from(2_u8),
             Real::one(),
             &GeometryContext::STRICT,
         )));
-        assert!(empty_compound(circle_with_flat(
+        assert!(invalid_compound(circle_with_flat(
             Real::one(),
             16,
             Real::one(),
             &GeometryContext::STRICT,
         )));
-        assert!(empty_compound(circle_with_two_flats(
+        assert!(invalid_compound(circle_with_two_flats(
             Real::one(),
             16,
             Real::one(),
@@ -3355,7 +3400,7 @@ mod tests {
             .is_empty()
         );
         assert!(star(usize::MAX, Real::from(2_u8), Real::one()).is_empty());
-        assert!(empty_compound(reuleaux(
+        assert!(invalid_compound(reuleaux(
             usize::MAX,
             Real::one(),
             16,
@@ -3638,9 +3683,12 @@ mod tests {
         ];
         assert!(!bezier_region(&closed_controls, 16).is_empty());
 
-        let mesh = try_triangulate(&square(two), &GeometryContext::STRICT)
-            .expect("square triangulation")
-            .into_value();
+        let mesh = try_triangulate(
+            &square(two).expect("valid planar fixture"),
+            &GeometryContext::STRICT,
+        )
+        .expect("square triangulation")
+        .into_value();
         assert_eq!(mesh.positions.len(), 4);
         assert_eq!(mesh.triangles.len(), 2);
         assert!(
@@ -3656,7 +3704,7 @@ mod tests {
         let one = Real::one();
         let two = Real::from(2_u8);
         let three_quarters = (Real::from(3_u8) / Real::from(4_u8)).unwrap();
-        let compound = |result: Result<GeometryOutcome<CurveRegion2>, CurveBooleanError>| {
+        let compound = |result: Result<GeometryOutcome<CurveRegion2>, ValidationError>| {
             result.expect("nominal compound region").into_value()
         };
         assert!(
@@ -3693,23 +3741,25 @@ mod tests {
             .is_empty()
         );
         let shapes = [
-            rectangle(two.clone(), one.clone()),
-            square(two.clone()),
-            circle(one.clone(), 16),
-            right_triangle(two.clone(), one.clone()),
+            rectangle(two.clone(), one.clone()).expect("valid planar fixture"),
+            square(two.clone()).expect("valid planar fixture"),
+            circle(one.clone(), 16).expect("valid planar fixture"),
+            right_triangle(two.clone(), one.clone()).expect("valid planar fixture"),
             polygon(&[
                 [Real::zero(), Real::zero()],
                 [one.clone(), Real::zero()],
                 [Real::zero(), one.clone()],
-            ]),
-            ellipse(two.clone(), one.clone(), 16),
-            regular_ngon(5, one.clone()),
+            ])
+            .expect("valid planar fixture"),
+            ellipse(two.clone(), one.clone(), 16).expect("valid planar fixture"),
+            regular_ngon(5, one.clone()).expect("valid planar fixture"),
             arrow(two.clone(), one.clone(), one.clone(), two.clone()),
             trapezoid(one.clone(), two.clone(), one.clone(), one.clone()),
             star(5, two.clone(), one.clone()),
             teardrop(two.clone(), Real::from(3_u8), 12),
             egg(two.clone(), Real::from(3_u8), 16),
-            rounded_rectangle(two.clone(), one.clone(), three_quarters.clone(), 4),
+            rounded_rectangle(two.clone(), one.clone(), three_quarters.clone(), 4)
+                .expect("valid planar fixture"),
             squircle(two.clone(), one.clone(), 16),
             compound(keyhole(
                 one.clone(),
@@ -3789,7 +3839,11 @@ mod tests {
 
     #[test]
     fn hilbert_samples_are_centered_symmetrically_in_the_usable_grid() {
-        let strings = hilbert_strings(&square(Real::from(8_u8)), 3, Real::one());
+        let strings = hilbert_strings(
+            &square(Real::from(8_u8)).expect("valid planar fixture"),
+            3,
+            Real::one(),
+        );
         let points = strings
             .iter()
             .flat_map(|string| string.segments())

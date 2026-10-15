@@ -45,7 +45,8 @@ fn named_receipts_preserve_both_certainty_values() {
 
 #[test]
 fn curve_boundary_is_distinct_from_empty_and_outside() {
-    let square = CurveRegionJs::from(curve::square(Real::one()));
+    let square =
+        CurveRegionJs::from(curve::square(Real::one()).expect("valid planar fixture"));
     let empty = CurveRegionJs::new();
     for approximate in [false, true] {
         let boundary = square
@@ -75,9 +76,12 @@ fn curve_boundary_is_distinct_from_empty_and_outside() {
 
 #[test]
 fn curve_uncertainty_survives_a_warm_approximate_boundary_query() {
-    let square =
-        curve::try_translated(&curve::square(Real::one()), unresolved_zero(), Real::zero())
-            .unwrap();
+    let square = curve::try_translated(
+        &curve::square(Real::one()).expect("valid planar fixture"),
+        unresolved_zero(),
+        Real::zero(),
+    )
+    .unwrap();
     let square = CurveRegionJs::from(square);
     for approximate in [false, true, false] {
         let result = square

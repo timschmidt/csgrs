@@ -285,7 +285,8 @@ fn arc_board_profile_materializes_exactly_and_emits_cam_arcs() {
                 hypercurve::Point2::new(Real::from(6), Real::from(12)),
                 hypercurve::Point2::new(Real::from(6), Real::from(13)),
                 hypercurve::Point2::new(Real::from(5), Real::from(13)),
-            ]),
+            ])
+            .expect("valid planar fixture"),
             None,
         );
         assert!(

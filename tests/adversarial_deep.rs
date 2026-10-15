@@ -42,9 +42,9 @@ fn repeated_boolean_and_transform_sequence_stays_nonempty() {
 
 #[test]
 fn native_curve_boolean_outputs_can_be_extruded() {
-    let left = curve::rectangle(r(2.0), r(1.0));
+    let left = curve::rectangle(r(2.0), r(1.0)).expect("valid planar fixture");
     let right = curve::transformed(
-        &curve::circle(r(0.75), 32),
+        &curve::circle(r(0.75), 32).expect("valid planar fixture"),
         &hyperlattice::Matrix4::affine_translation([r(1.0), r(0.5), r(0.0)]),
     );
     let region = left

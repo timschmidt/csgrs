@@ -13,8 +13,8 @@ const PATH: &str = "stl/examples/extrude";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let square = curve::square(r(1.5));
-    let circle = curve::circle(r(0.5), 32);
+    let square = curve::square(r(1.5)).expect("valid planar fixture");
+    let circle = curve::circle(r(0.5), 32).expect("valid planar fixture");
     let star = curve::star(5, r(1.2), r(0.45));
 
     write_mesh(
@@ -43,9 +43,13 @@ fn main() {
         })
         .collect::<Vec<_>>();
     write_mesh(
-        &curve::try_sweep(&curve::circle(r(0.08), 12), &path, &GeometryContext::STRICT)
-            .unwrap()
-            .into_value(),
+        &curve::try_sweep(
+            &curve::circle(r(0.08), 12).expect("valid planar fixture"),
+            &path,
+            &GeometryContext::STRICT,
+        )
+        .unwrap()
+        .into_value(),
         "sweep",
     );
 

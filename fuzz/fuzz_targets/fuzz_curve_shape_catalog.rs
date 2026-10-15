@@ -94,16 +94,51 @@ fuzz_target!(|bytes: &[u8]| {
     ];
 
     let region = match tag {
-        0 => curve::rectangle(a, b),
-        1 => curve::square(a),
-        2 => curve::circle(a, segments),
-        3 => curve::right_triangle(a, b),
-        4 => curve::ellipse(a, b, segments),
-        5 => curve::regular_ngon(segments, a),
+        0 => {
+            let Ok(region) = curve::rectangle(a, b) else {
+                return;
+            };
+            region
+        },
+        1 => {
+            let Ok(region) = curve::square(a) else {
+                return;
+            };
+            region
+        },
+        2 => {
+            let Ok(region) = curve::circle(a, segments) else {
+                return;
+            };
+            region
+        },
+        3 => {
+            let Ok(region) = curve::right_triangle(a, b) else {
+                return;
+            };
+            region
+        },
+        4 => {
+            let Ok(region) = curve::ellipse(a, b, segments) else {
+                return;
+            };
+            region
+        },
+        5 => {
+            let Ok(region) = curve::regular_ngon(segments, a) else {
+                return;
+            };
+            region
+        },
         6 => curve::arrow(a, b, c, positive_b),
         7 => curve::trapezoid(a, b, c, real(0.25)),
         8 => curve::star(segments, a, b),
-        9 => curve::rounded_rectangle(a, b, c, segments),
+        9 => {
+            let Ok(region) = curve::rounded_rectangle(a, b, c, segments) else {
+                return;
+            };
+            region
+        },
         10 => curve::squircle(a, b, segments),
         11 => {
             let Ok(outcome) = curve::keyhole(a, b, c, segments, &context) else {
@@ -199,7 +234,12 @@ fuzz_target!(|bytes: &[u8]| {
             exponent_b,
             segments,
         ),
-        _ => curve::polygon_points(&native_points),
+        _ => {
+            let Ok(region) = curve::polygon_points(&native_points) else {
+                return;
+            };
+            region
+        },
     };
 
     assert_curve_finite(&region, &context);

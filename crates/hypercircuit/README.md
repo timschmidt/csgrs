@@ -13,6 +13,13 @@ The crate ranges from a small exact-aware Modified Nodal Analysis (MNA) model
 to optional PCB authoring, routing, KiCad exchange, manufacturing release, and
 HyperDRC handoff. Features let applications select only the layers they need.
 
+Planar modeling constructor failures now remain typed during materialization
+(`GeometryMaterializationError::Construction`) and keepout/component handoff
+(`DrcHandoffOmission::ProfileConstruction`). Failed rings do not become empty
+placement envelopes. Rectangle construction uses the selected materialization
+policy and contributes its consumed certainty. These diagnostic enums retain
+`PartialEq`; they no longer implement `Eq` because their native causes do not.
+
 ## What HyperCircuit is for
 
 A circuit design has several related representations:

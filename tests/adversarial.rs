@@ -134,7 +134,7 @@ fn exact_near_plane_translation_is_preserved_by_native_geometry() {
 
 #[test]
 fn curve_offset_and_extrude_keep_hyperreal_scalars() {
-    let region = curve::square(r(2.0));
+    let region = curve::square(r(2.0)).expect("valid planar fixture");
     #[cfg(feature = "offset")]
     let region = region
         .offset(

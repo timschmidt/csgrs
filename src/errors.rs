@@ -60,6 +60,9 @@ pub enum ValidationError {
     /// A native exact curve operation failed, retaining its context and cause.
     #[error("{0}")]
     ExactCurve(#[from] ExactCurveError),
+    /// Native contour construction failed, retaining its original diagnostic.
+    #[error("{0}")]
+    Curve(#[from] CurveError),
     /// Native sampled-field extraction failed, retaining its typed diagnostic.
     #[error("{0}")]
     SurfaceNets(#[from] hypermesh::SurfaceNetsError),
@@ -127,6 +130,16 @@ impl ValidationErrorKind {
 impl ValidationError {
     pub const fn kind(&self) -> ValidationErrorKind {
         match self {
+            Self::Curve(source) => match source {
+                CurveError::AmbiguousBulge | CurveError::AmbiguousCurveStringConnection => {
+                    ValidationErrorKind::Undecided
+                },
+                CurveError::UnsupportedNurbsInterpolationDivision { .. } => {
+                    ValidationErrorKind::Unsupported
+                },
+                CurveError::Topology(_) | CurveError::Real(_) => ValidationErrorKind::Geometry,
+                _ => ValidationErrorKind::InvalidInput,
+            },
             Self::Triangulation(source) => match source {
                 hypertri::Error::PredicateUndecided { .. } => ValidationErrorKind::Undecided,
                 hypertri::Error::InvalidInput { .. } => ValidationErrorKind::InvalidInput,

@@ -40,20 +40,39 @@ fn main() {
 }
 
 fn render_readme_curves() {
-    render_curve("square", &curve::square(r(2.0)));
-    render_curve("rectangle", &curve::rectangle(r(2.4), r(1.35)));
-    render_curve("circle", &curve::circle(r(1.0), 96));
-    render_curve("right_triangle", &curve::right_triangle(r(2.0), r(1.5)));
+    render_curve(
+        "square",
+        &curve::square(r(2.0)).expect("valid planar fixture"),
+    );
+    render_curve(
+        "rectangle",
+        &curve::rectangle(r(2.4), r(1.35)).expect("valid planar fixture"),
+    );
+    render_curve(
+        "circle",
+        &curve::circle(r(1.0), 96).expect("valid planar fixture"),
+    );
+    render_curve(
+        "right_triangle",
+        &curve::right_triangle(r(2.0), r(1.5)).expect("valid planar fixture"),
+    );
     render_curve(
         "polygon",
-        &curve::polygon(&[[r(0.0), r(1.2)], [r(-1.1), r(-0.8)], [r(1.1), r(-0.8)]]),
+        &curve::polygon(&[[r(0.0), r(1.2)], [r(-1.1), r(-0.8)], [r(1.1), r(-0.8)]])
+            .expect("valid planar fixture"),
     );
     render_curve(
         "rounded_rectangle",
-        &curve::rounded_rectangle(r(2.4), r(1.5), r(0.28), 12),
+        &curve::rounded_rectangle(r(2.4), r(1.5), r(0.28), 12).expect("valid planar fixture"),
     );
-    render_curve("ellipse", &curve::ellipse(r(2.3), r(1.3), 96));
-    render_curve("regular_ngon", &curve::regular_ngon(6, r(1.0)));
+    render_curve(
+        "ellipse",
+        &curve::ellipse(r(2.3), r(1.3), 96).expect("valid planar fixture"),
+    );
+    render_curve(
+        "regular_ngon",
+        &curve::regular_ngon(6, r(1.0)).expect("valid planar fixture"),
+    );
     render_curve("curve_arrow", &curve::arrow(r(2.2), r(0.35), r(0.8), r(1.0)));
     render_curve(
         "trapezoid",
@@ -200,7 +219,11 @@ fn render_readme_curves() {
     render_open_curves(
         "hilbert_strings",
         &[],
-        &curve::hilbert_strings(&curve::square(r(2.0)), 4, r(0.12)),
+        &curve::hilbert_strings(
+            &curve::square(r(2.0)).expect("valid planar fixture"),
+            4,
+            r(0.12),
+        ),
     );
     render_open_curves(
         "hershey_strings",
@@ -353,7 +376,11 @@ fn render_readme_meshes() {
         .expect("twisted extrude")
         .into_value(),
     );
-    let revolve_profile = curve::translated(&curve::circle(r(0.18), 32), r(1.0), r(0.0));
+    let revolve_profile = curve::translated(
+        &curve::circle(r(0.18), 32).expect("valid planar fixture"),
+        r(1.0),
+        r(0.0),
+    );
     render_mesh(
         "revolve",
         &curve::revolve(
@@ -368,7 +395,7 @@ fn render_readme_meshes() {
     render_mesh(
         "sweep",
         &curve::try_sweep(
-            &curve::square(r(0.4)),
+            &curve::square(r(0.4)).expect("valid planar fixture"),
             &[p3(0.0, 0.0, -0.8), p3(0.0, 0.0, 1.1)],
             &GeometryContext::STRICT,
         )
