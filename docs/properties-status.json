@@ -7090,6 +7090,211 @@
       "implementation_commit": "fd83df3075042d3d8210f3604885f50811c80214",
       "evidence": "docs/evidence/2026-10-15-curve-constructor-failures/closure-v1.json",
       "plan_complete": false
+    },
+    "rounded_rectangle_fidelity": {
+      "updated_on": "2026-10-15",
+      "decision": "kept: corrects the represented sampled set. Output geometry, vertex counts and derived artifacts intentionally change. This is not an optimization or a matched comparison with the old incorrect result.",
+      "status": "Rounded rectangle retains nonzero straight sides and uses existing clamp facts to omit only coincident endpoints; locally qualified correction.",
+      "properties": [
+        "P1",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "owners": [
+        "CSGRS sampled rounded-rectangle geometry",
+        "Hypercurve contour and topology validation",
+        "Gerber and README rendering boundaries"
+      ],
+      "domain": "Nonnegative width, height, radius. Radius clamps to half the smaller dimension. Validated zero dimensions give canonical empty; zero radius or zero corner-segment count gives the sharp rectangle. Positive n gives n equal-angle chords per quarter-circle and all nonzero tangent straight sides; at most 4*(n+1) points, checked before allocation. No analytic fidelity bound is claimed.",
+      "migration": "No API signature changes. Rounded rectangles and Gerber obrounds can gain up to four tangent vertices. One-chord 4x2 radius-1/2 area changes from incorrect 4 to 15/2; clamped 4x2/2x4 capsules from 4 to 6. Derived exports/previews change. Regenerate artifacts; docs/rounded_rectangle.png is regenerated from the original full fixture and unchanged renderer functions.",
+      "semantic_evidence": [
+        "Three baseline failures, four initial passing regressions and the unchanged 49-test strict shape catalog; ten expanded regressions pass. One preserved test-only failure used structural equality on reordered sums; final tests require strict mathematical equality.",
+        "Independent exact rational, algebraic and symbolic areas; explicit one-chord vertices and full-resolution benchmark/README tangent endpoints. Both clamping directions, full-radius and sharp controls retained.",
+        "Strict translate, subtract interior hole, restore by union, subtract to empty and height-three extrusion: exact area 13/2, signed volume 39/2 and separate closed-manifold check. OBJ round-trip preserves this dyadic fixture exactly. Gerber obround import/export preserves exact tangent boundary points and independent inside/outside classifications.",
+        "Approximate clamp evidence remains qualified across strict/approximate/strict requests. Capacity overflow remains typed before empty shortcuts. Existing constructor/cache/context and adversarial regressions remain enabled."
+      ],
+      "test_totals": {
+        "fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "all-feature-tests": {
+          "passed": 263,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "curve-tests": {
+          "passed": 78,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "benchmark-consumer": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "renderer-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "validation": "All 13 final native commands passed: root and fuzz formatting; all-target strict Clippy for all features, no defaults and curve-only; all-feature library/integration tests; minimal and curve library/affected integration tests; fuzz-target Clippy; warning-free docs and doctests; original rounded-rectangle benchmark consumer; full renderer build. Direct language bindings do not expose rounded_rectangle or Gerber import; no binding implementation/signature changed in this slice.",
+      "render": {
+        "evidence": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/render-v2",
+        "migration": {
+          "path": "docs/rounded_rectangle.png",
+          "previous_sha256": "8680f5aa83974eeb80b4c48f03467545c3c0da9a473dbb94f4df14e0e509707f",
+          "previous_bytes": 29473,
+          "generated_path": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/render-v2/first/rounded_rectangle.png",
+          "generated_sha256": "e1dd521b14d7f8a4a95fbc1492bdf7c34ff14ebf2bfd5717cb577cc09ee9eba2",
+          "generated_bytes": 26480,
+          "repeat": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/render-v2/repeat/rounded_rectangle.png",
+          "claim": "Focused deterministic asset migration; same original fixture, resolution and renderer functions. Full README image corpus remains unqualified."
+        },
+        "claim": "Two byte-identical focused renders, original dimensions and 12 corner segments. All renderer functions and constants unchanged. Full image-corpus regression remains open. First harness build omitted the hypermesh extern; failed trial preserved."
+      },
+      "cost_probe": {
+        "kind": "focused corrected-output measurement, not a speedup or supported-corpus comparison",
+        "median_samples": {
+          "octagon-warm": {
+            "nanos": 2460482,
+            "allocations": 24704,
+            "requested_bytes": 1345792,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 1320
+          },
+          "octagon-miss": {
+            "nanos": 20027168,
+            "allocations": 119923,
+            "requested_bytes": 14846448,
+            "retained_byte_delta": 23328,
+            "peak_live_bytes_above_start": 64776
+          },
+          "benchmark-warm": {
+            "nanos": 70915421,
+            "allocations": 1526912,
+            "requested_bytes": 90350720,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 32680
+          },
+          "benchmark-miss": {
+            "nanos": 1059638285,
+            "allocations": 17393331,
+            "requested_bytes": 964601376,
+            "retained_byte_delta": 12032,
+            "peak_live_bytes_above_start": 422468
+          },
+          "readme-warm": {
+            "nanos": 98051791,
+            "allocations": 1606528,
+            "requested_bytes": 104313984,
+            "retained_byte_delta": 0,
+            "peak_live_bytes_above_start": 58064
+          },
+          "readme-miss": {
+            "nanos": 1496118936,
+            "allocations": 20668482,
+            "requested_bytes": 1174929848,
+            "retained_byte_delta": 163280,
+            "peak_live_bytes_above_start": 889977
+          }
+        },
+        "operations_per_sample": 128,
+        "fresh_process_samples_per_case": 3,
+        "measured_completed_operations": 2304,
+        "library_sizes": {
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/rounded-rectangle-fidelity/native-v1/release/deps/libcsgrs.rlib": 10020198
+        },
+        "evidence": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/cost-v1",
+        "claim": "All sampled operations completed Certified with materialized boundaries, exact tangent assertions, and independent area for one-chord cases. Allocation wrapper includes instrumentation; ring-cache warm and FIFO-miss states do not imply globally cold scalar caches."
+      },
+      "resources": "Primary point capacity and reservation checked. Serial offline trials, two Cargo jobs, external 1800-second wall and 8-GiB address-space containment per process. Scalar growth, total work, secondary allocations, retained heap-byte budgets and cancellation remain internally unbounded or unmeasured. No native heap bound or broad performance claim.",
+      "limitations": [
+        "Other constructors and legacy wrappers still need typed-failure migration. Operation-local certainty does not establish end-to-end provenance or fidelity to analytic source geometry.",
+        "The 35 original pending native files are byte-identical and uncommitted, pending separate admission. This is worktree qualification, not clean-checkout or published-package validation.",
+        "Full CI/pre-push, MSRV/release/external-package and full image-corpus validation, directed fuzz/sanitizer campaigns, and the rest of the properties plan remain open. No push occurred."
+      ],
+      "implementation_commit": "573bdcb8f9f558f4c64001c1d03f7c0525ae48dd",
+      "evidence": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/closure-v1.json",
+      "plan_complete": false
     }
   },
   "status_meanings": {
