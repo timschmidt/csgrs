@@ -146,6 +146,17 @@ Balanced nonmanifold PWN output is accepted and reported by its topology.
 
 ## Primary types
 
+`TriangleMesh::slice_z(context, z)` returns an oriented horizontal section
+with source triangle indices, source vertex/edge identities and exact edge
+parameters. Closed directed chains retain winding multiplicity. Separate
+limits from above and below prevent double counting edges lying in the plane;
+coplanar faces and remaining wires are retained separately. A planar consumer
+owns filling and regularization. Open sheets are accepted, isolated point
+contacts are omitted, and invalid indices or unresolved decisions return
+typed errors. Certainty records the decisions consumed by this operation;
+it does not certify input manifoldness or inherited source intent. No internal
+total-work, retained-byte or cancellation bound is claimed.
+
 | Purpose | API |
 | --- | --- |
 | Exact Boolean evaluation | `boolean` |

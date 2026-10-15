@@ -518,19 +518,23 @@ fn main() {
         "slice_and_flatten",
         1,
         || {
-            let (region, strings, paths) = solid::slice_z(&mesh, Real::zero());
-            let flattened = solid::flatten(&mesh);
+            let (region, strings, paths) =
+                solid::slice_z(&mesh, Real::zero()).expect("valid slice workload");
+            let flattened = solid::flatten(&mesh).expect("valid projection workload");
             let output = region.len() + strings.len() + paths.len() + flattened.len();
             Measurement::new(mesh.triangles.len() as u64, output as u64, output as u64)
         },
     );
     config.run("feature", "mesh_profile_projection", "slice", 1, || {
-        let (region, strings, paths) = solid::slice_z(&mesh, Real::zero());
+        let (region, strings, paths) =
+            solid::slice_z(&mesh, Real::zero()).expect("valid slice workload");
         let output = region.len() + strings.len() + paths.len();
         Measurement::new(mesh.triangles.len() as u64, output as u64, output as u64)
     });
     config.run("feature", "mesh_profile_projection", "flatten", 1, || {
-        let output = solid::flatten(&mesh).len();
+        let output = solid::flatten(&mesh)
+            .expect("valid projection workload")
+            .len();
         Measurement::new(mesh.triangles.len() as u64, output as u64, output as u64)
     });
     config.run("feature", "hypermesh", "buffers_hull_minkowski", 1, || {

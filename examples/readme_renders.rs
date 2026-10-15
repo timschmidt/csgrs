@@ -449,8 +449,12 @@ fn render_readme_meshes() {
     );
     let projection_source =
         solid::frustum(r(0.65), r(1.05), r(2.0), 12).expect("valid primitive fixture");
-    render_curve("flatten", &solid::flatten(&projection_source));
-    let (slice, _, _) = solid::slice_z(&projection_source, r(1.0));
+    render_curve(
+        "flatten",
+        &solid::flatten(&projection_source).expect("valid projection fixture"),
+    );
+    let (slice, _, _) =
+        solid::slice_z(&projection_source, r(1.0)).expect("valid slice fixture");
     render_curve("slice_z", &slice);
 
     render_implicit_meshes();

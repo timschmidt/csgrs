@@ -295,3 +295,173 @@ fn approximate_slice_never_certifies_a_later_strict_request() {
         }
     }
 }
+
+fn reversed(mesh: &TriangleMesh) -> TriangleMesh {
+    let mut faces = mesh.triangles.to_vec();
+    for face in &mut faces {
+        std::mem::swap(&mut face.v1, &mut face.v2);
+    }
+    TriangleMesh::new(mesh.positions.to_vec(), faces)
+}
+
+#[test]
+fn opposite_shells_cancel_interior_and_coplanar_sections() {
+    let cube = solid::cube(2.into()).unwrap();
+    let mesh = solid::merge(&[cube.clone(), reversed(&cube)]);
+    for z in [0, 1, 2] {
+        let (region, strings, paths) = solid::slice_z(&mesh, z.into()).attempt().unwrap();
+        assert!(region.is_empty(), "opposite winding at Z={z}");
+        assert!(strings.is_empty() && paths.is_empty());
+    }
+}
+
+#[test]
+fn signed_multiplicity_is_preserved_interior_and_coplanar() {
+    let cube = solid::cube(2.into()).unwrap();
+    let mesh = solid::merge(&[cube.clone(), cube.clone(), reversed(&cube)]);
+    for z in [0, 1, 2] {
+        let (region, strings, paths) = solid::slice_z(&mesh, z.into()).attempt().unwrap();
+        assert_eq!(region.filled_area().unwrap(), Some(4.into()));
+        assert!(strings.is_empty() && paths.is_empty());
+    }
+}
+
+#[test]
+fn shared_on_plane_edges_do_not_change_hole_winding() {
+    let lower = hollow_prism();
+    let upper = solid::transform(
+        &lower,
+        &Matrix4::affine_translation([0.into(), 0.into(), 2.into()]),
+    )
+    .unwrap();
+    let mesh = solid::merge(&[lower, upper]);
+    let (region, strings, paths) = solid::slice_z(&mesh, 2.into()).attempt().unwrap();
+    assert_hollow(&region);
+    assert!(strings.is_empty() && paths.is_empty());
+}
+
+#[test]
+fn vertex_touching_components_retain_both_material_regions() {
+    let first = solid::cube(2.into()).unwrap();
+    let second = solid::transform(
+        &first,
+        &Matrix4::affine_translation([2.into(), 2.into(), 0.into()]),
+    )
+    .unwrap();
+    let mesh = solid::merge(&[first, second]);
+    let (region, strings, paths) = solid::slice_z(&mesh, 1.into()).attempt().unwrap();
+    assert_eq!(region.filled_area().unwrap(), Some(8.into()));
+    for (x, y, inside) in [(1, 1, true), (3, 3, true), (1, 3, false), (3, 1, false)] {
+        assert_eq!(
+            curve::contains_xy(&region, x.into(), y.into()).unwrap(),
+            Some(inside)
+        );
+    }
+    assert!(strings.is_empty() && paths.is_empty());
+}
+
+#[test]
+fn contextual_invalid_indices_preserve_the_native_diagnostic() {
+    let mesh = triangle(Vec::new());
+    for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
+        for error in [
+            solid::flatten_with_context(&mesh, &context).unwrap_err(),
+            solid::slice_z_with_context(&mesh, 0.into(), &context).unwrap_err(),
+        ] {
+            assert!(matches!(error, ValidationError::Mesh(_)));
+            assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);
+            assert!(std::error::Error::source(&error).is_some());
+        }
+    }
+}
+
+#[test]
+fn interleaved_opposite_faces_preserve_winding_after_permutation() {
+    let cube = solid::cube(2.into()).unwrap();
+    for copies in [1, 2] {
+        let mut operands = vec![cube.clone(); copies];
+        operands.push(reversed(&cube));
+        let mesh = solid::merge(&operands);
+        let n = cube.triangles.len();
+        let mut faces = (0..n)
+            .flat_map(|i| (0..operands.len()).map(move |j| j * n + i))
+            .map(|i| mesh.triangles[i])
+            .collect::<Vec<_>>();
+        for shift in 0..n {
+            faces.rotate_left(1);
+            let permuted = TriangleMesh::new(mesh.positions.to_vec(), faces.clone());
+            for z in [0, 1, 2] {
+                let (region, strings, paths) = solid::slice_z(&permuted, z.into())
+                    .attempt()
+                    .unwrap_or_else(|error| {
+                        panic!("copies={copies}, shift={shift}, z={z}: {error:?}")
+                    });
+                if copies == 1 {
+                    assert!(region.is_empty());
+                } else {
+                    assert_eq!(region.filled_area().unwrap(), Some(4.into()));
+                }
+                assert!(strings.is_empty() && paths.is_empty());
+            }
+        }
+    }
+}
+
+#[test]
+fn thread_local_cache_modes_preserve_hollow_sections() {
+    let workers = [CachePolicy::DEFAULT, CachePolicy::DISABLED].map(|policy| {
+        std::thread::spawn(move || {
+            cache::with_policy(policy, || {
+                let mesh = hollow_prism();
+                assert_hollow(&solid::slice_z(&mesh, 1.into()).attempt().unwrap().0);
+            })
+        })
+    });
+    for worker in workers {
+        worker.join().unwrap();
+    }
+}
+
+#[test]
+fn independent_position_rows_preserve_the_same_section() {
+    let source = hollow_prism();
+    let mut positions = Vec::new();
+    let faces = source
+        .triangles
+        .iter()
+        .map(|face| {
+            let start = positions.len();
+            positions.extend(face.indices().map(|i| source.positions[i].clone()));
+            let mut output = *face;
+            output.v0 = start;
+            output.v1 = start + 1;
+            output.v2 = start + 2;
+            output
+        })
+        .collect();
+    let mesh = TriangleMesh::new(positions, faces);
+    for z in [0, 1, 2] {
+        let (region, strings, paths) = solid::slice_z(&mesh, z.into()).attempt().unwrap();
+        assert_hollow(&region);
+        assert!(strings.is_empty() && paths.is_empty());
+    }
+}
+
+#[test]
+fn shuffled_coincident_shell_faces_preserve_signed_set() {
+    let cube = solid::cube(2.into()).unwrap();
+    let source = solid::merge(&[cube.clone(), reversed(&cube)]);
+    let mut faces = source.triangles.to_vec();
+    let mut state = 0x1734_abcd_u64;
+    for case in 0..32 {
+        for i in (1..faces.len()).rev() {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
+            faces.swap(i, (state % (i as u64 + 1)) as usize);
+        }
+        let mesh = TriangleMesh::new(source.positions.to_vec(), faces.clone());
+        let (region, strings, paths) = solid::slice_z(&mesh, 1.into())
+            .attempt()
+            .unwrap_or_else(|error| panic!("case={case}: {error:?}"));
+        assert!(region.is_empty() && strings.is_empty() && paths.is_empty());
+    }
+}

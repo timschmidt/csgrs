@@ -2118,12 +2118,14 @@ pub fn exact_mass_properties(
         .map_err(|error| ValidationError::Geometry(format!("{error:?}")))
 }
 
-/// Flattens native triangle faces into native filled curve topology.
+/// Projects triangle faces into their regularized union in the XY plane.
+///
+/// Zero-area projected faces are omitted. Invalid indices and undecided
+/// orientation or region predicates remain typed errors. This projects faces,
+/// not an inferred analytic source, and does not certify input manifoldness.
 #[cfg(feature = "curve")]
-pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
-    flatten_with_context(mesh, &GeometryContext::STRICT)
-        .map(GeometryOutcome::into_value)
-        .unwrap_or_else(|_| hypercurve::CurveRegion2::empty())
+pub fn flatten(mesh: &TriangleMesh) -> Result<hypercurve::CurveRegion2, ValidationError> {
+    flatten_with_context(mesh, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Flattens faces with the selected policy, retaining errors and aggregate certainty.
@@ -2140,14 +2142,7 @@ pub fn flatten_with_context(
     let decisions = GeometryDecisions::new(context);
     let mut output = CurveRegion2::empty();
     for triangle in mesh.triangles.iter() {
-        let [a, b, c] = triangle.indices();
-        let (Some(a), Some(b), Some(c)) = (
-            mesh.positions.get(a),
-            mesh.positions.get(b),
-            mesh.positions.get(c),
-        ) else {
-            return Err(ValidationError::InvalidArguments);
-        };
+        let [a, b, c] = mesh.triangle_points(*triangle)?;
         let mut points = [
             [a.x.clone(), a.y.clone()],
             [b.x.clone(), b.y.clone()],
@@ -2165,17 +2160,13 @@ pub fn flatten_with_context(
             hyperlimit::Sign::Positive => {},
             hyperlimit::Sign::Zero => continue,
         }
-        let contour = Contour2::from_real_ring(&points)
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+        let contour = Contour2::from_real_ring(&points)?;
         let region = decisions
-            .exact_curve(|| CurveRegion2::try_from_native_material_contours(vec![contour]))
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+            .exact_curve(|| CurveRegion2::try_from_native_material_contours(vec![contour]))?;
         output = if output.is_empty() {
             region
         } else {
-            decisions
-                .exact_curve(|| output.boolean_region(&region, CurveBooleanOp::Union))
-                .map_err(|error| ValidationError::Geometry(error.to_string()))?
+            decisions.exact_curve(|| output.boolean_region(&region, CurveBooleanOp::Union))?
         };
     }
     let output = decisions.finish(output);
@@ -2183,163 +2174,90 @@ pub fn flatten_with_context(
     Ok(output)
 }
 
-/// Intersects native geometry with the XY plane at an exact Z coordinate.
+/// Intersects oriented native geometry with the XY plane at exact Z.
+///
+/// Closed sections use nonzero winding; holes and duplicate or opposite
+/// traversals retain their meaning. The one-sided sections and signed
+/// coplanar faces are regularized separately, then united. Open sheets retain
+/// section wires; isolated point contacts are omitted. Invalid indices and
+/// undecided predicates are errors, including when the geometric result would
+/// otherwise be empty. This operation does not certify manifoldness or
+/// inherited construction provenance, nor impose a total-work or byte bound.
 #[cfg(feature = "curve")]
-pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
-    slice_z_with_context(mesh, z, &GeometryContext::STRICT)
-        .map(GeometryOutcome::into_value)
-        .unwrap_or_else(|_| (hypercurve::CurveRegion2::empty(), Vec::new(), Vec::new()))
+pub fn slice_z(mesh: &TriangleMesh, z: Real) -> Result<SliceResult, ValidationError> {
+    slice_z_with_context(mesh, z, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
-/// Slices with the selected policy for intersections, stitching, and region Booleans.
+/// Slices with the selected policy, retaining native diagnostics and certainty.
 #[cfg(feature = "curve")]
 pub fn slice_z_with_context(
     mesh: &TriangleMesh,
     z: Real,
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<SliceResult>, ValidationError> {
-    use hypercurve::{BooleanOp as CurveBooleanOp, Contour2, CurveRegion2, CurveString2};
+    use hypercurve::{
+        BooleanOp as CurveBooleanOp, Contour2, CurveRegion2, CurveString2, FillRule,
+    };
 
     if let Some(result) = retained_slice(mesh, &z, context) {
         return Ok(result);
     }
     let decisions = GeometryDecisions::new(context);
-    let equal = |left: &Point3, right: &Point3| decisions.points_equal(left, right);
-    let mut edges = Vec::<[Point3; 2]>::new();
-    let mut coplanar_positions = Vec::new();
-    let mut coplanar_triangles = Vec::new();
-    for triangle in mesh.triangles.iter() {
-        let [a, b, c] = triangle.indices();
-        let Some(points) = [a, b, c]
-            .into_iter()
-            .map(|index| mesh.positions.get(index).cloned())
-            .collect::<Option<Vec<_>>>()
-        else {
-            return Err(ValidationError::InvalidArguments);
-        };
-        let signs = points
+    let section = decisions.consume_mesh(mesh.slice_z(decisions.mesh_context(), &z)?);
+    let chain_points = |chain: &hypermesh::SectionChain3| {
+        let mut points = chain
+            .segments
             .iter()
-            .map(|point| decisions.sign(&(point.z.clone() - z.clone()), "slice plane side"))
-            .collect::<Result<Vec<_>, _>>()?;
-        if signs.iter().all(|sign| *sign == RealSign::Zero) {
-            let base = coplanar_positions.len();
-            coplanar_positions.extend(points);
-            coplanar_triangles.push(Triangle::new(base, base + 1, base + 2));
-            continue;
-        }
-        let mut intersections = Vec::with_capacity(2);
-        for [start, end] in [[0, 1], [1, 2], [2, 0]] {
-            let (start_sign, end_sign) = (signs[start], signs[end]);
-            let point = if start_sign == RealSign::Zero {
-                Some(points[start].clone())
-            } else if matches!(
-                (start_sign, end_sign),
-                (RealSign::Negative, RealSign::Positive)
-                    | (RealSign::Positive, RealSign::Negative)
-            ) {
-                let denominator = points[end].z.clone() - points[start].z.clone();
-                let Ok(parameter) = (z.clone() - points[start].z.clone()) / denominator else {
-                    return Err(ValidationError::InvalidArguments);
-                };
-                Some(Point3::new(
-                    points[start].x.clone()
-                        + (points[end].x.clone() - points[start].x.clone())
-                            * parameter.clone(),
-                    points[start].y.clone()
-                        + (points[end].y.clone() - points[start].y.clone()) * parameter,
-                    z.clone(),
-                ))
-            } else {
-                None
-            };
-            if let Some(point) = point {
-                let duplicate =
-                    intersections.iter().try_fold(false, |duplicate, existing| {
-                        Ok::<_, ValidationError>(duplicate || equal(existing, &point)?)
-                    })?;
-                if !duplicate {
-                    intersections.push(point);
-                }
-            }
-        }
-        if intersections.len() == 2 {
-            edges.push([intersections.remove(0), intersections.remove(0)]);
-        }
-    }
-
-    let mut chains = Vec::<Vec<Point3>>::new();
-    let mut used = vec![false; edges.len()];
-    for start in 0..edges.len() {
-        if used[start] {
-            continue;
-        }
-        used[start] = true;
-        let mut chain = vec![edges[start][0].clone(), edges[start][1].clone()];
-        while let Some(last) = chain.last() {
-            let mut next = None;
-            for (index, edge) in edges.iter().enumerate() {
-                if used[index] {
-                    continue;
-                }
-                match (equal(last, &edge[0])?, equal(last, &edge[1])?) {
-                    (true, _) => {
-                        next = Some((index, edge[1].clone()));
-                        break;
-                    },
-                    (false, true) => {
-                        next = Some((index, edge[0].clone()));
-                        break;
-                    },
-                    (false, false) => {},
-                }
-            }
-            let Some((index, point)) = next else {
-                break;
-            };
-            used[index] = true;
-            chain.push(point);
-        }
-        chains.push(chain);
-    }
-
-    let mut region = if coplanar_triangles.is_empty() {
-        CurveRegion2::empty()
-    } else {
-        decisions.consume_geometry(flatten_with_context(
-            &TriangleMesh::new(coplanar_positions, coplanar_triangles),
-            context,
-        )?)
-    };
-    let mut wires = Vec::new();
-    for chain in chains {
-        let points = chain
-            .iter()
-            .map(|point| [point.x.clone(), point.y.clone()])
+            .map(|&index| {
+                let point = &section.segments[index].endpoints[0].position;
+                [point.x.clone(), point.y.clone()]
+            })
             .collect::<Vec<_>>();
-        let closed = match chain.first().zip(chain.last()) {
-            Some((first, last)) => equal(first, last)?,
-            None => false,
-        };
-        if closed {
-            let contour = Contour2::from_real_ring(&points)
-                .map_err(|error| ValidationError::Geometry(error.to_string()))?;
-            let loop_region = decisions
-                .exact_curve(|| CurveRegion2::try_from_native_material_contours(vec![contour]))
-                .map_err(|error| ValidationError::Geometry(error.to_string()))?;
-            region = if region.is_empty() {
-                loop_region
-            } else {
-                decisions
-                    .exact_curve(|| region.boolean_region(&loop_region, CurveBooleanOp::Union))
-                    .map_err(|error| ValidationError::Geometry(error.to_string()))?
-            };
-        } else {
-            let Ok(wire) = CurveString2::from_real_point_iter(points) else {
-                return Err(ValidationError::InvalidArguments);
-            };
-            wires.push(wire);
+        if let Some(&index) = chain.segments.last() {
+            let point = &section.segments[index].endpoints[1].position;
+            points.push([point.x.clone(), point.y.clone()]);
         }
+        points
+    };
+    let mut region = CurveRegion2::empty();
+    for chains in [&section.above, &section.below] {
+        let contours = chains
+            .iter()
+            .map(|chain| {
+                // A directed cycle may retrace one edge. Native contour
+                // construction accepts that zero-area winding contribution;
+                // a polygon-ring adapter incorrectly requires three vertices.
+                Contour2::try_new(
+                    CurveString2::from_real_point_iter(chain_points(chain))?.into_segments(),
+                )
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        let filled = decisions.exact_curve(|| {
+            CurveRegion2::try_from_native_boundary_contours(&contours, FillRule::NonZero)
+        })?;
+        region =
+            decisions.exact_curve(|| region.boolean_region(&filled, CurveBooleanOp::Union))?;
     }
+    let coplanar = section
+        .coplanar_triangles
+        .iter()
+        .map(|&index| {
+            let points = mesh
+                .triangle_points(mesh.triangles[index])?
+                .map(|point| [point.x.clone(), point.y.clone()]);
+            Ok::<_, ValidationError>(Contour2::from_real_ring(&points)?)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let coplanar = decisions.exact_curve(|| {
+        CurveRegion2::try_from_native_boundary_contours(&coplanar, FillRule::NonZero)
+    })?;
+    region =
+        decisions.exact_curve(|| region.boolean_region(&coplanar, CurveBooleanOp::Union))?;
+    let wires = section
+        .wires
+        .iter()
+        .map(|chain| CurveString2::from_real_point_iter(chain_points(chain)))
+        .collect::<Result<Vec<_>, _>>()?;
     let result = decisions.finish((region, wires, Vec::new()));
     retain_slice(mesh, z, context, &result);
     Ok(result)
