@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/source/crates/hyperreal/fuzz/directed/campaign.py", line 306, in <module>
+    run(args)
+    ~~~^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/source/crates/hyperreal/fuzz/directed/campaign.py", line 140, in run
+    scores = validate_response(response, payload, cases)
+  File "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/source/crates/hyperreal/fuzz/directed/evidence.py", line 10, in validate_response
+    lo, hi = map(Fraction, response['oracle']['interval'])
+    ^^^^^^
+  File "/usr/lib64/python3.14/fractions.py", line 261, in __new__
+    raise ValueError('Invalid literal for Fraction: %r' %
+                     numerator)
+ValueError: Invalid literal for Fraction: '-27931556500330433803049226533637006274590649963619668 925885374414150898765336872457256625242233613556347683983128124055594640483009157988897323896623413842844844379525894964387151983399682997532864595227954734660591504291488880247295459932217901826462320870738852806221550773867167559789549404623228305490833/3753758414402350114985578847754628430655879796774751768338949695381315781309615853973705099290165690424277009592352731309591345333151121630880730453319952580019863461295451288668314174944572706159989883958951313077165169522342308559632306943619798833037312'

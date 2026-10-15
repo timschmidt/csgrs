@@ -1,0 +1,3038 @@
+{
+  "ConstOffset": [
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          12,
+          146,
+          114,
+          108,
+          128,
+          175,
+          254,
+          46
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          47,
+          128,
+          223,
+          71,
+          133,
+          255,
+          155,
+          107
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          48,
+          107,
+          233,
+          211,
+          208,
+          222,
+          120,
+          84
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          254,
+          227,
+          149,
+          157,
+          182,
+          153,
+          93,
+          85
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstOffset",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "ConstProduct": [
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          15,
+          154,
+          13,
+          231,
+          22,
+          119,
+          182,
+          109
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          110,
+          114,
+          33,
+          235,
+          186,
+          29,
+          126,
+          45
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          177,
+          219,
+          122,
+          210,
+          125,
+          22,
+          51,
+          174
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          223,
+          187,
+          18,
+          239,
+          39,
+          106,
+          253,
+          117
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProduct",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "ConstProductSqrt": [
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          7,
+          88,
+          233,
+          198,
+          35,
+          235,
+          72,
+          235
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          32,
+          21,
+          119,
+          65,
+          49,
+          114,
+          40,
+          162
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          99,
+          234,
+          194,
+          195,
+          108,
+          21,
+          21,
+          38
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          155,
+          157,
+          46,
+          247,
+          59,
+          157,
+          19,
+          73
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "ConstProductSqrt",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "Exp": [
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          22,
+          128,
+          98,
+          35,
+          36,
+          1,
+          227,
+          119
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          126,
+          84,
+          115,
+          164,
+          149,
+          195,
+          40,
+          209
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          201,
+          110,
+          166,
+          250,
+          104,
+          254,
+          55,
+          253
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          219,
+          148,
+          241,
+          93,
+          70,
+          28,
+          231,
+          84
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Exp",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "Irrational": [
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          52,
+          157,
+          179,
+          62,
+          235,
+          130,
+          167,
+          6
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          167,
+          187,
+          93,
+          216,
+          159,
+          114,
+          143,
+          18
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          183,
+          101,
+          130,
+          186,
+          46,
+          137,
+          24,
+          41
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          184,
+          77,
+          184,
+          20,
+          206,
+          122,
+          69,
+          58
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Irrational",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "Ln": [
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          117,
+          207,
+          57,
+          158,
+          115,
+          118,
+          232,
+          49
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          152,
+          67,
+          45,
+          63,
+          191,
+          47,
+          178,
+          103
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          173,
+          68,
+          75,
+          1,
+          36,
+          60,
+          82,
+          2
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          250,
+          181,
+          116,
+          147,
+          188,
+          153,
+          249,
+          183
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Ln",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "LnAffine": [
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          84,
+          222,
+          66,
+          54,
+          149,
+          206,
+          87,
+          82
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          108,
+          226,
+          187,
+          24,
+          238,
+          6,
+          126,
+          181
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          133,
+          133,
+          33,
+          11,
+          51,
+          176,
+          221,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          227,
+          193,
+          36,
+          51,
+          202,
+          254,
+          243,
+          228
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnAffine",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "LnProduct": [
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          35,
+          28,
+          160,
+          159,
+          31,
+          223,
+          139,
+          96
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          57,
+          205,
+          165,
+          132,
+          173,
+          56,
+          66,
+          20
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          77,
+          75,
+          245,
+          44,
+          149,
+          63,
+          70,
+          208
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          145,
+          223,
+          164,
+          100,
+          107,
+          71,
+          166,
+          54
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "LnProduct",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "Log10": [
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          12,
+          75,
+          114,
+          16,
+          186,
+          244,
+          131,
+          27
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          203,
+          119,
+          7,
+          231,
+          184,
+          129,
+          147,
+          141
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          217,
+          196,
+          2,
+          184,
+          120,
+          244,
+          19,
+          18
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          241,
+          74,
+          56,
+          60,
+          169,
+          98,
+          72,
+          152
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log10",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "Log2": [
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          50,
+          196,
+          223,
+          106,
+          137,
+          204,
+          243,
+          185
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          144,
+          136,
+          125,
+          50,
+          247,
+          16,
+          211,
+          190
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          221,
+          9,
+          47,
+          179,
+          216,
+          113,
+          231,
+          215
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          225,
+          77,
+          60,
+          116,
+          88,
+          237,
+          24,
+          136
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Log2",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "One": [
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          7,
+          103,
+          234,
+          182,
+          44,
+          158,
+          242,
+          174
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          204,
+          140,
+          72,
+          129,
+          114,
+          210,
+          123,
+          251
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          211,
+          251,
+          233,
+          79,
+          111,
+          48,
+          133,
+          215
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          230,
+          34,
+          3,
+          170,
+          145,
+          239,
+          200,
+          208
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "One",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "Pi": [
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          1,
+          221,
+          175,
+          38,
+          230,
+          189,
+          57,
+          18
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          27,
+          18,
+          202,
+          182,
+          6,
+          233,
+          165,
+          197
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          30,
+          50,
+          132,
+          237,
+          144,
+          67,
+          11,
+          161
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          102,
+          9,
+          44,
+          49,
+          56,
+          157,
+          177,
+          178
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pi",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "PiExp": [
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          26,
+          10,
+          209,
+          139,
+          158,
+          4,
+          252,
+          100
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          80,
+          188,
+          168,
+          242,
+          65,
+          182,
+          255,
+          71
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          114,
+          169,
+          214,
+          132,
+          46,
+          203,
+          6,
+          162
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          155,
+          68,
+          108,
+          136,
+          239,
+          140,
+          33,
+          97
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiExp",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "PiInv": [
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          50,
+          207,
+          181,
+          78,
+          39,
+          244,
+          23,
+          253
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          54,
+          130,
+          149,
+          55,
+          60,
+          13,
+          86,
+          225
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          121,
+          180,
+          235,
+          134,
+          159,
+          147,
+          21,
+          179
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          168,
+          245,
+          98,
+          154,
+          101,
+          126,
+          153,
+          101
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInv",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "PiInvExp": [
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          6,
+          18,
+          154,
+          77,
+          119,
+          180,
+          125,
+          149
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          133,
+          216,
+          44,
+          77,
+          139,
+          216,
+          27,
+          216
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          188,
+          109,
+          210,
+          162,
+          7,
+          10,
+          115,
+          55
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          217,
+          179,
+          231,
+          219,
+          233,
+          34,
+          90,
+          219
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiInvExp",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "PiPow": [
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          72,
+          199,
+          178,
+          209,
+          68,
+          123,
+          49,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          119,
+          206,
+          48,
+          184,
+          216,
+          212,
+          7,
+          233
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          216,
+          60,
+          161,
+          138,
+          53,
+          29,
+          216,
+          103
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          245,
+          150,
+          220,
+          65,
+          64,
+          135,
+          64,
+          86
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiPow",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "PiSqrt": [
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          163,
+          244,
+          121,
+          115,
+          198,
+          142,
+          94,
+          223
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          169,
+          48,
+          181,
+          41,
+          210,
+          205,
+          42,
+          149
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          197,
+          30,
+          90,
+          209,
+          48,
+          89,
+          129,
+          217
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          252,
+          217,
+          100,
+          86,
+          164,
+          196,
+          114,
+          149
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "PiSqrt",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "Pow10": [
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          54,
+          51,
+          53,
+          110,
+          63,
+          129,
+          136,
+          180
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          201,
+          147,
+          223,
+          35,
+          191,
+          135,
+          157,
+          151
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          225,
+          234,
+          155,
+          14,
+          203,
+          31,
+          249,
+          94
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          239,
+          28,
+          112,
+          36,
+          47,
+          137,
+          96,
+          52
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow10",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "Pow2": [
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          76,
+          34,
+          130,
+          190,
+          42,
+          175,
+          55,
+          226
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          151,
+          212,
+          196,
+          29,
+          117,
+          37,
+          50,
+          108
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          169,
+          55,
+          131,
+          119,
+          245,
+          127,
+          72,
+          46
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          181,
+          98,
+          75,
+          99,
+          15,
+          126,
+          55,
+          219
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Pow2",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "SinPi": [
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          64,
+          126,
+          164,
+          19,
+          124,
+          5,
+          179,
+          201
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          99,
+          248,
+          223,
+          87,
+          131,
+          85,
+          89,
+          155
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          160,
+          105,
+          85,
+          83,
+          205,
+          118,
+          103,
+          242
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          197,
+          170,
+          223,
+          181,
+          156,
+          53,
+          52,
+          92
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "SinPi",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "Sqrt": [
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          25,
+          155,
+          8,
+          90,
+          35,
+          144,
+          24,
+          239
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          66,
+          112,
+          51,
+          58,
+          155,
+          12,
+          44,
+          142
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          120,
+          132,
+          138,
+          57,
+          14,
+          46,
+          198,
+          237
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          121,
+          15,
+          193,
+          73,
+          109,
+          157,
+          75,
+          250
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "Sqrt",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ],
+  "TanPi": [
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          0,
+          1,
+          127,
+          3,
+          5,
+          2,
+          128,
+          77
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          4,
+          31,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          63,
+          34,
+          213,
+          87,
+          126,
+          176,
+          150,
+          174
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          145,
+          75,
+          111,
+          80,
+          34,
+          8,
+          146,
+          201
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          165,
+          222,
+          186,
+          143,
+          3,
+          190,
+          95,
+          241
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          235,
+          32,
+          197,
+          189,
+          45,
+          157,
+          86,
+          165
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    },
+    {
+      "input": {
+        "bucket": "TanPi",
+        "genome": [
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "origin": "initial",
+      "parent_id": null
+    }
+  ]
+}

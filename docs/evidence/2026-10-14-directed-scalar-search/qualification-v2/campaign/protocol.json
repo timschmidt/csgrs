@@ -1,0 +1,25 @@
+{
+  "P38_complete": false,
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe",
+  "binary_sha256": "c63b776a2546b8ae4eebcbe3060f75e07db61ea8c52dc5be507323b650ea89be",
+  "competitive_benchmark": false,
+  "no_resumption_or_extension": true,
+  "parents_per_representation": 4,
+  "plan_complete": false,
+  "population_per_representation": 8,
+  "process_timeout_seconds": 30,
+  "python": "3.14.7 (main, Aug 10 2026, 00:00:00) [GCC 15.3.1 20260722 (Red Hat 15.3.1-1)]",
+  "rounds": 3,
+  "sanitizer_environment": {
+    "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1:abort_on_error=0:exitcode=66",
+    "LSAN_OPTIONS": ""
+  },
+  "schema": 1,
+  "score_contract": "Maximize median query-body elapsed nanoseconds within each independent representation population.",
+  "seed": 20261014,
+  "sources_sha256": {
+    "campaign.py": "7535573e9abd85c74277b584fbdb6abe71c058f29a0cf19c02d6461656cba160",
+    "evidence.py": "d3a90d63b5343ec0ad4320bfe97ccfcc4c96c912d34ecea71d7a0864ab23d269",
+    "lexicase.py": "e55daf224219f90cad2ebf2fde0304419d0f8cd70d191bcce1069dff33cfe18e"
+  }
+}

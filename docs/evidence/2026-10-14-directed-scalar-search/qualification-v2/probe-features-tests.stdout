@@ -1,0 +1,19 @@
+
+running 5 tests
+test tests::independent_oracle_rejects_opposite_sign_and_disjoint_intervals ... ok
+test tests::original_near_pi_failure_is_preserved_with_its_actual_class ... ok
+test tests::parameter_extremes_keep_every_private_class_and_agree_with_mpfr ... ok
+test tests::unknown_representations_and_malformed_genomes_are_rejected ... ok
+test tests::both_sides_of_all_near_pi_depths_and_all_offset_families_are_checked ... ok
+
+successes:
+
+successes:
+    tests::both_sides_of_all_near_pi_depths_and_all_offset_families_are_checked
+    tests::independent_oracle_rejects_opposite_sign_and_disjoint_intervals
+    tests::original_near_pi_failure_is_preserved_with_its_actual_class
+    tests::parameter_extremes_keep_every_private_class_and_agree_with_mpfr
+    tests::unknown_representations_and_malformed_genomes_are_rejected
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+

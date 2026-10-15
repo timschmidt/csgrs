@@ -1,0 +1,3 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 12.27s
+     Running unittests examples/directed_scalar_probe.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe-899de66a86f70001)

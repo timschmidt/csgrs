@@ -1,0 +1,159 @@
+{
+  "status": "closed-failed",
+  "driver_terminal_exit_code_observed": 1,
+  "commands_executed": 10,
+  "command_exit_codes": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1
+  ],
+  "python_tests_passed": 21,
+  "rust_tests_passed_each_configuration": 5,
+  "rust_test_configurations": [
+    "serde,dispatch-trace",
+    "all-features"
+  ],
+  "campaign_probes_exited_zero": 5,
+  "campaign_responses_accepted_before_failure": 4,
+  "campaign_selection_events": 0,
+  "campaign_complete": false,
+  "original_input": {
+    "bucket": "ConstOffset",
+    "genome": [
+      47,
+      128,
+      223,
+      71,
+      133,
+      255,
+      155,
+      107
+    ]
+  },
+  "original_recipe": {
+    "angle_denominator": 29,
+    "angle_numerator": 3,
+    "constant_offset": "41700634145107834391635548644048896/236",
+    "exponent_denominator": 15,
+    "exponent_numerator": 1,
+    "generic_near_pi": false,
+    "input": {
+      "bucket": "ConstOffset",
+      "genome": [
+        47,
+        128,
+        223,
+        71,
+        133,
+        255,
+        155,
+        107
+      ]
+    },
+    "offset_family": "InverseProductAdd",
+    "other_prime": 2,
+    "pi_offset": "3141592653589793238462643383280/1000000000000000000000000000000",
+    "pi_power": 2,
+    "prime": 19,
+    "scale": "-1927636186701270745318691578721903593165055826211650932398908132818944/12194404286479721223761995322976486445254187155456"
+  },
+  "finding": "The Rust probe passed its numeric checks and exited zero. Its rational Display output uses mixed-number notation for some values; the Python exact-fraction reader rejects that notation. This is an evidence wire-format defect, not a discovered arithmetic contradiction.",
+  "next_candidate_requirement": "Keep the complete original input and raw response. Serialize every numeric rational endpoint and normal form as an explicit signed numerator over a positive denominator; add cross-language regression coverage.",
+  "sources_verified": {
+    "v1": 10161,
+    "v2": 10163,
+    "main": 10153
+  },
+  "executed_binaries": {
+    "probe-features-tests/directed_scalar_probe-b4e29e084f4e51cb": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe-b4e29e084f4e51cb",
+      "sha256": "52ac64031f35b73e405337c4acf81b5136d32ca4f162082dc9a5bb5bdeed789b",
+      "bytes": 9505920
+    },
+    "all-features-tests/directed_scalar_probe-899de66a86f70001": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe-899de66a86f70001",
+      "sha256": "7c2ea3c7d94122a0372346470e9e99ac2495a8b735a0dd9f405a256e050bd9e5",
+      "bytes": 9512296
+    },
+    "probe-build": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe",
+      "sha256": "c63b776a2546b8ae4eebcbe3060f75e07db61ea8c52dc5be507323b650ea89be",
+      "bytes": 7800680
+    }
+  },
+  "trial_artifacts_sha256": {
+    "probe-features-tests.stderr": "5201f95934a87254f5ffc3a8e92c466f7479715e9c7d326ce4b9f1d8d17fbd4f",
+    "probe-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "all-features-tests.stderr": "c9f3876faee65ca2eefa873b0aafc8370988413c0c087ce108c7389e5defa3b0",
+    "probe-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "probe-features-tests.stdout": "100ae06c40be027c9a32254efb4fa109bcfe031fe54e436456defef5ebac6e47",
+    "probe-features-clippy.stderr": "1f26a82cb70e98f7c629b06e286ad5104903fe1003e6b85b161720f8f3ab112c",
+    "all-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python-tests.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "6da6bc54ad5df28d1a9e75a13f1ffd2bdeb6662e01628cde388df65ab500744e",
+    "fuzz-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "all-features-tests.stdout": "1282c91e1d9b41a7f26677d55c80c31784c9b90ace84e86450bd4301103de588",
+    "fuzz-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "inventory.stdout": "2d96cca25cbb9935d5c02951b11973cc0fb421f867a5f78936b75a73057f463a",
+    "campaign.stderr": "9488da182914cb17bf168f72eeb160451de0a1ddf4fb46e31a2a4a03e98fe47f",
+    "inventory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.json": "5a265d732a295632e653b54a00138ed3a466d749b377de3a1fb93f06fce6bf4d",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "campaign.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python-tests.stderr": "88a9c6c8b42c477fade76310ca5540a31e49639eabf70e8398d087de78ac4f03",
+    "failure.json": "0e6c996201bc122a3c2b4b1cbaf3266ef599479048f851f6ea7446d212fb1a23",
+    "all-features-clippy.stderr": "a9f4344f84b7abccc59ab0dd52b0a059b8d63e3240aa86da55e31eeffb290508",
+    "binaries.json": "58f471b7cbc4f0950e0b7e99683ecea21bb760124ed3c963ba7adfe7c8f9b4dd",
+    "probe-build.stderr": "e31583ace4cc99d8776f2a91a03b3e82f91371f62d9528f6e48d55c341168580",
+    "campaign/round-000-ConstOffset-34b0545faa4185b0883bc929aa80341d698dffdb88a87c40890b249847366018.input.json": "e04235b5e6b1e1f7837465a9757c20ea858f3c9575816f464bceb88e01de7759",
+    "campaign/inventory.process.json": "eb31f2a5d42c4de51e86b71f6181232a21fed1f5a3acfbaef0631fab3a193a98",
+    "campaign/round-000-ConstOffset-c062ea341e2c50e6e70f99a97e333451814ff2da78462186f5371feb6a070224.process.json": "21a84ef73369ca0dbe794f4b99ac9fa6d7480050233687c67147f3c3d0f20c27",
+    "campaign/round-000-ConstOffset-09e30b4d4677e4ca538a87e0fdf37702d67125b53f26b72f4fa454c944ac4442.process.json": "eeefa572229a42554bb184323599e4eb4c4c3b3604b1edede74975fac1558e9c",
+    "campaign/round-000-ConstOffset-887bc4fefbcaa413e50516cdbbb3017f811e98df1d46e990c6c31f78cad438b8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "campaign/protocol.json": "af4a7e7a425f1e2e30cbf9525d47df3ee16e282d82b6eb37cd62a5b29fac9581",
+    "campaign/round-000-ConstOffset-c062ea341e2c50e6e70f99a97e333451814ff2da78462186f5371feb6a070224.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "campaign/round-000-ConstOffset-75b2de48e382d9a4c886aec2e08225b45701379861e0da43dbff1e6c80b7f975.input.json": "1a2f5683c3750e393821f113680a88379f5f4a49eb60f0ed0445ff30393af35e",
+    "campaign/inventory.stdout": "2d96cca25cbb9935d5c02951b11973cc0fb421f867a5f78936b75a73057f463a",
+    "campaign/completed-probes.jsonl": "ab64bfa891c0efd3f8c1c539c3cda67972ec1601039f3f8a04501d5643503775",
+    "campaign/inventory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "campaign/round-000-ConstOffset-75b2de48e382d9a4c886aec2e08225b45701379861e0da43dbff1e6c80b7f975.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "campaign/round-000-ConstOffset-887bc4fefbcaa413e50516cdbbb3017f811e98df1d46e990c6c31f78cad438b8.input.json": "9e413dca7661a325578b7871888126065ba7565a0c1793c207ad5b64a42780d6",
+    "campaign/round-000-ConstOffset-34b0545faa4185b0883bc929aa80341d698dffdb88a87c40890b249847366018.stdout": "cbfed1d72341a2a46f55e67bdb9f021f21ce3cc44fafeb8756301724f196121b",
+    "campaign/round-000-ConstOffset-887bc4fefbcaa413e50516cdbbb3017f811e98df1d46e990c6c31f78cad438b8.stdout": "6750fef78f9a27e00119031aa7426b81ccc5ad9aafbacbc59ff27e87d390e8cb",
+    "campaign/round-000-ConstOffset-09e30b4d4677e4ca538a87e0fdf37702d67125b53f26b72f4fa454c944ac4442.stdout": "d1b2674521ae8e766d0ad65efb6c394ce0f5cbd72b6882b045d9e81592d85033",
+    "campaign/bucket-seeds.json": "ef0e3fdc8b8c3e15675607fd8a59994b4db8e380aa48ebf42b36aca862df2e25",
+    "campaign/round-000-ConstOffset-c062ea341e2c50e6e70f99a97e333451814ff2da78462186f5371feb6a070224.stdout": "4ee85a6e1ea0b47f2cb4436efd796edc3cdd6a8b292ae69683108d167eb2cffb",
+    "campaign/round-000-ConstOffset-34b0545faa4185b0883bc929aa80341d698dffdb88a87c40890b249847366018.process.json": "372624e4be73f73d61d48184e84987ca94a912db5528c5d98e314d8d73a9aa0e",
+    "campaign/failure.json": "fc03f03d8aba74107cbe8d2397420b3e67329cedabfc0cb49f508732036c86ac",
+    "campaign/round-000-ConstOffset-34b0545faa4185b0883bc929aa80341d698dffdb88a87c40890b249847366018.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "campaign/round-000-ConstOffset-75b2de48e382d9a4c886aec2e08225b45701379861e0da43dbff1e6c80b7f975.stdout": "62432cd101ff43863ef63864bfbd4f4fab76b02b08ce9a1ede219b5021d9d73c",
+    "campaign/round-000-ConstOffset-75b2de48e382d9a4c886aec2e08225b45701379861e0da43dbff1e6c80b7f975.process.json": "fe5a1ea3b42a0ffc6c66bda43b497784f8fbae26e5325efa945325cbdcd3f3ed",
+    "campaign/round-000-planned.json": "dc1a1b40ba185a932420e4bd229b9bbb2d54976e8bec5cc8b27260310a73b0c5",
+    "campaign/round-000-ConstOffset-09e30b4d4677e4ca538a87e0fdf37702d67125b53f26b72f4fa454c944ac4442.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "campaign/round-000-ConstOffset-887bc4fefbcaa413e50516cdbbb3017f811e98df1d46e990c6c31f78cad438b8.process.json": "7b1101d341991afa04075e35326c0b764dd4a1fda89248b638f5c544b3875019",
+    "campaign/round-000-ConstOffset-09e30b4d4677e4ca538a87e0fdf37702d67125b53f26b72f4fa454c944ac4442.input.json": "16aa800e8e12fbaf1a5b4a6a8ee3426c6655f5f03ed116c10e9742b4d6bd424b",
+    "campaign/round-000-ConstOffset-c062ea341e2c50e6e70f99a97e333451814ff2da78462186f5371feb6a070224.input.json": "22213673b2938195e88ccbfc60ca521ecb0023ef4c1d16398d5009f66613bb76"
+  },
+  "driver_logs_sha256": {
+    "driver-v2.stdout": "1d1bba5c12000ec362c1561a5947d3b291aef6f8a4acff9759a82795f59e3fb1",
+    "driver-v2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "closure_sources_sha256": {
+    "close_v1.py": "0f490714057b8eec8b005db008177862702d30e24d5bb70de400c94bb1f444de",
+    "close_v2.py": "8e251930f9470d50e89e003a12dd7415460e23f938bd3e09b115a3bb72251d30"
+  },
+  "sanitizer_error_markers_observed": false,
+  "competitive_benchmark_complete": false,
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false,
+  "closed_trial_retried_resumed_filtered_extended_or_pooled": false
+}

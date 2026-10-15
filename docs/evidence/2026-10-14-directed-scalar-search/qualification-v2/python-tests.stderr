@@ -1,0 +1,26 @@
+test_changed_plan_is_rejected (test_campaign.CampaignTests.test_changed_plan_is_rejected) ... ok
+test_changed_random_stream_is_rejected (test_campaign.CampaignTests.test_changed_random_stream_is_rejected) ... ok
+test_complete_campaign_replays (test_campaign.CampaignTests.test_complete_campaign_replays) ... ok
+test_failed_probe_cannot_be_ignored (test_campaign.CampaignTests.test_failed_probe_cannot_be_ignored) ... ok
+test_incomplete_journal_is_rejected (test_campaign.CampaignTests.test_incomplete_journal_is_rejected) ... ok
+test_missing_bucket_is_rejected (test_campaign.CampaignTests.test_missing_bucket_is_rejected) ... ok
+test_missing_parent_selection_is_rejected (test_campaign.CampaignTests.test_missing_parent_selection_is_rejected) ... ok
+test_selected_input_inventory_is_checked (test_campaign.CampaignTests.test_selected_input_inventory_is_checked) ... ok
+test_available_facts_cannot_be_dropped (test_evidence.EvidenceTests.test_available_facts_cannot_be_dropped) ... ok
+test_fine_proof_survives_a_zero_refinement_query (test_evidence.EvidenceTests.test_fine_proof_survives_a_zero_refinement_query) ... ok
+test_identity_query_inventory_and_answer_types_are_checked (test_evidence.EvidenceTests.test_identity_query_inventory_and_answer_types_are_checked) ... ok
+test_timing_samples_cannot_be_replaced_by_a_best_case (test_evidence.EvidenceTests.test_timing_samples_cannot_be_replaced_by_a_best_case) ... ok
+test_unknown_may_become_certified (test_evidence.EvidenceTests.test_unknown_may_become_certified) ... ok
+test_wrong_sign_and_disjoint_interval_are_rejected (test_evidence.EvidenceTests.test_wrong_sign_and_disjoint_interval_are_rejected) ... ok
+test_exhaustive_small_matrices_match_lexicographic_maxima (test_lexicase.LexicaseTests.test_exhaustive_small_matrices_match_lexicographic_maxima) ... ok
+test_independent_representation_buckets_have_independent_parents (test_lexicase.LexicaseTests.test_independent_representation_buckets_have_independent_parents) ... ok
+test_invalid_scores_and_incomplete_records_are_rejected (test_lexicase.LexicaseTests.test_invalid_scores_and_incomplete_records_are_rejected) ... ok
+test_later_case_breaks_a_tie_among_current_survivors (test_lexicase.LexicaseTests.test_later_case_breaks_a_tie_among_current_survivors) ... ok
+test_seeded_ties_and_population_permutations_replay (test_lexicase.LexicaseTests.test_seeded_ties_and_population_permutations_replay) ... ok
+test_specialists_survive_instead_of_the_average_winner (test_lexicase.LexicaseTests.test_specialists_survive_instead_of_the_average_winner) ... ok
+test_tampered_selection_evidence_is_rejected (test_lexicase.LexicaseTests.test_tampered_selection_evidence_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 12.284s
+
+OK

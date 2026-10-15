@@ -1,0 +1,75 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/source",
+  "source_files": 10163,
+  "inputs_sha256": {
+    "qualify_v2.py": "ee937c931c74cdb6e6342f26f19ff62d0cad420b3fce84e8f5e1a88f31cd9fb7",
+    "contract-v2.json": "b4b087702cde03681fc6bdf3750bda057aefbbd38a16f42890ad8d6eac6e8d8d",
+    "qualification-scope-v2.json": "336cc3c138afc3eec1ceec1ab297c47e960e4e447fdd1cc274a209423f1a12d0",
+    "prototype-v2.patch": "1c85046b984024e83eef6e3b2c29fdd76dfcfe720de8dd59e0dad8f99bacabf2",
+    "main-source-before.json.gz": "7637ab09a08c15e3ac7c239f1fad7a59c26ea93dfc6075b147f6da74b09cb92c",
+    "source-hashes-v2.json.gz": "c7798f916f0cb22a52ea3280131eff6b3421686afb73c840bc79172d31f70c28",
+    "closure-v1.json": "3bc60179a0d02e982c16c9bd9729bd4cc0e2136e02a1f0ba9a70a1afbe8b4b6a"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "base_environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "RUSTUP_TOOLCHAIN": "stable",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/check-target",
+    "RUSTFLAGS": "",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "RUSTC_BOOTSTRAP": "1"
+  },
+  "sanitizer_environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "RUSTUP_TOOLCHAIN": "stable",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v2/sanitizer-target",
+    "RUSTFLAGS": "-Zsanitizer=address -Cforce-frame-pointers=yes",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "RUSTC_BOOTSTRAP": "1",
+    "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1:abort_on_error=0:exitcode=66",
+    "LSAN_OPTIONS": ""
+  },
+  "stdlib_source": "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library",
+  "stdlib_source_mapping_sha256": "28292f3cdfeff912a6ceab877e119fa19732e77725e719e5ea3b70355dae24e0",
+  "preserved_binaries": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/qualification-target/x86_64-unknown-linux-gnu/release/deps/real_representations-4cfc6a52c9a097d4",
+      "sha256": "e1d44f0752dcd38b63495f2356015d64516931f27a768ebc4abc2636ce6e4eae",
+      "bytes": 2735464
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/qualification-target/x86_64-unknown-linux-gnu/release/deps/real_representations-7fffae914936c8dc",
+      "sha256": "9f85cc8202da0b1c655de249f052598342488a4bd5b997fe7c375568c1b79abc",
+      "bytes": 3855048
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/fuzz-target/x86_64-unknown-linux-gnu/release/structural_representations",
+      "sha256": "f8ce7e0b311c19c9dd5df504d938b61dc02cc85b235587af0796bb186de7f1d8",
+      "bytes": 40462072
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v1/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe-b4e29e084f4e51cb",
+      "sha256": "fefed31776da4d38d0d259a60b284b811e0801a044ad183b32202c6b6172854c",
+      "bytes": 9457928
+    }
+  ],
+  "commands": 11,
+  "campaign": {
+    "seed": 20261014,
+    "rounds": 3,
+    "population": 8,
+    "parents": 4,
+    "probe_timeout_seconds": 30,
+    "expected_completed_probes": 528,
+    "expected_selection_events": 264
+  },
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false
+}
