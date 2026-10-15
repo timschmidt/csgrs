@@ -11,7 +11,7 @@ fn r(value: f64) -> Real {
 
 #[test]
 fn repeated_boolean_and_transform_sequence_stays_nonempty() {
-    let base = solid::center(&solid::cube(r(1.0)));
+    let base = solid::center(&solid::cube(r(1.0)).expect("valid primitive fixture"));
     let mut acc = base.clone();
 
     for i in 0..3 {

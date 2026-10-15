@@ -47,12 +47,24 @@ fn primitives_preserve_scalar_structure_with_and_without_retention() {
         Real::pi(),
         Real::e(),
     ] {
-        let cold = solid::cube(width.clone());
-        let warm = solid::cube(width.clone());
+        if width == -Real::one() {
+            for _ in 0..2 {
+                assert!(matches!(
+                    solid::cube(width.clone()),
+                    Err(csgrs::errors::ValidationError::NegativeParameter { .. })
+                ));
+            }
+            cache::with_policy(CachePolicy::DISABLED, || {
+                assert!(solid::cube(width.clone()).is_err())
+            });
+            continue;
+        }
+        let cold = solid::cube(width.clone()).expect("valid primitive fixture");
+        let warm = solid::cube(width.clone()).expect("valid primitive fixture");
         assert!(Arc::ptr_eq(&cold.positions, &warm.positions));
         let uncached = cache::with_policy(CachePolicy::DISABLED, || {
-            let first = solid::cube(width.clone());
-            let second = solid::cube(width.clone());
+            let first = solid::cube(width.clone()).expect("valid primitive fixture");
+            let second = solid::cube(width.clone()).expect("valid primitive fixture");
             assert_mesh_eq(&first, &second);
             if !first.positions.is_empty() {
                 assert!(!Arc::ptr_eq(&first.positions, &second.positions));
@@ -70,9 +82,15 @@ fn every_cached_primitive_family_replays_the_same_exact_rows() {
     use hyperlattice::Point3;
 
     let constructors: &[fn() -> TriangleMesh] = &[
-        || solid::cuboid(Real::from(2), Real::from(3), Real::from(4)),
-        || solid::sphere(Real::from(2), 8, 4),
-        || solid::ellipsoid(Real::from(2), Real::from(3), Real::from(4), 8, 4),
+        || {
+            solid::cuboid(Real::from(2), Real::from(3), Real::from(4))
+                .expect("valid primitive fixture")
+        },
+        || solid::sphere(Real::from(2), 8, 4).expect("valid primitive fixture"),
+        || {
+            solid::ellipsoid(Real::from(2), Real::from(3), Real::from(4), 8, 4)
+                .expect("valid primitive fixture")
+        },
         || {
             solid::frustum_between(
                 Point3::new(Real::zero(), Real::zero(), Real::zero()),
@@ -81,11 +99,12 @@ fn every_cached_primitive_family_replays_the_same_exact_rows() {
                 Real::one(),
                 8,
             )
+            .expect("valid primitive fixture")
         },
-        || solid::octahedron(Real::from(2)),
-        || solid::icosahedron(Real::from(2)),
+        || solid::octahedron(Real::from(2)).expect("valid primitive fixture"),
+        || solid::icosahedron(Real::from(2)).expect("valid primitive fixture"),
         #[cfg(feature = "curve")]
-        || solid::torus(Real::from(4), Real::one(), 8, 4),
+        || solid::torus(Real::from(4), Real::one(), 8, 4).expect("valid primitive fixture"),
     ];
     for build in constructors {
         cache::clear();
@@ -108,19 +127,23 @@ fn fifo_hits_do_not_refresh_insertion_order() {
             ..CachePolicy::DISABLED
         },
         || {
-            let first = solid::cube(Real::one());
-            let second = solid::cube(Real::from(2));
+            let first = solid::cube(Real::one()).expect("valid primitive fixture");
+            let second = solid::cube(Real::from(2)).expect("valid primitive fixture");
             assert!(Arc::ptr_eq(
                 &first.positions,
-                &solid::cube(Real::one()).positions
+                &solid::cube(Real::one())
+                    .expect("valid primitive fixture")
+                    .positions
             ));
-            solid::cube(Real::from(3));
+            solid::cube(Real::from(3)).expect("valid primitive fixture");
             assert_eq!(cache::usage().primitives, 2);
             assert!(Arc::ptr_eq(
                 &second.positions,
-                &solid::cube(Real::from(2)).positions
+                &solid::cube(Real::from(2))
+                    .expect("valid primitive fixture")
+                    .positions
             ));
-            let rebuilt = solid::cube(Real::one());
+            let rebuilt = solid::cube(Real::one()).expect("valid primitive fixture");
             assert!(!Arc::ptr_eq(&first.positions, &rebuilt.positions));
             assert_mesh_eq(&first, &rebuilt);
         },
@@ -132,7 +155,7 @@ fn nested_scopes_shrink_immediately_and_restore_after_unwinding() {
     cache::clear();
     let original = cache::policy();
     cache::with_policy(ONE_EACH, || {
-        solid::cube(Real::one());
+        solid::cube(Real::one()).expect("valid primitive fixture");
         let panic = std::panic::catch_unwind(|| {
             cache::with_policy(CachePolicy::DISABLED, || {
                 assert_eq!(cache::usage(), CacheUsage::default());
@@ -145,7 +168,7 @@ fn nested_scopes_shrink_immediately_and_restore_after_unwinding() {
         assert_eq!(cache::usage(), CacheUsage::default());
         cache::with_policy(CachePolicy::DEFAULT, || {
             for width in 1..=4 {
-                solid::cube(Real::from(width));
+                solid::cube(Real::from(width)).expect("valid primitive fixture");
             }
             assert_eq!(cache::usage().primitives, 4);
         });
@@ -162,7 +185,7 @@ fn workers_have_independent_policy_and_retained_storage() {
         let worker = std::thread::spawn(|| {
             assert_eq!(cache::policy(), CachePolicy::DEFAULT);
             assert_eq!(cache::usage(), CacheUsage::default());
-            solid::cube(Real::one());
+            solid::cube(Real::one()).expect("valid primitive fixture");
             assert_eq!(cache::usage().primitives, 1);
         });
         worker.join().unwrap();
@@ -174,8 +197,8 @@ fn workers_have_independent_policy_and_retained_storage() {
 #[test]
 fn merge_keys_include_input_order_and_both_storage_identities() {
     cache::clear();
-    let cube = solid::cube(Real::one());
-    let large = solid::cube(Real::from(2));
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
+    let large = solid::cube(Real::from(2)).expect("valid primitive fixture");
     let inputs = [cube.clone(), large.clone()];
     let merged = solid::merge(&inputs);
     let mut warm = solid::merge(&inputs);
@@ -201,7 +224,7 @@ fn merge_keys_include_input_order_and_both_storage_identities() {
 #[test]
 fn each_distribution_family_preserves_geometry_and_certainty() {
     cache::clear();
-    let cube = solid::cube(Real::one());
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     for context in [STRICT, APPROXIMATE] {
         for family in 0..3 {
             let build = || {
@@ -246,7 +269,7 @@ fn each_distribution_family_preserves_geometry_and_certainty() {
 #[test]
 fn approximate_distribution_cannot_satisfy_a_strict_request() {
     cache::clear();
-    let cube = solid::cube(Real::one());
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let step = Real::one() + unresolved_zero();
     let build = |context| {
         solid::distribute_grid_with_context(&cube, 1, 2, step.clone(), Real::one(), context)
@@ -270,7 +293,7 @@ fn all_active_caches_obey_their_limits_and_release_entries() {
     cache::clear();
     cache::with_policy(ONE_EACH, || {
         for width in 1..=3 {
-            let cube = solid::cube(Real::from(width));
+            let cube = solid::cube(Real::from(width)).expect("valid primitive fixture");
             solid::merge(&[cube.clone(), cube.clone()]);
             solid::distribute_linear_with_context(
                 &cube,
@@ -310,7 +333,7 @@ fn curve_results_preserve_boundaries_and_context_when_warm_or_disabled() {
     use hypermesh::Triangle;
 
     cache::clear();
-    let cube = solid::cube(Real::one());
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let z = unresolved_zero();
     let sliced = solid::slice_z_with_context(&cube, z.clone(), &APPROXIMATE).unwrap();
     let warm = solid::slice_z_with_context(&cube, z.clone(), &APPROXIMATE).unwrap();

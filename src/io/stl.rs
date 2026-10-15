@@ -167,14 +167,15 @@ mod tests {
 
     #[test]
     fn binary_cube_round_trips_through_validated_import() {
-        let cube = crate::solid::cube(Real::from(2_u8));
+        let cube = crate::solid::cube(Real::from(2_u8)).expect("valid primitive fixture");
         let bytes = to_stl_binary(&cube, "cube").unwrap();
         assert_eq!(from_stl(&bytes).unwrap().triangles.len(), 12);
     }
 
     #[test]
     fn sampled_sphere_is_representable_at_the_stl_boundary() {
-        let sphere = crate::solid::sphere(Real::from(10_u8), 32, 16);
+        let sphere =
+            crate::solid::sphere(Real::from(10_u8), 32, 16).expect("valid primitive fixture");
         let bytes = to_stl_binary(&sphere, "sphere").unwrap();
         assert_eq!(
             from_stl(&bytes).unwrap().triangles.len(),
@@ -184,7 +185,7 @@ mod tests {
 
     #[test]
     fn rejects_injected_names_and_degenerate_geometry() {
-        let cube = crate::solid::cube(Real::one());
+        let cube = crate::solid::cube(Real::one()).expect("valid primitive fixture");
         assert!(to_stl_ascii(&cube, "safe\nendsolid forged").is_err());
         let point = Point3::origin();
         let degenerate = TriangleMesh::new(

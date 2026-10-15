@@ -1,0 +1,29 @@
+{
+  "commands": [
+    {
+      "name": "focused-tests",
+      "exit_code": 0,
+      "seconds": 164.6219853600487,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/primitive-failures/candidate-v2/release/deps/csgrs-12b72f0ccdd38706": "df15a2cb02f1c9660fe90681388d2855ffa9e160f3f095cee807669e7b63631a",
+        "target/primitive-failures/candidate-v2/release/deps/empty_composition-329c8a68d57ad60d": "f995ddc297945f67cd37597e78f76cc49b8dfbcdff2d4fc02443d31f408df8fc",
+        "target/primitive-failures/candidate-v2/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "ee375860f62928b3feb6e7c54e5a71b1b5577e84b9e1eb75b1cf05360f5cbd63",
+        "target/primitive-failures/candidate-v2/release/deps/primitive_failures-812823cb4c624c0c": "f6728c9636f0cf8328dc457e3618b454b86997c29020034a75eaa97ea02b813c",
+        "target/primitive-failures/candidate-v2/release/deps/solid_cache-07b265ceb2ca1c46": "49a10ffed0634da519f30533e3e2c1ac35ee04e1ed6250613a14498476ea4fba"
+      },
+      "stdout_sha256": "d556d63c4a41c4bed87da02111e829bbed07f7239eaf7d85e06bda7b5bb30667",
+      "stderr_sha256": "d3a41e576a9a4297e1f58427f89d08c0dd47b64e9595c49973abcbb99724dc8b"
+    },
+    {
+      "name": "clippy-minimal",
+      "exit_code": 0,
+      "seconds": 25.18694272218272,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "26f419e077a61dcc89a9c5f7e6dff3b527fd4cac7758f5e64b79ba5d66c70f3e"
+    }
+  ],
+  "passed": true
+}

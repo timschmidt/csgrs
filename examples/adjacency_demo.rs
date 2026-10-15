@@ -4,7 +4,7 @@ use csgrs::solid;
 use hyperlattice::Real;
 
 fn main() {
-    let sphere = solid::sphere(r(1.0), 16, 8);
+    let sphere = solid::sphere(r(1.0), 16, 8).expect("valid primitive fixture");
     let adjacency = sphere.adjacency().expect("sphere connectivity");
 
     let edge_uses = adjacency.iter().map(Vec::len).sum::<usize>();

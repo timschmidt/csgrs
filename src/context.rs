@@ -200,10 +200,10 @@ impl GeometryDecisions {
                 }
                 Ok(value)
             },
-            PredicateOutcome::Unknown { .. } => Err(ValidationError::Geometry(format!(
-                "{predicate} is undecided under {:?}",
-                self.context.predicate_policy()
-            ))),
+            PredicateOutcome::Unknown { .. } => Err(ValidationError::PredicateUndecided {
+                predicate,
+                policy: self.context.predicate_policy(),
+            }),
         }
     }
 

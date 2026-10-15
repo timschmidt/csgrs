@@ -11,12 +11,16 @@ namespace csgrs {
 
 class error : public std::runtime_error {
 public:
-  explicit error(const char *message) : std::runtime_error(message ? message : "csgrs error") {}
+  explicit error(const char *message, csgrs_status_t status = CSGRS_STATUS_VALIDATION_FAILED)
+      : std::runtime_error(message ? message : "csgrs error"), status_(status) {}
+  csgrs_status_t status() const noexcept { return status_; }
+private:
+  csgrs_status_t status_;
 };
 
 inline void check(csgrs_status_t status) {
   if (status != CSGRS_STATUS_OK) {
-    throw error(csgrs_last_error_message());
+    throw error(csgrs_last_error_message(), status);
   }
 }
 

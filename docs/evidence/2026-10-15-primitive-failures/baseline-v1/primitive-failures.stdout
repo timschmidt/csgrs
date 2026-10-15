@@ -1,0 +1,39 @@
+
+running 4 tests
+test capacity_overflow_is_an_error_through_the_public_adapter ... FAILED
+test invalid_resolution_is_an_error_even_for_zero_radius ... FAILED
+test negative_dimensions_are_errors_through_the_public_adapter ... FAILED
+test undecided_dimensions_are_errors_through_the_public_adapter ... FAILED
+
+failures:
+
+---- capacity_overflow_is_an_error_through_the_public_adapter stdout ----
+
+thread 'capacity_overflow_is_an_error_through_the_public_adapter' (2670) panicked at tests/primitive_failures.rs:34:5:
+assertion failed: RawTriangleMesh::sphere(Real::one(), usize::MAX, 2).is_err()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- invalid_resolution_is_an_error_even_for_zero_radius stdout ----
+
+thread 'invalid_resolution_is_an_error_even_for_zero_radius' (2671) panicked at tests/primitive_failures.rs:26:9:
+assertion failed: RawTriangleMesh::sphere(radius.clone(), 2, 4).is_err()
+
+---- negative_dimensions_are_errors_through_the_public_adapter stdout ----
+
+thread 'negative_dimensions_are_errors_through_the_public_adapter' (2672) panicked at tests/primitive_failures.rs:12:5:
+assertion failed: RawTriangleMesh::cube(-Real::one()).is_err()
+
+---- undecided_dimensions_are_errors_through_the_public_adapter stdout ----
+
+thread 'undecided_dimensions_are_errors_through_the_public_adapter' (2673) panicked at tests/primitive_failures.rs:20:5:
+assertion failed: RawTriangleMesh::cube(unresolved_zero()).is_err()
+
+
+failures:
+    capacity_overflow_is_an_error_through_the_public_adapter
+    invalid_resolution_is_an_error_even_for_zero_radius
+    negative_dimensions_are_errors_through_the_public_adapter
+    undecided_dimensions_are_errors_through_the_public_adapter
+
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

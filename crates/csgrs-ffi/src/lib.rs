@@ -43,6 +43,10 @@ pub enum CsgrsStatus {
     WrongScalarFamily = 2,
     ConversionFailed = 3,
     ValidationFailed = 4,
+    PredicateUndecided = 5,
+    ResourceExhausted = 6,
+    Unsupported = 7,
+    GeometryFailed = 8,
     Panic = 255,
 }
 
@@ -998,6 +1002,16 @@ fn status_for_error(error: &FfiError) -> CsgrsStatus {
         FfiError::NullPointer => CsgrsStatus::NullPointer,
         FfiError::WrongScalarFamily => CsgrsStatus::WrongScalarFamily,
         FfiError::Adapter(AdapterError::Validation(_)) => CsgrsStatus::ValidationFailed,
+        FfiError::Adapter(AdapterError::Construction(error)) => {
+            use csgrs::errors::ValidationErrorKind;
+            match error.kind() {
+                ValidationErrorKind::InvalidInput => CsgrsStatus::ValidationFailed,
+                ValidationErrorKind::Undecided => CsgrsStatus::PredicateUndecided,
+                ValidationErrorKind::ResourceExhausted => CsgrsStatus::ResourceExhausted,
+                ValidationErrorKind::Unsupported => CsgrsStatus::Unsupported,
+                _ => CsgrsStatus::GeometryFailed,
+            }
+        },
         FfiError::Adapter(_) => CsgrsStatus::ConversionFailed,
     }
 }
@@ -2250,6 +2264,23 @@ pub unsafe extern "C" fn csgrs_region_profiles_real_free(value: CsgrsRegionProfi
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn undecided_native_constructor_does_not_publish_an_ffi_handle() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let width = CsgrsReal {
+            inner: &sine * &sine + &cosine * &cosine - Real::one(),
+        };
+        let mut mesh = ptr::null_mut();
+        let status = unsafe { csgrs_triangle_mesh_real_cube(&width, &mut mesh) };
+        assert_eq!(status, CsgrsStatus::PredicateUndecided);
+        assert!(mesh.is_null());
+        let message = unsafe { CStr::from_ptr(csgrs_last_error_message()) }
+            .to_str()
+            .unwrap();
+        assert!(message.contains("width is undecided"));
+    }
 
     fn zero_matrix_f64() -> CsgrsMatrix4F64 {
         CsgrsMatrix4F64 { values: [0.0; 16] }

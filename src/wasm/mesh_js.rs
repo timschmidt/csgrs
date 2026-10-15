@@ -19,6 +19,18 @@ fn js_error(error: impl std::fmt::Display) -> JsValue {
     JsValue::from_str(&error.to_string())
 }
 
+fn construction_error(error: crate::errors::ValidationError) -> JsValue {
+    let exception = js_sys::Error::new(&error.to_string());
+    exception.set_name("GeometryError");
+    Reflect::set(
+        &exception,
+        &JsValue::from_str("code"),
+        &JsValue::from_str(error.kind().as_str()),
+    )
+    .expect("new Error object accepts a code property");
+    exception.into()
+}
+
 fn face_normal(points: &[Point3; 3]) -> Option<hyperlattice::Vector3> {
     (&points[1] - &points[0])
         .unit_cross_checked(&(&points[2] - &points[0]))
@@ -539,7 +551,9 @@ impl MeshJs {
     }
 
     pub fn cube(size: f64) -> Result<Self, JsValue> {
-        Ok(solid::cube(real_from_js_named(size, "size")?).into())
+        Ok(solid::cube(real_from_js_named(size, "size")?)
+            .map_err(construction_error)?
+            .into())
     }
 
     pub fn cuboid(width: f64, length: f64, height: f64) -> Result<Self, JsValue> {
@@ -548,11 +562,16 @@ impl MeshJs {
             real_from_js_named(length, "length")?,
             real_from_js_named(height, "height")?,
         )
+        .map_err(construction_error)?
         .into())
     }
 
     pub fn sphere(radius: f64, segments: usize, stacks: usize) -> Result<Self, JsValue> {
-        Ok(solid::sphere(real_from_js_named(radius, "radius")?, segments, stacks).into())
+        Ok(
+            solid::sphere(real_from_js_named(radius, "radius")?, segments, stacks)
+                .map_err(construction_error)?
+                .into(),
+        )
     }
 
     pub fn cylinder(radius: f64, height: f64, segments: usize) -> Result<Self, JsValue> {
@@ -561,6 +580,7 @@ impl MeshJs {
             real_from_js_named(height, "height")?,
             segments,
         )
+        .map_err(construction_error)?
         .into())
     }
 
@@ -576,6 +596,7 @@ impl MeshJs {
             real_from_js_named(height, "height")?,
             segments,
         )
+        .map_err(construction_error)?
         .into())
     }
 
@@ -593,6 +614,7 @@ impl MeshJs {
             segments,
             stacks,
         )
+        .map_err(construction_error)?
         .into())
     }
 
@@ -608,6 +630,7 @@ impl MeshJs {
             major_segments,
             minor_segments,
         )
+        .map_err(construction_error)?
         .into())
     }
 }

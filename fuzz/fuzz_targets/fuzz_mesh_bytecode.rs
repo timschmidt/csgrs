@@ -72,13 +72,16 @@ fuzz_target!(|bytes: &[u8]| {
         match op {
             0 => {
                 let size = at_least_tolerance(decode_real(bytes, &mut idx).abs());
-                stack.push(solid::cube(size));
+                stack.push(solid::cube(size).expect("valid primitive fixture"));
             },
             1 => {
                 let radius = at_least_tolerance(decode_real(bytes, &mut idx).abs());
                 let segments = (bytes[idx % bytes.len()] as usize % 16) + 3;
                 idx += 1;
-                stack.push(solid::sphere(radius, segments, segments));
+                stack.push(
+                    solid::sphere(radius, segments, segments)
+                        .expect("valid primitive fixture"),
+                );
             },
             2 => {
                 let Some(mesh) = stack.pop() else { continue };

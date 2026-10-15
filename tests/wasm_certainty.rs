@@ -31,7 +31,7 @@ fn named_receipts_preserve_both_certainty_values() {
         assert_eq!(query.value(), Some(false));
         assert_eq!(query.reason(), None);
         let result = GeometryMeshResultJs::from(GeometryOutcome {
-            value: solid::cube(Real::one()),
+            value: solid::cube(Real::one()).expect("valid primitive fixture"),
             certainty,
         });
         assert_eq!(result.certainty(), expected);
@@ -102,7 +102,7 @@ fn curve_uncertainty_survives_a_warm_approximate_boundary_query() {
 
 #[test]
 fn unknown_mesh_query_does_not_claim_a_certified_value() {
-    let cube = MeshJs::from(solid::cube(Real::one()));
+    let cube = MeshJs::from(solid::cube(Real::one()).expect("valid primitive fixture"));
     let half = (Real::one() / Real::from(2)).unwrap();
     let point = Point3Js::from(Point3::new(unresolved_zero(), half.clone(), half));
     for approximate in [false, true, false] {

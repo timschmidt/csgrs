@@ -320,67 +320,87 @@ fn run() {
     let config = Config::from_env();
 
     config.run("kernel", "construct_box", "unit", 64, || {
-        let mesh = black_box(solid::cube(Real::from(2_u8)));
+        let mesh = black_box(solid::cube(Real::from(2_u8)).expect("valid primitive fixture"));
         measurement(&mesh, 0)
     });
     config.run("kernel", "construct_cuboid", "2x4x6", 32, || {
-        let mesh = black_box(solid::cuboid(
-            Real::from(2_u8),
-            Real::from(4_u8),
-            Real::from(6_u8),
-        ));
+        let mesh = black_box(
+            solid::cuboid(Real::from(2_u8), Real::from(4_u8), Real::from(6_u8))
+                .expect("valid primitive fixture"),
+        );
         measurement(&mesh, 0)
     });
     config.run("kernel", "construct_cylinder", "r6_h20_s64", 8, || {
-        let mesh = black_box(solid::cylinder(Real::from(6_u8), Real::from(20_u8), 64));
+        let mesh = black_box(
+            solid::cylinder(Real::from(6_u8), Real::from(20_u8), 64)
+                .expect("valid primitive fixture"),
+        );
         measurement(&mesh, 0)
     });
     config.run("kernel", "construct_frustum", "r6_r2_h20_s64", 8, || {
-        let mesh = black_box(solid::frustum(
-            Real::from(6_u8),
-            Real::from(2_u8),
-            Real::from(20_u8),
-            64,
-        ));
+        let mesh = black_box(
+            solid::frustum(Real::from(6_u8), Real::from(2_u8), Real::from(20_u8), 64)
+                .expect("valid primitive fixture"),
+        );
         measurement(&mesh, 0)
     });
     config.run("kernel", "construct_octahedron", "r10", 32, || {
-        measurement(&black_box(solid::octahedron(Real::from(10_u8))), 0)
+        measurement(
+            &black_box(solid::octahedron(Real::from(10_u8)).expect("valid primitive fixture")),
+            0,
+        )
     });
     config.run("kernel", "construct_icosahedron", "r10", 16, || {
-        measurement(&black_box(solid::icosahedron(Real::from(10_u8))), 0)
+        measurement(
+            &black_box(
+                solid::icosahedron(Real::from(10_u8)).expect("valid primitive fixture"),
+            ),
+            0,
+        )
     });
 
     for (case, segments, stacks, iterations) in [("medium", 32, 16, 8), ("large", 64, 32, 2)] {
         config.run("kernel", "construct_sphere", case, iterations, || {
-            let mesh = black_box(solid::sphere(Real::from(10_u8), segments, stacks));
+            let mesh = black_box(
+                solid::sphere(Real::from(10_u8), segments, stacks)
+                    .expect("valid primitive fixture"),
+            );
             measurement(&mesh, 0)
         });
     }
     config.run("precision", "construct_sphere", "high_resolution", 1, || {
-        let mesh = black_box(solid::sphere(Real::from(10_u8), 128, 64));
+        let mesh = black_box(
+            solid::sphere(Real::from(10_u8), 128, 64).expect("valid primitive fixture"),
+        );
         measurement(&mesh, 0)
     });
     config.run("kernel", "construct_ellipsoid", "r10_6_4_s32x16", 4, || {
         measurement(
-            &black_box(solid::ellipsoid(
-                Real::from(10_u8),
-                Real::from(6_u8),
-                Real::from(4_u8),
-                32,
-                16,
-            )),
+            &black_box(
+                solid::ellipsoid(
+                    Real::from(10_u8),
+                    Real::from(6_u8),
+                    Real::from(4_u8),
+                    32,
+                    16,
+                )
+                .expect("valid primitive fixture"),
+            ),
             0,
         )
     });
     config.run("kernel", "construct_torus", "r10_2_s32x16", 2, || {
         measurement(
-            &black_box(solid::torus(Real::from(10_u8), Real::from(2_u8), 32, 16)),
+            &black_box(
+                solid::torus(Real::from(10_u8), Real::from(2_u8), 32, 16)
+                    .expect("valid primitive fixture"),
+            ),
             0,
         )
     });
 
-    let transform_source = solid::sphere(Real::from(10_u8), 32, 16);
+    let transform_source =
+        solid::sphere(Real::from(10_u8), 32, 16).expect("valid primitive fixture");
     let transform_input = facet_count(&transform_source);
     config.run("kernel", "translate", "sphere_medium", 8, || {
         let mesh = black_box(&transform_source).translated(
@@ -443,11 +463,9 @@ fn run() {
         let mesh = solid::inverse(black_box(&transform_source));
         geometry_measurement(&mesh, transform_input)
     });
-    let off_center = solid::cube(Real::from(2_u8)).translated(
-        Real::from(7_u8),
-        Real::from(-3_i8),
-        Real::from(5_u8),
-    );
+    let off_center = solid::cube(Real::from(2_u8))
+        .expect("valid primitive fixture")
+        .translated(Real::from(7_u8), Real::from(-3_i8), Real::from(5_u8));
     config.run("kernel", "center", "translated_box", 32, || {
         geometry_measurement(&solid::center(black_box(&off_center)), 12)
     });
@@ -465,12 +483,11 @@ fn run() {
 
     // Keep exact Boolean samples practical enough for repeated measurements.
     // Higher tessellation stress remains covered by construction/analysis cases.
-    let boolean_left = solid::sphere(Real::from(10_u8), 12, 6);
-    let boolean_right = solid::cube(Real::from(14_u8)).translated(
-        Real::from(3_u8),
-        Real::from(2_u8),
-        Real::from(1_u8),
-    );
+    let boolean_left =
+        solid::sphere(Real::from(10_u8), 12, 6).expect("valid primitive fixture");
+    let boolean_right = solid::cube(Real::from(14_u8))
+        .expect("valid primitive fixture")
+        .translated(Real::from(3_u8), Real::from(2_u8), Real::from(1_u8));
     let boolean_input = facet_count(&boolean_left) + facet_count(&boolean_right);
     config.run("kernel", "boolean_union", "sphere_box", 1, || {
         let mesh = black_box(&boolean_left)
@@ -503,15 +520,14 @@ fn run() {
         measurement(&mesh, boolean_input)
     });
 
-    let topology_left = solid::cube(Real::from(4_u8));
-    let topology_disjoint = solid::cube(Real::from(4_u8)).translated(
-        Real::from(10_u8),
-        Real::zero(),
-        Real::zero(),
-    );
-    let topology_contained = solid::cube(Real::from(2_u8));
-    let topology_touching =
-        solid::cube(Real::from(4_u8)).translated(Real::from(4_u8), Real::zero(), Real::zero());
+    let topology_left = solid::cube(Real::from(4_u8)).expect("valid primitive fixture");
+    let topology_disjoint = solid::cube(Real::from(4_u8))
+        .expect("valid primitive fixture")
+        .translated(Real::from(10_u8), Real::zero(), Real::zero());
+    let topology_contained = solid::cube(Real::from(2_u8)).expect("valid primitive fixture");
+    let topology_touching = solid::cube(Real::from(4_u8))
+        .expect("valid primitive fixture")
+        .translated(Real::from(4_u8), Real::zero(), Real::zero());
     config.run("kernel", "boolean_union", "disjoint_boxes", 8, || {
         measurement(
             &black_box(&topology_left)
@@ -552,9 +568,10 @@ fn run() {
         (Real::from(1_999_999_u64) / Real::from(1_000_000_u64)).expect("nonzero denominator");
     let sliver_thickness =
         (Real::one() / Real::from(1_000_000_u64)).expect("nonzero denominator");
-    let sliver_left = solid::cube(Real::from(2_u8));
-    let sliver_right =
-        solid::cube(Real::from(2_u8)).translated(sliver_shift, Real::zero(), Real::zero());
+    let sliver_left = solid::cube(Real::from(2_u8)).expect("valid primitive fixture");
+    let sliver_right = solid::cube(Real::from(2_u8))
+        .expect("valid primitive fixture")
+        .translated(sliver_shift, Real::zero(), Real::zero());
     let sliver_input = facet_count(&sliver_left) + facet_count(&sliver_right);
     config.run("precision", "boolean_sliver", "overlap_1e-6", 1, || {
         let mesh = black_box(&sliver_left)
@@ -582,7 +599,7 @@ fn run() {
         measurement(&mesh, 64)
     });
 
-    let distribution_source = solid::cube(Real::one());
+    let distribution_source = solid::cube(Real::one()).expect("valid primitive fixture");
     config.run("kernel", "distribute_linear", "box_8", 1, || {
         measurement(
             &solid::distribute_linear(
@@ -625,7 +642,8 @@ fn run() {
         },
     );
 
-    let analysis_source = solid::sphere(Real::from(10_u8), 32, 16);
+    let analysis_source =
+        solid::sphere(Real::from(10_u8), 32, 16).expect("valid primitive fixture");
     config.run("kernel", "triangulate", "sphere_medium", 16, || {
         let mesh = black_box(&analysis_source).clone();
         measurement(&mesh, facet_count(&analysis_source))
@@ -739,7 +757,7 @@ fn run() {
         },
     );
     config.run("kernel", "dihedral_angle", "box_adjacent_faces", 32, || {
-        let box_mesh = solid::cube(Real::from(2_u8));
+        let box_mesh = solid::cube(Real::from(2_u8)).expect("valid primitive fixture");
         let first = box_mesh.triangles[0];
         let first_normal = triangle_normal(&box_mesh, first);
         let second = box_mesh
@@ -854,12 +872,10 @@ fn run() {
         );
 
         let yeahright_boolean_source = import_oriented_obj(&yeahright_boolean_hull_path());
-        let yeahright_box = solid::cuboid(
-            Real::from(20_u8),
-            Real::from(40_u8),
-            Real::from(40_u8),
-        )
-        .translated(Real::from(-10_i8), Real::from(6_u8), Real::zero());
+        let yeahright_box =
+            solid::cuboid(Real::from(20_u8), Real::from(40_u8), Real::from(40_u8))
+                .expect("valid primitive fixture")
+                .translated(Real::from(-10_i8), Real::from(6_u8), Real::zero());
         let yeahright_box_input =
             facet_count(&yeahright_boolean_source) + facet_count(&yeahright_box);
         config.run("corpus", "boolean_all", "yeahright_hull_box", 1, || {

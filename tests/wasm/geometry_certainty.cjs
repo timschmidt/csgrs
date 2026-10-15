@@ -60,6 +60,21 @@ try {
   assert.equal(arrays.indices.length, 6);
 
   const cube = keep(MeshJs.cube(1));
+  for (const [construct, code] of [
+    [() => MeshJs.cube(-1), "invalid_input"],
+    [() => MeshJs.cuboid(0, -1, 1), "invalid_input"],
+    [() => MeshJs.sphere(0, 2, 4), "invalid_input"],
+    [() => MeshJs.sphere(1, 0xffffffff, 2), "resource_exhausted"],
+    [() => MeshJs.torus(1, 1, 8, 4), "unsupported"],
+  ]) {
+    assert.throws(construct, (error) => error instanceof Error
+      && error.name === "GeometryError" && error.code === code
+      && error.message.length > 0);
+  }
+  const zeroCube = keep(MeshJs.cube(0));
+  assert.equal(zeroCube.vertexCount(), 0);
+  assert.equal(zeroCube.triangleCount(), 0);
+  assert.equal(keep(zeroCube.union(cube)).vertexCount() > 0, true);
   const inside = keep(new Point3Js(0.5, 0.5, 0.5));
   const member = keep(cube.containsPointWithContext(inside, false));
   assert.equal(member.status, Status.Decided);

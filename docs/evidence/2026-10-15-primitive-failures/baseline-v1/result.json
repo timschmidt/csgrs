@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "primitive-failures",
+      "exit_code": 101,
+      "seconds": 165.19912227941677,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/primitive-failures/baseline-v1/release/deps/primitive_failures-812823cb4c624c0c": "331636133b1d3da4cc076d3a8c9a571e3529894de0bd6c59611128b37e25da45"
+      },
+      "stdout_sha256": "8e58c08d27ad568575302c19ab2edd93f9183e58c75b50bc6be22048a491bf54",
+      "stderr_sha256": "37a20bf7f73d2657348227ff0585ca048bc7fa7ccb15a682ce815aab42490d67"
+    }
+  ],
+  "passed": false
+}

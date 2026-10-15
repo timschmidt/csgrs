@@ -1,0 +1,81 @@
+{
+  "base_commit": "22ee9939e42b6c29bb8fdeff5180317dacb0b779",
+  "runner_sha256": "945b9d82ef103e7827531e841cc03c51798ed9ebbd97e6d69952d093a7aadb0d",
+  "phase": "candidate-v1",
+  "commands": [
+    [
+      "focused-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--lib",
+        "--test",
+        "primitive_failures",
+        "--test",
+        "empty_composition",
+        "--test",
+        "mesh_boolean_context",
+        "--test",
+        "solid_cache",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "clippy-minimal",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/candidate-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "CSGRS primitive constructors and successful-result cache",
+    "scalar and language adapters"
+  ],
+  "domain": "Strict native primitives: nonnegative dimensions/radii, directed signed frustum height, valid sample minima, representable buffer capacities. Proven degeneracies are canonical empty only after all inputs are validated. Ring tori require major > minor unless minor = 0.",
+  "consumers": [
+    "SolidExt",
+    "scalar adapters",
+    "C ABI",
+    "WASM"
+  ],
+  "missing_acceptance_test": "tests/primitive_failures.rs",
+  "semantic_oracle": "Typed failures remain failures through adapters; exact box coordinates/volume, canonical empty composition, native topology, and preservation of existing full-resolution fixtures.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: implemented and committed empty composition with native and real binding qualification."
+}

@@ -56,7 +56,7 @@ fn assert_box(mesh: &TriangleMesh, min: [i32; 3], max: [i32; 3]) {
 #[test]
 fn empty_identities_remain_composable_under_both_policies() {
     let empty = solid::empty();
-    let cube = solid::cube(Real::from(2));
+    let cube = solid::cube(Real::from(2)).expect("valid primitive fixture");
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         for operation in OPERATIONS {
             let outcome = solid::boolean_with_context(&empty, &empty, operation, &context)
@@ -90,7 +90,7 @@ fn empty_identities_remain_composable_under_both_policies() {
 
 #[test]
 fn accumulation_and_complete_subtraction_can_continue() {
-    let a = solid::cube(Real::from(2));
+    let a = solid::cube(Real::from(2)).expect("valid primitive fixture");
     let b = a.translated(Real::from(2), Real::zero(), Real::zero());
     let mut accumulated = solid::empty();
     for part in [&a, &b] {
@@ -114,7 +114,7 @@ fn accumulation_and_complete_subtraction_can_continue() {
 
 #[test]
 fn empty_shortcuts_preserve_invalid_operand_diagnostics_and_indices() {
-    let cube = solid::cube(Real::one());
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let mut reversed_face = cube.triangles.to_vec();
     let [a, b, c] = reversed_face[0].indices();
     reversed_face[0] = Triangle::new(a, c, b);
@@ -183,7 +183,7 @@ fn empty_shortcuts_preserve_invalid_operand_diagnostics_and_indices() {
 
 #[test]
 fn identity_regularizes_winding_multiplicity_and_cancellation() {
-    let cube = solid::cube(Real::one());
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let doubled = TriangleMesh::new(
         cube.positions.to_vec(),
         cube.triangles
@@ -210,7 +210,9 @@ fn identity_regularizes_winding_multiplicity_and_cancellation() {
 
 #[test]
 fn empty_identity_keeps_symbolic_coordinates() {
-    let source = solid::cube(Real::one()).translated(Real::pi(), Real::zero(), Real::zero());
+    let source = solid::cube(Real::one())
+        .expect("valid primitive fixture")
+        .translated(Real::pi(), Real::zero(), Real::zero());
     let result = solid::empty().try_union(&source).unwrap();
     let left = Real::pi();
     let right = Real::pi() + Real::one();
@@ -221,7 +223,7 @@ fn empty_identity_keeps_symbolic_coordinates() {
 
 #[test]
 fn empty_operand_does_not_erase_uncertainty_in_input_validation() {
-    let cube = solid::cube(Real::one());
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
@@ -277,7 +279,7 @@ fn scalar_adapter_reuses_empty_composition_and_visible_errors() {
 
 #[test]
 fn empty_rows_from_a_shared_boolean_batch_can_be_composed() {
-    let cube = solid::cube(Real::one());
+    let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let batch = hypermesh::boolean(
         &GeometryContext::STRICT.mesh_context(),
         &[cube.as_ref()],
@@ -297,10 +299,12 @@ fn empty_rows_from_a_shared_boolean_batch_can_be_composed() {
 
 #[test]
 fn holes_and_disconnected_components_survive_empty_composition() {
-    let outer = solid::cube(Real::from(4));
-    let inner = solid::cube(Real::from(2)).translated(Real::one(), Real::one(), Real::one());
+    let outer = solid::cube(Real::from(4)).expect("valid primitive fixture");
+    let inner = solid::cube(Real::from(2))
+        .expect("valid primitive fixture")
+        .translated(Real::one(), Real::one(), Real::one());
     let hollow = outer.try_difference(&inner).unwrap();
-    let left = solid::cube(Real::from(2));
+    let left = solid::cube(Real::from(2)).expect("valid primitive fixture");
     let right = left.translated(Real::from(4), Real::zero(), Real::zero());
     let disconnected = left.try_union(&right).unwrap();
     for (source, volume, samples) in [
@@ -343,7 +347,7 @@ fn holes_and_disconnected_components_survive_empty_composition() {
 
 #[test]
 fn warming_then_mutating_an_operand_cannot_hide_invalid_topology() {
-    let mut source = solid::cube(Real::one());
+    let mut source = solid::cube(Real::one()).expect("valid primitive fixture");
     let empty = solid::empty();
     assert_box(&source.try_union(&empty).unwrap(), [0; 3], [1; 3]);
     source.triangles = vec![source.triangles[0]].into();

@@ -93,22 +93,28 @@ fn main() {
         ];
         let faces: [&[usize]; 4] = [&[0, 2, 1], &[0, 1, 3], &[0, 3, 2], &[1, 2, 3]];
         let meshes = [
-            solid::cuboid(Real::from(2), Real::from(3), Real::from(5)),
-            solid::cube(Real::from(4)),
-            solid::sphere(Real::from(4), 16, 8),
-            solid::cylinder(Real::from(3), Real::from(8), 32),
-            solid::frustum(Real::from(3), Real::from(2), Real::from(8), 16),
+            solid::cuboid(Real::from(2), Real::from(3), Real::from(5))
+                .expect("valid primitive fixture"),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
+            solid::sphere(Real::from(4), 16, 8).expect("valid primitive fixture"),
+            solid::cylinder(Real::from(3), Real::from(8), 32)
+                .expect("valid primitive fixture"),
+            solid::frustum(Real::from(3), Real::from(2), Real::from(8), 16)
+                .expect("valid primitive fixture"),
             solid::polyhedron(&points, &faces).expect("tetrahedron"),
-            solid::torus(Real::from(8), Real::from(2), 32, 12),
-            solid::ellipsoid(Real::from(3), Real::from(5), Real::from(7), 24, 12),
+            solid::torus(Real::from(8), Real::from(2), 32, 12)
+                .expect("valid primitive fixture"),
+            solid::ellipsoid(Real::from(3), Real::from(5), Real::from(7), 24, 12)
+                .expect("valid primitive fixture"),
             solid::arrow(
                 Point3::origin(),
                 Vector3::from_xyz(Real::from(2), Real::from(3), Real::from(4)),
                 12,
                 false,
-            ),
-            solid::octahedron(Real::from(4)),
-            solid::icosahedron(Real::from(4)),
+            )
+            .expect("valid primitive fixture"),
+            solid::octahedron(Real::from(4)).expect("valid primitive fixture"),
+            solid::icosahedron(Real::from(4)).expect("valid primitive fixture"),
             curve::try_extrude(
                 &curve::involute_gear(
                     Real::from(2),
@@ -368,12 +374,10 @@ fn main() {
         },
     );
 
-    let mesh = solid::sphere(Real::from(8), 24, 12);
-    let positioned = solid::cuboid(Real::from(2), Real::from(3), Real::from(5)).translated(
-        Real::from(7),
-        Real::from(-4),
-        Real::from(-9),
-    );
+    let mesh = solid::sphere(Real::from(8), 24, 12).expect("valid primitive fixture");
+    let positioned = solid::cuboid(Real::from(2), Real::from(3), Real::from(5))
+        .expect("valid primitive fixture")
+        .translated(Real::from(7), Real::from(-4), Real::from(-9));
     config.run(
         "feature",
         "mesh_positioning",
@@ -394,7 +398,7 @@ fn main() {
         },
     );
     config.run("feature", "mesh_distribution", "arc_linear_grid", 1, || {
-        let source = solid::cube(Real::one());
+        let source = solid::cube(Real::one()).expect("valid primitive fixture");
         let copies = (0..22)
             .map(|index| {
                 source.translated(
@@ -511,9 +515,11 @@ fn main() {
     });
     config.run("feature", "hypermesh", "buffers_hull_minkowski", 1, || {
         let hull = solid::convex_hull(&mesh).expect("hull");
-        let sum =
-            solid::minkowski_sum(&solid::cube(Real::from(2)), &solid::cube(Real::from(3)))
-                .expect("Minkowski");
+        let sum = solid::minkowski_sum(
+            &solid::cube(Real::from(2)).expect("valid primitive fixture"),
+            &solid::cube(Real::from(3)).expect("valid primitive fixture"),
+        )
+        .expect("Minkowski");
         let output = mesh.triangles.len() * 3 + hull.triangles.len() + sum.triangles.len();
         Measurement::new(mesh.triangles.len() as u64, output as u64, output as u64)
     });
@@ -531,15 +537,18 @@ fn main() {
         )
     });
     config.run("feature", "hypermesh", "cube_minkowski", 1, || {
-        let sum =
-            solid::minkowski_sum(&solid::cube(Real::from(2)), &solid::cube(Real::from(3)))
-                .expect("Minkowski");
+        let sum = solid::minkowski_sum(
+            &solid::cube(Real::from(2)).expect("valid primitive fixture"),
+            &solid::cube(Real::from(3)).expect("valid primitive fixture"),
+        )
+        .expect("Minkowski");
         mesh_measurement(&sum, 16)
     });
 
-    let boolean_left = solid::cube(Real::from(4));
-    let boolean_right =
-        solid::cube(Real::from(4)).translated(Real::one(), Real::one(), Real::one());
+    let boolean_left = solid::cube(Real::from(4)).expect("valid primitive fixture");
+    let boolean_right = solid::cube(Real::from(4))
+        .expect("valid primitive fixture")
+        .translated(Real::one(), Real::one(), Real::one());
     config.run("feature", "mesh_boolean", "immediate_four", 1, || {
         boolean_measurement(&boolean_results(&boolean_left, &boolean_right, 4))
     });
@@ -555,23 +564,27 @@ fn main() {
     let fixtures = [
         (
             "disjoint",
-            solid::cube(Real::from(4)),
-            solid::cube(Real::from(4)).translated(Real::from(10), Real::zero(), Real::zero()),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
+            solid::cube(Real::from(4))
+                .expect("valid primitive fixture")
+                .translated(Real::from(10), Real::zero(), Real::zero()),
         ),
         (
             "identical",
-            solid::cube(Real::from(4)),
-            solid::cube(Real::from(4)),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
         ),
         (
             "contained",
-            solid::cube(Real::from(4)),
-            solid::cube(Real::from(2)),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
+            solid::cube(Real::from(2)).expect("valid primitive fixture"),
         ),
         (
             "face_touching",
-            solid::cube(Real::from(4)),
-            solid::cube(Real::from(4)).translated(Real::from(4), Real::zero(), Real::zero()),
+            solid::cube(Real::from(4)).expect("valid primitive fixture"),
+            solid::cube(Real::from(4))
+                .expect("valid primitive fixture")
+                .translated(Real::from(4), Real::zero(), Real::zero()),
         ),
     ];
     for (name, left, right) in &fixtures {
@@ -626,7 +639,7 @@ fn main() {
         )
     });
     config.run("feature", "implicit", "tpms_catalog", 1, || {
-        let bounds = solid::cube(Real::from(12));
+        let bounds = solid::cube(Real::from(12)).expect("valid primitive fixture");
         let gyroid = solid::gyroid(&bounds, 18, Real::from(6), Real::zero());
         let schwarz = solid::schwarz_p(&bounds, 18, Real::from(6), Real::zero());
         let triangles = gyroid.triangles.len() + schwarz.triangles.len();
@@ -677,11 +690,13 @@ fn main() {
                     },
                 ),
             );
-            let geometry = solid::cube(Real::from(2)).translated(
-                Real::from(index % 8) * Real::from(3),
-                Real::from(index / 8) * Real::from(3),
-                Real::from(index % 3),
-            );
+            let geometry = solid::cube(Real::from(2))
+                .expect("valid primitive fixture")
+                .translated(
+                    Real::from(index % 8) * Real::from(3),
+                    Real::from(index / 8) * Real::from(3),
+                    Real::from(index % 3),
+                );
             AttributedMesh::from_uniform(geometry, metadata)
         })
         .collect::<Vec<_>>();
@@ -691,7 +706,7 @@ fn main() {
         Measurement::new(parts.len() as u64, edges as u64, edges as u64)
     });
 
-    let io_mesh = solid::sphere(Real::from(4), 20, 10);
+    let io_mesh = solid::sphere(Real::from(4), 20, 10).expect("valid primitive fixture");
     config.run("feature", "mesh_io", "all_exporters", 1, || {
         let stl = csgrs::io::stl::to_stl_binary(&io_mesh, "benchmark").expect("STL");
         let dxf = csgrs::io::dxf::to_dxf(&io_mesh).expect("DXF");

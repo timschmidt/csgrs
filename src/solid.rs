@@ -3,6 +3,19 @@
 //! This module owns modeling vocabulary, not a second mesh carrier. Primitive
 //! constructors, transforms, and Boolean composition all accept or return the
 //! native Hypermesh type.
+//!
+//! Primitive constructors return [`ValidationError`] on invalid parameters,
+//! undecided strict predicates, unsupported representations, or checked buffer
+//! capacity/reservation failures. Dimensions and radii are nonnegative; a
+//! proven zero size yields canonical empty geometry after validating all inputs.
+//! Frustum/cylinder height is directed and may be negative. Sample counts need
+//! at least three segments and two sphere/ellipsoid stacks. Nonempty tori need
+//! `major_radius > minor_radius`. Only successful results are cached.
+//!
+//! Exact sampled coordinates are retained; construction does not certify
+//! analytic-surface fidelity or inherited provenance. Capacity checks are not
+//! total-work or heap-byte budgets. Scalar growth, secondary allocations and
+//! cancellation remain outside the constructor resource contract.
 
 use crate::context::{GeometryContext, GeometryDecisions, GeometryOutcome};
 use crate::errors::ValidationError;
@@ -36,29 +49,64 @@ pub use crate::implicit::metaballs::{MetaBall, MetaballDiagnostics};
 #[cfg(feature = "sdf")]
 pub use crate::implicit::sdf::SdfDiagnostics;
 
-fn positive(value: &Real) -> bool {
-    matches!(crate::hyper_math::hreal_sign(value), Some(RealSign::Positive))
+fn primitive_sign(value: &Real, predicate: &'static str) -> Result<RealSign, ValidationError> {
+    GeometryDecisions::new(&GeometryContext::STRICT).sign(value, predicate)
 }
 
-fn nonnegative(value: &Real) -> bool {
-    matches!(
-        crate::hyper_math::hreal_sign(value),
-        Some(RealSign::Positive | RealSign::Zero)
-    )
-}
-
-fn sampled_circle(count: usize) -> Option<Vec<(Real, Real)>> {
-    if count == 0 {
-        return None;
+fn nonnegative(value: &Real, name: &'static str) -> Result<RealSign, ValidationError> {
+    match primitive_sign(value, name)? {
+        RealSign::Negative => Err(ValidationError::NegativeParameter { name }),
+        sign => Ok(sign),
     }
-    let denominator = Real::from(u64::try_from(count).ok()?);
-    (0..count)
-        .map(|index| {
-            let fraction = (Real::from(u64::try_from(index).ok()?) / &denominator).ok()?;
-            let angle = Real::tau() * fraction;
-            Some((angle.clone().sin(), angle.cos()))
+}
+
+const fn sample_minimum(
+    value: usize,
+    min: usize,
+    name: &'static str,
+) -> Result<(), ValidationError> {
+    if value < min {
+        Err(ValidationError::InvalidResolution {
+            name,
+            min,
+            actual: value,
         })
-        .collect::<Option<Vec<_>>>()
+    } else {
+        Ok(())
+    }
+}
+
+fn capacity<T>(count: Option<usize>) -> Result<usize, ValidationError> {
+    count
+        .filter(|count| {
+            count
+                .checked_mul(std::mem::size_of::<T>())
+                .is_some_and(|bytes| bytes <= isize::MAX as usize)
+        })
+        .ok_or(ValidationError::CapacityOverflow)
+}
+
+fn reserved<T>(count: usize) -> Result<Vec<T>, ValidationError> {
+    let mut values = Vec::new();
+    values
+        .try_reserve_exact(capacity::<T>(Some(count))?)
+        .map_err(|_| ValidationError::AllocationFailed { elements: count })?;
+    Ok(values)
+}
+
+fn sampled_circle(count: usize) -> Result<Vec<(Real, Real)>, ValidationError> {
+    sample_minimum(count, 1, "circle samples")?;
+    let denominator =
+        Real::from(u64::try_from(count).map_err(|_| ValidationError::CapacityOverflow)?);
+    let mut samples = reserved(count)?;
+    for index in 0..count {
+        let fraction = (Real::from(
+            u64::try_from(index).map_err(|_| ValidationError::CapacityOverflow)?,
+        ) / &denominator)?;
+        let angle = Real::tau() * fraction;
+        samples.push((angle.clone().sin(), angle.cos()));
+    }
+    Ok(samples)
 }
 
 fn indexed(
@@ -87,20 +135,33 @@ pub fn empty() -> TriangleMesh {
 }
 
 /// Axis-aligned cube with its minimum corner at the origin.
-pub fn cube(width: Real) -> TriangleMesh {
+pub fn cube(width: Real) -> Result<TriangleMesh, ValidationError> {
     cuboid(width.clone(), width.clone(), width)
 }
 
 /// Axis-aligned cuboid with its minimum corner at the origin.
-pub fn cuboid(width: Real, length: Real, height: Real) -> TriangleMesh {
+pub fn cuboid(
+    width: Real,
+    length: Real,
+    height: Real,
+) -> Result<TriangleMesh, ValidationError> {
     let parameters =
         PrimitiveParameters::Cuboid(width.clone(), length.clone(), height.clone());
     retained_primitive(parameters, || cuboid_uncached(width, length, height))
 }
 
-fn cuboid_uncached(width: Real, length: Real, height: Real) -> TriangleMesh {
-    if !positive(&width) || !positive(&length) || !positive(&height) {
-        return empty();
+fn cuboid_uncached(
+    width: Real,
+    length: Real,
+    height: Real,
+) -> Result<TriangleMesh, ValidationError> {
+    let signs = [
+        nonnegative(&width, "width")?,
+        nonnegative(&length, "length")?,
+        nonnegative(&height, "height")?,
+    ];
+    if signs.contains(&RealSign::Zero) {
+        return Ok(empty());
     }
     let zero = Real::zero();
     let positions = vec![
@@ -113,7 +174,7 @@ fn cuboid_uncached(width: Real, length: Real, height: Real) -> TriangleMesh {
         Point3::new(width, length.clone(), height.clone()),
         Point3::new(Real::zero(), length, height),
     ];
-    indexed_convex(
+    Ok(indexed_convex(
         positions,
         [
             [0, 3, 2],
@@ -129,49 +190,53 @@ fn cuboid_uncached(width: Real, length: Real, height: Real) -> TriangleMesh {
             [1, 2, 6],
             [1, 6, 5],
         ],
-    )
+    ))
 }
 
 /// Tessellated sphere centered at the origin.
-pub fn sphere(radius: Real, segments: usize, stacks: usize) -> TriangleMesh {
+pub fn sphere(
+    radius: Real,
+    segments: usize,
+    stacks: usize,
+) -> Result<TriangleMesh, ValidationError> {
     let parameters = PrimitiveParameters::Sphere(radius.clone(), segments, stacks);
     retained_primitive(parameters, || sphere_uncached(radius, segments, stacks))
 }
 
-fn sphere_uncached(radius: Real, segments: usize, stacks: usize) -> TriangleMesh {
-    if !positive(&radius) || segments < 3 || stacks < 2 {
-        return empty();
+fn sphere_uncached(
+    radius: Real,
+    segments: usize,
+    stacks: usize,
+) -> Result<TriangleMesh, ValidationError> {
+    sample_minimum(segments, 3, "segments")?;
+    sample_minimum(stacks, 2, "stacks")?;
+    let radius_sign = nonnegative(&radius, "radius")?;
+    let position_capacity = capacity::<Point3>(
+        segments
+            .checked_mul(stacks - 1)
+            .and_then(|count| count.checked_add(2)),
+    )?;
+    let triangle_capacity = capacity::<[usize; 3]>(
+        segments
+            .checked_mul(stacks - 1)
+            .and_then(|count| count.checked_mul(2)),
+    )?;
+    if radius_sign == RealSign::Zero {
+        return Ok(empty());
     }
-    let Some(position_capacity) = segments
-        .checked_mul(stacks - 1)
-        .and_then(|count| count.checked_add(2))
-    else {
-        return empty();
-    };
-    let Some(triangle_capacity) = segments
-        .checked_mul(stacks - 1)
-        .and_then(|count| count.checked_mul(2))
-    else {
-        return empty();
-    };
-    let Some(longitudes) = sampled_circle(segments) else {
-        return empty();
-    };
-    let Some(stack_count) = u64::try_from(stacks).ok().map(Real::from) else {
-        return empty();
-    };
-    let Some(latitudes) = (1..stacks)
-        .map(|stack| {
-            let fraction = (Real::from(u64::try_from(stack).ok()?) / &stack_count).ok()?;
-            let angle = Real::pi() * fraction;
-            Some((angle.clone().sin(), angle.cos()))
-        })
-        .collect::<Option<Vec<_>>>()
-    else {
-        return empty();
-    };
-
-    let mut positions = Vec::with_capacity(position_capacity);
+    let mut positions = reserved(position_capacity)?;
+    let mut triangles = reserved(triangle_capacity)?;
+    let longitudes = sampled_circle(segments)?;
+    let stack_count =
+        Real::from(u64::try_from(stacks).map_err(|_| ValidationError::CapacityOverflow)?);
+    let mut latitudes = reserved(stacks - 1)?;
+    for stack in 1..stacks {
+        let fraction = (Real::from(
+            u64::try_from(stack).map_err(|_| ValidationError::CapacityOverflow)?,
+        ) / &stack_count)?;
+        let angle = Real::pi() * fraction;
+        latitudes.push((angle.clone().sin(), angle.cos()));
+    }
     positions.push(Point3::new(Real::zero(), radius.clone(), Real::zero()));
     for (longitude_sin, longitude_cos) in &longitudes {
         positions.extend(latitudes.iter().map(|(latitude_sin, latitude_cos)| {
@@ -184,7 +249,6 @@ fn sphere_uncached(radius: Real, segments: usize, stacks: usize) -> TriangleMesh
     }
     let south = positions.len();
     positions.push(Point3::new(Real::zero(), -radius, Real::zero()));
-    let mut triangles = Vec::with_capacity(triangle_capacity);
     for longitude in 0..segments {
         let next = (longitude + 1) % segments;
         let slot = |longitude: usize, latitude: usize| {
@@ -215,11 +279,15 @@ fn sphere_uncached(radius: Real, segments: usize, stacks: usize) -> TriangleMesh
             slot(longitude, stacks),
         ]);
     }
-    indexed_convex(positions, triangles)
+    Ok(indexed_convex(positions, triangles))
 }
 
 /// Tessellated cylinder along +Z.
-pub fn cylinder(radius: Real, height: Real, segments: usize) -> TriangleMesh {
+pub fn cylinder(
+    radius: Real,
+    height: Real,
+    segments: usize,
+) -> Result<TriangleMesh, ValidationError> {
     frustum(radius.clone(), radius, height, segments)
 }
 
@@ -230,7 +298,7 @@ pub fn ellipsoid(
     radius_z: Real,
     segments: usize,
     stacks: usize,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     let parameters = PrimitiveParameters::Ellipsoid(
         radius_x.clone(),
         radius_y.clone(),
@@ -249,12 +317,29 @@ fn ellipsoid_uncached(
     radius_z: Real,
     segments: usize,
     stacks: usize,
-) -> TriangleMesh {
-    if !positive(&radius_x) || !positive(&radius_y) || !positive(&radius_z) {
-        return empty();
+) -> Result<TriangleMesh, ValidationError> {
+    sample_minimum(segments, 3, "segments")?;
+    sample_minimum(stacks, 2, "stacks")?;
+    let signs = [
+        nonnegative(&radius_x, "radius_x")?,
+        nonnegative(&radius_y, "radius_y")?,
+        nonnegative(&radius_z, "radius_z")?,
+    ];
+    capacity::<Point3>(
+        segments
+            .checked_mul(stacks - 1)
+            .and_then(|count| count.checked_add(2)),
+    )?;
+    capacity::<[usize; 3]>(
+        segments
+            .checked_mul(stacks - 1)
+            .and_then(|count| count.checked_mul(2)),
+    )?;
+    if signs.contains(&RealSign::Zero) {
+        return Ok(empty());
     }
-    scale(
-        &sphere(Real::one(), segments, stacks),
+    try_scale(
+        &sphere(Real::one(), segments, stacks)?,
         radius_x,
         radius_y,
         radius_z,
@@ -267,7 +352,7 @@ pub fn frustum(
     radius_top: Real,
     height: Real,
     segments: usize,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     frustum_between(
         Point3::origin(),
         Point3::new(Real::zero(), Real::zero(), height),
@@ -284,7 +369,7 @@ pub fn frustum_between(
     start_radius: Real,
     end_radius: Real,
     segments: usize,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     let parameters = PrimitiveParameters::FrustumBetween(
         Box::new(start.clone()),
         Box::new(end.clone()),
@@ -303,37 +388,23 @@ fn frustum_between_uncached(
     start_radius: Real,
     end_radius: Real,
     segments: usize,
-) -> TriangleMesh {
-    if segments < 3 || !nonnegative(&start_radius) || !nonnegative(&end_radius) {
-        return empty();
-    }
-    let Some(position_capacity) =
-        segments.checked_mul(2).and_then(|count| count.checked_add(2))
-    else {
-        return empty();
-    };
-    let Some(triangle_capacity) = segments.checked_mul(4) else {
-        return empty();
-    };
+) -> Result<TriangleMesh, ValidationError> {
+    sample_minimum(segments, 3, "segments")?;
+    let bottom_degenerate = nonnegative(&start_radius, "start_radius")? == RealSign::Zero;
+    let top_degenerate = nonnegative(&end_radius, "end_radius")? == RealSign::Zero;
+    let position_capacity =
+        capacity::<Point3>(segments.checked_mul(2).and_then(|count| count.checked_add(2)))?;
+    let triangle_capacity = capacity::<[usize; 3]>(segments.checked_mul(4))?;
     let direction = &end - &start;
-    let Ok(axis) = direction.normalize_checked() else {
-        return empty();
-    };
-    if !positive(&direction.dot(&direction)) {
-        return empty();
+    let direction_sign = primitive_sign(&direction.dot(&direction), "frustum length squared")?;
+    if direction_sign == RealSign::Zero || (bottom_degenerate && top_degenerate) {
+        return Ok(empty());
     }
-    let Ok((axis_x, axis_y)) = axis.orthonormal_basis_checked() else {
-        return empty();
-    };
-    let Some(samples) = sampled_circle(segments) else {
-        return empty();
-    };
-    let bottom_degenerate = !positive(&start_radius);
-    let top_degenerate = !positive(&end_radius);
-    if bottom_degenerate && top_degenerate {
-        return empty();
-    }
-    let mut positions = Vec::with_capacity(position_capacity);
+    let axis = direction.normalize_checked()?;
+    let (axis_x, axis_y) = axis.orthonormal_basis_checked()?;
+    let mut positions = reserved(position_capacity)?;
+    let mut triangles = reserved(triangle_capacity)?;
+    let samples = sampled_circle(segments)?;
     let bottom_center = positions.len();
     positions.push(start.clone());
     let top_center = positions.len();
@@ -354,7 +425,6 @@ fn frustum_between_uncached(
                 + axis_y.clone() * (end_radius.clone() * sin.clone())
         }));
     }
-    let mut triangles = Vec::with_capacity(triangle_capacity);
     for index in 0..segments {
         let next = (index + 1) % segments;
         if !bottom_degenerate {
@@ -377,21 +447,21 @@ fn frustum_between_uncached(
             (true, true) => {},
         }
     }
-    indexed_convex(positions, triangles)
+    Ok(indexed_convex(positions, triangles))
 }
 
 /// Regular octahedron centered at the origin.
-pub fn octahedron(radius: Real) -> TriangleMesh {
+pub fn octahedron(radius: Real) -> Result<TriangleMesh, ValidationError> {
     let parameters = PrimitiveParameters::Octahedron(radius.clone());
     retained_primitive(parameters, || octahedron_uncached(radius))
 }
 
-fn octahedron_uncached(radius: Real) -> TriangleMesh {
-    if !positive(&radius) {
-        return empty();
+fn octahedron_uncached(radius: Real) -> Result<TriangleMesh, ValidationError> {
+    if nonnegative(&radius, "radius")? == RealSign::Zero {
+        return Ok(empty());
     }
     let negative = -radius.clone();
-    indexed_convex(
+    Ok(indexed_convex(
         vec![
             Point3::new(radius.clone(), Real::zero(), Real::zero()),
             Point3::new(negative.clone(), Real::zero(), Real::zero()),
@@ -410,24 +480,22 @@ fn octahedron_uncached(radius: Real) -> TriangleMesh {
             [5, 3, 1],
             [5, 0, 3],
         ],
-    )
+    ))
 }
 
 /// Regular icosahedron centered at the origin.
-pub fn icosahedron(radius: Real) -> TriangleMesh {
+pub fn icosahedron(radius: Real) -> Result<TriangleMesh, ValidationError> {
     let parameters = PrimitiveParameters::Icosahedron(radius.clone());
     retained_primitive(parameters, || icosahedron_uncached(radius))
 }
 
-fn icosahedron_uncached(radius: Real) -> TriangleMesh {
-    if !positive(&radius) {
-        return empty();
+fn icosahedron_uncached(radius: Real) -> Result<TriangleMesh, ValidationError> {
+    if nonnegative(&radius, "radius")? == RealSign::Zero {
+        return Ok(empty());
     }
     let phi =
         (Real::one() + Real::from(5_u8).sqrt().expect("five is positive")) / Real::from(2_u8);
-    let Ok(phi) = phi else {
-        return empty();
-    };
+    let phi = phi?;
     let raw = [
         [-Real::one(), phi.clone(), Real::zero()],
         [Real::one(), phi.clone(), Real::zero()],
@@ -452,7 +520,7 @@ fn icosahedron_uncached(radius: Real) -> TriangleMesh {
             Point3::origin() + unit * radius.clone()
         })
         .collect();
-    indexed_convex(
+    Ok(indexed_convex(
         positions,
         [
             [0, 11, 5],
@@ -476,7 +544,7 @@ fn icosahedron_uncached(radius: Real) -> TriangleMesh {
             [8, 6, 7],
             [9, 8, 1],
         ],
-    )
+    ))
 }
 
 /// Tessellated arrow from a start point and direction vector.
@@ -485,30 +553,18 @@ pub fn arrow(
     direction: Vector3,
     segments: usize,
     mirrored: bool,
-) -> TriangleMesh {
-    if segments < 3 {
-        return empty();
+) -> Result<TriangleMesh, ValidationError> {
+    sample_minimum(segments, 3, "segments")?;
+    let position_capacity =
+        capacity::<Point3>(segments.checked_mul(3).and_then(|count| count.checked_add(2)))?;
+    let triangle_capacity = capacity::<[usize; 3]>(segments.checked_mul(7))?;
+    let squared_length = direction.dot(&direction);
+    if primitive_sign(&squared_length, "arrow length squared")? == RealSign::Zero {
+        return Ok(empty());
     }
-    let Some(position_capacity) =
-        segments.checked_mul(3).and_then(|count| count.checked_add(2))
-    else {
-        return empty();
-    };
-    let Some(triangle_capacity) = segments.checked_mul(7) else {
-        return empty();
-    };
-    let Ok(axis) = direction.normalize_checked() else {
-        return empty();
-    };
-    let Ok((axis_x, axis_y)) = axis.orthonormal_basis_checked() else {
-        return empty();
-    };
-    let Some(length) = direction.dot(&direction).sqrt().ok() else {
-        return empty();
-    };
-    if !positive(&length) {
-        return empty();
-    }
+    let axis = direction.normalize_checked()?;
+    let (axis_x, axis_y) = axis.orthonormal_basis_checked()?;
+    let length = squared_length.sqrt()?;
     let ratio = |numerator: u8, denominator: u8| {
         (Real::from(numerator) / Real::from(denominator))
             .expect("arrow ratio denominator is nonzero")
@@ -528,9 +584,7 @@ pub fn arrow(
     } else {
         (start, joint.clone(), end, false)
     };
-    let Some(samples) = sampled_circle(segments) else {
-        return empty();
-    };
+    let samples = sampled_circle(segments)?;
     let ring = |center: &Point3, radius: &Real| {
         samples
             .iter()
@@ -541,7 +595,7 @@ pub fn arrow(
             })
             .collect::<Vec<_>>()
     };
-    let mut positions = Vec::with_capacity(position_capacity);
+    let mut positions = reserved(position_capacity)?;
     let shaft_start_center = positions.len();
     positions.push(shaft_start.clone());
     let tip_index = positions.len();
@@ -552,7 +606,7 @@ pub fn arrow(
     positions.extend(ring(&shaft_end, &shaft_radius));
     let head_joint_ring = positions.len();
     positions.extend(ring(&joint, &head_radius));
-    let mut triangles = Vec::with_capacity(triangle_capacity);
+    let mut triangles = reserved(triangle_capacity)?;
     for index in 0..segments {
         let next = (index + 1) % segments;
         if mirrored {
@@ -607,10 +661,14 @@ pub fn arrow(
         let outward = a.to_vector() + b.to_vector() + c.to_vector()
             - interior.to_vector() * Real::from(3_u8);
         let orientation = normal.dot(&outward);
-        let faces_inward = match crate::hyper_math::hreal_sign(&orientation) {
-            Some(RealSign::Negative) => true,
-            Some(RealSign::Positive) => false,
-            Some(RealSign::Zero) | None => return empty(),
+        let faces_inward = match primitive_sign(&orientation, "arrow face orientation")? {
+            RealSign::Negative => true,
+            RealSign::Positive => false,
+            RealSign::Zero => {
+                return Err(ValidationError::UnsupportedPrimitive {
+                    reason: "zero arrow face orientation",
+                });
+            },
         };
         if faces_inward {
             triangle.swap(1, 2);
@@ -666,16 +724,20 @@ pub fn arrow(
             - interior.to_vector() * Real::from(3_u8);
         score + normal.dot(&outward)
     });
-    match crate::hyper_math::hreal_sign(&orientation_score) {
-        Some(RealSign::Negative) => {
+    match primitive_sign(&orientation_score, "arrow orientation")? {
+        RealSign::Negative => {
             for triangle in &mut triangles {
                 triangle.swap(1, 2);
             }
         },
-        Some(RealSign::Positive) => {},
-        Some(RealSign::Zero) | None => return empty(),
+        RealSign::Positive => {},
+        RealSign::Zero => {
+            return Err(ValidationError::UnsupportedPrimitive {
+                reason: "zero arrow orientation",
+            });
+        },
     }
-    indexed(positions, triangles)
+    Ok(indexed(positions, triangles))
 }
 
 /// Tessellated torus around the Z axis.
@@ -685,7 +747,7 @@ pub fn torus(
     minor_radius: Real,
     major_segments: usize,
     minor_segments: usize,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     let parameters = PrimitiveParameters::Torus(
         major_radius.clone(),
         minor_radius.clone(),
@@ -703,28 +765,28 @@ fn torus_uncached(
     minor_radius: Real,
     major_segments: usize,
     minor_segments: usize,
-) -> TriangleMesh {
-    if !positive(&major_radius)
-        || !positive(&minor_radius)
-        || crate::hyper_math::hreal_try_cmp(&major_radius, &minor_radius)
-            != Some(std::cmp::Ordering::Greater)
-        || major_segments < 3
-        || minor_segments < 3
-    {
-        return empty();
+) -> Result<TriangleMesh, ValidationError> {
+    sample_minimum(major_segments, 3, "major_segments")?;
+    sample_minimum(minor_segments, 3, "minor_segments")?;
+    nonnegative(&major_radius, "major_radius")?;
+    let minor_sign = nonnegative(&minor_radius, "minor_radius")?;
+    let position_capacity = capacity::<Point3>(major_segments.checked_mul(minor_segments))?;
+    let triangle_capacity = capacity::<[usize; 3]>(position_capacity.checked_mul(2))?;
+    if minor_sign == RealSign::Zero {
+        return Ok(empty());
     }
-    let Some(position_capacity) = major_segments.checked_mul(minor_segments) else {
-        return empty();
-    };
-    let Some(triangle_capacity) = position_capacity.checked_mul(2) else {
-        return empty();
-    };
-    let (Some(major), Some(minor)) =
-        (sampled_circle(major_segments), sampled_circle(minor_segments))
-    else {
-        return empty();
-    };
-    let mut positions = Vec::with_capacity(position_capacity);
+    if primitive_sign(
+        &(&major_radius - &minor_radius),
+        "torus major radius > minor radius",
+    )? != RealSign::Positive
+    {
+        return Err(ValidationError::UnsupportedPrimitive {
+            reason: "only ring tori (major_radius > minor_radius) are supported",
+        });
+    }
+    let mut positions = reserved(position_capacity)?;
+    let major = sampled_circle(major_segments)?;
+    let minor = sampled_circle(minor_segments)?;
     for (major_sin, major_cos) in &major {
         for (minor_sin, minor_cos) in &minor {
             let radial = major_radius.clone() + minor_radius.clone() * minor_cos.clone();
@@ -735,7 +797,7 @@ fn torus_uncached(
             ));
         }
     }
-    let mut triangles = Vec::with_capacity(triangle_capacity);
+    let mut triangles = reserved(triangle_capacity)?;
     for major_index in 0..major_segments {
         let next_major = (major_index + 1) % major_segments;
         for minor_index in 0..minor_segments {
@@ -748,7 +810,7 @@ fn torus_uncached(
             triangles.push([a, c, d]);
         }
     }
-    indexed(positions, triangles)
+    Ok(indexed(positions, triangles))
 }
 
 /// Extruded teardrop solid.
@@ -2549,7 +2611,7 @@ mod tests {
 
     #[test]
     fn constructors_return_native_hypermesh_geometry() {
-        let mesh: TriangleMesh = cube(Real::from(2_u8));
+        let mesh: TriangleMesh = cube(Real::from(2_u8)).expect("valid primitive fixture");
         assert_eq!(mesh.triangles.len(), 12);
         hypermesh::polygon_soup(&crate::MESH_CONTEXT, &[mesh.as_ref()])
             .expect("native cube must satisfy Hypermesh's input contract");
@@ -2557,23 +2619,16 @@ mod tests {
 
     #[test]
     fn primitive_sample_count_arithmetic_is_checked() {
-        assert!(sphere(Real::one(), usize::MAX, 2).triangles.is_empty());
-        assert!(
-            frustum(Real::one(), Real::one(), Real::one(), usize::MAX)
-                .triangles
-                .is_empty()
-        );
-        assert!(
-            arrow(Point3::origin(), Vector3::z(), usize::MAX, false)
-                .triangles
-                .is_empty()
-        );
+        let mut results = vec![
+            sphere(Real::one(), usize::MAX, 2),
+            frustum(Real::one(), Real::one(), Real::one(), usize::MAX),
+            arrow(Point3::origin(), Vector3::z(), usize::MAX, false),
+        ];
         #[cfg(feature = "curve")]
-        assert!(
-            torus(Real::from(2_u8), Real::one(), usize::MAX, 3)
-                .triangles
-                .is_empty()
-        );
+        results.push(torus(Real::from(2_u8), Real::one(), usize::MAX, 3));
+        for result in results.drain(..) {
+            assert!(matches!(result, Err(ValidationError::CapacityOverflow)));
+        }
     }
 
     #[test]
@@ -2583,23 +2638,28 @@ mod tests {
         let start = Point3::origin();
         let end = Point3::new(Real::zero(), Real::zero(), two.clone());
         let shapes = vec![
-            cube(two.clone()),
-            cuboid(two.clone(), one.clone(), Real::from(3_u8)),
-            sphere(one.clone(), 12, 6),
-            cylinder(one.clone(), two.clone(), 12),
-            ellipsoid(two.clone(), one.clone(), one.clone(), 12, 6),
-            frustum(one.clone(), two.clone(), two.clone(), 12),
-            frustum(Real::zero(), one.clone(), two.clone(), 12),
-            frustum_between(start.clone(), end.clone(), one.clone(), one.clone(), 12),
-            octahedron(one.clone()),
-            icosahedron(one.clone()),
-            arrow(start, end.to_vector(), 12, false),
+            cube(two.clone()).expect("valid primitive fixture"),
+            cuboid(two.clone(), one.clone(), Real::from(3_u8))
+                .expect("valid primitive fixture"),
+            sphere(one.clone(), 12, 6).expect("valid primitive fixture"),
+            cylinder(one.clone(), two.clone(), 12).expect("valid primitive fixture"),
+            ellipsoid(two.clone(), one.clone(), one.clone(), 12, 6)
+                .expect("valid primitive fixture"),
+            frustum(one.clone(), two.clone(), two.clone(), 12)
+                .expect("valid primitive fixture"),
+            frustum(Real::zero(), one.clone(), two.clone(), 12)
+                .expect("valid primitive fixture"),
+            frustum_between(start.clone(), end.clone(), one.clone(), one.clone(), 12)
+                .expect("valid primitive fixture"),
+            octahedron(one.clone()).expect("valid primitive fixture"),
+            icosahedron(one.clone()).expect("valid primitive fixture"),
+            arrow(start, end.to_vector(), 12, false).expect("valid primitive fixture"),
         ];
         #[cfg(feature = "curve")]
         let shapes = {
             let mut shapes = shapes;
             shapes.extend([
-                torus(two.clone(), one.clone(), 12, 8),
+                torus(two.clone(), one.clone(), 12, 8).expect("valid primitive fixture"),
                 teardrop_cylinder(
                     two.clone(),
                     Real::from(3_u8),
@@ -2701,14 +2761,16 @@ mod tests {
         };
         let start = Point3::origin();
         let direction = Vector3::from_xyz(Real::zero(), Real::zero(), Real::from(5_u8));
-        let ordinary = arrow(start.clone(), direction.clone(), 24, false);
+        let ordinary = arrow(start.clone(), direction.clone(), 24, false)
+            .expect("valid primitive fixture");
         assert!(
             ordinary.is_closed_manifold(),
             "ordinary defects: {:?}",
             defects(&ordinary)
         );
         assert!(signed_volume(&ordinary) > 0.0);
-        let reflected_arrow = arrow(start, direction, 24, true);
+        let reflected_arrow =
+            arrow(start, direction, 24, true).expect("valid primitive fixture");
         assert!(
             reflected_arrow.is_closed_manifold(),
             "mirrored defects: {:?}",
@@ -2716,7 +2778,7 @@ mod tests {
         );
         assert!(signed_volume(&reflected_arrow) > 0.0);
 
-        let cube = cube(Real::from(2_u8));
+        let cube = cube(Real::from(2_u8)).expect("valid primitive fixture");
         assert!(try_scale(&cube, Real::zero(), Real::one(), Real::one()).is_err());
         assert!(
             scale(&cube, Real::zero(), Real::one(), Real::one())
@@ -2742,9 +2804,10 @@ mod tests {
 
     #[test]
     fn fluent_boolean_returns_reusable_native_geometry() {
-        let left = cube(Real::from(2_u8));
-        let right =
-            cube(Real::from(2_u8)).translated(Real::from(1_u8), Real::zero(), Real::zero());
+        let left = cube(Real::from(2_u8)).expect("valid primitive fixture");
+        let right = cube(Real::from(2_u8))
+            .expect("valid primitive fixture")
+            .translated(Real::from(1_u8), Real::zero(), Real::zero());
         let result: TriangleMesh = left
             .try_union(&right)
             .expect("native cube union must be certified");

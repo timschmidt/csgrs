@@ -187,7 +187,7 @@ mod tests {
 
     #[test]
     fn attributes_are_strictly_aligned_to_native_geometry() {
-        let geometry = solid::cube(Real::from(2_u8));
+        let geometry = solid::cube(Real::from(2_u8)).expect("valid primitive fixture");
         let attributed = AttributedMesh::from_uniform(geometry.clone(), "body");
         assert_eq!(attributed.geometry(), &geometry);
         assert_eq!(attributed.face_metadata().len(), geometry.triangles.len());
@@ -195,7 +195,7 @@ mod tests {
 
     #[test]
     fn rejects_misaligned_metadata() {
-        let geometry = solid::cube(Real::from(2_u8));
+        let geometry = solid::cube(Real::from(2_u8)).expect("valid primitive fixture");
         let error = AttributedMesh::<()>::new(geometry, Vec::new()).unwrap_err();
         assert!(matches!(error, AttributeAlignmentError::FaceMetadata { .. }));
     }

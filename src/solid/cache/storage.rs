@@ -1,6 +1,7 @@
 //! Typed keys and completed results for the grammar cache policy.
 
 use super::{CachePolicy, CacheUsage, STATE};
+use crate::errors::ValidationError;
 use crate::{GeometryContext, GeometryOutcome};
 use hyperlattice::{Point3, Real, Vector3};
 use hypermesh::{Triangle, TriangleMesh};
@@ -159,23 +160,23 @@ impl CacheState {
 #[inline]
 pub(in crate::solid) fn retained_primitive(
     parameters: PrimitiveParameters,
-    build: impl FnOnce() -> TriangleMesh,
-) -> TriangleMesh {
+    build: impl FnOnce() -> Result<TriangleMesh, ValidationError>,
+) -> Result<TriangleMesh, ValidationError> {
     if let Some(mesh) = STATE.with_borrow(|state| {
         state
             .primitives
             .iter()
             .find_map(|(cached, mesh)| (cached == &parameters).then(|| mesh.clone()))
     }) {
-        return mesh;
+        return Ok(mesh);
     }
-    let mesh = build();
+    let mesh = build()?;
     STATE.with_borrow_mut(|state| {
         retain(&mut state.primitives, state.policy.primitives, || {
             (parameters, mesh.clone())
         });
     });
-    mesh
+    Ok(mesh)
 }
 
 pub(in crate::solid) fn retained_distribution(

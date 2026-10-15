@@ -56,7 +56,7 @@ fuzz_target!(|bytes: &[u8]| {
     idx += 1;
     let period = at_least(decode_real(bytes, &mut idx).abs(), 0.001);
     let iso = decode_real(bytes, &mut idx);
-    let base = solid::cube(real(2.0));
+    let base = solid::cube(real(2.0)).expect("valid primitive fixture");
 
     let mesh = match tag {
         0 => solid::sdf(
@@ -71,9 +71,9 @@ fuzz_target!(|bytes: &[u8]| {
             let max_radius_squared = real(10.0);
             let radius_squared =
                 hyperlimit::real_min(&period, &max_radius_squared, PredicatePolicy::STRICT)
-                .value()
-                .cloned()
-                .expect("decoded rationals have decidable order");
+                    .value()
+                    .cloned()
+                    .expect("decoded rationals have decidable order");
             solid::sdf_expr(
                 SdfExpr::sphere(center, radius_squared),
                 (res, res, res),

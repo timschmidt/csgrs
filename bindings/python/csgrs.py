@@ -7,7 +7,9 @@ from typing import Iterable, Sequence
 
 
 class CsgrsError(RuntimeError):
-    pass
+    def __init__(self, message: str, status: int | None = None):
+        super().__init__(message)
+        self.status = status
 
 
 class _RealHandle(ctypes.Structure):
@@ -217,7 +219,7 @@ def load(path: str | os.PathLike[str] | None = None) -> ctypes.CDLL:
 def _check(status: int) -> None:
     if status != 0:
         message = load().csgrs_last_error_message()
-        raise CsgrsError(message.decode() if message else f"csgrs status {status}")
+        raise CsgrsError(message.decode() if message else f"csgrs status {status}", status)
 
 
 def _call(name: str, *args):
