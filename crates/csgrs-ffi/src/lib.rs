@@ -48,6 +48,8 @@ pub enum CsgrsStatus {
     Unsupported = 7,
     GeometryFailed = 8,
     Unbounded = 9,
+    /// The bounds query completed on empty geometry; no AABB was written.
+    NoBounds = 10,
     Panic = 255,
 }
 
@@ -312,6 +314,7 @@ enum FfiError {
     NullPointer,
     WrongScalarFamily,
     Adapter(AdapterError),
+    NoBounds,
 }
 
 impl fmt::Display for FfiError {
@@ -320,6 +323,7 @@ impl fmt::Display for FfiError {
             Self::NullPointer => f.write_str("null pointer"),
             Self::WrongScalarFamily => f.write_str("handle belongs to another scalar family"),
             Self::Adapter(error) => write!(f, "{error}"),
+            Self::NoBounds => f.write_str("empty geometry has no bounds"),
         }
     }
 }
@@ -1002,6 +1006,7 @@ fn status_for_error(error: &FfiError) -> CsgrsStatus {
     match error {
         FfiError::NullPointer => CsgrsStatus::NullPointer,
         FfiError::WrongScalarFamily => CsgrsStatus::WrongScalarFamily,
+        FfiError::NoBounds => CsgrsStatus::NoBounds,
         FfiError::Adapter(AdapterError::Validation(_)) => CsgrsStatus::ValidationFailed,
         FfiError::Adapter(AdapterError::Construction(error)) => {
             use csgrs::errors::ValidationErrorKind;
@@ -1477,8 +1482,9 @@ macro_rules! export_family {
         ) -> CsgrsStatus {
             ffi_status(|| {
                 let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
-                *unsafe { out_ptr(out) }? =
-                    <$family as Family>::aabb_from_adapter(mesh.bounding_box()?)?;
+                let out = unsafe { out_ptr(out) }?;
+                let bounds = mesh.bounding_box()?.ok_or(FfiError::NoBounds)?;
+                *out = <$family as Family>::aabb_from_adapter(bounds)?;
                 Ok(())
             })
         }
@@ -1706,8 +1712,9 @@ macro_rules! export_family {
             ffi_status(|| {
                 let region =
                     <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
-                *unsafe { out_ptr(out) }? =
-                    <$family as Family>::aabb_from_adapter(region.bounding_box()?)?;
+                let out = unsafe { out_ptr(out) }?;
+                let bounds = region.bounding_box()?.ok_or(FfiError::NoBounds)?;
+                *out = <$family as Family>::aabb_from_adapter(bounds)?;
                 Ok(())
             })
         }
@@ -2266,6 +2273,72 @@ pub unsafe extern "C" fn csgrs_region_profiles_real_free(value: CsgrsRegionProfi
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bounds_absence_and_uncertainty_do_not_publish_real_values() {
+        let null_point = CsgrsVec3Real {
+            x: ptr::null_mut(),
+            y: ptr::null_mut(),
+            z: ptr::null_mut(),
+        };
+        let sentinel = CsgrsAabb3Real {
+            mins: null_point,
+            maxs: null_point,
+        };
+        let empty =
+            triangle_mesh_handle::<RealFamily>(ScalarMesh::from_native(csgrs::solid::empty()));
+        let mut out = sentinel;
+        unsafe {
+            assert_eq!(
+                csgrs_triangle_mesh_real_bounding_box(&empty, &mut out),
+                CsgrsStatus::NoBounds
+            );
+            assert_eq!(out, sentinel);
+            assert_eq!(
+                csgrs_triangle_mesh_real_bounding_box(&empty, ptr::null_mut()),
+                CsgrsStatus::NullPointer
+            );
+        }
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let mesh = csgrs::TriangleMesh::new(
+            vec![
+                hyperlattice::Point3::new(sine.clone(), 0.into(), sine.clone()),
+                hyperlattice::Point3::new(&sine + &zero, 1.into(), sine + zero),
+            ],
+            Vec::new(),
+        );
+        let uncertain = triangle_mesh_handle::<RealFamily>(ScalarMesh::from_native(mesh));
+        let mut placed = ptr::null_mut();
+        unsafe {
+            assert_eq!(
+                csgrs_triangle_mesh_real_bounding_box(&uncertain, &mut out),
+                CsgrsStatus::PredicateUndecided
+            );
+            assert_eq!(out, sentinel);
+            assert_eq!(
+                csgrs_triangle_mesh_real_center(&uncertain, &mut placed),
+                CsgrsStatus::PredicateUndecided
+            );
+            assert!(placed.is_null());
+            assert_eq!(
+                csgrs_triangle_mesh_real_float(&uncertain, &mut placed),
+                CsgrsStatus::PredicateUndecided
+            );
+            assert!(placed.is_null());
+            assert_eq!(
+                csgrs_triangle_mesh_real_center(&empty, &mut placed),
+                CsgrsStatus::Ok
+            );
+            assert_eq!(
+                csgrs_triangle_mesh_real_bounding_box(placed, &mut out),
+                CsgrsStatus::NoBounds
+            );
+            assert_eq!(out, sentinel);
+            csgrs_triangle_mesh_free(placed);
+        }
+    }
 
     #[test]
     fn undecided_transform_does_not_publish_an_ffi_handle() {

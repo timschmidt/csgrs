@@ -20,6 +20,8 @@ typedef enum csgrs_status_t {
   CSGRS_STATUS_UNSUPPORTED = 7,
   CSGRS_STATUS_GEOMETRY_FAILED = 8,
   CSGRS_STATUS_UNBOUNDED = 9,
+  /* Completed empty bounds query; the output AABB is untouched. */
+  CSGRS_STATUS_NO_BOUNDS = 10,
   CSGRS_STATUS_PANIC = 255,
 } csgrs_status_t;
 

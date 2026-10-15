@@ -77,8 +77,15 @@ finite region projections, and curve-to-solid operations.
 - Mesh transforms retain native failure categories. A projective image that
   reaches or crosses infinity reports `UNBOUNDED` (9). Invalid transforms and
   undecided predicates remain distinct failures, and publish no model handle.
+- Mesh and curve bounds return `NO_BOUNDS` (10) for a completed empty query.
+  They require a valid output pointer but leave its record untouched; no
+  opaque-real endpoints are allocated. Only `OK` writes an owned bounds record.
+  Nonempty zero-size bounds, invalid input, and undecided predicates remain
+  distinct. Centering and floating preserve canonical empty geometry and
+  propagate bounds errors without publishing a model handle.
 - C++ exceptions retain the C status in `error::status()`; Python exceptions
-  retain it in `CsgrsError.status`. WASM primitive constructors and transforms throw a
+  retain it in `CsgrsError.status`; Go retains it in `StatusError.Status`.
+  WASM primitive constructors, transforms, bounds, and positioning throw a
   `GeometryError` with a string `code` (`invalid_input`, `undecided`,
   `resource_exhausted`, `unsupported`, `unbounded`, or `geometry_failure`) and a diagnostic
   message. Other binding operations that still flatten native error categories

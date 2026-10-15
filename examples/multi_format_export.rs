@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create various native meshes to demonstrate export.
 
     // 1. Simple cube
-    let cube: TriangleMesh = solid::center(&solid::cube(r(20.0))?);
+    let cube: TriangleMesh = solid::center(&solid::cube(r(20.0))?)?;
     export_to_obj(&cube, "cube", "Simple 20x20x20mm cube")?;
 
     // 2. Sphere
@@ -29,7 +29,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     export_to_obj(&cylinder, "cylinder", "Cylinder: 8mm radius, 25mm height")?;
 
     // 4. Complex boolean operation: cube with spherical cavity
-    let cube_large: TriangleMesh = solid::center(&solid::cube(r(30.0))?);
+    let cube_large: TriangleMesh = solid::center(&solid::cube(r(30.0))?)?;
     let sphere_cavity: TriangleMesh =
         solid::sphere(r(12.0), 24, 12)?.translated(r(5.0), r(5.0), r(0.0))?;
     let cube_with_cavity = cube_large.try_difference(&sphere_cavity).expect("difference");
@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 5. Union operation: cube + sphere
-    let cube_small: TriangleMesh = solid::center(&solid::cube(r(16.0))?);
+    let cube_small: TriangleMesh = solid::center(&solid::cube(r(16.0))?)?;
     let sphere_union: TriangleMesh =
         solid::sphere(r(10.0), 20, 10)?.translated(r(8.0), r(8.0), r(8.0))?;
     let union_object = cube_small.try_union(&sphere_union).expect("union");
@@ -51,7 +51,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 6. Intersection operation
-    let cube_intersect: TriangleMesh = solid::center(&solid::cube(r(25.0))?);
+    let cube_intersect: TriangleMesh = solid::center(&solid::cube(r(25.0))?)?;
     let sphere_intersect: TriangleMesh =
         solid::sphere(r(15.0), 24, 12)?.translated(r(5.0), r(5.0), r(0.0))?;
     let intersection_object = cube_intersect
@@ -64,7 +64,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 7. More complex shape: cube with cylindrical hole
-    let cube_base: TriangleMesh = solid::center(&solid::cube(r(40.0))?);
+    let cube_base: TriangleMesh = solid::center(&solid::cube(r(40.0))?)?;
     let hole_cylinder: TriangleMesh = solid::rotate(
         &solid::cylinder(r(6.0), r(50.0), 16)?,
         r(90.0),

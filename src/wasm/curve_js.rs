@@ -482,7 +482,7 @@ impl CurveRegionJs {
     ) -> Result<GeometryBoundsResultJs, JsValue> {
         curve::try_bounding_box_with_context(&self.inner, &geometry_context(approximate_512))
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn extrude(

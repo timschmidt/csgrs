@@ -206,7 +206,7 @@ pub fn blueprint_from_aabb_parts(
             blockers.push(format!("part at input index {index} has no face metadata"));
             continue;
         };
-        let Ok(bounds) = crate::solid::try_bounding_box(mesh.geometry()) else {
+        let Ok(Some(bounds)) = crate::solid::try_bounding_box(mesh.geometry()) else {
             blockers.push(format!(
                 "{} has no certifiable exact axis-aligned bounds",
                 metadata.handle

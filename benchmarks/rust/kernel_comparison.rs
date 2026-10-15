@@ -145,7 +145,9 @@ fn run_generated_corpus(config: &Config, case: &str, path: &Path) {
         )
     });
     config.run("corpus", "bounding_box", case, 1, || {
-        let bounds = solid::bounding_box(black_box(source));
+        let bounds = solid::bounding_box(black_box(source))
+            .expect("decidable fixture bounds")
+            .expect("nonempty fixture");
         let checksum = bounds.maxs.x.to_f64_lossy().unwrap_or_default().to_bits()
             ^ bounds.maxs.y.to_f64_lossy().unwrap_or_default().to_bits()
             ^ bounds.maxs.z.to_f64_lossy().unwrap_or_default().to_bits();
@@ -471,7 +473,10 @@ fn run() {
         .translated(Real::from(7_u8), Real::from(-3_i8), Real::from(5_u8))
         .expect("valid transform fixture");
     config.run("kernel", "center", "translated_box", 32, || {
-        geometry_measurement(&solid::center(black_box(&off_center)), 12)
+        geometry_measurement(
+            &solid::center(black_box(&off_center)).expect("valid modeling fixture"),
+            12,
+        )
     });
     config.run("kernel", "scale_uniform", "sphere_medium", 8, || {
         geometry_measurement(
@@ -587,7 +592,9 @@ fn run() {
             .try_intersection(black_box(&sliver_right))
             .expect("exact rational sliver intersection must remain valid");
         assert!(!mesh.triangles.is_empty(), "sliver intersection was lost");
-        let bounds = solid::bounding_box(&mesh);
+        let bounds = solid::bounding_box(&mesh)
+            .expect("decidable fixture bounds")
+            .expect("nonempty fixture");
         assert_eq!(
             bounds.maxs.x.clone() - bounds.mins.x.clone(),
             sliver_thickness,
@@ -672,7 +679,9 @@ fn run() {
         geometry_measurement(&mesh, facet_count(&analysis_source))
     });
     config.run("kernel", "bounding_box", "sphere_medium", 128, || {
-        let bounds = solid::bounding_box(black_box(&analysis_source));
+        let bounds = solid::bounding_box(black_box(&analysis_source))
+            .expect("decidable fixture bounds")
+            .expect("nonempty fixture");
         let checksum = bounds.maxs.x.to_f64_lossy().unwrap_or_default().to_bits();
         Measurement::new(facet_count(&analysis_source) as u64, 6, checksum)
     });
@@ -829,7 +838,9 @@ fn run() {
             "yeahright_control_genus131",
             1,
             || {
-                let bounds = solid::bounding_box(black_box(&yeahright_source));
+                let bounds = solid::bounding_box(black_box(&yeahright_source))
+                    .expect("decidable fixture bounds")
+                    .expect("nonempty fixture");
                 let checksum = bounds.maxs.x.to_f64_lossy().unwrap_or_default().to_bits()
                     ^ bounds.maxs.y.to_f64_lossy().unwrap_or_default().to_bits()
                     ^ bounds.maxs.z.to_f64_lossy().unwrap_or_default().to_bits();

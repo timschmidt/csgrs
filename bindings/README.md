@@ -64,6 +64,16 @@ behavior, metadata rules, and topology stay in the Rust layers.
 
 ## Compatibility
 
+Bounds are optional. The C ABI returns `CSGRS_STATUS_NO_BOUNDS` (10) for a
+completed empty query and leaves the output record untouched. C++ returns
+`std::optional`, Python returns `None`, and Go returns a nil bounds pointer with
+a nil error. Nonempty results retain their previous coordinate types. Invalid
+input and unresolved predicates remain errors; Go's `StatusError` retains both
+the C status and diagnostic message. Go callers must now check the bounds
+pointer before dereferencing it. Native JavaScript loaders must map `NO_BOUNDS`
+to absence and preserve all other status categories; the loader implementation
+is supplied by the consumer and is not included here.
+
 Opaque handles may cross only the ABI version that created them. Callers must
 use the matching free function, must not mix scalar families, and must copy any
 borrowed last-error text before another ABI call. The wrappers are currently

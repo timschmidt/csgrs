@@ -118,6 +118,33 @@ pub(crate) fn sample_with_context(
     collect_diagnostics: bool,
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<(TriangleMesh, SdfDiagnostics)>, ValidationError> {
+    sample_indexed_with_context(
+        |_, _, _, x, y, z| field(&Point3::new(x.clone(), y.clone(), z.clone())),
+        resolution,
+        min,
+        max,
+        iso_value,
+        collect_diagnostics,
+        context,
+    )
+}
+
+pub(super) fn sample_indexed_with_context(
+    mut field: impl FnMut(
+        usize,
+        usize,
+        usize,
+        &Real,
+        &Real,
+        &Real,
+    ) -> Result<Real, ValidationError>,
+    resolution: (usize, usize, usize),
+    min: Point3,
+    max: Point3,
+    iso_value: Real,
+    collect_diagnostics: bool,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<(TriangleMesh, SdfDiagnostics)>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let (nx, ny, nz, sample_count) =
         validated_resolution(resolution).ok_or(ValidationError::InvalidArguments)?;
@@ -128,14 +155,15 @@ pub(crate) fn sample_with_context(
         sample_count,
         ..SdfDiagnostics::default()
     };
-    let mut values = Vec::with_capacity(sample_count);
+    let mut values =
+        crate::solid::reserved(crate::solid::capacity::<Real>(Some(sample_count))?)?;
     let x_coordinates = grid.axis_coordinates(&grid.origin.x, &grid.step.x, nx);
     let y_coordinates = grid.axis_coordinates(&grid.origin.y, &grid.step.y, ny);
     let z_coordinates = grid.axis_coordinates(&grid.origin.z, &grid.step.z, nz);
-    for z in &z_coordinates {
-        for y in &y_coordinates {
-            for x in &x_coordinates {
-                let value = field(&Point3::new(x.clone(), y.clone(), z.clone()))?;
+    for (iz, z) in z_coordinates.iter().enumerate() {
+        for (iy, y) in y_coordinates.iter().enumerate() {
+            for (ix, x) in x_coordinates.iter().enumerate() {
+                let value = field(ix, iy, iz, x, y, z)?;
                 let shifted = &value - &grid.iso;
                 if collect_diagnostics {
                     match decisions.sign(&shifted, "SDF sample sign")? {
@@ -178,13 +206,10 @@ pub(crate) fn sample_with_context(
         }
     }
     let step = grid.step.to_vector();
-    let output = decisions.consume_mesh(
-        surface_nets(
-            decisions.mesh_context(),
-            SurfaceNetsGrid::new(&grid.origin, &step, [nx, ny, nz], &values),
-        )
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
+    let output = decisions.consume_mesh(surface_nets(
+        decisions.mesh_context(),
+        SurfaceNetsGrid::new(&grid.origin, &step, [nx, ny, nz], &values),
+    )?);
     diagnostics.crossing_cell_count = output.active_cell_count;
     diagnostics.surface_nets_vertex_count = output.mesh.positions.len();
     diagnostics.surface_nets_index_count = output.mesh.triangles.len() * 3;
@@ -208,16 +233,6 @@ pub(crate) fn sdf(
         false,
     )
     .0
-}
-
-pub(super) fn sdf_indexed(
-    field: impl FnMut(usize, usize, usize, &Real, &Real, &Real) -> Real,
-    resolution: (usize, usize, usize),
-    min_pt: Point3,
-    max_pt: Point3,
-    iso_value: Real,
-) -> TriangleMesh {
-    sdf_with_indexed_sampler(field, resolution, min_pt, max_pt, iso_value, false).0
 }
 
 pub(crate) fn sdf_expr(

@@ -259,20 +259,10 @@ where
             .map_err(AdapterError::from)
     }
 
-    pub fn bounding_box(&self) -> AdapterResult<Aabb3<A::Scalar>> {
-        let bounds = solid::try_bounding_box(&self.inner).map_err(AdapterError::from)?;
-        Ok(Aabb3 {
-            mins: [
-                A::from_real(&bounds.mins.x)?,
-                A::from_real(&bounds.mins.y)?,
-                A::from_real(&bounds.mins.z)?,
-            ],
-            maxs: [
-                A::from_real(&bounds.maxs.x)?,
-                A::from_real(&bounds.maxs.y)?,
-                A::from_real(&bounds.maxs.z)?,
-            ],
-        })
+    pub fn bounding_box(&self) -> AdapterResult<Option<Aabb3<A::Scalar>>> {
+        solid::try_bounding_box(&self.inner)?
+            .map(super::convert_bounds::<A>)
+            .transpose()
     }
 
     /// Applies the operation with the selected policy and aggregate certainty.
@@ -369,23 +359,9 @@ where
     pub fn bounding_box_with_context(
         &self,
         context: &GeometryContext,
-    ) -> AdapterResult<GeometryOutcome<Aabb3<A::Scalar>>> {
-        solid::try_bounding_box_with_context(&self.inner, context)
-            .map_err(AdapterError::from)?
-            .try_map(|bounds| {
-                Ok(Aabb3 {
-                    mins: [
-                        A::from_real(&bounds.mins.x)?,
-                        A::from_real(&bounds.mins.y)?,
-                        A::from_real(&bounds.mins.z)?,
-                    ],
-                    maxs: [
-                        A::from_real(&bounds.maxs.x)?,
-                        A::from_real(&bounds.maxs.y)?,
-                        A::from_real(&bounds.maxs.z)?,
-                    ],
-                })
-            })
+    ) -> AdapterResult<GeometryOutcome<Option<Aabb3<A::Scalar>>>> {
+        solid::try_bounding_box_with_context(&self.inner, context)?
+            .try_map(|bounds| bounds.map(super::convert_bounds::<A>).transpose())
     }
 
     /// Triangulates faces with the selected policy after promoting scalar coordinates.

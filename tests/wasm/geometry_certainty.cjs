@@ -54,6 +54,14 @@ try {
   assert.equal(union.certainty, Certainty.Certified);
   const bounds = keep(square.boundingBoxWithContext(false));
   assert.equal(bounds.certainty, Certainty.Certified);
+  assert.equal(bounds.isEmpty, false);
+  assert.equal(keep(bounds.min).x, 0);
+  assert.equal(keep(bounds.max).x, 1);
+  const emptyCurveBounds = keep(empty.boundingBoxWithContext(false));
+  assert.equal(emptyCurveBounds.isEmpty, true);
+  assert.equal(emptyCurveBounds.min, undefined);
+  assert.equal(emptyCurveBounds.max, undefined);
+  assert.equal(emptyCurveBounds.certainty, Certainty.Certified);
   assert.equal(square.toRegionProfiles(false).certainty, Certainty.Certified);
   const arrays = square.toArrays(false);
   assert.equal(arrays.certainty, Certainty.Certified);
@@ -101,6 +109,24 @@ try {
   assert.equal(member.value, true);
   assert.equal(member.certainty, Certainty.Certified);
   const emptyMesh = keep(new MeshJs());
+  assert.equal(emptyMesh.boundingBox(), undefined);
+  const emptyBounds = keep(emptyMesh.boundingBoxWithContext(false));
+  assert.equal(emptyBounds.isEmpty, true);
+  assert.equal(emptyBounds.min, undefined);
+  assert.equal(emptyBounds.max, undefined);
+  assert.equal(emptyBounds.certainty, Certainty.Certified);
+  const placedEmpty = keep(keep(emptyMesh.center()).floatOnZ());
+  assert.equal(placedEmpty.vertexCount(), 0);
+  assert.equal(keep(placedEmpty.union(cube)).containsPoint(inside), true);
+  const origin = keep(MeshJs.fromArrays(new Float64Array([0, 0, 0]), new Uint32Array()));
+  const originBounds = keep(origin.boundingBoxWithContext(false));
+  assert.equal(originBounds.isEmpty, false);
+  assert.equal(keep(originBounds.min).x, 0);
+  assert.equal(keep(originBounds.max).x, 0);
+  const positioned = keep(keep(cube.center()).floatOnZ());
+  const positionedBounds = positioned.boundingBox();
+  assert.equal(keep(positionedBounds.min).x, -0.5);
+  assert.equal(keep(positionedBounds.max).z, 1);
   const openMesh = keep(MeshJs.fromArrays(
     new Float64Array([0, 0, 0, 1, 0, 0, 0, 1, 0]),
     new Uint32Array([0, 1, 2]),

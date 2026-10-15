@@ -76,7 +76,7 @@ const fn sample_minimum(
     }
 }
 
-fn capacity<T>(count: Option<usize>) -> Result<usize, ValidationError> {
+pub(crate) fn capacity<T>(count: Option<usize>) -> Result<usize, ValidationError> {
     count
         .filter(|count| {
             count
@@ -86,7 +86,7 @@ fn capacity<T>(count: Option<usize>) -> Result<usize, ValidationError> {
         .ok_or(ValidationError::CapacityOverflow)
 }
 
-fn reserved<T>(count: usize) -> Result<Vec<T>, ValidationError> {
+pub(crate) fn reserved<T>(count: usize) -> Result<Vec<T>, ValidationError> {
     let mut values = Vec::new();
     values
         .try_reserve_exact(capacity::<T>(Some(count))?)
@@ -1503,9 +1503,9 @@ pub fn gyroid_solid(
     scale: Real,
     iso_value: Real,
     wall_thickness: Real,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     crate::implicit::tpms::gyroid_solid(
-        &bounding_box(bounds),
+        bounding_box(bounds)?.as_ref(),
         resolution,
         scale,
         iso_value,
@@ -1521,9 +1521,9 @@ pub fn schwarz_p_solid(
     scale: Real,
     iso_value: Real,
     wall_thickness: Real,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     crate::implicit::tpms::schwarz_p_solid(
-        &bounding_box(bounds),
+        bounding_box(bounds)?.as_ref(),
         resolution,
         scale,
         iso_value,
@@ -1539,9 +1539,9 @@ pub fn schwarz_d_solid(
     scale: Real,
     iso_value: Real,
     wall_thickness: Real,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     crate::implicit::tpms::schwarz_d_solid(
-        &bounding_box(bounds),
+        bounding_box(bounds)?.as_ref(),
         resolution,
         scale,
         iso_value,
@@ -1556,8 +1556,8 @@ pub fn gyroid(
     resolution: usize,
     scale: Real,
     iso_value: Real,
-) -> TriangleMesh {
-    crate::implicit::tpms::gyroid(&bounding_box(bounds), resolution, scale, iso_value)
+) -> Result<TriangleMesh, ValidationError> {
+    crate::implicit::tpms::gyroid(bounding_box(bounds)?.as_ref(), resolution, scale, iso_value)
 }
 
 /// Samples a bounded Schwarz-P level surface.
@@ -1567,8 +1567,13 @@ pub fn schwarz_p(
     resolution: usize,
     scale: Real,
     iso_value: Real,
-) -> TriangleMesh {
-    crate::implicit::tpms::schwarz_p(&bounding_box(bounds), resolution, scale, iso_value)
+) -> Result<TriangleMesh, ValidationError> {
+    crate::implicit::tpms::schwarz_p(
+        bounding_box(bounds)?.as_ref(),
+        resolution,
+        scale,
+        iso_value,
+    )
 }
 
 /// Samples a bounded Schwarz-D level surface.
@@ -1578,12 +1583,17 @@ pub fn schwarz_d(
     resolution: usize,
     scale: Real,
     iso_value: Real,
-) -> TriangleMesh {
-    crate::implicit::tpms::schwarz_d(&bounding_box(bounds), resolution, scale, iso_value)
+) -> Result<TriangleMesh, ValidationError> {
+    crate::implicit::tpms::schwarz_d(
+        bounding_box(bounds)?.as_ref(),
+        resolution,
+        scale,
+        iso_value,
+    )
 }
 
 /// Exact bounds of native triangle positions.
-pub fn try_bounding_box(mesh: &TriangleMesh) -> Result<Aabb, ValidationError> {
+pub fn try_bounding_box(mesh: &TriangleMesh) -> Result<Option<Aabb>, ValidationError> {
     try_bounding_box_with_context(mesh, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -1592,23 +1602,15 @@ pub fn try_bounding_box(mesh: &TriangleMesh) -> Result<Aabb, ValidationError> {
 pub fn try_bounding_box_with_context(
     mesh: &TriangleMesh,
     context: &GeometryContext,
-) -> Result<GeometryOutcome<Aabb>, ValidationError> {
+) -> Result<GeometryOutcome<Option<Aabb>>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let bounds = decisions.consume_mesh(
-        mesh.exact_bounds(decisions.mesh_context())
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
-    let bounds = match bounds {
-        Some(bounds) => bounds,
-        None if mesh.positions.is_empty() && mesh.triangles.is_empty() => Aabb::origin(),
-        None => return Err(ValidationError::InvalidArguments),
-    };
+    let bounds = decisions.consume_mesh(mesh.exact_bounds(decisions.mesh_context())?);
     Ok(decisions.finish(bounds))
 }
 
-/// Exact bounds, using the origin box only for empty or invalid geometry.
-pub fn bounding_box(mesh: &TriangleMesh) -> Aabb {
-    try_bounding_box(mesh).unwrap_or_else(|_| Aabb::origin())
+/// Exact position bounds, absent for canonical empty geometry; errors remain typed.
+pub fn bounding_box(mesh: &TriangleMesh) -> Result<Option<Aabb>, ValidationError> {
+    try_bounding_box(mesh)
 }
 
 /// Translates the center of the exact bounds to the origin.
@@ -1622,14 +1624,15 @@ pub fn try_center_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let bounds = decisions.consume_geometry(try_bounding_box_with_context(mesh, context)?);
+    let Some(bounds) =
+        decisions.consume_geometry(try_bounding_box_with_context(mesh, context)?)
+    else {
+        return Ok(decisions.finish(mesh.clone()));
+    };
     let two = Real::from(2_u8);
-    let x = -((&bounds.mins.x + &bounds.maxs.x) / &two)
-        .map_err(|_| ValidationError::InvalidArguments)?;
-    let y = -((&bounds.mins.y + &bounds.maxs.y) / &two)
-        .map_err(|_| ValidationError::InvalidArguments)?;
-    let z = -((&bounds.mins.z + &bounds.maxs.z) / &two)
-        .map_err(|_| ValidationError::InvalidArguments)?;
+    let x = -((&bounds.mins.x + &bounds.maxs.x) / &two)?;
+    let y = -((&bounds.mins.y + &bounds.maxs.y) / &two)?;
+    let z = -((&bounds.mins.z + &bounds.maxs.z) / &two)?;
     let centered = try_transform_with_known_orientation(
         mesh,
         &Matrix4::affine_translation([x, y, z]),
@@ -1640,8 +1643,8 @@ pub fn try_center_with_context(
 }
 
 /// Translates the center of the exact bounds to the origin.
-pub fn center(mesh: &TriangleMesh) -> TriangleMesh {
-    try_center(mesh).unwrap_or_else(|_| empty())
+pub fn center(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
+    try_center(mesh)
 }
 
 /// Translates the minimum Z bound to zero.
@@ -1655,7 +1658,11 @@ pub fn try_float_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let bounds = decisions.consume_geometry(try_bounding_box_with_context(mesh, context)?);
+    let Some(bounds) =
+        decisions.consume_geometry(try_bounding_box_with_context(mesh, context)?)
+    else {
+        return Ok(decisions.finish(mesh.clone()));
+    };
     let floated = try_transform_with_known_orientation(
         mesh,
         &Matrix4::affine_translation([Real::zero(), Real::zero(), -bounds.mins.z]),
@@ -1666,8 +1673,8 @@ pub fn try_float_with_context(
 }
 
 /// Translates the minimum Z bound to zero.
-pub fn float(mesh: &TriangleMesh) -> TriangleMesh {
-    try_float(mesh).unwrap_or_else(|_| empty())
+pub fn float(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
+    try_float(mesh)
 }
 
 /// Concatenates native meshes without performing a Boolean operation.
@@ -2488,7 +2495,7 @@ pub trait SolidExt: Sized {
     /// Translate by an exact vector.
     fn translated(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError>;
     /// Return exact bounds.
-    fn exact_bounds(&self) -> Aabb;
+    fn exact_bounds(&self) -> Result<Option<Aabb>, ValidationError>;
     /// Visit native triangles without constructing a csgrs mesh facade.
     fn visit_native_triangles<F>(&self, visitor: F)
     where
@@ -2552,8 +2559,8 @@ impl SolidExt for TriangleMesh {
         transform(self, &Matrix4::affine_translation([x, y, z]))
     }
 
-    fn exact_bounds(&self) -> Aabb {
-        bounding_box(self).clone()
+    fn exact_bounds(&self) -> Result<Option<Aabb>, ValidationError> {
+        bounding_box(self)
     }
 
     fn visit_native_triangles<F>(&self, mut visitor: F)

@@ -1,7 +1,7 @@
 // The runner copies this beside the generated csgrs.d.ts before type-checking.
 import {
   CurveRegionJs, GeometryBoolResultJs, GeometryCertaintyJs,
-  GeometryQueryStatusJs, MeshJs,
+  GeometryQueryStatusJs, MeshJs, Point3Js,
 } from "./csgrs";
 
 function assertNever(value: never): never {
@@ -33,6 +33,15 @@ query.free();
 square.free();
 
 const cube = MeshJs.cube(1);
+const bounds = cube.boundingBoxWithContext(false);
+const minimum: Point3Js | undefined = bounds.min;
+const maximum: Point3Js | undefined = bounds.max;
+const empty: boolean = bounds.isEmpty;
+if (!empty && minimum && maximum) {
+  minimum.free();
+  maximum.free();
+}
+bounds.free();
 const result = cube.unionWithContext(cube, false);
 const certainty: GeometryCertaintyJs = result.certainty;
 if (certainty === GeometryCertaintyJs.Certified) {

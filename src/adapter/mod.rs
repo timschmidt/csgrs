@@ -28,6 +28,23 @@ pub struct Aabb3<S> {
     pub maxs: [S; 3],
 }
 
+fn convert_bounds<A: ScalarAdapter>(
+    bounds: hyperlattice::Aabb,
+) -> AdapterResult<Aabb3<A::Scalar>> {
+    Ok(Aabb3 {
+        mins: [
+            A::from_real(&bounds.mins.x)?,
+            A::from_real(&bounds.mins.y)?,
+            A::from_real(&bounds.mins.z)?,
+        ],
+        maxs: [
+            A::from_real(&bounds.maxs.x)?,
+            A::from_real(&bounds.maxs.y)?,
+            A::from_real(&bounds.maxs.z)?,
+        ],
+    })
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "curve")]
@@ -39,7 +56,7 @@ mod tests {
     fn f64_mesh_adapter_converts_at_edges() {
         let cube = ScalarMesh::<F64>::cube(2.0).unwrap();
         let moved = cube.translate(1.0, 0.0, 0.0).unwrap();
-        let bounds = moved.bounding_box().unwrap();
+        let bounds = moved.bounding_box().unwrap().unwrap();
 
         assert_eq!(bounds.mins, [1.0, 0.0, 0.0]);
         assert_eq!(bounds.maxs, [3.0, 2.0, 2.0]);
@@ -57,7 +74,7 @@ mod tests {
     fn raw_real_profile_stays_exact_at_boundary() {
         let width = Real::from(3_i128);
         let profile = ScalarCurve::<RawReal>::square(width.clone()).unwrap();
-        let bounds = profile.bounding_box().unwrap();
+        let bounds = profile.bounding_box().unwrap().unwrap();
 
         assert_eq!(bounds.mins, [Real::zero(), Real::zero(), Real::zero()]);
         assert_eq!(bounds.maxs, [width.clone(), width.clone(), Real::zero()]);

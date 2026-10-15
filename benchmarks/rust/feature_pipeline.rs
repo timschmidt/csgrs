@@ -386,8 +386,8 @@ fn main() {
         8,
         || {
             let outputs = [
-                solid::center(&positioned),
-                solid::float(&positioned),
+                solid::center(&positioned).expect("valid modeling fixture"),
+                solid::float(&positioned).expect("valid modeling fixture"),
                 positioned
                     .translated(Real::from(3), Real::from(-2), Real::from(5))
                     .expect("valid transform fixture"),
@@ -648,8 +648,10 @@ fn main() {
     });
     config.run("feature", "implicit", "tpms_catalog", 1, || {
         let bounds = solid::cube(Real::from(12)).expect("valid primitive fixture");
-        let gyroid = solid::gyroid(&bounds, 18, Real::from(6), Real::zero());
-        let schwarz = solid::schwarz_p(&bounds, 18, Real::from(6), Real::zero());
+        let gyroid = solid::gyroid(&bounds, 18, Real::from(6), Real::zero())
+            .expect("valid modeling fixture");
+        let schwarz = solid::schwarz_p(&bounds, 18, Real::from(6), Real::zero())
+            .expect("valid modeling fixture");
         let triangles = gyroid.triangles.len() + schwarz.triangles.len();
         Measurement::new(2 * 18 * 18 * 18, triangles as u64, triangles as u64)
     });

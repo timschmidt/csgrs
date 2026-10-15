@@ -11,7 +11,8 @@ fn r(value: f64) -> Real {
 
 #[test]
 fn repeated_boolean_and_transform_sequence_stays_nonempty() {
-    let base = solid::center(&solid::cube(r(1.0)).expect("valid primitive fixture"));
+    let base = solid::center(&solid::cube(r(1.0)).expect("valid primitive fixture"))
+        .expect("valid modeling fixture");
     let mut acc = base.clone();
 
     for i in 0..3 {
@@ -29,7 +30,9 @@ fn repeated_boolean_and_transform_sequence_stays_nonempty() {
     }
 
     assert!(!acc.triangles.is_empty());
-    let bounds = solid::bounding_box(&acc);
+    let bounds = solid::bounding_box(&acc)
+        .expect("decidable fixture bounds")
+        .expect("nonempty fixture");
     assert_eq!(
         hyperlimit::compare_reals(&bounds.maxs.x, &bounds.mins.x, PredicatePolicy::STRICT)
             .value(),
