@@ -1,0 +1,65 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 2.0139520377852023,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "172e754a494287fddeb50204a14ed69ad960090e6fc249e177387583e9f2a936"
+    },
+    {
+      "name": "physics-build",
+      "exit_code": 0,
+      "seconds": 3.7732295212335885,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "f32797954687b1f3b6a8c394c6be130d316fb6df6982994a760dbbc378003127"
+    },
+    {
+      "name": "library-build",
+      "exit_code": 0,
+      "seconds": 5.551764901261777,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "2389882b06368115401847dcb641516069b8507621ea058bdfb4ed13adf893fe"
+    },
+    {
+      "name": "probe-build",
+      "exit_code": 0,
+      "seconds": 2.901641317177564,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "59a3152bf4527ff4a6995efa92f859f853bf499a3de93ff3937e65dbd968a864"
+    },
+    {
+      "name": "drill-16-strict",
+      "exit_code": 0,
+      "seconds": 2.081438324879855,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "9748453ab821118020a3548185cf77fef106ec10722a43c38151cfd52f2f7133",
+      "stderr_sha256": "652c04ade61424b6daa306035777028b4cb8a8b7837332a6d9b1800151d0b56f",
+      "resources_sha256": "eced6ea8150da22dd1da7dfa6b973193af047e2244fc79335564671a47658139"
+    },
+    {
+      "name": "drill-32-strict",
+      "exit_code": 0,
+      "seconds": 2.056805816013366,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "91a6971aeec90d0c96b0c2e513c0219a10a9be0804f62bc234d49f509642f329",
+      "stderr_sha256": "01a27fbe4a173b010db5d130e6804503a558646979daabd15b0f5b1823c06b45",
+      "resources_sha256": "d6f0ff94b477763f91a7f644489da0fad49ddc65dc6c75c4ca54d8a61203ef16"
+    }
+  ],
+  "passed": true
+}

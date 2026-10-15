@@ -1,0 +1,35 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 2.980231901165098,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "75c7d071e9423b80713e9a9c3ca0b6f5b00353bceb45ef5b9179322c98684aa0"
+    },
+    {
+      "name": "native-build",
+      "exit_code": 0,
+      "seconds": 8.56423757923767,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "06ef13809cc565595dc13fe9a8a22aa9cef3f354ff987e99c097d702df50d8c4"
+    },
+    {
+      "name": "library-build",
+      "exit_code": 1,
+      "seconds": 3.101174068171531,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "45dce9a4acea6890f645352094886ae4a5c87f423c599ba33ef4a93e0fa94245",
+      "resources_sha256": "80b9409cfa59c873884e67f263f889e71334413f82d3ed8643fa682e9124c414"
+    }
+  ],
+  "passed": false
+}

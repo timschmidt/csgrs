@@ -1,0 +1,32 @@
+
+running 5 tests
+test equal_ordered_symbolic_products_keep_the_identity ... ok
+test equal_sign_products_are_added ... ok
+test independently_reconstructed_factors_keep_the_identity ... FAILED
+test nearby_unequal_factors_do_not_cancel ... ok
+test reversed_symbolic_products_cancel_before_refinement ... FAILED
+
+failures:
+
+---- independently_reconstructed_factors_keep_the_identity stdout ----
+
+thread 'independently_reconstructed_factors_keep_the_identity' (97) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/determinant_product_cancellation.rs:44:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- reversed_symbolic_products_cancel_before_refinement stdout ----
+
+thread 'reversed_symbolic_products_cancel_before_refinement' (99) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/determinant_product_cancellation.rs:28:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+
+
+failures:
+    independently_reconstructed_factors_keep_the_identity
+    reversed_symbolic_products_cancel_before_refinement
+
+test result: FAILED. 3 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

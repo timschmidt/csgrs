@@ -1,0 +1,13 @@
+{
+  "captured_scalar_sha256": "652c04ade61424b6daa306035777028b4cb8a8b7837332a6d9b1800151d0b56f",
+  "script_sha256": "ee00bf11d884038c3d728cf073eede5bd9c5b6b5257594b83999d8e5608a7ad2",
+  "arithmetic_node_visits": 177,
+  "opaque_atoms": [
+    "{\"Constant\":\"Sqrt2\"}",
+    "{\"PrescaledSin\":{\"internal\":{\"Multiply\":[{\"internal\":{\"Constant\":\"Pi\"}},{\"internal\":{\"Ratio\":{\"denominator\":[8],\"numerator\":[3],\"sign\":1}}}]}}}",
+    "{\"PrescaledSin\":{\"internal\":{\"Offset\":[{\"internal\":{\"Constant\":\"Pi\"}},-3]}}}"
+  ],
+  "remaining_terms": 0,
+  "positive_control_add_one": "exactly 1",
+  "scope": "One captured scalar is zero by rational commutative-ring laws; no trigonometric or square-root relation is assumed. Diagnostic only, not a production algorithm or a proof of the complete Boolean result."
+}

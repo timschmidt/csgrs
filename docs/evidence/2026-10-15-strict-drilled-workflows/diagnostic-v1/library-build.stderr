@@ -1,0 +1,28 @@
+error[E0308]: mismatched types
+    --> /home/tim/Documents/GitHub/workspace/csgrs/src/solid.rs:2117:65
+     |
+2117 |     hyperphysics::triangle_mesh_uniform_density_mass_properties(mesh, density)
+     |     ----------------------------------------------------------- ^^^^ expected `hypermesh::mesh::TriangleMesh`, found `TriangleMesh`
+     |     |
+     |     arguments to this function are incorrect
+     |
+note: there are multiple different versions of crate `hypermesh` in the dependency graph
+    --> crates/hypermesh/src/mesh.rs:110:1
+     |
+ 110 | pub struct TriangleMesh {
+     | ^^^^^^^^^^^^^^^^^^^^^^^ this is the expected type
+     |
+    ::: /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/mesh.rs:110:1
+     |
+ 110 | pub struct TriangleMesh {
+     | ----------------------- this is the found type
+     = help: you can use `cargo tree` to explore your dependency tree
+note: function defined here
+    --> crates/hyperphysics/src/mass.rs:242:8
+     |
+ 242 | pub fn triangle_mesh_uniform_density_mass_properties(
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0308`.

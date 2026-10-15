@@ -1,0 +1,25 @@
+--- crates/hypermesh/src/predicate.rs
++++ diagnostic-v1/hypermesh/src/predicate.rs
+@@ -643,7 +643,7 @@
+         );
+     }
+     crate::trace_dispatch!("classify-real", "hyperlimit");
+-    decisions
++    let result = decisions
+         .decide(
+             classify_real_sign(value, decisions.policy()),
+             "Real sign classification",
+@@ -652,7 +652,12 @@
+             Sign::Negative => Classification::Negative,
+             Sign::Zero => Classification::On,
+             Sign::Positive => Classification::Positive,
+-        })
++        });
++    if result.is_err() {
++        eprintln!("unresolved_scalar={}", value.to_json());
++        eprintln!("unresolved_backtrace={}", std::backtrace::Backtrace::force_capture());
++    }
++    result
+ }
+ 
+ #[cfg(test)]

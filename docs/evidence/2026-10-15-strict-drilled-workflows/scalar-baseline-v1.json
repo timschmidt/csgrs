@@ -1,0 +1,35 @@
+[
+  [
+    "prepare-target",
+    [
+      "mkdir",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/strict-drilled-workflows/scalar-baseline-v1"
+    ]
+  ],
+  [
+    "build",
+    [
+      "rustc",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-D",
+      "warnings",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/native-v1/release/deps/libhyperreal-8040aeb6a6d9c5b1.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/native-v1/release/deps",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/determinant_product_cancellation.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/strict-drilled-workflows/scalar-baseline-v1/regressions"
+    ]
+  ],
+  [
+    "regressions",
+    [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/strict-drilled-workflows/scalar-baseline-v1/regressions",
+      "--test-threads=1"
+    ]
+  ]
+]

@@ -1,0 +1,15 @@
+{
+  "commands": [
+    {
+      "name": "expand",
+      "exit_code": 0,
+      "seconds": 1.972219082992524,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "b39317c895f9b9dc87656e9d869c584b716fddb5b42fd6c48b92b88eab7b5e1b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "1c715ac749991d7415a8d59fc751f0651564d15ba1848aa58d1e904a65e533f9"
+    }
+  ],
+  "passed": true
+}

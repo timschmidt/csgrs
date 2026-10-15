@@ -1,0 +1,60 @@
+unresolved_scalar={"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"Irrational","computable":{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Multiply":[{"internal":{"Int":[1,[6]]}},{"internal":{"Multiply":[{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Multiply":[{"internal":{"Constant":"Pi"}},{"internal":{"Ratio":{"sign":1,"numerator":[3],"denominator":[8]}}}]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}},{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}]}}]}},{"internal":{"Multiply":[{"internal":{"Int":[-1,[6]]}},{"internal":{"Multiply":[{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Offset":[{"internal":{"Constant":"Pi"}},-3]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}},{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}]}}]}}]}},{"internal":{"Multiply":[{"internal":{"Int":[1,[5]]}},{"internal":{"Add":[{"internal":{"Multiply":[{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Offset":[{"internal":{"Constant":"Pi"}},-3]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}},{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Multiply":[{"internal":{"Constant":"Pi"}},{"internal":{"Ratio":{"sign":1,"numerator":[3],"denominator":[8]}}}]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}}]}},{"internal":{"Negate":{"internal":{"Multiply":[{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Multiply":[{"internal":{"Constant":"Pi"}},{"internal":{"Ratio":{"sign":1,"numerator":[3],"denominator":[8]}}}]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}},{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Offset":[{"internal":{"Constant":"Pi"}},-3]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}}]}}}}]}}]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Multiply":[{"internal":{"Int":[1,[6]]}},{"internal":{"Multiply":[{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Multiply":[{"internal":{"Constant":"Pi"}},{"internal":{"Ratio":{"sign":1,"numerator":[3],"denominator":[8]}}}]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}},{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}]}}]}},{"internal":{"Multiply":[{"internal":{"Int":[-1,[6]]}},{"internal":{"Multiply":[{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Offset":[{"internal":{"Constant":"Pi"}},-3]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}},{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}]}}]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Multiply":[{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Offset":[{"internal":{"Constant":"Pi"}},-3]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}},{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Multiply":[{"internal":{"Constant":"Pi"}},{"internal":{"Ratio":{"sign":1,"numerator":[3],"denominator":[8]}}}]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}}]}},{"internal":{"Negate":{"internal":{"Multiply":[{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Multiply":[{"internal":{"Constant":"Pi"}},{"internal":{"Ratio":{"sign":1,"numerator":[3],"denominator":[8]}}}]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}},{"internal":{"Add":[{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Offset":[{"internal":{"PrescaledSin":{"internal":{"Offset":[{"internal":{"Constant":"Pi"}},-3]}}}},1]}}}},{"internal":{"Int":[1,[6]]}}]}},{"internal":{"Negate":{"internal":{"Add":[{"internal":{"Negate":{"internal":{"Constant":"Sqrt2"}}}},{"internal":{"Int":[1,[6]]}}]}}}}]}}]}}}}]}}}}]}}}}]}}}
+unresolved_backtrace=   0: hypermesh::predicate::classify_real
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/predicate.rs:658:46
+   1: <hypermesh::predicate::PointPlanePredicate>::classify
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/predicate.rs:251:9
+   2: hypermesh::predicate::classify_point_with_optional_rational_query_decision
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/predicate.rs:444:48
+   3: <hypermesh::predicate::Point3PredicateQuery>::classify
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/predicate.rs:429:9
+   4: hypermesh::predicate::classify_point_decision
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/predicate.rs:360:38
+   5: hypermesh::intersection::classify_polygon_vertex_decision
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/intersection.rs:1229:17
+   6: hypermesh::intersection::polygon_cycles_share_reversed_manifold_triangle_edge
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/intersection.rs:2059:16
+   7: hypermesh::intersection::append_pairwise_intersection
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/intersection.rs:1646:9
+   8: hypermesh::intersection::pairwise_intersections_by_polygon_from_bvh::{closure#0}
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/intersection.rs:1593:29
+   9: <hypermesh::bvh::ExactBvh>::intersect_self_candidates_decision::<hypermesh::intersection::pairwise_intersections_by_polygon_from_bvh::{closure#0}>
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/bvh.rs:779:33
+  10: hypermesh::intersection::pairwise_intersections_by_polygon_from_bvh
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/intersection.rs:1589:9
+  11: hypermesh::surface_arrangement::build_surface_arrangement
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/surface_arrangement.rs:4063:17
+  12: hypermesh::boolean::boolean
+             at /tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/boolean.rs:36:9
+  13: csgrs::solid::boolean_with_context
+             at ./src/solid.rs:1075:27
+  14: drill_probe_v1::main
+             at ./docs/evidence/2026-10-15-strict-drilled-workflows/drill_probe_v1.rs:25:23
+  15: <fn() as core::ops::function::FnOnce<()>>::call_once
+             at /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+  16: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+             at /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/sys/backtrace.rs:166:18
+  17: std::rt::lang_start::<()>::{closure#0}
+             at /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/rt.rs:206:18
+  18: <&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:287:21
+  19: std::panicking::catch_unwind::do_call::<&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync, i32>
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576:43
+  20: std::panicking::catch_unwind::<i32, &dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync>
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544:19
+  21: std::panic::catch_unwind::<&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync, i32>
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359:14
+  22: std::rt::lang_start_internal::{closure#0}
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/rt.rs:175:24
+  23: std::panicking::catch_unwind::do_call::<std::rt::lang_start_internal::{closure#0}, isize>
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576:43
+  24: std::panicking::catch_unwind::<isize, std::rt::lang_start_internal::{closure#0}>
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544:19
+  25: std::panic::catch_unwind::<std::rt::lang_start_internal::{closure#0}, isize>
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359:14
+  26: std::rt::lang_start_internal
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/rt.rs:171:5
+  27: main
+  28: __libc_start_call_main
+  29: __libc_start_main_alias_1
+  30: _start
+
