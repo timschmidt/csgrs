@@ -65,6 +65,40 @@ try {
   assert.equal(member.status, Status.Decided);
   assert.equal(member.value, true);
   assert.equal(member.certainty, Certainty.Certified);
+  const emptyMesh = keep(new MeshJs());
+  const openMesh = keep(MeshJs.fromArrays(
+    new Float64Array([0, 0, 0, 1, 0, 0, 0, 1, 0]),
+    new Uint32Array([0, 1, 2]),
+  ));
+  for (const approximate of [false, true]) {
+    for (const operation of [
+      "unionWithContext", "intersectionWithContext",
+      "differenceWithContext", "xorWithContext",
+    ]) {
+      for (const emptyOnLeft of [false, true]) {
+        const [left, right] = emptyOnLeft ? [emptyMesh, cube] : [cube, emptyMesh];
+        const result = keep(left[operation](right, approximate));
+        assert.equal(result.certainty, Certainty.Certified);
+        owned.pop();
+        const mesh = keep(result.intoMesh());
+        const isEmpty = operation === "intersectionWithContext"
+          || (operation === "differenceWithContext" && emptyOnLeft);
+        assert.equal(mesh.containsPoint(inside), !isEmpty);
+        if (isEmpty) {
+          assert.equal(mesh.vertexCount(), 0);
+          assert.equal(mesh.triangleCount(), 0);
+          assert.equal(keep(mesh.union(cube)).containsPoint(inside), true);
+        } else {
+          assert.equal(keep(mesh.difference(cube)).isEmpty(), true);
+        }
+        const [invalidLeft, invalidRight] = emptyOnLeft
+          ? [emptyMesh, openMesh] : [openMesh, emptyMesh];
+        assert.throws(() => invalidLeft[operation](invalidRight, approximate),
+          (error) => String(error).includes(
+            `input mesh ${emptyOnLeft ? 1 : 0} has 3 boundary edges`));
+      }
+    }
+  }
   assert.equal(keep(cube.boundingBoxWithContext(false)).certainty, Certainty.Certified);
   const rotatedCube = keep(cube.rotate(0, 0, 13));
   const restoredCube = keep(rotatedCube.rotate(0, 0, -13));
