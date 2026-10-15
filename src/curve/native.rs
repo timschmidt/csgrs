@@ -603,7 +603,13 @@ pub fn egg(width: Real, length: Real, segments: usize) -> CurveRegion2 {
     region_from_ring(&points)
 }
 
-/// Rounded rectangle.
+/// Rounded rectangle represented by exact samples and straight chords.
+///
+/// The radius is clamped to half the smaller dimension. For a positive radius
+/// and `corner_segments = n > 0`, each quarter-circle has `n` uniform angular
+/// intervals, and every nonzero straight side joins its tangent endpoints.
+/// Only coincident endpoints are omitted. Zero radius or zero corner segments
+/// selects the sharp rectangle. Dimensions and radius must be nonnegative.
 pub fn rounded_rectangle(
     width: Real,
     height: Real,
@@ -629,7 +635,11 @@ pub fn rounded_rectangle_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let point_capacity = solid::capacity::<[Real; 2]>(corner_segments.checked_mul(4))?;
+    let point_capacity = solid::capacity::<[Real; 2]>(
+        corner_segments
+            .checked_add(1)
+            .and_then(|count| count.checked_mul(4)),
+    )?;
     let width_sign = nonnegative_with(&width, "width", &decisions)?;
     let height_sign = nonnegative_with(&height, "height", &decisions)?;
     nonnegative_with(&corner_radius, "corner_radius", &decisions)?;
@@ -638,13 +648,16 @@ pub fn rounded_rectangle_with_context(
     }
     let half_width = (&width / Real::from(2_u8)).expect("two is nonzero");
     let half_height = (&height / Real::from(2_u8)).expect("two is nonzero");
-    let radius = match compare_with(&corner_radius, &half_width, &decisions)? {
-        Ordering::Greater => half_width,
-        Ordering::Equal | Ordering::Less => corner_radius,
+    let (radius, shared_x) = match compare_with(&corner_radius, &half_width, &decisions)? {
+        Ordering::Greater => (half_width, true),
+        Ordering::Equal => (corner_radius, true),
+        Ordering::Less => (corner_radius, false),
     };
-    let radius = match compare_with(&radius, &half_height, &decisions)? {
-        Ordering::Greater => half_height,
-        Ordering::Equal | Ordering::Less => radius,
+    let (radius, shared_x, shared_y) = match compare_with(&radius, &half_height, &decisions)? {
+        // half_height < radius <= half_width also proves a nonzero horizontal side.
+        Ordering::Greater => (half_height, false, true),
+        Ordering::Equal => (radius, shared_x, true),
+        Ordering::Less => (radius, shared_x, false),
     };
     if corner_segments == 0
         || decisions.sign(&radius, "corner radius")? == hyperreal::RealSign::Zero
@@ -669,13 +682,17 @@ pub fn rounded_rectangle_with_context(
     let mut points = solid::reserved(point_capacity)?;
     let corner_count = centers.len();
     for (corner_index, (cx, cy, start)) in centers.into_iter().enumerate() {
+        let shared_start = match corner_index {
+            1 | 3 => shared_x,
+            2 => shared_y,
+            _ => false,
+        };
         for index in 0..=corner_segments {
-            // Adjacent analytic corner intervals share their endpoint, and the
-            // last endpoint closes onto the first. Omit those duplicates by
-            // construction instead of making repeated equality decisions over
-            // transcendental coordinates.
-            if (corner_index > 0 && index == 0)
-                || (corner_index + 1 == corner_count && index == corner_segments)
+            // The clamp comparisons prove which tangent endpoints coincide.
+            // Other adjacent corners are joined by a nonzero straight side,
+            // whose two endpoints must both remain in the sampled boundary.
+            if (shared_start && index == 0)
+                || (shared_y && corner_index + 1 == corner_count && index == corner_segments)
             {
                 continue;
             }
