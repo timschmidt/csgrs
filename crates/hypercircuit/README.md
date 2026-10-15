@@ -20,6 +20,12 @@ placement envelopes. Rectangle construction uses the selected materialization
 policy and contributes its consumed certainty. These diagnostic enums retain
 `PartialEq`; they no longer implement `Eq` because their native causes do not.
 
+Profile translation, scaling and rotation also use the selected materialization
+policy and retain consumed certainty through the placement chain. Fabrication
+scaling preserves native causes as `FabricationPackageError::Construction`;
+failed transforms cannot become empty manufacturing images. This error enum
+now implements `PartialEq` without `Eq` for the same reason.
+
 ## What HyperCircuit is for
 
 A circuit design has several related representations:

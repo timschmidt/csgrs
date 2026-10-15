@@ -1106,9 +1106,9 @@ fn flash_to_curve(
                 &GeometryContext::new(decisions.predicate_policy()),
             )
             .map(|outcome| decisions.consume_geometry(outcome))
-            .map_err(|error| IoError::Geometry {
+            .map_err(|error| IoError::Construction {
                 format: "Gerber",
-                detail: format!("polygon aperture rotation failed: {error}"),
+                source: error,
             })?;
             if let Some(hole_diameter) = polygon.hole_diameter {
                 let hole_diameter = positive(
@@ -1153,9 +1153,9 @@ fn flash_to_curve(
         &GeometryContext::new(decisions.predicate_policy()),
     )
     .map(|outcome| decisions.consume_geometry(outcome))
-    .map_err(|error| IoError::Geometry {
+    .map_err(|error| IoError::Construction {
         format: "Gerber",
-        detail: format!("aperture translation failed: {error}"),
+        source: error,
     })
 }
 
@@ -1224,9 +1224,9 @@ fn aperture_rect_curve(
         &GeometryContext::new(decisions.predicate_policy()),
     )
     .map(|outcome| decisions.consume_geometry(outcome))
-    .map_err(|error| IoError::Geometry {
+    .map_err(|error| IoError::Construction {
         format: "Gerber",
-        detail: format!("rectangular aperture translation failed: {error}"),
+        source: error,
     })?;
 
     if let Some(hole_diameter) = rect.hole_diameter {
@@ -1737,9 +1737,9 @@ fn repeat_curves(
                     &GeometryContext::new(decisions.predicate_policy()),
                 )
                 .map(|outcome| decisions.consume_geometry(outcome))
-                .map_err(|error| IoError::Geometry {
+                .map_err(|error| IoError::Construction {
                     format: "Gerber",
-                    detail: format!("step-repeat translation failed: {error}"),
+                    source: error,
                 })?,
             );
         }
@@ -1765,9 +1765,9 @@ fn apply_aperture_transform(
         &GeometryContext::new(decisions.predicate_policy()),
     )
     .map(|outcome| decisions.consume_geometry(outcome))
-    .map_err(|error| IoError::Geometry {
+    .map_err(|error| IoError::Construction {
         format: "Gerber",
-        detail: format!("aperture mirroring failed: {error}"),
+        source: error,
     })?;
     curve::try_rotated_with_context(
         &scaled,
@@ -1775,9 +1775,9 @@ fn apply_aperture_transform(
         &GeometryContext::new(decisions.predicate_policy()),
     )
     .map(|outcome| decisions.consume_geometry(outcome))
-    .map_err(|error| IoError::Geometry {
+    .map_err(|error| IoError::Construction {
         format: "Gerber",
-        detail: format!("aperture rotation failed: {error}"),
+        source: error,
     })
 }
 

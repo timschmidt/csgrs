@@ -104,34 +104,33 @@ where
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
+    /// Applies a checked transform whose image remains in the XY plane.
     pub fn transform(&self, matrix: &Matrix4) -> AdapterResult<Self> {
-        curve::try_transformed(&self.inner, matrix)
-            .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+        self.transform_with_context(matrix, &GeometryContext::STRICT)
+            .map(GeometryOutcome::into_value)
     }
 
-    pub fn translate(&self, x: A::Scalar, y: A::Scalar, _z: A::Scalar) -> AdapterResult<Self> {
-        curve::try_translated(&self.inner, A::into_real(x)?, A::into_real(y)?)
-            .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+    /// Translates the region; nonzero Z translation cannot remain planar.
+    pub fn translate(&self, x: A::Scalar, y: A::Scalar, z: A::Scalar) -> AdapterResult<Self> {
+        self.translate_with_context(x, y, z, &GeometryContext::STRICT)
+            .map(GeometryOutcome::into_value)
     }
 
-    pub fn scale(&self, sx: A::Scalar, sy: A::Scalar, _sz: A::Scalar) -> AdapterResult<Self> {
-        curve::try_scaled(&self.inner, A::into_real(sx)?, A::into_real(sy)?)
-            .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+    /// Scales the XY region. Z scale is validated at ingress and has no planar effect.
+    pub fn scale(&self, sx: A::Scalar, sy: A::Scalar, sz: A::Scalar) -> AdapterResult<Self> {
+        self.scale_with_context(sx, sy, sz, &GeometryContext::STRICT)
+            .map(GeometryOutcome::into_value)
     }
 
+    /// Applies X, then Y, then Z rotations when their image remains in the XY plane.
     pub fn rotate(
         &self,
         x_degrees: A::Scalar,
         y_degrees: A::Scalar,
         z_degrees: A::Scalar,
     ) -> AdapterResult<Self> {
-        let _ = (A::into_real(x_degrees)?, A::into_real(y_degrees)?);
-        curve::try_rotated(&self.inner, A::into_real(z_degrees)?)
-            .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+        self.rotate_with_context(x_degrees, y_degrees, z_degrees, &GeometryContext::STRICT)
+            .map(GeometryOutcome::into_value)
     }
 
     pub fn bounding_box(&self) -> AdapterResult<Option<Aabb3<A::Scalar>>> {
@@ -140,7 +139,7 @@ where
             .transpose()
     }
 
-    /// Applies the curve transform with the selected policy and aggregate certainty.
+    /// Applies the same planar matrix admission with the selected policy and certainty.
     pub fn transform_with_context(
         &self,
         matrix: &Matrix4,
@@ -148,10 +147,10 @@ where
     ) -> AdapterResult<GeometryOutcome<Self>> {
         curve::try_transformed_with_context(&self.inner, matrix, context)
             .map(|outcome| outcome.map(Self::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
-    /// Applies the curve transform with the selected policy and aggregate certainty.
+    /// Translates with the selected policy, rejecting a nonzero Z image.
     pub fn translate_with_context(
         &self,
         x: A::Scalar,
@@ -159,20 +158,17 @@ where
         z: A::Scalar,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
-        {
-            let _ = A::into_real(z)?;
-            curve::try_translated_with_context(
-                &self.inner,
+        self.transform_with_context(
+            &Matrix4::affine_translation([
                 A::into_real(x)?,
                 A::into_real(y)?,
-                context,
-            )
-        }
-        .map(|outcome| outcome.map(Self::from_native))
-        .map_err(|error| AdapterError::Validation(error.to_string()))
+                A::into_real(z)?,
+            ]),
+            context,
+        )
     }
 
-    /// Applies the curve transform with the selected policy and aggregate certainty.
+    /// Scales with the selected policy after validating all three scalar inputs.
     pub fn scale_with_context(
         &self,
         x: A::Scalar,
@@ -180,20 +176,17 @@ where
         z: A::Scalar,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
-        {
-            let _ = A::into_real(z)?;
-            curve::try_scaled_with_context(
-                &self.inner,
+        self.transform_with_context(
+            &Matrix4::affine_nonuniform_scale([
                 A::into_real(x)?,
                 A::into_real(y)?,
-                context,
-            )
-        }
-        .map(|outcome| outcome.map(Self::from_native))
-        .map_err(|error| AdapterError::Validation(error.to_string()))
+                A::into_real(z)?,
+            ]),
+            context,
+        )
     }
 
-    /// Applies the curve transform with the selected policy and aggregate certainty.
+    /// Applies X/Y/Z rotations through shared planar matrix admission.
     pub fn rotate_with_context(
         &self,
         x: A::Scalar,
@@ -201,12 +194,10 @@ where
         z: A::Scalar,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
-        {
-            let _ = (A::into_real(x)?, A::into_real(y)?);
-            curve::try_rotated_with_context(&self.inner, A::into_real(z)?, context)
-        }
-        .map(|outcome| outcome.map(Self::from_native))
-        .map_err(|error| AdapterError::Validation(error.to_string()))
+        let x = Matrix4::rotation_x(A::into_real(x)?.to_radians());
+        let y = Matrix4::rotation_y(A::into_real(y)?.to_radians());
+        let z = Matrix4::rotation_z(A::into_real(z)?.to_radians());
+        self.transform_with_context(&(z * y * x), context)
     }
 
     /// Computes bounds before scalar conversion, retaining predicate certainty.

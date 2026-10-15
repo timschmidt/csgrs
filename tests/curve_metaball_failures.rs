@@ -92,8 +92,14 @@ fn normalized_unit_source_has_exact_diamond_area() {
         curve::metaballs(&one_ball(1.into()), (3, 3), 1.into(), 0.into()).into_region();
     let b = (Real::from(20201) / Real::from(20200)).unwrap();
     assert_eq!(region.filled_area().unwrap(), Some(Real::from(2) * &b * &b));
-    assert_eq!(curve::contains_xy(&region, 0.into(), 0.into()), Some(true));
-    assert_eq!(curve::contains_xy(&region, 2.into(), 0.into()), Some(false));
+    assert_eq!(
+        curve::contains_xy(&region, 0.into(), 0.into()).unwrap(),
+        Some(true)
+    );
+    assert_eq!(
+        curve::contains_xy(&region, 2.into(), 0.into()).unwrap(),
+        Some(false)
+    );
 }
 #[test]
 fn a_ring_of_sources_preserves_its_hole() {
@@ -109,9 +115,15 @@ fn a_ring_of_sources_preserves_its_hole() {
     )
     .into_region();
     assert!(!region.is_empty());
-    assert_eq!(curve::contains_xy(&region, 0.into(), 0.into()), Some(false));
+    assert_eq!(
+        curve::contains_xy(&region, 0.into(), 0.into()).unwrap(),
+        Some(false)
+    );
     for (x, y) in [(2, 0), (-2, 0), (0, 2), (0, -2), (1, 1)] {
-        assert_eq!(curve::contains_xy(&region, x.into(), y.into()), Some(true));
+        assert_eq!(
+            curve::contains_xy(&region, x.into(), y.into()).unwrap(),
+            Some(true)
+        );
     }
 }
 
@@ -190,5 +202,8 @@ fn failed_construction_does_not_contaminate_later_policies_or_composition() {
 fn the_original_twelve_by_twelve_closed_fixture_remains_supported() {
     let region = curve::metaballs(&one_ball(1.into()), (12, 12), 1.into(), 0.into()).unwrap();
     assert!(!region.is_empty());
-    assert_eq!(curve::contains_xy(&region, 0.into(), 0.into()), Some(true));
+    assert_eq!(
+        curve::contains_xy(&region, 0.into(), 0.into()).unwrap(),
+        Some(true)
+    );
 }

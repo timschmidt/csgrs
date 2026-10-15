@@ -329,33 +329,36 @@ impl CurveRegionJs {
     pub fn transform(&self, matrix: &Matrix4Js) -> Result<Self, JsValue> {
         curve::try_transformed(&self.inner, &matrix.inner)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn translate(&self, x: f64, y: f64) -> Result<Self, JsValue> {
         curve::try_translated(
             &self.inner,
-            real_from_js_named(x, "x")?,
-            real_from_js_named(y, "y")?,
+            crate::wasm::mesh_js::geometry_scalar(x, "x")?,
+            crate::wasm::mesh_js::geometry_scalar(y, "y")?,
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn rotate(&self, degrees: f64) -> Result<Self, JsValue> {
-        curve::try_rotated(&self.inner, real_from_js_named(degrees, "degrees")?)
-            .map(Into::into)
-            .map_err(js_error)
+        curve::try_rotated(
+            &self.inner,
+            crate::wasm::mesh_js::geometry_scalar(degrees, "degrees")?,
+        )
+        .map(Into::into)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn scale(&self, x: f64, y: f64) -> Result<Self, JsValue> {
         curve::try_scaled(
             &self.inner,
-            real_from_js_named(x, "x")?,
-            real_from_js_named(y, "y")?,
+            crate::wasm::mesh_js::geometry_scalar(x, "x")?,
+            crate::wasm::mesh_js::geometry_scalar(y, "y")?,
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     #[wasm_bindgen(js_name = containsXY)]
@@ -364,12 +367,12 @@ impl CurveRegionJs {
     pub fn contains_xy(&self, x: f64, y: f64) -> Result<Option<bool>, JsValue> {
         curve::contains_xy_with_context(
             &self.inner,
-            real_from_js_named(x, "x")?,
-            real_from_js_named(y, "y")?,
+            crate::wasm::mesh_js::geometry_scalar(x, "x")?,
+            crate::wasm::mesh_js::geometry_scalar(y, "y")?,
             &crate::GeometryContext::STRICT,
         )
         .map(GeometryOutcome::into_value)
-        .map_err(js_error)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     #[wasm_bindgen(js_name = transformWithContext)]
@@ -381,7 +384,7 @@ impl CurveRegionJs {
         let context = geometry_context(approximate_512);
         curve::try_transformed_with_context(&self.inner, &matrix.inner, &context)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     #[wasm_bindgen(js_name = translateWithContext)]
@@ -394,12 +397,12 @@ impl CurveRegionJs {
         let context = geometry_context(approximate_512);
         curve::try_translated_with_context(
             &self.inner,
-            real_from_js_named(x, "x")?,
-            real_from_js_named(y, "y")?,
+            crate::wasm::mesh_js::geometry_scalar(x, "x")?,
+            crate::wasm::mesh_js::geometry_scalar(y, "y")?,
             &context,
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     #[wasm_bindgen(js_name = rotateWithContext)]
@@ -411,11 +414,11 @@ impl CurveRegionJs {
         let context = geometry_context(approximate_512);
         curve::try_rotated_with_context(
             &self.inner,
-            real_from_js_named(degrees, "degrees")?,
+            crate::wasm::mesh_js::geometry_scalar(degrees, "degrees")?,
             &context,
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     #[wasm_bindgen(js_name = scaleWithContext)]
@@ -428,12 +431,12 @@ impl CurveRegionJs {
         let context = geometry_context(approximate_512);
         curve::try_scaled_with_context(
             &self.inner,
-            real_from_js_named(x, "x")?,
-            real_from_js_named(y, "y")?,
+            crate::wasm::mesh_js::geometry_scalar(x, "x")?,
+            crate::wasm::mesh_js::geometry_scalar(y, "y")?,
             &context,
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     #[wasm_bindgen(js_name = containsXYWithContext)]
@@ -443,8 +446,10 @@ impl CurveRegionJs {
         y: f64,
         approximate_512: bool,
     ) -> Result<GeometryBoolResultJs, JsValue> {
-        let point =
-            hypercurve::Point2::new(real_from_js_named(x, "x")?, real_from_js_named(y, "y")?);
+        let point = hypercurve::Point2::new(
+            crate::wasm::mesh_js::geometry_scalar(x, "x")?,
+            crate::wasm::mesh_js::geometry_scalar(y, "y")?,
+        );
         let evaluated = hypercurve::evaluate_under(
             geometry_context(approximate_512).predicate_policy(),
             || self.inner.classify_point(&point.into()),
@@ -471,7 +476,7 @@ impl CurveRegionJs {
                     format!("{:?}", blocker.reason()),
                 ))
             },
-            Err(error) => Err(js_error(error)),
+            Err(error) => Err(crate::wasm::mesh_js::geometry_error(error.into())),
         }
     }
 

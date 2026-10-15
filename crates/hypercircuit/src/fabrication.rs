@@ -239,7 +239,9 @@ pub enum FabricationManifestError {
 impl Display for FabricationManifestError {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Json(error) => write!(formatter, "invalid fabrication manifest JSON: {error}"),
+            Self::Json(error) => {
+                write!(formatter, "invalid fabrication manifest JSON: {error}")
+            }
             Self::UnsupportedSchema(schema) => {
                 write!(
                     formatter,
@@ -593,8 +595,10 @@ pub struct FabricationPackage {
 }
 
 /// Failure that prevents a non-lossy manufacturing package from being emitted.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum FabricationPackageError {
+    /// A model transform failed before a fabrication file could be published.
+    Construction(csgrs::errors::ValidationError),
     /// Materialization intentionally skipped CAM-oriented layer aggregation.
     LayerImagesNotAggregated,
     /// A layer image has an unresolved exact boolean.
@@ -633,6 +637,9 @@ impl Display for FabricationPackageError {
                     "{role:?} has an unresolved production-image union"
                 )
             }
+            Self::Construction(error) => {
+                write!(formatter, "fabrication transform failed: {error}")
+            }
             Self::Gerber(error) => write!(formatter, "Gerber serialization failed: {error}"),
             Self::UnspecifiedPlating(source) => {
                 write!(formatter, "drill plating is unspecified: {source}")
@@ -652,12 +659,21 @@ impl Display for FabricationPackageError {
                     "Gerber attribute field cannot be represented: {value}"
                 )
             }
-            Self::Manifest(error) => write!(formatter, "manifest serialization failed: {error}"),
+            Self::Manifest(error) => {
+                write!(formatter, "manifest serialization failed: {error}")
+            }
         }
     }
 }
 
-impl std::error::Error for FabricationPackageError {}
+impl std::error::Error for FabricationPackageError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Construction(error) => Some(error),
+            _ => None,
+        }
+    }
+}
 
 impl FabricationPackage {
     /// Emits Gerber, Excellon, and semantic electrical-test files.
@@ -706,7 +722,7 @@ impl FabricationPackage {
                     blocker: image.blocker.clone().unwrap_or_else(|| "unknown".into()),
                 });
             };
-            let profile = scale_profile(profile, &millimeter_factor);
+            let profile = scale_profile(profile, &millimeter_factor)?;
             let gerber = csgrs::io::gerber::export_gerber(&profile)
                 .map_err(|error| FabricationPackageError::Gerber(format!("{error:?}")))?;
             let function = if position == 0 {
@@ -730,7 +746,7 @@ impl FabricationPackage {
                     blocker: image.blocker.clone().unwrap_or_else(|| "unknown".into()),
                 });
             };
-            let profile = scale_profile(profile, &millimeter_factor);
+            let profile = scale_profile(profile, &millimeter_factor)?;
             let gerber = csgrs::io::gerber::export_gerber(&profile)
                 .map_err(|error| FabricationPackageError::Gerber(format!("{error:?}")))?;
             let (suffix, function, polarity) = process_file_role(image.role);
@@ -1235,8 +1251,12 @@ fn add_x2_attributes(gerber: Vec<u8>, function: &str, polarity: &str) -> Vec<u8>
     output
 }
 
-fn scale_profile(profile: &CurveRegion2, factor: &Real) -> CurveRegion2 {
+fn scale_profile(
+    profile: &CurveRegion2,
+    factor: &Real,
+) -> Result<CurveRegion2, FabricationPackageError> {
     curve::scaled(profile, factor.clone(), factor.clone())
+        .map_err(FabricationPackageError::Construction)
 }
 
 fn process_file_role(role: ProcessLayerRole) -> (&'static str, &'static str, &'static str) {

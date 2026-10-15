@@ -234,7 +234,8 @@ fn main() {
     let curve_right = curve::transformed(
         &curve::square(Real::from(12)).expect("valid planar fixture"),
         &Matrix4::affine_translation([Real::from(4), Real::zero(), Real::zero()]),
-    );
+    )
+    .expect("valid planar transform fixture");
     config.run("feature", "profile_boolean", "all_operations", 2, || {
         let results = [
             curve_left
@@ -283,7 +284,8 @@ fn main() {
             curve::transformed(
                 &source,
                 &Matrix4::affine_translation([Real::from(3), Real::from(-2), Real::zero()]),
-            ),
+            )
+            .expect("valid planar transform fixture"),
             source
                 .transform_affine(
                     &Real::zero(),
@@ -307,7 +309,8 @@ fn main() {
             curve::transformed(
                 &source,
                 &Matrix4::affine_translation([Real::from(7), Real::from(-4), Real::zero()]),
-            ),
+            )
+            .expect("valid planar transform fixture"),
         ];
         let contours = outputs.iter().map(CurveRegion2::len).sum::<usize>();
         Measurement::new(8, contours as u64, contours as u64)
@@ -321,14 +324,17 @@ fn main() {
             let source = curve::square(Real::one()).expect("valid planar fixture");
             let mut regions = Vec::new();
             for index in 0..14 {
-                regions.push(curve::transformed(
-                    &source,
-                    &Matrix4::affine_translation([
-                        Real::from((index % 4) as u64) * Real::from(3),
-                        Real::from((index / 4) as u64) * Real::from(3),
-                        Real::zero(),
-                    ]),
-                ));
+                regions.push(
+                    curve::transformed(
+                        &source,
+                        &Matrix4::affine_translation([
+                            Real::from((index % 4) as u64) * Real::from(3),
+                            Real::from((index / 4) as u64) * Real::from(3),
+                            Real::zero(),
+                        ]),
+                    )
+                    .expect("valid planar transform fixture"),
+                );
             }
             let contours = regions.iter().map(CurveRegion2::len).sum::<usize>();
             Measurement::new(14, contours as u64, contours as u64)
@@ -347,7 +353,8 @@ fn main() {
             let radial = curve::transformed(
                 &curve::rectangle(Real::from(3), Real::from(8)).expect("valid planar fixture"),
                 &Matrix4::affine_translation([Real::from(5), Real::zero(), Real::zero()]),
-            );
+            )
+            .expect("valid planar transform fixture");
             let revolution =
                 curve::revolve(&radial, Real::from(360), 32, &GeometryContext::STRICT)
                     .expect("revolution")

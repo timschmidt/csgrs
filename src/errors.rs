@@ -39,6 +39,12 @@ pub enum ValidationError {
     /// The requested analytic primitive is outside the supported representation.
     #[error("unsupported primitive: {reason}")]
     UnsupportedPrimitive { reason: &'static str },
+    /// A valid transform cannot be represented by the target geometry carrier.
+    #[error("unsupported transform: {reason}")]
+    UnsupportedTransform { reason: &'static str },
+    /// A transform has no finite image under the admitted homogeneous map.
+    #[error("unbounded transform: {reason}")]
+    UnboundedTransform { reason: &'static str },
     /// A necessary predicate has no admissible proof under the selected policy.
     #[error("{predicate} is undecided under {policy:?}")]
     PredicateUndecided {
@@ -247,7 +253,10 @@ impl ValidationError {
                 },
                 _ => ValidationErrorKind::InvalidInput,
             },
-            Self::UnsupportedPrimitive { .. } => ValidationErrorKind::Unsupported,
+            Self::UnsupportedPrimitive { .. } | Self::UnsupportedTransform { .. } => {
+                ValidationErrorKind::Unsupported
+            },
+            Self::UnboundedTransform { .. } => ValidationErrorKind::Unbounded,
             Self::PredicateUndecided { .. }
             | Self::Scalar(hyperreal::Problem::UnknownZero) => ValidationErrorKind::Undecided,
             Self::CapacityOverflow

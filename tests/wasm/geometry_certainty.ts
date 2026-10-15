@@ -1,7 +1,7 @@
 // The runner copies this beside the generated csgrs.d.ts before type-checking.
 import {
   CurveRegionJs, GeometryBoolResultJs, GeometryCertaintyJs,
-  GeometryQueryStatusJs, MeshJs, Point3Js,
+  GeometryQueryStatusJs, Matrix4Js, MeshJs, Point3Js,
 } from "./csgrs";
 
 function assertNever(value: never): never {
@@ -44,6 +44,18 @@ for (const profile of [
   extrusion.free();
   profile.free();
 }
+
+const planarSource = CurveRegionJs.square(1);
+const normalizedMatrix = new Matrix4Js(4, 0, 17, 2, 0, -6, 19, 4, 0, 0, 0, 0, 0, 0, 23, 2);
+const transformed = planarSource.transformWithContext(normalizedMatrix, false);
+const transformReceipt: GeometryCertaintyJs = transformed.certainty;
+if (transformReceipt !== GeometryCertaintyJs.Certified) throw new Error("Uncertified transform");
+const planarImage = transformed.intoRegion();
+const classified: boolean | undefined = planarImage.containsXY(2, 0);
+if (classified !== true) throw new Error("Wrong homogeneous image");
+planarImage.free();
+normalizedMatrix.free();
+planarSource.free();
 
 const cube = MeshJs.cube(1);
 const bounds = cube.boundingBoxWithContext(false);
