@@ -1,0 +1,30 @@
+--- examples/readme_renders.rs
++++ docs/evidence/2026-10-15-rounded-rectangle-fidelity/render_driver_v1.rs
+@@ -30,13 +30,11 @@
+ const LIGHT_DIRECTION: [f64; 3] = [0.25, 0.55, 1.0];
+ 
+ fn main() {
+-    let output_dir = output_dir();
+-    fs::create_dir_all(&output_dir).expect("create README render output directory");
+-
+-    render_readme_curves();
+-    render_readme_meshes();
+-
+-    println!("README renders written to {}/*.png", output_dir.display());
++    fs::create_dir_all(output_dir()).expect("create focused render output directory");
++    render_curve(
++        "rounded_rectangle",
++        &curve::rounded_rectangle(r(2.4), r(1.5), r(0.28), 12).expect("valid planar fixture"),
++    );
+ }
+ 
+ fn render_readme_curves() {
+@@ -184,7 +182,7 @@
+     render_curve("from_image", &readme_raster_shape());
+     render_curve(
+         "truetype",
+-        &curve::truetype_text("CSG", include_bytes!("../asar.ttf"), r(72.0)),
++        &curve::truetype_text("CSG", include_bytes!("../../../asar.ttf"), r(72.0)),
+     );
+     render_open_curves(
+         "bezier_path",

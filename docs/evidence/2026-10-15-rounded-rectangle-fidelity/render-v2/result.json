@@ -1,0 +1,38 @@
+{
+  "commands": [
+    {
+      "name": "build",
+      "exit_code": 0,
+      "seconds": 2.371193641331047,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "a5392401d681c1b8499283604c095a94750c834a3f9af801b905298421e10728"
+      }
+    },
+    {
+      "name": "first",
+      "exit_code": 0,
+      "seconds": 0.06788473902270198,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "22a4b9756f571c8cd5985d9f70de01e6c6f2b6440c88d944fab424cb5b5e9493",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "b3ad796ec4ef7912a53cb37d7069d5a5562886ce38d6b245809ba6f44634f4b3"
+      }
+    },
+    {
+      "name": "repeat",
+      "exit_code": 0,
+      "seconds": 0.03515810100361705,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "498563d4d645feab8c9d5ea3598eeb3231dc4a4ac10e1b0a29626d90c791c452",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "ca1aea851431eed196ff81ac2c64b7ed123d723b63f66f2a8e2fcf93702659e4"
+      }
+    }
+  ],
+  "passed": true
+}

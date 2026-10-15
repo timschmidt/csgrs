@@ -1,0 +1,98 @@
+
+running 49 tests
+test adapter::tests::exact_and_integer_graphics_adapters_keep_generic_conversion ... ok
+test adapter::tests::f32_graphics_adapter_preserves_strict_overflow_error ... ok
+test adapter::tests::f64_mesh_adapter_converts_at_edges ... ok
+test adapter::tests::i128_adapter_rejects_fractional_output ... ok
+test adapter::tests::primitive_graphics_adapters_match_core_gpu_buffers ... ok
+test adapter::tests::raw_real_profile_stays_exact_at_boundary ... ok
+test context::tests::contexts_and_certainty_remain_one_byte ... ok
+test context::tests::one_context_derives_matching_kernel_policies ... ok
+test curve::native::tests::analytic_shape_parameters_change_their_geometry ... ok
+test curve::native::tests::approximate_sweep_reports_consumed_terminal_point_equality ... ok
+test curve::native::tests::cycloidal_rack_alternates_face_and_root_flanks ... ok
+test curve::native::tests::degenerate_profile_solid_requests_do_not_claim_solids ... ok
+test curve::native::tests::filled_constructor_and_extrusion_remain_native ... ok
+test curve::native::tests::finite_profiles_reuse_retained_loop_topology_without_reconsumption ... ok
+test curve::native::tests::gear_and_rack_profiles_form_one_hole_free_material_component ... ok
+test curve::native::tests::higher_order_curve_constructors_and_flat_triangulation_are_usable ... ok
+test curve::native::tests::hilbert_samples_are_centered_symmetrically_in_the_usable_grid ... ok
+test curve::native::tests::native_region_boolean_does_not_construct_a_public_facade ... ok
+test curve::native::tests::nominal_planar_shape_catalog_constructs_material ... ok
+test curve::native::tests::normalized_egg_and_heart_match_requested_sampled_bounds ... ok
+test curve::native::tests::planar_constructors_reject_invalid_dimensions_and_ranges ... ok
+test curve::native::tests::profile_solid_constructors_share_closed_indexed_topology ... ok
+test curve::native::tests::ring_cache_keeps_only_strict_success_and_owned_identity ... ok
+test curve::native::tests::sweep_rejects_revisited_open_path_vertices ... ok
+test parts::assembly::tests::parent_explode_keeps_child_step_seated ... ok
+test parts::assembly::tests::suppressed_explode_stays_put ... ok
+test parts::attachment::tests::mate_matches_origin_and_axis ... ok
+test parts::attachment::tests::zero_axis_is_rejected ... ok
+test parts::blueprint::tests::nearer_box_hides_a_covered_edge_and_no_explode_still_occludes ... ok
+test parts::blueprint::tests::overlapping_depth_splits_an_edge_into_visible_and_unknown ... ok
+test parts::blueprint::tests::svg_export_records_hidden_dashes ... ok
+test parts::bom::tests::quantities_merge_and_sort ... ok
+test parts::dimension::tests::dimension_x_keeps_the_exact_length ... ok
+test parts::dimension::tests::zero_and_negative_lengths_are_rejected ... ok
+test parts::manual::tests::manual_contains_instructions_and_reports_gaps ... ok
+test parts::occlude::tests::cube_feature_edges_are_visible ... ok
+test parts::occlude::tests::front_box_hides_rear_feature_edges ... ok
+test parts::occlude::tests::half_covered_edge_splits ... ok
+test parts::occlude::tests::suppressed_front_box_still_hides_the_rear_box ... ok
+test parts::occlude::tests::svg_snapshot_mentions_a_rear_coordinate ... ok
+test parts::occlude::tests::undecided_depth_stays_unknown ... ok
+test solid::tests::arrows_and_orientation_reversing_transforms_keep_outward_manifold_winding ... ok
+test solid::tests::constructors_return_native_hypermesh_geometry ... ok
+test solid::tests::fluent_boolean_returns_reusable_native_geometry ... ok
+test solid::tests::loft_uses_each_cap_plane_and_rejects_nonplanar_sections ... ok
+test solid::tests::nominal_direct_solid_catalog_is_closed_and_consistently_indexed ... ok
+test solid::tests::polyhedron_certifies_symbolically_planar_faces_before_normalization ... ok
+test solid::tests::primitive_sample_count_arithmetic_is_checked ... ok
+test solid::tests::sampled_circle_retains_exact_cardinal_angles ... ok
+
+test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.78s
+
+
+running 7 tests
+test bounds_reject_malformed_indices ... ok
+test cached_position_bounds_do_not_validate_mutated_indices ... ok
+test empty_bounds_are_absent_rather_than_a_point_at_the_origin ... ok
+test empty_curve_bounds_are_absent ... ok
+test placement_preserves_exact_box_geometry_and_empty_composition ... ok
+test undecided_bounds_do_not_become_an_origin_box_or_empty_model ... ok
+test undecided_bounds_retain_their_category_through_the_adapter ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 14 tests
+test approximate_selection_and_consumption_are_distinct_and_do_not_poison_strict_calls ... ok
+test canonical_degeneracies_compose_and_invalid_companions_still_fail ... ok
+test checked_compound_capacity_failure_is_not_successful_empty_geometry ... ok
+test compound_constructors_reject_invalid_parameters ... ok
+test degenerate_dimensions_do_not_conceal_invalid_companions ... ok
+test exact_constructor_sets_survive_triangulation_and_extrusion ... ok
+test failures_remain_structured_through_scalar_adapters ... ok
+test invalid_resolution_fails_even_for_a_zero_radius ... ok
+test malformed_polygon_cannot_enter_a_downstream_pipeline ... ok
+test native_polygon_cause_survives_the_modeling_wrapper ... ok
+test negative_dimensions_fail_through_the_public_adapter ... ok
+test representable_sample_count_with_unrepresentable_bytes_fails_before_allocation ... ok
+test undecided_compound_parameter_retains_a_typed_cause ... ok
+test undecided_dimensions_do_not_become_empty_regions ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 8 tests
+test algebraic_corners_and_symbolic_dimensions_keep_independently_known_areas ... ok
+test approximate_clamp_facts_remain_qualified_and_do_not_warm_strict_success ... ok
+test capacity_covers_every_corner_endpoint_even_before_empty_shortcuts ... ok
+test clamped_capsules_keep_nonzero_straight_sides ... ok
+test corrected_profiles_compose_with_transforms_holes_booleans_and_extrusion ... ok
+test full_radius_and_sharp_corner_controls_remain_defined ... ok
+test one_chord_per_corner_retains_all_straight_sides_and_exact_area ... ok
+test original_published_sampling_resolutions_retain_tangent_vertices ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+

@@ -1,0 +1,6 @@
+[
+  "src/curve/native.rs",
+  "tests/rounded_rectangle_fidelity.rs",
+  "readme.md",
+  "docs/rounded_rectangle.png"
+]

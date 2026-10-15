@@ -1,0 +1,23 @@
+	Command being timed: "env CSGRS_BENCH_FILTER=profile_primitives/constructor/rounded_rectangle CSGRS_BENCH_SAMPLES=3 CSGRS_BENCH_WARMUP=2 cargo bench --locked -p csgrs --all-features --bench profile_primitives"
+	User time (seconds): 1.52
+	System time (seconds): 0.42
+	Percent of CPU this job got: 142%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.37
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 360968
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 153
+	Minor (reclaiming a frame) page faults: 102687
+	Voluntary context switches: 4934
+	Involuntary context switches: 276
+	Swaps: 0
+	File system inputs: 2816
+	File system outputs: 63736
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

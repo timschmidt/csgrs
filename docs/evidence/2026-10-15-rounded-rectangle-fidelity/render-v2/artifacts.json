@@ -1,0 +1,14 @@
+{
+  "target/rounded-rectangle-fidelity/render-v2/rounded-readme-render": {
+    "sha256": "f290426757916ce50bede77a001eae1da0887ac5d52b3b972d735129fe456f94",
+    "bytes": 40809048
+  },
+  "docs/evidence/2026-10-15-rounded-rectangle-fidelity/render-v2/first/rounded_rectangle.png": {
+    "sha256": "e1dd521b14d7f8a4a95fbc1492bdf7c34ff14ebf2bfd5717cb577cc09ee9eba2",
+    "bytes": 26480
+  },
+  "docs/evidence/2026-10-15-rounded-rectangle-fidelity/render-v2/repeat/rounded_rectangle.png": {
+    "sha256": "e1dd521b14d7f8a4a95fbc1492bdf7c34ff14ebf2bfd5717cb577cc09ee9eba2",
+    "bytes": 26480
+  }
+}

@@ -1,0 +1,43 @@
+error[E0433]: cannot find module or crate `hypermesh` in this scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-rounded-rectangle-fidelity/render_driver_v1.rs:548:19
+    |
+548 |     let context = hypermesh::MeshContext::new(hypermesh::PredicatePolicy::APPROXIMATE_512);
+    |                   ^^^^^^^^^ use of unresolved module or unlinked crate `hypermesh`
+    |
+    = help: you might be missing a crate named `hypermesh`
+
+error[E0433]: cannot find module or crate `hypermesh` in this scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-rounded-rectangle-fidelity/render_driver_v1.rs:548:47
+    |
+548 |     let context = hypermesh::MeshContext::new(hypermesh::PredicatePolicy::APPROXIMATE_512);
+    |                                               ^^^^^^^^^ use of unresolved module or unlinked crate `hypermesh`
+    |
+    = help: you might be missing a crate named `hypermesh`
+
+error[E0433]: cannot find module or crate `hypermesh` in this scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-rounded-rectangle-fidelity/render_driver_v1.rs:552:9
+    |
+552 |         hypermesh::BooleanProgram::Operation(hypermesh::BooleanOp::Difference),
+    |         ^^^^^^^^^ use of unresolved module or unlinked crate `hypermesh`
+    |
+    = help: you might be missing a crate named `hypermesh`
+
+error[E0433]: cannot find module or crate `hypermesh` in this scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-rounded-rectangle-fidelity/render_driver_v1.rs:552:46
+    |
+552 |         hypermesh::BooleanProgram::Operation(hypermesh::BooleanOp::Difference),
+    |                                              ^^^^^^^^^ use of unresolved module or unlinked crate `hypermesh`
+    |
+    = help: you might be missing a crate named `hypermesh`
+
+error[E0433]: cannot find module or crate `hypermesh` in this scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-rounded-rectangle-fidelity/render_driver_v1.rs:549:5
+    |
+549 |     hypermesh::boolean(
+    |     ^^^^^^^^^ use of unresolved module or unlinked crate `hypermesh`
+    |
+    = help: you might be missing a crate named `hypermesh`
+
+error: aborting due to 5 previous errors
+
+For more information about this error, try `rustc --explain E0433`.

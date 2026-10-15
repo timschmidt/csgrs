@@ -1,0 +1,6 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 4.16s
+     Running unittests src/lib.rs (target/rounded-rectangle-fidelity/native-v1/release/deps/csgrs-12b72f0ccdd38706)
+     Running tests/bounds_failures.rs (target/rounded-rectangle-fidelity/native-v1/release/deps/bounds_failures-c661a92a5b4c7962)
+     Running tests/curve_constructor_failures.rs (target/rounded-rectangle-fidelity/native-v1/release/deps/curve_constructor_failures-fd8f13d67d2561c4)
+     Running tests/rounded_rectangle_fidelity.rs (target/rounded-rectangle-fidelity/native-v1/release/deps/rounded_rectangle_fidelity-1435e79a4c8f8808)

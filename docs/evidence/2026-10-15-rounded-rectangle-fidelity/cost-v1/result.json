@@ -1,0 +1,466 @@
+{
+  "commands": [
+    {
+      "name": "candidate-build",
+      "exit_code": 0,
+      "seconds": 0.8775593410246074,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "293148b556bfc3f9ef6be8fd2d0bed8836ab179963f39f31c1e6757aa7a027d8"
+      }
+    },
+    {
+      "name": "0-octagon-warm",
+      "exit_code": 0,
+      "seconds": 0.018981609027832747,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "d6520076c66150328cf277237718237131fbf7cf5c1121677f8c83d290d34e60",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "58529c06b73cfe6d34efcdfb63197d5bf69055616e4dfd5812e1c5bb77cdda08"
+      },
+      "sample": {
+        "shape": "octagon",
+        "cache": "warm",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 2916100,
+        "allocations": 24704,
+        "requested_bytes": 1345792,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 1320
+      }
+    },
+    {
+      "name": "0-octagon-miss",
+      "exit_code": 0,
+      "seconds": 0.0676079080440104,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "6e05437f10fd302de08a3040ac23252c725be0fe809861f530995b19cf0f27bf",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "6ca7071b583452f9ebc9697d8dfb5c7cd10cfbec8a0e7b38d0748123cff7dc0b"
+      },
+      "sample": {
+        "shape": "octagon",
+        "cache": "miss",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 19162617,
+        "allocations": 119923,
+        "requested_bytes": 14846448,
+        "retained_byte_delta": 23328,
+        "peak_live_bytes_above_start": 64776
+      }
+    },
+    {
+      "name": "0-benchmark-warm",
+      "exit_code": 0,
+      "seconds": 0.1676829312928021,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "6c1f9a97ae2c7cd89f46607f6805f6616ae3766034cf8a11a959f59daa3fd3c6",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "eeb87b17ae965a7d3e86cc20fc6653b4ae02032888a60b325bcea6f90c223d5b"
+      },
+      "sample": {
+        "shape": "benchmark",
+        "cache": "warm",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 70915421,
+        "allocations": 1526912,
+        "requested_bytes": 90350720,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 32680
+      }
+    },
+    {
+      "name": "0-benchmark-miss",
+      "exit_code": 0,
+      "seconds": 2.1204464780166745,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "8956d674bd81060ab6f9aff2bcbc94099ccb3494880f13603fcef7709c04bdbd",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "4ae948cb567e3e992db90324b2a278898559f27071fd5c5e6519f4e24ac9819c"
+      },
+      "sample": {
+        "shape": "benchmark",
+        "cache": "miss",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 1064222610,
+        "allocations": 17393331,
+        "requested_bytes": 964601376,
+        "retained_byte_delta": 12032,
+        "peak_live_bytes_above_start": 422468
+      }
+    },
+    {
+      "name": "0-readme-warm",
+      "exit_code": 0,
+      "seconds": 0.26756169693544507,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "306064a6db549e4aeb98117cb3723c00847ffc10c53ab4f78a35314187ed31de",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "8fb1a040ae3bfeb6d86c8033e804d62c656588877366a58902d68f43f8ae3d42"
+      },
+      "sample": {
+        "shape": "readme",
+        "cache": "warm",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 98051791,
+        "allocations": 1606528,
+        "requested_bytes": 104313984,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 58064
+      }
+    },
+    {
+      "name": "0-readme-miss",
+      "exit_code": 0,
+      "seconds": 3.071825919672847,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "0ae153fba572a1e0e93988d4df8478285f642747a0f924d1a4a4808acda58b24",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "fa3d66dd1296c2a9410fd3c5863c560022e106fab65761bcb202ad1383906d13"
+      },
+      "sample": {
+        "shape": "readme",
+        "cache": "miss",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 1532912725,
+        "allocations": 20668482,
+        "requested_bytes": 1174929848,
+        "retained_byte_delta": 163280,
+        "peak_live_bytes_above_start": 889977
+      }
+    },
+    {
+      "name": "1-octagon-warm",
+      "exit_code": 0,
+      "seconds": 0.01904175616800785,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "bf58b3c364c62a4611b9a517d0e0e4ddbbe5d0b7b99c38f75a2cc48d44ac8869",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "d5bd2f6d04fe32c62dfe5fa3d1181bb580695b32dd6d2dbdf730e5784d78544d"
+      },
+      "sample": {
+        "shape": "octagon",
+        "cache": "warm",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 2385907,
+        "allocations": 24704,
+        "requested_bytes": 1345792,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 1320
+      }
+    },
+    {
+      "name": "1-octagon-miss",
+      "exit_code": 0,
+      "seconds": 0.06709964293986559,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "b5b8c9affa11e6c059d49c7dd0a605fdd0a951e9eec8dee85bb9b8ef054a6d46",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "3e7af5eb1ccb32a42313ef5a505d90addab960f4835ec6efbe4f28a9143c7947"
+      },
+      "sample": {
+        "shape": "octagon",
+        "cache": "miss",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 20027168,
+        "allocations": 119923,
+        "requested_bytes": 14846448,
+        "retained_byte_delta": 23328,
+        "peak_live_bytes_above_start": 64776
+      }
+    },
+    {
+      "name": "1-benchmark-warm",
+      "exit_code": 0,
+      "seconds": 0.16766661079600453,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "4d0074656ea4812eb66c120983605953d867a386a7a454de6a85eee6a485bbad",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "31de10ee50c39fea419b7f043789d299cf379c4fa891d0de79c4d98829b8c44b"
+      },
+      "sample": {
+        "shape": "benchmark",
+        "cache": "warm",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 68617978,
+        "allocations": 1526912,
+        "requested_bytes": 90350720,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 32680
+      }
+    },
+    {
+      "name": "1-benchmark-miss",
+      "exit_code": 0,
+      "seconds": 2.1199928992427886,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "129da51d5cf7d6e8190a226fc1c50949f9e115fcbca571877891fdc352ae7950",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "a78a935d902d4f0e0ecbe902cacb9319647b8f795c71dd8c1de30611f3fddb67"
+      },
+      "sample": {
+        "shape": "benchmark",
+        "cache": "miss",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 1057859056,
+        "allocations": 17393331,
+        "requested_bytes": 964601376,
+        "retained_byte_delta": 12032,
+        "peak_live_bytes_above_start": 422468
+      }
+    },
+    {
+      "name": "1-readme-warm",
+      "exit_code": 0,
+      "seconds": 0.2677637627348304,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "6d6b317581c87c8cff6be0b4795e374c6d69cdb06717ddc7e1944bf10cc2a954",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "67f9b81e1fccc3705bbb60d7a6c390186c3ceee55d5007ba2966b7c5da5d73e0"
+      },
+      "sample": {
+        "shape": "readme",
+        "cache": "warm",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 98604243,
+        "allocations": 1606528,
+        "requested_bytes": 104313984,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 58064
+      }
+    },
+    {
+      "name": "1-readme-miss",
+      "exit_code": 0,
+      "seconds": 3.02169924415648,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "09533b588ba76dee9230b2105ea4b3576cc032573dceb05e57164f071946b381",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "92b34aec22348745f171bffacf36091f89509abc3ee96e93aa3ab8f5b0506fd3"
+      },
+      "sample": {
+        "shape": "readme",
+        "cache": "miss",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 1496118936,
+        "allocations": 20668482,
+        "requested_bytes": 1174929848,
+        "retained_byte_delta": 163280,
+        "peak_live_bytes_above_start": 889977
+      }
+    },
+    {
+      "name": "2-octagon-warm",
+      "exit_code": 0,
+      "seconds": 0.019518542103469372,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "058522b172873706abff0179621ac6bc2b865119d12fd7d5e5dec68cc56a6a1c",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "3e5ae1b41ab9929b6234039fccf28fa6ca5997878a78c3e0c508a795e619e38c"
+      },
+      "sample": {
+        "shape": "octagon",
+        "cache": "warm",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 2460482,
+        "allocations": 24704,
+        "requested_bytes": 1345792,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 1320
+      }
+    },
+    {
+      "name": "2-octagon-miss",
+      "exit_code": 0,
+      "seconds": 0.06757060997188091,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "2e4c6429a25bdda1301b306ca82cbe8621eea16b5e9e46a0b830062aec6b78aa",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "f7956964bc04e34b01ef33ef3f36f6568bebf276282a5776a7017fc8d00dad58"
+      },
+      "sample": {
+        "shape": "octagon",
+        "cache": "miss",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 20525884,
+        "allocations": 119923,
+        "requested_bytes": 14846448,
+        "retained_byte_delta": 23328,
+        "peak_live_bytes_above_start": 64776
+      }
+    },
+    {
+      "name": "2-benchmark-warm",
+      "exit_code": 0,
+      "seconds": 0.16743691684678197,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "a0fb0b409323b9863a46b2600e952e261c5ee6c9daf8fad42971708f69071e07",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "470975fa217a18ff13f07fed794d8275b7f1ec25bdb4761b5d60ed97607d8680"
+      },
+      "sample": {
+        "shape": "benchmark",
+        "cache": "warm",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 71948780,
+        "allocations": 1526912,
+        "requested_bytes": 90350720,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 32680
+      }
+    },
+    {
+      "name": "2-benchmark-miss",
+      "exit_code": 0,
+      "seconds": 2.120235523208976,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "deb4239bb157e787f5fea000e81be9b096a0a1f83ae83e190b0de7ab713babb5",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "518c1f9d65f30d31f07b80051628002d32d00a776d3cc398d84743fd78d9168a"
+      },
+      "sample": {
+        "shape": "benchmark",
+        "cache": "miss",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 1059638285,
+        "allocations": 17393331,
+        "requested_bytes": 964601376,
+        "retained_byte_delta": 12032,
+        "peak_live_bytes_above_start": 422468
+      }
+    },
+    {
+      "name": "2-readme-warm",
+      "exit_code": 0,
+      "seconds": 0.2178101851604879,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "c81b202b5d15baff64f4357da4e19f855dc0095e067dbf831fc1e9f22c8b3140",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "ea4939b992ae042b54c5013f62bcede31455fdd69d1e1822569ea789772582c4"
+      },
+      "sample": {
+        "shape": "readme",
+        "cache": "warm",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 97059829,
+        "allocations": 1606528,
+        "requested_bytes": 104313984,
+        "retained_byte_delta": 0,
+        "peak_live_bytes_above_start": 58064
+      }
+    },
+    {
+      "name": "2-readme-miss",
+      "exit_code": 0,
+      "seconds": 2.971128460019827,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "4d2e3474f2a1f70c58f08f89215ed324cceec95589ec37506418428e8949ba4c",
+        "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "resources": "e83510cd37f5ea467e3145636f057f7915429a0704c1da4abb351bf74a6d98c0"
+      },
+      "sample": {
+        "shape": "readme",
+        "cache": "miss",
+        "iterations": 128,
+        "completed": 128,
+        "policy": "strict",
+        "certainty": "Certified",
+        "oracle": "exact tangents and one-chord area",
+        "nanos": 1483664040,
+        "allocations": 20668482,
+        "requested_bytes": 1174929848,
+        "retained_byte_delta": 163280,
+        "peak_live_bytes_above_start": 889977
+      }
+    }
+  ],
+  "passed": true
+}

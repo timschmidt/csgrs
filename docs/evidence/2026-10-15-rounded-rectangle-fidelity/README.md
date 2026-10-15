@@ -47,8 +47,67 @@ through OBJ. Gerber obround import/export retains independently known straight
 boundary points and inside/outside classifications. This is not a lossless
 claim for arbitrary curved Gerber or OBJ geometry.
 
-Broader post-edit qualification, the corrected image, and proportionate cost
-evidence are pending. These trials include the unchanged 35 original pending
+## Final local qualification
+
+All 13 `native-v1` commands pass after the final implementation, documentation
+and image edit. This includes formatting, all-target Clippy with warnings denied
+under all features, no default features and curve-only; all-feature library and
+integration tests (263 passed, one existing ignored image-corpus test); affected
+minimal (38 passed) and curve-only (78 passed) suites; fuzz-target Clippy;
+warning-free docs and one doctest; the original benchmark consumer (three
+samples of eight operations); and the full renderer build. The overlapping
+configurations total 380 passing test executions. The unchanged ignore is not
+credited as a pass. No language binding directly exposes this constructor or
+Gerber import, and no binding implementation or signature changes here.
+
+`render-v1` failed to compile because the focused harness omitted its `hypermesh`
+extern. `render-v2` retains the unchanged source driver, supplies that dependency,
+and produces two identical 26,480-byte PNGs. The derived driver's only changes
+are selecting the original rounded-rectangle fixture in `main` and rebasing the
+unused font include path. Its patch, exact source hash and build inputs are
+retained. The renderer functions, constants, fixture dimensions and 12 corner
+segments remain unchanged. `docs/rounded_rectangle.png` intentionally changes
+from its previous 29,473-byte artifact. This is focused regeneration, not a
+successful full image-corpus regression.
+
+## Corrected-workload resource probe
+
+`cost-v1` passes its build and all 18 fresh-process samples: three repetitions
+of three fixtures in each of two ring-cache states. Each sample has 128 warmup
+and 128 measured operations. All 2,304 measured operations complete Certified,
+materialize the boundary, verify every exact tangent endpoint and the expected
+sample count, and drop the result within the timing interval. The one-chord
+fixture also checks independently derived exact area. Misses cycle 128 widths
+to exceed the 64-entry FIFO; this does not make scalar/kernel caches globally
+cold. The n=8 benchmark and n=12 README inputs retain their original resolutions.
+
+Median instrumented measurements follow. Time, allocation count and requested
+bytes are per completed operation; peak live bytes is the largest live-byte
+increase above the start of the measured 128-operation batch, with the median
+across three samples. Rust global-allocator instrumentation adds overhead and
+does not observe all native allocations or imply a heap-byte bound.
+
+| Fixture | Ring cache | ms/op | allocations/op | requested bytes/op | batch peak extra live bytes |
+| --- | --- | ---: | ---: | ---: | ---: |
+| octagon | warm | 0.019223 | 193.000 | 10514.0 | 1320 |
+| octagon | miss | 0.156462 | 936.898 | 115987.9 | 64776 |
+| benchmark | warm | 0.554027 | 11929.000 | 705865.0 | 32680 |
+| benchmark | miss | 8.278424 | 135885.398 | 7535948.2 | 422468 |
+| readme | warm | 0.766030 | 12551.000 | 814953.0 | 58064 |
+| readme | miss | 11.688429 | 161472.516 | 9179139.4 | 889977 |
+
+The instrumented executable is 35,286,376 bytes; the all-feature CSGRS rlib is
+10,020,198 bytes. Raw timings, allocation requests, retained-byte deltas,
+per-process resource reports, hardware, toolchain, dependency lock and source
+hashes are retained. These are focused costs of corrected outputs on a shared
+host, not a speedup claim or a comparison against the old incorrect set. No
+unfavorable measurement is removed. The original benchmark harness's checksum
+is only a consumer smoke check; independent semantics come from the regression
+and cost-probe assertions.
+
+## Remaining scope
+
+These trials include the unchanged 35 original pending
 native files. Their separate admission, full CI/pre-push checks, external
 package/release validation and the rest of the properties plan remain open.
 No push has occurred.

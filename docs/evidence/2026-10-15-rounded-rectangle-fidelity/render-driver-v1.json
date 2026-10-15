@@ -1,0 +1,6 @@
+{
+  "source": "examples/readme_renders.rs",
+  "source_sha256": "96a4a6220d03b69bfa0bc7e3b00fe81bb7d76f503ce4de0cd09dd7079ab5ead3",
+  "derived_sha256": "e035617621dab3b817b4cad46d6c3fe38eaeaefdd8dca99b15981cc81682f923",
+  "changes": "Replace only main to select the original rounded_rectangle fixture; rebase the unused embedded-font include path. All renderer functions, constants, resolution and geometry remain byte-identical. Compile allows dead_code for uncalled fixtures. Focused asset regeneration, not execution or qualification of the full image corpus."
+}

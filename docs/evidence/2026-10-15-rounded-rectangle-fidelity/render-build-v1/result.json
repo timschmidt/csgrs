@@ -1,0 +1,15 @@
+{
+  "commands": [
+    {
+      "name": "renderer-build",
+      "exit_code": 0,
+      "seconds": 23.77556491084397,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "124aa2f6b44565c57df0f5a5b06ee5e5470af57de4c4f33d3071a34508c65920",
+      "stderr_sha256": "d3e58f5848a58bd8c22596e63fc15d0a61ce93dafaa85bfe9afdce9613923302",
+      "resources_sha256": "27b3e15edddbf35a554e5659e96ccfd33a7488c417057c5262e9a0033553c4d1"
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,10 @@
+{
+  "path": "docs/rounded_rectangle.png",
+  "previous_sha256": "8680f5aa83974eeb80b4c48f03467545c3c0da9a473dbb94f4df14e0e509707f",
+  "previous_bytes": 29473,
+  "generated_path": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/render-v2/first/rounded_rectangle.png",
+  "generated_sha256": "e1dd521b14d7f8a4a95fbc1492bdf7c34ff14ebf2bfd5717cb577cc09ee9eba2",
+  "generated_bytes": 26480,
+  "repeat": "docs/evidence/2026-10-15-rounded-rectangle-fidelity/render-v2/repeat/rounded_rectangle.png",
+  "claim": "Focused deterministic asset migration; same original fixture, resolution and renderer functions. Full README image corpus remains unqualified."
+}

@@ -1,0 +1,10 @@
+{
+  "target/rounded-rectangle-fidelity/cost-v1/candidate": {
+    "sha256": "167a37a474c6155f3b3c128d668e4585e568171c11302a4c5faab97987b113e8",
+    "bytes": 35286376
+  },
+  "target/rounded-rectangle-fidelity/native-v1/release/deps/libcsgrs.rlib": {
+    "sha256": "f91a7e36f52900f514a300e911e5472010a6a98e426c2aefd338dce962a6591f",
+    "bytes": 10020198
+  }
+}

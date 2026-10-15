@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "build",
+      "exit_code": 1,
+      "seconds": 0.21737035736441612,
+      "sources_unchanged": true,
+      "streams_sha256": {
+        "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr": "45f1ad456f7a76ff12a29b21f334991300a7db2e05a562c44c8452d4661f495c",
+        "resources": "3edf6d984f330470248283694f44c4b1e2691af083e813b0ef739cb6ddc69a8f"
+      }
+    }
+  ],
+  "passed": false
+}

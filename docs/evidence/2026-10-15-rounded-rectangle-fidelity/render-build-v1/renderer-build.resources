@@ -1,0 +1,23 @@
+	Command being timed: "cargo build --locked --release -p csgrs --all-features --example readme_renders --message-format=json-render-diagnostics"
+	User time (seconds): 29.77
+	System time (seconds): 1.72
+	Percent of CPU this job got: 158%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:19.89
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 665388
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 5088
+	Minor (reclaiming a frame) page faults: 476943
+	Voluntary context switches: 15593
+	Involuntary context switches: 3108
+	Swaps: 0
+	File system inputs: 995200
+	File system outputs: 161288
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

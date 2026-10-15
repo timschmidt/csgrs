@@ -1,0 +1,1 @@
+{"shape":"octagon","cache":"warm","iterations":128,"completed":128,"policy":"strict","certainty":"Certified","oracle":"exact tangents and one-chord area","nanos":2385907,"allocations":24704,"requested_bytes":1345792,"retained_byte_delta":0,"peak_live_bytes_above_start":1320}

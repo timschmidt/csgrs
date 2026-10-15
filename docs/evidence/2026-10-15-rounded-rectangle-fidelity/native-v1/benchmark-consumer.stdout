@@ -1,0 +1,4 @@
+engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum
+csgrs,warm,profile_primitives,constructor,rounded_rectangle,0,8,1248574,8,8,34359738368
+csgrs,warm,profile_primitives,constructor,rounded_rectangle,1,8,1254734,8,8,34359738368
+csgrs,warm,profile_primitives,constructor,rounded_rectangle,2,8,1295092,8,8,34359738368

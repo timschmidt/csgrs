@@ -1,0 +1,26 @@
+    Checking hashbrown v0.16.1
+    Checking indexmap v2.14.0
+    Checking bevy_platform v0.18.1
+    Checking av-scenechange v0.14.1
+    Checking bevy_utils v0.18.1
+    Checking bevy_reflect v0.18.1
+    Checking bevy_tasks v0.18.1
+    Checking rav1e v0.8.1
+    Checking tiff v0.11.3
+    Checking bevy_ecs v0.18.1
+    Checking bevy_math v0.18.1
+    Checking ravif v0.13.0
+    Checking png v0.18.1
+    Checking gerber-types v0.7.0
+    Checking image v0.25.10
+    Checking dxf v0.6.1
+    Checking bevy_app v0.18.1
+    Checking bevy_time v0.18.1
+    Checking bevy_diagnostic v0.18.1
+    Checking bevy_log v0.18.1
+    Checking bevy_asset v0.18.1
+    Checking bevy_transform v0.18.1
+    Checking gerber_parser v0.4.0
+    Checking bevy_mesh v0.18.1
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 17.53s
