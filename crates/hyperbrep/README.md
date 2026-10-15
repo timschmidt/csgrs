@@ -427,10 +427,10 @@ The clean-break implementation currently provides:
 - immutable `Arc`-shared `Model` values.
 
 The implementation intentionally rejects combinations whose proof path has not
-landed yet. The workspace-root
-[`HYPERBREP_REBUILD_PLAN.md`](../HYPERBREP_REBUILD_PLAN.md) is the execution
-plan for analytic surfaces, intersections, editing, Booleans, spline surfaces,
-tessellation, and adapters.
+landed yet. The [development plan](docs/DEVELOPMENT_PLAN.md) specifies the
+remaining kernel, modeling, STEP, persistence, and downstream integration work.
+The accompanying [repository audit](docs/REPOSITORY_AUDIT.md) records the
+implementation baseline and external reference findings.
 
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.
