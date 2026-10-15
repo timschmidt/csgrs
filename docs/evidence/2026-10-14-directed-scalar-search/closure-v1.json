@@ -1,0 +1,76 @@
+{
+  "status": "closed-failed",
+  "driver_terminal_exit_code_observed": 1,
+  "commands_executed": 6,
+  "command_exit_codes": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    101
+  ],
+  "python_tests_passed": 13,
+  "rust_tests_passed": 2,
+  "rust_tests_failed": 1,
+  "original_input": {
+    "bucket": "ConstOffset",
+    "genome": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "exact_expression": "(pi - 31/10) * 1",
+  "observed_private_class": "Irrational",
+  "incorrect_expected_private_class": "ConstOffset",
+  "finding": "Generator contract mismatch: the production ConstOffset constructor deliberately requires a cheap positive inner-value certificate. Negative offsets from pi are admitted only when their magnitude is at most three; near cancellation remains a generic computable.",
+  "constructor_source": "crates/hyperreal/src/real/arithmetic/classification.rs",
+  "constructor_source_sha256": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+  "next_candidate_requirement": "Preserve this exact failure and the full near-pi parameter range as generic Irrational cases; add representation-preserving ConstOffset recipes without changing the production constructor.",
+  "source_files_verified": 10161,
+  "main_source_files_verified": 10153,
+  "executed_binaries": {
+    "probe-features-tests/directed_scalar_probe-b4e29e084f4e51cb": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v1/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe-b4e29e084f4e51cb",
+      "sha256": "fefed31776da4d38d0d259a60b284b811e0801a044ad183b32202c6b6172854c",
+      "bytes": 9457928
+    }
+  },
+  "trial_artifacts_sha256": {
+    "probe-features-tests.stderr": "23a343bb9354c563252b69c48ee407202b007b04a6042999ab6d2e58fa9875b1",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "probe-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "probe-features-tests.stdout": "3fa8a03b44c65ac47799d383f3499758827ced7e81cde0cde6e8e2a1447dfa6e",
+    "probe-features-clippy.stderr": "68663135f541527e5d46ce2d92fce2b2b09a0ae8a9ecfe1601efae791bcc2a14",
+    "all-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python-tests.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "2d1f6a443ed378b597a081b1786142853813e693ae900f97cdb27566f34e9c40",
+    "fuzz-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fuzz-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.json": "e8ee1dcac2031ac5714848e503ef575858d98ec3827528f6cf8b82ed71257275",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python-tests.stderr": "cbeca35e811bac2043ba384cc03e3b63ace5ac90c7a59a07ee0bcc96ace31bc5",
+    "failure.json": "763989310692605fbc7e6d952170ea655d30cbc736231a33301c6f16dfec0047",
+    "all-features-clippy.stderr": "406801626221d29c77bb5dcfb8d2c635a39319b4712ee0aa33356b600ff208cc",
+    "binaries.json": "550e777e280efb7659479e839b8056a3388df5587e9b863f346b3484f0048e2e"
+  },
+  "driver_logs_sha256": {
+    "driver-v1.stdout": "328a3d281d5e45f687399283e284293699a26d03b21599bd2a6899439673e296",
+    "driver-v1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "closure_script_sha256": "0f490714057b8eec8b005db008177862702d30e24d5bb70de400c94bb1f444de",
+  "sanitizer_error_markers_observed_in_executed_test_logs": false,
+  "complete_sanitizer_qualification": false,
+  "campaign_started": false,
+  "competitive_benchmark_complete": false,
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false,
+  "closed_trial_retried_resumed_filtered_extended_or_pooled": false
+}

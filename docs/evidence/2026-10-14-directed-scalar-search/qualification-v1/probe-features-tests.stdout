@@ -1,0 +1,28 @@
+
+running 3 tests
+test tests::independent_oracle_rejects_opposite_sign_and_disjoint_intervals ... ok
+test tests::unknown_representations_and_malformed_genomes_are_rejected ... ok
+test tests::parameter_extremes_keep_every_private_class_and_agree_with_mpfr ... FAILED
+
+successes:
+
+successes:
+    tests::independent_oracle_rejects_opposite_sign_and_disjoint_intervals
+    tests::unknown_representations_and_malformed_genomes_are_rejected
+
+failures:
+
+---- tests::parameter_extremes_keep_every_private_class_and_agree_with_mpfr stdout ----
+
+thread 'tests::parameter_extremes_keep_every_private_class_and_agree_with_mpfr' (763448) panicked at crates/hyperreal/examples/directed_scalar_probe.rs:250:17:
+assertion `left == right` failed: Recipe { input: Input { bucket: "ConstOffset", genome: [0, 0, 0, 0, 0, 0, 0, 0] }, scale: "1/1", prime: 2, other_prime: 3, exponent_numerator: 1, exponent_denominator: 2, angle_numerator: 1, angle_denominator: 5, pi_power: 2, pi_offset: "31/10" }
+  left: "Irrational"
+ right: "ConstOffset"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::parameter_extremes_keep_every_private_class_and_agree_with_mpfr
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

@@ -1,0 +1,7 @@
+{
+  "probe-features-tests/directed_scalar_probe-b4e29e084f4e51cb": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v1/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe-b4e29e084f4e51cb",
+    "sha256": "fefed31776da4d38d0d259a60b284b811e0801a044ad183b32202c6b6172854c",
+    "bytes": 9457928
+  }
+}

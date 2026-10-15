@@ -1,0 +1,47 @@
+{
+  "complete": false,
+  "failed_command": {
+    "name": "probe-features-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-Zbuild-std",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--example",
+      "directed_scalar_probe",
+      "--features",
+      "serde,dispatch-trace",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "exit_code": 101,
+    "process_wall_seconds": 39.75888871308416,
+    "stdout_sha256": "3fa8a03b44c65ac47799d383f3499758827ced7e81cde0cde6e8e2a1447dfa6e",
+    "stderr_sha256": "23a343bb9354c563252b69c48ee407202b007b04a6042999ab6d2e58fa9875b1"
+  },
+  "artifacts_sha256": {
+    "probe-features-tests.stderr": "23a343bb9354c563252b69c48ee407202b007b04a6042999ab6d2e58fa9875b1",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "probe-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "probe-features-tests.stdout": "3fa8a03b44c65ac47799d383f3499758827ced7e81cde0cde6e8e2a1447dfa6e",
+    "probe-features-clippy.stderr": "68663135f541527e5d46ce2d92fce2b2b09a0ae8a9ecfe1601efae791bcc2a14",
+    "all-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python-tests.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "2d1f6a443ed378b597a081b1786142853813e693ae900f97cdb27566f34e9c40",
+    "fuzz-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fuzz-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.json": "e8ee1dcac2031ac5714848e503ef575858d98ec3827528f6cf8b82ed71257275",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python-tests.stderr": "cbeca35e811bac2043ba384cc03e3b63ace5ac90c7a59a07ee0bcc96ace31bc5",
+    "all-features-clippy.stderr": "406801626221d29c77bb5dcfb8d2c635a39319b4712ee0aa33356b600ff208cc",
+    "binaries.json": "550e777e280efb7659479e839b8056a3388df5587e9b863f346b3484f0048e2e"
+  },
+  "admitted": false,
+  "P38_complete": false
+}
