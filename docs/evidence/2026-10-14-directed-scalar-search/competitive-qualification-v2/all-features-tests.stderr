@@ -1,0 +1,3 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-bench-v2/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 12.19s
+     Running unittests examples/directed_scalar_bench.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-bench-v2/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_bench-27c1cd645d9c6f57)

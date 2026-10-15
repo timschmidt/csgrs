@@ -1,0 +1,2 @@
+{"verified": true, "completed_probes": 528, "selection_events": 264, "rounds": 3}
+{"complete": true, "input_count": 59, "representations": 22, "samples_per_backend_per_input": 11, "completed_samples": 1298, "interval_comparison_complete": true, "structural_certificate_api_comparison": false, "P38_complete": false, "plan_complete": false}

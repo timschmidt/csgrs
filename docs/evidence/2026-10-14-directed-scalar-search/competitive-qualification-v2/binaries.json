@@ -1,0 +1,17 @@
+{
+  "serde-tests/directed_scalar_bench-62046d216389883a": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-bench-v2/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_bench-62046d216389883a",
+    "sha256": "b68ffee9191bfd3c7482708ae4ff4bf02b2b441be820791517a7a4f453900dc1",
+    "bytes": 9006392
+  },
+  "all-features-tests/directed_scalar_bench-27c1cd645d9c6f57": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-bench-v2/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_bench-27c1cd645d9c6f57",
+    "sha256": "d1ef1a73b1a05ac4c52814d7eb508f3d43bd9d2e585389c86dc01d05d4efae34",
+    "bytes": 9529088
+  },
+  "native-build": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-bench-v2/native-target/release/examples/directed_scalar_bench",
+    "sha256": "90d67401c87d260c841084b3b667056b606a5d4c65f10dd6ac4fc8b97662d5c2",
+    "bytes": 2945552
+  }
+}

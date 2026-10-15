@@ -1,0 +1,15 @@
+
+running 3 tests
+test tests::wide_scaled_regression_requires_refinement_and_preserves_the_full_input ... ok
+test wire::tests::signed_and_mixed_fractions_round_trip_through_independent_readers ... ok
+test tests::all_representation_boundaries_meet_the_same_absolute_width ... ok
+
+successes:
+
+successes:
+    tests::all_representation_boundaries_meet_the_same_absolute_width
+    tests::wide_scaled_regression_requires_refinement_and_preserves_the_full_input
+    wire::tests::signed_and_mixed_fractions_round_trip_through_independent_readers
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+

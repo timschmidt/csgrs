@@ -1,0 +1,3306 @@
+[
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 91503,
+        "median_ns": 59856,
+        "minimum_ns": 57556,
+        "raw_elapsed_ns": [
+          57556,
+          58016,
+          58136,
+          60976,
+          76955,
+          61766,
+          67405,
+          58636,
+          58096,
+          59856,
+          91503
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 91774,
+        "median_ns": 58666,
+        "minimum_ns": 55656,
+        "raw_elapsed_ns": [
+          58646,
+          60326,
+          86304,
+          56756,
+          91774,
+          58666,
+          55656,
+          57326,
+          61686,
+          58506,
+          58776
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.0202843214127433,
+    "id": "0166aa17cbb61efc34e05f9fd35c4cea7ecb7b8b07e66f7fa7c52959e8fb8a4e",
+    "input": {
+      "bucket": "PiInvExp",
+      "genome": [
+        255,
+        7,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 52567,
+        "median_ns": 37567,
+        "minimum_ns": 33948,
+        "raw_elapsed_ns": [
+          34487,
+          37338,
+          33948,
+          37468,
+          40177,
+          37567,
+          40578,
+          38077,
+          52567,
+          37197,
+          42487
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 31728,
+        "median_ns": 24559,
+        "minimum_ns": 21748,
+        "raw_elapsed_ns": [
+          23459,
+          21919,
+          24599,
+          23619,
+          27258,
+          24988,
+          23578,
+          25128,
+          31728,
+          21748,
+          24559
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.5296632599047193,
+    "id": "03cc234bd82e41df08571078f75eb2bf21d6b43c19fcdb326049a41d50366b8b",
+    "input": {
+      "bucket": "SinPi",
+      "genome": [
+        64,
+        126,
+        164,
+        19,
+        124,
+        5,
+        179,
+        201
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 191457,
+        "median_ns": 124312,
+        "minimum_ns": 118592,
+        "raw_elapsed_ns": [
+          120552,
+          118592,
+          123062,
+          121532,
+          180008,
+          150919,
+          128451,
+          123841,
+          191457,
+          124312,
+          183798
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 51616,
+        "median_ns": 34767,
+        "minimum_ns": 34318,
+        "raw_elapsed_ns": [
+          34767,
+          34318,
+          34747,
+          34797,
+          47987,
+          34478,
+          36197,
+          34738,
+          51616,
+          34347,
+          49947
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 3.5755745390744096,
+    "id": "04cf1f215b8614ecbc218bb17629be0a4b8934ef91c11700914612c1334abd8d",
+    "input": {
+      "bucket": "ConstProduct",
+      "genome": [
+        223,
+        187,
+        18,
+        239,
+        39,
+        106,
+        253,
+        117
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 58306,
+        "median_ns": 39267,
+        "minimum_ns": 34147,
+        "raw_elapsed_ns": [
+          34147,
+          36037,
+          35418,
+          41127,
+          58306,
+          39267,
+          39888,
+          40627,
+          37637,
+          37767,
+          53776
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 35928,
+        "median_ns": 26279,
+        "minimum_ns": 24948,
+        "raw_elapsed_ns": [
+          25448,
+          25489,
+          27268,
+          25359,
+          34027,
+          25628,
+          34577,
+          24948,
+          26279,
+          33748,
+          35928
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.4942349404467445,
+    "id": "05458cd22871f214c869a65eae884ed067e639de9b94c6389e6ef87fa411ab3f",
+    "input": {
+      "bucket": "Exp",
+      "genome": [
+        87,
+        128,
+        98,
+        35,
+        36,
+        1,
+        227,
+        119
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 43077,
+        "median_ns": 8100,
+        "minimum_ns": 5270,
+        "raw_elapsed_ns": [
+          8479,
+          5270,
+          6880,
+          8100,
+          11539,
+          8409,
+          7089,
+          8440,
+          6219,
+          43077,
+          6240
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 18508,
+        "median_ns": 12870,
+        "minimum_ns": 11230,
+        "raw_elapsed_ns": [
+          18508,
+          12819,
+          13009,
+          11269,
+          17409,
+          12870,
+          16878,
+          12699,
+          11230,
+          12489,
+          13029
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 0.6293706293706294,
+    "id": "071a04c02f11f63aa4aec884f45c46dafaeea9d44fc4d21221cfb3892957610b",
+    "input": {
+      "bucket": "One",
+      "genome": [
+        255,
+        171,
+        255,
+        255,
+        154,
+        255,
+        255,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 177778,
+        "median_ns": 127611,
+        "minimum_ns": 124661,
+        "raw_elapsed_ns": [
+          127832,
+          125031,
+          127611,
+          124661,
+          126812,
+          124811,
+          128551,
+          126511,
+          132691,
+          177778,
+          147010
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 121962,
+        "median_ns": 79964,
+        "minimum_ns": 77974,
+        "raw_elapsed_ns": [
+          80945,
+          78814,
+          80264,
+          79944,
+          77974,
+          80404,
+          83344,
+          79895,
+          79964,
+          121962,
+          79525
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.595855635035766,
+    "id": "0ee64799ac3b143e30762c98600f3c226caa0ab15db40d27748c34c9aebf8966",
+    "input": {
+      "bucket": "Log2",
+      "genome": [
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        9
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 44877,
+        "median_ns": 41727,
+        "minimum_ns": 36337,
+        "raw_elapsed_ns": [
+          42067,
+          36337,
+          39767,
+          39717,
+          44877,
+          40468,
+          42088,
+          42077,
+          42357,
+          40757,
+          41727
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 18599,
+        "median_ns": 13759,
+        "minimum_ns": 11249,
+        "raw_elapsed_ns": [
+          11249,
+          18599,
+          14589,
+          12379,
+          12439,
+          12350,
+          13759,
+          14619,
+          14799,
+          12839,
+          14519
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 3.032705865251835,
+    "id": "0f5ba7c321e0caffcfc8b43176437ed1a23cae7985784d9284b507fe3ca32c7a",
+    "input": {
+      "bucket": "Pi",
+      "genome": [
+        4,
+        31,
+        0,
+        0,
+        88,
+        1,
+        201,
+        0
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 70725,
+        "median_ns": 53576,
+        "minimum_ns": 49377,
+        "raw_elapsed_ns": [
+          50086,
+          49377,
+          49917,
+          53406,
+          69285,
+          53606,
+          53726,
+          52946,
+          53576,
+          64616,
+          70725
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 36427,
+        "median_ns": 23689,
+        "minimum_ns": 20469,
+        "raw_elapsed_ns": [
+          23239,
+          21609,
+          23129,
+          26968,
+          30448,
+          23049,
+          23689,
+          20469,
+          25459,
+          36427,
+          27988
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.261640423825404,
+    "id": "10cefa5c74d83c9ddb32b155fdfacd431d19ff83884a348f3d8de15ea639066e",
+    "input": {
+      "bucket": "Irrational",
+      "genome": [
+        183,
+        101,
+        130,
+        189,
+        46,
+        137,
+        24,
+        41
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 32458,
+        "median_ns": 24309,
+        "minimum_ns": 16678,
+        "raw_elapsed_ns": [
+          16789,
+          25768,
+          18769,
+          16678,
+          25508,
+          23558,
+          28238,
+          24309,
+          20409,
+          32458,
+          32028
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 29578,
+        "median_ns": 22909,
+        "minimum_ns": 20709,
+        "raw_elapsed_ns": [
+          27188,
+          20709,
+          21128,
+          22048,
+          20918,
+          22798,
+          24739,
+          22909,
+          24518,
+          29578,
+          26019
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.0611113536164827,
+    "id": "1380841753ae3eddbdb2f996fcd5bd108c071ed6b5c384138f20bd02c9b31499",
+    "input": {
+      "bucket": "Irrational",
+      "genome": [
+        255,
+        255,
+        111,
+        255,
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 88774,
+        "median_ns": 66476,
+        "minimum_ns": 59146,
+        "raw_elapsed_ns": [
+          59146,
+          62756,
+          86105,
+          64725,
+          86274,
+          66476,
+          71325,
+          66786,
+          63706,
+          66055,
+          88774
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 88564,
+        "median_ns": 59866,
+        "minimum_ns": 57416,
+        "raw_elapsed_ns": [
+          57416,
+          57416,
+          88564,
+          57946,
+          80314,
+          59756,
+          60006,
+          60666,
+          58076,
+          59866,
+          86674
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.1104132562723417,
+    "id": "1525829348ad771ee42fa01c04a78f399115c82028a15b41ae3a79300335c24b",
+    "input": {
+      "bucket": "PiExp",
+      "genome": [
+        255,
+        255,
+        255,
+        255,
+        49,
+        15,
+        255,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 48237,
+        "median_ns": 39177,
+        "minimum_ns": 32558,
+        "raw_elapsed_ns": [
+          32558,
+          34348,
+          35298,
+          37108,
+          47187,
+          40287,
+          35977,
+          48237,
+          41848,
+          39177,
+          45727
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 32358,
+        "median_ns": 23749,
+        "minimum_ns": 20229,
+        "raw_elapsed_ns": [
+          23529,
+          23539,
+          20229,
+          23298,
+          30848,
+          23469,
+          25858,
+          32358,
+          23749,
+          23829,
+          29078
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.6496273527306413,
+    "id": "18ded912e512ec7d3a7f8158a6f5a6c266a91dced76e813410c0e6ffb9f91cdd",
+    "input": {
+      "bucket": "SinPi",
+      "genome": [
+        64,
+        126,
+        164,
+        19,
+        124,
+        95,
+        179,
+        201
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 92114,
+        "median_ns": 65805,
+        "minimum_ns": 62146,
+        "raw_elapsed_ns": [
+          65386,
+          64626,
+          62146,
+          66075,
+          92114,
+          65805,
+          66075,
+          65295,
+          69845,
+          65426,
+          90274
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 139710,
+        "median_ns": 87514,
+        "minimum_ns": 84334,
+        "raw_elapsed_ns": [
+          86054,
+          87514,
+          84334,
+          86424,
+          85354,
+          139710,
+          87434,
+          91494,
+          87894,
+          88574,
+          123602
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 0.7519368329638686,
+    "id": "2004193d1e27a1c1af8636e1ed63e9e747c45ca70b316a9acff2e6e857c28d92",
+    "input": {
+      "bucket": "ConstOffset",
+      "genome": [
+        47,
+        128,
+        223,
+        71,
+        133,
+        222,
+        155,
+        107
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 9720,
+        "median_ns": 6149,
+        "minimum_ns": 5109,
+        "raw_elapsed_ns": [
+          5519,
+          5109,
+          5200,
+          7969,
+          9720,
+          6149,
+          7839,
+          6000,
+          8250,
+          5920,
+          7910
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 10810,
+        "median_ns": 8590,
+        "minimum_ns": 8269,
+        "raw_elapsed_ns": [
+          8760,
+          8690,
+          8749,
+          8499,
+          10810,
+          8269,
+          8570,
+          8509,
+          8590,
+          8579,
+          8770
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 0.7158323632130384,
+    "id": "228489ec83c4108b665d8a10d756aba633198c113ca1cf3bb09695f9adeaaa5b",
+    "input": {
+      "bucket": "One",
+      "genome": [
+        255,
+        171,
+        255,
+        255,
+        255,
+        255,
+        143,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 51786,
+        "median_ns": 38107,
+        "minimum_ns": 33957,
+        "raw_elapsed_ns": [
+          34578,
+          33957,
+          35177,
+          36657,
+          49236,
+          38578,
+          40217,
+          36988,
+          49976,
+          38107,
+          51786
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 33228,
+        "median_ns": 26738,
+        "minimum_ns": 23548,
+        "raw_elapsed_ns": [
+          25058,
+          27758,
+          24868,
+          26738,
+          33228,
+          26788,
+          25798,
+          25019,
+          23548,
+          30567,
+          33088
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.4252000897598922,
+    "id": "2bf3c23999d07ac2a8196683cb93a24629a681e1cdca6f360b7b6eb50174c041",
+    "input": {
+      "bucket": "Exp",
+      "genome": [
+        113,
+        128,
+        98,
+        35,
+        36,
+        1,
+        227,
+        119
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 31888,
+        "median_ns": 25018,
+        "minimum_ns": 19579,
+        "raw_elapsed_ns": [
+          21168,
+          19579,
+          25818,
+          27088,
+          24959,
+          25148,
+          25018,
+          31888,
+          25769,
+          24228,
+          24288
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 13589,
+        "median_ns": 11399,
+        "minimum_ns": 9650,
+        "raw_elapsed_ns": [
+          11979,
+          9650,
+          13429,
+          11399,
+          9800,
+          13589,
+          9760,
+          13149,
+          12150,
+          9970,
+          10569
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.1947539257829636,
+    "id": "3120f90f32673aed9164e6c9a43c6059c130b414e0895d0a84ef24be7045aaa0",
+    "input": {
+      "bucket": "Sqrt",
+      "genome": [
+        4,
+        31,
+        152,
+        0,
+        0,
+        1,
+        177,
+        0
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 195637,
+        "median_ns": 142991,
+        "minimum_ns": 132041,
+        "raw_elapsed_ns": [
+          194747,
+          132041,
+          134531,
+          137221,
+          188688,
+          141360,
+          195637,
+          134631,
+          143431,
+          142991,
+          171168
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 139520,
+        "median_ns": 95074,
+        "minimum_ns": 92164,
+        "raw_elapsed_ns": [
+          139520,
+          92164,
+          94493,
+          92424,
+          137651,
+          94813,
+          136631,
+          94733,
+          95074,
+          96523,
+          119512
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.5039968866356732,
+    "id": "397a0d7bd6389b008a82a6216968ba4b0110b3c7c64b3f413d8689c5ba0eaf96",
+    "input": {
+      "bucket": "Pow10",
+      "genome": [
+        239,
+        28,
+        112,
+        133,
+        47,
+        137,
+        96,
+        52
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 50576,
+        "median_ns": 38287,
+        "minimum_ns": 33488,
+        "raw_elapsed_ns": [
+          33488,
+          35347,
+          48587,
+          40657,
+          39867,
+          37127,
+          38287,
+          36288,
+          50576,
+          36128,
+          39637
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 77465,
+        "median_ns": 47327,
+        "minimum_ns": 45167,
+        "raw_elapsed_ns": [
+          45927,
+          47327,
+          77465,
+          49156,
+          48247,
+          63605,
+          46247,
+          46977,
+          45167,
+          48076,
+          47006
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 0.8089885266338454,
+    "id": "40f76f2e1fd053a33f22a04082cb64238aacae1fdf9acb80a68ba52b86ae1689",
+    "input": {
+      "bucket": "Exp",
+      "genome": [
+        22,
+        128,
+        98,
+        35,
+        36,
+        1,
+        29,
+        119
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 32168,
+        "median_ns": 25388,
+        "minimum_ns": 20568,
+        "raw_elapsed_ns": [
+          32168,
+          20568,
+          23258,
+          22678,
+          23728,
+          24049,
+          25829,
+          25598,
+          29038,
+          26089,
+          25388
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 19368,
+        "median_ns": 14319,
+        "minimum_ns": 12559,
+        "raw_elapsed_ns": [
+          18939,
+          13849,
+          14349,
+          14249,
+          14319,
+          16248,
+          13039,
+          12559,
+          19368,
+          14050,
+          16039
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.7730288427962846,
+    "id": "43914410a351f8f105fb3bc0991ba3e97a3dfa8fdd964a950d3609f587d90f7e",
+    "input": {
+      "bucket": "Pi",
+      "genome": [
+        4,
+        31,
+        0,
+        0,
+        224,
+        1,
+        0,
+        0
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 392063,
+        "median_ns": 275621,
+        "minimum_ns": 266661,
+        "raw_elapsed_ns": [
+          267711,
+          275621,
+          297019,
+          266661,
+          392063,
+          273501,
+          282301,
+          280031,
+          268012,
+          328547,
+          271541
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 181497,
+        "median_ns": 121011,
+        "minimum_ns": 116882,
+        "raw_elapsed_ns": [
+          121011,
+          150050,
+          181497,
+          116882,
+          128541,
+          117582,
+          117982,
+          119742,
+          116972,
+          121032,
+          121092
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.277652444819066,
+    "id": "44ebe83380238d9b4a73dba127d3d8eeea33eb105521793523cd22522cc5cd73",
+    "input": {
+      "bucket": "LnProduct",
+      "genome": [
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        91,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 50647,
+        "median_ns": 40537,
+        "minimum_ns": 34697,
+        "raw_elapsed_ns": [
+          34697,
+          37388,
+          50647,
+          49657,
+          40887,
+          37288,
+          38757,
+          41357,
+          36817,
+          41837,
+          40537
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 30567,
+        "median_ns": 21788,
+        "minimum_ns": 19629,
+        "raw_elapsed_ns": [
+          21508,
+          19629,
+          30567,
+          24599,
+          20239,
+          21778,
+          21059,
+          23039,
+          21788,
+          25788,
+          21809
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.8605195520469984,
+    "id": "4694f9acc079e20bfa3a3a62d3f8f3d8f56fbabc3348a6ac9005f3040d9b49ab",
+    "input": {
+      "bucket": "PiInv",
+      "genome": [
+        50,
+        207,
+        181,
+        78,
+        39,
+        24,
+        164,
+        253
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 260062,
+        "median_ns": 169218,
+        "minimum_ns": 163659,
+        "raw_elapsed_ns": [
+          169508,
+          163659,
+          168308,
+          260062,
+          245383,
+          171989,
+          167978,
+          173338,
+          168219,
+          165179,
+          169218
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 120832,
+        "median_ns": 80935,
+        "minimum_ns": 77474,
+        "raw_elapsed_ns": [
+          80935,
+          78315,
+          88924,
+          117702,
+          112162,
+          79885,
+          120832,
+          78864,
+          78335,
+          77474,
+          98293
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.090788904676592,
+    "id": "482a55420bbe374b9a8c6fb0ce8b6210a282d1e78674058733eb68f4d5589e62",
+    "input": {
+      "bucket": "Log10",
+      "genome": [
+        4,
+        199,
+        0,
+        232,
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 242303,
+        "median_ns": 177028,
+        "minimum_ns": 164309,
+        "raw_elapsed_ns": [
+          189367,
+          172449,
+          168989,
+          170809,
+          242303,
+          218055,
+          233324,
+          174058,
+          164309,
+          177028,
+          210206
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 127931,
+        "median_ns": 88474,
+        "minimum_ns": 86754,
+        "raw_elapsed_ns": [
+          87304,
+          86754,
+          88463,
+          87214,
+          127931,
+          88474,
+          89053,
+          89084,
+          104663,
+          87524,
+          126622
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.0009042204489456,
+    "id": "4a7f5df22f916085a347664ac2adaaf24cf7cbf34fb62aa3a29f51982511220b",
+    "input": {
+      "bucket": "ConstOffset",
+      "genome": [
+        48,
+        107,
+        233,
+        211,
+        208,
+        222,
+        120,
+        84
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 142200,
+        "median_ns": 117322,
+        "minimum_ns": 114832,
+        "raw_elapsed_ns": [
+          115572,
+          117292,
+          115192,
+          117322,
+          114832,
+          118392,
+          123451,
+          116832,
+          142200,
+          117532,
+          120471
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 127741,
+        "median_ns": 75984,
+        "minimum_ns": 74695,
+        "raw_elapsed_ns": [
+          76525,
+          75225,
+          108222,
+          74885,
+          75984,
+          74775,
+          101023,
+          75655,
+          127741,
+          74695,
+          76975
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.5440355864392503,
+    "id": "4e4df19cd95ef5047e9c1775ec663093d5043e3b7bf1dab9ca9d3b1f6fc416f2",
+    "input": {
+      "bucket": "LnAffine",
+      "genome": [
+        108,
+        178,
+        187,
+        24,
+        238,
+        6,
+        126,
+        99
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 341926,
+        "median_ns": 331998,
+        "minimum_ns": 320298,
+        "raw_elapsed_ns": [
+          331998,
+          320298,
+          328487,
+          330887,
+          328748,
+          335747,
+          338677,
+          327308,
+          333037,
+          333417,
+          341926
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 142100,
+        "median_ns": 96224,
+        "minimum_ns": 92843,
+        "raw_elapsed_ns": [
+          92843,
+          94504,
+          96534,
+          142100,
+          96803,
+          94134,
+          95664,
+          96224,
+          96813,
+          98733,
+          95673
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 3.45026188892584,
+    "id": "55b2cf37e4f194a05153d0a246f821c32044236467f10941785ce7797c46fc2e",
+    "input": {
+      "bucket": "ConstProductSqrt",
+      "genome": [
+        7,
+        36,
+        233,
+        198,
+        35,
+        235,
+        72,
+        235
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 150839,
+        "median_ns": 109983,
+        "minimum_ns": 103223,
+        "raw_elapsed_ns": [
+          106513,
+          103223,
+          105673,
+          103303,
+          150839,
+          135811,
+          109983,
+          119911,
+          108632,
+          111663,
+          112173
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 46457,
+        "median_ns": 34378,
+        "minimum_ns": 32057,
+        "raw_elapsed_ns": [
+          35947,
+          32057,
+          34378,
+          34798,
+          46457,
+          32848,
+          33827,
+          42997,
+          33968,
+          32178,
+          44747
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 3.1992262493455117,
+    "id": "5b613b3972e5f5c1a9179462a18560984344431ff43b82e740351291241299ff",
+    "input": {
+      "bucket": "PiExp",
+      "genome": [
+        80,
+        188,
+        168,
+        242,
+        65,
+        182,
+        227,
+        71
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 120972,
+        "median_ns": 94794,
+        "minimum_ns": 89024,
+        "raw_elapsed_ns": [
+          89024,
+          94794,
+          92264,
+          92574,
+          120972,
+          95094,
+          92004,
+          90084,
+          96083,
+          106463,
+          113103
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 176988,
+        "median_ns": 121942,
+        "minimum_ns": 117792,
+        "raw_elapsed_ns": [
+          118142,
+          117792,
+          122971,
+          121942,
+          176988,
+          118822,
+          120512,
+          118852,
+          122722,
+          123491,
+          158879
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 0.7773695691394269,
+    "id": "5ec66185b69cd5cd2bd1752b99492a3c110ef21571dbd3c8954a25a18be72ed5",
+    "input": {
+      "bucket": "ConstOffset",
+      "genome": [
+        47,
+        128,
+        223,
+        71,
+        133,
+        255,
+        11,
+        107
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 163659,
+        "median_ns": 111472,
+        "minimum_ns": 107213,
+        "raw_elapsed_ns": [
+          107213,
+          109183,
+          116432,
+          108592,
+          109483,
+          134810,
+          111472,
+          109882,
+          115373,
+          163659,
+          160479
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 61336,
+        "median_ns": 43247,
+        "minimum_ns": 37687,
+        "raw_elapsed_ns": [
+          43247,
+          37847,
+          56427,
+          37687,
+          50497,
+          51336,
+          39947,
+          37897,
+          40397,
+          61336,
+          51846
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.5775660739473256,
+    "id": "70fa7e90eab649ad1f120b6f5de91460f06e310ff9c08e3376c5652c3855abc6",
+    "input": {
+      "bucket": "TanPi",
+      "genome": [
+        235,
+        21,
+        197,
+        189,
+        45,
+        7,
+        86,
+        165
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 167828,
+        "median_ns": 115002,
+        "minimum_ns": 108562,
+        "raw_elapsed_ns": [
+          108562,
+          111392,
+          158549,
+          109562,
+          115002,
+          149599,
+          154199,
+          167828,
+          114412,
+          114882,
+          148830
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 59136,
+        "median_ns": 41477,
+        "minimum_ns": 38647,
+        "raw_elapsed_ns": [
+          40197,
+          40037,
+          58466,
+          41477,
+          40618,
+          52726,
+          48836,
+          59136,
+          40337,
+          38647,
+          52546
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.772669190153579,
+    "id": "73bced58eaffe2374b9106e51c2099eddf94ca146f76d30efe9939ca3a2ffdc0",
+    "input": {
+      "bucket": "Log10",
+      "genome": [
+        4,
+        199,
+        0,
+        0,
+        122,
+        1,
+        0,
+        0
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 77704,
+        "median_ns": 54016,
+        "minimum_ns": 51066,
+        "raw_elapsed_ns": [
+          77704,
+          51357,
+          51066,
+          70555,
+          74254,
+          53857,
+          55536,
+          54016,
+          53436,
+          52986,
+          55756
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 38848,
+        "median_ns": 28458,
+        "minimum_ns": 25268,
+        "raw_elapsed_ns": [
+          28458,
+          27698,
+          25268,
+          38848,
+          37168,
+          27049,
+          28868,
+          27918,
+          28398,
+          29638,
+          35247
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.8980954388924027,
+    "id": "74eaed6a51b73c314b5aded6d47158957a820db8be9f0af30fa696a470e55865",
+    "input": {
+      "bucket": "PiInv",
+      "genome": [
+        91,
+        207,
+        181,
+        78,
+        39,
+        244,
+        23,
+        253
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 126671,
+        "median_ns": 85794,
+        "minimum_ns": 81765,
+        "raw_elapsed_ns": [
+          114782,
+          81765,
+          83904,
+          85444,
+          126671,
+          85794,
+          99783,
+          89274,
+          84484,
+          84615,
+          108452
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 122221,
+        "median_ns": 80535,
+        "minimum_ns": 78864,
+        "raw_elapsed_ns": [
+          122202,
+          80324,
+          79665,
+          78864,
+          122221,
+          78864,
+          106263,
+          79545,
+          83604,
+          80535,
+          109473
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.0653008008940212,
+    "id": "75b46a0d07559d1948263f84ef6956b3caa0735f68594f02aaa73fd1f56cab22",
+    "input": {
+      "bucket": "Log2",
+      "genome": [
+        255,
+        195,
+        255,
+        101,
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 73035,
+        "median_ns": 54496,
+        "minimum_ns": 48806,
+        "raw_elapsed_ns": [
+          49867,
+          48806,
+          51907,
+          54637,
+          55556,
+          52247,
+          66726,
+          73035,
+          61136,
+          52257,
+          54496
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 27828,
+        "median_ns": 23438,
+        "minimum_ns": 20169,
+        "raw_elapsed_ns": [
+          23308,
+          23438,
+          24849,
+          23858,
+          26189,
+          22149,
+          27828,
+          22259,
+          20169,
+          21879,
+          23658
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.325113064254629,
+    "id": "760a9accad415640958e58ac3ca1d67650e19aea149e00bacd00a3dec14ee15e",
+    "input": {
+      "bucket": "Irrational",
+      "genome": [
+        183,
+        101,
+        130,
+        186,
+        46,
+        137,
+        24,
+        41
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 227824,
+        "median_ns": 149470,
+        "minimum_ns": 145780,
+        "raw_elapsed_ns": [
+          148279,
+          145780,
+          155569,
+          152500,
+          227824,
+          149150,
+          148040,
+          148070,
+          150660,
+          149470,
+          205436
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 145190,
+        "median_ns": 96023,
+        "minimum_ns": 94583,
+        "raw_elapsed_ns": [
+          94834,
+          94583,
+          96584,
+          94863,
+          145190,
+          95893,
+          95713,
+          99393,
+          96023,
+          130131,
+          140991
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.5566062297574539,
+    "id": "767a9b746eba99eb7aa3f4edf92bf2e39932642f9c5b7a5b786a977748d4827a",
+    "input": {
+      "bucket": "Pow10",
+      "genome": [
+        98,
+        28,
+        112,
+        133,
+        47,
+        137,
+        96,
+        52
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 8959,
+        "median_ns": 5290,
+        "minimum_ns": 4220,
+        "raw_elapsed_ns": [
+          5670,
+          4349,
+          4220,
+          4270,
+          8959,
+          6989,
+          7490,
+          5270,
+          6830,
+          5269,
+          5290
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 9760,
+        "median_ns": 8910,
+        "minimum_ns": 7309,
+        "raw_elapsed_ns": [
+          9270,
+          8920,
+          8760,
+          8809,
+          9760,
+          7309,
+          8890,
+          8839,
+          9129,
+          9009,
+          8910
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 0.5937149270482603,
+    "id": "76df71af9c0353585f3c7905d3d1999775a4be31f8c02dbabf23264ef9e54a27",
+    "input": {
+      "bucket": "One",
+      "genome": [
+        255,
+        171,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 159329,
+        "median_ns": 109412,
+        "minimum_ns": 102843,
+        "raw_elapsed_ns": [
+          106252,
+          106502,
+          102843,
+          109412,
+          159329,
+          105643,
+          150310,
+          109623,
+          104733,
+          155639,
+          121782
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 111372,
+        "median_ns": 77585,
+        "minimum_ns": 74695,
+        "raw_elapsed_ns": [
+          74695,
+          77005,
+          77144,
+          101233,
+          111372,
+          77585,
+          101113,
+          77105,
+          78214,
+          83354,
+          77455
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.410221047882967,
+    "id": "792436d893b7938b1886625c65696b5d3d1b16240e5d12d2ae7d1ff47534e00d",
+    "input": {
+      "bucket": "LnAffine",
+      "genome": [
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 82235,
+        "median_ns": 59106,
+        "minimum_ns": 54366,
+        "raw_elapsed_ns": [
+          56106,
+          55706,
+          54366,
+          60886,
+          82235,
+          58876,
+          76875,
+          81084,
+          62156,
+          58696,
+          59106
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 48537,
+        "median_ns": 33698,
+        "minimum_ns": 31558,
+        "raw_elapsed_ns": [
+          33337,
+          32188,
+          38098,
+          33698,
+          48537,
+          32018,
+          44357,
+          35467,
+          34308,
+          31558,
+          32478
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.7539913347973173,
+    "id": "7e2ef425937d2ad21f073ec1c2fce06070e5adb3cbf270f171cf89b28e042e2f",
+    "input": {
+      "bucket": "Ln",
+      "genome": [
+        255,
+        255,
+        97,
+        255,
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 71545,
+        "median_ns": 46737,
+        "minimum_ns": 40937,
+        "raw_elapsed_ns": [
+          62375,
+          47437,
+          40937,
+          66136,
+          60835,
+          45027,
+          46737,
+          44817,
+          45077,
+          46647,
+          71545
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 15689,
+        "median_ns": 11649,
+        "minimum_ns": 9610,
+        "raw_elapsed_ns": [
+          15689,
+          9759,
+          9960,
+          13539,
+          12359,
+          11649,
+          9610,
+          11609,
+          11699,
+          9929,
+          13799
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 4.012104043265516,
+    "id": "8041ee98ce128233c9160d712e15b2fbfe2e15bdaa2f9e54a7dce28562f5389f",
+    "input": {
+      "bucket": "Sqrt",
+      "genome": [
+        4,
+        31,
+        0,
+        0,
+        217,
+        1,
+        177,
+        0
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 163598,
+        "median_ns": 111573,
+        "minimum_ns": 110242,
+        "raw_elapsed_ns": [
+          146130,
+          111043,
+          110242,
+          111232,
+          156539,
+          110982,
+          111573,
+          163598,
+          110252,
+          112512,
+          114352
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 96263,
+        "median_ns": 63075,
+        "minimum_ns": 61495,
+        "raw_elapsed_ns": [
+          65256,
+          62726,
+          61635,
+          63066,
+          92944,
+          63075,
+          65265,
+          96263,
+          63456,
+          62905,
+          61495
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.7688941736028538,
+    "id": "838b71b4ab93f1938e5d47e561260f3519969455a4584ad8998c0c1b409eb66b",
+    "input": {
+      "bucket": "Pow2",
+      "genome": [
+        245,
+        221,
+        75,
+        99,
+        15,
+        126,
+        55,
+        219
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 121092,
+        "median_ns": 86714,
+        "minimum_ns": 80985,
+        "raw_elapsed_ns": [
+          86714,
+          80985,
+          121092,
+          82104,
+          120091,
+          83745,
+          103553,
+          84794,
+          107093,
+          82235,
+          88574
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 28188,
+        "median_ns": 17869,
+        "minimum_ns": 14129,
+        "raw_elapsed_ns": [
+          17869,
+          16189,
+          28188,
+          15608,
+          25358,
+          18918,
+          19879,
+          17069,
+          14129,
+          15529,
+          19418
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 4.8527617661872515,
+    "id": "9210dc8d375df0f141aa212d8063bd19f9aba629a96e45852c90681b82fd8db7",
+    "input": {
+      "bucket": "PiPow",
+      "genome": [
+        72,
+        199,
+        178,
+        209,
+        68,
+        123,
+        234,
+        65
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 151599,
+        "median_ns": 101043,
+        "minimum_ns": 98393,
+        "raw_elapsed_ns": [
+          99224,
+          98793,
+          101803,
+          98833,
+          101463,
+          101043,
+          102903,
+          98393,
+          99903,
+          151599,
+          107763
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 88704,
+        "median_ns": 59706,
+        "minimum_ns": 58666,
+        "raw_elapsed_ns": [
+          59635,
+          59606,
+          61006,
+          60266,
+          60496,
+          58716,
+          59425,
+          58666,
+          59706,
+          88704,
+          61035
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.6923424781429002,
+    "id": "9480eb9f37c884395dcc3a165417db7f64b1ee819f4260abf02f09ff9adf1cc2",
+    "input": {
+      "bucket": "Ln",
+      "genome": [
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 184118,
+        "median_ns": 126111,
+        "minimum_ns": 115092,
+        "raw_elapsed_ns": [
+          147560,
+          115092,
+          126111,
+          115982,
+          170248,
+          122502,
+          121092,
+          121172,
+          127111,
+          181708,
+          184118
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 59356,
+        "median_ns": 39867,
+        "minimum_ns": 37568,
+        "raw_elapsed_ns": [
+          38198,
+          39298,
+          37568,
+          38217,
+          52986,
+          39667,
+          39917,
+          40167,
+          39867,
+          59356,
+          59026
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 3.16329294905561,
+    "id": "9b02ca39ae219446a7d32a0fa5afea3524e4d945d233ba4685cca77fe785a64b",
+    "input": {
+      "bucket": "LnProduct",
+      "genome": [
+        4,
+        31,
+        0,
+        0,
+        241,
+        1,
+        0,
+        0
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 50216,
+        "median_ns": 40087,
+        "minimum_ns": 35217,
+        "raw_elapsed_ns": [
+          37507,
+          35217,
+          50216,
+          40087,
+          41527,
+          36807,
+          39168,
+          41297,
+          41828,
+          37128,
+          40557
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 41687,
+        "median_ns": 20219,
+        "minimum_ns": 19558,
+        "raw_elapsed_ns": [
+          20219,
+          19558,
+          19969,
+          19749,
+          22938,
+          19999,
+          21439,
+          41687,
+          22418,
+          22919,
+          19569
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.9826400910035116,
+    "id": "a653a95367301296419b5d177d71840666c9c0a887f4296e1de9062e164a8f31",
+    "input": {
+      "bucket": "PiInv",
+      "genome": [
+        50,
+        207,
+        181,
+        78,
+        52,
+        244,
+        164,
+        253
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 43087,
+        "median_ns": 30018,
+        "minimum_ns": 27609,
+        "raw_elapsed_ns": [
+          27609,
+          28918,
+          27808,
+          29688,
+          30018,
+          32427,
+          37947,
+          43087,
+          30338,
+          32087,
+          28978
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 30878,
+        "median_ns": 23289,
+        "minimum_ns": 19988,
+        "raw_elapsed_ns": [
+          23558,
+          23379,
+          21718,
+          22898,
+          19988,
+          23378,
+          30098,
+          30878,
+          23289,
+          21309,
+          21099
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.2889346901970888,
+    "id": "aa14e62b467788e04b13df55626fdf95a3ba0274a1c50b0c2b8237fe61800715",
+    "input": {
+      "bucket": "Irrational",
+      "genome": [
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 164478,
+        "median_ns": 110612,
+        "minimum_ns": 107192,
+        "raw_elapsed_ns": [
+          108082,
+          155440,
+          108212,
+          108733,
+          147960,
+          112622,
+          107192,
+          111233,
+          109662,
+          164478,
+          110612
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 99263,
+        "median_ns": 62976,
+        "minimum_ns": 61006,
+        "raw_elapsed_ns": [
+          62186,
+          61116,
+          65205,
+          62576,
+          62976,
+          61006,
+          61846,
+          63485,
+          64205,
+          99263,
+          66315
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.7564151422764227,
+    "id": "acebec36d4bd1781310b519d1a0fe8d866338cd54b88a5bb070d696ce0a31a96",
+    "input": {
+      "bucket": "Pow2",
+      "genome": [
+        181,
+        221,
+        75,
+        99,
+        15,
+        126,
+        55,
+        219
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 130602,
+        "median_ns": 89103,
+        "minimum_ns": 81595,
+        "raw_elapsed_ns": [
+          81595,
+          130602,
+          84895,
+          128071,
+          126521,
+          112032,
+          89103,
+          87154,
+          87054,
+          87524,
+          125421
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 92273,
+        "median_ns": 61486,
+        "minimum_ns": 59906,
+        "raw_elapsed_ns": [
+          60215,
+          61486,
+          60906,
+          79965,
+          92273,
+          82114,
+          61336,
+          60196,
+          62406,
+          59906,
+          62985
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.4491591581823504,
+    "id": "af39d77c5a836491f2139241b0f5ae16ac764999ec358a0be87766d67fd47182",
+    "input": {
+      "bucket": "ConstProduct",
+      "genome": [
+        0,
+        1,
+        127,
+        3,
+        5,
+        2,
+        128,
+        77
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 51306,
+        "median_ns": 40407,
+        "minimum_ns": 35328,
+        "raw_elapsed_ns": [
+          35328,
+          37328,
+          45597,
+          40407,
+          39057,
+          37387,
+          51306,
+          39037,
+          40847,
+          41437,
+          40727
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 27438,
+        "median_ns": 16469,
+        "minimum_ns": 13059,
+        "raw_elapsed_ns": [
+          13059,
+          16469,
+          17579,
+          14489,
+          16689,
+          16749,
+          17069,
+          13129,
+          27438,
+          15239,
+          14649
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.4535187321634586,
+    "id": "b0b2c2b0c29707f62e5ea2bf6b51f784d6084145090374f3b71a6af7788813be",
+    "input": {
+      "bucket": "PiSqrt",
+      "genome": [
+        197,
+        148,
+        90,
+        209,
+        48,
+        3,
+        129,
+        217
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 138991,
+        "median_ns": 106983,
+        "minimum_ns": 100953,
+        "raw_elapsed_ns": [
+          102473,
+          102663,
+          100953,
+          107193,
+          105003,
+          106983,
+          133110,
+          107883,
+          106303,
+          107673,
+          138991
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 90334,
+        "median_ns": 60535,
+        "minimum_ns": 56457,
+        "raw_elapsed_ns": [
+          56457,
+          60535,
+          58936,
+          73265,
+          58716,
+          56796,
+          76925,
+          61726,
+          63545,
+          59506,
+          90334
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.7672916494589908,
+    "id": "d083b68e49e1450381c9349fdcab8064d4743408024f90f46e0afd1634f6f0a3",
+    "input": {
+      "bucket": "Ln",
+      "genome": [
+        4,
+        31,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 51847,
+        "median_ns": 39117,
+        "minimum_ns": 32967,
+        "raw_elapsed_ns": [
+          32967,
+          37637,
+          39677,
+          43647,
+          49547,
+          39117,
+          41737,
+          38258,
+          37397,
+          37618,
+          51847
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 22569,
+        "median_ns": 16798,
+        "minimum_ns": 14569,
+        "raw_elapsed_ns": [
+          14569,
+          14689,
+          16798,
+          22569,
+          22358,
+          14639,
+          16679,
+          16599,
+          18219,
+          18659,
+          20379
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.3286700797714013,
+    "id": "d3daef2c56c6308d111f2c0f1455a6b2f927fe8f62aa2aa338a0f8e2f3c6dc9e",
+    "input": {
+      "bucket": "PiSqrt",
+      "genome": [
+        66,
+        30,
+        90,
+        209,
+        48,
+        89,
+        129,
+        217
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 190847,
+        "median_ns": 123131,
+        "minimum_ns": 120442,
+        "raw_elapsed_ns": [
+          190847,
+          121162,
+          120442,
+          123131,
+          124322,
+          127801,
+          127461,
+          122182,
+          122542,
+          122882,
+          172228
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 97074,
+        "median_ns": 63076,
+        "minimum_ns": 60756,
+        "raw_elapsed_ns": [
+          97074,
+          85884,
+          61035,
+          65395,
+          62816,
+          63076,
+          63875,
+          61866,
+          62576,
+          60756,
+          86514
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.9521053966643414,
+    "id": "d5147e97c8dc1ba61ae3b820027a3c637148cc40f9bae783fec3d5cc4e65f32a",
+    "input": {
+      "bucket": "ConstProduct",
+      "genome": [
+        0,
+        1,
+        127,
+        145,
+        5,
+        2,
+        128,
+        77
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 228524,
+        "median_ns": 170579,
+        "minimum_ns": 165299,
+        "raw_elapsed_ns": [
+          216295,
+          165299,
+          171229,
+          166758,
+          228524,
+          174898,
+          170428,
+          170579,
+          167058,
+          168968,
+          228445
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 92874,
+        "median_ns": 59776,
+        "minimum_ns": 55176,
+        "raw_elapsed_ns": [
+          92874,
+          57336,
+          57286,
+          55176,
+          75635,
+          55386,
+          57116,
+          59806,
+          60696,
+          59776,
+          79555
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.853636911134904,
+    "id": "d81c14b77a130261d1bbe6411e1b3b06d828d4e16ca9f03f6d7897d5efc03dc9",
+    "input": {
+      "bucket": "TanPi",
+      "genome": [
+        235,
+        32,
+        197,
+        189,
+        45,
+        251,
+        25,
+        165
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 10139,
+        "median_ns": 6639,
+        "minimum_ns": 5290,
+        "raw_elapsed_ns": [
+          6639,
+          5290,
+          5500,
+          5420,
+          7929,
+          10139,
+          6149,
+          6089,
+          8179,
+          8120,
+          7640
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 17759,
+        "median_ns": 12489,
+        "minimum_ns": 10609,
+        "raw_elapsed_ns": [
+          12019,
+          11899,
+          12169,
+          10609,
+          12489,
+          15139,
+          12549,
+          13089,
+          17439,
+          17759,
+          12359
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 0.5315877972615902,
+    "id": "daad1051262fe9314f0c7cf5ea49dc6df7934f8b5d4b036a5ccab46ef9957330",
+    "input": {
+      "bucket": "One",
+      "genome": [
+        230,
+        34,
+        207,
+        194,
+        145,
+        239,
+        200,
+        208
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 447180,
+        "median_ns": 307879,
+        "minimum_ns": 300149,
+        "raw_elapsed_ns": [
+          300559,
+          300149,
+          302389,
+          300850,
+          447180,
+          317229,
+          324977,
+          321398,
+          307879,
+          441940,
+          307149
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 93044,
+        "median_ns": 64856,
+        "minimum_ns": 63096,
+        "raw_elapsed_ns": [
+          63356,
+          63356,
+          63096,
+          64706,
+          93044,
+          65116,
+          74775,
+          71855,
+          64596,
+          92734,
+          64856
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 4.747116689280868,
+    "id": "dc0ee3360fb81b181e1b8a02a1121b907f0459fe26c150f1850240b43945ae41",
+    "input": {
+      "bucket": "ConstProductSqrt",
+      "genome": [
+        155,
+        157,
+        46,
+        247,
+        59,
+        157,
+        19,
+        73
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 235264,
+        "median_ns": 156979,
+        "minimum_ns": 148210,
+        "raw_elapsed_ns": [
+          151260,
+          148210,
+          225425,
+          160219,
+          155549,
+          163929,
+          228084,
+          235264,
+          156630,
+          152849,
+          156979
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 271691,
+        "median_ns": 151080,
+        "minimum_ns": 148440,
+        "raw_elapsed_ns": [
+          148440,
+          149040,
+          152000,
+          151570,
+          150760,
+          151080,
+          151500,
+          271691,
+          151430,
+          150929,
+          149800
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.0390455387873974,
+    "id": "dc669564c3f77e1f7f3a40ca3c4ea27d22232cd33063eeb71f3e2cc6ec5941e9",
+    "input": {
+      "bucket": "Pow10",
+      "genome": [
+        0,
+        1,
+        254,
+        3,
+        5,
+        116,
+        128,
+        77
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 251382,
+        "median_ns": 173098,
+        "minimum_ns": 164749,
+        "raw_elapsed_ns": [
+          165349,
+          171449,
+          242064,
+          164749,
+          179398,
+          173098,
+          215825,
+          251382,
+          170749,
+          165029,
+          242614
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 153769,
+        "median_ns": 99643,
+        "minimum_ns": 96433,
+        "raw_elapsed_ns": [
+          107072,
+          96684,
+          151750,
+          96433,
+          98094,
+          98614,
+          125031,
+          153769,
+          99303,
+          99643,
+          127531
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.737181738807543,
+    "id": "dcd3f589b4b7a31654732b3e0680eb2d7c5847498e391460d99746807ebc7776",
+    "input": {
+      "bucket": "ConstProductSqrt",
+      "genome": [
+        7,
+        88,
+        233,
+        198,
+        35,
+        235,
+        72,
+        235
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 523854,
+        "median_ns": 358496,
+        "minimum_ns": 347726,
+        "raw_elapsed_ns": [
+          347726,
+          357895,
+          348866,
+          447749,
+          523854,
+          357266,
+          363035,
+          352576,
+          358496,
+          371955,
+          362785
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 145400,
+        "median_ns": 98584,
+        "minimum_ns": 94113,
+        "raw_elapsed_ns": [
+          94113,
+          95813,
+          94243,
+          124432,
+          145400,
+          100213,
+          96733,
+          98583,
+          98584,
+          99773,
+          104013
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 3.636452162622738,
+    "id": "deb88aa0bd0e06a454aeea86d43566b6f4f4445a1a00abd2c986a439b00c1756",
+    "input": {
+      "bucket": "ConstProductSqrt",
+      "genome": [
+        57,
+        88,
+        233,
+        198,
+        35,
+        235,
+        72,
+        235
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 218086,
+        "median_ns": 130851,
+        "minimum_ns": 123022,
+        "raw_elapsed_ns": [
+          183697,
+          123022,
+          123292,
+          128721,
+          129371,
+          128161,
+          144760,
+          130851,
+          137050,
+          218086,
+          189177
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 125241,
+        "median_ns": 80685,
+        "minimum_ns": 76804,
+        "raw_elapsed_ns": [
+          125241,
+          117512,
+          78874,
+          97144,
+          80685,
+          79234,
+          81004,
+          80525,
+          76804,
+          80104,
+          122971
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.6217512548800892,
+    "id": "e681d5c94c6cb1acb72e32a3e5655745314268db37069d82d45e1c99bc78089d",
+    "input": {
+      "bucket": "Log2",
+      "genome": [
+        255,
+        233,
+        255,
+        255,
+        255,
+        255,
+        255,
+        9
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 247963,
+        "median_ns": 170579,
+        "minimum_ns": 165539,
+        "raw_elapsed_ns": [
+          169289,
+          165539,
+          167699,
+          173219,
+          235034,
+          170579,
+          167369,
+          175038,
+          247963,
+          168988,
+          232044
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 116532,
+        "median_ns": 80144,
+        "minimum_ns": 77675,
+        "raw_elapsed_ns": [
+          80154,
+          80094,
+          80714,
+          79705,
+          109933,
+          79744,
+          77675,
+          80144,
+          88854,
+          80025,
+          116532
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.128406368536634,
+    "id": "f541128512f9c55297dad3fbbf9fc792e4109429bfb54b43562b7ddf0d85d8d4",
+    "input": {
+      "bucket": "Log10",
+      "genome": [
+        4,
+        199,
+        77,
+        0,
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 91554,
+        "median_ns": 63356,
+        "minimum_ns": 55346,
+        "raw_elapsed_ns": [
+          55886,
+          55346,
+          83184,
+          63106,
+          82134,
+          63356,
+          60976,
+          63725,
+          61056,
+          91554,
+          87774
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 88494,
+        "median_ns": 63176,
+        "minimum_ns": 57456,
+        "raw_elapsed_ns": [
+          88494,
+          58496,
+          87604,
+          63176,
+          84634,
+          59136,
+          59846,
+          58696,
+          57456,
+          87214,
+          84855
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 1.0028491832341395,
+    "id": "f5552e68a7756c768e581d3d9b4c31128fcd326115370b3d233954147025c892",
+    "input": {
+      "bucket": "PiExp",
+      "genome": [
+        255,
+        255,
+        255,
+        255,
+        255,
+        15,
+        255,
+        255
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 31228,
+        "median_ns": 25298,
+        "minimum_ns": 19449,
+        "raw_elapsed_ns": [
+          20059,
+          26878,
+          19449,
+          25789,
+          29998,
+          23798,
+          29138,
+          25298,
+          23818,
+          23418,
+          31228
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 14259,
+        "median_ns": 11280,
+        "minimum_ns": 9190,
+        "raw_elapsed_ns": [
+          10719,
+          9399,
+          11179,
+          11469,
+          13499,
+          11219,
+          14259,
+          11999,
+          9190,
+          11689,
+          11280
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 2.2427304964539005,
+    "id": "f9d2cf21b8036ea1f5e0d2ceb224a179906b6ec027610ed9ef214a13a21ee942",
+    "input": {
+      "bucket": "Sqrt",
+      "genome": [
+        115,
+        31,
+        0,
+        0,
+        0,
+        1,
+        177,
+        0
+      ]
+    },
+    "samples": 11
+  },
+  {
+    "backends": {
+      "hyperreal": {
+        "maximum_ns": 268321,
+        "median_ns": 178127,
+        "minimum_ns": 171839,
+        "raw_elapsed_ns": [
+          179647,
+          171839,
+          176458,
+          172978,
+          179457,
+          228285,
+          268321,
+          173188,
+          178127,
+          180028,
+          176128
+        ]
+      },
+      "mpfr": {
+        "maximum_ns": 88904,
+        "median_ns": 59186,
+        "minimum_ns": 56056,
+        "raw_elapsed_ns": [
+          56056,
+          61955,
+          75415,
+          58306,
+          57806,
+          82094,
+          88904,
+          59186,
+          58566,
+          57776,
+          60145
+        ]
+      }
+    },
+    "hyperreal_over_mpfr_median_ratio": 3.0096137600108133,
+    "id": "fffa5357784e0d9791bef22e53885fa2195f678fbcf5a8506b9de78af88f936d",
+    "input": {
+      "bucket": "PiInvExp",
+      "genome": [
+        188,
+        109,
+        210,
+        162,
+        7,
+        10,
+        115,
+        159
+      ]
+    },
+    "samples": 11
+  }
+]

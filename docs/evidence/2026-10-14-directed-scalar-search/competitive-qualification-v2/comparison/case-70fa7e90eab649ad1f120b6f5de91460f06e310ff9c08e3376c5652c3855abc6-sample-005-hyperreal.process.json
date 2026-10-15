@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-bench-v2/native-target/release/examples/directed_scalar_bench",
+    "hyperreal",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-directed-scalar-search/competitive-qualification-v2/comparison/inputs/70fa7e90eab649ad1f120b6f5de91460f06e310ff9c08e3376c5652c3855abc6.json"
+  ],
+  "exit_code": 0,
+  "process_elapsed_ns": 2424744,
+  "status": "exited",
+  "stderr": "case-70fa7e90eab649ad1f120b6f5de91460f06e310ff9c08e3376c5652c3855abc6-sample-005-hyperreal.stderr",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout": "case-70fa7e90eab649ad1f120b6f5de91460f06e310ff9c08e3376c5652c3855abc6-sample-005-hyperreal.stdout",
+  "stdout_sha256": "df5b05ff5947e8c6165303e19d1caf791ef16099c49dae1ba5e3880e6fe4703f"
+}
