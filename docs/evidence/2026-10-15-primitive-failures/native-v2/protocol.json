@@ -1,0 +1,208 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/native-v1",
+  "preserved_prior_executables_sha256": {
+    "target/primitive-failures/native-v1/release/deps/csgrs-d5e0741bbc5df635": "e8fb648bf5f386acbae6bb7ad53224a3605313c9fe9096b52ae16bbc2f17914a",
+    "target/primitive-failures/native-v1/release/deps/adversarial-c03dde69c05f1cf2": "87cf2d02e0a4fcc352e28a802481b75354329baf7b12bc8a69d89bc35ad64f31",
+    "target/primitive-failures/native-v1/release/deps/adversarial_deep-5dea7b8952749c41": "87d97ab0c133aa1bf03b0f6e0df19c4bbc5d90a5cfc61b2a3e9f3010007f5e67",
+    "target/primitive-failures/native-v1/release/deps/adversarial_extrusions-22c8c063f22c33de": "6c67f0fd15807774cbddd6073db1187aa203c95c24e8810d2a49b1ede2ee486b",
+    "target/primitive-failures/native-v1/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/primitive-failures/native-v1/release/deps/adversarial_stress-8c747993ca7dff64": "17cbed60f3207fa5ea8b33c224699e6c8083db1bebf819eb55ab528ae1ff7efa",
+    "target/primitive-failures/native-v1/release/deps/competitive-8d824413442e1853": "1bf59b9d9d48c9c09a25523e01472466d67d16c4e412ff95c8e82acdcc1ef346",
+    "target/primitive-failures/native-v1/release/deps/empty_composition-1b2f2ba6943338cd": "5275f2caa7fa36d8e6669cd6c7e7e2fb30a0b3179a652f217138e1c75ba8984e",
+    "target/primitive-failures/native-v1/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "21d471bb135bbc9de322191bb5b2edeab9f7a00c2d8eecaf1cd2939e64662dd6",
+    "target/primitive-failures/native-v1/release/deps/geometry_context-d256044952b39c9d": "795a0fe3ba54e680f57a25e1b5afa3ff8f8b7e379734a5c3520137fc8cf35c54",
+    "target/primitive-failures/native-v1/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "b93263cc1a6692c453924b20c48b5b6e81db5f8f44fd8c93b5bd501c70e769b6",
+    "target/primitive-failures/native-v1/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "b53ec01472ca92bb42f9ae299a9ee2b91483d4feb2a2fe91614cc81e203462f0",
+    "target/primitive-failures/native-v1/release/deps/native_queries-32678419862dff6b": "a5f5a30b8454885810932d79b53e4dc79492e58735064263e8e054ee497d7feb",
+    "target/primitive-failures/native-v1/release/deps/primitive_failures-8e6539f143e56577": "bc80f7b103b9385a1409577963215fd1efd82e146ae20c7cf986b88ed235f164",
+    "target/primitive-failures/native-v1/release/deps/readme-d31b115aba933918": "e2c2e5a577640241a8ad5c895d3dcea14ef2e3c39e7132cefa074932e6ed7fc4",
+    "target/primitive-failures/native-v1/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/primitive-failures/native-v1/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "6b03e2856ee3cc0304a71cb137c109a351911d4e56346e86e1ee6d9040a3e2cd",
+    "target/primitive-failures/native-v1/release/deps/solid_cache-f1483884916afc0e": "1a362c4a88a4c58d54fadb2b27b03216c98f948dcfd3cbf0006f746c06a6a854",
+    "target/primitive-failures/native-v1/release/deps/wasm_certainty-d7100c8fa594776c": "ef9cfb823886e5151605c1d5a55e423149ce281df7952fabe7c67e1c0cc8baab",
+    "target/primitive-failures/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "3371076fee8b06984c5602328255a4435aa25cefb0bb7a39e501b5927590fd83",
+    "target/primitive-failures/native-v1/release/deps/release_workflow-594135c930ee78a9": "400283470ae02726d4562ce9ea1466d61755b1e426dfca920ad10be9a47a95a9"
+  },
+  "base_commit": "6581c65c0684b078d972a21d038c4ad688583b5e",
+  "runner_sha256": "fa1d807ee0d68920968f6c78aba8b415668ee053df88636fda81d6479880dc15",
+  "phase": "native-v2",
+  "commands": [
+    [
+      "fmt",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "fuzz-fmt",
+      [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "all-feature-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "ffi-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs-ffi"
+      ]
+    ],
+    [
+      "downstream-release-model",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercircuit",
+        "--test",
+        "release_workflow",
+        "external_obj_vrml_and_gltf_package_models_resolve_with_digest_and_scene_identity",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "strict-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "-p",
+        "csgrs-ffi",
+        "--all-targets",
+        "--all-features",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "downstream-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercircuit",
+        "--test",
+        "release_workflow",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "fuzz-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bins",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "docs",
+      [
+        "env",
+        "RUSTDOCFLAGS=-D warnings",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "csgrs",
+        "-p",
+        "csgrs-ffi",
+        "--all-features",
+        "--no-deps"
+      ]
+    ],
+    [
+      "doctests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--doc"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/native-v2"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "CSGRS primitive constructors and successful-result cache",
+    "scalar and language adapters"
+  ],
+  "domain": "Strict native primitives: nonnegative dimensions/radii, directed signed frustum height, valid sample minima, representable buffer capacities. Proven degeneracies are canonical empty only after all inputs are validated. Ring tori require major > minor unless minor = 0.",
+  "consumers": [
+    "SolidExt",
+    "scalar adapters",
+    "C ABI",
+    "WASM"
+  ],
+  "missing_acceptance_test": "tests/primitive_failures.rs",
+  "semantic_oracle": "Typed failures remain failures through adapters; exact box coordinates/volume, canonical empty composition, native topology, and preservation of existing full-resolution fixtures.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: implemented and committed empty composition with native and real binding qualification."
+}

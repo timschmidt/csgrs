@@ -1,0 +1,14 @@
+{
+  "commands": [
+    {
+      "name": "wasm",
+      "exit_code": 0,
+      "seconds": 16.02727987477556,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "70870ab9accd685edf7fc42949a7fa04f2536afa268ad1cf0bf230fbbd0a13fe",
+      "stderr_sha256": "71bc7375d23a0e7dfb66344735c71f5a4dcdd45f0d025d055ace5e69a99b2b18"
+    }
+  ],
+  "passed": true
+}

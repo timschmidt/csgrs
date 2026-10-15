@@ -1,0 +1,12 @@
+[
+  [
+    "wasm",
+    [
+      "env",
+      "WASM_BINDGEN=/tmp/csgrs-properties-tools/bin/wasm-bindgen",
+      "TSC=/home/tim/Documents/GitHub/workspace/csgrs/tests/wasm/node_modules/.bin/tsc",
+      "bash",
+      "scripts/test-wasm-bindings.sh"
+    ]
+  ]
+]

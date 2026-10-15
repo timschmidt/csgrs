@@ -1,0 +1,710 @@
+{
+  "qualification": {
+    "updated_on": "2026-10-15",
+    "status": "Native primitive failure migration implemented and locally qualified in the recorded scope.",
+    "properties": [
+      "P4",
+      "P6",
+      "P8",
+      "P18",
+      "P20",
+      "P25",
+      "P30",
+      "P35",
+      "P37"
+    ],
+    "owners": [
+      "CSGRS primitive constructors and successful-result cache",
+      "shared modeling predicate diagnostics",
+      "scalar adapters and affected C/C++/Python/WASM error boundaries"
+    ],
+    "domain": "Strict cube, cuboid, sphere, cylinder, ellipsoid, frustum, frustum_between, octahedron, icosahedron, arrow and ring torus construction; nonnegative dimensions/radii, directed signed heights, documented resolution minima and representable buffer capacities.",
+    "migration": "Primary constructors now return Result<TriangleMesh, ValidationError>. Negative inputs, invalid resolutions, undecided predicates, unsupported representations, and capacity/reservation failures no longer masquerade as empty geometry. Proven degeneracies remain canonical empty after validation. Only successes are cached. Rust consumers must handle/propagate Result; C statuses are additive, C++/Python preserve status, and WASM constructor exceptions expose code.",
+    "baseline": "All four initial adapter acceptance tests failed on 22ee9939e plus the original in-scope native changes. Candidate v1 passed 66 focused tests but failed strict Clippy on missing const. Candidate v2 fixed that lint and passed 67 focused tests plus strict minimal all-target Clippy. Native v1 later passed the runtime/downstream checks but failed fuzz Clippy on an existing nested conditional; that condition was collapsed without weakening validation. Binding v1 passed all native consumers and reproduced plain-string nonfinite constructor errors in actual WASM. Native v2 and WASM binding v2 qualify the corrections; all failed phases and executables are retained.",
+    "test_totals": {
+      "all-feature-tests": {
+        "passed": 180,
+        "failed": 0,
+        "ignored": 1,
+        "measured": 0,
+        "filtered": 0
+      },
+      "ffi-tests": {
+        "passed": 8,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "downstream-release-model": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "doctests": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      }
+    },
+    "binding_consumers": [
+      "Actual C f64 ABI",
+      "C++ F64 RAII wrapper",
+      "Python ctypes F64 wrapper",
+      "Generated WASM Node.js runtime and TypeScript declarations"
+    ],
+    "evidence": "docs/evidence/2026-10-15-primitive-failures/closure-v1.json",
+    "remaining": [
+      "Other modeling conveniences and curve/sampled-field constructors still contain silent-empty or origin fallbacks; this patch does not complete visible-failure migration.",
+      "Existing non-constructor adapters still flatten some native error categories. The Go wrapper retains only error text and was not qualified (no Go toolchain found). The separate native JS wrapper requires an external loader; generated WASM was the exercised JavaScript distribution.",
+      "Construction uses strict decisions but does not attach end-to-end provenance or certify fidelity to analytic surfaces; export/import provenance remains open.",
+      "Checked platform capacities and fallible primary-buffer reservations are not total-work, expression-growth, heap-byte or cancellation budgets. Secondary allocations and allocator/process termination remain outside the contract; no complete internal resource bound is claimed.",
+      "The original drilled-body strict-mode frontier and all full-scale geometry remain unchanged. Ordinary strict-mode completion still requires work.",
+      "One existing README PNG regeneration test remains ignored. No sanitizer, live fuzz campaign, performance comparison, full repository pre-push matrix, or clean external release installation is claimed for this migration. No push was performed.",
+      "The original 35 pending native files remain byte-identical. Earlier DRC runtime failures and scalar-integration limitations remain open and were not rerun here."
+    ],
+    "plan_complete": false
+  },
+  "command_records": {
+    "baseline-v1": {
+      "commands": [
+        {
+          "name": "primitive-failures",
+          "exit_code": 101,
+          "seconds": 165.19912227941677,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/primitive-failures/baseline-v1/release/deps/primitive_failures-812823cb4c624c0c": "331636133b1d3da4cc076d3a8c9a571e3529894de0bd6c59611128b37e25da45"
+          },
+          "stdout_sha256": "8e58c08d27ad568575302c19ab2edd93f9183e58c75b50bc6be22048a491bf54",
+          "stderr_sha256": "37a20bf7f73d2657348227ff0585ca048bc7fa7ccb15a682ce815aab42490d67"
+        }
+      ],
+      "passed": false
+    },
+    "candidate-v1": {
+      "commands": [
+        {
+          "name": "focused-tests",
+          "exit_code": 0,
+          "seconds": 169.02234848914668,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/primitive-failures/candidate-v1/release/deps/csgrs-12b72f0ccdd38706": "5e77292733b40296c5520e65b48a7bda66581f3a7e0357afdbc1db5c5bdf5882",
+            "target/primitive-failures/candidate-v1/release/deps/empty_composition-329c8a68d57ad60d": "8b89888b0477a9c219bb573e0e90048a22200b76c87b0e846a092128905bb1a6",
+            "target/primitive-failures/candidate-v1/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "c156099d09b92f2d90d7f5b01238849210da15c6ec4df9cd1c6d7ae3f7b14064",
+            "target/primitive-failures/candidate-v1/release/deps/primitive_failures-812823cb4c624c0c": "38a4070200cc0f5fa9677e91f80841d4e2affe75f329b39e2d3435bf0c4d69e8",
+            "target/primitive-failures/candidate-v1/release/deps/solid_cache-07b265ceb2ca1c46": "1d2ca790b5f91cfffa4adc5bf07bfc8f0e56d0fed429740f01d3b95c531aa642"
+          },
+          "stdout_sha256": "d14fd1b228e367f9e50744085ae0ea83c1ce11c8a95b445e97ad09d55eae0610",
+          "stderr_sha256": "ae36011b4239698ff6b04f7875f47e49bd6a27a0e45842e42a3cbd901e122ef9"
+        },
+        {
+          "name": "clippy-minimal",
+          "exit_code": 101,
+          "seconds": 24.602686220314354,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "9ccf064d40709948cc0debb1fff98bc9ffb4072c888fd401bc02fe5fcf56efb2"
+        }
+      ],
+      "passed": false
+    },
+    "candidate-v2": {
+      "commands": [
+        {
+          "name": "focused-tests",
+          "exit_code": 0,
+          "seconds": 164.6219853600487,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/primitive-failures/candidate-v2/release/deps/csgrs-12b72f0ccdd38706": "df15a2cb02f1c9660fe90681388d2855ffa9e160f3f095cee807669e7b63631a",
+            "target/primitive-failures/candidate-v2/release/deps/empty_composition-329c8a68d57ad60d": "f995ddc297945f67cd37597e78f76cc49b8dfbcdff2d4fc02443d31f408df8fc",
+            "target/primitive-failures/candidate-v2/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "ee375860f62928b3feb6e7c54e5a71b1b5577e84b9e1eb75b1cf05360f5cbd63",
+            "target/primitive-failures/candidate-v2/release/deps/primitive_failures-812823cb4c624c0c": "f6728c9636f0cf8328dc457e3618b454b86997c29020034a75eaa97ea02b813c",
+            "target/primitive-failures/candidate-v2/release/deps/solid_cache-07b265ceb2ca1c46": "49a10ffed0634da519f30533e3e2c1ac35ee04e1ed6250613a14498476ea4fba"
+          },
+          "stdout_sha256": "d556d63c4a41c4bed87da02111e829bbed07f7239eaf7d85e06bda7b5bb30667",
+          "stderr_sha256": "d3a41e576a9a4297e1f58427f89d08c0dd47b64e9595c49973abcbb99724dc8b"
+        },
+        {
+          "name": "clippy-minimal",
+          "exit_code": 0,
+          "seconds": 25.18694272218272,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "26f419e077a61dcc89a9c5f7e6dff3b527fd4cac7758f5e64b79ba5d66c70f3e"
+        }
+      ],
+      "passed": true
+    },
+    "native-v1": {
+      "commands": [
+        {
+          "name": "fmt",
+          "exit_code": 0,
+          "seconds": 12.255871749017388,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "fuzz-fmt",
+          "exit_code": 0,
+          "seconds": 1.821728051174432,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "all-feature-tests",
+          "exit_code": 0,
+          "seconds": 376.52037679729983,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/primitive-failures/native-v1/release/deps/csgrs-d5e0741bbc5df635": "e8fb648bf5f386acbae6bb7ad53224a3605313c9fe9096b52ae16bbc2f17914a",
+            "target/primitive-failures/native-v1/release/deps/adversarial-c03dde69c05f1cf2": "87cf2d02e0a4fcc352e28a802481b75354329baf7b12bc8a69d89bc35ad64f31",
+            "target/primitive-failures/native-v1/release/deps/adversarial_deep-5dea7b8952749c41": "87d97ab0c133aa1bf03b0f6e0df19c4bbc5d90a5cfc61b2a3e9f3010007f5e67",
+            "target/primitive-failures/native-v1/release/deps/adversarial_extrusions-22c8c063f22c33de": "6c67f0fd15807774cbddd6073db1187aa203c95c24e8810d2a49b1ede2ee486b",
+            "target/primitive-failures/native-v1/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+            "target/primitive-failures/native-v1/release/deps/adversarial_stress-8c747993ca7dff64": "17cbed60f3207fa5ea8b33c224699e6c8083db1bebf819eb55ab528ae1ff7efa",
+            "target/primitive-failures/native-v1/release/deps/competitive-8d824413442e1853": "1bf59b9d9d48c9c09a25523e01472466d67d16c4e412ff95c8e82acdcc1ef346",
+            "target/primitive-failures/native-v1/release/deps/empty_composition-1b2f2ba6943338cd": "5275f2caa7fa36d8e6669cd6c7e7e2fb30a0b3179a652f217138e1c75ba8984e",
+            "target/primitive-failures/native-v1/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "21d471bb135bbc9de322191bb5b2edeab9f7a00c2d8eecaf1cd2939e64662dd6",
+            "target/primitive-failures/native-v1/release/deps/geometry_context-d256044952b39c9d": "795a0fe3ba54e680f57a25e1b5afa3ff8f8b7e379734a5c3520137fc8cf35c54",
+            "target/primitive-failures/native-v1/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "b93263cc1a6692c453924b20c48b5b6e81db5f8f44fd8c93b5bd501c70e769b6",
+            "target/primitive-failures/native-v1/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "b53ec01472ca92bb42f9ae299a9ee2b91483d4feb2a2fe91614cc81e203462f0",
+            "target/primitive-failures/native-v1/release/deps/native_queries-32678419862dff6b": "a5f5a30b8454885810932d79b53e4dc79492e58735064263e8e054ee497d7feb",
+            "target/primitive-failures/native-v1/release/deps/primitive_failures-8e6539f143e56577": "bc80f7b103b9385a1409577963215fd1efd82e146ae20c7cf986b88ed235f164",
+            "target/primitive-failures/native-v1/release/deps/readme-d31b115aba933918": "e2c2e5a577640241a8ad5c895d3dcea14ef2e3c39e7132cefa074932e6ed7fc4",
+            "target/primitive-failures/native-v1/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+            "target/primitive-failures/native-v1/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "6b03e2856ee3cc0304a71cb137c109a351911d4e56346e86e1ee6d9040a3e2cd",
+            "target/primitive-failures/native-v1/release/deps/solid_cache-f1483884916afc0e": "1a362c4a88a4c58d54fadb2b27b03216c98f948dcfd3cbf0006f746c06a6a854",
+            "target/primitive-failures/native-v1/release/deps/wasm_certainty-d7100c8fa594776c": "ef9cfb823886e5151605c1d5a55e423149ce281df7952fabe7c67e1c0cc8baab"
+          },
+          "stdout_sha256": "109c5127c90046a12337a81b2e4524cb9d146979d674b41a2c3cfefa6df149ad",
+          "stderr_sha256": "c4fdcc42d290f2b4cde365edf672aa8a0c9a428064e507e1050f2775efa0cfc1"
+        },
+        {
+          "name": "ffi-tests",
+          "exit_code": 0,
+          "seconds": 135.91868881275877,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/primitive-failures/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "3371076fee8b06984c5602328255a4435aa25cefb0bb7a39e501b5927590fd83"
+          },
+          "stdout_sha256": "603cb7e7b18ac2da9ce661f635b4b738bd74bbf5f702a98277d5530263010a52",
+          "stderr_sha256": "a084b61f3ad68aae9e9d2a1824c93a12264e41a069dd51cff601a0d88430a01b"
+        },
+        {
+          "name": "downstream-release-model",
+          "exit_code": 0,
+          "seconds": 61.17159616900608,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/primitive-failures/native-v1/release/deps/release_workflow-594135c930ee78a9": "400283470ae02726d4562ce9ea1466d61755b1e426dfca920ad10be9a47a95a9"
+          },
+          "stdout_sha256": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd",
+          "stderr_sha256": "a63c7cc242aad5623dd7c4c93c28e3e5c90c0a52a586d4a0d6ea08eb0c7d566d"
+        },
+        {
+          "name": "strict-clippy",
+          "exit_code": 0,
+          "seconds": 63.153394537977874,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "a6671cc1df75386be970d6a197e0845b6bb139b02ff4d0dde94033e7d97b1ac4"
+        },
+        {
+          "name": "downstream-clippy",
+          "exit_code": 0,
+          "seconds": 13.12249080138281,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "73dc381b5d1fffe668920ba27341ae5914fb0e635dab657000f96e2fdc292736"
+        },
+        {
+          "name": "fuzz-clippy",
+          "exit_code": 101,
+          "seconds": 54.257533160969615,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "0d1e5047968b08afa0281cf986ff786b455d967477b03bc44d5eb77ad4c244d7"
+        }
+      ],
+      "passed": false
+    },
+    "bindings-v1": {
+      "commands": [
+        {
+          "name": "ffi-build",
+          "exit_code": 0,
+          "seconds": 139.28684228099883,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "05d447487eb3b9b2b84001b59377c193d40e3e1a11cf73e46261039076537463"
+        },
+        {
+          "name": "empty_composition-c-build",
+          "exit_code": 0,
+          "seconds": 1.8348654792644083,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "empty_composition-c-run",
+          "exit_code": 0,
+          "seconds": 1.6811075410805643,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "9129339c006d2d6c8870eaeade18c45c9302dabd88de9be2a1d9bdf24ba6f286",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "empty_composition-cpp-build",
+          "exit_code": 0,
+          "seconds": 2.2702925843186677,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "empty_composition-cpp-run",
+          "exit_code": 0,
+          "seconds": 1.72390307020396,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "338ae8643ba3e40ec977a07d50e13b739c9deac7bb1b08b598a848d3f92bf045",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "empty_composition-python",
+          "exit_code": 0,
+          "seconds": 1.8849935247562826,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "bcc2468e5a7a09608b8b1a2e0a056984088d66dd03917be28ef41c96c12baeb0",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "primitive_failures-c-build",
+          "exit_code": 0,
+          "seconds": 1.811575723811984,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "primitive_failures-c-run",
+          "exit_code": 0,
+          "seconds": 1.756957174744457,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "d61d5a70facff0cc93a2403a5cda7ff00c12d326786f966536f71195ce4c4b87",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "primitive_failures-cpp-build",
+          "exit_code": 0,
+          "seconds": 2.070526166819036,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "primitive_failures-cpp-run",
+          "exit_code": 0,
+          "seconds": 1.6991167971864343,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "primitive_failures-python",
+          "exit_code": 0,
+          "seconds": 1.8020618259906769,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "388333ab6f3d4da0a451bca380b08d0d0b214137984217e6d051580f87d019a1",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "wasm",
+          "exit_code": 1,
+          "seconds": 175.86663621431217,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "2f425a788eb8beed20bd86f7f5b3318decc28f53957fc86671ba4a8b5cc7539c"
+        }
+      ],
+      "passed": false
+    },
+    "native-v2": {
+      "commands": [
+        {
+          "name": "fmt",
+          "exit_code": 0,
+          "seconds": 12.88173511205241,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "fuzz-fmt",
+          "exit_code": 0,
+          "seconds": 1.8449100009165704,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "all-feature-tests",
+          "exit_code": 0,
+          "seconds": 41.1114604389295,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/primitive-failures/native-v2/release/deps/csgrs-d5e0741bbc5df635": "7414550e1deb231c3fc83c0c3e417a8b76078e3a17ac598a77597408aedb0767",
+            "target/primitive-failures/native-v2/release/deps/adversarial-c03dde69c05f1cf2": "aaead9595151dbf1dfe3f0b5cc7e0e11bfbe8ffc459a78a5457be62c371488a6",
+            "target/primitive-failures/native-v2/release/deps/adversarial_deep-5dea7b8952749c41": "1597e504517c767fddd6679eea121a5ec4cc99532160b38087745eebd94c3661",
+            "target/primitive-failures/native-v2/release/deps/adversarial_extrusions-22c8c063f22c33de": "a280b0f052ee9a7ca8f04a3e92caf46681608810d33658540f2a785567c9be6a",
+            "target/primitive-failures/native-v2/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+            "target/primitive-failures/native-v2/release/deps/adversarial_stress-8c747993ca7dff64": "9fdbab8616d24f53e74594b7addf14cb23bc2721e08748e3ea069c25f5414979",
+            "target/primitive-failures/native-v2/release/deps/competitive-8d824413442e1853": "a4eb13e9af055d1a21f29a62dcae516f1aeab8fb8827deb0bc962b4db8176f5a",
+            "target/primitive-failures/native-v2/release/deps/empty_composition-1b2f2ba6943338cd": "6f0ed4ee5e435c0173831b949e4ef94bf169c7708a401a83c49b571f79e39aca",
+            "target/primitive-failures/native-v2/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "cf762d3c117746def771601d033f38f24de385f04aabdb70cd6acb82b2af1159",
+            "target/primitive-failures/native-v2/release/deps/geometry_context-d256044952b39c9d": "8fc8697e18ba9a645e9e8905d53ff3c7a100bcecd64ef9e8eecf1ccbdd2670b6",
+            "target/primitive-failures/native-v2/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "7880ef8e9840938b8920a492d01e173cc159c5a21d4c42e0299ad23faa01cfaa",
+            "target/primitive-failures/native-v2/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "49de09db800e87d92f2c49ff9514d943dd12786dd8d891f8b4f1db5a5514d1c8",
+            "target/primitive-failures/native-v2/release/deps/native_queries-32678419862dff6b": "64ea292bb25e7bb07bec57f790045e016fcc4f61926197ee217198797346dcd2",
+            "target/primitive-failures/native-v2/release/deps/primitive_failures-8e6539f143e56577": "51ea4f3ae8e12dfd71f20cad064020429ea52606ac3cb97787372fc9a91abd3a",
+            "target/primitive-failures/native-v2/release/deps/readme-d31b115aba933918": "e2c2e5a577640241a8ad5c895d3dcea14ef2e3c39e7132cefa074932e6ed7fc4",
+            "target/primitive-failures/native-v2/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+            "target/primitive-failures/native-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "93aadac265fd8ae46925aeaa903a1f39bc9c3e4a8e9af0260be1cddf644d62ee",
+            "target/primitive-failures/native-v2/release/deps/solid_cache-f1483884916afc0e": "20aa5cfee92d991cee5659a12b4434b4b5442267b5ae769909ad88babce11f1a",
+            "target/primitive-failures/native-v2/release/deps/wasm_certainty-d7100c8fa594776c": "e01d38e87b692aa8e31671a00571bc303634036ee712265e78b72f7d8442df4c"
+          },
+          "stdout_sha256": "c549f3ec471e759a9e55d63e7b5ee40ddc84d0cd7d8ef26f9406c3ab571d66fb",
+          "stderr_sha256": "38a9e7d7112ea5c3884a62234fdb99e83b968d55d1d8c7c164c01dc07ed8d6e8"
+        },
+        {
+          "name": "ffi-tests",
+          "exit_code": 0,
+          "seconds": 14.303571691736579,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/primitive-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f": "3371076fee8b06984c5602328255a4435aa25cefb0bb7a39e501b5927590fd83"
+          },
+          "stdout_sha256": "d4d1a79ee26342288cad4a96afcb5c12078f038191cc07d203ef0d4391b16d66",
+          "stderr_sha256": "66d527a7837d5c14eb00fe5bed31079ed8aa2c039ad400219aa02e5d2c4f374e"
+        },
+        {
+          "name": "downstream-release-model",
+          "exit_code": 0,
+          "seconds": 2.091843957081437,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/primitive-failures/native-v2/release/deps/release_workflow-594135c930ee78a9": "400283470ae02726d4562ce9ea1466d61755b1e426dfca920ad10be9a47a95a9"
+          },
+          "stdout_sha256": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd",
+          "stderr_sha256": "a5f4a1ce54a348a392af180bf20524ff4d01f991ca6bacbf471ded9ede908df7"
+        },
+        {
+          "name": "strict-clippy",
+          "exit_code": 0,
+          "seconds": 7.320740948431194,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "c288f248e0a52858e9514f3a42ce387ef8887832c4939d1e42b8dff55ce065d3"
+        },
+        {
+          "name": "downstream-clippy",
+          "exit_code": 0,
+          "seconds": 1.980584777891636,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "1ff8bbcb4151dc887e69b78a29bc241d5062cba4757aa5f4639926ae712a8181"
+        },
+        {
+          "name": "fuzz-clippy",
+          "exit_code": 0,
+          "seconds": 2.32007355382666,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "72a1a678298661dbe1fcbc0e161f72194b1b0f0880d40e2619d8c2ce1d086123"
+        },
+        {
+          "name": "docs",
+          "exit_code": 0,
+          "seconds": 245.54987028893083,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "2487cc5c1d7a2d7c245319ea1b3c2acddbfccc07d9bdc53658a0aab9a5564aa5"
+        },
+        {
+          "name": "doctests",
+          "exit_code": 0,
+          "seconds": 17.127869429066777,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e2e428ad64c081d4629a6ca35ffe5710fa9ff8ba6b873b1b11d7f93cf1157153",
+          "stderr_sha256": "6f12f76d75edb624aa126a7348f4aa0379223a7f46bc288013d1b6e661b1800f"
+        }
+      ],
+      "passed": true
+    },
+    "bindings-v2": {
+      "commands": [
+        {
+          "name": "wasm",
+          "exit_code": 0,
+          "seconds": 16.02727987477556,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "70870ab9accd685edf7fc42949a7fa04f2536afa268ad1cf0bf230fbbd0a13fe",
+          "stderr_sha256": "71bc7375d23a0e7dfb66344735c71f5a4dcdd45f0d025d055ace5e69a99b2b18"
+        }
+      ],
+      "passed": true
+    }
+  },
+  "closure_runner_sha256": "e07ef0a0ce8a0a250bb454c1b36d462b9aa8ecd73fb4314c123e7259f35ede02",
+  "implementation_and_tests_sha256": {
+    "benchmarks/rust/adapter_graphics_export.rs": "26299675da18331c48c78105d541844dcffb0cf56452d99e4fc6af7240542d52",
+    "benchmarks/rust/feature_pipeline.rs": "14067a199117e7badc938f7d8ff9575609111fa5ab50d3b6d01c68a9f2e2f60f",
+    "benchmarks/rust/kernel_comparison.rs": "821c1221d73534f0464fa73bee2ae71010f21d04b698ec2601113a021cdf0302",
+    "benchmarks/rust/mesh_boolean_context.rs": "b595af757825e3195de87301ffe131b2b0be3f57dd3c063ce8d90c46d0110896",
+    "benchmarks/rust/mesh_pipeline.rs": "db4fa00f9a9d16c8db94e23cb9d70b7e002720ff95cb7864093f477e4109b369",
+    "benchmarks/rust/part_blueprint.rs": "e611e4f2edec1a017a22f092d4cc130756b6b146a94222ca8b6882f28d37de06",
+    "bindings/cpp/csgrs.hpp": "cb1ce0bf5ff8d4a2e639f3c87537383114d104ee4933aec90c4c334b6aba2060",
+    "bindings/python/csgrs.py": "c6c89ffa186a1d6334d17b2ca524f8be23a0509ca722958caf55b33835f42e6a",
+    "crates/csgrs-ffi/README.md": "8000a86e8b4025faa5543b799a1e706cd635b73843362b619168b0794e70f92f",
+    "crates/csgrs-ffi/include/csgrs.h": "c3bb497c55a7e960d67fb10dd26f2c74ffe114b1dc8f74eb454ff7a698249d11",
+    "crates/csgrs-ffi/src/lib.rs": "69dc7dea6a36af63f57483664d339d7bfec8b677de6486b16d80821fe735e45c",
+    "crates/hypercircuit/tests/release_workflow.rs": "a69ae5d79ea68d76486a3e1b448a35960e7dbfda0b078a58e046178bc64dae34",
+    "docs/properties-status.json": "ef47bb6e7a0342452281e099e3d4afecb22ea875e7f99d77d0838f92fa0cd6a6",
+    "examples/adjacency_demo.rs": "7b44c8885bda8e5cceef4dded9bd4736cb346f4118bb1254ebff84a93b7e57de",
+    "examples/assembly_manual.rs": "c93c9b1d4ad950f1934c31d7015676165bf8b81db985134140f1a80f9a6c3227",
+    "examples/basic.rs": "280a2483e0b724a56ac33a56dcf0ea41371bc8f7f9e5d3cc2d4612a049efeb1a",
+    "examples/basic_shapes.rs": "e2e48a0535d43dfac5b1df7a3b3fc9aef162c40401c1ea6fcc3666533850ed44",
+    "examples/boolean_operations.rs": "ab93a268c3e195793a99c5baed45fb3567cdad3b13b6f6177ad9b9275d6dcef0",
+    "examples/convex_hull.rs": "6b505aade6dd44917d60b323aa6ae72511b39d1da94be521fe9ce0b1e8d45b7f",
+    "examples/minkowski_sum.rs": "444382faaf01ea6322c27d60596cb6b9d628d32cf5a48b32e48f85ecd4084dd1",
+    "examples/multi_format_export.rs": "51b9e5a883e37a87b06b81cd58930c3e0bc6d058da9c529d4f5be88c9be0e175",
+    "examples/readme_renders.rs": "b1c1257ac308f5cc4833fd0669eef5c479b791324b7af432627395296675b4b5",
+    "examples/transformations.rs": "a567633aec43c8b4c663b903ed471935c189185686d772d3fb7e226f47b758d3",
+    "fuzz/fuzz_targets/fuzz_curve_polygon_triangulate.rs": "ecb01b978871142bf65458c0f569093cc3b6c799809d5debe30a1071b8c7c732",
+    "fuzz/fuzz_targets/fuzz_curve_shape_catalog.rs": "dea0f9db9cceda7b55c83009ec2a1a94b0bb066eac6b50627d1d09ed53f57c98",
+    "fuzz/fuzz_targets/fuzz_export_names.rs": "d970acbc42db1958e05e11c64a3cfe7b4ddad7d8aac0a43ee5eb15441fdaca59",
+    "fuzz/fuzz_targets/fuzz_gerber_import.rs": "fda6da25685dbcba8f3a05d897fa09ce2c3544554de764e767d9741a0beec0f2",
+    "fuzz/fuzz_targets/fuzz_mesh_boolean_pair.rs": "3f88fceb5d7877f063a0e5da2299bef76e99fddc4f930f047a5093bc0057a701",
+    "fuzz/fuzz_targets/fuzz_mesh_bytecode.rs": "9fc9ffe6d4ed9ec90099c8a8c0e81cdb695ca69ad341542e7785cf06fc3e3cf2",
+    "fuzz/fuzz_targets/fuzz_mesh_hypermesh_adapter.rs": "d64288d9c847e461049c39f7c7cf66ce7f940bded54cefc13aa2f97380eeeb8b",
+    "fuzz/fuzz_targets/fuzz_mesh_primitive_catalog.rs": "897b602b6d58e6b7ad0f8a4cd8babc55246ddd82978338eb8ee95ca31525a10b",
+    "fuzz/fuzz_targets/fuzz_part_blueprint.rs": "f708c6eb574f3b8054dc783fe5e9d1262ee4c6c3bbe13f8f5d24649dc263f4b5",
+    "fuzz/fuzz_targets/fuzz_sdf_tpms.rs": "014d92c0314dee7c54fbcf2f4924db42e3d18e00caca627a207f16839044806f",
+    "fuzz/fuzz_targets/fuzz_svg_import.rs": "c4b4734fbbaf81656402bbabb0edbe2b37ea1bc407113eebd6f7bfdfdf85a7b2",
+    "fuzz/fuzz_targets/fuzz_transform_matrix.rs": "54265c827679f3c4c2966c3ccd839cd0b011f00ac3dcda5d11b66aa3dc17d650",
+    "readme.md": "e607f455592be2539abba78d37f13ac1a349b9be6a82b1dba4859152a5509917",
+    "src/adapter/mesh.rs": "9328a3ba35159232565ca51924f02e82b91f1525e93d540734eeabc624b7527d",
+    "src/adapter/scalar.rs": "4b9933a309b67c514fede97812c10c9d95ddf07b1a860ec454d6500f163fda0a",
+    "src/attributed.rs": "0621e065e1e18e99769a6540d49091858a48498e15d510530d7b5058e7313fad",
+    "src/context.rs": "0009bc6c50a5cba6f4d47ffc27c0e49076dbc869affe0471d60299df5def2df9",
+    "src/errors.rs": "4faeac21f56225e23cebfbfbd2217f7a835a7451932cffa07da7bed12696319d",
+    "src/io/dxf.rs": "2b6ef3edf0b6ee48af0a779a51ff411dafc581b178d144f3277fe62909eb49f2",
+    "src/io/obj.rs": "37caa578342c9b618d9e7b70f03d2ee0cf7b33670308a630299f1691b33d5bb0",
+    "src/io/ply.rs": "72a38f6851b91163a515066c29920f79c136e5eb7cf863dd74b242dd6b5ebd21",
+    "src/io/stl.rs": "ab29247046a12a794de8a22294c4bdae05bc523e8d3c0f1ead0d0cece6ac53e8",
+    "src/parts/assembly.rs": "19f8e6435fa901acad58fdadaf1ff26c4a1283150b8a40231e73e2560d02cc2e",
+    "src/parts/bom.rs": "64908bb0fbf2f5cd1ec61f5b1ebab832b2077a354daf9c899667d2bd11afac3e",
+    "src/parts/manual.rs": "79407bc8dcc210102561855c0f2848c4c38a3c80805b28042b302c85aa9a301a",
+    "src/parts/occlude.rs": "c988cdc81d1769ac2bcf22546f7c45137e55455ee33c0e7b7b7621ebdeef084e",
+    "src/solid.rs": "902cb69b7cdf64babe17509ab464e061dc4d5d6c3edf126459170dc378aedcca",
+    "src/solid/cache.rs": "a77911fef620b52b3c4a8bbeb61ed68e5879056cb5905cf43bf40cac68491d2e",
+    "src/solid/cache/storage.rs": "538db91b6865110235b2282b5320e838a879af886864a464364de17201052951",
+    "src/wasm/mesh_js.rs": "69fa7cec721740152a482c41e828dc459413c1a42e4dff67370e18ba586f1d28",
+    "tests/adversarial.rs": "bf941bdb07064841563fba3e1adddddcd59f4fc0285888f9a0ce849b36af11a9",
+    "tests/adversarial_deep.rs": "31c8b16c62fec31d519fcf0434ae235e74331795eb8358caa3a40af5ad4ff291",
+    "tests/adversarial_stress.rs": "a976494483bac7b6b0878759d1bbd081f60d1999d78c1840370a036e69bb3998",
+    "tests/empty_composition.rs": "6f6b9a979845401a27b06eca14b6cb29b33d2ed0bc2335aa5c15d6cc5f9e4a32",
+    "tests/ffi/primitive_failures.c": "7d1b6bf4a468f8fa96d135f05db2cf58f6d11ba97da212c3626883118dafded5",
+    "tests/ffi/primitive_failures.cpp": "c1937bccdb6d235500321d2b1af6e1ec14874f4d2712e03776f89f0d689c2878",
+    "tests/ffi/primitive_failures.py": "1d242fb6670aa47f9e75a527f9ddebd92f0cbaf0afbf81742c97a1cfacbc717f",
+    "tests/geometry_context.rs": "15f1d92bd4ff944cfe476997beb95bc4f6db9a723ed843821ac0b190c1ea1cb6",
+    "tests/mesh_boolean_context.rs": "ae5c133fdddc7a7c5e296287c42998b077442a4d34ac172dabd5b397f66328aa",
+    "tests/native_queries.rs": "82477b622038ef6370cc309bba35e2748f32ae02bbc3ee32da21f896c682b532",
+    "tests/primitive_failures.rs": "9ba90c5fd74a9de9ed705ee6822b082c79c35869bcec31fcceae07d3cbcc1d6f",
+    "tests/sdf_tpms_diagnostics.rs": "e7ee09fd98ad0eab7e0b16b73647d262f78350564abe4f32a49e6e234a610fe3",
+    "tests/solid_cache.rs": "1f0fa5320e383d8b7e600440b6184ab72e49e4a49d20dcd4599741042ce8742b",
+    "tests/wasm/geometry_certainty.cjs": "7c4cf8c4ac75d1dd5c5dbcbb10fe21f0430891201e72c341b8c5ff384632caba",
+    "tests/wasm_certainty.rs": "9d2956f925a9cc6ccc6321a83ac73473289175ea60e011c702ba58bb4415a83c"
+  },
+  "preserved_executables_sha256": {
+    "target/primitive-failures/baseline-v1/release/deps/primitive_failures-812823cb4c624c0c": "331636133b1d3da4cc076d3a8c9a571e3529894de0bd6c59611128b37e25da45",
+    "target/primitive-failures/candidate-v1/release/deps/csgrs-12b72f0ccdd38706": "5e77292733b40296c5520e65b48a7bda66581f3a7e0357afdbc1db5c5bdf5882",
+    "target/primitive-failures/candidate-v1/release/deps/empty_composition-329c8a68d57ad60d": "8b89888b0477a9c219bb573e0e90048a22200b76c87b0e846a092128905bb1a6",
+    "target/primitive-failures/candidate-v1/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "c156099d09b92f2d90d7f5b01238849210da15c6ec4df9cd1c6d7ae3f7b14064",
+    "target/primitive-failures/candidate-v1/release/deps/primitive_failures-812823cb4c624c0c": "38a4070200cc0f5fa9677e91f80841d4e2affe75f329b39e2d3435bf0c4d69e8",
+    "target/primitive-failures/candidate-v1/release/deps/solid_cache-07b265ceb2ca1c46": "1d2ca790b5f91cfffa4adc5bf07bfc8f0e56d0fed429740f01d3b95c531aa642",
+    "target/primitive-failures/candidate-v2/release/deps/csgrs-12b72f0ccdd38706": "df15a2cb02f1c9660fe90681388d2855ffa9e160f3f095cee807669e7b63631a",
+    "target/primitive-failures/candidate-v2/release/deps/empty_composition-329c8a68d57ad60d": "f995ddc297945f67cd37597e78f76cc49b8dfbcdff2d4fc02443d31f408df8fc",
+    "target/primitive-failures/candidate-v2/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "ee375860f62928b3feb6e7c54e5a71b1b5577e84b9e1eb75b1cf05360f5cbd63",
+    "target/primitive-failures/candidate-v2/release/deps/primitive_failures-812823cb4c624c0c": "f6728c9636f0cf8328dc457e3618b454b86997c29020034a75eaa97ea02b813c",
+    "target/primitive-failures/candidate-v2/release/deps/solid_cache-07b265ceb2ca1c46": "49a10ffed0634da519f30533e3e2c1ac35ee04e1ed6250613a14498476ea4fba",
+    "target/primitive-failures/native-v1/release/deps/csgrs-d5e0741bbc5df635": "e8fb648bf5f386acbae6bb7ad53224a3605313c9fe9096b52ae16bbc2f17914a",
+    "target/primitive-failures/native-v1/release/deps/adversarial-c03dde69c05f1cf2": "87cf2d02e0a4fcc352e28a802481b75354329baf7b12bc8a69d89bc35ad64f31",
+    "target/primitive-failures/native-v1/release/deps/adversarial_deep-5dea7b8952749c41": "87d97ab0c133aa1bf03b0f6e0df19c4bbc5d90a5cfc61b2a3e9f3010007f5e67",
+    "target/primitive-failures/native-v1/release/deps/adversarial_extrusions-22c8c063f22c33de": "6c67f0fd15807774cbddd6073db1187aa203c95c24e8810d2a49b1ede2ee486b",
+    "target/primitive-failures/native-v1/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/primitive-failures/native-v1/release/deps/adversarial_stress-8c747993ca7dff64": "17cbed60f3207fa5ea8b33c224699e6c8083db1bebf819eb55ab528ae1ff7efa",
+    "target/primitive-failures/native-v1/release/deps/competitive-8d824413442e1853": "1bf59b9d9d48c9c09a25523e01472466d67d16c4e412ff95c8e82acdcc1ef346",
+    "target/primitive-failures/native-v1/release/deps/empty_composition-1b2f2ba6943338cd": "5275f2caa7fa36d8e6669cd6c7e7e2fb30a0b3179a652f217138e1c75ba8984e",
+    "target/primitive-failures/native-v1/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "21d471bb135bbc9de322191bb5b2edeab9f7a00c2d8eecaf1cd2939e64662dd6",
+    "target/primitive-failures/native-v1/release/deps/geometry_context-d256044952b39c9d": "795a0fe3ba54e680f57a25e1b5afa3ff8f8b7e379734a5c3520137fc8cf35c54",
+    "target/primitive-failures/native-v1/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "b93263cc1a6692c453924b20c48b5b6e81db5f8f44fd8c93b5bd501c70e769b6",
+    "target/primitive-failures/native-v1/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "b53ec01472ca92bb42f9ae299a9ee2b91483d4feb2a2fe91614cc81e203462f0",
+    "target/primitive-failures/native-v1/release/deps/native_queries-32678419862dff6b": "a5f5a30b8454885810932d79b53e4dc79492e58735064263e8e054ee497d7feb",
+    "target/primitive-failures/native-v1/release/deps/primitive_failures-8e6539f143e56577": "bc80f7b103b9385a1409577963215fd1efd82e146ae20c7cf986b88ed235f164",
+    "target/primitive-failures/native-v1/release/deps/readme-d31b115aba933918": "e2c2e5a577640241a8ad5c895d3dcea14ef2e3c39e7132cefa074932e6ed7fc4",
+    "target/primitive-failures/native-v1/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/primitive-failures/native-v1/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "6b03e2856ee3cc0304a71cb137c109a351911d4e56346e86e1ee6d9040a3e2cd",
+    "target/primitive-failures/native-v1/release/deps/solid_cache-f1483884916afc0e": "1a362c4a88a4c58d54fadb2b27b03216c98f948dcfd3cbf0006f746c06a6a854",
+    "target/primitive-failures/native-v1/release/deps/wasm_certainty-d7100c8fa594776c": "ef9cfb823886e5151605c1d5a55e423149ce281df7952fabe7c67e1c0cc8baab",
+    "target/primitive-failures/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "3371076fee8b06984c5602328255a4435aa25cefb0bb7a39e501b5927590fd83",
+    "target/primitive-failures/native-v1/release/deps/release_workflow-594135c930ee78a9": "400283470ae02726d4562ce9ea1466d61755b1e426dfca920ad10be9a47a95a9",
+    "target/primitive-failures/native-v2/release/deps/csgrs-d5e0741bbc5df635": "7414550e1deb231c3fc83c0c3e417a8b76078e3a17ac598a77597408aedb0767",
+    "target/primitive-failures/native-v2/release/deps/adversarial-c03dde69c05f1cf2": "aaead9595151dbf1dfe3f0b5cc7e0e11bfbe8ffc459a78a5457be62c371488a6",
+    "target/primitive-failures/native-v2/release/deps/adversarial_deep-5dea7b8952749c41": "1597e504517c767fddd6679eea121a5ec4cc99532160b38087745eebd94c3661",
+    "target/primitive-failures/native-v2/release/deps/adversarial_extrusions-22c8c063f22c33de": "a280b0f052ee9a7ca8f04a3e92caf46681608810d33658540f2a785567c9be6a",
+    "target/primitive-failures/native-v2/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/primitive-failures/native-v2/release/deps/adversarial_stress-8c747993ca7dff64": "9fdbab8616d24f53e74594b7addf14cb23bc2721e08748e3ea069c25f5414979",
+    "target/primitive-failures/native-v2/release/deps/competitive-8d824413442e1853": "a4eb13e9af055d1a21f29a62dcae516f1aeab8fb8827deb0bc962b4db8176f5a",
+    "target/primitive-failures/native-v2/release/deps/empty_composition-1b2f2ba6943338cd": "6f0ed4ee5e435c0173831b949e4ef94bf169c7708a401a83c49b571f79e39aca",
+    "target/primitive-failures/native-v2/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "cf762d3c117746def771601d033f38f24de385f04aabdb70cd6acb82b2af1159",
+    "target/primitive-failures/native-v2/release/deps/geometry_context-d256044952b39c9d": "8fc8697e18ba9a645e9e8905d53ff3c7a100bcecd64ef9e8eecf1ccbdd2670b6",
+    "target/primitive-failures/native-v2/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "7880ef8e9840938b8920a492d01e173cc159c5a21d4c42e0299ad23faa01cfaa",
+    "target/primitive-failures/native-v2/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "49de09db800e87d92f2c49ff9514d943dd12786dd8d891f8b4f1db5a5514d1c8",
+    "target/primitive-failures/native-v2/release/deps/native_queries-32678419862dff6b": "64ea292bb25e7bb07bec57f790045e016fcc4f61926197ee217198797346dcd2",
+    "target/primitive-failures/native-v2/release/deps/primitive_failures-8e6539f143e56577": "51ea4f3ae8e12dfd71f20cad064020429ea52606ac3cb97787372fc9a91abd3a",
+    "target/primitive-failures/native-v2/release/deps/readme-d31b115aba933918": "e2c2e5a577640241a8ad5c895d3dcea14ef2e3c39e7132cefa074932e6ed7fc4",
+    "target/primitive-failures/native-v2/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/primitive-failures/native-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "93aadac265fd8ae46925aeaa903a1f39bc9c3e4a8e9af0260be1cddf644d62ee",
+    "target/primitive-failures/native-v2/release/deps/solid_cache-f1483884916afc0e": "20aa5cfee92d991cee5659a12b4434b4b5442267b5ae769909ad88babce11f1a",
+    "target/primitive-failures/native-v2/release/deps/wasm_certainty-d7100c8fa594776c": "e01d38e87b692aa8e31671a00571bc303634036ee712265e78b72f7d8442df4c",
+    "target/primitive-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f": "3371076fee8b06984c5602328255a4435aa25cefb0bb7a39e501b5927590fd83",
+    "target/primitive-failures/native-v2/release/deps/release_workflow-594135c930ee78a9": "400283470ae02726d4562ce9ea1466d61755b1e426dfca920ad10be9a47a95a9",
+    "target/primitive-failures/bindings-v1/release/libcsgrs_ffi.so": "c8feb230e4892e9718285f1bebdc4c7c57c35610389a4fa4fda574967f79c7d2",
+    "target/primitive-failures/bindings-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "5f6fb43af95973ec2665992428dc655220767175bbc3fafae367ee348ab61c49",
+    "target/primitive-failures/bindings-v1/empty_composition-c": "8b3e2dc62ac775dffd60db04484779e99c7fdf3f76aff4d2054bce57f5e2b423",
+    "target/primitive-failures/bindings-v1/empty_composition-cpp": "e7fe0b30ec0a552b92300d1296aad9c99e8e1689132bc793bd329d13ff6b076f",
+    "target/primitive-failures/bindings-v1/primitive_failures-c": "1998d1f4a48f79b8a2b9a2a1e3f8d7da21f8ba6e8a897daf805fd9889b12c25b",
+    "target/primitive-failures/bindings-v1/primitive_failures-cpp": "3d5fde845052d38ec64fc6e8d0966b4f646e5ef65e4378cd266d0a567a53f7aa",
+    "target/primitive-failures/bindings-v1/wasm-bindings-node/csgrs.js": "ca82d918f6887d28e9220097d9016d07677cf5c6836d1ef59b112e53fd953c02",
+    "target/primitive-failures/bindings-v1/wasm-bindings-node/csgrs.d.ts": "411a252a9bc51de012bf5be2bc7191cebba27aac8f37f41344ddad26f7f6e6fe",
+    "target/primitive-failures/bindings-v1/wasm-bindings-node/csgrs_bg.wasm": "b4f74b91e19c1afd1c4d481b8f200dec88f85a5cf1f3ca3f0038987d01e5f12a",
+    "target/primitive-failures/bindings-v2/wasm32-unknown-unknown/wasm/csgrs.wasm": "fc483cbd166696c688aae8dbe80020201549956ffb28a4a41c7fb04a206b1286",
+    "target/primitive-failures/bindings-v2/wasm-bindings-node/csgrs.js": "ca82d918f6887d28e9220097d9016d07677cf5c6836d1ef59b112e53fd953c02",
+    "target/primitive-failures/bindings-v2/wasm-bindings-node/csgrs.d.ts": "411a252a9bc51de012bf5be2bc7191cebba27aac8f37f41344ddad26f7f6e6fe",
+    "target/primitive-failures/bindings-v2/wasm-bindings-node/csgrs_bg.wasm": "fea1e6507e19383d81f078bb2a6346c635abaefca072243924d58e755aca5fb1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/baseline-v1/release/deps/empty_composition-329c8a68d57ad60d": "4c3ff457f2768596b30df2ad2670bef4203962271eb44e931e276126b0ae11bb",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/empty_composition-329c8a68d57ad60d": "0b052a1dbee4bad3fe82f3128d75ee387fbb319ad4fb8420e778f5a2a6e80977",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "e4b9dcf93902200c0cfe70ee55094e6ef067b6b47cdab93a72763f3218965913",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/solid_cache-07b265ceb2ca1c46": "45741c0db6ac171cc24138d7b87589539df553800d94c6eb9c3cbde8a04592a1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/release/libcsgrs_ffi.so": "3b80452ae5ee6c2f0b72eb108497e3d4d4106cfee1053b36ae66f5dcccfea2bd",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/empty-c-consumer": "cc345dc9a00a53e3a65488a4d128541f21efb783555c1e889be748c3b6c93a7e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/empty-cpp-consumer": "c2c5e56c5585b6f86f22fa6496c7bc579117a9af88842a39acfa90770f8160d7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "47aeb7ab2a44950bc943552584e8d153cbd9d68a3801cea289ce8fb5f5b655d2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs_bg.wasm": "202ecd8b97b57f8f5795c81740a5fb201f6a40da38288d11549cf5ace381c798",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs.js": "bab626941aaec3b5c78453fc3106060f07a809a230d89abd23ce1740df57967a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs.d.ts": "411a252a9bc51de012bf5be2bc7191cebba27aac8f37f41344ddad26f7f6e6fe",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/hypermesh-2b29b988ffb01c31": "a1b6859f3fad6299740f5d5b2d8df37ab654957c04d2997134969dd4f2dc9913",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/boolean-8c7aa124f327f010": "daaa1dd3e469bd16b671666cf36012fec77827867be087e60833b89e0a715549",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/csgrs-d5e0741bbc5df635": "a3749d16efbe3e027fe9c98d8b06d67465a1788b63e03179fbb13a8921572ff9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial-c03dde69c05f1cf2": "3558ab3fdf6439999b2518d15dfbfba83e4f78f2d23962dc8fb3fef40c3fb0d9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_deep-5dea7b8952749c41": "dcf3e0c907796ea910cdf6b118836029f0b3998e75804b2724c5fa7d4c7b3dc6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_extrusions-22c8c063f22c33de": "fa7241663a4f672fa5951a56f0c64b1500bba94f3ac12dbee5e3d064cceb00c2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_stress-8c747993ca7dff64": "1608199a4c5739fab18d4b17031314b1bdb3195520715a48eccbc8aa6335d68a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/competitive-8d824413442e1853": "7b2693c2a35e84e8f86df0ce1e69de5f52407e07901790d6c20a617009feb1ad",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/empty_composition-1b2f2ba6943338cd": "74f20b6d0fd14ea06b009f39c23efc1e9ce249ac271863607c9c97305113cffa",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "294ce9c0661efe78d7608501e3429c14a99d7c1869d1eba16cff78b26dfe487a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/geometry_context-d256044952b39c9d": "d1f227b6285275b3d55596d2a73e276247c7985826e252fa1bc3673d4a8db6a3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "8924a7c7571206d511e933803e4c7023089b1fe90a1d8bd7ea9200e5fb7143ec",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "af03aac2dd91027c9e9f6135a32f87245d341dc87cd0a7d54b97d073c33758ae",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/native_queries-32678419862dff6b": "aee3aaaf184ca7f347b1ccf111a372f4af3d77ea5c7f5ba6ba0225dea6e30d07",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/readme-d31b115aba933918": "426328dc9b5ca7d64d189456a44017ab552d7820f97634a9ba1b19be2fbdc6f3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "4310a05c435519987fe0fc896d63a33e36016fd2118cd758dfa5d8ea61000df0",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/solid_cache-f1483884916afc0e": "7c88e42bc8386f4150f4bf5be569427db5ef9e0ff017c38758bc0e9adc3e9cf0",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/wasm_certainty-d7100c8fa594776c": "b887d9ec4083dcea50898a540bb045377df8712c989b819bc2aa37f2b9d7df3d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "416a3e7e06e547da3921c73b4f2e5a7e0e3c5d0d1aa0c353e724438627f099ed"
+  },
+  "pending_native_sha256": {
+    "crates/hypercurve/src/bbox.rs": "c145ab30c68433690f8827b7de7cc9c30c1707a1cdb7793cb81e33b3dba0ae4c",
+    "crates/hypercurve/src/bezier.rs": "257dc8fb654fa86f7d2d47089bd5137f5a1f53d3336127e76baf4cf7d05b8840",
+    "crates/hypercurve/src/bezier_fit.rs": "cbba8129249d814c997629e7d8373a985b6bf9b77ab2774dff4afff1bed4d762",
+    "crates/hypercurve/src/bezier_region.rs": "6ea7d9bb3bd2fadc96cb8736b59fc66b5f576460eee83ee5fb306b43a227bb1e",
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/src/bezier_region/offset_spans.rs": "4c6ffb8e36b5dfd3d9d030c016d96af7964f9a9e56f1b9c1abbbf91553f29ee6",
+    "crates/hypercurve/src/bezier_region/point_location.rs": "2d915ac75cd5d7a61b3440fecf0f0ffae8c6c25687e5c4f382077f8de3908672",
+    "crates/hypercurve/src/bezier_region/tests.rs": "c78ab04298572d06d51eec08aa3201e392a6fb663a0b1a65d5ce81e5c06c6318",
+    "crates/hypercurve/src/classify.rs": "6997d26ebfe4c50d3abf7ed296cb9cc121ab70754421172e21693bde005e81df",
+    "crates/hypercurve/src/contour.rs": "a6ef94566c3c68d6311f7fc7bd47f55e129858cb4d381ec6a8acde157fe4141c",
+    "crates/hypercurve/src/curve.rs": "5e9e1457cd9c7f875f0c730ef8ea88ce2f78a8eab1cd93b8e59463f57327468d",
+    "crates/hypercurve/src/curve_intersection.rs": "2d5b2566186174ed2cfc53de0c276560bc647c6f9a39004ffedcdd90f91f78f4",
+    "crates/hypercurve/src/curve_region_boolean.rs": "5d0a87272791632d128731c4ed78971fdac5717b594f33bd8513389401606471",
+    "crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs": "385a1080d7972a08a5082bb6c47ad19e2cfcc1012b4f6c45bfd618796b848344",
+    "crates/hypercurve/src/curve_region_boolean/regularization.rs": "5a542169b7e0dfe99e520da867a907303485a56b03b13491af4970044e9ca866",
+    "crates/hypercurve/src/offset.rs": "b83ee4f648f9ae4b0bcfc5b52f2553eaaf87f1c57c67e340d9ab101053bcffda",
+    "crates/hypercurve/src/policy.rs": "abbadb4d1345eb2ccdf50df57337e991abb999e479067851c5bb2e75f9f34202",
+    "crates/hypercurve/src/rational_bezier_general.rs": "372d81688c5c6e061ad62cff408dd974c7f4bc771dccb19389823e6edd8886ef",
+    "crates/hypercurve/src/segment.rs": "d253abef3276d8b56a99ad9a7273227d3c823b6f01a7b01a0ce3959b32057213",
+    "crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs": "ef2d56e6e5dcec355eb776a8218fba2c797db5b14eda9c1e2dd5ec79224b4fd0",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b",
+    "crates/hyperdrc/README.md": "3af373486b7b51887db4cbfd17b50c7f01c2c64b018a342b3ac970484c0acd9d",
+    "crates/hyperdrc/src/checks/area_tolerance.rs": "d659ed532de0f81477afaa00df6521f4625bb7ddf4af3e08d158f8300cc00d5b",
+    "crates/hyperdrc/src/checks/differential.rs": "90e491f2578abdb07a7c922058d0b579c1cbb1f3ccea872ffcdb9deb373a6951",
+    "crates/hyperdrc/src/checks/layer.rs": "df442cd2614061fadcb0a5a8019410aa36afa9999a5ccf128d91e52cd1ef6f06",
+    "crates/hyperdrc/src/checks/mod.rs": "7f085ea070136481b6a1550f1589ddf15d4dfec657e68679059a05fc93f05ca1",
+    "crates/hyperdrc/src/geometry.rs": "18826a139f20f4fa047ecf83b864ad8311c26e0965835d8df0c42412fdd37fc2",
+    "crates/hyperdrc/src/geometry/README.md": "f8145f2c515a5b35b70815c7b68d8fc50e893f9d41072d0913d00b22133c2eb0",
+    "crates/hyperdrc/src/geometry/primitives.rs": "a753ce71223326c4b1d92467ec64ce2ad1a7528bd2c3822135a62e0990b13070",
+    "crates/hyperdrc/src/geometry/stroke.rs": "193422c60cd9a6e86efb7d8f61cfd9baae4e7ce130d136a881c1150d270e212f",
+    "crates/hyperdrc/src/kicad.rs": "598c62dfddbb7cbc8840b5a31b02ddcb408b4e35771ee33d03994084ccd16f59",
+    "crates/hyperdrc/src/kicad/README.md": "01e8aca6832bce80152306ad74cfb20fae6ef7258ed833ff1c6692e842c204a7",
+    "crates/hyperdrc/src/kicad/tracks.rs": "6ea5c63821f0f79b7f548bdaf613e9fdce273dc42be5d2597070f7195f2ba227",
+    "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+    "crates/hyperdrc/tests/native_linear_strokes.rs": "84f86db87c666e019b54bad7bff57cbbb290fe23960cc891966134cddd0a7b74"
+  },
+  "final_source_map": "native-v2/source-hashes.json.gz",
+  "source_delta_after_c_consumers": [
+    "src/wasm/mesh_js.rs"
+  ],
+  "ledger_after_sha256": "ef47bb6e7a0342452281e099e3d4afecb22ea875e7f99d77d0838f92fa0cd6a6",
+  "only_current_work_changed_in_ledger": true,
+  "full_plan_complete": false
+}

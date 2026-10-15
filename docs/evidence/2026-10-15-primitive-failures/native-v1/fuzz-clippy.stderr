@@ -1,0 +1,184 @@
+   Compiling proc-macro2 v1.0.106
+   Compiling quote v1.0.45
+   Compiling unicode-ident v1.0.24
+   Compiling autocfg v1.5.0
+   Compiling num-traits v0.2.19
+   Compiling syn v2.0.117
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+    Checking cfg-if v1.0.4
+    Checking memchr v2.8.0
+    Checking num-integer v0.1.46
+   Compiling zerocopy v0.8.48
+   Compiling libc v0.2.186
+   Compiling zmij v1.0.21
+   Compiling serde_json v1.0.150
+   Compiling serde_derive v1.0.228
+   Compiling zerocopy-derive v0.8.48
+    Checking num-bigint v0.4.6
+    Checking num-rational v0.4.2
+   Compiling crossbeam-utils v0.8.21
+    Checking itoa v1.0.18
+    Checking half v2.7.1
+    Checking num-complex v0.4.6
+    Checking num-iter v0.1.45
+    Checking arrayvec v0.7.6
+    Checking ciborium-io v0.2.2
+    Checking ciborium-ll v0.2.2
+    Checking num v0.4.3
+    Checking crossbeam-epoch v0.9.18
+   Compiling rayon-core v1.13.0
+    Checking ciborium v0.2.2
+    Checking crossbeam-deque v0.8.6
+   Compiling equator-macro v0.4.2
+   Compiling thiserror v2.0.18
+    Checking simd-adler32 v0.3.9
+   Compiling anyhow v1.0.102
+    Checking equator v0.4.2
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling thiserror-impl v2.0.18
+    Checking either v1.16.0
+    Checking aligned-vec v0.6.4
+    Checking log v0.4.29
+   Compiling crc32fast v1.5.0
+    Checking adler2 v2.0.1
+    Checking stable_deref_trait v1.2.1
+    Checking as-slice v0.2.1
+    Checking miniz_oxide v0.8.9
+    Checking v_frame v0.3.9
+    Checking rayon v1.12.0
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking smallvec v1.15.1
+   Compiling paste v1.0.15
+   Compiling built v0.8.1
+   Compiling getrandom v0.4.2
+   Compiling av-scenechange v0.14.1
+   Compiling rav1e v0.8.1
+   Compiling aho-corasick v1.1.4
+    Checking aligned v0.4.3
+   Compiling profiling-procmacros v1.0.18
+   Compiling arg_enum_proc_macro v0.3.4
+    Checking nom v8.0.0
+    Checking no_std_io2 v0.9.4
+    Checking quick-error v2.0.1
+   Compiling regex-syntax v0.8.10
+   Compiling pastey v0.1.1
+    Checking y4m v0.8.0
+   Compiling regex-automata v0.4.14
+    Checking av1-grain v0.2.5
+    Checking bitstream-io v4.10.0
+    Checking profiling v1.0.18
+    Checking flate2 v1.1.9
+    Checking maybe-rayon v0.1.1
+    Checking itertools v0.14.0
+   Compiling num-derive v0.4.2
+   Compiling simd_helpers v0.1.0
+    Checking imgref v1.12.1
+    Checking weezl v0.1.12
+   Compiling xml-rs v0.8.28
+   Compiling noop_proc_macro v0.3.0
+    Checking iana-time-zone v0.1.65
+    Checking zune-core v0.5.1
+    Checking new_debug_unreachable v1.0.6
+    Checking zune-jpeg v0.5.15
+   Compiling xmltree v0.9.0
+    Checking chrono v0.4.44
+    Checking loop9 v0.1.5
+   Compiling jobserver v0.1.34
+   Compiling regex v1.12.3
+    Checking uuid v1.23.1
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking fdeflate v0.3.7
+    Checking zune-inflate v0.2.54
+    Checking avif-serialize v0.8.9
+    Checking polycool v0.4.0
+    Checking color_quant v1.1.0
+   Compiling heck v0.5.0
+    Checking fax v0.2.7
+    Checking rgb v0.8.53
+    Checking bytemuck v1.25.0
+    Checking static_assertions v1.1.0
+    Checking byteorder v1.5.0
+   Compiling find-msvc-tools v0.1.9
+    Checking lebe v0.5.3
+    Checking bit_field v0.10.3
+   Compiling shlex v1.3.0
+    Checking pxfm v0.1.29
+   Compiling inflections v1.1.1
+    Checking byteorder-lite v0.1.0
+    Checking bitflags v2.11.1
+    Checking png v0.18.1
+    Checking image-webp v0.2.4
+    Checking moxcms v0.8.1
+   Compiling gltf-derive v1.4.1
+   Compiling cc v1.2.62
+    Checking exr v1.74.0
+    Checking ndshape v0.3.0
+    Checking ravif v0.13.0
+    Checking qoi v0.4.1
+    Checking tiff v0.11.3
+   Compiling strum_macros v0.27.2
+    Checking kurbo v0.13.1
+    Checking gif v0.14.2
+   Compiling lazy-regex-proc_macros v3.6.0
+   Compiling dxf v0.6.1
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking num-traits v0.1.43
+    Checking once_cell v1.21.4
+    Checking siphasher v1.0.3
+    Checking strum v0.27.2
+    Checking glam v0.29.3
+    Checking fast-surface-nets v0.2.1
+    Checking gerber-types v0.7.0
+    Checking svgtypes v0.16.1
+    Checking lazy-regex v3.6.0
+    Checking enum_primitive v0.1.1
+    Checking image v0.25.10
+   Compiling libfuzzer-sys v0.4.12
+    Checking gltf-json v1.4.1
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking encoding_rs v0.8.35
+    Checking float-cmp v0.9.0
+    Checking svg v0.18.0
+    Checking ttf-parser v0.25.1
+    Checking allocator-api2 v0.2.21
+    Checking lazy_static v1.5.0
+    Checking equivalent v1.0.2
+    Checking foldhash v0.1.5
+   Compiling base64 v0.22.1
+   Compiling doc-image-embed v0.2.1
+    Checking hashbrown v0.15.5
+    Checking ttf-parser-utils v0.1.1
+    Checking gltf v1.4.1
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking stl_io v0.8.6
+    Checking gerber_parser v0.4.0
+    Checking hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+    Checking arbitrary v1.4.2
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Checking csgrs-fuzz v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/fuzz)
+error: this `if` statement can be collapsed
+   --> fuzz_targets/fuzz_curve_shape_catalog.rs:209:5
+    |
+209 | /     if !region.is_empty() {
+210 | |         if let Ok(solid) = curve::try_extrude(&region, Real::one(), &context) {
+211 | |             support::validate_triangle_mesh(&solid.into_value(), true);
+212 | |         }
+213 | |     }
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#collapsible_if
+    = note: `-D clippy::collapsible-if` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::collapsible_if)]`
+help: collapse nested if block
+    |
+209 ~     if !region.is_empty()
+210 ~         && let Ok(solid) = curve::try_extrude(&region, Real::one(), &context) {
+211 |             support::validate_triangle_mesh(&solid.into_value(), true);
+212 ~         }
+    |
+
+error: could not compile `csgrs-fuzz` (bin "fuzz_curve_shape_catalog") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

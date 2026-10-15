@@ -1,0 +1,29 @@
+   Compiling libc v0.2.186
+   Compiling zerocopy v0.8.48
+   Compiling rustix v1.1.4
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling getrandom v0.3.4
+   Compiling rand_core v0.9.5
+   Compiling linux-raw-sys v0.12.1
+   Compiling bitflags v2.11.1
+   Compiling serde_core v1.0.228
+   Compiling getrandom v0.4.2
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling once_cell v1.21.4
+   Compiling tinyvec_macros v0.1.1
+   Compiling tinyvec v1.11.0
+   Compiling tempfile v3.27.0
+   Compiling ppv-lite86 v0.2.21
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling wait-timeout v0.2.1
+   Compiling rusty-fork v0.3.1
+   Compiling semver v1.0.28
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling rand_chacha v0.9.0
+   Compiling unicode-normalization v0.1.25
+   Compiling rand v0.9.4
+   Compiling rand_xorshift v0.4.0
+   Compiling proptest v1.11.0
+   Compiling hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Finished `release` profile [optimized] target(s) in 59.39s
+     Running tests/release_workflow.rs (target/primitive-failures/native-v1/release/deps/release_workflow-594135c930ee78a9)

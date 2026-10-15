@@ -1,0 +1,183 @@
+{
+  "base_commit": "6581c65c0684b078d972a21d038c4ad688583b5e",
+  "runner_sha256": "945b9d82ef103e7827531e841cc03c51798ed9ebbd97e6d69952d093a7aadb0d",
+  "phase": "bindings-v1",
+  "commands": [
+    [
+      "ffi-build",
+      [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs-ffi"
+      ]
+    ],
+    [
+      "empty_composition-c-build",
+      [
+        "cc",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I",
+        "crates/csgrs-ffi/include",
+        "tests/ffi/empty_composition.c",
+        "-L",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/release",
+        "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/release",
+        "-lcsgrs_ffi",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/empty_composition-c"
+      ]
+    ],
+    [
+      "empty_composition-c-run",
+      [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/empty_composition-c"
+      ]
+    ],
+    [
+      "empty_composition-cpp-build",
+      [
+        "c++",
+        "-std=c++17",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I",
+        "bindings/cpp",
+        "tests/ffi/empty_composition.cpp",
+        "-L",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/release",
+        "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/release",
+        "-lcsgrs_ffi",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/empty_composition-cpp"
+      ]
+    ],
+    [
+      "empty_composition-cpp-run",
+      [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/empty_composition-cpp"
+      ]
+    ],
+    [
+      "empty_composition-python",
+      [
+        "env",
+        "CSGRS_LIBRARY=/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/release/libcsgrs_ffi.so",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "python3",
+        "tests/ffi/empty_composition.py"
+      ]
+    ],
+    [
+      "primitive_failures-c-build",
+      [
+        "cc",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I",
+        "crates/csgrs-ffi/include",
+        "tests/ffi/primitive_failures.c",
+        "-L",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/release",
+        "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/release",
+        "-lcsgrs_ffi",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/primitive_failures-c"
+      ]
+    ],
+    [
+      "primitive_failures-c-run",
+      [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/primitive_failures-c"
+      ]
+    ],
+    [
+      "primitive_failures-cpp-build",
+      [
+        "c++",
+        "-std=c++17",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I",
+        "bindings/cpp",
+        "tests/ffi/primitive_failures.cpp",
+        "-L",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/release",
+        "-Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/release",
+        "-lcsgrs_ffi",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/primitive_failures-cpp"
+      ]
+    ],
+    [
+      "primitive_failures-cpp-run",
+      [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/primitive_failures-cpp"
+      ]
+    ],
+    [
+      "primitive_failures-python",
+      [
+        "env",
+        "CSGRS_LIBRARY=/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1/release/libcsgrs_ffi.so",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "python3",
+        "tests/ffi/primitive_failures.py"
+      ]
+    ],
+    [
+      "wasm",
+      [
+        "env",
+        "WASM_BINDGEN=/tmp/csgrs-properties-tools/bin/wasm-bindgen",
+        "TSC=/home/tim/Documents/GitHub/workspace/csgrs/tests/wasm/node_modules/.bin/tsc",
+        "bash",
+        "scripts/test-wasm-bindings.sh"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/bindings-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "CSGRS primitive constructors and successful-result cache",
+    "scalar and language adapters"
+  ],
+  "domain": "Strict native primitives: nonnegative dimensions/radii, directed signed frustum height, valid sample minima, representable buffer capacities. Proven degeneracies are canonical empty only after all inputs are validated. Ring tori require major > minor unless minor = 0.",
+  "consumers": [
+    "SolidExt",
+    "scalar adapters",
+    "C ABI",
+    "WASM"
+  ],
+  "missing_acceptance_test": "tests/primitive_failures.rs",
+  "semantic_oracle": "Typed failures remain failures through adapters; exact box coordinates/volume, canonical empty composition, native topology, and preservation of existing full-resolution fixtures.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: implemented and committed empty composition with native and real binding qualification."
+}

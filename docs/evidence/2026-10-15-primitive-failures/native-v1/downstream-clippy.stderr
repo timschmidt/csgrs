@@ -1,0 +1,35 @@
+    Checking num-traits v0.2.19
+    Checking libc v0.2.186
+    Checking num-integer v0.1.46
+    Checking num-bigint v0.4.6
+    Checking num-iter v0.1.45
+    Checking num-complex v0.4.6
+    Checking getrandom v0.3.4
+    Checking rand_core v0.9.5
+    Checking bitflags v2.11.1
+    Checking linux-raw-sys v0.12.1
+    Checking num-rational v0.4.2
+    Checking rustix v1.1.4
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking zerocopy v0.8.48
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking getrandom v0.4.2
+    Checking tinyvec_macros v0.1.1
+    Checking once_cell v1.21.4
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking tempfile v3.27.0
+    Checking tinyvec v1.11.0
+    Checking ppv-lite86 v0.2.21
+    Checking serde_core v1.0.228
+    Checking wait-timeout v0.2.1
+    Checking rusty-fork v0.3.1
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking semver v1.0.28
+    Checking rand_chacha v0.9.0
+    Checking unicode-normalization v0.1.25
+    Checking rand_xorshift v0.4.0
+    Checking rand v0.9.4
+    Checking proptest v1.11.0
+    Checking hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Finished `release` profile [optimized] target(s) in 11.30s

@@ -1,0 +1,103 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/native-v2",
+  "preserved_prior_executables_sha256": {
+    "target/primitive-failures/native-v2/release/deps/csgrs-d5e0741bbc5df635": "7414550e1deb231c3fc83c0c3e417a8b76078e3a17ac598a77597408aedb0767",
+    "target/primitive-failures/native-v2/release/deps/adversarial-c03dde69c05f1cf2": "aaead9595151dbf1dfe3f0b5cc7e0e11bfbe8ffc459a78a5457be62c371488a6",
+    "target/primitive-failures/native-v2/release/deps/adversarial_deep-5dea7b8952749c41": "1597e504517c767fddd6679eea121a5ec4cc99532160b38087745eebd94c3661",
+    "target/primitive-failures/native-v2/release/deps/adversarial_extrusions-22c8c063f22c33de": "a280b0f052ee9a7ca8f04a3e92caf46681608810d33658540f2a785567c9be6a",
+    "target/primitive-failures/native-v2/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/primitive-failures/native-v2/release/deps/adversarial_stress-8c747993ca7dff64": "9fdbab8616d24f53e74594b7addf14cb23bc2721e08748e3ea069c25f5414979",
+    "target/primitive-failures/native-v2/release/deps/competitive-8d824413442e1853": "a4eb13e9af055d1a21f29a62dcae516f1aeab8fb8827deb0bc962b4db8176f5a",
+    "target/primitive-failures/native-v2/release/deps/empty_composition-1b2f2ba6943338cd": "6f0ed4ee5e435c0173831b949e4ef94bf169c7708a401a83c49b571f79e39aca",
+    "target/primitive-failures/native-v2/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "cf762d3c117746def771601d033f38f24de385f04aabdb70cd6acb82b2af1159",
+    "target/primitive-failures/native-v2/release/deps/geometry_context-d256044952b39c9d": "8fc8697e18ba9a645e9e8905d53ff3c7a100bcecd64ef9e8eecf1ccbdd2670b6",
+    "target/primitive-failures/native-v2/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "7880ef8e9840938b8920a492d01e173cc159c5a21d4c42e0299ad23faa01cfaa",
+    "target/primitive-failures/native-v2/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "49de09db800e87d92f2c49ff9514d943dd12786dd8d891f8b4f1db5a5514d1c8",
+    "target/primitive-failures/native-v2/release/deps/native_queries-32678419862dff6b": "64ea292bb25e7bb07bec57f790045e016fcc4f61926197ee217198797346dcd2",
+    "target/primitive-failures/native-v2/release/deps/primitive_failures-8e6539f143e56577": "51ea4f3ae8e12dfd71f20cad064020429ea52606ac3cb97787372fc9a91abd3a",
+    "target/primitive-failures/native-v2/release/deps/readme-d31b115aba933918": "e2c2e5a577640241a8ad5c895d3dcea14ef2e3c39e7132cefa074932e6ed7fc4",
+    "target/primitive-failures/native-v2/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/primitive-failures/native-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "93aadac265fd8ae46925aeaa903a1f39bc9c3e4a8e9af0260be1cddf644d62ee",
+    "target/primitive-failures/native-v2/release/deps/solid_cache-f1483884916afc0e": "20aa5cfee92d991cee5659a12b4434b4b5442267b5ae769909ad88babce11f1a",
+    "target/primitive-failures/native-v2/release/deps/wasm_certainty-d7100c8fa594776c": "e01d38e87b692aa8e31671a00571bc303634036ee712265e78b72f7d8442df4c",
+    "target/primitive-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f": "3371076fee8b06984c5602328255a4435aa25cefb0bb7a39e501b5927590fd83",
+    "target/primitive-failures/native-v2/release/deps/release_workflow-594135c930ee78a9": "400283470ae02726d4562ce9ea1466d61755b1e426dfca920ad10be9a47a95a9"
+  },
+  "base_commit": "6581c65c0684b078d972a21d038c4ad688583b5e",
+  "runner_sha256": "f569e3f62d55e88fdbb06e167ae23e391aec6cb4b08094f1fbedad905e40e7c8",
+  "phase": "downstream-v1",
+  "commands": [
+    [
+      "downstream-release-model",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercircuit",
+        "--features",
+        "drc,interchange",
+        "--test",
+        "release_workflow",
+        "external_obj_vrml_and_gltf_package_models_resolve_with_digest_and_scene_identity",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "downstream-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercircuit",
+        "--features",
+        "drc,interchange",
+        "--test",
+        "release_workflow",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/primitive-failures/downstream-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "CSGRS primitive constructors and successful-result cache",
+    "scalar and language adapters"
+  ],
+  "domain": "Strict native primitives: nonnegative dimensions/radii, directed signed frustum height, valid sample minima, representable buffer capacities. Proven degeneracies are canonical empty only after all inputs are validated. Ring tori require major > minor unless minor = 0.",
+  "consumers": [
+    "SolidExt",
+    "scalar adapters",
+    "C ABI",
+    "WASM"
+  ],
+  "missing_acceptance_test": "tests/primitive_failures.rs",
+  "semantic_oracle": "Typed failures remain failures through adapters; exact box coordinates/volume, canonical empty composition, native topology, and preservation of existing full-resolution fixtures.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: implemented and committed empty composition with native and real binding qualification."
+}

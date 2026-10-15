@@ -5574,6 +5574,83 @@
         "The original 35 pending native changes remain byte-identical. Their earlier DRC runtime failures, including the closed scalar-integration trial, were neither resolved nor rerun here."
       ],
       "plan_complete": false
+    },
+    "primitive_failure_visibility": {
+      "updated_on": "2026-10-15",
+      "status": "Native primitive failure migration implemented and locally qualified in the recorded scope.",
+      "properties": [
+        "P4",
+        "P6",
+        "P8",
+        "P18",
+        "P20",
+        "P25",
+        "P30",
+        "P35",
+        "P37"
+      ],
+      "owners": [
+        "CSGRS primitive constructors and successful-result cache",
+        "shared modeling predicate diagnostics",
+        "scalar adapters and affected C/C++/Python/WASM error boundaries"
+      ],
+      "domain": "Strict cube, cuboid, sphere, cylinder, ellipsoid, frustum, frustum_between, octahedron, icosahedron, arrow and ring torus construction; nonnegative dimensions/radii, directed signed heights, documented resolution minima and representable buffer capacities.",
+      "migration": "Primary constructors now return Result<TriangleMesh, ValidationError>. Negative inputs, invalid resolutions, undecided predicates, unsupported representations, and capacity/reservation failures no longer masquerade as empty geometry. Proven degeneracies remain canonical empty after validation. Only successes are cached. Rust consumers must handle/propagate Result; C statuses are additive, C++/Python preserve status, and WASM constructor exceptions expose code.",
+      "baseline": "All four initial adapter acceptance tests failed on 22ee9939e plus the original in-scope native changes. Candidate v1 passed 66 focused tests but failed strict Clippy on missing const. Candidate v2 fixed that lint and passed 67 focused tests plus strict minimal all-target Clippy. Native v1 later passed the runtime/downstream checks but failed fuzz Clippy on an existing nested conditional; that condition was collapsed without weakening validation. Binding v1 passed all native consumers and reproduced plain-string nonfinite constructor errors in actual WASM. Native v2 and WASM binding v2 qualify the corrections; all failed phases and executables are retained.",
+      "test_totals": {
+        "all-feature-tests": {
+          "passed": 180,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-tests": {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "downstream-release-model": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 7
+        },
+        "doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "binding_consumers": [
+        "Actual C f64 ABI",
+        "C++ F64 RAII wrapper",
+        "Python ctypes F64 wrapper",
+        "Generated WASM Node.js runtime and TypeScript declarations"
+      ],
+      "evidence": "docs/evidence/2026-10-15-primitive-failures/qualification-correction-v1.json",
+      "remaining": [
+        "Other modeling conveniences and curve/sampled-field constructors still contain silent-empty or origin fallbacks; this patch does not complete visible-failure migration.",
+        "Existing non-constructor adapters still flatten some native error categories. The Go wrapper retains only error text and was not qualified (no Go toolchain found). The separate native JS wrapper requires an external loader; generated WASM was the exercised JavaScript distribution.",
+        "Construction uses strict decisions but does not attach end-to-end provenance or certify fidelity to analytic surfaces; export/import provenance remains open.",
+        "Checked platform capacities and fallible primary-buffer reservations are not total-work, expression-growth, heap-byte or cancellation budgets. Secondary allocations and allocator/process termination remain outside the contract; no complete internal resource bound is claimed.",
+        "The original drilled-body strict-mode frontier and all full-scale geometry remain unchanged. Ordinary strict-mode completion still requires work.",
+        "One existing README PNG regeneration test remains ignored. No sanitizer, live fuzz campaign, performance comparison, full repository pre-push matrix, or clean external release installation is claimed for this migration. No push was performed.",
+        "The original 35 pending native files remain byte-identical. Earlier DRC runtime failures and scalar-integration limitations remain open and were not rerun here."
+      ],
+      "plan_complete": false,
+      "qualification_correction": {
+        "finding": "The original downstream test command returned success with zero tests because the target requires both drc and interchange. The initial commentary credited it too early. Those two original downstream invocations establish no runtime coverage.",
+        "corrected_commands": "docs/evidence/2026-10-15-primitive-failures/downstream-v1.json",
+        "result": "The selected actual package-model test passed with both required features enabled; strict Clippy also passed for that target and feature combination.",
+        "retained_original": "docs/evidence/2026-10-15-primitive-failures/closure-v1.json",
+        "retained_original_sha256": "79fa7c2db23d9edefb4040b9d72ca1a784ee8109e910bec708bfb5a09926e317"
+      }
     }
   },
   "status_meanings": {

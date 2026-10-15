@@ -61,6 +61,8 @@ try {
 
   const cube = keep(MeshJs.cube(1));
   for (const [construct, code] of [
+    [() => MeshJs.cube(NaN), "invalid_input"],
+    [() => MeshJs.sphere(Infinity, 8, 4), "invalid_input"],
     [() => MeshJs.cube(-1), "invalid_input"],
     [() => MeshJs.cuboid(0, -1, 1), "invalid_input"],
     [() => MeshJs.sphere(0, 2, 4), "invalid_input"],

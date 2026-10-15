@@ -1,0 +1,6 @@
+
+running 1 test
+test external_obj_vrml_and_gltf_package_models_resolve_with_digest_and_scene_identity ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.10s
+

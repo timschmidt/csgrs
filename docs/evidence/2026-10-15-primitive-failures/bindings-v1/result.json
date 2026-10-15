@@ -1,0 +1,113 @@
+{
+  "commands": [
+    {
+      "name": "ffi-build",
+      "exit_code": 0,
+      "seconds": 139.28684228099883,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "05d447487eb3b9b2b84001b59377c193d40e3e1a11cf73e46261039076537463"
+    },
+    {
+      "name": "empty_composition-c-build",
+      "exit_code": 0,
+      "seconds": 1.8348654792644083,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "empty_composition-c-run",
+      "exit_code": 0,
+      "seconds": 1.6811075410805643,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "9129339c006d2d6c8870eaeade18c45c9302dabd88de9be2a1d9bdf24ba6f286",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "empty_composition-cpp-build",
+      "exit_code": 0,
+      "seconds": 2.2702925843186677,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "empty_composition-cpp-run",
+      "exit_code": 0,
+      "seconds": 1.72390307020396,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "338ae8643ba3e40ec977a07d50e13b739c9deac7bb1b08b598a848d3f92bf045",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "empty_composition-python",
+      "exit_code": 0,
+      "seconds": 1.8849935247562826,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "bcc2468e5a7a09608b8b1a2e0a056984088d66dd03917be28ef41c96c12baeb0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "primitive_failures-c-build",
+      "exit_code": 0,
+      "seconds": 1.811575723811984,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "primitive_failures-c-run",
+      "exit_code": 0,
+      "seconds": 1.756957174744457,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "d61d5a70facff0cc93a2403a5cda7ff00c12d326786f966536f71195ce4c4b87",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "primitive_failures-cpp-build",
+      "exit_code": 0,
+      "seconds": 2.070526166819036,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "primitive_failures-cpp-run",
+      "exit_code": 0,
+      "seconds": 1.6991167971864343,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "primitive_failures-python",
+      "exit_code": 0,
+      "seconds": 1.8020618259906769,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "388333ab6f3d4da0a451bca380b08d0d0b214137984217e6d051580f87d019a1",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wasm",
+      "exit_code": 1,
+      "seconds": 175.86663621431217,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "2f425a788eb8beed20bd86f7f5b3318decc28f53957fc86671ba4a8b5cc7539c"
+    }
+  ],
+  "passed": false
+}

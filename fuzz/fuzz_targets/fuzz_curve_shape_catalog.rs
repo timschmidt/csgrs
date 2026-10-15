@@ -206,9 +206,9 @@ fuzz_target!(|bytes: &[u8]| {
     if let Ok(flat) = curve::try_triangulate(&region, &context) {
         support::validate_triangle_mesh(&flat.into_value(), false);
     }
-    if !region.is_empty() {
-        if let Ok(solid) = curve::try_extrude(&region, Real::one(), &context) {
-            support::validate_triangle_mesh(&solid.into_value(), true);
-        }
+    if !region.is_empty()
+        && let Ok(solid) = curve::try_extrude(&region, Real::one(), &context)
+    {
+        support::validate_triangle_mesh(&solid.into_value(), true);
     }
 });
