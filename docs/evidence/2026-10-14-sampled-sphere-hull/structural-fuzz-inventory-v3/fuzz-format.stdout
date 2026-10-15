@@ -1,0 +1,16 @@
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v1/source/crates/hyperreal/fuzz/fuzz_targets/real_elementary.rs:94:
+                     i64::try_from(numerator.unsigned_abs()).expect("bounded numerator") + 1,
+                     denominator,
+                 )
+[31m-                    .expect("positive denominator"),
+(B[m[32m+                .expect("positive denominator"),
+(B[m             );
+             let root = positive.clone().root_n(degree).expect("positive radicand");
+[31m-            let reconstructed = (0..degree)
+(B[m[31m-                .fold(Real::one(), |product, _| product * root.clone())
+(B[m[31m-                - positive;
+(B[m[32m+            let reconstructed =
+(B[m[32m+                (0..degree).fold(Real::one(), |product, _| product * root.clone()) - positive;
+(B[m             // The radicand has numerator <= 17 and denominator <= 256.
+             // At degree n <= 9 the shared-generator separation bound is at
+             // most 8*n*(n+1) + n-1 <= 728 bits, plus two certification bits.

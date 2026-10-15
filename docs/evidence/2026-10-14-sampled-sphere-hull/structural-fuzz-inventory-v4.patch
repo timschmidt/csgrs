@@ -1,0 +1,538 @@
+diff --git a/crates/hyperreal/fuzz/README.md b/crates/hyperreal/fuzz/README.md
+--- a/crates/hyperreal/fuzz/README.md
++++ b/crates/hyperreal/fuzz/README.md
+@@ -5,13 +5,13 @@
+ algebra, lazy elementary-function evaluation, serialization, and direct
+ `Computable` approximation without treating a primitive-float result as proof.
+ 
+-Compile every target:
++From `crates/hyperreal`, compile every target:
+ 
+ ```sh
+ cargo check --manifest-path fuzz/Cargo.toml --bins
+ ```
+ 
+-Run a bounded smoke pass from the repository root:
++From the same directory, run a bounded smoke pass:
+ 
+ ```sh
+ cargo +nightly fuzz run rational_arithmetic --fuzz-dir fuzz -- -max_total_time=30
+@@ -25,13 +25,19 @@
+ Long-running campaigns should retain each target's corpus separately. A crash
+ is a semantic regression until minimized and promoted to a deterministic test.
+ 
+-`structural_representations` constructs all 20 private optimized `Real`
+-certificate forms, which span all eight public `StructuralKind` values.
+-Twenty seed strides cover the complete ordered 20x20 binary-dispatch matrix;
+-mutated bytes also build shared `Computable` DAGs with up to 32 variable
+-nodes. The deterministic serde inventory test covers every finite
++`structural_representations` uses the same 22 private optimized `Real`
++certificate representatives as the deterministic integration tests, including
++`Pow10` and `Pow2`. They span all eight public `StructuralKind` values.
++Replaying all 22 retained stride seeds covers the complete ordered 22x22
++binary-dispatch matrix. Mutated bytes also build shared `Computable` DAGs with
++up to 32 variable nodes. The deterministic serde inventory test covers every finite
+ `Computable` node and shared-constant tag, while this target covers the
+ unbounded graph-topology dimension.
++
++The same target also checks rational normal-form and affine-determinant facts
++before and after refinement. Warming may strengthen an unknown result, but
++must preserve every available definite fact. Generated DAGs additionally
++retain signs proved at a finer precision when queried again at zero refinement.
+ 
+ `string_parsing` checks that every accepted exact `Rational` literal is
+ also accepted by `Real`. Its seed corpus includes signed wide integers,
+diff --git a/crates/hyperreal/fuzz/fuzz_targets/structural_representations.rs b/crates/hyperreal/fuzz/fuzz_targets/structural_representations.rs
+--- a/crates/hyperreal/fuzz/fuzz_targets/structural_representations.rs
++++ b/crates/hyperreal/fuzz/fuzz_targets/structural_representations.rs
+@@ -1,43 +1,29 @@
+-//! Exhaustive cross-representation fuzzing for every public `Real` structural kind.
++//! Cross-representation checks using the shared finite `Real` certificate inventory.
+ 
+ #![no_main]
+ 
+ use hyperreal::{
+     CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, Computable, Rational, Real,
+-    RealSign, StructuralKind,
++    RealSign,
+ };
+ use libfuzzer_sys::fuzz_target;
+ 
+-const EXPECTED_KINDS: [StructuralKind; 20] = [
+-    StructuralKind::ExactRational,
+-    StructuralKind::PiLike,
+-    StructuralKind::PiLike,
+-    StructuralKind::PiLike,
+-    StructuralKind::ExpLike,
+-    StructuralKind::ExpLike,
+-    StructuralKind::SqrtLike,
+-    StructuralKind::ProductConstant,
+-    StructuralKind::ProductConstant,
+-    StructuralKind::ProductConstant,
+-    StructuralKind::SqrtLike,
+-    StructuralKind::ExpLike,
+-    StructuralKind::LogLike,
+-    StructuralKind::LogLike,
+-    StructuralKind::LogLike,
+-    StructuralKind::LogLike,
+-    StructuralKind::LogLike,
+-    StructuralKind::TrigExact,
+-    StructuralKind::TrigExact,
+-    StructuralKind::ComputableOpaque,
+-];
++#[path = "../../tests/support/representations.rs"]
++mod representations;
+ 
+ fuzz_target!(|data: &[u8]| {
+-    let values = representative_values();
+-    assert_eq!(values.len(), EXPECTED_KINDS.len());
+-
+-    for (value, expected) in values.iter().zip(EXPECTED_KINDS) {
+-        assert_eq!(value.detailed_facts().symbolic.kind, expected);
+-        assert!(value.certified_rational_interval(-512).is_some());
++    let cases = representations::optimized_certificate_representatives();
++    assert_eq!(cases.len(), 22, "update the optimized certificate matrix");
++
++    for case in &cases {
++        let value = &case.value;
++        assert_eq!(
++            value.detailed_facts().symbolic.kind,
++            case.public_kind,
++            "{}",
++            case.certificate
++        );
++        check_normal_and_affine_cache_contract(value);
+ 
+         let negated = -value;
+         assert_bounded_equal(&-negated, value);
+@@ -61,12 +47,13 @@
+         let _ = value.clone().powi_i64(exponent);
+     }
+ 
+-    // Rotate all twenty left-hand certificates across a fuzzer-selected right
+-    // stride. A campaign covers the full ordered 20x20 dispatch matrix without
+-    // forcing every individual execution to perform 400 high-precision pairs.
+-    let stride = usize::from(data.first().copied().unwrap_or(0)) % values.len();
+-    for (index, left) in values.iter().enumerate() {
+-        let right = &values[(index + stride) % values.len()];
++    // Each of the 22 retained stride seeds covers one rotation of the left-hand
++    // certificates. Replaying all seeds covers all 484 ordered pairs without
++    // forcing every execution to perform the complete matrix.
++    let stride = usize::from(data.first().copied().unwrap_or(0)) % cases.len();
++    for (index, case) in cases.iter().enumerate() {
++        let left = &case.value;
++        let right = &cases[(index + stride) % cases.len()].value;
+         assert_bounded_equal(&(left + right), &(right + left));
+         assert_bounded_equal(&(left * right), &(right * left));
+         assert_bounded_equal(&(left - right), &-(right - left));
+@@ -85,13 +72,55 @@
+     // test. This fuzzer covers the unbounded part of the representation space:
+     // variable-depth, shared expression-DAG topology.
+     let graph = variable_depth_graph(data);
++    let cold_sign = graph.sign_until(0);
+     let coarse = graph.approx(-32);
+     assert_eq!(graph.approx(-32), coarse);
+     let fine = graph.approx(-96);
+     assert_eq!(graph.approx(-96), fine);
+     let _ = graph.structural_facts();
+-    let _ = graph.sign_until(-128);
++    let refined_sign = graph.sign_until(-128);
++    let warm_sign = graph.sign_until(0);
++    if let Some(sign) = cold_sign {
++        assert_eq!(refined_sign, Some(sign));
++    }
++    if let Some(sign) = refined_sign {
++        assert_eq!(warm_sign, Some(sign));
++    }
+ });
++
++fn check_normal_and_affine_cache_contract(value: &Real) {
++    let zero = Real::zero();
++    let one = Real::one();
++    let query = || {
++        (
++            value.exact_rational_normal_form(),
++            Real::certified_affine_det3_sign(
++                [value, &zero, &zero],
++                [&zero, &one, &zero],
++                [&zero, &zero, &one],
++                [&zero, &zero, &zero],
++            ),
++        )
++    };
++    let cold = query();
++    let [lower, upper] = value
++        .certified_rational_interval(-512)
++        .expect("representative has a bounded approximation");
++    let warm = query();
++    if let Some(normal) = cold.0 {
++        assert_eq!(warm.0.as_ref(), Some(&normal));
++    }
++    if let Some(sign) = cold.1 {
++        assert_eq!(warm.1, Some(sign));
++    }
++    if let Some(normal) = warm.0 {
++        assert!(lower <= normal && normal <= upper);
++    }
++    if let Some(sign) = warm.1 {
++        // This determinant equals the positive inventory representative.
++        assert_eq!(sign, RealSign::Positive);
++    }
++}
+ 
+ fn assert_certificates_match_bounded_evaluation(left: &Real, right: &Real) {
+     let difference = left - right;
+@@ -139,39 +168,6 @@
+         left_lower <= right_upper && right_lower <= left_upper,
+         "512-bit intervals must overlap for approximately equal expressions"
+     );
+-}
+-
+-fn representative_values() -> Vec<Real> {
+-    let pi = Real::pi();
+-    let e = Real::e();
+-    let pi_squared = &pi * &pi;
+-    let sqrt_two = Real::from(2).sqrt().expect("positive radicand");
+-    let ln_two = Real::from(2).ln().expect("positive logarithm input");
+-    let ln_three = Real::from(3).ln().expect("positive logarithm input");
+-    vec![
+-        Real::new(Rational::fraction(3, 2).expect("nonzero denominator")),
+-        pi.clone(),
+-        pi_squared.clone(),
+-        pi.clone().inverse().expect("pi is nonzero"),
+-        &pi * &e,
+-        (&e / &pi).expect("pi is nonzero"),
+-        &pi * &sqrt_two,
+-        &pi_squared * &e,
+-        &pi - Real::from(3),
+-        &(&pi_squared * &e) * &sqrt_two,
+-        sqrt_two,
+-        Real::from(2).exp().expect("finite exponential"),
+-        ln_three.clone(),
+-        (Real::from(2) * &e).ln().expect("positive logarithm input"),
+-        &ln_two * &ln_three,
+-        Real::from(2).log10().expect("positive logarithm input"),
+-        Real::from(3).log2().expect("positive logarithm input"),
+-        Real::new(Rational::fraction(1, 5).expect("nonzero denominator")).sin_pi(),
+-        Real::new(Rational::fraction(1, 5).expect("nonzero denominator"))
+-            .tan_pi()
+-            .expect("one fifth of a turn is not a tangent pole"),
+-        Real::new(Rational::one()).sin(),
+-    ]
+ }
+ 
+ fn variable_depth_graph(data: &[u8]) -> Computable {
+diff --git a/crates/hyperreal/tests/real_representations.rs b/crates/hyperreal/tests/real_representations.rs
+--- a/crates/hyperreal/tests/real_representations.rs
++++ b/crates/hyperreal/tests/real_representations.rs
+@@ -18,143 +18,9 @@
+     Rational, RationalStorageClass, Real, RealSign, StructuralKind,
+ };
+ 
+-struct RepresentationCase {
+-    certificate: &'static str,
+-    public_kind: StructuralKind,
+-    value: Real,
+-}
+-
+-fn fraction(numerator: i64, denominator: u64) -> Real {
+-    Real::new(Rational::fraction(numerator, denominator).expect("nonzero denominator"))
+-}
+-
+-fn optimized_certificate_representatives() -> Vec<RepresentationCase> {
+-    let pi = Real::pi();
+-    let e = Real::e();
+-    let pi_squared = &pi * &pi;
+-    let sqrt_two = Real::from(2).sqrt().expect("positive radicand");
+-    let ln_two = Real::from(2).ln().expect("positive logarithm input");
+-    let ln_three = Real::from(3).ln().expect("positive logarithm input");
+-
+-    vec![
+-        RepresentationCase {
+-            certificate: "One",
+-            public_kind: StructuralKind::ExactRational,
+-            value: fraction(3, 2),
+-        },
+-        RepresentationCase {
+-            certificate: "Pi",
+-            public_kind: StructuralKind::PiLike,
+-            value: pi.clone(),
+-        },
+-        RepresentationCase {
+-            certificate: "PiPow",
+-            public_kind: StructuralKind::PiLike,
+-            value: pi_squared.clone(),
+-        },
+-        RepresentationCase {
+-            certificate: "PiInv",
+-            public_kind: StructuralKind::PiLike,
+-            value: pi.clone().inverse().expect("pi is nonzero"),
+-        },
+-        RepresentationCase {
+-            certificate: "PiExp",
+-            public_kind: StructuralKind::ExpLike,
+-            value: &pi * &e,
+-        },
+-        RepresentationCase {
+-            certificate: "PiInvExp",
+-            public_kind: StructuralKind::ExpLike,
+-            value: (&e / &pi).expect("pi is nonzero"),
+-        },
+-        RepresentationCase {
+-            certificate: "PiSqrt",
+-            public_kind: StructuralKind::SqrtLike,
+-            value: &pi * &sqrt_two,
+-        },
+-        RepresentationCase {
+-            certificate: "ConstProduct",
+-            public_kind: StructuralKind::ProductConstant,
+-            value: &pi_squared * &e,
+-        },
+-        RepresentationCase {
+-            certificate: "ConstOffset",
+-            public_kind: StructuralKind::ProductConstant,
+-            value: &pi - Real::from(3),
+-        },
+-        RepresentationCase {
+-            certificate: "ConstProductSqrt",
+-            public_kind: StructuralKind::ProductConstant,
+-            value: &(&pi_squared * &e) * &sqrt_two,
+-        },
+-        RepresentationCase {
+-            certificate: "Sqrt",
+-            public_kind: StructuralKind::SqrtLike,
+-            value: sqrt_two,
+-        },
+-        RepresentationCase {
+-            certificate: "Exp",
+-            public_kind: StructuralKind::ExpLike,
+-            value: Real::from(2).exp().expect("finite exponential"),
+-        },
+-        RepresentationCase {
+-            certificate: "Ln",
+-            public_kind: StructuralKind::LogLike,
+-            value: ln_three.clone(),
+-        },
+-        RepresentationCase {
+-            certificate: "LnAffine",
+-            public_kind: StructuralKind::LogLike,
+-            value: (Real::from(2) * &e).ln().expect("positive logarithm input"),
+-        },
+-        RepresentationCase {
+-            certificate: "LnProduct",
+-            public_kind: StructuralKind::LogLike,
+-            value: &ln_two * &ln_three,
+-        },
+-        RepresentationCase {
+-            certificate: "Log10",
+-            public_kind: StructuralKind::LogLike,
+-            value: Real::from(2).log10().expect("positive logarithm input"),
+-        },
+-        RepresentationCase {
+-            certificate: "Log2",
+-            public_kind: StructuralKind::LogLike,
+-            value: Real::from(3).log2().expect("positive logarithm input"),
+-        },
+-        RepresentationCase {
+-            certificate: "Pow10",
+-            public_kind: StructuralKind::ExpLike,
+-            value: fraction(1, 7)
+-                .exp10()
+-                .expect("finite rational base-ten power"),
+-        },
+-        RepresentationCase {
+-            certificate: "Pow2",
+-            public_kind: StructuralKind::ExpLike,
+-            value: fraction(1, 7)
+-                .exp2()
+-                .expect("finite rational base-two power"),
+-        },
+-        RepresentationCase {
+-            certificate: "SinPi",
+-            public_kind: StructuralKind::TrigExact,
+-            value: fraction(1, 5).sin_pi(),
+-        },
+-        RepresentationCase {
+-            certificate: "TanPi",
+-            public_kind: StructuralKind::TrigExact,
+-            value: fraction(1, 5)
+-                .tan_pi()
+-                .expect("one fifth of a turn is not a tangent pole"),
+-        },
+-        RepresentationCase {
+-            certificate: "Irrational",
+-            public_kind: StructuralKind::ComputableOpaque,
+-            value: Real::one().sin(),
+-        },
+-    ]
+-}
++#[path = "support/representations.rs"]
++mod representations;
++use representations::{fraction, optimized_certificate_representatives};
+ 
+ fn structural_kind_index(kind: StructuralKind) -> usize {
+     match kind {
+diff --git a/crates/hyperreal/tests/support/representations.rs b/crates/hyperreal/tests/support/representations.rs
+--- /dev/null
++++ b/crates/hyperreal/tests/support/representations.rs
+@@ -0,0 +1,141 @@
++//! Shared finite Real certificate inventory for integration tests and fuzzing.
++
++use hyperreal::{Rational, Real, StructuralKind};
++
++pub(crate) struct RepresentationCase {
++    pub(crate) certificate: &'static str,
++    pub(crate) public_kind: StructuralKind,
++    pub(crate) value: Real,
++}
++
++pub(crate) fn fraction(numerator: i64, denominator: u64) -> Real {
++    Real::new(Rational::fraction(numerator, denominator).expect("nonzero denominator"))
++}
++
++pub(crate) fn optimized_certificate_representatives() -> Vec<RepresentationCase> {
++    let pi = Real::pi();
++    let e = Real::e();
++    let pi_squared = &pi * &pi;
++    let sqrt_two = Real::from(2).sqrt().expect("positive radicand");
++    let ln_two = Real::from(2).ln().expect("positive logarithm input");
++    let ln_three = Real::from(3).ln().expect("positive logarithm input");
++
++    vec![
++        RepresentationCase {
++            certificate: "One",
++            public_kind: StructuralKind::ExactRational,
++            value: fraction(3, 2),
++        },
++        RepresentationCase {
++            certificate: "Pi",
++            public_kind: StructuralKind::PiLike,
++            value: pi.clone(),
++        },
++        RepresentationCase {
++            certificate: "PiPow",
++            public_kind: StructuralKind::PiLike,
++            value: pi_squared.clone(),
++        },
++        RepresentationCase {
++            certificate: "PiInv",
++            public_kind: StructuralKind::PiLike,
++            value: pi.clone().inverse().expect("pi is nonzero"),
++        },
++        RepresentationCase {
++            certificate: "PiExp",
++            public_kind: StructuralKind::ExpLike,
++            value: &pi * &e,
++        },
++        RepresentationCase {
++            certificate: "PiInvExp",
++            public_kind: StructuralKind::ExpLike,
++            value: (&e / &pi).expect("pi is nonzero"),
++        },
++        RepresentationCase {
++            certificate: "PiSqrt",
++            public_kind: StructuralKind::SqrtLike,
++            value: &pi * &sqrt_two,
++        },
++        RepresentationCase {
++            certificate: "ConstProduct",
++            public_kind: StructuralKind::ProductConstant,
++            value: &pi_squared * &e,
++        },
++        RepresentationCase {
++            certificate: "ConstOffset",
++            public_kind: StructuralKind::ProductConstant,
++            value: &pi - Real::from(3),
++        },
++        RepresentationCase {
++            certificate: "ConstProductSqrt",
++            public_kind: StructuralKind::ProductConstant,
++            value: &(&pi_squared * &e) * &sqrt_two,
++        },
++        RepresentationCase {
++            certificate: "Sqrt",
++            public_kind: StructuralKind::SqrtLike,
++            value: sqrt_two,
++        },
++        RepresentationCase {
++            certificate: "Exp",
++            public_kind: StructuralKind::ExpLike,
++            value: Real::from(2).exp().expect("finite exponential"),
++        },
++        RepresentationCase {
++            certificate: "Ln",
++            public_kind: StructuralKind::LogLike,
++            value: ln_three.clone(),
++        },
++        RepresentationCase {
++            certificate: "LnAffine",
++            public_kind: StructuralKind::LogLike,
++            value: (Real::from(2) * &e).ln().expect("positive logarithm input"),
++        },
++        RepresentationCase {
++            certificate: "LnProduct",
++            public_kind: StructuralKind::LogLike,
++            value: &ln_two * &ln_three,
++        },
++        RepresentationCase {
++            certificate: "Log10",
++            public_kind: StructuralKind::LogLike,
++            value: Real::from(2).log10().expect("positive logarithm input"),
++        },
++        RepresentationCase {
++            certificate: "Log2",
++            public_kind: StructuralKind::LogLike,
++            value: Real::from(3).log2().expect("positive logarithm input"),
++        },
++        RepresentationCase {
++            certificate: "Pow10",
++            public_kind: StructuralKind::ExpLike,
++            value: fraction(1, 7)
++                .exp10()
++                .expect("finite rational base-ten power"),
++        },
++        RepresentationCase {
++            certificate: "Pow2",
++            public_kind: StructuralKind::ExpLike,
++            value: fraction(1, 7)
++                .exp2()
++                .expect("finite rational base-two power"),
++        },
++        RepresentationCase {
++            certificate: "SinPi",
++            public_kind: StructuralKind::TrigExact,
++            value: fraction(1, 5).sin_pi(),
++        },
++        RepresentationCase {
++            certificate: "TanPi",
++            public_kind: StructuralKind::TrigExact,
++            value: fraction(1, 5)
++                .tan_pi()
++                .expect("one fifth of a turn is not a tangent pole"),
++        },
++        RepresentationCase {
++            certificate: "Irrational",
++            public_kind: StructuralKind::ComputableOpaque,
++            value: Real::one().sin(),
++        },
++    ]
++}
+diff --git a/crates/hyperreal/fuzz/fuzz_targets/real_elementary.rs b/crates/hyperreal/fuzz/fuzz_targets/real_elementary.rs
+--- a/crates/hyperreal/fuzz/fuzz_targets/real_elementary.rs
++++ b/crates/hyperreal/fuzz/fuzz_targets/real_elementary.rs
+@@ -94,12 +94,11 @@
+                     i64::try_from(numerator.unsigned_abs()).expect("bounded numerator") + 1,
+                     denominator,
+                 )
+-                    .expect("positive denominator"),
++                .expect("positive denominator"),
+             );
+             let root = positive.clone().root_n(degree).expect("positive radicand");
+-            let reconstructed = (0..degree)
+-                .fold(Real::one(), |product, _| product * root.clone())
+-                - positive;
++            let reconstructed =
++                (0..degree).fold(Real::one(), |product, _| product * root.clone()) - positive;
+             // The radicand has numerator <= 17 and denominator <= 256.
+             // At degree n <= 9 the shared-generator separation bound is at
+             // most 8*n*(n+1) + n-1 <= 728 bits, plus two certification bits.

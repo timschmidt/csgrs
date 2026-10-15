@@ -1,0 +1,31 @@
+{
+  "complete": false,
+  "failed_command": {
+    "name": "fuzz-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "crates/hyperreal/fuzz/Cargo.toml",
+      "--",
+      "--check"
+    ],
+    "exit_code": 1,
+    "process_wall_seconds": 0.06387015525251627,
+    "stdout_sha256": "559564cf2ee62fe114e31f70187c66c3505ce9e02a9218f04743df5ba2cd141d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "retained_artifacts_sha256": {
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "056f98a642e38357e549b6b71ef9d1785c70850543eeab8085fa533f4da6c123",
+    "fuzz-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fuzz-format.stdout": "559564cf2ee62fe114e31f70187c66c3505ce9e02a9218f04743df5ba2cd141d",
+    "commands.json": "b2ba640abe19b97b1fa1738aababfec3331a1177de92049d36328eb71a15cc86",
+    "root-source-hashes.json.gz": "2e939368a26e94ba517e61e413282ed191b48d4e6159ddafbbeec5f85780b317",
+    "source-hashes.json.gz": "ed2326f68d2ff6c8171463fb7b20d1bd20edc5a06ce5bd0829cb7934f06750dd",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "binaries.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+  },
+  "admitted": false,
+  "plan_complete": false
+}

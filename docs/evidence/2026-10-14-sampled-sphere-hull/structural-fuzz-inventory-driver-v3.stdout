@@ -1,0 +1,4 @@
+{"start": "format"}
+{"name": "format", "command": ["cargo", "fmt", "--all", "--", "--check"], "exit_code": 0, "process_wall_seconds": 10.709328684955835, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"start": "fuzz-format"}
+{"name": "fuzz-format", "command": ["cargo", "fmt", "--manifest-path", "crates/hyperreal/fuzz/Cargo.toml", "--", "--check"], "exit_code": 1, "process_wall_seconds": 0.06387015525251627, "stdout_sha256": "559564cf2ee62fe114e31f70187c66c3505ce9e02a9218f04743df5ba2cd141d", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
