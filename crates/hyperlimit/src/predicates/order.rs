@@ -334,8 +334,10 @@ pub fn compare_point2_lexicographic_with_policy(
 ///
 /// Point equality is an exact predicate over Real coordinate differences.
 /// Keeping it here avoids each arrangement, curve, or triangulation crate
-/// reimplementing "compare x, then compare y" with slightly different
-/// uncertainty handling while preserving the exact-computation boundary.
+/// reimplementing coordinate comparison with different uncertainty handling.
+/// One certified unequal coordinate suffices, even if another is undecided.
+/// Equality requires evidence for every coordinate. Lexicographic ordering
+/// retains its separate, ordered-coordinate contract.
 pub fn point2_equal_with_policy(
     left: &Point2,
     right: &Point2,
@@ -360,11 +362,33 @@ pub fn point2_equal_with_policy(
         }
     }
 
-    crate::trace_dispatch!("hyperlimit", "point2_equal", "lexicographic-cascade");
-    map_outcome(
-        compare_point2_lexicographic_with_policy(left, right, policy),
-        |ordering| ordering == Ordering::Equal,
-    )
+    crate::trace_dispatch!("hyperlimit", "point2_equal", "coordinate-witnesses");
+    coordinates_equal(&[(&left.x, &right.x), (&left.y, &right.y)], policy)
+}
+
+fn coordinates_equal(pairs: &[(&Real, &Real)], policy: PredicatePolicy) -> PredicateOutcome<bool> {
+    let evaluate = |policy| {
+        let mut result = PredicateOutcome::decided(true, Certainty::Exact, Escalation::Structural);
+        for &(left, right) in pairs {
+            result = result.and(map_outcome(
+                compare_reals_with_policy(left, right, policy),
+                |ordering| ordering == Ordering::Equal,
+            ));
+            if result.value() == Some(false) {
+                return result;
+            }
+        }
+        result
+    };
+    // Search all coordinates for an admissible proof before consuming any
+    // approximate terminal. An unrelated undecided coordinate is not a
+    // dependency of a certified inequality witness.
+    let certified = evaluate(PredicatePolicy::STRICT);
+    if matches!(certified, PredicateOutcome::Unknown { .. }) && policy != PredicatePolicy::STRICT {
+        evaluate(policy)
+    } else {
+        certified
+    }
 }
 
 /// Compare two 3D points lexicographically by `(x, y, z)` with an explicit
@@ -425,14 +449,19 @@ pub fn compare_point3_lexicographic_with_policy(
 /// Keeping the 3D form beside [`point2_equal_with_policy`] gives callers a direct semantic
 /// API for vertex identity and normal-row deduplication instead of requiring a
 /// zero-radius sphere classification.
+/// A certified unequal coordinate suffices; equality requires every coordinate.
 pub fn point3_equal_with_policy(
     left: &Point3,
     right: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {
-    map_outcome(
-        compare_point3_lexicographic_with_policy(left, right, policy),
-        |ordering| ordering == Ordering::Equal,
+    coordinates_equal(
+        &[
+            (&left.x, &right.x),
+            (&left.y, &right.y),
+            (&left.z, &right.z),
+        ],
+        policy,
     )
 }
 

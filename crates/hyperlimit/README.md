@@ -124,6 +124,12 @@ fn require_decided<T>(outcome: PredicateOutcome<T>) -> Result<T, RefinementNeed>
 | Intersect intervals | `classify_closed_interval_intersection`, `closed_intervals_intersect` |
 | Use certified scalar filters | `certified_ball_sign`, `certified_interval_sign`, `classify_ball_sign_with_policy` |
 
+Point equality can use any certified unequal coordinate as a complete witness,
+even when another coordinate is undecided. It checks certified coordinate
+evidence before an approximate terminal; equality still requires every coordinate.
+Lexicographic ordering keeps its ordered-coordinate contract and may remain
+undecided for the same pair of points.
+
 ### Orientation and lifted predicates
 
 | Task | API |
