@@ -308,14 +308,23 @@ analytic/spline pair matrix.
 
 ## Booleans
 
-Public `union`, `intersection` and `difference` currently consume two
-`SolidRef` values and return `BodySet`. Empty and disconnected outputs are
-representable, but an empty result cannot be supplied directly to the next
-Boolean, and a multi-body result has no single operand view. The
+Public `union`, `intersection`, `difference` and `symmetric_difference` consume
+two `&BodySet` operands and return `BodySet`. Empty identities retain the
+surviving selection; complete subtraction produces canonical empty. Each
+selection denotes the regularized union of its bodies, including overlapping
+inputs. Intersection distributes over both selections, subtraction applies
+every cutter successively, and native union normalization merges overlapping
+results. Only selected solid subgraphs are copied when collecting components;
+source curves, parameters, certificates and voids remain attached.
+
+The [composition record](evidence/2026-10-15-body-set/admission.md) covers the
+native domain and its tests. The earlier
 [compiler reproduction](evidence/2026-10-15-upstream-integration/empty-operand.log)
-records this API gap. The plan's `BodySet` operand/result contract and complete
-empty identities remain unimplemented; the family-specific results below do
-not close that workflow gate.
+is historical. General mixed-surface closure, shared expression arrangements,
+durable provenance receipts and complete work/memory/cancellation bounds remain
+open. An unsupported constituent operation fails the complete Boolean; no
+partial selection is published as success. XOR currently composes two directed
+differences and their union, with the same intermediate support limits.
 
 `boolean::{union, intersection, difference}` supports certified global-z
 prisms whose planar boundaries contain exact lines and circular arcs.

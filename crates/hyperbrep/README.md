@@ -20,12 +20,17 @@ Constructors and Booleans return owned `BodySet` or `SheetSet` selections.
 Typed arena positions in errors are diagnostic labels and cannot resolve a
 record through the public API.
 
-Boolean results can be empty or contain multiple bodies, but the current
-Boolean front doors accept two individual `SolidRef` operands. An empty
-`BodySet` cannot yet feed the next Boolean directly. Closing that composition
-gap is the first priority under the updated
-[development plan](docs/DEVELOPMENT_PLAN.md#acceptance-order-after-the-upstream-integration);
-the constructor inventory below does not establish complete CAD workflows.
+`boolean::{union, intersection, difference, symmetric_difference}` consume
+`&BodySet` and return `BodySet`, so empty and multi-body outputs feed directly
+into further operations. `BodySet::empty()` starts an accumulation;
+`BodySet::from_solid(solid)` selects an already validated solid while sharing
+its model. A selection denotes the regularized union of its bodies, even when
+they overlap. Its `len()` counts selected bodies; summing individual volumes
+does not measure an overlapping union. Nontrivial Booleans normalize their
+results through the same strict native solid kernels. See the
+[composition contract and evidence](docs/evidence/2026-10-15-body-set/admission.md).
+General surface arrangements, full resource bounds and durable operation
+receipts remain open under the [development plan](docs/DEVELOPMENT_PLAN.md).
 
 `OperationContext::strict(WorkBudget { refinements, promotions })` runs a
 synchronous batch through `context.evaluate(|| ...)`. Nested BREP, Hypercurve

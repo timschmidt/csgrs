@@ -2541,8 +2541,11 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SKEW_PLANAR_ITERATIONS {
-        let result_bodies = boolean::intersection(only_solid(first_box), only_solid(&skew_box))
-            .expect("benchmark skew convex planar intersection");
+        let result_bodies = boolean::intersection(
+            &hyperbrep::BodySet::from_solid(only_solid(first_box)),
+            &hyperbrep::BodySet::from_solid(only_solid(&skew_box)),
+        )
+        .expect("benchmark skew convex planar intersection");
         assert!(
             result_bodies.len() == 1,
             "skew cuboid intersection must be one solid"
@@ -2562,8 +2565,11 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SKEW_GENERAL_ITERATIONS {
-        let result_bodies = boolean::difference(only_solid(first_box), only_solid(&skew_box))
-            .expect("benchmark skew general planar difference");
+        let result_bodies = boolean::difference(
+            &hyperbrep::BodySet::from_solid(only_solid(first_box)),
+            &hyperbrep::BodySet::from_solid(only_solid(&skew_box)),
+        )
+        .expect("benchmark skew general planar difference");
         assert!(
             result_bodies.len() == 1,
             "generic skew cuboid difference must be one solid"
@@ -2600,8 +2606,11 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SKEW_VOID_ITERATIONS {
-        let result_bodies = boolean::difference(only_solid(first_box), only_solid(&void_inner))
-            .expect("benchmark contained skew planar void difference");
+        let result_bodies = boolean::difference(
+            &hyperbrep::BodySet::from_solid(only_solid(first_box)),
+            &hyperbrep::BodySet::from_solid(only_solid(&void_inner)),
+        )
+        .expect("benchmark contained skew planar void difference");
         assert!(
             result_bodies.len() == 1,
             "contained skew cuboid must produce one void solid"
@@ -2650,8 +2659,11 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..BOOLEAN_ITERATIONS {
-        let result_bodies = boolean::union(only_solid(first), only_solid(&second))
-            .expect("benchmark disjoint Boolean");
+        let result_bodies = boolean::union(
+            &hyperbrep::BodySet::from_solid(only_solid(first)),
+            &hyperbrep::BodySet::from_solid(only_solid(&second)),
+        )
+        .expect("benchmark disjoint Boolean");
         assert!(
             result_bodies.len() > 1,
             "disjoint sphere union must retain two solids"
@@ -2678,8 +2690,11 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPHERE_PAIR_ITERATIONS {
-        let result_bodies = boolean::intersection(only_solid(first), only_solid(&overlapping))
-            .expect("benchmark partial sphere intersection");
+        let result_bodies = boolean::intersection(
+            &hyperbrep::BodySet::from_solid(only_solid(first)),
+            &hyperbrep::BodySet::from_solid(only_solid(&overlapping)),
+        )
+        .expect("benchmark partial sphere intersection");
         assert!(
             result_bodies.len() == 1,
             "partial sphere intersection must retain one solid"
@@ -2721,8 +2736,11 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..CYLINDER_INTERVAL_ITERATIONS {
-        let result_bodies = boolean::difference(only_solid(&interval), only_solid(&cut))
-            .expect("benchmark oriented cylinder interval difference");
+        let result_bodies = boolean::difference(
+            &hyperbrep::BodySet::from_solid(only_solid(&interval)),
+            &hyperbrep::BodySet::from_solid(only_solid(&cut)),
+        )
+        .expect("benchmark oriented cylinder interval difference");
         assert!(
             result_bodies.len() > 1,
             "interior cylinder interval cut must return two solids"
@@ -2760,8 +2778,11 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..FRUSTUM_INTERVAL_ITERATIONS {
-        let result_bodies = boolean::difference(only_solid(frustum), only_solid(&frustum_cut))
-            .expect("benchmark cone-frustum interval difference");
+        let result_bodies = boolean::difference(
+            &hyperbrep::BodySet::from_solid(only_solid(frustum)),
+            &hyperbrep::BodySet::from_solid(only_solid(&frustum_cut)),
+        )
+        .expect("benchmark cone-frustum interval difference");
         assert!(
             result_bodies.len() > 1,
             "interior frustum interval cut must return two solids"
@@ -2805,8 +2826,8 @@ fn main() {
     let mut checksum = 0_usize;
     for _ in 0..AXIAL_FRUSTUM_ITERATIONS {
         let result_bodies = boolean::intersection(
-            only_solid(black_box(&axial_frustum)),
-            only_solid(black_box(axial_cutter)),
+            &hyperbrep::BodySet::from_solid(only_solid(black_box(&axial_frustum))),
+            &hyperbrep::BodySet::from_solid(only_solid(black_box(axial_cutter))),
         )
         .expect("benchmark axial half-frustum intersection");
         assert!(
@@ -2861,9 +2882,11 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..REVOLUTION_BOOLEAN_ITERATIONS {
-        let result =
-            boolean::difference(only_solid(black_box(first)), only_solid(black_box(second)))
-                .expect("benchmark coaxial revolution difference");
+        let result = boolean::difference(
+            &hyperbrep::BodySet::from_solid(only_solid(black_box(first))),
+            &hyperbrep::BodySet::from_solid(only_solid(black_box(second))),
+        )
+        .expect("benchmark coaxial revolution difference");
         let result_bodies = result;
         assert!(
             result_bodies.len() == 1,

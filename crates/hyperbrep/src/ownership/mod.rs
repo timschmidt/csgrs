@@ -114,6 +114,11 @@ impl Model {
 }
 
 /// An owned selection of validated volume bodies, including the empty set.
+///
+/// As a Boolean operand the selection denotes the regularized union of its
+/// bodies. Selected solids may overlap; summing their volumes is not in
+/// general the volume of that union. Unselected entities in the backing model
+/// are not part of the operand.
 #[derive(Clone, Debug)]
 pub struct BodySet {
     model: Model,
@@ -121,6 +126,27 @@ pub struct BodySet {
 }
 
 impl BodySet {
+    /// Constructs the canonical empty volume set.
+    pub fn empty() -> Self {
+        Self::from_parts(
+            ArenaModelBuilder::new()
+                .finish()
+                .expect("empty model is valid"),
+            Vec::new(),
+        )
+    }
+
+    /// Selects one already validated solid, sharing its immutable model.
+    ///
+    /// Geometry, selected roots and source parameters are retained without
+    /// reconstruction. Other solids in the same model are not selected.
+    pub fn from_solid(solid: SolidRef<'_>) -> Self {
+        Self {
+            model: solid.model.clone(),
+            solids: vec![solid.id],
+        }
+    }
+
     fn from_parts(model: ArenaModel, solids: Vec<SolidId>) -> Self {
         Self {
             model: Model::from_arena(model),
@@ -141,7 +167,7 @@ impl BodySet {
         })
     }
 
-    /// Returns the number of selected connected bodies.
+    /// Returns the number of selected bodies, not their union's component count.
     pub fn len(&self) -> usize {
         self.solids.len()
     }

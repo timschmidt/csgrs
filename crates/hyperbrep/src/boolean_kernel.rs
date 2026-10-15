@@ -1,5 +1,7 @@
 //! Certified regularized Booleans for active exact solid families.
 
+pub(crate) mod sets;
+
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::fmt;
@@ -48,7 +50,7 @@ pub enum ArenaBooleanResult {
     Solids {
         /// Newly validated result model.
         model: ArenaModel,
-        /// Result solids in deterministic planar-contour order.
+        /// Result solids in deterministic component order.
         solids: Vec<SolidId>,
     },
 }
@@ -339,6 +341,12 @@ impl ArenaSolidIntersectionGraph {
 /// Failure to certify or represent a regularized solid Boolean.
 #[derive(Clone, Debug)]
 pub enum BooleanError {
+    /// Union of two validated connected solids returned an impossible component
+    /// count. This is a kernel invariant failure, not successful empty geometry.
+    InvalidUnionComponentCount {
+        /// Observed number of connected components (must be one or two).
+        count: usize,
+    },
     /// The operand pair is outside the active exact Boolean matrix.
     UnsupportedOperand,
     /// A non-cylinder prism union or difference uses incompatible slabs.
@@ -415,6 +423,10 @@ pub enum BooleanError {
 impl fmt::Display for BooleanError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::InvalidUnionComponentCount { count } => write!(
+                formatter,
+                "union of two connected solids returned {count} components"
+            ),
             Self::UnsupportedOperand => {
                 formatter.write_str("Boolean operands are outside the supported exact matrix")
             }
@@ -6194,9 +6206,9 @@ fn merge_owned_solids(
     let mut solids = Vec::with_capacity(sources.len());
     for (model, solid) in sources {
         let remapped = model
-            .append_to_builder(&mut builder)
+            .append_solids_to_builder(&mut builder, &[solid])
             .map_err(ConstructionError::from)?;
-        solids.push(remapped[solid.index()]);
+        solids.push(remapped[0]);
     }
     let model = builder
         .finish()
@@ -6383,17 +6395,13 @@ fn disjoint_boolean(
     second_solid: SolidId,
     operation: BooleanOp,
 ) -> Result<Option<ArenaBooleanResult>, BooleanError> {
-    if first_model.counts().solids != 1
-        || second_model.counts().solids != 1
-        || first_model.solid(first_solid).is_none()
-        || second_model.solid(second_solid).is_none()
-    {
+    if first_model.solid(first_solid).is_none() || second_model.solid(second_solid).is_none() {
         return Ok(None);
     }
-    let Some(first_bounds) = first_model.bounds()? else {
+    let Some(first_bounds) = sets::solid_bounds(first_model, first_solid)? else {
         return Ok(None);
     };
-    let Some(second_bounds) = second_model.bounds()? else {
+    let Some(second_bounds) = sets::solid_bounds(second_model, second_solid)? else {
         return Ok(None);
     };
     let separated = [
@@ -6420,10 +6428,10 @@ fn disjoint_boolean(
         BooleanOp::Union => {
             let mut builder = ArenaModelBuilder::new();
             let first = first_model
-                .append_to_builder(&mut builder)
+                .append_solids_to_builder(&mut builder, &[first_solid])
                 .map_err(ConstructionError::from)?[0];
             let second = second_model
-                .append_to_builder(&mut builder)
+                .append_solids_to_builder(&mut builder, &[second_solid])
                 .map_err(ConstructionError::from)?[0];
             let model = builder.finish().map_err(ConstructionError::from)?;
             ArenaBooleanResult::Solids {

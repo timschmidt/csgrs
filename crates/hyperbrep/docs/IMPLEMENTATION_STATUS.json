@@ -730,6 +730,42 @@
         "../../hypersolve/src/residual_replay.rs",
         "../../hypersolve/tests/real_representations.rs"
       ]
+    },
+    {
+      "id": "body-set-boolean-composition",
+      "work_packages": [
+        "WP00",
+        "WP01",
+        "WP08",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P6",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P27",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "decision": "kept for exact empty and finite multi-body composition; scoped admission, all work-package gates remain open",
+      "change": "Use BodySet as the public operand and result for union, intersection and difference; add symmetric difference, canonical empty and zero-reconstruction solid selection. Implement regularized union meaning for overlapping selections by distribution, successive cutting and normalization through the existing strict native kernels. Share complete/selected topology transfer and retain selected parameters, source curves, pcurves, voids and native certificates. Migrate current callers directly with no compatibility API. Prove self identities from model revision plus identical selected IDs, including native curved sweeps outside general face partition support.",
+      "source": "../src/boolean_kernel/sets.rs",
+      "source_files": [
+        "../src/ownership/boolean.rs",
+        "../src/ownership/mod.rs",
+        "../src/boolean_kernel.rs",
+        "../src/boolean_kernel/sets.rs",
+        "../src/topology/transfer.rs"
+      ],
+      "evidence": "evidence/2026-10-15-body-set/summary.json",
+      "validation": "383 combined native BREP/IO results pass in debug and release; minimal-feature release has 375 passes (configuration counts overlap). Nine public semantic groups and one private invalid-selection test are new. Six restored implementation faults fail runtime assertions. Core/IO all-target/all-feature and minimal-feature Clippy, warning-denied docs, fuzz-bin compilation, formatting and nine actual zero-import Wasmtime groups pass. Initial fuzz-caller compilation failures and three curved-sweep self-identity failures are retained with their fixes.",
+      "cost_evidence": "Six matched single-pair rows preserve certified completion, archive sizes and fingerprints over 15 warm samples per binary (20 completions each). Same-selection complete subtraction uses 5.30% of baseline median time and 1.41% of allocation calls. Other median time ratios are 0.992\u20131.017; disjoint-sphere union allocation calls increase 6.49%, with requested bytes increasing 0.150%. No general speedup or cold/peak-memory comparison is claimed. A separate construction\u2192difference/intersection\u2192reconstruction\u2192classification\u2192archive-replay probe completes at 1/4/16/64 bodies per input; the 64-body row takes 2.34 seconds, requests 1.265 GB cumulatively and peaks at 36.9 MB live requested bytes (not process RSS). Shared arrangements and resource bounds remain open. Raw samples, initial attempts and binary/source hashes are retained.",
+      "limits": "All 28 work packages remain open. Finite composition is not a shared expression arrangement. Unsupported intermediate topology remains typed. Full operation provenance/receipts, total pair work, retained-byte bounds, cancellation, release/MSRV/bindings, formal/coverage/new fuzz campaigns and the complete pre-push matrix remain open. The two root upstream drill-composition failures and closed-edge stash are unchanged."
     }
   ],
   "work_packages": [
@@ -903,10 +939,10 @@
     }
   ],
   "next_actions": [
-    "Reproduce and close BREP Boolean composition over canonical empty and multi-body results before broader geometry expansion. Current front doors take SolidRef and cannot consume an empty BodySet. Implement one native BodySet operand/result contract, migrate callers directly, and test every empty identity followed by further operations without concealing invalid input or dropping provenance (WP01/WP08, P6/P17-P20).",
+    "Preserve and broaden the BodySet empty/multi-body/overlapping-selection composition corpus. Add shared arrangements across expression roots, durable boundary provenance and certainty receipts, complete work/memory/cancellation bounds, and mixed analytic/spline closure without losing the newly certified finite composition path (WP01/WP08, P6/P17-P20).",
     "Preserve and exercise named ordinary strict workflows with independent set, topology and source-fidelity checks. Retain upstream 16/32-segment drilled composition failures and all certified controls; inherited scalar candidate status is not admission. Record all seven outcome categories and the failing stage (WP00/WP21, P39).",
     "Complete the documented-package pipeline in clean external consumers and actual affected bindings; verify features, dependency versions, MSRV, certainty and format-specific round trips. Local paths, source builds and WASM probes do not close delivery gates (WP17/WP18/WP23, P37).",
-    "Restore the unfinished native closed-edge candidate after the upstream integration and requalify its tests and completed-contract costs on the merged source; preserve interrupted and pre-integration evidence as historical.",
+    "Restore the unfinished native closed-edge candidate from the verified stash, migrate its callers to the BodySet Boolean API, preserve the new guidance/ledgers, and requalify its tests and completed-contract costs on the integrated source; interrupted and pre-integration evidence remains historical.",
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
     "Complete WP02/G1 beyond planar spline replay, subdivided cuboid and axial-cylinder archive replay. Extend independent solid/void/corner proofs, retained surface/contact images and selected Boolean transfer while preserving every existing exact behavior. Native-to-selected spline composition and five repeated selected cuboid cuts now have regression evidence.",
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",

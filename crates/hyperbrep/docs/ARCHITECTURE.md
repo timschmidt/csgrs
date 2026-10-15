@@ -181,11 +181,13 @@ there is no parallel legacy model API.
 | --- | --- |
 | `ownership/` | Canonical public model references, scoped construction keys, owned operation results and transactions |
 | `construction.rs`, `boolean_kernel.rs`, `meshing.rs` | Private constructor, Boolean and derived-output algorithms |
+| `boolean_kernel/sets.rs` | Regularized finite-union operands, intersection distribution, successive subtraction and connected-component normalization through the shared solid kernel |
 | `context.rs` | Explicit strict operation configuration and shared Hypersolve budgets; strict authority at fallible public operation boundaries |
 | `cache.rs` | Shared publication of successful immutable certificates; failed queries remain retryable |
 | `parameter.rs`, `geometry/location.rs`, `geometry/point.rs` | Retained parameters, spatial inverse queries and shared selected point images |
 | `topology/ids.rs`, `records.rs`, `correspondence.rs` | Typed identifiers, immutable topology records and exact parameter relations |
 | `topology/model.rs`, `builder.rs`, `error.rs` | Arena access, adjacency, staged construction/publication and typed failures |
+| `topology/transfer.rs` | Common full-model and selected-solid transfer; source-order remapping retains curve images, parameter correspondence, voids and validated solid certificates |
 | `topology/edit/` | Edge/face/surface splitting, multi-trace partitioning, endpoint attachment, transactions and edit results |
 | `topology/validation/` | Image agreement, wire/shell checks and existing analytic/prism/sweep/loft family certificates |
 | `topology/query.rs`, `measure.rs`, `transform.rs` | Classification, exact measurements and immutable transforms |

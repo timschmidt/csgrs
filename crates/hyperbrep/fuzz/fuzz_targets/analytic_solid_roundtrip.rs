@@ -50,9 +50,9 @@ fuzz_target!(|bytes: &[u8]| {
                 return;
             };
             let result = match bytes[2] % 3 {
-                0 => boolean::union(first_solid(&first), first_solid(&second)),
-                1 => boolean::intersection(first_solid(&first), first_solid(&second)),
-                _ => boolean::difference(first_solid(&first), first_solid(&second)),
+                0 => boolean::union(&hyperbrep::BodySet::from_solid(first_solid(&first)), &hyperbrep::BodySet::from_solid(first_solid(&second))),
+                1 => boolean::intersection(&hyperbrep::BodySet::from_solid(first_solid(&first)), &hyperbrep::BodySet::from_solid(first_solid(&second))),
+                _ => boolean::difference(&hyperbrep::BodySet::from_solid(first_solid(&first)), &hyperbrep::BodySet::from_solid(first_solid(&second))),
             };
             result
                 .ok()
@@ -87,9 +87,9 @@ fuzz_target!(|bytes: &[u8]| {
                 return;
             };
             let result = match bytes[2] % 3 {
-                0 => boolean::union(first_solid(&first), first_solid(&second)),
-                1 => boolean::intersection(first_solid(&first), first_solid(&second)),
-                _ => boolean::difference(first_solid(&first), first_solid(&second)),
+                0 => boolean::union(&hyperbrep::BodySet::from_solid(first_solid(&first)), &hyperbrep::BodySet::from_solid(first_solid(&second))),
+                1 => boolean::intersection(&hyperbrep::BodySet::from_solid(first_solid(&first)), &hyperbrep::BodySet::from_solid(first_solid(&second))),
+                _ => boolean::difference(&hyperbrep::BodySet::from_solid(first_solid(&first)), &hyperbrep::BodySet::from_solid(first_solid(&second))),
             };
             result
                 .ok()
@@ -118,9 +118,9 @@ fuzz_target!(|bytes: &[u8]| {
                 return;
             };
             let result = match bytes[1] % 3 {
-                0 => boolean::union(first_solid(&outer), first_solid(&inner)),
-                1 => boolean::intersection(first_solid(&outer), first_solid(&inner)),
-                _ => boolean::difference(first_solid(&outer), first_solid(&inner)),
+                0 => boolean::union(&hyperbrep::BodySet::from_solid(first_solid(&outer)), &hyperbrep::BodySet::from_solid(first_solid(&inner))),
+                1 => boolean::intersection(&hyperbrep::BodySet::from_solid(first_solid(&outer)), &hyperbrep::BodySet::from_solid(first_solid(&inner))),
+                _ => boolean::difference(&hyperbrep::BodySet::from_solid(first_solid(&outer)), &hyperbrep::BodySet::from_solid(first_solid(&inner))),
             };
             result
                 .ok()
@@ -168,9 +168,9 @@ fuzz_target!(|bytes: &[u8]| {
                 return;
             };
             let result = match bytes[1] % 3 {
-                0 => boolean::union(first_solid(&first), first_solid(&second)),
-                1 => boolean::intersection(first_solid(&first), first_solid(&second)),
-                _ => boolean::difference(first_solid(&first), first_solid(&second)),
+                0 => boolean::union(&hyperbrep::BodySet::from_solid(first_solid(&first)), &hyperbrep::BodySet::from_solid(first_solid(&second))),
+                1 => boolean::intersection(&hyperbrep::BodySet::from_solid(first_solid(&first)), &hyperbrep::BodySet::from_solid(first_solid(&second))),
+                _ => boolean::difference(&hyperbrep::BodySet::from_solid(first_solid(&first)), &hyperbrep::BodySet::from_solid(first_solid(&second))),
             };
             result
                 .ok()
@@ -460,9 +460,9 @@ fuzz_target!(|bytes: &[u8]| {
             return;
         };
         let result = if bytes[1].is_multiple_of(2) {
-            boolean::intersection(first_solid(&frustum), first_solid(&cutter))
+            boolean::intersection(&hyperbrep::BodySet::from_solid(first_solid(&frustum)), &hyperbrep::BodySet::from_solid(first_solid(&cutter)))
         } else {
-            boolean::difference(first_solid(&frustum), first_solid(&cutter))
+            boolean::difference(&hyperbrep::BodySet::from_solid(first_solid(&frustum)), &hyperbrep::BodySet::from_solid(first_solid(&cutter)))
         };
         let Ok(bodies) = result else {
             panic!("certified axial frustum Boolean failed: {result:?}");
@@ -576,13 +576,13 @@ fuzz_target!(|bytes: &[u8]| {
     };
     let skew_result = match operation {
         boolean::BooleanOperation::Union => {
-            boolean::union(first_solid(&first_box), first_solid(&skew_box))
+            boolean::union(&hyperbrep::BodySet::from_solid(first_solid(&first_box)), &hyperbrep::BodySet::from_solid(first_solid(&skew_box)))
         }
         boolean::BooleanOperation::Intersection => {
-            boolean::intersection(first_solid(&first_box), first_solid(&skew_box))
+            boolean::intersection(&hyperbrep::BodySet::from_solid(first_solid(&first_box)), &hyperbrep::BodySet::from_solid(first_solid(&skew_box)))
         }
         boolean::BooleanOperation::Difference => {
-            boolean::difference(first_solid(&first_box), first_solid(&skew_box))
+            boolean::difference(&hyperbrep::BodySet::from_solid(first_solid(&first_box)), &hyperbrep::BodySet::from_solid(first_solid(&skew_box)))
         }
     };
     let Ok(skew_bodies) = skew_result else {
@@ -634,7 +634,7 @@ fuzz_target!(|bytes: &[u8]| {
     let Ok(void_inner) = void_inner.transformed(&void_transform) else {
         return;
     };
-    if let Ok(bodies) = boolean::difference(first_solid(&void_outer), first_solid(&void_inner))
+    if let Ok(bodies) = boolean::difference(&hyperbrep::BodySet::from_solid(first_solid(&void_outer)), &hyperbrep::BodySet::from_solid(first_solid(&void_inner)))
         && bodies.len() == 1
     {
         let model = bodies.model();

@@ -446,7 +446,7 @@ fn boolean_outputs_keep_source_and_result_faces_in_their_correct_models() {
         assert!(pair.first_face().model().same_revision(first.model()));
         assert!(pair.second_face().model().same_revision(second.model()));
     }
-    let intersection = boolean::intersection(a, b).unwrap();
+    let intersection = boolean::intersection(&first, &second).unwrap();
     assert_eq!(intersection.len(), 1);
     assert_eq!(
         intersection.bodies().next().unwrap().volume().unwrap(),
@@ -454,7 +454,7 @@ fn boolean_outputs_keep_source_and_result_faces_in_their_correct_models() {
     );
     assert!(!intersection.model().same_revision(first.model()));
     assert!(!intersection.model().same_revision(second.model()));
-    let empty = boolean::difference(a, a).unwrap();
+    let empty = boolean::difference(&first, &first).unwrap();
     assert!(empty.is_empty());
     assert_eq!(empty.model().counts().solids, 0);
 }

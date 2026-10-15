@@ -7,38 +7,81 @@ pub use crate::boolean_kernel::{
 
 fn bodies(result: ArenaBooleanResult) -> BodySet {
     match result {
-        ArenaBooleanResult::Empty => BodySet::from_parts(
-            ArenaModelBuilder::new()
-                .finish()
-                .expect("empty model is valid"),
-            Vec::new(),
-        ),
+        ArenaBooleanResult::Empty => BodySet::empty(),
         ArenaBooleanResult::Solid { model, solid } => BodySet::from_parts(model, vec![solid]),
         ArenaBooleanResult::Solids { model, solids } => BodySet::from_parts(model, solids),
     }
 }
 
 /// Returns material belonging to either operand.
-pub fn union(first: SolidRef<'_>, second: SolidRef<'_>) -> Result<BodySet, BooleanError> {
-    crate::boolean_kernel::union(&first.model.inner, first.id, &second.model.inner, second.id)
-        .map(bodies)
+pub fn union(first: &BodySet, second: &BodySet) -> Result<BodySet, BooleanError> {
+    boolean(first, second, BooleanOperation::Union)
 }
 
 /// Returns material common to both operands.
-pub fn intersection(first: SolidRef<'_>, second: SolidRef<'_>) -> Result<BodySet, BooleanError> {
-    crate::boolean_kernel::intersection(
-        &first.model.inner,
-        first.id,
-        &second.model.inner,
-        second.id,
-    )
-    .map(bodies)
+pub fn intersection(first: &BodySet, second: &BodySet) -> Result<BodySet, BooleanError> {
+    boolean(first, second, BooleanOperation::Intersection)
 }
 
 /// Returns material in the first operand outside the second.
-pub fn difference(first: SolidRef<'_>, second: SolidRef<'_>) -> Result<BodySet, BooleanError> {
-    crate::boolean_kernel::difference(&first.model.inner, first.id, &second.model.inner, second.id)
-        .map(bodies)
+pub fn difference(first: &BodySet, second: &BodySet) -> Result<BodySet, BooleanError> {
+    boolean(first, second, BooleanOperation::Difference)
+}
+
+/// Returns material belonging to exactly one operand (regularized XOR).
+///
+/// Both directed differences and their union use the same strict native path.
+/// An unsupported intermediate result remains an error; intersections are not
+/// yet shared across these three operations.
+pub fn symmetric_difference(first: &BodySet, second: &BodySet) -> Result<BodySet, BooleanError> {
+    let left = difference(first, second)?;
+    let right = difference(second, first)?;
+    union(&left, &right)
+}
+
+/// Applies a regularized operation to the unions represented by two selections.
+///
+/// Empty and same-selection identities retain the surviving immutable selection. Nontrivial results
+/// contain all selected components; a failed constituent operation fails the
+/// whole call without changing either input. Single-solid kernels and their
+/// supported geometry matrix are shared with the multi-body path.
+///
+/// Input admission precedes this API: only validated `BodySet` values are
+/// accepted. An untrusted archive or failed constructor cannot masquerade as
+/// empty. Decisions remain strict even inside an ambient approximate scope.
+/// Current solver budgets apply; total pair work, memory and cancellation are
+/// not yet independently bounded. Shared expression arrangements remain future
+/// work, and an unsupported intermediate topology returns its typed error.
+pub fn boolean(
+    first: &BodySet,
+    second: &BodySet,
+    operation: BooleanOperation,
+) -> Result<BodySet, BooleanError> {
+    if first.is_empty() || second.is_empty() {
+        return Ok(match operation {
+            BooleanOperation::Union if first.is_empty() => second.clone(),
+            BooleanOperation::Union => first.clone(),
+            BooleanOperation::Intersection => BodySet::empty(),
+            BooleanOperation::Difference => first.clone(),
+        });
+    }
+    // Identity is a proof about the complete selected sets, independent of the
+    // geometric family's intersection support. Both revision AND selection
+    // must match: different solids may belong to the same model.
+    if first.model.same_revision(&second.model) && first.solids == second.solids {
+        return Ok(match operation {
+            BooleanOperation::Union | BooleanOperation::Intersection => first.clone(),
+            BooleanOperation::Difference => BodySet::empty(),
+        });
+    }
+    crate::boolean_kernel::sets::boolean(
+        &first.model.inner,
+        &first.solids,
+        &second.model.inner,
+        &second.solids,
+        operation,
+    )
+    .map(bodies)
 }
 
 /// An owned exact face-pair relation with both source revisions retained.

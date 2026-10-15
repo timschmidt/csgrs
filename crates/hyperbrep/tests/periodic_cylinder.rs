@@ -60,11 +60,11 @@ fn seam_subdivision_reflection_and_boolean_reuse_the_certificate() {
         .unwrap();
     fixture::check(&fixture::replay(&reflected));
     let canonical = builder::cylinder(Real::from(2), Real::from(4)).unwrap();
-    let a = model.solids().next().unwrap();
-    let b = canonical.bodies().next().unwrap();
-    fixture::check(boolean::union(a, b).unwrap().model());
-    fixture::check(boolean::intersection(a, b).unwrap().model());
-    assert_eq!(boolean::difference(a, b).unwrap().bodies().count(), 0);
+    let a = BodySet::from_solid(model.solids().next().unwrap());
+    let b = canonical;
+    fixture::check(boolean::union(&a, &b).unwrap().model());
+    fixture::check(boolean::intersection(&a, &b).unwrap().model());
+    assert_eq!(boolean::difference(&a, &b).unwrap().bodies().count(), 0);
 }
 
 #[test]

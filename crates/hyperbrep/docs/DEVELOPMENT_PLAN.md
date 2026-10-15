@@ -101,10 +101,13 @@ apply to each subsequent patch; these application notes do not replace them.
 
 1. **Empty-result composition and visible failures.** Reproduce gaps on the
    target source, identify the owning layer and missing acceptance test, then
-   implement the smallest coherent repair. BREP's current Boolean front doors
-   take two `SolidRef` values and return a `BodySet`; an empty result cannot
-   be supplied to the next Boolean. Close that public composition gap before
-   treating additional primitive or exchange cases as workflow completion.
+   implement the smallest coherent repair. The integration baseline's Boolean
+   front doors took two `SolidRef` values and could not consume empty results.
+   The [BodySet increment](evidence/2026-10-15-body-set/admission.md) changes
+   the public operand/result contract and exercises empty/disconnected/overlapping
+   selections through further operations. Preserve those successes and extend
+   full geometric and evidentiary closure before treating additional primitive
+   or exchange cases as workflow completion.
    Audit error propagation through builders, queries, persistence, adapters
    and bindings at the same time; no failure becomes empty, false, zero,
    unchanged input or incomplete success.
@@ -537,12 +540,14 @@ A compound can reference mixed objects without claiming a material interior.
 Nonmanifold cell complexes may be a future distinct type; they are not
 silently admitted as manifold solids.
 
-Make `BodySet` the operand as well as result of public volume composition.
-Provide a canonical `BodySet::empty()` and `BodySet::from_solid(SolidRef)`
-without reconstructing geometry. Migrate callers directly; retain single-solid
-fast paths privately inside the same operation. Multi-body inputs represent
-their regularized union, with shared intersections across expression roots;
-do not substitute a pairwise loop that changes overlapping-component meaning.
+`BodySet` is now the operand as well as result of public volume composition,
+with canonical `BodySet::empty()` and `BodySet::from_solid(SolidRef)` that
+shares the existing immutable model. Callers migrate directly; single-solid
+fast paths remain private. Multi-body inputs represent their regularized union.
+The native implementation distributes intersection, subtracts cutters
+successively and normalizes collected unions, preserving overlapping-component
+meaning. Shared intersections across expression roots remain to be implemented;
+the finite composition path does not discharge that requirement.
 Identity shortcuts operate only on admitted geometry and must retain required
 provenance. Untrusted `RawModel` and staged builders remain outside this API.
 
@@ -1911,15 +1916,17 @@ certified topology throughout its operation.
 
 Apply the [upstream acceptance order](#acceptance-order-after-the-upstream-integration)
 to the existing implementation before continuing broader geometry expansion.
-First reproduce and close BREP's empty/multi-body operand and failure-visibility
-gaps (WP01/WP08); run the ordinary strict workflow corpus against the integrated
+Preserve the BodySet operand/result and exact composition regressions, then
+extend failure visibility, shared arrangements and durable evidence (WP01/WP08).
+Run the ordinary strict workflow corpus against the integrated
 scalar/predicate stack (WP00/WP21); then complete the external consumer and
 release boundary for each admitted path (WP17/WP18/WP23). A dependency's own
 candidate status, unresolved tests or missing cost admission remains visible
 when inherited; merging it does not prove whole-stack acceptance.
 
-Preserve unfinished closed-edge work and its original evidence, then rebase
-its qualification and costs on the integrated source before retention. Its
+Preserve unfinished closed-edge work and its original evidence, then migrate
+its Boolean callers to BodySet and rebase qualification and costs on the
+integrated source before retention. Its
 tests establish only their declared native domain, not general Boolean closure
 or curved STEP exchange. Existing archive cost regressions remain open.
 
