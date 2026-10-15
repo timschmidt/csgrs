@@ -5404,6 +5404,32 @@
       },
       "mpfr_test_cleanup_main_admission": "docs/evidence/2026-10-14-sampled-sphere-hull/mpfr-test-cleanup-main-admission-v1/admission.json",
       "mpfr_test_cleanup_main_source_mapping": "docs/evidence/2026-10-14-sampled-sphere-hull/mpfr-test-cleanup-main-admission-v1/source-hashes-after.json.gz"
+    },
+    "structural_fuzz_inventory": {
+      "status": "shared-22-form-inventory-and-monotone-cache-checks-admitted",
+      "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/structural-fuzz-inventory-scope-v5.json",
+      "result": "docs/evidence/2026-10-14-sampled-sphere-hull/structural-fuzz-inventory-v5/result.json",
+      "admission": "docs/evidence/2026-10-14-sampled-sphere-hull/structural-fuzz-inventory-admission-v5/admission.json",
+      "source_mapping": "docs/evidence/2026-10-14-sampled-sphere-hull/structural-fuzz-inventory-admission-v5/source-hashes-after.json.gz",
+      "test_only_change": true,
+      "admitted": true,
+      "representatives": 22,
+      "fixed_replayed_seeds": 43,
+      "retained_stride_schedule_ordered_pairs": 484,
+      "bounded_mutation_runs": 256,
+      "test_counts": {
+        "default-tests": 4,
+        "all-features-tests": 6
+      },
+      "limits": [
+        "A bounded inventory regression and smoke campaign, not exhaustive topology exploration, a directed lexicase campaign, or P38 completion.",
+        "Shared fixture recipes and production arithmetic remain unchanged. No runtime performance claim or benchmark gate applies to this test-only change.",
+        "Default/all-feature integration checks use ordinary release builds; the fuzz executable requests AddressSanitizer, leak detection, coverage instrumentation, and instrumented standard-library rebuilding. Actual build and execution evidence determines completion.",
+        "The corpus is finite. Interval overlap checks can reject inconsistent arithmetic but do not prove symbolic equality for every generated expression.",
+        "No full workspace CI, platform coverage, or push-readiness claim."
+      ],
+      "directed_lexicase_campaign_complete": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {

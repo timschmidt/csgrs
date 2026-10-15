@@ -94,12 +94,11 @@ fuzz_target!(|input: Input| {
                     i64::try_from(numerator.unsigned_abs()).expect("bounded numerator") + 1,
                     denominator,
                 )
-                    .expect("positive denominator"),
+                .expect("positive denominator"),
             );
             let root = positive.clone().root_n(degree).expect("positive radicand");
-            let reconstructed = (0..degree)
-                .fold(Real::one(), |product, _| product * root.clone())
-                - positive;
+            let reconstructed =
+                (0..degree).fold(Real::one(), |product, _| product * root.clone()) - positive;
             // The radicand has numerator <= 17 and denominator <= 256.
             // At degree n <= 9 the shared-generator separation bound is at
             // most 8*n*(n+1) + n-1 <= 728 bits, plus two certification bits.

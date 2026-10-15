@@ -1,0 +1,100 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 1469780605
+INFO: Loaded 1 modules   (108300 inline 8-bit counters): 108300 [0x564dcd10fa40, 0x564dcd12a14c), 
+INFO: Loaded 1 PC tables (108300 PCs): 108300 [0x564dcd12a150,0x564dcd2d1210), 
+/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/fuzz-target/x86_64-unknown-linux-gnu/release/structural_representations: Running 43 inputs 1 time(s) each.
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/seed
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/seed in 105 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-00
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-00 in 29 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-01
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-01 in 56 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-02
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-02 in 54 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-03
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-03 in 53 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-04
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-04 in 26 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-05
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-05 in 66 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-06
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-06 in 58 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-07
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-07 in 57 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-08
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-08 in 57 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-09
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-09 in 58 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-10
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-10 in 61 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-11
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-11 in 29 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-12
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-12 in 26 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-13
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-13 in 78 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-14
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-14 in 30 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-15
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-15 in 29 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-16
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-16 in 31 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-17
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-17 in 57 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-18
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-18 in 25 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-19
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-19 in 27 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-20
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-20 in 26 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-21
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride-21 in 25 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_00
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_00 in 51 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_01
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_01 in 28 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_02
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_02 in 27 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_03
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_03 in 28 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_04
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_04 in 13 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_05
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_05 in 28 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_06
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_06 in 57 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_07
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_07 in 28 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_08
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_08 in 53 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_09
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_09 in 26 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_10
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_10 in 27 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_11
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_11 in 28 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_12
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_12 in 30 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_13
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_13 in 31 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_14
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_14 in 30 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_15
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_15 in 30 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_16
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_16 in 29 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_17
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_17 in 27 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_18
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_18 in 27 ms
+Running: /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_19
+Executed /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/fuzz/corpus/structural_representations/stride_19 in 30 ms
+***
+*** NOTE: fuzzing was not performed, you have only
+***       executed the target code on a fixed set of inputs.
+***
+stat::number_of_executed_units: 59
+stat::average_exec_per_sec:     59
+stat::new_units_added:          0
+stat::slowest_unit_time_sec:    0
+stat::peak_rss_mb:              217

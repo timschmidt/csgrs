@@ -1,0 +1,154 @@
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 20261014
+INFO: Loaded 1 modules   (108300 inline 8-bit counters): 108300 [0x563d63dcaa40, 0x563d63de514c), 
+INFO: Loaded 1 PC tables (108300 PCs): 108300 [0x563d63de5150,0x563d63f8c210), 
+INFO:       43 files found in /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/mutation-corpus
+INFO: seed corpus: files: 43 min: 2b max: 34b total: 118b rss: 57Mb
+#57	INITED cov: 9911 ft: 18873 corp: 43/118b exec/s: 57 rss: 215Mb
+#59	NEW    cov: 9912 ft: 18884 corp: 44/119b lim: 34 exec/s: 59 rss: 220Mb L: 1/34 MS: 1 EraseBytes-
+#62	NEW    cov: 9912 ft: 18896 corp: 45/121b lim: 34 exec/s: 62 rss: 229Mb L: 2/34 MS: 3 CopyPart-ChangeASCIIInt-ChangeBinInt-
+	NEW_FUNC[1/5]: 0x563d639131a0 in <std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<num_bigint::bigint::BigInt>>::force::{closure#0}>::{closure#0} /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/sync/once.rs:226
+	NEW_FUNC[2/5]: 0x563d63a23380 in <hyperreal::computable::node::Computable>::prescaled_atan /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:145
+#65	NEW    cov: 9995 ft: 19267 corp: 46/134b lim: 34 exec/s: 32 rss: 239Mb L: 13/34 MS: 2 ShuffleBytes-InsertRepeatedBytes-
+#66	NEW    cov: 9995 ft: 19268 corp: 47/135b lim: 34 exec/s: 33 rss: 242Mb L: 1/34 MS: 1 EraseBytes-
+#68	NEW    cov: 9998 ft: 19314 corp: 48/138b lim: 34 exec/s: 34 rss: 249Mb L: 3/34 MS: 1 InsertByte-
+#69	NEW    cov: 9998 ft: 19319 corp: 49/139b lim: 34 exec/s: 34 rss: 252Mb L: 1/34 MS: 1 EraseBytes-
+	NEW_FUNC[1/9]: 0x563d63aaba90 in <hyperreal::computable::node::Computable>::cos_large_rational_deferred /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/src/computable/node/primitive_constructors.rs:485
+	NEW_FUNC[2/9]: 0x563d63adb180 in hyperreal::computable::approximation::cos_large_rational /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/src/computable/approximation/trig.rs:630
+#71	NEW    cov: 10093 ft: 19444 corp: 50/143b lim: 34 exec/s: 35 rss: 257Mb L: 4/34 MS: 1 CrossOver-
+#72	NEW    cov: 10094 ft: 19457 corp: 51/146b lim: 34 exec/s: 36 rss: 260Mb L: 3/34 MS: 1 InsertByte-
+#73	NEW    cov: 10094 ft: 19464 corp: 52/148b lim: 34 exec/s: 36 rss: 263Mb L: 2/34 MS: 1 ChangeByte-
+#74	NEW    cov: 10110 ft: 19507 corp: 53/151b lim: 34 exec/s: 37 rss: 266Mb L: 3/34 MS: 1 InsertByte-
+#77	NEW    cov: 10115 ft: 19523 corp: 54/153b lim: 34 exec/s: 38 rss: 274Mb L: 2/34 MS: 3 CrossOver-EraseBytes-InsertByte-
+#79	NEW    cov: 10124 ft: 19593 corp: 55/157b lim: 34 exec/s: 39 rss: 280Mb L: 4/34 MS: 2 CopyPart-CMP- DE: "\015\003"-
+#81	NEW    cov: 10124 ft: 19616 corp: 56/160b lim: 34 exec/s: 40 rss: 284Mb L: 3/34 MS: 2 EraseBytes-PersAutoDict- DE: "\015\003"-
+#82	NEW    cov: 10124 ft: 19617 corp: 57/162b lim: 34 exec/s: 41 rss: 288Mb L: 2/34 MS: 1 ShuffleBytes-
+#83	NEW    cov: 10124 ft: 19623 corp: 58/166b lim: 34 exec/s: 41 rss: 291Mb L: 4/34 MS: 1 CrossOver-
+#84	NEW    cov: 10124 ft: 19635 corp: 59/168b lim: 34 exec/s: 28 rss: 294Mb L: 2/34 MS: 1 ChangeBinInt-
+#85	NEW    cov: 10124 ft: 19642 corp: 60/170b lim: 34 exec/s: 28 rss: 296Mb L: 2/34 MS: 1 ChangeByte-
+#86	NEW    cov: 10124 ft: 19657 corp: 61/174b lim: 34 exec/s: 28 rss: 299Mb L: 4/34 MS: 1 CopyPart-
+#87	NEW    cov: 10124 ft: 19692 corp: 62/179b lim: 34 exec/s: 29 rss: 302Mb L: 5/34 MS: 1 CrossOver-
+#88	NEW    cov: 10124 ft: 19701 corp: 63/181b lim: 34 exec/s: 29 rss: 305Mb L: 2/34 MS: 1 ChangeBit-
+#89	NEW    cov: 10124 ft: 19725 corp: 64/183b lim: 34 exec/s: 29 rss: 308Mb L: 2/34 MS: 1 ShuffleBytes-
+#90	NEW    cov: 10124 ft: 19744 corp: 65/185b lim: 34 exec/s: 30 rss: 311Mb L: 2/34 MS: 1 ChangeByte-
+#92	NEW    cov: 10124 ft: 19750 corp: 66/186b lim: 34 exec/s: 30 rss: 316Mb L: 1/34 MS: 2 ShuffleBytes-EraseBytes-
+#93	NEW    cov: 10124 ft: 19778 corp: 67/188b lim: 34 exec/s: 31 rss: 319Mb L: 2/34 MS: 1 ChangeByte-
+#95	NEW    cov: 10124 ft: 19794 corp: 68/192b lim: 34 exec/s: 31 rss: 325Mb L: 4/34 MS: 2 ShuffleBytes-PersAutoDict- DE: "\015\003"-
+#97	NEW    cov: 10126 ft: 20177 corp: 69/209b lim: 34 exec/s: 32 rss: 333Mb L: 17/34 MS: 1 InsertRepeatedBytes-
+#98	NEW    cov: 10126 ft: 20180 corp: 70/211b lim: 34 exec/s: 32 rss: 336Mb L: 2/34 MS: 1 ChangeByte-
+#100	NEW    cov: 10148 ft: 20401 corp: 71/220b lim: 34 exec/s: 33 rss: 342Mb L: 9/34 MS: 2 EraseBytes-CMP- DE: "\025\000\000\000\000\000\000\000"-
+#101	NEW    cov: 10148 ft: 20406 corp: 72/222b lim: 34 exec/s: 33 rss: 345Mb L: 2/34 MS: 1 ChangeByte-
+	NEW_FUNC[1/1]: 0x563d63a3b030 in <hyperreal::computable::node::PiAtanTermsForm>::scaled /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/src/computable/node/algebra.rs:317
+#103	NEW    cov: 10164 ft: 20484 corp: 73/226b lim: 34 exec/s: 34 rss: 348Mb L: 4/34 MS: 1 ChangeBinInt-
+#104	NEW    cov: 10164 ft: 20490 corp: 74/228b lim: 34 exec/s: 34 rss: 351Mb L: 2/34 MS: 1 ChangeByte-
+#106	NEW    cov: 10164 ft: 20492 corp: 75/230b lim: 34 exec/s: 35 rss: 356Mb L: 2/34 MS: 1 ChangeByte-
+#108	NEW    cov: 10164 ft: 20499 corp: 76/233b lim: 34 exec/s: 36 rss: 362Mb L: 3/34 MS: 1 InsertByte-
+#115	NEW    cov: 10169 ft: 20705 corp: 77/254b lim: 34 exec/s: 38 rss: 377Mb L: 21/34 MS: 1 InsertRepeatedBytes-
+#117	NEW    cov: 10189 ft: 21172 corp: 78/282b lim: 34 exec/s: 29 rss: 382Mb L: 28/34 MS: 1 InsertRepeatedBytes-
+#118	NEW    cov: 10189 ft: 21184 corp: 79/284b lim: 34 exec/s: 29 rss: 385Mb L: 2/34 MS: 1 EraseBytes-
+#119	NEW    cov: 10189 ft: 21190 corp: 80/286b lim: 34 exec/s: 29 rss: 388Mb L: 2/34 MS: 1 ChangeBit-
+#120	NEW    cov: 10189 ft: 21192 corp: 81/289b lim: 34 exec/s: 30 rss: 389Mb L: 3/34 MS: 1 ChangeBit-
+#121	NEW    cov: 10189 ft: 21277 corp: 82/323b lim: 34 exec/s: 30 rss: 393Mb L: 34/34 MS: 1 CMP- DE: "Z\000"-
+	NEW_FUNC[1/4]: 0x563d63ae5e50 in hyperreal::computable::approximation::atan_anchor_residual /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/src/computable/approximation/inverse_trig.rs:131
+	NEW_FUNC[2/4]: 0x563d63b8abd0 in <&num_bigint::biguint::BigUint as core::ops::arith::Mul<u8>>::mul /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.8/src/macros.rs:272
+#123	NEW    cov: 10233 ft: 21407 corp: 83/327b lim: 34 exec/s: 30 rss: 399Mb L: 4/34 MS: 1 PersAutoDict- DE: "\015\003"-
+#125	NEW    cov: 10233 ft: 21412 corp: 84/329b lim: 34 exec/s: 31 rss: 404Mb L: 2/34 MS: 1 ChangeBit-
+#127	NEW    cov: 10233 ft: 21415 corp: 85/331b lim: 34 exec/s: 31 rss: 409Mb L: 2/34 MS: 1 ChangeByte-
+#128	pulse  cov: 10233 ft: 21728 corp: 85/331b lim: 34 exec/s: 32 rss: 413Mb
+#128	NEW    cov: 10233 ft: 21728 corp: 86/361b lim: 34 exec/s: 32 rss: 413Mb L: 30/34 MS: 1 InsertRepeatedBytes-
+#129	NEW    cov: 10233 ft: 21739 corp: 87/364b lim: 34 exec/s: 32 rss: 415Mb L: 3/34 MS: 1 InsertByte-
+	NEW_FUNC[1/3]: 0x563d63aabd70 in <hyperreal::computable::node::Computable>::sin_large_rational_deferred /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/src/computable/node/primitive_constructors.rs:545
+	NEW_FUNC[2/3]: 0x563d63adba40 in hyperreal::computable::approximation::sin_large_rational /home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/source/crates/hyperreal/src/computable/approximation/trig.rs:785
+#130	NEW    cov: 10277 ft: 21854 corp: 88/368b lim: 34 exec/s: 32 rss: 418Mb L: 4/34 MS: 1 CrossOver-
+#131	NEW    cov: 10291 ft: 21899 corp: 89/370b lim: 34 exec/s: 32 rss: 421Mb L: 2/34 MS: 1 CopyPart-
+#133	NEW    cov: 10291 ft: 21929 corp: 90/372b lim: 34 exec/s: 33 rss: 424Mb L: 2/34 MS: 1 ShuffleBytes-
+#135	NEW    cov: 10291 ft: 21932 corp: 91/376b lim: 34 exec/s: 33 rss: 429Mb L: 4/34 MS: 1 CrossOver-
+	NEW_FUNC[1/5]: 0x563d63b8ffe0 in <hyperreal::computable::approximation::SEVEN_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/ops/function.rs:250
+	NEW_FUNC[2/5]: 0x563d63b903d0 in <hyperreal::computable::approximation::NEG_FOUR_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/ops/function.rs:250
+#137	NEW    cov: 10335 ft: 22034 corp: 92/379b lim: 34 exec/s: 34 rss: 432Mb L: 3/34 MS: 1 CopyPart-
+#138	NEW    cov: 10335 ft: 22060 corp: 93/388b lim: 34 exec/s: 34 rss: 435Mb L: 9/34 MS: 1 ChangeBit-
+#141	NEW    cov: 10335 ft: 22095 corp: 94/391b lim: 34 exec/s: 35 rss: 443Mb L: 3/34 MS: 3 ChangeBinInt-CrossOver-EraseBytes-
+#144	NEW    cov: 10335 ft: 22099 corp: 95/394b lim: 34 exec/s: 36 rss: 447Mb L: 3/34 MS: 2 CMP-CrossOver- DE: "\000\000"-
+#145	NEW    cov: 10335 ft: 22141 corp: 96/399b lim: 34 exec/s: 36 rss: 450Mb L: 5/34 MS: 1 InsertByte-
+#146	NEW    cov: 10335 ft: 22164 corp: 97/403b lim: 34 exec/s: 36 rss: 453Mb L: 4/34 MS: 1 CMP- DE: "\000\000"-
+#148	NEW    cov: 10339 ft: 22495 corp: 98/434b lim: 34 exec/s: 29 rss: 467Mb L: 31/34 MS: 1 InsertRepeatedBytes-
+#149	NEW    cov: 10342 ft: 22557 corp: 99/438b lim: 34 exec/s: 29 rss: 469Mb L: 4/34 MS: 1 ChangeBit-
+#151	NEW    cov: 10342 ft: 22569 corp: 100/442b lim: 34 exec/s: 30 rss: 475Mb L: 4/34 MS: 2 CopyPart-CrossOver-
+#152	NEW    cov: 10342 ft: 22584 corp: 101/444b lim: 34 exec/s: 30 rss: 478Mb L: 2/34 MS: 1 ChangeByte-
+#153	NEW    cov: 10348 ft: 22654 corp: 102/462b lim: 34 exec/s: 30 rss: 482Mb L: 18/34 MS: 1 CopyPart-
+#155	NEW    cov: 10348 ft: 22665 corp: 103/464b lim: 34 exec/s: 31 rss: 487Mb L: 2/34 MS: 1 ChangeByte-
+#156	NEW    cov: 10348 ft: 22674 corp: 104/468b lim: 34 exec/s: 31 rss: 490Mb L: 4/34 MS: 1 CrossOver-
+#157	NEW    cov: 10353 ft: 22685 corp: 105/470b lim: 34 exec/s: 31 rss: 492Mb L: 2/34 MS: 1 ChangeByte-
+#158	NEW    cov: 10353 ft: 22726 corp: 106/501b lim: 34 exec/s: 31 rss: 499Mb L: 31/34 MS: 1 ChangeBinInt-
+#160	NEW    cov: 10358 ft: 22830 corp: 107/514b lim: 34 exec/s: 32 rss: 503Mb L: 13/34 MS: 1 InsertRepeatedBytes-
+#161	NEW    cov: 10358 ft: 22841 corp: 108/517b lim: 34 exec/s: 32 rss: 503Mb L: 3/34 MS: 1 InsertByte-
+#164	NEW    cov: 10358 ft: 22922 corp: 109/523b lim: 34 exec/s: 32 rss: 503Mb L: 6/34 MS: 3 ShuffleBytes-ChangeByte-InsertRepeatedBytes-
+#165	NEW    cov: 10358 ft: 22931 corp: 110/525b lim: 34 exec/s: 33 rss: 504Mb L: 2/34 MS: 1 ChangeBinInt-
+#166	NEW    cov: 10360 ft: 22963 corp: 111/529b lim: 34 exec/s: 33 rss: 504Mb L: 4/34 MS: 1 CrossOver-
+#168	NEW    cov: 10360 ft: 23028 corp: 112/533b lim: 34 exec/s: 33 rss: 504Mb L: 4/34 MS: 2 ShuffleBytes-PersAutoDict- DE: "\015\003"-
+#170	NEW    cov: 10360 ft: 23036 corp: 113/535b lim: 34 exec/s: 34 rss: 504Mb L: 2/34 MS: 1 ChangeByte-
+#172	NEW    cov: 10361 ft: 23051 corp: 114/537b lim: 34 exec/s: 34 rss: 504Mb L: 2/34 MS: 1 ShuffleBytes-
+#174	NEW    cov: 10413 ft: 23116 corp: 115/541b lim: 34 exec/s: 34 rss: 505Mb L: 4/34 MS: 1 ShuffleBytes-
+#177	NEW    cov: 10431 ft: 23152 corp: 116/545b lim: 34 exec/s: 29 rss: 506Mb L: 4/34 MS: 2 CrossOver-PersAutoDict- DE: "Z\000"-
+#179	NEW    cov: 10433 ft: 23275 corp: 117/578b lim: 34 exec/s: 29 rss: 507Mb L: 33/34 MS: 1 InsertRepeatedBytes-
+#180	NEW    cov: 10433 ft: 23288 corp: 118/580b lim: 34 exec/s: 30 rss: 507Mb L: 2/34 MS: 1 ChangeBit-
+#181	NEW    cov: 10433 ft: 23310 corp: 119/583b lim: 34 exec/s: 30 rss: 507Mb L: 3/34 MS: 1 InsertByte-
+#182	NEW    cov: 10436 ft: 23323 corp: 120/585b lim: 34 exec/s: 30 rss: 507Mb L: 2/34 MS: 1 ChangeBinInt-
+#183	NEW    cov: 10436 ft: 23331 corp: 121/591b lim: 34 exec/s: 30 rss: 507Mb L: 6/34 MS: 1 ChangeByte-
+#184	NEW    cov: 10436 ft: 23338 corp: 122/625b lim: 34 exec/s: 30 rss: 508Mb L: 34/34 MS: 1 ChangeBit-
+#185	NEW    cov: 10436 ft: 23346 corp: 123/627b lim: 34 exec/s: 30 rss: 508Mb L: 2/34 MS: 1 PersAutoDict- DE: "Z\000"-
+#189	NEW    cov: 10437 ft: 23348 corp: 124/630b lim: 34 exec/s: 31 rss: 508Mb L: 3/34 MS: 3 ChangeBit-ChangeBit-EraseBytes-
+#192	NEW    cov: 10437 ft: 23393 corp: 125/659b lim: 34 exec/s: 32 rss: 509Mb L: 29/34 MS: 2 ShuffleBytes-InsertRepeatedBytes-
+#194	NEW    cov: 10437 ft: 23396 corp: 126/660b lim: 34 exec/s: 32 rss: 510Mb L: 1/34 MS: 2 EraseBytes-ChangeByte-
+#196	NEW    cov: 10437 ft: 23404 corp: 127/662b lim: 34 exec/s: 32 rss: 510Mb L: 2/34 MS: 2 EraseBytes-InsertByte-
+#197	NEW    cov: 10437 ft: 23462 corp: 128/688b lim: 34 exec/s: 32 rss: 510Mb L: 26/34 MS: 1 CopyPart-
+#204	NEW    cov: 10437 ft: 23693 corp: 129/717b lim: 34 exec/s: 29 rss: 511Mb L: 29/34 MS: 2 ShuffleBytes-InsertRepeatedBytes-
+#205	NEW    cov: 10437 ft: 23710 corp: 130/724b lim: 34 exec/s: 29 rss: 512Mb L: 7/34 MS: 1 CopyPart-
+#206	NEW    cov: 10437 ft: 23711 corp: 131/726b lim: 34 exec/s: 29 rss: 512Mb L: 2/34 MS: 1 ChangeBit-
+#207	NEW    cov: 10437 ft: 23792 corp: 132/760b lim: 34 exec/s: 29 rss: 513Mb L: 34/34 MS: 1 InsertRepeatedBytes-
+#208	NEW    cov: 10437 ft: 23827 corp: 133/769b lim: 34 exec/s: 29 rss: 513Mb L: 9/34 MS: 1 CMP- DE: "\001\000\000\000\000\000\000\001"-
+#210	NEW    cov: 10437 ft: 23830 corp: 134/771b lim: 34 exec/s: 30 rss: 513Mb L: 2/34 MS: 1 ChangeByte-
+#213	NEW    cov: 10440 ft: 23882 corp: 135/774b lim: 34 exec/s: 30 rss: 513Mb L: 3/34 MS: 2 EraseBytes-PersAutoDict- DE: "Z\000"-
+#215	NEW    cov: 10441 ft: 23954 corp: 136/777b lim: 34 exec/s: 30 rss: 513Mb L: 3/34 MS: 2 ShuffleBytes-CrossOver-
+#216	NEW    cov: 10441 ft: 23956 corp: 137/779b lim: 34 exec/s: 30 rss: 513Mb L: 2/34 MS: 1 ChangeByte-
+#219	NEW    cov: 10458 ft: 24048 corp: 138/783b lim: 34 exec/s: 31 rss: 515Mb L: 4/34 MS: 2 ChangeByte-EraseBytes-
+#220	NEW    cov: 10458 ft: 24099 corp: 139/788b lim: 34 exec/s: 31 rss: 515Mb L: 5/34 MS: 1 InsertByte-
+#222	NEW    cov: 10458 ft: 24100 corp: 140/790b lim: 34 exec/s: 31 rss: 515Mb L: 2/34 MS: 2 ShuffleBytes-ChangeBit-
+#223	NEW    cov: 10458 ft: 24164 corp: 141/821b lim: 34 exec/s: 31 rss: 515Mb L: 31/34 MS: 1 CopyPart-
+#225	NEW    cov: 10458 ft: 24170 corp: 142/823b lim: 34 exec/s: 32 rss: 515Mb L: 2/34 MS: 2 EraseBytes-InsertByte-
+#228	NEW    cov: 10458 ft: 24235 corp: 143/840b lim: 34 exec/s: 32 rss: 516Mb L: 17/34 MS: 2 ShuffleBytes-InsertRepeatedBytes-
+#230	NEW    cov: 10458 ft: 24255 corp: 144/844b lim: 34 exec/s: 32 rss: 516Mb L: 4/34 MS: 1 ChangeBit-
+#232	NEW    cov: 10458 ft: 24256 corp: 145/846b lim: 34 exec/s: 33 rss: 516Mb L: 2/34 MS: 1 ChangeByte-
+#234	NEW    cov: 10458 ft: 24265 corp: 146/848b lim: 34 exec/s: 29 rss: 516Mb L: 2/34 MS: 2 ChangeBit-ChangeBinInt-
+#235	NEW    cov: 10458 ft: 24422 corp: 147/878b lim: 34 exec/s: 29 rss: 517Mb L: 30/34 MS: 1 InsertByte-
+#236	NEW    cov: 10458 ft: 24423 corp: 148/880b lim: 34 exec/s: 29 rss: 518Mb L: 2/34 MS: 1 ShuffleBytes-
+	NEW_FUNC[1/2]: 0x563d63b908f0 in <hyperreal::computable::approximation::FOUR_FIFTHS_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/ops/function.rs:250
+	NEW_FUNC[2/2]: 0x563d63b90b10 in <hyperreal::computable::approximation::FOUR_THIRDS_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/ops/function.rs:250
+#238	NEW    cov: 10487 ft: 24515 corp: 149/881b lim: 34 exec/s: 29 rss: 518Mb L: 1/34 MS: 1 EraseBytes-
+#239	NEW    cov: 10487 ft: 24539 corp: 150/898b lim: 34 exec/s: 29 rss: 518Mb L: 17/34 MS: 1 CMP- DE: "\005\000\000\000\000\000\000\000"-
+#240	NEW    cov: 10487 ft: 24552 corp: 151/902b lim: 34 exec/s: 30 rss: 518Mb L: 4/34 MS: 1 InsertByte-
+#241	NEW    cov: 10492 ft: 24573 corp: 152/904b lim: 34 exec/s: 30 rss: 518Mb L: 2/34 MS: 1 ChangeBinInt-
+#244	NEW    cov: 10495 ft: 24655 corp: 153/923b lim: 34 exec/s: 30 rss: 519Mb L: 19/34 MS: 3 ShuffleBytes-EraseBytes-CrossOver-
+#245	NEW    cov: 10495 ft: 24662 corp: 154/924b lim: 34 exec/s: 30 rss: 519Mb L: 1/34 MS: 1 EraseBytes-
+#247	NEW    cov: 10495 ft: 24683 corp: 155/937b lim: 34 exec/s: 30 rss: 520Mb L: 13/34 MS: 1 InsertRepeatedBytes-
+#248	NEW    cov: 10495 ft: 24720 corp: 156/966b lim: 34 exec/s: 31 rss: 521Mb L: 29/34 MS: 1 InsertRepeatedBytes-
+#250	NEW    cov: 10496 ft: 24729 corp: 157/970b lim: 34 exec/s: 31 rss: 521Mb L: 4/34 MS: 2 ChangeBit-PersAutoDict- DE: "\000\000"-
+#252	NEW    cov: 10496 ft: 24799 corp: 158/1002b lim: 34 exec/s: 31 rss: 522Mb L: 32/34 MS: 2 ChangeByte-InsertRepeatedBytes-
+#255	NEW    cov: 10496 ft: 24800 corp: 159/1005b lim: 34 exec/s: 31 rss: 522Mb L: 3/34 MS: 3 InsertByte-ShuffleBytes-EraseBytes-
+#256	pulse  cov: 10496 ft: 24812 corp: 159/1005b lim: 34 exec/s: 32 rss: 522Mb
+#256	NEW    cov: 10496 ft: 24812 corp: 160/1008b lim: 34 exec/s: 32 rss: 522Mb L: 3/34 MS: 1 InsertByte-
+#256	DONE   cov: 10496 ft: 24812 corp: 160/1008b lim: 34 exec/s: 32 rss: 522Mb
+###### Recommended dictionary. ######
+"\015\003" # Uses: 4
+"\025\000\000\000\000\000\000\000" # Uses: 0
+"Z\000" # Uses: 3
+"\000\000" # Uses: 1
+"\001\000\000\000\000\000\000\001" # Uses: 0
+"\005\000\000\000\000\000\000\000" # Uses: 0
+###### End of recommended dictionary. ######
+Done 256 runs in 8 second(s)
+stat::number_of_executed_units: 256
+stat::average_exec_per_sec:     32
+stat::new_units_added:          117
+stat::slowest_unit_time_sec:    0
+stat::peak_rss_mb:              522

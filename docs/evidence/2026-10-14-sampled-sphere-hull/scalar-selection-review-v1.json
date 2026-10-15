@@ -1,0 +1,36 @@
+{
+  "status": "focused-source-review-complete-implementation-open",
+  "scope": "The inspected scalar benchmark promotion and score functions only; not an audit of all repository selection code.",
+  "source": "crates/hyperreal/benches/adversarial_library.rs",
+  "source_sha256": "eca33e6cc19e5a5a1781efea87903e7f6ed49f6f4f892939bebc5042f00f3300",
+  "inspected_function_starts": {
+    "time_case": 105,
+    "time_promoted_case_current": 902,
+    "rotate_promoted_cases": 961,
+    "average_nanos": 1049,
+    "score_promoted_cases": 1059,
+    "promoted_score_section": 1116
+  },
+  "findings": [
+    "time_case retains the minimum of 5 wall-clock samples.",
+    "rotate_promoted_cases sorts by elapsed nanoseconds, rotates the worst eligible historical cases into one promoted group, and truncates that group to 100.",
+    "score_promoted_cases averages current timing probes across the promoted group.",
+    "The inspected selection path does not shuffle independent case dimensions and successively filter candidate survivors. It does not maintain an independent promoted population for each private Real representation.",
+    "The existing lexicase wording in the scalar fuzz README and generated score description exceeds the behavior of these inspected functions."
+  ],
+  "primary_algorithm_reference": {
+    "title": "Solving Uncompromising Problems with Lexicase Selection",
+    "url": "https://faculty.hampshire.edu/lspector/pubs/lexicase-IEEE-TEC.pdf",
+    "location": "Figure 1 and Section II",
+    "paraphrase": "For each selection, shuffle case order, retain candidates with the best value on the next case, and continue until one survives or cases are exhausted; select randomly among remaining ties."
+  },
+  "next_work": [
+    "Describe the current timing promotion accurately without rewriting closed numeric evidence.",
+    "Implement and test genuine case-by-case selection with independent representation buckets, deterministic replay records, and retained failures.",
+    "Run a separately frozen directed campaign with sanitizer, path-trace, and competitive-benchmark gates."
+  ],
+  "current_inventory_qualification_is_not_directed_selection": true,
+  "production_sources_changed": false,
+  "P38_complete": false,
+  "plan_complete": false
+}

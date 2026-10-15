@@ -5,13 +5,13 @@ exercise construction, arithmetic, structural/certified queries, fused linear
 algebra, lazy elementary-function evaluation, serialization, and direct
 `Computable` approximation without treating a primitive-float result as proof.
 
-Compile every target:
+From `crates/hyperreal`, compile every target:
 
 ```sh
 cargo check --manifest-path fuzz/Cargo.toml --bins
 ```
 
-Run a bounded smoke pass from the repository root:
+From the same directory, run a bounded smoke pass:
 
 ```sh
 cargo +nightly fuzz run rational_arithmetic --fuzz-dir fuzz -- -max_total_time=30
@@ -25,13 +25,19 @@ cargo +nightly fuzz run string_parsing --fuzz-dir fuzz -- -max_total_time=30
 Long-running campaigns should retain each target's corpus separately. A crash
 is a semantic regression until minimized and promoted to a deterministic test.
 
-`structural_representations` constructs all 20 private optimized `Real`
-certificate forms, which span all eight public `StructuralKind` values.
-Twenty seed strides cover the complete ordered 20x20 binary-dispatch matrix;
-mutated bytes also build shared `Computable` DAGs with up to 32 variable
-nodes. The deterministic serde inventory test covers every finite
+`structural_representations` uses the same 22 private optimized `Real`
+certificate representatives as the deterministic integration tests, including
+`Pow10` and `Pow2`. They span all eight public `StructuralKind` values.
+Replaying all 22 retained stride seeds covers the complete ordered 22x22
+binary-dispatch matrix. Mutated bytes also build shared `Computable` DAGs with
+up to 32 variable nodes. The deterministic serde inventory test covers every finite
 `Computable` node and shared-constant tag, while this target covers the
 unbounded graph-topology dimension.
+
+The same target also checks rational normal-form and affine-determinant facts
+before and after refinement. Warming may strengthen an unknown result, but
+must preserve every available definite fact. Generated DAGs additionally
+retain signs proved at a finer precision when queried again at zero refinement.
 
 `string_parsing` checks that every accepted exact `Rational` literal is
 also accepted by `Real`. Its seed corpus includes signed wide integers,
