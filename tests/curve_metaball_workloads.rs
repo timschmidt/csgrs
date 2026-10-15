@@ -24,7 +24,7 @@ fn validate(balls: &[(Point2, Real)], resolution: usize, padding: Real) {
     );
     for (center, _) in balls {
         assert_eq!(
-            curve::contains_xy(&result.value, center.x().clone(), center.y().clone()),
+            curve::contains_xy(&result.value, center.x().clone(), center.y().clone()).unwrap(),
             Some(true)
         );
     }

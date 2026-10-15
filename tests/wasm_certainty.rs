@@ -69,7 +69,7 @@ fn curve_boundary_is_distinct_from_empty_and_outside() {
     }
     assert_eq!(empty.contains_xy(0.0, 0.0).unwrap(), Some(false));
     assert_eq!(
-        curve::contains_xy(&curve::empty(), Real::zero(), Real::zero()),
+        curve::contains_xy(&curve::empty(), Real::zero(), Real::zero()).unwrap(),
         Some(false)
     );
 }

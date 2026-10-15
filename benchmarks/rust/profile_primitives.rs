@@ -281,7 +281,8 @@ fn main() {
     let disjoint = curve::transformed(
         &curve::square(Real::from(2)).expect("valid planar fixture"),
         &Matrix4::affine_translation([Real::from(10), Real::zero(), Real::zero()]),
-    );
+    )
+    .expect("valid planar transform fixture");
     config.run(
         "profile_curves",
         "boolean",

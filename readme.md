@@ -219,14 +219,43 @@ The Hershey catalog is compiled into Hypercurve and exposed as
 
 Planar operations:
 
-- `CurveRegion2::boolean_region(&other, BooleanOp::{Union, Difference, Intersection, Xor}, policy)`
+- `CurveRegion2::boolean_region(&other, BooleanOp::{Union, Difference, Intersection, Xor})`
   from Hypercurve, or `boolean_regions` for all four sharing one arrangement;
 - `offset` and `offset_rounded`;
 - `transformed`, `translated`, `rotated`, and `scaled`;
-- `contains_xy`, `bounding_box`, `finite_profiles`, and `triangulate`.
+- `contains_xy`, `bounding_box`, `try_finite_profiles`, and `try_triangulate`.
 
-`finite_profiles` is an explicit display/interchange projection. It is not a
+`try_finite_profiles` is an explicit display/interchange projection. It is not a
 replacement for the native curve topology.
+
+The four `curve::transformed`/`translated`/`rotated`/`scaled` functions now
+return `Result<CurveRegion2, ValidationError>`; failures no longer become empty
+regions. Their `try_` aliases and context variants use the same error type,
+retaining native causes in `ValidationError::ExactCurve`. Context variants
+return operation-local certainty. `contains_xy` now returns
+`Result<Option<bool>, ValidationError>`: `Some(true)`/`Some(false)` classify
+inside/outside, `Ok(None)` means a proved boundary, and an undecided query is
+an error. Canonical empty regions classify outside and remain composable under
+valid transforms. Invalid transform arguments are checked even for empty input.
+
+A `Matrix4` applied to a planar region must restrict to a nonsingular affine
+map on `z = 0`, keep that plane in `z = 0`, and have constant nonzero homogeneous
+weight. The weight is divided out, including negative or nonunit values.
+The third column has no effect on an XY input. Perspective and out-of-plane
+images return `UnsupportedTransform`; a constant zero weight with a nonzero
+coordinate image returns `UnboundedTransform`. An all-zero homogeneous image
+is invalid input. Unproved constraints remain undecided, or explicitly
+qualified when the selected policy consumes approximate evidence. This corrects
+the old behavior that ignored these components and could publish a different set.
+
+Scalar adapters and native bindings share this admission path. They validate
+all three scalar inputs: Z translation must preserve the plane; Z scale has no
+effect on XY geometry; X/Y/Z rotations are applied in that order and their
+combined image must remain planar. An X half-turn is therefore a reflection,
+while an X quarter-turn is unsupported. WASM transforms and strict point queries
+throw `GeometryError` with a diagnostic `code`; contextual queries retain their
+explicit boundary/uncertain status. These receipts do not establish end-to-end
+provenance or an internal work, retained-memory, or cancellation bound.
 
 ### Curves to solids
 

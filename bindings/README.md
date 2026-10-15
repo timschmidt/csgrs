@@ -64,6 +64,25 @@ behavior, metadata rules, and topology stay in the Rust layers.
 
 ## Compatibility
 
+Planar transforms share the native matrix contract. A matrix must act as a
+nonsingular affine map on the XY plane, preserve that plane, and have constant
+nonzero homogeneous weight; the weight is divided out. Perspective and
+out-of-plane maps return `UNSUPPORTED` (7); constant zero weight with a nonzero
+coordinate image returns `UNBOUNDED` (9); singular planar maps or an all-zero
+homogeneous image return `VALIDATION_FAILED` (4).
+Unresolved predicates remain `PREDICATE_UNDECIDED` (5), with diagnostic text.
+These checks also apply to empty regions. C++/Python exceptions and Go errors
+retain the C status. Scalar conversion still has its own failure category.
+
+Three-component planar transform methods now validate every component and
+preserve its meaning. Nonzero Z translation and rotations leaving the XY plane
+are rejected. Z scale has no effect on XY geometry. Plane-preserving X/Y
+half-turns perform their actual reflections; rotation order is X, then Y, then Z.
+These corrections replace the earlier ignored components without changing
+binding signatures. WASM transforms expose matching `GeometryError.code`
+categories. Strict WASM membership returns no value only at a proved boundary;
+an undecided query throws `GeometryError` with code `undecided`.
+
 Planar square, rectangle, circle and polygon constructors preserve native
 failure through C status codes, C++/Python exceptions and Go errors. Negative
 dimensions, invalid resolutions and malformed polygon rings no longer publish

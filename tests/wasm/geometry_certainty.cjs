@@ -14,6 +14,53 @@ const keep = (value) => { owned.push(value); return value; };
 try {
   const empty = keep(new CurveRegionJs());
   const square = keep(CurveRegionJs.square(1));
+  const planarPerspective = keep(new Matrix4Js(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1));
+  const outOfPlane = keep(new Matrix4Js(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1));
+  const zeroWeight = keep(new Matrix4Js(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0));
+  for (const source of [empty, square]) {
+    for (const [operation, code] of [
+      [() => source.scale(0, 1), "invalid_input"],
+      [() => source.transform(planarPerspective), "unsupported"],
+      [() => source.transform(outOfPlane), "unsupported"],
+      [() => source.transform(zeroWeight), "unbounded"],
+      [() => source.translate(NaN, 0), "invalid_input"],
+      [() => source.rotate(Infinity), "invalid_input"],
+      [() => source.scale(1, NaN), "invalid_input"],
+      [() => source.containsXY(NaN, 0), "invalid_input"],
+    ]) {
+      assert.throws(operation, (error) => error instanceof Error
+        && error.name === "GeometryError" && error.code === code && error.message.length > 0);
+    }
+    for (const approximate of [false, true]) {
+      for (const [operation, code] of [
+        [() => source.scaleWithContext(0, 1, approximate), "invalid_input"],
+        [() => source.transformWithContext(planarPerspective, approximate), "unsupported"],
+        [() => source.transformWithContext(outOfPlane, approximate), "unsupported"],
+        [() => source.transformWithContext(zeroWeight, approximate), "unbounded"],
+        [() => source.translateWithContext(NaN, 0, approximate), "invalid_input"],
+        [() => source.rotateWithContext(Infinity, approximate), "invalid_input"],
+        [() => source.scaleWithContext(1, NaN, approximate), "invalid_input"],
+        [() => source.containsXYWithContext(NaN, 0, approximate), "invalid_input"],
+      ]) {
+        assert.throws(operation, (error) => error instanceof Error
+          && error.name === "GeometryError" && error.code === code && error.message.length > 0);
+      }
+    }
+  }
+  const homogeneousPlanar = keep(new Matrix4Js(4, 0, 17, 2, 0, -6, 19, 4, 0, 0, 0, 0, 0, 0, 23, 2));
+  for (const approximate of [false, true]) {
+    const outcome = square.transformWithContext(homogeneousPlanar, approximate);
+    assert.equal(outcome.certainty, Certainty.Certified);
+    const normalized = keep(outcome.intoRegion());
+    const bounds = keep(normalized.boundingBoxWithContext(false));
+    const minimum = keep(bounds.min), maximum = keep(bounds.max);
+    assert.deepEqual([minimum.x, minimum.y, maximum.x, maximum.y], [1, -1, 3, 2]);
+    assert.equal(normalized.containsXY(2, 0), true);
+    assert.equal(normalized.containsXY(0, 0), false);
+    assert.equal(normalized.containsXY(1, 0), undefined);
+    const extrusion = keep(normalized.extrude(2, false));
+    assert.equal(extrusion.certainty, Certainty.Certified);
+  }
   for (const [construct, code] of [
     [() => CurveRegionJs.square(-1), "invalid_input"],
     [() => CurveRegionJs.rectangle(0, -1), "invalid_input"],
@@ -94,7 +141,8 @@ try {
   // certify at this angle. A warm terminal answer must not satisfy STRICT.
   const rotatedSquare = keep(square.rotate(13));
   const restoredSquare = keep(rotatedSquare.rotate(-13));
-  assert.throws(() => restoredSquare.containsXY(0.5, 0));
+  assert.throws(() => restoredSquare.containsXY(0.5, 0), (error) =>
+    error instanceof Error && error.name === "GeometryError" && error.code === "undecided");
   for (const approximate of [false, true, false]) {
     const result = keep(restoredSquare.containsXYWithContext(0.5, 0, approximate));
     assert.equal(result.value, undefined);

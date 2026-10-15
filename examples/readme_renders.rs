@@ -404,7 +404,8 @@ fn render_readme_meshes() {
         &curve::circle(r(0.18), 32).expect("valid planar fixture"),
         r(1.0),
         r(0.0),
-    );
+    )
+    .expect("valid planar transform fixture");
     render_mesh(
         "revolve",
         &curve::revolve(

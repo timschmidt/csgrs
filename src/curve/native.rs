@@ -10,9 +10,8 @@ use crate::solid;
 use crate::{GeometryContext, GeometryOutcome};
 use hypercurve::{
     BooleanOp, Contour2, CubicBezier2, Curve2, CurvePath2, CurveRegion2, CurveString2,
-    ExactCurveResult, FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2,
-    LineSeg2, Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2,
-    RegionPointLocation,
+    FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, Point2,
+    PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RegionPointLocation,
 };
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::TriangleMesh;
@@ -2958,40 +2957,90 @@ pub fn hershey_strings(
         .collect()
 }
 
-/// Applies a 3D homogeneous transform through the established curve lifting
-/// boundary and returns only native filled topology.
+/// Applies a homogeneous matrix whose restriction to the XY plane is affine.
+///
+/// The image must remain in the XY plane and have a constant nonzero
+/// homogeneous weight. That weight is divided out, including negative weights.
+/// Perspective and out-of-plane maps return typed unsupported errors. A zero
+/// constant weight with a nonzero coordinate image returns an unbounded error;
+/// an all-zero homogeneous image is invalid. Hypercurve validates the planar
+/// map's nonsingularity and topology, including for empty inputs.
 pub fn try_transformed(
     input: &CurveRegion2,
     matrix: &Matrix4,
-) -> ExactCurveResult<CurveRegion2> {
+) -> Result<CurveRegion2, ValidationError> {
     try_transformed_with_context(input, matrix, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
-/// Applies the curve transform with the selected policy and aggregate certainty.
+/// Applies the same planar matrix contract with aggregate predicate certainty.
 pub fn try_transformed_with_context(
     input: &CurveRegion2,
     matrix: &Matrix4,
     context: &GeometryContext,
-) -> ExactCurveResult<GeometryOutcome<CurveRegion2>> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-
-    decisions
-        .exact_curve(|| {
-            input.transform_affine(
-                &matrix.0[0][0],
-                &matrix.0[0][1],
-                &matrix.0[1][0],
-                &matrix.0[1][1],
-                &matrix.0[0][3],
-                &matrix.0[1][3],
-            )
-        })
-        .map(|region| decisions.finish(region))
+    for value in [&matrix.0[3][0], &matrix.0[3][1]] {
+        if decisions.sign(value, "planar homogeneous weight is constant")?
+            != hyperreal::RealSign::Zero
+        {
+            return Err(ValidationError::UnsupportedTransform {
+                reason: "perspective planar transforms require a projective curve operation",
+            });
+        }
+    }
+    for value in [&matrix.0[2][0], &matrix.0[2][1], &matrix.0[2][3]] {
+        if decisions.sign(value, "transform preserves the XY plane")?
+            != hyperreal::RealSign::Zero
+        {
+            return Err(ValidationError::UnsupportedTransform {
+                reason: "the transform leaves the XY plane",
+            });
+        }
+    }
+    let weight = &matrix.0[3][3];
+    if decisions.sign(weight, "planar homogeneous weight")? == hyperreal::RealSign::Zero {
+        let mut nonzero_image = false;
+        for value in [
+            &matrix.0[0][0],
+            &matrix.0[0][1],
+            &matrix.0[0][3],
+            &matrix.0[1][0],
+            &matrix.0[1][1],
+            &matrix.0[1][3],
+        ] {
+            nonzero_image |= decisions.sign(value, "homogeneous coordinate image")?
+                != hyperreal::RealSign::Zero;
+        }
+        if !nonzero_image {
+            // [0,0,0,0] is not a homogeneous point, including at infinity.
+            return Err(ValidationError::InvalidArguments);
+        }
+        return Err(ValidationError::UnboundedTransform {
+            reason: "the XY plane has zero homogeneous weight",
+        });
+    }
+    // z=0 removes the third column. Normalize the remaining homogeneous
+    // coordinates; do not duplicate Hypercurve's affine determinant proof.
+    let [m00, m01, m10, m11, tx, ty] = [
+        (&matrix.0[0][0] / weight)?,
+        (&matrix.0[0][1] / weight)?,
+        (&matrix.0[1][0] / weight)?,
+        (&matrix.0[1][1] / weight)?,
+        (&matrix.0[0][3] / weight)?,
+        (&matrix.0[1][3] / weight)?,
+    ];
+    let region =
+        decisions.exact_curve(|| input.transform_affine(&m00, &m01, &m10, &m11, &tx, &ty))?;
+    Ok(decisions.finish(region))
 }
 
-pub fn transformed(input: &CurveRegion2, matrix: &Matrix4) -> CurveRegion2 {
-    try_transformed(input, matrix).unwrap_or_else(|_| empty())
+/// Applies the same checked planar transform as [`try_transformed`].
+pub fn transformed(
+    input: &CurveRegion2,
+    matrix: &Matrix4,
+) -> Result<CurveRegion2, ValidationError> {
+    try_transformed(input, matrix)
 }
 
 /// Applies an exact planar translation to a filled native region.
@@ -2999,7 +3048,7 @@ pub fn try_translated(
     input: &CurveRegion2,
     x: Real,
     y: Real,
-) -> ExactCurveResult<CurveRegion2> {
+) -> Result<CurveRegion2, ValidationError> {
     try_translated_with_context(input, x, y, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -3010,29 +3059,35 @@ pub fn try_translated_with_context(
     x: Real,
     y: Real,
     context: &GeometryContext,
-) -> ExactCurveResult<GeometryOutcome<CurveRegion2>> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-
-    decisions
-        .exact_curve(|| {
-            input.transform_affine(
-                &Real::one(),
-                &Real::zero(),
-                &Real::zero(),
-                &Real::one(),
-                &x,
-                &y,
-            )
-        })
-        .map(|region| decisions.finish(region))
+    let region = decisions.exact_curve(|| {
+        input.transform_affine(
+            &Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+            &Real::one(),
+            &x,
+            &y,
+        )
+    })?;
+    Ok(decisions.finish(region))
 }
 
-pub fn translated(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
-    try_translated(input, x, y).unwrap_or_else(|_| empty())
+/// Translates a planar region, preserving native failures.
+pub fn translated(
+    input: &CurveRegion2,
+    x: Real,
+    y: Real,
+) -> Result<CurveRegion2, ValidationError> {
+    try_translated(input, x, y)
 }
 
 /// Rotates a filled native region counterclockwise about the origin in degrees.
-pub fn try_rotated(input: &CurveRegion2, z_degrees: Real) -> ExactCurveResult<CurveRegion2> {
+pub fn try_rotated(
+    input: &CurveRegion2,
+    z_degrees: Real,
+) -> Result<CurveRegion2, ValidationError> {
     try_rotated_with_context(input, z_degrees, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -3042,32 +3097,38 @@ pub fn try_rotated_with_context(
     input: &CurveRegion2,
     z_degrees: Real,
     context: &GeometryContext,
-) -> ExactCurveResult<GeometryOutcome<CurveRegion2>> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-
     let radians = (z_degrees * Real::pi() / Real::from(180_u16)).expect("180 is nonzero");
     let cosine = radians.clone().cos();
     let sine = radians.sin();
-    decisions
-        .exact_curve(|| {
-            input.transform_affine(
-                &cosine,
-                &(-sine.clone()),
-                &sine,
-                &cosine,
-                &Real::zero(),
-                &Real::zero(),
-            )
-        })
-        .map(|region| decisions.finish(region))
+    let region = decisions.exact_curve(|| {
+        input.transform_affine(
+            &cosine,
+            &(-sine.clone()),
+            &sine,
+            &cosine,
+            &Real::zero(),
+            &Real::zero(),
+        )
+    })?;
+    Ok(decisions.finish(region))
 }
 
-pub fn rotated(input: &CurveRegion2, z_degrees: Real) -> CurveRegion2 {
-    try_rotated(input, z_degrees).unwrap_or_else(|_| empty())
+/// Rotates a planar region, preserving native failures.
+pub fn rotated(
+    input: &CurveRegion2,
+    z_degrees: Real,
+) -> Result<CurveRegion2, ValidationError> {
+    try_rotated(input, z_degrees)
 }
 
 /// Scales a filled native region independently along the planar axes.
-pub fn try_scaled(input: &CurveRegion2, x: Real, y: Real) -> ExactCurveResult<CurveRegion2> {
+pub fn try_scaled(
+    input: &CurveRegion2,
+    x: Real,
+    y: Real,
+) -> Result<CurveRegion2, ValidationError> {
     try_scaled_with_context(input, x, y, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -3078,36 +3139,43 @@ pub fn try_scaled_with_context(
     x: Real,
     y: Real,
     context: &GeometryContext,
-) -> ExactCurveResult<GeometryOutcome<CurveRegion2>> {
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-
-    decisions
-        .exact_curve(|| {
-            input.transform_affine(
-                &x,
-                &Real::zero(),
-                &Real::zero(),
-                &y,
-                &Real::zero(),
-                &Real::zero(),
-            )
-        })
-        .map(|region| decisions.finish(region))
+    let region = decisions.exact_curve(|| {
+        input.transform_affine(
+            &x,
+            &Real::zero(),
+            &Real::zero(),
+            &y,
+            &Real::zero(),
+            &Real::zero(),
+        )
+    })?;
+    Ok(decisions.finish(region))
 }
 
-pub fn scaled(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
-    try_scaled(input, x, y).unwrap_or_else(|_| empty())
+/// Scales a planar region, preserving singular or undecided transform errors.
+pub fn scaled(
+    input: &CurveRegion2,
+    x: Real,
+    y: Real,
+) -> Result<CurveRegion2, ValidationError> {
+    try_scaled(input, x, y)
 }
 
-/// Classifies an exact XY point, returning `None` on boundaries or uncertainty.
-pub fn contains_xy(input: &CurveRegion2, x: Real, y: Real) -> Option<bool> {
+/// Classifies an exact XY point. Only a proved boundary returns `Ok(None)`;
+/// undecided classifications and native failures return typed errors.
+pub fn contains_xy(
+    input: &CurveRegion2,
+    x: Real,
+    y: Real,
+) -> Result<Option<bool>, ValidationError> {
     contains_xy_with_context(input, x, y, &GeometryContext::STRICT)
-        .ok()
-        .and_then(GeometryOutcome::into_value)
+        .map(GeometryOutcome::into_value)
 }
 
 /// Classifies a point with the selected policy. Boundaries return `None`;
-/// undecided classifications return an error.
+/// undecided classifications retain their native error and context.
 pub fn contains_xy_with_context(
     input: &CurveRegion2,
     x: Real,
@@ -3118,9 +3186,8 @@ pub fn contains_xy_with_context(
     if input.is_empty() {
         return Ok(decisions.finish(Some(false)));
     }
-    let classification = decisions
-        .exact_curve(|| input.classify_point(&Point2::new(x, y).into()))
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+    let classification =
+        decisions.exact_curve(|| input.classify_point(&Point2::new(x, y).into()))?;
     let inside = match classification {
         RegionPointLocation::Inside => Some(true),
         RegionPointLocation::Outside => Some(false),

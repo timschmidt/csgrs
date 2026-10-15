@@ -46,7 +46,8 @@ fn native_curve_boolean_outputs_can_be_extruded() {
     let right = curve::transformed(
         &curve::circle(r(0.75), 32).expect("valid planar fixture"),
         &hyperlattice::Matrix4::affine_translation([r(1.0), r(0.5), r(0.0)]),
-    );
+    )
+    .expect("valid planar transform fixture");
     let region = left
         .boolean_region(&right, hypercurve::BooleanOp::Union)
         .expect("curve union");
