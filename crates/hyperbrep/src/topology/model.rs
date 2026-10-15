@@ -262,20 +262,19 @@ impl ArenaModel {
     /// Returns the exact model-space bounds of all canonical vertices.
     ///
     /// The empty model has no bounds. The result is retained after the first
-    /// certified coordinate-ordering pass.
+    /// certified coordinate-ordering pass. Errors are not cached, so later
+    /// scalar refinement can strengthen an unresolved ordering.
     pub fn bounds(&self) -> Result<Option<Aabb>, GeometryError> {
         crate::context::strict(|| {
-            self.data
-                .bounds
-                .get_or_init(|| {
-                    compute_bounds(
-                        &self.data.vertices,
-                        &self.data.curves,
-                        &self.data.certified_spheres,
-                        &self.data.certified_sphere_pairs,
-                    )
-                })
-                .clone()
+            crate::cache::get_or_try_init(&self.data.bounds, || {
+                compute_bounds(
+                    &self.data.vertices,
+                    &self.data.curves,
+                    &self.data.certified_spheres,
+                    &self.data.certified_sphere_pairs,
+                )
+            })
+            .cloned()
         })
     }
 

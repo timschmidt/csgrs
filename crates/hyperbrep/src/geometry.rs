@@ -281,7 +281,7 @@ pub struct Curve3 {
 struct Curve3Data {
     geometry: CurveGeometry3,
     domain: ParameterDomain,
-    bounds: OnceLock<Result<Aabb, GeometryError>>,
+    bounds: OnceLock<Aabb>,
 }
 
 #[derive(Debug)]
@@ -689,24 +689,21 @@ impl Curve3 {
     ///
     /// Positive-weight rational Bézier and NURBS curves lie in the convex hull
     /// of their affine control points, so this bound never samples or converts
-    /// to floating point.
+    /// to floating point. Only successful bounds are cached; unresolved
+    /// comparisons can be retried after scalar evidence strengthens.
     pub fn bounds(&self) -> GeometryResult<Aabb> {
         crate::context::strict(|| {
-            self.data
-                .bounds
-                .get_or_init(|| match &self.data.geometry {
-                    CurveGeometry3::Line(line) => {
-                        exact_point_bounds(&[line.start.clone(), line.end.clone()])
-                    }
-                    CurveGeometry3::RationalBezier(curve) => {
-                        exact_point_bounds(&curve.control_points)
-                    }
-                    CurveGeometry3::Nurbs(curve) => exact_point_bounds(&curve.control_points),
-                    CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
-                        ellipse_arc_conservative_bounds(arc)
-                    }
-                })
-                .clone()
+            crate::cache::get_or_try_init(&self.data.bounds, || match &self.data.geometry {
+                CurveGeometry3::Line(line) => {
+                    exact_point_bounds(&[line.start.clone(), line.end.clone()])
+                }
+                CurveGeometry3::RationalBezier(curve) => exact_point_bounds(&curve.control_points),
+                CurveGeometry3::Nurbs(curve) => exact_point_bounds(&curve.control_points),
+                CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
+                    ellipse_arc_conservative_bounds(arc)
+                }
+            })
+            .cloned()
         })
     }
 
@@ -2697,7 +2694,7 @@ pub struct Surface {
 struct SurfaceData {
     geometry: SurfaceGeometry,
     domain: SurfaceDomain,
-    bounds: OnceLock<Result<SurfaceBounds, GeometryError>>,
+    bounds: OnceLock<SurfaceBounds>,
 }
 
 #[derive(Debug)]
@@ -3586,36 +3583,35 @@ impl Surface {
     ///
     /// Positive-weight tensor-product spline surfaces lie in the convex hull
     /// of their affine control net. Infinite analytic families are reported as
-    /// unbounded; bounded analytic families use an exact enclosing cube.
+    /// unbounded; bounded analytic families use an exact enclosing cube. Only
+    /// successful bounds are cached; unresolved comparisons remain retryable.
     pub fn bounds(&self) -> GeometryResult<SurfaceBounds> {
         crate::context::strict(|| {
-            self.data
-                .bounds
-                .get_or_init(|| match &self.data.geometry {
-                    SurfaceGeometry::Plane(_)
-                    | SurfaceGeometry::Cylinder(_)
-                    | SurfaceGeometry::Cone(_)
-                    | SurfaceGeometry::Extrusion(_) => Ok(SurfaceBounds::Unbounded),
-                    SurfaceGeometry::Sphere(surface) => Ok(SurfaceBounds::Bounded(Box::new(
-                        centered_cube_bounds(&surface.center, &surface.radius),
-                    ))),
-                    SurfaceGeometry::Torus(surface) => {
-                        Ok(SurfaceBounds::Bounded(Box::new(centered_cube_bounds(
-                            &surface.center,
-                            &(&surface.major_radius + &surface.minor_radius),
-                        ))))
-                    }
-                    SurfaceGeometry::Revolution(surface) => Ok(SurfaceBounds::Bounded(Box::new(
-                        revolution_bounds(surface)?,
-                    ))),
-                    SurfaceGeometry::RationalBezier(surface) => Ok(SurfaceBounds::Bounded(
-                        Box::new(exact_surface_control_bounds(&surface.control_points)?),
-                    )),
-                    SurfaceGeometry::Nurbs(surface) => Ok(SurfaceBounds::Bounded(Box::new(
-                        exact_surface_control_bounds(&surface.control_points)?,
-                    ))),
-                })
-                .clone()
+            crate::cache::get_or_try_init(&self.data.bounds, || match &self.data.geometry {
+                SurfaceGeometry::Plane(_)
+                | SurfaceGeometry::Cylinder(_)
+                | SurfaceGeometry::Cone(_)
+                | SurfaceGeometry::Extrusion(_) => Ok(SurfaceBounds::Unbounded),
+                SurfaceGeometry::Sphere(surface) => Ok(SurfaceBounds::Bounded(Box::new(
+                    centered_cube_bounds(&surface.center, &surface.radius),
+                ))),
+                SurfaceGeometry::Torus(surface) => {
+                    Ok(SurfaceBounds::Bounded(Box::new(centered_cube_bounds(
+                        &surface.center,
+                        &(&surface.major_radius + &surface.minor_radius),
+                    ))))
+                }
+                SurfaceGeometry::Revolution(surface) => Ok(SurfaceBounds::Bounded(Box::new(
+                    revolution_bounds(surface)?,
+                ))),
+                SurfaceGeometry::RationalBezier(surface) => Ok(SurfaceBounds::Bounded(Box::new(
+                    exact_surface_control_bounds(&surface.control_points)?,
+                ))),
+                SurfaceGeometry::Nurbs(surface) => Ok(SurfaceBounds::Bounded(Box::new(
+                    exact_surface_control_bounds(&surface.control_points)?,
+                ))),
+            })
+            .cloned()
         })
     }
 

@@ -997,10 +997,10 @@ impl ArenaModel {
     }
 
     pub(crate) fn face_contours(&self, face: FaceId) -> Result<&[Contour2], GeometryError> {
-        match self.data.face_contours[face.index()].get_or_init(|| self.build_face_contours(face)) {
-            Ok(contours) => Ok(contours),
-            Err(error) => Err(error.clone()),
-        }
+        crate::cache::get_or_try_init(&self.data.face_contours[face.index()], || {
+            self.build_face_contours(face)
+        })
+        .map(Vec::as_slice)
     }
 
     pub(in crate::topology) fn build_face_contours(

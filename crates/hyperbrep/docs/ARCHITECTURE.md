@@ -41,6 +41,7 @@ there is no parallel legacy model API.
 | `ownership/` | Canonical public model references, scoped construction keys, owned operation results and transactions |
 | `construction.rs`, `boolean_kernel.rs`, `meshing.rs` | Private constructor, Boolean and derived-output algorithms |
 | `context.rs` | Strict curve-policy scope at fallible public operation boundaries, including calls nested inside provisional or display-preview scopes |
+| `cache.rs` | Shared publication of successful immutable certificates; failed queries remain retryable |
 | `topology/ids.rs`, `records.rs`, `correspondence.rs` | Typed identifiers, immutable topology records and exact parameter relations |
 | `topology/model.rs`, `builder.rs`, `error.rs` | Arena access, adjacency, staged construction/publication and typed failures |
 | `topology/edit/` | Edge/face/surface splitting, multi-trace partitioning, endpoint attachment, transactions and edit results |
@@ -52,6 +53,13 @@ This split preserves the existing algorithms and admitted families. Shared
 operation budgets, general curved-shell validation and retained algebraic
 parameters remain tracked in the
 [implementation ledger](IMPLEMENTATION_STATUS.json).
+
+Curve, surface and model bounds and face contours retain successful results
+only. A predicate or resource failure belongs to its query, so later requests
+can benefit from stronger scalar evidence. Concurrent cold readers may repeat
+the calculation; publication keeps one successful value, and a failed reader
+uses a success published before its final cache check. Warm reads do not
+recompute. See the [cache regression evidence](evidence/2026-10-14-retryable-caches/manifest.json).
 
 ## Canonical model
 

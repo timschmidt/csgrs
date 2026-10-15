@@ -114,8 +114,8 @@ struct ModelData {
     certified_lofts: Vec<Option<CertifiedLoftShell>>,
     certified_curve_sweeps: Vec<Option<CertifiedCurveSweepShell>>,
     certified_prisms: Vec<Option<CertifiedPrismShell>>,
-    bounds: OnceLock<Result<Option<Aabb>, GeometryError>>,
-    face_contours: Vec<OnceLock<Result<Vec<Contour2>, GeometryError>>>,
+    bounds: OnceLock<Option<Aabb>>,
+    face_contours: Vec<OnceLock<Vec<Contour2>>>,
 }
 
 #[derive(Clone, Debug)]
