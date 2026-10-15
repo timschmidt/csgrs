@@ -32,6 +32,19 @@ describe(query);
 query.free();
 square.free();
 
+for (const profile of [
+  CurveRegionJs.star(4, 2, 1),
+  CurveRegionJs.teardrop(2, 3, 2),
+  CurveRegionJs.egg(2, 4, 4),
+  CurveRegionJs.heart(2, 2, 8),
+]) {
+  const extrusion = profile.extrude(3, false);
+  const receipt: GeometryCertaintyJs = extrusion.certainty;
+  if (receipt !== GeometryCertaintyJs.Certified) throw new Error("Uncertified fixture");
+  extrusion.free();
+  profile.free();
+}
+
 const cube = MeshJs.cube(1);
 const bounds = cube.boundingBoxWithContext(false);
 const minimum: Point3Js | undefined = bounds.min;

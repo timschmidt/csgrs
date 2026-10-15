@@ -130,16 +130,28 @@ fuzz_target!(|bytes: &[u8]| {
             };
             region
         },
-        6 => curve::arrow(a, b, c, positive_b),
-        7 => curve::trapezoid(a, b, c, real(0.25)),
-        8 => curve::star(segments, a, b),
+        6 => match curve::arrow(a, b, c, positive_b) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
+        7 => match curve::trapezoid(a, b, c, real(0.25)) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
+        8 => match curve::star(segments, a, b) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
         9 => {
             let Ok(region) = curve::rounded_rectangle(a, b, c, segments) else {
                 return;
             };
             region
         },
-        10 => curve::squircle(a, b, segments),
+        10 => match curve::squircle(a, b, segments) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
         11 => {
             let Ok(outcome) = curve::keyhole(a, b, c, segments, &context) else {
                 return;
@@ -159,8 +171,14 @@ fuzz_target!(|bytes: &[u8]| {
             };
             outcome.into_value()
         },
-        14 => curve::pie_slice(a, b, c, segments),
-        15 => curve::heart(a, b, segments),
+        14 => match curve::pie_slice(a, b, c, segments) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
+        15 => match curve::heart(a, b, segments) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
         16 => {
             let Ok(outcome) = curve::crescent(positive_a, positive_b, c, segments, &context)
             else {
@@ -177,16 +195,32 @@ fuzz_target!(|bytes: &[u8]| {
         21 => curve::cycloidal_rack(a, teeth, c, segments.clamp(4, 8)),
         22 => {
             if bytes[idx % bytes.len()] & 1 == 0 {
-                curve::teardrop(a, b, segments)
+                match curve::teardrop(a, b, segments) {
+                    Ok(region) => region,
+                    Err(_) => return,
+                }
             } else {
-                curve::teardrop(positive_a.clone(), positive_a + positive_b, segments.max(2))
+                match curve::teardrop(
+                    positive_a.clone(),
+                    positive_a + positive_b,
+                    segments.max(2),
+                ) {
+                    Ok(region) => region,
+                    Err(_) => return,
+                }
             }
         },
         23 => {
             if bytes[idx % bytes.len()] & 1 == 0 {
-                curve::egg(a, b, segments)
+                match curve::egg(a, b, segments) {
+                    Ok(region) => region,
+                    Err(_) => return,
+                }
             } else {
-                curve::egg(positive_a, positive_b, segments.max(3))
+                match curve::egg(positive_a, positive_b, segments.max(3)) {
+                    Ok(region) => region,
+                    Err(_) => return,
+                }
             }
         },
         24 => {
@@ -225,7 +259,7 @@ fuzz_target!(|bytes: &[u8]| {
             }
             return;
         },
-        29 => curve::supershape(
+        29 => match curve::supershape(
             positive_a,
             positive_b,
             c,
@@ -233,7 +267,10 @@ fuzz_target!(|bytes: &[u8]| {
             exponent_a,
             exponent_b,
             segments,
-        ),
+        ) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
         _ => {
             let Ok(region) = curve::polygon_points(&native_points) else {
                 return;

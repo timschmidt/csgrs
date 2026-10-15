@@ -155,13 +155,18 @@ fn main() {
             curve::polygon(&polygon).expect("valid planar fixture"),
             curve::ellipse(Real::from(8), Real::from(4), 24).expect("valid planar fixture"),
             curve::regular_ngon(7, Real::from(4)).expect("valid planar fixture"),
-            curve::arrow(Real::from(6), Real::from(2), Real::from(3), Real::from(4)),
+            curve::arrow(Real::from(6), Real::from(2), Real::from(3), Real::from(4))
+                .expect("valid sampled profile fixture"),
             curve::rounded_rectangle(Real::from(12), Real::from(8), Real::from(2), 8)
                 .expect("valid planar fixture"),
-            curve::star(12, Real::from(8), Real::from(4)),
-            curve::teardrop(Real::from(6), Real::from(10), 24),
-            curve::egg(Real::from(6), Real::from(10), 24),
-            curve::squircle(Real::from(8), Real::from(6), 24),
+            curve::star(12, Real::from(8), Real::from(4))
+                .expect("valid sampled profile fixture"),
+            curve::teardrop(Real::from(6), Real::from(10), 24)
+                .expect("valid sampled profile fixture"),
+            curve::egg(Real::from(6), Real::from(10), 24)
+                .expect("valid sampled profile fixture"),
+            curve::squircle(Real::from(8), Real::from(6), 24)
+                .expect("valid sampled profile fixture"),
             compound_region(curve::keyhole(
                 Real::from(4),
                 Real::from(2),
@@ -181,7 +186,8 @@ fn main() {
                 24,
                 &GeometryContext::APPROXIMATE_512,
             )),
-            curve::heart(Real::from(8), Real::from(8), 32),
+            curve::heart(Real::from(8), Real::from(8), 32)
+                .expect("valid sampled profile fixture"),
             compound_region(curve::crescent(
                 Real::from(6),
                 Real::from(4),

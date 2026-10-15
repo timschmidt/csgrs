@@ -24,10 +24,35 @@ try {
     [() => CurveRegionJs.circle(1, 0xffffffff), "resource_exhausted"],
     [() => CurveRegionJs.square(NaN), "invalid_input"],
     [() => CurveRegionJs.ellipse(1, Infinity, 4), "invalid_input"],
+    [() => CurveRegionJs.star(2, 2, 1), "invalid_input"],
+    [() => CurveRegionJs.star(4, 1, 2), "invalid_input"],
+    [() => CurveRegionJs.teardrop(-1, 2, 4), "invalid_input"],
+    [() => CurveRegionJs.egg(1, -1, 4), "invalid_input"],
+    [() => CurveRegionJs.heart(1, 1, 7), "invalid_input"],
+    [() => CurveRegionJs.star(0xffffffff, 2, 1), "resource_exhausted"],
+    [() => CurveRegionJs.teardrop(1, 2, 0xffffffff), "resource_exhausted"],
+    [() => CurveRegionJs.egg(1, 2, 0xffffffff), "resource_exhausted"],
+    [() => CurveRegionJs.heart(1, 2, 0xffffffff), "resource_exhausted"],
+    [() => CurveRegionJs.star(4, NaN, 1), "invalid_input"],
+    [() => CurveRegionJs.teardrop(Infinity, 2, 4), "invalid_input"],
+    [() => CurveRegionJs.egg(1, NaN, 4), "invalid_input"],
+    [() => CurveRegionJs.heart(1, Infinity, 8), "invalid_input"],
   ]) {
     assert.throws(construct, (error) => error instanceof Error
       && error.name === "GeometryError" && error.code === code
       && error.message.length > 0);
+  }
+  for (const [profile, x, y] of [
+    [keep(CurveRegionJs.star(4, 2, 1)), 0, 0],
+    [keep(CurveRegionJs.teardrop(2, 3, 2)), 0, 1],
+    [keep(CurveRegionJs.egg(2, 4, 4)), 0, 0],
+    [keep(CurveRegionJs.heart(2, 2, 8)), 1, 1],
+  ]) {
+    const location = keep(profile.containsXYWithContext(x, y, false));
+    assert.equal(location.value, true);
+    assert.equal(location.certainty, Certainty.Certified);
+    const extrusion = keep(profile.extrude(3, false));
+    assert.equal(extrusion.certainty, Certainty.Certified);
   }
   for (const approximate of [false, true]) {
     assert.throws(() => CurveRegionJs.ring(1, -1, 4, approximate), (error) =>
