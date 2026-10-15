@@ -1,0 +1,35 @@
+[
+  [
+    "prepare-target",
+    [
+      "mkdir",
+      "/tmp/csgrs-quotient-scalar-proofs/public-baseline-v1"
+    ]
+  ],
+  [
+    "test-build",
+    [
+      "rustc",
+      "--test",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-D",
+      "warnings",
+      "--extern",
+      "hyperreal=/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "-L",
+      "dependency=/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release/deps",
+      "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/quotient_polynomial_cancellation.rs",
+      "-o",
+      "/tmp/csgrs-quotient-scalar-proofs/public-baseline-v1/regressions"
+    ]
+  ],
+  [
+    "public-regressions",
+    [
+      "/tmp/csgrs-quotient-scalar-proofs/public-baseline-v1/regressions",
+      "--test-threads=2"
+    ]
+  ]
+]

@@ -1,0 +1,39 @@
+
+running 4 tests
+test differently_expanded_quotients_have_an_exact_equality_proof ... FAILED
+test polynomial_factor_division_preserves_small_nonzero_denominators ... FAILED
+test quotient_proofs_preserve_exact_nonzero_displacements ... FAILED
+test an_unproved_zero_denominator_keeps_its_typed_failure ... ok
+
+failures:
+
+---- differently_expanded_quotients_have_an_exact_equality_proof stdout ----
+
+thread 'differently_expanded_quotients_have_an_exact_equality_proof' (104) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/quotient_polynomial_cancellation.rs:26:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- polynomial_factor_division_preserves_small_nonzero_denominators stdout ----
+
+thread 'polynomial_factor_division_preserves_small_nonzero_denominators' (105) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/quotient_polynomial_cancellation.rs:67:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+
+---- quotient_proofs_preserve_exact_nonzero_displacements stdout ----
+
+thread 'quotient_proofs_preserve_exact_nonzero_displacements' (106) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/tests/quotient_polynomial_cancellation.rs:42:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: Minus, numerator: 1, denominator: 1000000000000 })
+
+
+failures:
+    differently_expanded_quotients_have_an_exact_equality_proof
+    polynomial_factor_division_preserves_small_nonzero_denominators
+    quotient_proofs_preserve_exact_nonzero_displacements
+
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
