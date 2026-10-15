@@ -1,0 +1,69 @@
+
+running 8 tests
+test accumulation_and_complete_subtraction_can_continue ... FAILED
+test empty_identities_remain_composable_under_both_policies ... FAILED
+test empty_identity_keeps_symbolic_coordinates ... FAILED
+test empty_operand_does_not_erase_uncertainty_in_input_validation ... FAILED
+test empty_rows_from_a_shared_boolean_batch_can_be_composed ... FAILED
+test empty_shortcuts_preserve_invalid_operand_diagnostics_and_indices ... FAILED
+test identity_regularizes_winding_multiplicity_and_cancellation ... FAILED
+test scalar_adapter_reuses_empty_composition_and_visible_errors ... FAILED
+
+failures:
+
+---- accumulation_and_complete_subtraction_can_continue stdout ----
+
+thread 'accumulation_and_complete_subtraction_can_continue' (2673) panicked at tests/empty_composition.rs:97:51:
+called `Result::unwrap()` on an `Err` value: EmptyMesh { mesh_index: 0 }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- empty_identities_remain_composable_under_both_policies stdout ----
+
+thread 'empty_identities_remain_composable_under_both_policies' (2674) panicked at tests/empty_composition.rs:63:18:
+two canonical empty sets compose: EmptyMesh { mesh_index: 0 }
+
+---- empty_identity_keeps_symbolic_coordinates stdout ----
+
+thread 'empty_identity_keeps_symbolic_coordinates' (2675) panicked at tests/empty_composition.rs:214:52:
+called `Result::unwrap()` on an `Err` value: EmptyMesh { mesh_index: 0 }
+
+---- empty_operand_does_not_erase_uncertainty_in_input_validation stdout ----
+
+thread 'empty_operand_does_not_erase_uncertainty_in_input_validation' (2676) panicked at tests/empty_composition.rs:241:21:
+Err(EmptyMesh { mesh_index: 1 })
+
+---- empty_rows_from_a_shared_boolean_batch_can_be_composed stdout ----
+
+thread 'empty_rows_from_a_shared_boolean_batch_can_be_composed' (2677) panicked at tests/empty_composition.rs:22:5:
+assertion failed: mesh.positions.is_empty()
+
+---- empty_shortcuts_preserve_invalid_operand_diagnostics_and_indices stdout ----
+
+thread 'empty_shortcuts_preserve_invalid_operand_diagnostics_and_indices' (2678) panicked at tests/empty_composition.rs:151:30:
+assertion `left == right` failed
+  left: EmptyMesh { mesh_index: 0 }
+ right: EmptyMesh { mesh_index: 1 }
+
+---- identity_regularizes_winding_multiplicity_and_cancellation stdout ----
+
+thread 'identity_regularizes_winding_multiplicity_and_cancellation' (2679) panicked at tests/empty_composition.rs:204:54:
+called `Result::unwrap()` on an `Err` value: EmptyMesh { mesh_index: 1 }
+
+---- scalar_adapter_reuses_empty_composition_and_visible_errors stdout ----
+
+thread 'scalar_adapter_reuses_empty_composition_and_visible_errors' (2680) panicked at tests/empty_composition.rs:265:41:
+called `Result::unwrap()` on an `Err` value: Validation("input mesh 0 has no positions or triangles")
+
+
+failures:
+    accumulation_and_complete_subtraction_can_continue
+    empty_identities_remain_composable_under_both_policies
+    empty_identity_keeps_symbolic_coordinates
+    empty_operand_does_not_erase_uncertainty_in_input_validation
+    empty_rows_from_a_shared_boolean_batch_can_be_composed
+    empty_shortcuts_preserve_invalid_operand_diagnostics_and_indices
+    identity_regularizes_winding_multiplicity_and_cancellation
+    scalar_adapter_reuses_empty_composition_and_visible_errors
+
+test result: FAILED. 0 passed; 8 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

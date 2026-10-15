@@ -1,0 +1,69 @@
+    Checking libm v0.2.16
+    Checking cfg-if v1.0.4
+    Checking libc v0.2.186
+    Checking zerocopy v0.8.48
+    Checking num-traits v0.2.19
+    Checking num-integer v0.1.46
+    Checking num-bigint v0.4.6
+    Checking num-rational v0.4.2
+    Checking num-iter v0.1.45
+    Checking num-complex v0.4.6
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking getrandom v0.3.4
+    Checking rand_core v0.9.5
+    Checking bitflags v2.11.1
+    Checking linux-raw-sys v0.12.1
+    Checking rustix v1.1.4
+    Checking getrandom v0.4.2
+    Checking approx v0.4.0
+    Checking fastrand v2.4.1
+    Checking once_cell v1.21.4
+    Checking tempfile v3.27.0
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking thiserror v1.0.69
+    Checking cgmath v0.18.0
+    Checking half v2.7.1
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking ppv-lite86 v0.2.21
+    Checking wait-timeout v0.2.1
+    Checking quick-error v1.2.3
+    Checking fnv v1.0.7
+    Checking peg-runtime v0.6.3
+    Checking allocator-api2 v0.2.21
+    Checking memchr v2.8.0
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking foldhash v0.1.5
+    Checking equivalent v1.0.2
+    Checking bit-vec v0.8.0
+    Checking bit-set v0.8.0
+    Checking hashbrown v0.15.5
+    Checking peg v0.6.3
+    Checking rusty-fork v0.3.1
+    Checking zmij v1.0.21
+    Checking rand_chacha v0.9.0
+    Checking three-d-asset v0.4.0
+    Checking thiserror v2.0.21
+    Checking serde_core v1.0.228
+    Checking rand v0.9.4
+    Checking rand_xorshift v0.4.0
+    Checking clipper2-rust v1.1.0
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Checking glam v0.30.10
+    Checking itoa v1.0.18
+    Checking byteorder v1.5.0
+    Checking unarray v0.1.4
+    Checking linked-hash-map v0.5.6
+    Checking regex-syntax v0.8.10
+    Checking proptest v1.11.0
+    Checking ply-rs v0.1.3
+    Checking serde_json v1.0.149
+    Checking boolmesh v0.1.9
+    Checking manifold-rust v0.9.2
+    Checking tri-mesh v0.6.1
+    Checking quick-xml v0.39.4
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 24.07s

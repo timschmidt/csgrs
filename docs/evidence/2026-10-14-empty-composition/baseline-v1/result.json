@@ -1,0 +1,14 @@
+{
+  "commands": [
+    {
+      "name": "empty-composition",
+      "exit_code": 101,
+      "seconds": 160.6649310439825,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "7fe3ad69e6af8cdc15863a382cbae41d473a5620c987b1e9c5131ce7da33a75d",
+      "stderr_sha256": "9a2f52e43f728ba6599dda32c4aa09695c3a638bf3545263a07e73d4bbf5f140"
+    }
+  ],
+  "passed": false
+}

@@ -1,0 +1,68 @@
+{
+  "commands": [
+    {
+      "name": "ffi-build",
+      "exit_code": 0,
+      "seconds": 130.10986763006076,
+      "sources_and_preserved_binaries_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ea9df062eeac448553057639cdb1f02da3b7155f6bd39bdc8c92c0e38d5c3294",
+      "warnings": []
+    },
+    {
+      "name": "c-build",
+      "exit_code": 0,
+      "seconds": 1.9352356949821115,
+      "sources_and_preserved_binaries_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "warnings": []
+    },
+    {
+      "name": "c-consumer",
+      "exit_code": 0,
+      "seconds": 1.8432112392038107,
+      "sources_and_preserved_binaries_unchanged": true,
+      "stdout_sha256": "9129339c006d2d6c8870eaeade18c45c9302dabd88de9be2a1d9bdf24ba6f286",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "warnings": []
+    },
+    {
+      "name": "cpp-build",
+      "exit_code": 0,
+      "seconds": 2.1972667877562344,
+      "sources_and_preserved_binaries_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "warnings": []
+    },
+    {
+      "name": "cpp-consumer",
+      "exit_code": 0,
+      "seconds": 1.7772652148269117,
+      "sources_and_preserved_binaries_unchanged": true,
+      "stdout_sha256": "338ae8643ba3e40ec977a07d50e13b739c9deac7bb1b08b598a848d3f92bf045",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "warnings": []
+    },
+    {
+      "name": "python-consumer",
+      "exit_code": 0,
+      "seconds": 1.884289254900068,
+      "sources_and_preserved_binaries_unchanged": true,
+      "stdout_sha256": "bcc2468e5a7a09608b8b1a2e0a056984088d66dd03917be28ef41c96c12baeb0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "warnings": []
+    },
+    {
+      "name": "wasm-consumers",
+      "exit_code": 0,
+      "seconds": 172.39428200479597,
+      "sources_and_preserved_binaries_unchanged": true,
+      "stdout_sha256": "70870ab9accd685edf7fc42949a7fa04f2536afa268ad1cf0bf230fbbd0a13fe",
+      "stderr_sha256": "29cae3aed2d193ca20be16b64778dac1affd1b9b21a02755dba55710fbea2b7c",
+      "warnings": []
+    }
+  ],
+  "passed": true
+}

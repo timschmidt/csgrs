@@ -1,0 +1,9 @@
+{
+  "note": "Cargo printed a relative executable path; the original absolute-path-only runner did not collect it. This additive observation records the unchanged retained executable without rerunning the trial.",
+  "executables_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/baseline-v1/release/deps/empty_composition-329c8a68d57ad60d": "4c3ff457f2768596b30df2ad2670bef4203962271eb44e931e276126b0ae11bb"
+  },
+  "terminal_exit_code": 101,
+  "passed": 0,
+  "failed": 8
+}

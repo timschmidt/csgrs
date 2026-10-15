@@ -1,0 +1,32 @@
+{
+  "commands": [
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.318640843965113,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "focused-tests",
+      "exit_code": 0,
+      "seconds": 159.00603047013283,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "5d16501b0b9fba049a7a5af8a88721c966f66f01891ab7c9a6acf838e6661418",
+      "stderr_sha256": "1116fdfb86e978935d20c37063d39174c9aafd0bbcf230c711acf7a7f15454ba"
+    },
+    {
+      "name": "clippy-minimal",
+      "exit_code": 0,
+      "seconds": 25.862229177728295,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "195bd7fec4ff4aff4b9995710564f96d2e097cb1f973738e50be7525114b437f"
+    }
+  ],
+  "passed": true
+}

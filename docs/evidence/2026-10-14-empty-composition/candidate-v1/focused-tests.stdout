@@ -1,0 +1,36 @@
+
+running 8 tests
+test accumulation_and_complete_subtraction_can_continue ... ok
+test empty_identities_remain_composable_under_both_policies ... ok
+test empty_identity_keeps_symbolic_coordinates ... ok
+test empty_operand_does_not_erase_uncertainty_in_input_validation ... ok
+test empty_rows_from_a_shared_boolean_batch_can_be_composed ... ok
+test empty_shortcuts_preserve_invalid_operand_diagnostics_and_indices ... ok
+test identity_regularizes_winding_multiplicity_and_cancellation ... ok
+test scalar_adapter_reuses_empty_composition_and_visible_errors ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+
+running 4 tests
+test context_booleans_preserve_input_errors ... ok
+test drill_cylinder_uses_the_requested_context ... ok
+test every_boolean_reports_approximation_without_affecting_later_strict_calls ... ok
+test rational_booleans_stay_certified_with_either_context ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
+
+
+running 9 tests
+test all_active_caches_obey_their_limits_and_release_entries ... ok
+test approximate_distribution_cannot_satisfy_a_strict_request ... ok
+test each_distribution_family_preserves_geometry_and_certainty ... ok
+test every_cached_primitive_family_replays_the_same_exact_rows ... ok
+test fifo_hits_do_not_refresh_insertion_order ... ok
+test merge_keys_include_input_order_and_both_storage_identities ... ok
+test nested_scopes_shrink_immediately_and_restore_after_unwinding ... ok
+test primitives_preserve_scalar_structure_with_and_without_retention ... ok
+test workers_have_independent_policy_and_retained_storage ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

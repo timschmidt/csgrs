@@ -1,0 +1,9 @@
+{
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/release/libcsgrs_ffi.so": "3b80452ae5ee6c2f0b72eb108497e3d4d4106cfee1053b36ae66f5dcccfea2bd",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/empty-c-consumer": "cc345dc9a00a53e3a65488a4d128541f21efb783555c1e889be748c3b6c93a7e",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/empty-cpp-consumer": "c2c5e56c5585b6f86f22fa6496c7bc579117a9af88842a39acfa90770f8160d7",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "47aeb7ab2a44950bc943552584e8d153cbd9d68a3801cea289ce8fb5f5b655d2",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs_bg.wasm": "202ecd8b97b57f8f5795c81740a5fb201f6a40da38288d11549cf5ace381c798",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs.js": "bab626941aaec3b5c78453fc3106060f07a809a230d89abd23ce1740df57967a",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs.d.ts": "411a252a9bc51de012bf5be2bc7191cebba27aac8f37f41344ddad26f7f6e6fe"
+}

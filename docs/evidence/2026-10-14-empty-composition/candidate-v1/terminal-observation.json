@@ -1,0 +1,13 @@
+{
+  "note": "Additive executable identities for relative Cargo paths; no command was rerun.",
+  "executables_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/empty_composition-329c8a68d57ad60d": "0b052a1dbee4bad3fe82f3128d75ee387fbb319ad4fb8420e778f5a2a6e80977",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "e4b9dcf93902200c0cfe70ee55094e6ef067b6b47cdab93a72763f3218965913",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/solid_cache-07b265ceb2ca1c46": "45741c0db6ac171cc24138d7b87589539df553800d94c6eb9c3cbde8a04592a1"
+  },
+  "terminal_exit_code": 0,
+  "focused_tests_passed": 21,
+  "new_acceptance_tests_passed": 8,
+  "fmt_passed": true,
+  "strict_minimal_clippy_passed": true
+}
