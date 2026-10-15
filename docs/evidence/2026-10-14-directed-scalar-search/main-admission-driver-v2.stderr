@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-directed-scalar-search/admit_main_whitespace_v2.py", line 92, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-directed-scalar-search/admit_main_whitespace_v2.py", line 83, in main
+    'admission_script_sha256': sha(__file__), 'limits': original['limits'],
+                               ~~~^^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-directed-scalar-search/close_v1.py", line 13, in sha
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+                          ^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'read_bytes'

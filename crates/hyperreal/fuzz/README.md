@@ -67,3 +67,74 @@ dedicated Criterion rows by `adversarial_transcendentals`.
 The promotion ranks cases by recorded elapsed time. P38 still requires
 case-by-case lexicase selection and independent populations for each
 representation type; the current timing group does not satisfy those criteria.
+
+## Directed scalar search
+
+The `directed_scalar_probe` example and `directed/campaign.py` implement a
+separate adaptive search over all 22 private scalar representations. Each
+representation owns its population and random stream. Selection shuffles the
+query cases, retains the slowest current candidates on each successive case,
+and breaks remaining ties randomly. Selected parents produce byte mutations
+for the next generation; every filtering and mutation step can be replayed.
+
+From `crates/hyperreal`, build and run into a new output directory:
+
+```sh
+cargo build --release --example directed_scalar_probe --features serde,dispatch-trace --target-dir /tmp/hyperreal-directed-build
+python3 fuzz/directed/campaign.py run --binary /tmp/hyperreal-directed-build/release/examples/directed_scalar_probe --output /tmp/hyperreal-directed-run --seed 20261014 --rounds 3 --population 8 --parents 4 --timeout 30
+python3 fuzz/directed/campaign.py verify /tmp/hyperreal-directed-run
+```
+
+Each input varies the parameters inside its representation, including exact
+rational widths, exponents, prime roots and logarithms, rational angles, and
+decimal rational offsets near pi. A probe checks the actual private class,
+retains three timing samples and raw dispatch paths per query, checks numeric
+answers against directed MPFR intervals, and checks cold/warm proof retention.
+Timing fitness guides exploration; it is not a competitive benchmark result.
+Each sample rebuilds its query object; shared constants may already be warm
+within that input's process. These are not claims that every cache is empty.
+
+Near-pi cancellation belongs to the generic `Irrational` population, alongside
+non-special sine inputs. The full one-to-78-digit decimal-offset range is
+retained. `ConstOffset` separately varies subtraction from pi or e within the
+constructor's certified positive range, and positive offsets from products
+containing exponentials and positive or reciprocal powers of pi. The first
+generator's incorrect `ConstOffset` expectation for `pi - 31/10` is retained
+as an exact regression fixture.
+
+Numeric response fields use explicit signed numerators and positive denominators
+(`-7/3`), independently of the human-readable mixed-number `Rational` display.
+The complete input and response that exposed the first wire-format mismatch
+remain regression fixtures; the qualification also checks a fresh Rust response
+through the Python exact-fraction validator before starting a campaign.
+
+Campaign outputs include every generated input, process result, raw response,
+population, selection trace, and mutation lineage. A failure or timeout closes
+the run with its evidence intact. Completed campaigns can be verified from
+their retained scores and exact rational endpoints. Existing outputs are never
+overwritten or resumed.
+
+P38 still requires sanitizer qualification and competitive benchmarks for the
+retained cases, as well as directed populations in the other stack layers.
+The bounded scalar campaign is not an exhaustive-input or cross-stack claim.
+
+The `directed_scalar_bench` example and `directed/competitive.py` compare every
+final selected input with native directed MPFR interval evaluation. Both must
+produce an exact-rational enclosure with absolute width at most `2^-256`.
+Both follow the recorded 256-to-2048-bit precision schedule, stopping when an
+exact width check succeeds. All intermediate enclosures, all samples, and the
+seeded execution order are retained. Each measured operation runs in a new
+process; numeric oracle checks and text encoding occur after its timer.
+
+```sh
+cargo build --release --example directed_scalar_bench --features serde --target-dir /tmp/hyperreal-directed-native
+python3 fuzz/directed/competitive.py run --binary /tmp/hyperreal-directed-native/release/examples/directed_scalar_bench --campaign /tmp/hyperreal-directed-run --output /tmp/hyperreal-directed-comparison --seed 20261014 --samples 11 --timeout 30
+python3 fuzz/directed/competitive.py verify /tmp/hyperreal-directed-comparison
+```
+
+The comparison requires Linux CPU affinity support, a release build without
+`dispatch-trace`, and a completed campaign from the same search implementation.
+Qualify the adapters with sanitizers before collecting native timings. The
+native benchmark build must exclude sanitizers. These results concern the
+enclosure operation on the retained scalar inputs; they do not rank whole
+libraries or compare symbolic certificate APIs or warm-result performance.
