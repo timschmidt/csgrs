@@ -1,5 +1,25 @@
 # Repository Agent Rules
 
+## Change Acceptance
+
+Apply the acceptance contract in [`properties.md`](properties.md) and the
+normative protocol in [`docs/admission.md`](docs/admission.md) to every change.
+
+Before changing code, identify the owning layer, the relevant property, its
+input domain, and a failing or missing acceptance test. Reproduce review
+findings on the target revision; do not assume an earlier assessment is still
+current.
+
+Make the smallest coherent change that restores or extends the contract.
+Preserve exact meaning, supported composition, provenance, certainty, and
+explicit failure. Do not weaken tests, policies, fixtures, or validation to
+obtain a passing result.
+
+After the final edit, run the affected local and downstream checks. Record
+what was executed, what passed, what remains blocked, and the evidence
+supporting any correctness or performance claim. Updating a specification or
+ledger does not establish that the implementation satisfies it.
+
 ## Pre-Push Verification
 
 Before every `git push`, agents must:
