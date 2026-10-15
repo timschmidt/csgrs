@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_on": "2026-10-14",
+  "updated_on": "2026-10-15",
   "plan": "DEVELOPMENT_PLAN.md",
   "research": "ALGORITHM_RESEARCH.md",
   "property_ledger": "../../../docs/properties-status.json",
@@ -228,6 +228,31 @@
       "validation": "Seven new integration tests and two deliberately failing mutants cover real BREP root queries, promotion limits, nested budgets, retry, warm results, strict authority and unwind restoration. All 239 core tests, 15 integration tests and 3 doctests pass, as do strict Clippy, rustdoc, WASM build, fuzz-bin Clippy and formatting. Both release harnesses pass all receipts.",
       "cost_evidence": "The unchanged 66-case harness preserves every receipt in three paired trials: median of case median ratios 1.00617; largest sampled ratio 1.06225 (analytic_kernel/sphere_build_measure_classify); executable +96 bytes. Five direct/scoped trials measure line-query medians 678/709 ns and five-root query medians 329,898/331,251 ns, including scoped usage checks. Samples are descriptive, not statistical guarantees.",
       "limits": "Only existing instrumented solver refinements/promotions are counted. Full geometry/scalar/elimination accounting, degree/coefficient and memory limits, worker allocation, cancellation, async propagation, proof-stage receipts and mandatory composed provenance remain open. No whole-operation time/memory bound or work-package completion is claimed."
+    },
+    {
+      "id": "retained-parameter-prerequisite-probe",
+      "work_packages": [
+        "WP01",
+        "WP02",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P11",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "kept as prerequisite evidence; no production geometry change",
+      "change": "Exercise a selected quintic parameter through existing planar split/reverse/transform composition and a repeated split; record the current BREP inverse-parameter materialization blocker. Reject zero- and two-root isolators. Update the normative operation-scope description.",
+      "evidence": "evidence/2026-10-15-retained-parameter-feasibility/manifest.json",
+      "validation": "Locked standalone release build and strict Clippy pass; three CPU 0 executions retain the same exact assertions and receipt (7 instrumented refinements, 0 promotions). Dependency identities match the workspace lockfile.",
+      "limits": "G1 and WP02 remain open: no BREP selected point/domain, whole-model split, dual-pcurve certification or selected graph persistence/replay. Smoke measurements do not prove performance or retained-memory growth."
     }
   ],
   "work_packages": [

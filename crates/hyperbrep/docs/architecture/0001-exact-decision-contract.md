@@ -70,8 +70,15 @@ New predicate-bearing entry points must establish this authority before any
 principal Hypercurve call. Reading immutable records and metadata requires no
 predicate scope.
 
-This authority guard does not supply the planned caller-visible work budgets,
-cancellation or full operation receipts; those remain separate requirements.
+`OperationContext::strict(WorkBudget)` additionally establishes a caller-visible
+synchronous scope through `evaluate`. It shares Hypersolve's instrumented root
+refinements and algebraic promotions across nested calls, retaining the outer
+`BudgetExceeded` result and admitted `WorkUsage`. Each evaluation starts a fresh
+scope; nested scopes also charge their parents. The two counters do not bound
+all scalar or geometry work, coefficient growth, memory or time. Worker
+allocations, cancellation and full proof-stage receipts remain separate
+requirements. See the [operation-scope contract](../ARCHITECTURE.md#operation-scopes)
+and [qualification evidence](../evidence/2026-10-14-operation-context/manifest.json).
 
 ### Outcomes
 

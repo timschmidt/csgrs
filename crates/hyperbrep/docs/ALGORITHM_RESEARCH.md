@@ -471,6 +471,13 @@ results and cannot be counted as a passing exact solution.
 | G6 — offsets/fillets, WP10–WP11 | Analytic cases followed by one declared non-rational parallel, self-contact and a completed corner network | Intended distance/material set, complete rails/rims/corners, composition/save-load/query/meshing closure and typed excessive-radius outcomes |
 | G7 — derived output, WP12/WP15 | Regular trimmed mixed-carrier body, near-contact bodies and chart singularities | Separate integration bounds, geometric approximation bounds, joint-contact limits and mesh conformity; source topology unaffected by display resolution |
 
+The [2026-10-15 G1 prerequisite probe](evidence/2026-10-15-retained-parameter-feasibility/README.md)
+now exercises the retained quintic parameter in Hypercurve and records BREP's
+current `UnrepresentableParameter` boundary. Planar split/reverse/transform
+composition passes without a stored scalar view. Spatial topology, dual
+pcurves and graph persistence/replay remain unimplemented by that probe;
+G1 remains open.
+
 Small mathematical fixtures should precede large imported examples. The
 following are proposed exact counterexamples and proof obligations, not
 results of running HyperBRep:
