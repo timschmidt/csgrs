@@ -603,7 +603,7 @@ fn run() {
         measurement(&mesh, sliver_input)
     });
 
-    let profile = curve::circle(Real::from(6_u8), 64);
+    let profile = curve::circle(Real::from(6_u8), 64).expect("valid planar fixture");
     config.run("kernel", "extrude", "circle_64", 8, || {
         let mesh = curve::try_extrude(
             black_box(&profile),

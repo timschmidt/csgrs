@@ -150,7 +150,7 @@ fn empty_curve_bounds_are_absent() {
         )
         .is_err()
     );
-    let rectangle = csgrs::curve::rectangle(2.into(), 3.into());
+    let rectangle = csgrs::curve::rectangle(2.into(), 3.into()).expect("valid planar fixture");
     let bounds = csgrs::curve::bounding_box(&rectangle).unwrap().unwrap();
     assert_eq!(bounds.mins, Point3::origin());
     assert_eq!(bounds.maxs, Point3::new(2.into(), 3.into(), 0.into()));

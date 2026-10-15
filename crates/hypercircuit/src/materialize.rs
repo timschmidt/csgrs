@@ -114,6 +114,19 @@ impl MaterializationDecisions {
         })
     }
 
+    fn rectangle(
+        &self,
+        width: Real,
+        height: Real,
+    ) -> Result<CurveRegion2, GeometryMaterializationError> {
+        self.consume_geometry(curve::rectangle_with_context(
+            width,
+            height,
+            &GeometryContext::new(self.predicates),
+        ))
+        .map_err(GeometryMaterializationError::Construction)
+    }
+
     fn boundary_operation<T>(
         &self,
         mut evaluate: impl FnMut(PredicatePolicy) -> Result<T, BoardBoundaryGeometryError>,
@@ -848,7 +861,7 @@ impl Display for Pcb3dGltfError {
 impl std::error::Error for Pcb3dGltfError {}
 
 /// Failure while lowering retained PCB intent into geometry.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum GeometryMaterializationError {
     /// Structural circuit or layout validation failed.
     InvalidSourceModel,
@@ -866,6 +879,8 @@ pub enum GeometryMaterializationError {
     ZoneIsland(String),
     /// Native bounds could not be established; retain the curve diagnostic.
     Bounds(ExactCurveError),
+    /// A modeling constructor failed; no replacement profile was published.
+    Construction(csgrs::errors::ValidationError),
 }
 
 impl Display for GeometryMaterializationError {
@@ -889,6 +904,9 @@ impl Display for GeometryMaterializationError {
                 )
             }
             Self::Bounds(source) => write!(formatter, "PCB geometry bounds failed: {source}"),
+            Self::Construction(source) => {
+                write!(formatter, "PCB profile construction failed: {source}")
+            }
         }
     }
 }
@@ -897,6 +915,7 @@ impl std::error::Error for GeometryMaterializationError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Bounds(source) => Some(source),
+            Self::Construction(source) => Some(source),
             _ => None,
         }
     }
@@ -1476,7 +1495,7 @@ fn hatch_zone(
             None => return Err(GeometryMaterializationError::Arithmetic),
         }
         let stripe = curve::translated(
-            &curve::rectangle(extent.clone() + extent.clone(), line_width.clone()),
+            &decisions.rectangle(extent.clone() + extent.clone(), line_width.clone())?,
             Real::zero(),
             offset.clone(),
         );
@@ -1520,12 +1539,12 @@ fn thermal_spoke_mask(
     let span = extent.clone() + extent.clone();
     let spokes = if count == 4 {
         let horizontal = curve::translated(
-            &curve::rectangle(span.clone(), width.clone()),
+            &decisions.rectangle(span.clone(), width.clone())?,
             center.x.clone(),
             center.y.clone(),
         );
         let vertical = curve::translated(
-            &curve::rectangle(width.clone(), span),
+            &decisions.rectangle(width.clone(), span)?,
             center.x.clone(),
             center.y.clone(),
         );
@@ -1541,7 +1560,7 @@ fn thermal_spoke_mask(
         let mut spokes: Option<CurveRegion2> = None;
         for index in 0..count {
             let angle = step.clone() * Real::from(index);
-            let spoke = curve::rotated(&curve::rectangle(span.clone(), width.clone()), angle);
+            let spoke = curve::rotated(&decisions.rectangle(span.clone(), width.clone())?, angle);
             let spoke = curve::translated(&spoke, center.x.clone(), center.y.clone());
             spokes = Some(match spokes {
                 None => spoke,
@@ -1572,7 +1591,7 @@ fn thermal_spoke_mask(
             .map_err(|_| GeometryMaterializationError::Arithmetic)?,
     );
     let clip = curve::translated(
-        &curve::rectangle(width, height),
+        &decisions.rectangle(width, height)?,
         clip_center.x,
         clip_center.y,
     );
@@ -3136,7 +3155,7 @@ fn pad_profile(
             decisions,
         ),
         PadShape::Rectangle { width, height } => Ok(center_pad_profile(
-            curve::rectangle(width.clone(), height.clone()),
+            decisions.rectangle(width.clone(), height.clone())?,
             width,
             height,
         )?),
@@ -3998,6 +4017,45 @@ mod tests {
     use hyperreal::Real;
 
     #[test]
+    fn rectangle_materialization_preserves_errors_and_consumed_certainty() {
+        use csgrs::errors::ValidationError;
+        use std::error::Error;
+        let strict = MaterializationDecisions::new(&MaterializationContext::STRICT);
+        let error = strict.rectangle(Real::zero(), -Real::one()).unwrap_err();
+        assert!(matches!(
+            error,
+            super::GeometryMaterializationError::Construction(ValidationError::NegativeParameter {
+                name: "height"
+            })
+        ));
+        assert!(error.source().is_some());
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let zero = &sine * &sine + &cosine * &cosine - Real::one();
+        assert!(matches!(
+            strict.rectangle(zero.clone(), Real::one()),
+            Err(super::GeometryMaterializationError::Construction(
+                ValidationError::PredicateUndecided { .. }
+            ))
+        ));
+        let approximate = MaterializationDecisions::new(&MaterializationContext::APPROXIMATE_512);
+        assert!(
+            approximate
+                .rectangle(zero.clone(), Real::one())
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(
+            approximate.certainty(),
+            GeometryCertainty::Approximate512Consumed
+        );
+        assert!(strict.rectangle(zero, Real::one()).is_err());
+        let exact = strict.rectangle(Real::from(2), Real::from(3)).unwrap();
+        assert_eq!(exact.filled_area().unwrap(), Some(Real::from(6)));
+        assert_eq!(strict.certainty(), GeometryCertainty::Certified);
+    }
+
+    #[test]
     fn thermal_spoke_bounds_preserve_empty_clearance() {
         let boundary = [(-5, -5), (5, -5), (5, 5), (-5, 5)]
             .map(|(x, y)| Point2::new(Real::from(x), Real::from(y)));
@@ -4017,7 +4075,7 @@ mod tests {
             .unwrap();
             assert!(mask.is_empty());
             assert_eq!(decisions.certainty(), GeometryCertainty::Certified);
-            let square = curve::square(Real::one());
+            let square = curve::square(Real::one()).expect("valid planar fixture");
             let restored = decisions
                 .exact_curve(|| mask.boolean_region(&square, BooleanOp::Union))
                 .unwrap();
@@ -4200,7 +4258,10 @@ mod tests {
         );
 
         let hard_cut = exact_compound_composition(
-            &[first, curve::rectangle(Real::from(6), Real::one())],
+            &[
+                first,
+                curve::rectangle(Real::from(6), Real::one()).expect("valid planar fixture"),
+            ],
             &[second.clone(), second],
             &decisions,
         )
@@ -4221,7 +4282,7 @@ mod tests {
             Real::from(3),
         );
         let rectangle = curve::translated(
-            &curve::rectangle(Real::from(26), Real::from(6)),
+            &curve::rectangle(Real::from(26), Real::from(6)).expect("valid planar fixture"),
             Real::from(15),
             Real::from(15),
         );
@@ -4237,7 +4298,7 @@ mod tests {
     fn overlapping_additive_union_does_not_reclassify_material_as_a_hole() {
         let decisions = MaterializationDecisions::new(&MaterializationContext::STRICT);
         let trace = curve::translated(
-            &curve::rectangle(Real::from(20), Real::one()),
+            &curve::rectangle(Real::from(20), Real::one()).expect("valid planar fixture"),
             Real::from(15),
             Real::from(3),
         );
@@ -4269,7 +4330,8 @@ mod tests {
             let decisions = MaterializationDecisions::new(&context);
             let square = |half: i32| {
                 curve::translated(
-                    &curve::rectangle(Real::from(2 * half), Real::from(2 * half)),
+                    &curve::rectangle(Real::from(2 * half), Real::from(2 * half))
+                        .expect("valid planar fixture"),
                     Real::from(-half),
                     Real::from(-half),
                 )
@@ -4281,7 +4343,7 @@ mod tests {
                 .unwrap();
             let island = square(1);
             let bridge = curve::translated(
-                &curve::rectangle(Real::from(2), Real::from(4)),
+                &curve::rectangle(Real::from(2), Real::from(4)).expect("valid planar fixture"),
                 Real::from(3),
                 Real::from(-2),
             );

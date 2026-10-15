@@ -60,7 +60,7 @@ fn nonnegative(value: &Real, name: &'static str) -> Result<RealSign, ValidationE
     }
 }
 
-const fn sample_minimum(
+pub(crate) const fn sample_minimum(
     value: usize,
     min: usize,
     name: &'static str,

@@ -149,7 +149,7 @@ pub struct DrcDielectricMaterialEvidence {
 }
 
 /// Explicitly retained information that the current `hyperdrc` model cannot carry.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum DrcHandoffOmission {
     /// The DRC drill carrier requires a plating boolean.
     UnspecifiedDrillPlating(String),
@@ -166,6 +166,11 @@ pub enum DrcHandoffOmission {
     UnsupportedCourtyardGraphic { instance: String, graphic: String },
     /// Courtyard/body polygons could not become one certified placement envelope.
     InvalidComponentEnvelope(String),
+    /// A keepout or placement envelope failed construction with a retained cause.
+    ProfileConstruction {
+        source: String,
+        error: csgrs::errors::ValidationError,
+    },
     /// A placed component has neither a usable courtyard nor a body envelope.
     MissingComponentEnvelope(String),
     /// An impedance-controlled stackup has no dielectric layer to characterize.
@@ -494,13 +499,22 @@ impl HyperDrcHandoff {
             .keepouts
             .iter()
             .filter_map(|keepout| {
-                let profile = curve::polygon_points(
+                let profile = match curve::polygon_points(
                     &keepout
                         .boundary
                         .iter()
                         .map(|point| CurvePoint2::new(point.x.clone(), point.y.clone()))
                         .collect::<Vec<_>>(),
-                );
+                ) {
+                    Ok(profile) => profile,
+                    Err(error) => {
+                        omissions.push(DrcHandoffOmission::ProfileConstruction {
+                            source: format!("keepout:{}", keepout.id.as_str()),
+                            error,
+                        });
+                        return None;
+                    }
+                };
                 if profile.is_empty() {
                     omissions.push(DrcHandoffOmission::InvalidKeepoutGeometry(
                         keepout.id.as_str().to_owned(),
@@ -1402,7 +1416,21 @@ fn component_envelope(
             });
             continue;
         };
-        let profile = placed_polygon(vertices, placement);
+        let profile = match placed_polygon(vertices, placement) {
+            Ok(profile) => profile,
+            Err(error) => {
+                courtyard_complete = false;
+                omissions.push(DrcHandoffOmission::ProfileConstruction {
+                    source: format!(
+                        "courtyard:{}:{}",
+                        placement.instance.as_str(),
+                        graphic.id.as_str()
+                    ),
+                    error,
+                });
+                continue;
+            }
+        };
         if profile.is_empty() {
             courtyard_complete = false;
             omissions.push(DrcHandoffOmission::InvalidComponentEnvelope(format!(
@@ -1431,13 +1459,19 @@ fn component_envelope(
         }
     }
     if let Some(body) = &pattern.body {
-        let profile = placed_polygon(&body.outline, placement);
-        if !profile.is_empty() {
-            return Some(authored_component(
-                placement,
-                profile,
-                AuthoredComponentEnvelopeKind::Body,
-            ));
+        match placed_polygon(&body.outline, placement) {
+            Ok(profile) if !profile.is_empty() => {
+                return Some(authored_component(
+                    placement,
+                    profile,
+                    AuthoredComponentEnvelopeKind::Body,
+                ));
+            }
+            Err(error) => omissions.push(DrcHandoffOmission::ProfileConstruction {
+                source: format!("body:{}", placement.instance.as_str()),
+                error,
+            }),
+            _ => {}
         }
         omissions.push(DrcHandoffOmission::InvalidComponentEnvelope(format!(
             "body:{}",
@@ -1453,7 +1487,7 @@ fn component_envelope(
 fn placed_polygon(
     vertices: &[hyperlattice::Point2],
     placement: &crate::PcbPlacement,
-) -> CurveRegion2 {
+) -> Result<CurveRegion2, csgrs::errors::ValidationError> {
     curve::polygon_points(
         &vertices
             .iter()
@@ -1803,6 +1837,7 @@ fn process_role_name(role: ProcessLayerRole) -> &'static str {
 
 #[cfg(test)]
 mod tests {
+    use hyperlattice::Point2;
     use hyperpath::TraceLayer;
     use hyperphysics::{MaterialAssertion, MaterialState, PropertyValue, SourceSpec};
 
@@ -1811,6 +1846,39 @@ mod tests {
 
     fn exact_ratio(numerator: i64, denominator: i64) -> Real {
         (Real::from(numerator) / Real::from(denominator)).expect("nonzero denominator")
+    }
+
+    #[test]
+    fn placed_polygon_retains_constructor_failure_instead_of_an_empty_envelope() {
+        let placement = crate::PcbPlacement {
+            instance: crate::CircuitInstanceId::new("U1").unwrap(),
+            land_pattern: crate::LandPatternId::new("test").unwrap(),
+            position: Point2::origin(),
+            rotation_degrees: Real::zero(),
+            side: crate::BoardSide::Front,
+        };
+        let error = placed_polygon(&[], &placement).unwrap_err();
+        assert!(matches!(
+            error,
+            csgrs::errors::ValidationError::Curve(hypercurve::CurveError::InsufficientVertices)
+        ));
+        assert_eq!(
+            error.kind(),
+            csgrs::errors::ValidationErrorKind::InvalidInput
+        );
+        let unit = [
+            Point2::origin(),
+            Point2::new(Real::one(), Real::zero()),
+            Point2::new(Real::one(), Real::one()),
+            Point2::new(Real::zero(), Real::one()),
+        ];
+        assert_eq!(
+            placed_polygon(&unit, &placement)
+                .unwrap()
+                .filled_area()
+                .unwrap(),
+            Some(Real::one())
+        );
     }
 
     fn material_graph(relative_permittivity: Real, loss_tangent: Real) -> MaterialPropertyGraph {
@@ -1879,6 +1947,50 @@ mod tests {
     }
 
     #[test]
+    fn keepout_constructor_failure_survives_the_public_handoff_and_recovers() {
+        let mut layout = controlled_layout(None);
+        layout.rules.net_classes.clear();
+        let circuit = crate::Circuit::new(
+            crate::CircuitId::new("constructor-regression").unwrap(),
+            crate::TransientPolicy::Static,
+            crate::AdapterKind::Dc,
+        );
+        let materialized = layout
+            .materialize(
+                &circuit,
+                &crate::MaterializationContext::STRICT,
+                crate::MaterializationOptions::default(),
+            )
+            .unwrap();
+        layout.keepouts.push(crate::PcbKeepout {
+            id: crate::KeepoutId::new("bad-ring").unwrap(),
+            boundary: Vec::new(),
+            scope: crate::KeepoutScope::All,
+        });
+        let failed = HyperDrcHandoff::from_materialization(&layout, &materialized);
+        assert!(failed.authored_keepouts.is_empty());
+        assert!(failed.omissions.iter().any(|omission| matches!(omission,
+            DrcHandoffOmission::ProfileConstruction {
+                source, error: csgrs::errors::ValidationError::Curve(hypercurve::CurveError::InsufficientVertices),
+            } if source == "keepout:bad-ring"
+        )));
+        layout.keepouts[0].boundary = vec![
+            Point2::origin(),
+            Point2::new(Real::one(), Real::zero()),
+            Point2::new(Real::one(), Real::one()),
+            Point2::new(Real::zero(), Real::one()),
+        ];
+        let recovered = HyperDrcHandoff::from_materialization(&layout, &materialized);
+        assert_eq!(recovered.authored_keepouts.len(), 1);
+        assert!(
+            !recovered
+                .omissions
+                .iter()
+                .any(|omission| matches!(omission, DrcHandoffOmission::ProfileConstruction { .. }))
+        );
+    }
+
+    #[test]
     fn hyperphysics_material_graph_enables_hyperdrc_impedance_estimate() {
         let layout = controlled_layout(Some("hyperphysics:material/fr4"));
         let materials = PcbMaterialPropertyLibrary::default().with_material(
@@ -1910,7 +2022,8 @@ mod tests {
                     net: Some("RF".into()),
                     kind: CopperKind::Segment,
                     region: PcbRegion::new(
-                        curve::rectangle(exact_ratio(8, 100), Real::one()),
+                        curve::rectangle(exact_ratio(8, 100), Real::one())
+                            .expect("valid planar fixture"),
                         Some(LayerMetadata {
                             name: "route:rf".into(),
                         }),

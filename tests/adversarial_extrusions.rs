@@ -25,17 +25,25 @@ fn p3(x: f64, y: f64, z: f64) -> Point3 {
 
 #[test]
 fn loft_revolve_and_sweep_accept_native_hyperreal_geometry() {
-    let revolved =
-        curve::revolve(&curve::square(r(1.0)), r(270.0), 24, &GeometryContext::STRICT)
-            .expect("revolve")
-            .into_value();
+    let revolved = curve::revolve(
+        &curve::square(r(1.0)).expect("valid planar fixture"),
+        r(270.0),
+        24,
+        &GeometryContext::STRICT,
+    )
+    .expect("revolve")
+    .into_value();
     assert!(!revolved.triangles.is_empty());
     assert!(is_exact_solid(&revolved));
 
     let path = vec![p3(0.0, 0.0, 0.0), p3(0.0, 0.0, 0.9)];
-    let swept = curve::try_sweep(&curve::square(r(0.08)), &path, &GeometryContext::STRICT)
-        .expect("sweep")
-        .into_value();
+    let swept = curve::try_sweep(
+        &curve::square(r(0.08)).expect("valid planar fixture"),
+        &path,
+        &GeometryContext::STRICT,
+    )
+    .expect("sweep")
+    .into_value();
     assert!(!swept.triangles.is_empty());
     assert!(is_exact_solid(&swept));
 

@@ -31,7 +31,7 @@ fn mesh_measurement(mesh: &TriangleMesh, work_units: usize) -> Measurement {
 }
 
 fn compound_region(
-    result: Result<csgrs::GeometryOutcome<CurveRegion2>, csgrs::errors::CurveBooleanError>,
+    result: Result<csgrs::GeometryOutcome<CurveRegion2>, csgrs::errors::ValidationError>,
 ) -> CurveRegion2 {
     result.expect("compound curve Boolean").into_value()
 }
@@ -148,15 +148,16 @@ fn main() {
             [Real::from(2), Real::from(3)],
         ];
         let regions = [
-            curve::rectangle(Real::from(12), Real::from(8)),
-            curve::square(Real::from(8)),
-            curve::circle(Real::from(4), 24),
-            curve::right_triangle(Real::from(6), Real::from(4)),
-            curve::polygon(&polygon),
-            curve::ellipse(Real::from(8), Real::from(4), 24),
-            curve::regular_ngon(7, Real::from(4)),
+            curve::rectangle(Real::from(12), Real::from(8)).expect("valid planar fixture"),
+            curve::square(Real::from(8)).expect("valid planar fixture"),
+            curve::circle(Real::from(4), 24).expect("valid planar fixture"),
+            curve::right_triangle(Real::from(6), Real::from(4)).expect("valid planar fixture"),
+            curve::polygon(&polygon).expect("valid planar fixture"),
+            curve::ellipse(Real::from(8), Real::from(4), 24).expect("valid planar fixture"),
+            curve::regular_ngon(7, Real::from(4)).expect("valid planar fixture"),
             curve::arrow(Real::from(6), Real::from(2), Real::from(3), Real::from(4)),
-            curve::rounded_rectangle(Real::from(12), Real::from(8), Real::from(2), 8),
+            curve::rounded_rectangle(Real::from(12), Real::from(8), Real::from(2), 8)
+                .expect("valid planar fixture"),
             curve::star(12, Real::from(8), Real::from(4)),
             curve::teardrop(Real::from(6), Real::from(10), 24),
             curve::egg(Real::from(6), Real::from(10), 24),
@@ -223,9 +224,9 @@ fn main() {
         )
     });
 
-    let curve_left = curve::circle(Real::from(10), 64);
+    let curve_left = curve::circle(Real::from(10), 64).expect("valid planar fixture");
     let curve_right = curve::transformed(
-        &curve::square(Real::from(12)),
+        &curve::square(Real::from(12)).expect("valid planar fixture"),
         &Matrix4::affine_translation([Real::from(4), Real::zero(), Real::zero()]),
     );
     config.run("feature", "profile_boolean", "all_operations", 2, || {
@@ -270,7 +271,8 @@ fn main() {
         Measurement::new(128, (sharp.len() + rounded.len()) as u64, sharp.len() as u64)
     });
     config.run("feature", "profile_transform", "all_csg_helpers", 4, || {
-        let source = curve::rectangle(Real::from(8), Real::from(5));
+        let source =
+            curve::rectangle(Real::from(8), Real::from(5)).expect("valid planar fixture");
         let outputs = [
             curve::transformed(
                 &source,
@@ -310,7 +312,7 @@ fn main() {
         "arc_linear_grid",
         1,
         || {
-            let source = curve::square(Real::one());
+            let source = curve::square(Real::one()).expect("valid planar fixture");
             let mut regions = Vec::new();
             for index in 0..14 {
                 regions.push(curve::transformed(
@@ -337,7 +339,7 @@ fn main() {
                     .expect("extrusion")
                     .into_value();
             let radial = curve::transformed(
-                &curve::rectangle(Real::from(3), Real::from(8)),
+                &curve::rectangle(Real::from(3), Real::from(8)).expect("valid planar fixture"),
                 &Matrix4::affine_translation([Real::from(5), Real::zero(), Real::zero()]),
             );
             let revolution =
@@ -355,7 +357,7 @@ fn main() {
             .expect("twisted extrusion")
             .into_value();
             let sweep = curve::try_sweep(
-                &curve::circle(Real::one(), 24),
+                &curve::circle(Real::one(), 24).expect("valid planar fixture"),
                 &[
                     Point3::origin(),
                     Point3::new(Real::zero(), Real::zero(), Real::from(4)),

@@ -239,7 +239,7 @@ fn slices_and_flattening_report_uncertainty_instead_of_empty_success() {
 #[cfg(feature = "curve")]
 #[test]
 fn curve_queries_preserve_boundary_and_uncertainty_distinctions() {
-    let square = csgrs::curve::square(Real::one());
+    let square = csgrs::curve::square(Real::one()).expect("valid planar fixture");
     let half = (Real::one() / Real::from(2)).unwrap();
     assert!(
         csgrs::curve::contains_xy_with_context(
@@ -275,7 +275,7 @@ fn curve_queries_preserve_boundary_and_uncertainty_distinctions() {
 #[cfg(feature = "curve")]
 #[test]
 fn explicit_geometry_context_is_independent_of_enclosing_display_preview() {
-    let square = csgrs::curve::square(Real::one());
+    let square = csgrs::curve::square(Real::one()).expect("valid planar fixture");
     let half = (Real::one() / Real::from(2)).unwrap();
     for preview in [
         hypercurve::CurvePreviewOptions::try_strict(0.01, 0.01).unwrap(),

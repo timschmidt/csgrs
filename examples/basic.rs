@@ -7,7 +7,7 @@ use csgrs::{
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let body = solid::cube(Real::from(12))?;
     let opening = curve::try_extrude(
-        &curve::square(Real::from(4)),
+        &curve::square(Real::from(4))?,
         Real::from(16),
         &GeometryContext::STRICT,
     )?

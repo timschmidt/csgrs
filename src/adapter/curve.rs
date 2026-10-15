@@ -50,21 +50,21 @@ where
     }
 
     pub fn square(width: A::Scalar) -> AdapterResult<Self> {
-        Ok(Self::from_native(curve::square(A::into_real(width)?)))
+        Ok(Self::from_native(curve::square(A::into_real(width)?)?))
     }
 
     pub fn rectangle(width: A::Scalar, length: A::Scalar) -> AdapterResult<Self> {
         Ok(Self::from_native(curve::rectangle(
             A::into_real(width)?,
             A::into_real(length)?,
-        )))
+        )?))
     }
 
     pub fn circle(radius: A::Scalar, segments: usize) -> AdapterResult<Self> {
         Ok(Self::from_native(curve::circle(
             A::into_real(radius)?,
             segments,
-        )))
+        )?))
     }
 
     pub fn polygon(points: &[[A::Scalar; 2]]) -> AdapterResult<Self> {
@@ -73,7 +73,7 @@ where
             .cloned()
             .map(scalar2_to_real::<A>)
             .collect::<AdapterResult<Vec<_>>>()?;
-        Ok(Self::from_native(curve::polygon(&points)))
+        Ok(Self::from_native(curve::polygon(&points)?))
     }
 
     pub fn union(&self, other: &Self) -> AdapterResult<Self> {
@@ -230,7 +230,7 @@ where
             .collect::<AdapterResult<Vec<_>>>()?;
         curve::polygon_with_context(&points, context)
             .map(|outcome| outcome.map(Self::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn extrude(

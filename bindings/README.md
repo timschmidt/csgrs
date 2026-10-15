@@ -64,6 +64,15 @@ behavior, metadata rules, and topology stay in the Rust layers.
 
 ## Compatibility
 
+Planar square, rectangle, circle and polygon constructors preserve native
+failure through C status codes, C++/Python exceptions and Go errors. Negative
+dimensions, invalid resolutions and malformed polygon rings no longer publish
+empty model handles. A certified zero-size primitive is successful empty
+geometry after every argument has been checked. WASM's corresponding
+constructors (also ellipse, right triangle, regular polygon, ring and crescent)
+throw `GeometryError` with a machine-readable `code`. Signatures at these
+language boundaries are unchanged.
+
 Bounds are optional. The C ABI returns `CSGRS_STATUS_NO_BOUNDS` (10) for a
 completed empty query and leaves the output record untouched. C++ returns
 `std::optional`, Python returns `None`, and Go returns a nil bounds pointer with

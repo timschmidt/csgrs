@@ -58,7 +58,8 @@ fuzz_target!(|bytes: &[u8]| {
     let mut idx = 0usize;
     let width = at_least_tolerance(decode_real(bytes, &mut idx).abs());
     let height = at_least_tolerance(decode_real(bytes, &mut idx).abs());
-    let region = curve::rectangle(width.clone(), height.clone());
+    let region =
+        curve::rectangle(width.clone(), height.clone()).expect("valid planar fixture");
     let context = if bytes[0] & 1 == 0 {
         GeometryContext::STRICT
     } else {
