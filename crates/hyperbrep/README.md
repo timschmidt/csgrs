@@ -431,6 +431,8 @@ landed yet. The [development plan](docs/DEVELOPMENT_PLAN.md) specifies the
 remaining kernel, modeling, STEP, persistence, and downstream integration work.
 The accompanying [repository audit](docs/REPOSITORY_AUDIT.md) records the
 implementation baseline and external reference findings.
+The [algorithm research](docs/ALGORITHM_RESEARCH.md) documents feasibility,
+source assumptions, prototype gates and performance experiments for that plan.
 
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.

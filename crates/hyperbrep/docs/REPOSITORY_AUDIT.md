@@ -15,6 +15,11 @@ verification status remains in the existing
 review does not upgrade that status or replace the unfinished future-work
 inventory with a completion claim.
 
+The follow-up [algorithm research](ALGORITHM_RESEARCH.md) examines feasibility,
+primary literature, performance experiments and solver applicability against
+revision `4529450d6`. It supplements this audit without changing the baseline
+test result or claiming that the proposed algorithms have landed.
+
 ## Baseline verification
 
 The following command completed successfully on the local native host:

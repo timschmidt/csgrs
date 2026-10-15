@@ -12,7 +12,12 @@ always participate in the next operation.
 
 The [repository audit](REPOSITORY_AUDIT.md) records the inspected baseline,
 all surrounding crate responsibilities, external reference revisions, and
-existing CI obligations. The current
+existing CI obligations. The
+[algorithm research](ALGORITHM_RESEARCH.md) records primary-source findings,
+feasibility limits, implementation experiments and decisive prototype gates.
+It distinguishes reviewed methods from candidates still needing a proof or
+implementation audit; published performance is not a HyperBRep benchmark.
+The current
 [architecture](ARCHITECTURE.md) and [support matrix](SUPPORT_MATRIX.md)
 describe implemented behavior. This plan describes work to perform; proposed
 APIs and paths below do not already exist.
@@ -651,6 +656,13 @@ empty successful `IntersectionSet` certifies disjointness in the requested
 domain. Tangencies do not automatically cross material boundaries;
 multiplicity, orientation and neighborhood structure decide their effect.
 
+The private proof retains source/domain identity, original equations and
+denominator/radical guards, applicability hypotheses, a complete domain
+cover, local branch/event incidence and correspondence to both chart images.
+Partial covers and numerical traces remain solver state. Local uniqueness
+at a sampled point cannot certify either whole-branch correspondence or
+completeness over the original face domains.
+
 ### Algorithm layers
 
 1. Build a conservative exact face/patch hierarchy. Use bounds and certified
@@ -658,15 +670,24 @@ multiplicity, orientation and neighborhood structure decide their effect.
    indexes after edits with explicit affected-region maps.
 2. Dispatch known analytic, aligned, coaxial and construction-derived
    identities. Keep the existing substantial implementation and test
-   equivalence under alternate frames and parameterizations.
+   equivalence under alternate frames and parameterizations. Add general
+   quadric pencil/type analysis without assuming rational parameterizations
+   exist for every intersection curve.
 3. For rational surfaces, decompose at knots, establish denominator signs,
-   and solve the equality of two surface images over their finite parameter
-   domains. Use exact elimination and selected fibers in Hypersolve.
+   and prefer a bivariate pullback when a cheap exact implicit carrier is
+   available. For general pairs, prototype reusable matrix/implicit
+   representations against the original three equalities in four
+   parameters. Preserve both finite domains, guard every cleared denominator
+   and replay candidates against the original surfaces. Use exact
+   elimination and selected fibers in Hypersolve.
 4. Isolate boundary events, critical projection values, singularities,
    tangencies, common components and branch crossings. Use resultant and
    subresultant information with interval/Bernstein exclusion and certified
    local continuation. Prove each admitted cell's solution count and branch
-   connectivity. Numerical seeds only choose work order.
+   connectivity. Global component discovery precedes local tracing; interior
+   closed loops need seeds established by a complete event census. Numerical
+   seeds only choose work order. Certify projection/Jacobian hypotheses;
+   a square-system root test on one slice is not a four-parameter curve proof.
 5. Handle positive-dimensional common components separately. Detect and
    certify carrier equality/reparameterization or a shared subregion; zero
    resultants must not be reported as "no roots" or endlessly subdivided.
@@ -677,11 +698,23 @@ multiplicity, orientation and neighborhood structure decide their effect.
    Its proof covers the original queried domain, including rejected cells.
 
 The general algebraic fallback needs a degree-aware exact cell decomposition
-strategy. Prototype projection choices and certificate replay on small
-cases before broadening the supported degree range. Worst-case elimination
-growth is a release risk, not something a sampling fallback resolves.
+strategy. Generic cylindrical algebraic decomposition is a possible
+algebraic completeness backstop, not the default path for every patch pair.
+Reduced projection and numerical singularity methods require checked
+applicability conditions; exceptional fibers, nullification, base points
+and failed genericity checks must reach a valid alternative or typed blocker.
+Prototype projection choices and certificate replay on small cases before
+broadening the supported degree range. Worst-case elimination growth is a
+release risk, not something a sampling fallback resolves.
 Separate regular isolated branches from singular/common-component work in
 both implementation and capability reporting.
+
+Apply [research gates G2–G5](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)
+before making practical-completeness claims. ESOLID and exact quadric work
+establish useful precedents with specific domains; recent numerical tracing
+or tolerance-based overlap methods do not establish this kernel's full
+exact contract. Preserve arbitrary computable-coefficient `Undecided`
+behavior even if rational/algebraic prototypes terminate.
 
 ### Coverage order
 
@@ -789,6 +822,11 @@ Frenet framing cannot silently become a sequence of sampled frames. At zero
 curvature or tangent degeneracy, use a stated frame continuation law or fail.
 Closed sweeps must certify frame closure and seam identity.
 
+Rational rotation-minimizing frames are a special recognized family, not a
+property of every rational spine. General parallel transport and arc-length
+parameterization can leave the algebraic solver domain; admit their analytic
+relations and decision procedures explicitly before promising their support.
+
 Lofts specify section correspondence, orientation, parameterization, guide
 curves and required continuity. Match degrees/knots by exact operations,
 then build tensor or retained interpolation surfaces. Prove regularity,
@@ -821,8 +859,10 @@ conditions; it generally is not a rational tensor surface.
 
 `SolidOffsetSpec` states the sign and join law. For round Euclidean joins,
 outward offset is the regularized dilation by a radius ball and inward offset
-is erosion, with exact distance semantics. Extended-surface/miter joins have
-a different contract and a separate option. At zero offset, preserve the
+is regularized erosion, with exact distance semantics. Regularization takes
+the closure of the interior; lower-dimensional collapse events may survive
+as contact diagnostics rather than volume bodies. Extended-surface/miter
+joins have a different contract and a separate option. At zero offset, preserve the
 source set and provide deterministic history.
 
 Construct displaced faces, edge transition surfaces and vertex patches;
@@ -837,6 +877,14 @@ multiple openings, cavities and sheet thickening as separately typed inputs.
 Prove the thickness relation on the claimed domain and validate the complete
 wall. Large thickness may produce a valid topology change, an empty erosion,
 or a specific invalid/nonmanifold result.
+
+Local normal/curvature regularity does not prove global separation. Boundary
+selection must account for closest features across the whole source solid,
+including trimmed faces, edges and vertices. Self-intersection solving must
+exclude the parameter diagonal and authorized atlas identifications exactly,
+without discarding a numerical neighborhood of either. Retained parallel
+relations keep the positive normal-length branch and denominator guards;
+squaring without these guards admits unintended surfaces.
 
 Implement analytic families first, followed by rational input surfaces with
 retained algebraic parallels. Their intersections, measurements, persistence
@@ -857,6 +905,12 @@ surfaces to obtain the center spine; derive contact rails and the exact
 envelope branch. Certify radius, contact and G1 continuity along each rail,
 then solve corner patches and trim against the target. Keep analytic
 cylinder/sphere/torus cases native and retain general algebraic envelopes.
+
+Spine/envelope equations do not by themselves close corners or certify
+global embedding. Admit each corner family with a constructive boundary
+and continuity proof, and measure the non-rational retained-carrier path in
+[research gate G6](ALGORITHM_RESEARCH.md#prototype-gates-and-decisive-fixtures)
+before extending the claimed spline domain.
 
 Implement planar equal/unequal-distance and distance/angle chamfers first,
 then constant-radius edges, tangent edge chains, convex/concave analytic
@@ -950,6 +1004,13 @@ including trim cells and knot boundaries. Separate absolute and relative
 accuracy; near-zero integrals require an absolute target. An interval result
 is not a guessed `Real`, and geometric validity does not depend on expressing
 the integral in closed form.
+
+Start with conservative interval/Bernstein domain integration as a reference
+where its compact regular-chart hypotheses hold. Add validated quadrature
+only with its analytic-domain/error assumptions proved. Trim-domain
+uncertainty, singular endpoints and branch cuts need explicit treatment;
+a fast analytic one-dimensional integrator is not already a solution for
+every trimmed surface integral.
 
 HyperBRep owns the geometry integrals and their orientation. Hyperphysics
 applies density/material semantics, center-of-mass and inertia transforms.
@@ -1144,6 +1205,12 @@ their own evidence. Certify local orientation and reject inverted or
 degenerate triangles beyond the declared singular handling. Check global
 embedding when claiming a topology-preserving surface approximation.
 
+Regular implicit-surface meshing methods need separate extensions for trims,
+seams, poles and singular strata. Even topology-preserving approximations of
+two individual bodies need not preserve their mutual tangency/intersection
+arrangement. A mesh may propose Boolean work, but topology decisions still
+require exact source replay or a separately admitted joint-arrangement proof.
+
 ```rust,ignore
 pub struct TessellationSpec {
     pub max_position_error: Real,
@@ -1311,6 +1378,13 @@ requiring native threads. Test native/WASM semantic parity on deterministic
 fixtures, including exact scalar representations and serialized models.
 
 ## Performance, resources and reproducibility
+
+The [research experiment matrix E01–E12](ALGORITHM_RESEARCH.md#proposed-experiment-order)
+defines the initial candidates and their cost/correctness gates. These are
+unmeasured proposals. Extend existing modular coprimality, reconstruction,
+Bareiss/resultant, prepared Sturm and owned-root refinement paths before
+building parallel implementations of the same machinery. Keep the cheap
+low-degree paths when evaluating Newton/Descartes cluster acceleration.
 
 Performance work follows the actual cascade: avoid constructing expensive
 expressions when a certified structural fact or filter resolves the query;
@@ -1640,16 +1714,16 @@ below supplement the admission protocol; none authorizes weaker exactness.
 | WP01 | BREP; WP00 | Split large files; scoped identity; explicit strict context, numeric errors and certainty receipts; ADR amendments; mandatory provenance and optional history indexes | Wrong-model/stale-reference and ordinary numeric failures are typed; receipts remain accessible without tracing; transactions preserve source on failure; behavior matches baseline |
 | WP02 | Hypersolve, Hypercurve, BREP; WP01 | Retained parameters and geometric points; common-source comparison; budget/error propagation | A non-materializable contact can split a 3D edge, agree with both pcurves, reverse, transform and compare without float conversion |
 | WP03 | BREP, Hypercurve; WP02 | Chart atlas, periodic trim gluing, pole/apex strata and full-interval correspondence | Full sphere, torus holes across seams, cone apex and repeated seam uses validate and survive subdivision without changing material |
-| WP04 | BREP, Hyperlimit; WP01–WP03 | Conservative hierarchy, prepared operands, complete analytic intersections and coincidence interfaces | Pair symmetry, frame changes, tangency and overlaps pass; hierarchy never loses a contact versus exhaustive enumeration |
+| WP04 | BREP, Hypersolve, Hyperlimit; WP01–WP03 | Conservative hierarchy, prepared operands, complete analytic intersections and coincidence interfaces | Pair symmetry, frame changes, tangency and overlaps pass; hierarchy never loses a contact versus exhaustive enumeration |
 | WP05a | Hypersolve; WP02 | Exact cell/branch decomposition prototype and certificate format for bounded rational surface equations | Independent root counts and critical events verified on regular, tangent and common-factor fixtures; degree/bit/work costs measured |
-| WP05b | Hypersolve, Hypercurve, BREP; WP03–WP05a | General plane/spline and regular rational patch-pair contacts with retained pcurves | Interior closed branches and trimmed algebraic endpoints produce complete replayable results, including save/load composition |
-| WP05c | Same owners; WP05b | Singular branches, shared components and broader coincidence; supported-domain ledger expansion | No missing components at singular events; unsupported subdomains are precise; repeated subdivision preserves branch identity |
+| WP05b | Hypersolve, Hypercurve, BREP; WP03–WP05a | General plane/spline and regular rational patch-pair contacts with retained pcurves; compare guarded bivariate/matrix reduction and four-parameter continuation | Research G3/G4: global component census, interior loops and trimmed algebraic endpoints produce complete replayable results, including save/load composition; cost and applicability are recorded |
+| WP05c | Same owners; WP05b | Singular branches, shared components and broader coincidence; supported-domain ledger expansion | Research G5: no missing components at singular events; base points, bad projections and parameter-diagonal exceptions handled or precisely diagnosed; repeated subdivision preserves branch identity |
 | WP06 | BREP, Hypercurve; WP03–WP05b | General chart arrangements, lift/partition/stitch and complete source maps | Crossing/overlapping/nested traces yield deterministic cells and shared edges independent of insertion order |
 | WP07 | BREP; WP05b–WP06 | General curved-shell embedding, material classification and cavity nesting | Valid mixed curved shells publish without a whole-solid recognizer or closed-form volume; pinches, self-overlap and false cavities fail |
 | WP08 | BREP; WP05c–WP07 | Common Boolean pipeline, all four operations, shared arrangements across expression roots, imprint/section/split | Mixed analytic/spline outputs support another Boolean and edit; contacts/empty/multi-body/nonmanifold outcomes have correct semantics; unbounded outputs fail typed; extra roots reuse intersections |
 | WP09 | BREP; WP02–WP03, WP07–WP08 for full coverage | General extrusion/revolution, prescribed-frame sweeps and spline lofts | Existing constructors remain fast paths; holes, partial turns, frame closure and global self-intersection cases pass |
-| WP10 | BREP, Hypersolve; WP05c, WP07–WP08 | Retained surface parallels, regularized constant offsets, shelling and sheet thickening | Analytic and declared spline domains pass distance, closure, collapse and opening-rim tests; outputs compose and persist |
-| WP11 | BREP; WP08, WP10 | Chamfers, constant-radius fillets, edge chains, declared corner networks and exact radius-law interface | Every selected edge is accounted for; contact/radius/G1 identities hold over full rails and end trims; no gaps at corners; collisions and excessive radii fail or regularize by contract |
+| WP10 | BREP, Hypersolve; WP05c, WP07–WP08 | Retained surface parallels, regularized constant offsets, shelling and sheet thickening | Research G6: analytic and declared spline domains pass global distance/material selection, local/global self-contact, closure, collapse and opening-rim tests; non-rational outputs compose and persist |
+| WP11 | BREP; WP08, WP10 | Chamfers, constant-radius fillets, edge chains, declared corner networks and exact radius-law interface | Research G6: every selected edge is accounted for; contact/radius/G1 identities hold over full rails and end trims; each admitted corner has a constructive closure proof; collisions and excessive radii fail or regularize by contract |
 | WP12 | BREP, Hyperphysics; WP05b, WP07 | General queries, certified integration and moment adapter | Classification/nearest sets include degeneracies; integral bounds enclose independent references; no validity dependency on elementary volume |
 | WP13 | BREP; WP02–WP03 then every new carrier | Exact graph persistence and bounded replay | Retained branch lineage survives round trip; forged/cyclic/oversized input fails safely on native and WASM |
 | WP14a | hyperbrep-io; WP01, WP13 for archive integration | STEP dependency decision, bounded syntax, entity/units graph and simple analytic/faceted exchange | Exact decimal import and consistent topology; primitives and multi-body files read in an independent tool |
@@ -1677,6 +1751,13 @@ complete by fitting an unreported NURBS approximation. WP14a can advance
 alongside kernel work once its basic model interfaces settle; full STEP does
 not need to wait for every advanced modeling feature. WP13 evolves with each
 new retained carrier, rather than being postponed until after all operations.
+
+Use the [research feasibility assessment](ALGORITHM_RESEARCH.md#feasibility-assessment)
+to distinguish mathematical availability from practical support in this
+implementation. Work-package completion requires the corresponding G1–G7
+prototype evidence and measured capability domain. A paper's successful
+examples, a floating-point implementation or an unverified genericity
+assumption cannot close a work package.
 
 WP18 requires every first-release row, including the declared singular and
 corner cases needed by its scenarios. A lower-level preview release may be
@@ -1728,7 +1809,12 @@ certified topology throughout its operation.
    mixed curved shell through the general route.
 6. Advance the intersection matrix and arrangement pipeline in bounded
    domains, carrying persistence and composition tests in each change.
-   Start STEP syntax and simple exchange once the model interface stabilizes.
+   Establish G2/G3 analytic/bivariate prototypes, then compare G4 regular
+   patch-pair routes before committing to a general elimination architecture.
+   Continue G5 singular/coincident work as an explicit release dependency.
+   Run the research performance experiments against the same frozen corpus,
+   extending upstream machinery rather than duplicating it. Start STEP
+   syntax and simple exchange once the model interface stabilizes.
 
 Do not begin broad fillet or shell feature coding until the retained-carrier,
 intersection and validation gates it needs are demonstrated. Maintain one
