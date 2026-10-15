@@ -55,3 +55,7 @@ harness = false
 [[bench]]
 name = "selected_solids"
 harness = false
+
+[[bench]]
+name = "spline_replay_cost"
+harness = false

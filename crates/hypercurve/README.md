@@ -179,6 +179,11 @@ exact signatures.
   including exterior charts and finite restrictions excluding source poles.
 - `BezierParameter2`, `BezierParameterRange2`, and
   `BezierRootIsolationResult2` retain exact algebraic parameter information.
+- `Curve2::has_certified_injective_image` supplies a strict sufficient proof
+  for complete images, including connected native spans with one common
+  monotone coordinate. A missing certificate does not imply self-intersection.
+  [Qualification](../hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md)
+  covers its use in independent BREP replay and its explicit limits.
 - Bézier analysis includes cusp and inflection classification, monotone spans,
   line/curve contacts, curve/curve intersection, length bounds, exact
   polynomial and rational area moments for conics, exact homogeneous degree

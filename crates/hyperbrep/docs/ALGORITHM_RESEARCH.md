@@ -687,3 +687,26 @@ reload/split/query composition. It does not prove general selected-solid,
 contact/fiber, Boolean-transfer or resource-boundary closure. The external
 references support the algorithm choices; they are not executed test oracles
 or measured performance comparisons.
+
+## Trimmed spline image and multi-span replay (2026-10-15)
+
+Shene's [Bezier subdivision explanation](https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/Bezier/bezier-sub.html)
+and [parameter-change proof](https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/Bezier/b-sub-correct.html)
+describe obtaining exact subcurves from de Casteljau control nets. The
+[B-spline subdivision notes](https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/subdivision.html)
+describe retaining the corresponding knot interval after subdivision. These
+support the distinction between a rebased Bezier pcurve and a NURBS knot chart.
+HyperBRep reuses its existing native subdivision and affine-lift routines to
+compare the mapped spatial interval with the complete pcurve image. No new
+subdivision solver or coordinate approximation is introduced.
+
+The multi-span injectivity proof is a direct composition of existing strict
+span monotonicity certificates: exact endpoint joins and a common strict
+coordinate direction imply disjoint ordered coordinate ranges except at each
+shared endpoint. Individual span injectivity is insufficient, as backtracking
+can revisit earlier points. Hypercurve owns the complete-image certificate;
+BREP consumes it only to reassemble a boundary image for validation. This is a
+sufficient condition, not a complete self-intersection algorithm. The
+[qualification](evidence/2026-10-15-spline-replay/README.md) records the initial
+failures, regressions, deliberate faults and measured costs. The cited teaching
+material supports the parameter-domain reasoning; it is not a test oracle.

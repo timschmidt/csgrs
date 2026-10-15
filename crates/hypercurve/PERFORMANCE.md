@@ -10,6 +10,28 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Complete-image injectivity for connected native spans
+
+`Curve2::has_certified_injective_image` reuses prepared rational evaluators and
+existing strict axis-monotonicity proofs. Multi-span success also requires
+exact joins and one common direction. It never caches a negative result or
+uses provisional near-equality. `false` means no certificate, not a proven
+self-intersection. The implementation adds no solver or global cache.
+
+The [qualification](../hyperbrep/docs/evidence/2026-10-15-spline-replay/README.md)
+records positive/reversed/restricted weighted NURBS cases, backtracking and
+disconnected-span rejection, strict behavior in a provisional scope, and three
+rejected injectivity faults. A fourth fault tests BREP spline-image agreement.
+Eight focused Hypercurve regressions pass; this is not a full Hypercurve suite.
+
+A prepared two-span query takes a median 72 ns across three short 100-iteration
+process samples in `hyperbrep`'s `spline_replay_cost` harness. Preparation is
+outside timing. The 66 existing BREP receipts match, with a median case timing
+ratio 0.989699 and largest 1.073174 against `7091576d8`. Whole executable size
+increases 10,704 bytes; median process peak RSS changes from 21,764 to 21,712
+KiB. These are descriptive cross-crate costs, not an isolated method size,
+allocation count, statistically established speedup or complete growth bound.
+
 ## Rejected strict-scope entry fast path
 
 The [scope-entry experiment](../hyperbrep/docs/evidence/2026-10-14-strict-scope-fast-path/manifest.json)

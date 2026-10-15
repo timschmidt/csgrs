@@ -143,6 +143,16 @@ General selected solid/surface/contact graphs and Boolean transfer remain open. 
 coefficient subdivision and angular conic evaluation retain their explicit
 scalar requirements. WP02/G1 and WP13 are not complete.
 
+Independent planar spline image validation compares the complete lifted pcurve
+with the spatial curve restricted to the mapped edge interval. The shared
+affine lift handles rational Bezier/quadratic controls and transforms NURBS knot
+charts, including reversed parameter direction. Selected source restrictions
+can therefore replay after prior native subdivision without requiring the
+source pcurve to span the entire spatial curve. The archive contract also
+defines Hypercurve's complete-image injectivity gate for boundary reassembly;
+connected multi-span NURBS with one common strict monotone coordinate can pass.
+See [composition evidence](evidence/2026-10-15-spline-replay/README.md).
+
 ## Source organization
 
 The private [topology module](../src/topology/mod.rs) owns arena storage and

@@ -1,5 +1,42 @@
 # HyperBREP Performance Contract
 
+## 2026-10-15: trimmed spline replay and complete-image injectivity
+
+Kept for exact native/selected spline trim replay. The
+[qualification](docs/evidence/2026-10-15-spline-replay/README.md) compares against
+`7091576d8` in three alternating process pairs pinned to CPU 0. All 66 native
+receipts retain case order, iterations, units and checksums. The median of
+per-case median timing ratios is 0.989699; the largest is 1.073174 for
+`analytic_kernel/homothetic_loft_build_measure_classify`
+(1,116,308 to 1,197,993 ns), within the 10% cohort budget. Executable size
+increases 10,704 bytes to 24,771,240. Median process peak RSS is 21,764 KiB for
+the baseline and 21,712 KiB for the candidate. These descriptive samples do
+not establish a speedup or significant memory difference.
+
+The `spline_replay_cost` harness measures 100 iterations in each of three
+processes. Authoring and initial root isolation are outside timing. Each replay
+parses JSON, reconstructs proofs, checks topology/selected-coordinate counts,
+and encodes byte-identical JSON. Selected cases contain one native cut and two
+algebraic cuts.
+
+| Cohort | Median per iteration | Archive bytes |
+| --- | ---: | ---: |
+| Full rational Bezier sheet | 379.494 µs | 9,206 |
+| Native rational Bezier trim | 884.277 µs | 10,892 |
+| Selected rational Bezier trims | 1.160422 ms | 14,141 |
+| Selected rational quadratic trims | 1.133407 ms | 14,175 |
+| Selected single-span NURBS trims | 1.426204 ms | 15,428 |
+| Selected multi-span NURBS trims | 1.616475 ms | 17,047 |
+| Eight multi-span replay/encode cycles | 12.824790 ms | 17,047 input |
+| Prepared two-span injectivity query | 72 ns | — |
+
+Each selected archive retains one root and one pcurve source; rational Bezier
+variants have three chart images and NURBS variants two. Eight-cycle timing is
+a fixed composition case, not an asymptotic bound. The prepared query is a
+short sample with existing span caches warm; it is not a cold/warm comparison.
+No per-query allocation count, statistical significance, external-kernel
+comparison or general growth bound is claimed.
+
 ## 2026-10-15: independent selected solid proofs
 
 Kept for exact selected-solid replay and composition. The

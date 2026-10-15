@@ -96,12 +96,12 @@ fn join_source_restrictions(
     }
     // Removing an internal boundary from a simplicity proof must not hide
     // a self-contact inside the reassembled source. Lines are injective by
-    // construction. Other sources need one certified injective Bezier span.
-    if !matches!(source.geometry(), Some(CurveGeometry2::Line(_))) {
-        let fragments = source.native_bezier_fragments()?;
-        if fragments.len() != 1 || !fragments[0].has_certified_injective_axis()? {
-            return Ok(None);
-        }
+    // construction. Other sources need a complete image certificate, including
+    // exact span joins and a common monotone coordinate for multi-span splines.
+    if !matches!(source.geometry(), Some(CurveGeometry2::Line(_)))
+        && !source.has_certified_injective_image()?
+    {
+        return Ok(None);
     }
     if first
         .parameter_endpoints()

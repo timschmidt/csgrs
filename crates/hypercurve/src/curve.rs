@@ -3,6 +3,8 @@
 #[path = "curve_evaluation.rs"]
 mod curve_evaluation;
 
+#[path = "curve_injectivity.rs"]
+mod curve_injectivity;
 #[path = "curve_subdivision.rs"]
 mod curve_subdivision;
 use crate::bezier_split::{CurveParameterDomain2, CurveParameterRange2};

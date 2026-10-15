@@ -5271,6 +5271,18 @@ pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
                 weights,
             )?))
         }
+        Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
+            let mut controls = curve.control_points();
+            let mut weights = curve.weights().map(Clone::clone);
+            if reversed {
+                controls.reverse();
+                weights.reverse();
+            }
+            Ok(Some(Curve3::rational_bezier(
+                controls.into_iter().map(lift).collect(),
+                weights.to_vec(),
+            )?))
+        }
         Some(CurveGeometry2::Nurbs(curve)) => {
             let mut control_points = curve
                 .affine_control_points()
@@ -5296,7 +5308,6 @@ pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
         Some(CurveGeometry2::CircularArc(_))
         | Some(CurveGeometry2::QuadraticBezier(_))
         | Some(CurveGeometry2::CubicBezier(_))
-        | Some(CurveGeometry2::RationalQuadraticBezier(_))
         | Some(CurveGeometry2::PolynomialBSpline(_)) => Ok(None),
     }
 }

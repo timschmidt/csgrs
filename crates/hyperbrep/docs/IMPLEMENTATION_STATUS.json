@@ -415,6 +415,40 @@
       "validation": "243 all-feature core tests, 53 integration tests and four doctests; overlapping default configuration; 30 release retained-point/topology/solid tests; strict Clippy, warning-denied docs, WASM library compilation, fuzz-bin Clippy, seven benchmark builds and formatting pass. Two deliberate faults fail runtime assertions and are restored before final checks.",
       "cost_evidence": "Three alternating pinned pairs preserve all 66 native receipts. Median of case median timing ratios 1.011113; largest 1.093023 (903 to 987 ns). Executable +29,640 bytes; median peak RSS 21,668 to 21,424 KiB. Six final feature cohorts cover native/selected solid replay, classification, volume, further subdivision and eight replay/encode cycles. Setup target-selection and metadata-label mistakes are recorded separately. Descriptive measurements only; no allocation, significance or general growth claim.",
       "limits": "Coverage is cuboid edge subdivisions (each/all), shear/reflection and cylinder axial subdivisions (one/all), with reload/split/query composition. General selected solid/corner/void-shell validation, surface/contact/fiber graphs, Boolean transfer and bounded/WASM-safe decoding remain open. No full Hypercurve, runtime fuzz/ASan/lexicase, external oracle, WASM execution or full-workspace/pre-push qualification."
+    },
+    {
+      "id": "spline-trim-replay",
+      "work_packages": [
+        "WP02",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P3",
+        "P4",
+        "P6",
+        "P8",
+        "P11",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "kept as exact native/selected spline replay and complete-image proof progress; no work-package gate completed",
+      "change": "Compare planar spline lifts with the mapped spatial trim interval, including rebased Bezier and affine/reversed NURBS charts. Add a strict Hypercurve complete-image injectivity certificate for exactly connected native spans sharing a monotone coordinate. Use it for proof-only boundary reassembly; preserve all topology and retained roots.",
+      "source": "../src/topology/validation/image.rs",
+      "contract": "SELECTED_ARCHIVE.md",
+      "evidence": "evidence/2026-10-15-spline-replay/manifest.json",
+      "validation": "243 all-feature core tests, 57 integration tests and four doctests; 236 default core tests, 56 integration tests and four doctests; 34 release selected regressions; eight focused Hypercurve regressions; strict Clippy, warning-denied docs, WASM library compilation, fuzz-bin Clippy, eight benchmark builds and formatting. Four deliberate proof faults fail runtime assertions; all sources restored before final checks.",
+      "cost_evidence": "Three alternating pinned process pairs preserve all 66 native receipts. Median of case median timing ratios 0.989699; largest 1.073174, within 10%. Executable +10,704 bytes; median peak RSS 21,764 to 21,712 KiB. Eight feature cohorts measure native/selected spline replay, repeated replay and prepared multi-span injectivity. Descriptive samples only; no allocation, significance, cold/warm advantage or general growth claim.",
+      "limits": "Coverage includes four planar spline families, exact and selected trims, positive/negative affine NURBS charts, reflection/shear, and five repeated selected cuboid cuts. The injectivity proof is sufficient, not complete. General selected solid/void/corner proofs, surface/contact/fiber graphs, Boolean transfer and bounded/WASM-safe decoding remain open. No full Hypercurve, runtime fuzz/ASan/lexicase, external oracle, WASM execution or full-workspace/pre-push qualification."
     }
   ],
   "work_packages": [
@@ -589,7 +623,7 @@
   ],
   "next_actions": [
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
-    "Complete WP02/G1 beyond selected sheet, subdivided cuboid and axial-cylinder archive replay. Extend independent solid/void/corner proofs and retained surface/contact images, selected Boolean transfer and repeated selected-cut composition while preserving every existing exact behavior.",
+    "Complete WP02/G1 beyond planar spline replay, subdivided cuboid and axial-cylinder archive replay. Extend independent solid/void/corner proofs, retained surface/contact images and selected Boolean transfer while preserving every existing exact behavior. Native-to-selected spline composition and five repeated selected cuboid cuts now have regression evidence.",
     "Continue WP13 with byte/entity/degree/allocation limits, iterative WASM-safe decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features; version 9 root/source replay is partial progress.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."

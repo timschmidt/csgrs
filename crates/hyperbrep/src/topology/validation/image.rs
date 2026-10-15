@@ -193,7 +193,7 @@ impl ArenaModelBuilder {
                 SurfaceKind::Plane,
                 ParameterCorrespondence::Affine { .. },
             ) => {
-                self.validate_planar_spline_image(curve, edge_use, pcurve, surface)?;
+                self.validate_planar_spline_image(curve, edge, edge_use, pcurve, surface)?;
             }
             (
                 Curve3Kind::Line,
@@ -375,49 +375,38 @@ impl ArenaModelBuilder {
     pub(in crate::topology) fn validate_planar_spline_image(
         &self,
         curve: &Curve3,
+        edge: &Edge,
         edge_use: &EdgeUse,
         pcurve: &Pcurve,
         surface: &Surface,
     ) -> Result<(), BuildError> {
-        let lift = |point: &CurvePoint2| {
-            surface.point_at(&Point2::new(point.x().clone(), point.y().clone()))
+        let ParameterCorrespondence::Affine { scale, offset } = &edge_use.parameter_correspondence
+        else {
+            return Err(BuildError::EdgeUseSupportMismatch);
         };
-        let expected = match pcurve.curve().geometry() {
-            Some(CurveGeometry2::RationalBezier(planar)) => Curve3::rational_bezier(
-                planar
-                    .affine_control_points()
-                    .ok_or(GeometryError::UnsupportedIntersection)?
-                    .iter()
-                    .map(lift)
-                    .collect::<Result<Vec<_>, _>>()?,
-                planar.weights().to_vec(),
-            )?,
-            Some(CurveGeometry2::RationalQuadraticBezier(planar)) => Curve3::rational_bezier(
-                planar
-                    .control_points()
-                    .into_iter()
-                    .map(lift)
-                    .collect::<Result<Vec<_>, _>>()?,
-                planar.weights().into_iter().cloned().collect(),
-            )?,
-            Some(CurveGeometry2::Nurbs(planar)) => Curve3::nurbs(
-                planar.degree(),
-                planar
-                    .affine_control_points()
-                    .ok_or(BuildError::EdgeUseSupportMismatch)?
-                    .iter()
-                    .map(lift)
-                    .collect::<Result<Vec<_>, _>>()?,
-                planar.weights().to_vec(),
-                planar.knots().to_vec(),
-            )?,
-            _ => return Err(BuildError::EdgeUseSupportMismatch),
+        let (Some(origin), Some((u, v))) = (surface.plane_origin(), surface.plane_directions())
+        else {
+            return Err(BuildError::EdgeUseSupportMismatch);
         };
-        let expected = match edge_use.direction {
-            Direction::Forward => expected,
-            Direction::Reversed => expected.reversed()?,
-        };
-        if curve_parameterizations_equal(curve, &expected)? {
+        let expected = crate::geometry::lift_curve_from_plane_frame_with_affine_parameter(
+            pcurve.curve(),
+            origin,
+            u,
+            v,
+            scale,
+            offset,
+        )?
+        .ok_or(BuildError::EdgeUseSupportMismatch)?;
+        // Native subdivision may rebase a Bezier pcurve to [0,1], while a
+        // NURBS keeps its knot chart. Compare the actual edge interval with
+        // the lift in its mapped chart, not with the whole spatial source.
+        // Selected restrictions reach here through their authored source and
+        // the independently checked source-domain map above.
+        let actual = curve.subcurve(
+            edge.domain.represented_start()?,
+            edge.domain.represented_end()?,
+        )?;
+        if curve_parameterizations_equal(&actual, &expected)? {
             Ok(())
         } else {
             Err(BuildError::EdgeUseSupportMismatch)

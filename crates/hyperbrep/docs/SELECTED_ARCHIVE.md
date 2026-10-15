@@ -61,12 +61,26 @@ selected point or trust a serialized image certificate.
 
 Consecutive, equally directed restrictions can reassemble an authored boundary
 image for region and area proofs. Their sources must agree structurally, their
-joining parameters must compare equal, and the source must be a line or one
-Bezier span with a certified injective axis. The injectivity condition prevents
+joining parameters must compare equal, and the source must have a complete
+injectivity certificate. Lines retain their direct proof. Other native sources
+use Hypercurve's `Curve2::has_certified_injective_image`: one span reuses its
+existing certificate; multiple spans must join at exactly equal points and be
+strictly monotone in the same coordinate and direction. A missing certificate
+does not assert self-intersection and does not authorize reassembly. This prevents
 reassembly from hiding an internal self-contact during simplicity validation.
 The same helper serves boundary queries and validation. All original vertices,
 edges, uses, ranges and incidences remain in the published model. This is an
 exact boundary-image proof, not a topology repair or replay of an editing history.
+
+For a planar spline image, the validator restricts the spatial curve to the
+mapped edge interval before comparing complete parameterizations. Native
+Bezier subdivision may rebase a pcurve to `[0,1]`; NURBS retains its knot chart.
+The lift applies the affine parameter map to every NURBS knot and reverses
+controls/weights when its scale is negative. A selected restriction validates
+its complete authored source on that source's mapped interval, which can be
+only part of the original spatial curve after an earlier native cut. Endpoint
+agreement alone never certifies the interior. These are proof views; original
+geometry and topology records are retained.
 
 ## Verified coverage and remaining work
 
@@ -78,6 +92,15 @@ Adversarial cases cover invalid singleton evidence, missing and cyclic graph
 references, poles, wrong spatial selectors, reversed/out-of-domain pcurve
 ranges, wrong maps, forged proof flags and trailing JSON. Native persistence
 fixtures remain part of the complete HyperBRep test suite.
+
+The [spline replay qualification](evidence/2026-10-15-spline-replay/README.md)
+adds native-then-selected-then-selected cuts of rational Bezier, rational
+quadratic and single-/multi-span NURBS boundaries, reflected replay, differently
+authored pcurve/spatial NURBS charts with both map signs, and five successive
+selected cuboid cuts with one shared root. It also rejects modified spline
+interiors that preserve their endpoints. This does not establish arbitrary
+degree-elevated curve equality, every nonmonotone multi-span image, or general
+selected corner/surface/Boolean closure.
 
 Independent solid reconstruction now covers cuboid edge subdivisions (each
 edge and all twelve together), their affine shears/reflections, and cylinder

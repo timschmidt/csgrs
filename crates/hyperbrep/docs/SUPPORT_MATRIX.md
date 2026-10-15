@@ -506,6 +506,15 @@ volume and can split and reload again. This uses reconstructed geometric proofs,
 not archived solid flags; see the [evidence](evidence/2026-10-15-selected-solids/README.md).
 General selected surface/contact validation remains unsupported.
 
+Planar rational Bezier, rational quadratic and single-/multi-span NURBS
+boundaries also replay native cuts followed by two selected cuts and reflection.
+Complete image agreement is checked on the mapped trim interval; NURBS pcurves
+may use a different affine knot chart, including negative spatial direction.
+Multi-span reassembly requires a complete Hypercurve injectivity certificate,
+not merely individually injective spans. Five successive selected cuboid cuts
+retain one root through reload and exact solid queries. See the
+[composition qualification](evidence/2026-10-15-spline-replay/README.md).
+
 `FaceRef::split` splits a trimmed planar face along an exact line chord
 between nonadjacent outer-boundary vertices. It authors one identity-shared
 edge with opposite uses, retains the first face and outer-wire IDs, reassigns
