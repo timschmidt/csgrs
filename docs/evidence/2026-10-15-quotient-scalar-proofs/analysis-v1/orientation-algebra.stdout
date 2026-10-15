@@ -1,0 +1,18 @@
+[
+  {
+    "segments": 16,
+    "orientation_index": 0,
+    "arithmetic_visits": 648,
+    "zero_numerator": true,
+    "inverse_count": 4,
+    "opaque_atoms": 3
+  },
+  {
+    "segments": 32,
+    "orientation_index": 0,
+    "arithmetic_visits": 648,
+    "zero_numerator": true,
+    "inverse_count": 4,
+    "opaque_atoms": 3
+  }
+]

@@ -1,0 +1,9 @@
+[
+  [
+    "orientation-algebra",
+    [
+      "python3",
+      "docs/evidence/2026-10-15-quotient-scalar-proofs/analyze_orientation_v1.py"
+    ]
+  ]
+]

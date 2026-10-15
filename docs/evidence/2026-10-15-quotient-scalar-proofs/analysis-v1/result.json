@@ -1,0 +1,15 @@
+{
+  "commands": [
+    {
+      "name": "orientation-algebra",
+      "exit_code": 0,
+      "seconds": 1.9682678119279444,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "cbbe609bda36bd9c0f351332545246f73b3bcc92ed318178cf6f92955b7300db",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "8e95482a1541627642847e5a265b8220c9b88de1ba5c3f15ed41dc2d9ccb742b"
+    }
+  ],
+  "passed": true
+}

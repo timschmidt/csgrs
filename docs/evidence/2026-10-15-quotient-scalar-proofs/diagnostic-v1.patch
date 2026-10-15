@@ -1,0 +1,21 @@
+--- crates/hypermesh/src/surface_arrangement.rs
++++ diagnostic-v1-source/surface_arrangement.rs
+@@ -3898,6 +3898,18 @@
+         ),
+         (None, _) => return planar_orientation(decisions, edge[0], edge[1], point),
+     };
++    if matches!(outcome, hyperlimit::PredicateOutcome::Unknown { .. }) {
++        let abx = &edge[1].x - &edge[0].x;
++        let aby = &edge[1].y - &edge[0].y;
++        let acx = &point.x - &edge[0].x;
++        let acy = &point.y - &edge[0].y;
++        let det = &abx * &acy - &aby * &acx;
++        eprintln!("unresolved_orientation_from={:?}", edge[0]);
++        eprintln!("unresolved_orientation_to={:?}", edge[1]);
++        eprintln!("unresolved_orientation_point={point:?}");
++        eprintln!("unresolved_orientation_determinant={det:?}");
++        eprintln!("{}", std::backtrace::Backtrace::force_capture());
++    }
+     let side = decisions.decide(outcome, "surface arrangement retained line orientation")?;
+     Ok(match side {
+         hyperlimit::LineSide::Right => Classification::Negative,

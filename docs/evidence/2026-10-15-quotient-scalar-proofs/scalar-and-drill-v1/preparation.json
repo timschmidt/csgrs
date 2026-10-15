@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--no-preserve=links",
+    "--reflink=auto",
+    "/run/user/1000/csgrs-affine-scalar-proofs/scalar-and-drill-v2/release",
+    "/run/user/1000/csgrs-quotient-scalar-proofs/scalar-and-drill-v1/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "1af9b56177ef71f7356749b1cb6692e723c33b69214d1aa6aec68edf6b5e90e6",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

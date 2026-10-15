@@ -1,0 +1,74 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-quotient-scalar-proofs/analyze_orientation_v1.py": "5a0d85d0479ace9aacf30ebc4593359fd5d1792a0bef82397ffea46f4e7e5c87",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-quotient-scalar-proofs/diagnostic-v1/drill-32-strict.stderr": "ea0ad78a154be298bdff994c4bffbc92afae678fe82f66ef00a88b9aa347819b",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-quotient-scalar-proofs/diagnostic-v1/drill-16-strict.stderr": "388e524f9b4f6cd2ccfae2c1874ca0095c305965b8ad347c9c10fd08d029dba4"
+  },
+  "base_commit": "a9e3fbb297f058d0c2d2e2892e46d6b24451e35e",
+  "runner_sha256": "1af9b56177ef71f7356749b1cb6692e723c33b69214d1aa6aec68edf6b5e90e6",
+  "phase": "analysis-v1",
+  "commands": [
+    [
+      "orientation-algebra",
+      [
+        "python3",
+        "docs/evidence/2026-10-15-quotient-scalar-proofs/analyze_orientation_v1.py"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/tmp/csgrs-quotient-scalar-proofs/analysis-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P7",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P20",
+    "P21",
+    "P24",
+    "P25",
+    "P27",
+    "P35",
+    "P36",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "Hyperreal rational polynomial identities over opaque atoms",
+    "Hypermesh plane predicates and Boolean topology",
+    "CSGRS modeling composition and certainty"
+  ],
+  "domain": "Rational-function projection proves identities only with admissible exact nonzero-denominator evidence. Existing Laurent and polynomial proof domains remain first; zero or unknown expanded denominators cannot manufacture certification. Downstream target is the unchanged 16-segment radius-2 polygonal drill through a 12 by 12 by 4 cuboid; no analytic-cylinder claim.",
+  "consumers": [
+    "Real::exact_rational_normal_form",
+    "Hyperlimit shared sign resolvers",
+    "Hypermesh planes and Boolean arrangement",
+    "CSGRS strict drilled-body workflow"
+  ],
+  "missing_acceptance_test": [
+    "crates/hyperreal/tests/quotient_polynomial_cancellation.rs",
+    "Original tests/mesh_boolean_context.rs drill fixture, currently expected undecided; no policy or resolution weakening"
+  ],
+  "semantic_oracle": "Independent quotient and distributive identities with nonzero-denominator obligations, exact nonzero displacements and typed unresolved-denominator controls. Downstream acceptance additionally needs independent point membership, polygonal volume and a separate topology check; program exit zero alone is not certified completion.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: 789a9705a commits a tested polynomial proof and diagnoses strict drilling at quotient coordinate equality. Full admission, costs, strict drilling and 35 native files remain open."
+}
