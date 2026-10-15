@@ -1,0 +1,1218 @@
+diff --git a/crates/hyperreal/Cargo.toml b/crates/hyperreal/Cargo.toml
+--- a/crates/hyperreal/Cargo.toml
++++ b/crates/hyperreal/Cargo.toml
+@@ -44,6 +44,10 @@
+ [[example]]
+ name = "readme_quickstart"
+ 
++[[example]]
++name = "directed_scalar_probe"
++required-features = ["serde", "dispatch-trace"]
++
+ [[bench]]
+ name = "borrowed_ops"
+ harness = false
+diff --git a/crates/hyperreal/examples/directed_scalar_probe.rs b/crates/hyperreal/examples/directed_scalar_probe.rs
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_probe.rs
+@@ -0,0 +1,314 @@
++//! Development-only process probe for representation-bucketed adversarial search.
++
++use hyperreal::{CertifiedRealSign, Rational, Real, RealSign, dispatch_trace};
++use serde_json::{Value, json};
++use std::{path::Path, time::Instant};
++
++#[path = "../tests/support/representations.rs"]
++mod inventory;
++#[path = "../tests/support/mpfr.rs"]
++mod mpfr;
++#[path = "directed_scalar_probe/oracle.rs"]
++mod oracle;
++#[path = "directed_scalar_probe/recipe.rs"]
++mod recipe;
++
++use recipe::{Input, Recipe};
++
++const QUERIES: [&str; 6] = [
++    "normal_form",
++    "affine_det3",
++    "sign_zero",
++    "sign_256",
++    "interval_64",
++    "interval_256",
++];
++
++enum Answer {
++    Normal(Option<Rational>),
++    Sign(Option<RealSign>),
++    Interval([Rational; 2]),
++}
++
++fn sign(value: &Real, floor: i32) -> Option<RealSign> {
++    match value.certified_sign_until(floor) {
++        CertifiedRealSign::Known { sign, .. } => Some(sign),
++        CertifiedRealSign::Unknown { .. } => None,
++    }
++}
++
++fn affine(value: &Real) -> Option<RealSign> {
++    let zero = Real::zero();
++    let one = Real::one();
++    Real::certified_affine_det3_sign(
++        [value, &zero, &zero],
++        [&zero, &one, &zero],
++        [&zero, &zero, &one],
++        [&zero, &zero, &zero],
++    )
++}
++
++fn query(value: &Real, name: &str) -> Result<Answer, String> {
++    Ok(match name {
++        "normal_form" => Answer::Normal(value.exact_rational_normal_form()),
++        "affine_det3" => Answer::Sign(affine(value)),
++        "sign_zero" => Answer::Sign(sign(value, 0)),
++        "sign_256" => Answer::Sign(sign(value, -256)),
++        "interval_64" | "interval_256" => Answer::Interval(
++            value
++                .certified_rational_interval(if name == "interval_64" { -64 } else { -256 })
++                .ok_or("bounded interval query exhausted")?,
++        ),
++        _ => return Err("unknown query".into()),
++    })
++}
++
++fn checked_answer(
++    answer: Answer,
++    reference: &[Rational; 2],
++    expected_sign: RealSign,
++) -> Result<Value, String> {
++    match answer {
++        Answer::Normal(value) => {
++            if value
++                .as_ref()
++                .is_some_and(|x| x < &reference[0] || x > &reference[1])
++            {
++                return Err("rational normal form contradicts independent MPFR enclosure".into());
++            }
++            Ok(json!({"normal_form": value.map(|x| x.to_string())}))
++        }
++        Answer::Sign(value) => {
++            if value.is_some_and(|x| x != expected_sign) {
++                return Err("certified sign contradicts independent MPFR enclosure".into());
++            }
++            Ok(json!({"sign": value.map(|x| format!("{x:?}"))}))
++        }
++        Answer::Interval([lo, hi]) => {
++            if lo > hi || hi < reference[0] || lo > reference[1] {
++                return Err(
++                    "certified interval is disjoint from independent MPFR enclosure".into(),
++                );
++            }
++            Ok(json!({"interval": [lo.to_string(), hi.to_string()]}))
++        }
++    }
++}
++
++fn check_cache(
++    recipe: &Recipe,
++    reference: &[Rational; 2],
++    expected_sign: RealSign,
++) -> Result<Value, String> {
++    let value = recipe.real()?;
++    let cold_normal = value.exact_rational_normal_form();
++    let cold_affine = affine(&value);
++    let cold_sign = sign(&value, 0);
++    let _ = checked_answer(query(&value, "interval_256")?, reference, expected_sign)?;
++    let fine_sign = sign(&value, -256);
++    let warm_normal = value.exact_rational_normal_form();
++    let warm_affine = affine(&value);
++    let warm_sign = sign(&value, 0);
++    if cold_normal
++        .as_ref()
++        .is_some_and(|x| warm_normal.as_ref() != Some(x))
++        || cold_affine.is_some_and(|x| warm_affine != Some(x))
++        || cold_sign.is_some_and(|x| fine_sign != Some(x))
++        || fine_sign.is_some_and(|x| warm_sign != Some(x))
++    {
++        return Err("cache warming weakened or contradicted a definite fact".into());
++    }
++    let record = json!({
++        "cold": {"normal": cold_normal.as_ref().map(ToString::to_string),
++                 "affine": cold_affine.map(|x| format!("{x:?}")), "sign": cold_sign.map(|x| format!("{x:?}"))},
++        "refined_sign": fine_sign.map(|x| format!("{x:?}")),
++        "warm": {"normal": warm_normal.as_ref().map(ToString::to_string),
++                 "affine": warm_affine.map(|x| format!("{x:?}")), "sign": warm_sign.map(|x| format!("{x:?}"))},
++    });
++    for answer in [
++        Answer::Normal(warm_normal),
++        Answer::Sign(warm_affine),
++        Answer::Sign(warm_sign),
++    ] {
++        let _ = checked_answer(answer, reference, expected_sign)?;
++    }
++    Ok(record)
++}
++
++fn probe(input: Input) -> Result<Value, String> {
++    mpfr::cleanup_on_thread_exit();
++    let recipe = Recipe::new(input);
++    let oracle_start = Instant::now();
++    let reference = oracle::bounds(&recipe)?;
++    let oracle_ns = oracle_start.elapsed().as_nanos();
++    let expected_sign = oracle::sign(&reference)?;
++    let mut rows = Vec::new();
++    for name in QUERIES {
++        let mut samples = Vec::new();
++        for sample in 0..3 {
++            let value = recipe.real()?;
++            let actual = recipe::private_class(&value)?;
++            if actual != recipe.input.bucket {
++                return Err(format!(
++                    "unexpected representation normalization: {} -> {actual}",
++                    recipe.input.bucket
++                ));
++            }
++            dispatch_trace::reset();
++            let start = Instant::now();
++            let answer = dispatch_trace::with_recording(|| query(&value, name));
++            let elapsed_ns = start.elapsed().as_nanos();
++            let trace = dispatch_trace::take_trace();
++            let answer = checked_answer(answer?, &reference, expected_sign)?;
++            samples.push(json!({
++                "sample": sample, "elapsed_ns": elapsed_ns, "answer": answer,
++                "dispatch": trace.dispatch.iter().map(|row| json!({
++                    "layer": row.layer, "operation": row.operation, "path": row.path, "count": row.count,
++                })).collect::<Vec<_>>(),
++                "rational": {"temporaries": trace.rational.temporary_rationals,
++                             "reductions": trace.rational.reductions, "gcds": trace.rational.gcds,
++                             "peak_operand_bits": trace.rational.peak_operand_bits},
++            }));
++        }
++        let mut nanos = samples
++            .iter()
++            .map(|row| row["elapsed_ns"].as_u64().expect("bounded probe duration"))
++            .collect::<Vec<_>>();
++        nanos.sort_unstable();
++        rows.push(json!({"query": name, "score_ns": nanos[1], "samples": samples}));
++    }
++    let cache = check_cache(&recipe, &reference, expected_sign)?;
++    Ok(json!({
++        "schema": 1, "status": "ok", "recipe": recipe,
++        "oracle": {"precision_bits": 1024, "interval": reference.map(|x| x.to_string()),
++                   "sign": format!("{expected_sign:?}"), "diagnostic_elapsed_ns": oracle_ns},
++        "queries": rows, "cache_contract": cache, "cache_contract_checked": true,
++        "score_contract": "Median of three query-body elapsed times; every sample and trace is retained. This is search fitness, not a competitive benchmark.",
++    }))
++}
++
++fn run() -> Result<Value, String> {
++    let args = std::env::args().skip(1).collect::<Vec<_>>();
++    if args == ["--list"] {
++        return Ok(
++            json!({"representations": inventory::optimized_certificate_representatives().iter()
++            .map(|case| json!({"name": case.certificate, "kind": format!("{:?}", case.public_kind),
++                             "actual_class": recipe::private_class(&case.value).expect("inventory serializes")}))
++            .collect::<Vec<_>>(), "queries": QUERIES}),
++        );
++    }
++    if args.len() != 1 {
++        return Err("usage: directed_scalar_probe INPUT.json | --list".into());
++    }
++    let path = Path::new(&args[0]);
++    if path.metadata().map_err(|e| e.to_string())?.len() > 4096 {
++        return Err("input exceeds 4096 bytes".into());
++    }
++    let input = serde_json::from_str(&std::fs::read_to_string(path).map_err(|e| e.to_string())?)
++        .map_err(|e| format!("invalid input: {e}"))?;
++    probe(input)
++}
++
++fn main() {
++    let result = run();
++    // This standalone process is single-threaded; all oracle Float values have
++    // dropped before releasing its local and shared MPFR caches.
++    rug::float::free_cache(rug::float::FreeCache::All);
++    match result {
++        Ok(value) => println!("{value}"),
++        Err(error) => {
++            println!(
++                "{}",
++                json!({"schema": 1, "status": "error", "error": error})
++            );
++            std::process::exit(2);
++        }
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn parameter_extremes_keep_every_private_class_and_agree_with_mpfr() {
++        mpfr::cleanup_on_thread_exit();
++        let cases = inventory::optimized_certificate_representatives();
++        assert_eq!(cases.len(), 22);
++        for genome in [
++            [0; 8],
++            [255; 8],
++            [0, 1, 127, 3, 5, 2, 128, 77],
++            [4, 31, 0, 0, 0, 1, 0, 0],
++        ] {
++            for case in &cases {
++                let recipe = Recipe::new(Input {
++                    bucket: case.certificate.into(),
++                    genome,
++                });
++                let value = recipe.real().unwrap();
++                assert_eq!(
++                    recipe::private_class(&value).unwrap(),
++                    case.certificate,
++                    "{recipe:?}"
++                );
++                assert_eq!(value.detailed_facts().symbolic.kind, case.public_kind);
++                let bounds = oracle::bounds(&recipe).unwrap();
++                let expected = oracle::sign(&bounds).unwrap();
++                for name in QUERIES {
++                    checked_answer(query(&value, name).unwrap(), &bounds, expected).unwrap();
++                }
++                check_cache(&recipe, &bounds, expected).unwrap();
++            }
++        }
++    }
++
++    #[test]
++    fn unknown_representations_and_malformed_genomes_are_rejected() {
++        assert!(
++            Recipe::new(Input {
++                bucket: "not-a-class".into(),
++                genome: [0; 8]
++            })
++            .real()
++            .is_err()
++        );
++        for input in [
++            r#"{"bucket":"Pi","genome":[]}"#,
++            r#"{"bucket":"Pi","genome":[256,0,0,0,0,0,0,0]}"#,
++            r#"{"bucket":"Pi","genome":[0,0,0,0,0,0,0,0],"extra":true}"#,
++        ] {
++            assert!(serde_json::from_str::<Input>(input).is_err());
++        }
++    }
++
++    #[test]
++    fn independent_oracle_rejects_opposite_sign_and_disjoint_intervals() {
++        let bounds = [Rational::new(1), Rational::new(2)];
++        assert!(
++            checked_answer(
++                Answer::Sign(Some(RealSign::Negative)),
++                &bounds,
++                RealSign::Positive
++            )
++            .is_err()
++        );
++        assert!(
++            checked_answer(
++                Answer::Normal(Some(Rational::new(3))),
++                &bounds,
++                RealSign::Positive
++            )
++            .is_err()
++        );
++        assert!(
++            checked_answer(
++                Answer::Interval([Rational::new(3), Rational::new(4)]),
++                &bounds,
++                RealSign::Positive
++            )
++            .is_err()
++        );
++        assert!(checked_answer(Answer::Sign(None), &bounds, RealSign::Positive).is_ok());
++    }
++}
+diff --git a/crates/hyperreal/examples/directed_scalar_probe/oracle.rs b/crates/hyperreal/examples/directed_scalar_probe/oracle.rs
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_probe/oracle.rs
+@@ -0,0 +1,150 @@
++//! Independent directed MPFR evaluation of the exact generated recipe.
++
++use super::recipe::Recipe;
++use hyperreal::{Rational, RealSign};
++use rug::{
++    Float, Rational as Mpq,
++    float::{Constant, Round},
++};
++use std::cmp::Ordering;
++
++const PRECISION: u32 = 1024;
++
++struct Interval {
++    lo: Float,
++    hi: Float,
++}
++
++impl Interval {
++    fn rational(text: &str) -> Self {
++        let value = text.parse::<Mpq>().expect("exact generated rational");
++        Self {
++            lo: Float::with_val_round(PRECISION, &value, Round::Down).0,
++            hi: Float::with_val_round(PRECISION, &value, Round::Up).0,
++        }
++    }
++
++    fn pi() -> Self {
++        Self {
++            lo: Float::with_val_round(PRECISION, Constant::Pi, Round::Down).0,
++            hi: Float::with_val_round(PRECISION, Constant::Pi, Round::Up).0,
++        }
++    }
++
++    fn sub(self, other: Self) -> Self {
++        Self {
++            lo: Float::with_val_round(PRECISION, &self.lo - &other.hi, Round::Down).0,
++            hi: Float::with_val_round(PRECISION, &self.hi - &other.lo, Round::Up).0,
++        }
++    }
++
++    fn mul(self, other: Self) -> Self {
++        let corners = [
++            (&self.lo, &other.lo),
++            (&self.lo, &other.hi),
++            (&self.hi, &other.lo),
++            (&self.hi, &other.hi),
++        ];
++        let lo = corners
++            .iter()
++            .map(|(a, b)| Float::with_val_round(PRECISION, *a * *b, Round::Down).0)
++            .min_by(|a, b| a.partial_cmp(b).expect("finite interval corner"))
++            .unwrap();
++        let hi = corners
++            .iter()
++            .map(|(a, b)| Float::with_val_round(PRECISION, *a * *b, Round::Up).0)
++            .max_by(|a, b| a.partial_cmp(b).expect("finite interval corner"))
++            .unwrap();
++        Self { lo, hi }
++    }
++
++    fn inverse(self) -> Self {
++        assert!(
++            self.lo > 0 || self.hi < 0,
++            "oracle denominator contains zero"
++        );
++        let one = Float::with_val(PRECISION, 1);
++        Self {
++            lo: Float::with_val_round(PRECISION, &one / &self.hi, Round::Down).0,
++            hi: Float::with_val_round(PRECISION, &one / &self.lo, Round::Up).0,
++        }
++    }
++
++    // All selected transcendental functions are increasing on their generated
++    // domains. Trigonometric inputs are checked below against an independent
++    // directed lower bound for pi/2 before this method is used.
++    fn increasing(mut self, operation: fn(&mut Float, Round) -> Ordering) -> Self {
++        operation(&mut self.lo, Round::Down);
++        operation(&mut self.hi, Round::Up);
++        assert!(self.lo.is_finite() && self.hi.is_finite() && self.lo <= self.hi);
++        self
++    }
++
++    fn positive_trig(self, operation: fn(&mut Float, Round) -> Ordering) -> Self {
++        let half_pi = Self::pi().mul(Self::rational("1/2"));
++        assert!(
++            self.lo > 0 && self.hi < half_pi.lo,
++            "oracle trig domain is not monotone"
++        );
++        self.increasing(operation)
++    }
++
++    fn rational_bounds(self) -> [Rational; 2] {
++        [self.lo, self.hi].map(|x| {
++            x.to_rational()
++                .expect("finite MPFR endpoint")
++                .to_string()
++                .parse()
++                .expect("exact rational MPFR endpoint")
++        })
++    }
++}
++
++pub fn bounds(recipe: &Recipe) -> Result<[Rational; 2], String> {
++    let rational = |n: u32, d: u32| Interval::rational(&format!("{n}/{d}"));
++    let prime = || rational(recipe.prime, 1);
++    let exponent = || rational(recipe.exponent_numerator, recipe.exponent_denominator);
++    let angle = || rational(recipe.angle_numerator, recipe.angle_denominator);
++    let pi_power = || (1..recipe.pi_power).fold(Interval::pi(), |x, _| x.mul(Interval::pi()));
++    let exp = || exponent().increasing(Float::exp_round);
++    let root = || prime().increasing(Float::sqrt_round);
++    let log = || prime().increasing(Float::ln_round);
++    let value = match recipe.input.bucket.as_str() {
++        "One" => rational(1, 1),
++        "Pi" => Interval::pi(),
++        "PiPow" => pi_power(),
++        "PiInv" => Interval::pi().inverse(),
++        "PiExp" => Interval::pi().mul(exp()),
++        "PiInvExp" => exp().mul(Interval::pi().inverse()),
++        "PiSqrt" => Interval::pi().mul(root()),
++        "ConstProduct" => pi_power().mul(exp()),
++        "ConstOffset" => Interval::pi().sub(Interval::rational(&recipe.pi_offset)),
++        "ConstProductSqrt" => pi_power().mul(exp()).mul(root()),
++        "Sqrt" => root(),
++        "Exp" => exp(),
++        "Ln" => log(),
++        "LnAffine" => prime().mul(exp()).increasing(Float::ln_round),
++        "LnProduct" => log().mul(rational(recipe.other_prime, 1).increasing(Float::ln_round)),
++        "Log10" => prime().increasing(Float::log10_round),
++        "Log2" => rational(recipe.angle_denominator, 1).increasing(Float::log2_round),
++        "Pow10" => angle().increasing(Float::exp10_round),
++        "Pow2" => angle().increasing(Float::exp2_round),
++        "SinPi" => angle().mul(Interval::pi()).positive_trig(Float::sin_round),
++        "TanPi" => angle().mul(Interval::pi()).positive_trig(Float::tan_round),
++        "Irrational" => angle().positive_trig(Float::sin_round),
++        other => return Err(format!("unsupported oracle representation: {other}")),
++    };
++    Ok(value
++        .mul(Interval::rational(&recipe.scale))
++        .rational_bounds())
++}
++
++pub fn sign(bounds: &[Rational; 2]) -> Result<RealSign, String> {
++    if bounds[0] > Rational::zero() {
++        Ok(RealSign::Positive)
++    } else if bounds[1] < Rational::zero() {
++        Ok(RealSign::Negative)
++    } else {
++        Err("independent oracle inconclusive at 1024 bits".into())
++    }
++}
+diff --git a/crates/hyperreal/examples/directed_scalar_probe/recipe.rs b/crates/hyperreal/examples/directed_scalar_probe/recipe.rs
+--- /dev/null
++++ b/crates/hyperreal/examples/directed_scalar_probe/recipe.rs
+@@ -0,0 +1,117 @@
++use hyperreal::{Rational, Real};
++use num::{BigInt, BigUint};
++use serde::{Deserialize, Serialize};
++
++#[derive(Clone, Debug, Deserialize, Serialize)]
++#[serde(deny_unknown_fields)]
++pub struct Input {
++    pub bucket: String,
++    pub genome: [u8; 8],
++}
++
++#[derive(Clone, Debug, Serialize)]
++pub struct Recipe {
++    pub input: Input,
++    pub scale: String,
++    pub prime: u32,
++    pub other_prime: u32,
++    pub exponent_numerator: u32,
++    pub exponent_denominator: u32,
++    pub angle_numerator: u32,
++    pub angle_denominator: u32,
++    pub pi_power: u32,
++    pub pi_offset: String,
++}
++
++impl Recipe {
++    pub fn new(input: Input) -> Self {
++        const PRIMES: [u32; 8] = [2, 3, 5, 7, 11, 13, 17, 19];
++        const ODD_PRIMES: [u32; 8] = [5, 7, 11, 13, 17, 19, 23, 29];
++        const PI_DIGITS: &str =
++            "314159265358979323846264338327950288419716939937510582097494459230781640628620899";
++        let g = input.genome;
++        let numerator = BigInt::from(2 * u32::from(g[3]) + 1) << usize::from(g[2]);
++        let numerator = if g[5] & 1 == 0 { numerator } else { -numerator };
++        let denominator = BigUint::from(2 * u32::from(g[4]) + 1) << usize::from(g[6]);
++        let places = 1 + usize::from(g[7]) % 78;
++        let mut offset: BigUint = PI_DIGITS[..=places].parse().expect("decimal pi prefix");
++        if g[5] & 2 != 0 {
++            offset += 1_u8;
++        }
++        let angle_denominator = ODD_PRIMES[usize::from(g[0]) % ODD_PRIMES.len()];
++        Self {
++            scale: format!("{numerator}/{denominator}"),
++            prime: PRIMES[usize::from(g[0]) % PRIMES.len()],
++            other_prime: PRIMES[(usize::from(g[0]) + 1) % PRIMES.len()],
++            exponent_numerator: 1 + u32::from(g[1]) % 16,
++            exponent_denominator: 2 + u32::from(g[0]) % 17,
++            angle_numerator: 1 + u32::from(g[1]) % ((angle_denominator - 1) / 2),
++            angle_denominator,
++            pi_power: 2 + u32::from(g[6]) % 5,
++            pi_offset: format!("{offset}/1{}", "0".repeat(places)),
++            input,
++        }
++    }
++
++    pub fn real(&self) -> Result<Real, String> {
++        let rational = |n: u32, d: u32| {
++            Real::new(Rational::fraction(i64::from(n), u64::from(d)).expect("positive denominator"))
++        };
++        let exponent = || rational(self.exponent_numerator, self.exponent_denominator);
++        let angle = || rational(self.angle_numerator, self.angle_denominator);
++        let pi_power = || {
++            let pi = Real::pi();
++            (1..self.pi_power).fold(pi.clone(), |value, _| value * &pi)
++        };
++        let exponential = || exponent().exp().expect("finite positive exponential input");
++        let root = || Real::from(self.prime).sqrt().expect("positive prime");
++        let log = || Real::from(self.prime).ln().expect("positive prime");
++        let value = match self.input.bucket.as_str() {
++            "One" => Real::one(),
++            "Pi" => Real::pi(),
++            "PiPow" => pi_power(),
++            "PiInv" => Real::pi().inverse().expect("pi is nonzero"),
++            "PiExp" => Real::pi() * exponential(),
++            "PiInvExp" => (exponential() / Real::pi()).expect("pi is nonzero"),
++            "PiSqrt" => Real::pi() * root(),
++            "ConstProduct" => pi_power() * exponential(),
++            "ConstOffset" => Real::pi() - self.pi_offset.parse::<Real>().expect("exact pi offset"),
++            "ConstProductSqrt" => pi_power() * exponential() * root(),
++            "Sqrt" => root(),
++            "Exp" => exponential(),
++            "Ln" => log(),
++            "LnAffine" => (Real::from(self.prime) * exponential())
++                .ln()
++                .expect("positive logarithm input"),
++            "LnProduct" => log() * Real::from(self.other_prime).ln().expect("positive prime"),
++            "Log10" => Real::from(self.prime).log10().expect("positive prime"),
++            "Log2" => Real::from(self.angle_denominator)
++                .log2()
++                .expect("odd prime"),
++            "Pow10" => angle().exp10().expect("finite exponent"),
++            "Pow2" => angle().exp2().expect("finite exponent"),
++            "SinPi" => angle().sin_pi(),
++            "TanPi" => angle()
++                .tan_pi()
++                .expect("angle is strictly between zero and one half"),
++            "Irrational" => angle().sin(),
++            other => return Err(format!("unsupported representation: {other}")),
++        };
++        Ok(value
++            * self
++                .scale
++                .parse::<Real>()
++                .expect("nonzero exact rational scale"))
++    }
++}
++
++pub fn private_class(value: &Real) -> Result<String, String> {
++    let serialized = serde_json::to_value(value).map_err(|error| error.to_string())?;
++    match &serialized["class"] {
++        serde_json::Value::String(name) => Ok(name.clone()),
++        serde_json::Value::Object(fields) if fields.len() == 1 => {
++            Ok(fields.keys().next().unwrap().clone())
++        }
++        _ => Err("unexpected private-class serialization".into()),
++    }
++}
+diff --git a/crates/hyperreal/fuzz/README.md b/crates/hyperreal/fuzz/README.md
+--- a/crates/hyperreal/fuzz/README.md
++++ b/crates/hyperreal/fuzz/README.md
+@@ -67,3 +67,37 @@
+ The promotion ranks cases by recorded elapsed time. P38 still requires
+ case-by-case lexicase selection and independent populations for each
+ representation type; the current timing group does not satisfy those criteria.
++
++## Directed scalar search
++
++The `directed_scalar_probe` example and `directed/campaign.py` implement a
++separate adaptive search over all 22 private scalar representations. Each
++representation owns its population and random stream. Selection shuffles the
++query cases, retains the slowest current candidates on each successive case,
++and breaks remaining ties randomly. Selected parents produce byte mutations
++for the next generation; every filtering and mutation step can be replayed.
++
++From `crates/hyperreal`, build and run into a new output directory:
++
++```sh
++cargo build --release --example directed_scalar_probe --features serde,dispatch-trace --target-dir /tmp/hyperreal-directed-build
++python3 fuzz/directed/campaign.py run --binary /tmp/hyperreal-directed-build/release/examples/directed_scalar_probe --output /tmp/hyperreal-directed-run --seed 20261014 --rounds 3 --population 8 --parents 4 --timeout 30
++python3 fuzz/directed/campaign.py verify /tmp/hyperreal-directed-run
++```
++
++Each input varies the parameters inside its representation, including exact
++rational widths, exponents, prime roots and logarithms, rational angles, and
++decimal rational offsets near pi. A probe checks the actual private class,
++retains three timing samples and raw dispatch paths per query, checks numeric
++answers against directed MPFR intervals, and checks cold/warm proof retention.
++Timing fitness guides exploration; it is not a competitive benchmark result.
++
++Campaign outputs include every generated input, process result, raw response,
++population, selection trace, and mutation lineage. A failure or timeout closes
++the run with its evidence intact. Completed campaigns can be verified from
++their retained scores and exact rational endpoints. Existing outputs are never
++overwritten or resumed.
++
++P38 still requires sanitizer qualification and competitive benchmarks for the
++retained cases, as well as directed populations in the other stack layers.
++The bounded scalar campaign is not an exhaustive-input or cross-stack claim.
+diff --git a/crates/hyperreal/fuzz/directed/campaign.py b/crates/hyperreal/fuzz/directed/campaign.py
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/campaign.py
+@@ -0,0 +1,240 @@
++"""Bounded adaptive scalar search; every probe, selection, and mutation is retained."""
++import argparse
++import hashlib
++import json
++import os
++from pathlib import Path
++import random
++import re
++import subprocess
++import sys
++import time
++
++from evidence import validate_response
++from lexicase import select_buckets, verify_selection
++
++
++def digest(path):
++    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
++
++
++def write(path, value):
++    with path.open('x') as output:
++        output.write(json.dumps(value, indent=2, sort_keys=True) + '\n')
++
++
++def identity(input_value):
++    return hashlib.sha256(json.dumps(input_value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
++
++
++def execute(binary, arguments, prefix, timeout, expected_hash):
++    if digest(binary) != expected_hash:
++        raise ValueError('probe executable changed during the campaign')
++    stdout, stderr = prefix.with_suffix('.stdout'), prefix.with_suffix('.stderr')
++    start = time.monotonic_ns()
++    with stdout.open('xb') as out, stderr.open('xb') as err:
++        try:
++            code = subprocess.run([str(binary), *map(str, arguments)], stdout=out, stderr=err,
++                                  timeout=timeout, check=False).returncode
++            status = 'exited'
++        except subprocess.TimeoutExpired:
++            code, status = None, 'timeout'
++    record = {'command': [str(binary), *map(str, arguments)], 'status': status, 'exit_code': code,
++              'process_elapsed_ns': time.monotonic_ns() - start,
++              'stdout': stdout.name, 'stderr': stderr.name,
++              'stdout_sha256': digest(stdout), 'stderr_sha256': digest(stderr)}
++    write(prefix.with_suffix('.process.json'), record)
++    if code != 0 or status != 'exited':
++        raise ValueError(f'probe {status} with exit code {code}; retained at {prefix}')
++    if stderr.stat().st_size:
++        raise ValueError(f'probe emitted diagnostics; retained at {stderr}')
++    if stdout.stat().st_size > 32 * 1024 * 1024:
++        raise ValueError('probe response exceeds 32 MiB')
++    return json.loads(stdout.read_text()), record
++
++
++def next_population(bucket, rows, selections, rng, size):
++    by_id = {row['id']: row for row in rows}
++    chosen = [by_id[selection['selected']] for selection in selections]
++    output = {}
++    for parent in chosen:
++        payload = {'bucket': bucket, 'genome': parent['genome']}
++        output[parent['id']] = {'input': payload, 'origin': 'retained', 'parent_id': parent['id']}
++    attempts = 0
++    while len(output) < size:
++        attempts += 1
++        if attempts > 128 * size:
++            raise ValueError('distinct mutation budget exhausted')
++        parent = rng.choice(chosen)
++        genome = parent['genome'].copy()
++        index, mask = rng.randrange(8), rng.randrange(1, 256)
++        genome[index] ^= mask
++        payload = {'bucket': bucket, 'genome': genome}
++        key = identity(payload)
++        if key not in output:
++            output[key] = {'input': payload, 'origin': 'mutation', 'parent_id': parent['id'],
++                           'mutation': {'index': index, 'xor_mask': mask}}
++    return list(output.values())
++
++
++def run(args):
++    if not 4 <= args.population <= 1024 or not 1 <= args.parents < args.population:
++        raise ValueError('population must be 4..1024 and parents must be 1..population-1')
++    if not 1 <= args.rounds <= 1000 or not 1 <= args.timeout <= 3600:
++        raise ValueError('rounds must be 1..1000 and timeout 1..3600 seconds')
++    binary, output = args.binary.resolve(), args.output.resolve()
++    output.mkdir(parents=True, exist_ok=False)
++    binary_hash = digest(binary)
++    protocol = {'schema': 1, 'binary': str(binary), 'binary_sha256': binary_hash,
++                'python': sys.version, 'seed': args.seed, 'rounds': args.rounds,
++                'population_per_representation': args.population, 'parents_per_representation': args.parents,
++                'process_timeout_seconds': args.timeout,
++                'sanitizer_environment': {name: os.environ.get(name) for name in ['ASAN_OPTIONS', 'LSAN_OPTIONS']},
++                'sources_sha256': {name: digest(Path(__file__).with_name(name))
++                                   for name in ['campaign.py', 'lexicase.py', 'evidence.py']},
++                'score_contract': 'Maximize median query-body elapsed nanoseconds within each independent representation population.',
++                'no_resumption_or_extension': True, 'competitive_benchmark': False,
++                'P38_complete': False, 'plan_complete': False}
++    write(output / 'protocol.json', protocol)
++    completed, generations = 0, []
++    try:
++        listing, _ = execute(binary, ['--list'], output / 'inventory', args.timeout, binary_hash)
++        cases = listing['queries']
++        buckets = sorted(row['name'] for row in listing['representations'])
++        if len(set(buckets)) != 22 or any(not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', b) for b in buckets):
++            raise ValueError('expected all 22 distinct representation buckets')
++        if any(row['name'] != row['actual_class'] for row in listing['representations']):
++            raise ValueError('fixture inventory did not reach its declared private classes')
++        seeds = {bucket: int(hashlib.sha256(f'{args.seed}:{bucket}'.encode()).hexdigest(), 16) for bucket in buckets}
++        rngs = {bucket: random.Random(seed) for bucket, seed in seeds.items()}
++        write(output / 'bucket-seeds.json', seeds)
++        populations = {}
++        boundary = [[0] * 8, [255] * 8, [0, 1, 127, 3, 5, 2, 128, 77], [4, 31, 0, 0, 0, 1, 0, 0]]
++        for bucket in buckets:
++            values = {tuple(genome) for genome in boundary}
++            attempts = 0
++            while len(values) < args.population:
++                attempts += 1
++                if attempts > 128 * args.population:
++                    raise ValueError('distinct initial-population budget exhausted')
++                values.add(tuple(rngs[bucket].randrange(256) for _ in range(8)))
++            populations[bucket] = [{'input': {'bucket': bucket, 'genome': list(genome)},
++                                     'origin': 'initial', 'parent_id': None} for genome in sorted(values)]
++        for generation in range(args.rounds):
++            write(output / f'round-{generation:03}-planned.json', populations)
++            measured, selection = {}, {}
++            for bucket in buckets:
++                measured[bucket] = []
++                for member in populations[bucket]:
++                    payload = member['input']
++                    key = identity(payload)
++                    stem = output / f'round-{generation:03}-{bucket}-{key}'
++                    input_path = stem.with_suffix('.input.json')
++                    write(input_path, payload)
++                    response, process = execute(binary, [input_path], stem, args.timeout, binary_hash)
++                    scores = validate_response(response, payload, cases)
++                    row = {'id': key, 'bucket': bucket, 'genome': payload['genome'], 'scores': scores,
++                           'input_file': input_path.name, 'input_sha256': digest(input_path),
++                           'response_file': process['stdout'], 'response_sha256': process['stdout_sha256']}
++                    measured[bucket].append(row)
++                    completed += 1
++                    with (output / 'completed-probes.jsonl').open('a') as journal:
++                        journal.write(json.dumps({'round': generation, **row}, sort_keys=True) + '\n')
++                selection[bucket] = select_buckets({bucket: measured[bucket]}, cases, rngs[bucket], args.parents)[bucket]
++                for record in selection[bucket]:
++                    verify_selection(measured[bucket], cases, record)
++            record = {'round': generation, 'populations': measured, 'selections': selection}
++            write(output / f'round-{generation:03}-selection.json', record)
++            generations.append(record)
++            if generation + 1 < args.rounds:
++                populations = {bucket: next_population(bucket, measured[bucket], selection[bucket], rngs[bucket], args.population)
++                               for bucket in buckets}
++        final = generations[-1]
++        retained = {}
++        for bucket in buckets:
++            rows = {row['id']: row for row in final['populations'][bucket]}
++            retained[bucket] = [{'bucket': bucket, 'genome': rows[key]['genome']}
++                                for key in sorted({r['selected'] for r in final['selections'][bucket]})]
++        write(output / 'selected-inputs.json', retained)
++        result = {'complete': True, 'rounds': args.rounds, 'representations': len(buckets),
++                  'completed_probes': completed, 'selection_events': args.rounds * len(buckets) * args.parents,
++                  'all_selection_traces_replayed': True,
++                  'artifacts_sha256': {p.name: digest(p) for p in output.iterdir() if p.is_file()},
++                  'competitive_benchmark_complete': False, 'P38_complete': False, 'plan_complete': False}
++        write(output / 'result.json', result)
++        print(json.dumps({key: value for key, value in result.items() if key != 'artifacts_sha256'}))
++    except Exception as error:
++        write(output / 'failure.json', {'complete': False, 'error': str(error), 'completed_probes': completed,
++                                       'artifacts_sha256': {p.name: digest(p) for p in output.iterdir() if p.is_file()},
++                                       'P38_complete': False, 'plan_complete': False})
++        raise
++
++
++def verify(output):
++    result = json.loads((output / 'result.json').read_text())
++    if not result['complete'] or (output / 'failure.json').exists():
++        raise ValueError('campaign did not complete')
++    for name, expected in result['artifacts_sha256'].items():
++        if digest(output / name) != expected:
++            raise ValueError(f'changed campaign artifact: {name}')
++    protocol = json.loads((output / 'protocol.json').read_text())
++    listing = json.loads((output / 'inventory.stdout').read_text())
++    cases = listing['queries']
++    count = 0
++    prior = None
++    for generation in range(protocol['rounds']):
++        planned = json.loads((output / f'round-{generation:03}-planned.json').read_text())
++        record = json.loads((output / f'round-{generation:03}-selection.json').read_text())
++        for bucket, rows in record['populations'].items():
++            if len(rows) != protocol['population_per_representation']:
++                raise ValueError('population was shrunk')
++            for member, row in zip(planned[bucket], rows, strict=True):
++                payload = json.loads((output / row['input_file']).read_text())
++                if payload != member['input'] or identity(payload) != row['id']:
++                    raise ValueError('input identity changed')
++                response = json.loads((output / row['response_file']).read_text())
++                if validate_response(response, payload, cases) != row['scores']:
++                    raise ValueError('retained fitness differs from raw samples')
++                if prior is not None:
++                    parent = {r['id']: r for r in prior['populations'][bucket]}[member['parent_id']]
++                    selected = {r['selected'] for r in prior['selections'][bucket]}
++                    if parent['id'] not in selected:
++                        raise ValueError('mutation or retention ignored selected parents')
++                    genome = parent['genome'].copy()
++                    if member['origin'] == 'mutation':
++                        mutation = member['mutation']
++                        if not 0 <= mutation['index'] < 8 or not 1 <= mutation['xor_mask'] <= 255:
++                            raise ValueError('mutation is outside its declared domain')
++                        genome[mutation['index']] ^= mutation['xor_mask']
++                    elif member['origin'] != 'retained':
++                        raise ValueError('unknown descendant origin')
++                    if genome != payload['genome']:
++                        raise ValueError('descendant does not replay from selected parent')
++                count += 1
++            for selection in record['selections'][bucket]:
++                verify_selection(rows, cases, selection)
++        prior = record
++    expected = protocol['rounds'] * 22 * protocol['population_per_representation']
++    if count != expected or result['completed_probes'] != count:
++        raise ValueError('campaign budget was not completed exactly')
++    print(json.dumps({'verified': True, 'completed_probes': count, 'rounds': protocol['rounds']}))
++
++
++if __name__ == '__main__':
++    parser = argparse.ArgumentParser(description=__doc__)
++    sub = parser.add_subparsers(dest='command', required=True)
++    run_parser = sub.add_parser('run')
++    run_parser.add_argument('--binary', type=Path, required=True)
++    run_parser.add_argument('--output', type=Path, required=True)
++    run_parser.add_argument('--seed', type=int, required=True)
++    run_parser.add_argument('--rounds', type=int, required=True)
++    run_parser.add_argument('--population', type=int, required=True)
++    run_parser.add_argument('--parents', type=int, required=True)
++    run_parser.add_argument('--timeout', type=int, required=True)
++    verify_parser = sub.add_parser('verify')
++    verify_parser.add_argument('output', type=Path)
++    args = parser.parse_args()
++    if args.command == 'run':
++        run(args)
++    else:
++        verify(args.output)
+diff --git a/crates/hyperreal/fuzz/directed/evidence.py b/crates/hyperreal/fuzz/directed/evidence.py
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/evidence.py
+@@ -0,0 +1,63 @@
++"""Independent exact-rational checks of retained scalar-probe responses."""
++from fractions import Fraction
++
++
++def validate_response(response, input_value, cases):
++    if response.get('status') != 'ok' or response.get('schema') != 1:
++        raise ValueError('probe did not report a successful schema-1 response')
++    if response['recipe']['input'] != input_value:
++        raise ValueError('probe changed the retained input identity')
++    lo, hi = map(Fraction, response['oracle']['interval'])
++    if not lo <= hi or not (lo > 0 or hi < 0):
++        raise ValueError('independent oracle did not isolate a nonzero sign')
++    expected_sign = 'Positive' if lo > 0 else 'Negative'
++    if response['oracle']['sign'] != expected_sign:
++        raise ValueError('oracle sign disagrees with its exact rational bounds')
++    if response['oracle']['precision_bits'] != 1024 or response.get('cache_contract_checked') is not True:
++        raise ValueError('probe omitted a declared correctness check')
++    if [row['query'] for row in response['queries']] != list(cases):
++        raise ValueError('probe query inventory changed')
++    scores = {}
++    for row in response['queries']:
++        samples = row['samples']
++        if len(samples) != 3 or [sample['sample'] for sample in samples] != [0, 1, 2]:
++            raise ValueError('missing or reordered timing samples')
++        times = [sample['elapsed_ns'] for sample in samples]
++        if any(type(value) is not int or value < 0 for value in times):
++            raise ValueError('invalid timing sample')
++        if row['score_ns'] != sorted(times)[1]:
++            raise ValueError('fitness is not the retained three-sample median')
++        scores[row['query']] = row['score_ns']
++        for sample in samples:
++            answer = sample['answer']
++            expected_key = ('normal_form' if row['query'] == 'normal_form' else
++                            'interval' if row['query'].startswith('interval_') else 'sign')
++            if set(answer) != {expected_key}:
++                raise ValueError('answer does not match its declared query')
++            if 'sign' in answer and answer['sign'] not in [None, expected_sign]:
++                raise ValueError('certificate contradicts the independent sign')
++            if answer.get('normal_form') is not None and not lo <= Fraction(answer['normal_form']) <= hi:
++                raise ValueError('normal form contradicts the independent interval')
++            if 'interval' in answer:
++                a, b = map(Fraction, answer['interval'])
++                if a > b or b < lo or a > hi:
++                    raise ValueError('certified interval contradicts independent enclosure')
++            for trace in sample['dispatch']:
++                if type(trace['count']) is not int or trace['count'] < 0:
++                    raise ValueError('invalid dispatch count')
++    cache = response['cache_contract']
++    for name in ['normal', 'affine', 'sign']:
++        cold, warm = cache['cold'][name], cache['warm'][name]
++        if cold is not None and warm != cold:
++            raise ValueError('available cold fact was weakened or contradicted')
++        if name == 'normal':
++            if warm is not None and not lo <= Fraction(warm) <= hi:
++                raise ValueError('warm normal form contradicts independent enclosure')
++        elif warm not in [None, expected_sign]:
++            raise ValueError('warm sign contradicts independent enclosure')
++    fine = cache['refined_sign']
++    if cache['cold']['sign'] is not None and fine != cache['cold']['sign']:
++        raise ValueError('refinement discarded a known sign')
++    if fine is not None and cache['warm']['sign'] != fine:
++        raise ValueError('zero-refinement query discarded a prior finer proof')
++    return scores
+diff --git a/crates/hyperreal/fuzz/directed/lexicase.py b/crates/hyperreal/fuzz/directed/lexicase.py
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/lexicase.py
+@@ -0,0 +1,82 @@
++"""Worst-case lexicase selection with independent, replayable representation buckets."""
++
++
++def validate(population, cases):
++    if not population or not isinstance(cases, (list, tuple)) or not cases:
++        raise ValueError('population and cases must be nonempty sequences')
++    if any(not isinstance(case, str) or not case for case in cases):
++        raise ValueError('case names must be nonempty strings')
++    if len(set(cases)) != len(cases):
++        raise ValueError('case names must be distinct')
++    if any(not isinstance(row, dict) or not {'id', 'bucket', 'scores'} <= set(row)
++           or not isinstance(row['scores'], dict) for row in population):
++        raise ValueError('malformed candidate record')
++    if any(not isinstance(row['id'], str) or not row['id'] for row in population):
++        raise ValueError('candidate identifiers must be nonempty strings')
++    rows = sorted(population, key=lambda row: row['id'])
++    if len({row['id'] for row in rows}) != len(rows):
++        raise ValueError('duplicate candidate identifier')
++    if len({row['bucket'] for row in rows}) != 1:
++        raise ValueError('representation buckets cannot share a selection pool')
++    for row in rows:
++        if not isinstance(row['bucket'], str) or not row['bucket']:
++            raise ValueError('bucket names must be nonempty strings')
++        if set(row['scores']) != set(cases):
++            raise ValueError('every candidate needs every declared case score')
++        if any(type(score) is not int or score < 0 for score in row['scores'].values()):
++            raise ValueError('scores must be nonnegative integers')
++    return rows
++
++
++def select(population, cases, random):
++    """Maximize observed cost on successive shuffled cases, then break ties."""
++    survivors = validate(population, cases)
++    order = list(cases)
++    random.shuffle(order)
++    steps = []
++    for case in order:
++        worst = max(row['scores'][case] for row in survivors)
++        survivors = [row for row in survivors if row['scores'][case] == worst]
++        steps.append({'case': case, 'worst_score': worst,
++                      'survivors': [row['id'] for row in survivors]})
++        if len(survivors) == 1:
++            break
++    chosen = random.choice(survivors)
++    return {'bucket': chosen['bucket'], 'case_order': order, 'steps': steps,
++            'selected': chosen['id']}
++
++
++def select_buckets(populations, cases, random, parents_per_bucket):
++    if type(parents_per_bucket) is not int or parents_per_bucket <= 0:
++        raise ValueError('parent count must be a positive integer')
++    if not populations:
++        raise ValueError('representation populations cannot be empty')
++    for bucket, rows in populations.items():
++        validate(rows, cases)
++        if any(row['bucket'] != bucket for row in rows):
++            raise ValueError('candidate is stored in the wrong representation bucket')
++    return {bucket: [select(rows, cases, random) for _ in range(parents_per_bucket)]
++            for bucket, rows in sorted(populations.items())}
++
++
++def verify_selection(population, cases, record):
++    """Replay all filtering steps from retained scores, independent of PRNG state."""
++    survivors = validate(population, cases)
++    if record['bucket'] != survivors[0]['bucket']:
++        raise ValueError('selection bucket mismatch')
++    order = record['case_order']
++    if len(order) != len(cases) or set(order) != set(cases):
++        raise ValueError('case order is not a complete permutation')
++    expected = []
++    for case in order:
++        worst = max(row['scores'][case] for row in survivors)
++        survivors = [row for row in survivors if row['scores'][case] == worst]
++        expected.append({'case': case, 'worst_score': worst,
++                         'survivors': [row['id'] for row in survivors]})
++        if len(survivors) == 1:
++            break
++    if expected != record['steps']:
++        raise ValueError('selection filtering trace does not replay')
++    if record['selected'] not in {row['id'] for row in survivors}:
++        raise ValueError('selected candidate did not survive')
++
+diff --git a/crates/hyperreal/fuzz/directed/test_evidence.py b/crates/hyperreal/fuzz/directed/test_evidence.py
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/test_evidence.py
+@@ -0,0 +1,72 @@
++import copy
++import unittest
++
++from evidence import validate_response
++
++
++INPUT = {'bucket': 'One', 'genome': [0] * 8}
++CASES = ['normal_form', 'affine_det3', 'sign_zero', 'sign_256', 'interval_64', 'interval_256']
++
++
++def response():
++    queries = []
++    for case in CASES:
++        answer = ({'normal_form': '1'} if case == 'normal_form' else
++                  {'interval': ['1/2', '3/2']} if case.startswith('interval_') else
++                  {'sign': None if case == 'sign_zero' else 'Positive'})
++        queries.append({'query': case, 'score_ns': 7,
++                        'samples': [{'sample': i, 'elapsed_ns': ns, 'answer': copy.deepcopy(answer),
++                                     'dispatch': [{'layer': 'real', 'operation': case, 'path': 'fixture', 'count': 1}]}
++                                    for i, ns in enumerate([1, 11, 7])]})
++    return {'schema': 1, 'status': 'ok', 'recipe': {'input': copy.deepcopy(INPUT)},
++            'oracle': {'precision_bits': 1024, 'interval': ['3/4', '5/4'], 'sign': 'Positive'},
++            'queries': queries, 'cache_contract_checked': True,
++            'cache_contract': {'cold': {'normal': None, 'affine': None, 'sign': None},
++                               'refined_sign': 'Positive',
++                               'warm': {'normal': '1', 'affine': 'Positive', 'sign': 'Positive'}}}
++
++
++class EvidenceTests(unittest.TestCase):
++    def test_unknown_may_become_certified(self):
++        self.assertEqual(validate_response(response(), INPUT, CASES), dict.fromkeys(CASES, 7))
++
++    def test_wrong_sign_and_disjoint_interval_are_rejected(self):
++        wrong = response(); wrong['queries'][1]['samples'][0]['answer']['sign'] = 'Negative'
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++        wrong = response(); wrong['queries'][4]['samples'][0]['answer']['interval'] = ['2', '3']
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++
++    def test_available_facts_cannot_be_dropped(self):
++        for field, value in [('normal', '1'), ('affine', 'Positive'), ('sign', 'Positive')]:
++            wrong = response()
++            wrong['cache_contract']['cold'][field] = value
++            wrong['cache_contract']['warm'][field] = None
++            with self.assertRaises(ValueError):
++                validate_response(wrong, INPUT, CASES)
++
++    def test_fine_proof_survives_a_zero_refinement_query(self):
++        wrong = response(); wrong['cache_contract']['warm']['sign'] = None
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++
++    def test_timing_samples_cannot_be_replaced_by_a_best_case(self):
++        wrong = response(); wrong['queries'][0]['score_ns'] = 1
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++
++    def test_identity_query_inventory_and_answer_types_are_checked(self):
++        wrong = response(); wrong['recipe']['input']['genome'][0] = 1
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++        wrong = response(); wrong['queries'].pop()
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++        wrong = response(); wrong['queries'][1]['samples'][0]['answer'] = {'normal_form': '1'}
++        with self.assertRaises(ValueError):
++            validate_response(wrong, INPUT, CASES)
++
++
++if __name__ == '__main__':
++    unittest.main()
+diff --git a/crates/hyperreal/fuzz/directed/test_lexicase.py b/crates/hyperreal/fuzz/directed/test_lexicase.py
+--- /dev/null
++++ b/crates/hyperreal/fuzz/directed/test_lexicase.py
+@@ -0,0 +1,93 @@
++import copy
++import itertools
++import random
++import unittest
++
++from lexicase import select, select_buckets, verify_selection
++
++
++def candidate(name, scores, bucket='Pi'):
++    return {'id': name, 'bucket': bucket, 'scores': dict(zip(['left', 'right'], scores))}
++
++
++class FixedOrder:
++    def __init__(self, reverse=False):
++        self.reverse = reverse
++
++    def shuffle(self, values):
++        if self.reverse:
++            values.reverse()
++
++    @staticmethod
++    def choice(values):
++        return values[0]
++
++
++class LexicaseTests(unittest.TestCase):
++    def test_specialists_survive_instead_of_the_average_winner(self):
++        rows = [candidate('left-specialist', [10, 0]), candidate('right-specialist', [0, 10]),
++                candidate('average-winner', [9, 9])]
++        self.assertEqual(select(rows, ['left', 'right'], FixedOrder())['selected'], 'left-specialist')
++        self.assertEqual(select(rows, ['left', 'right'], FixedOrder(True))['selected'], 'right-specialist')
++
++    def test_later_case_breaks_a_tie_among_current_survivors(self):
++        rows = [candidate('a', [5, 2]), candidate('b', [5, 3]), candidate('c', [4, 9])]
++        record = select(rows, ['left', 'right'], FixedOrder())
++        self.assertEqual(record['selected'], 'b')
++        self.assertEqual([step['survivors'] for step in record['steps']], [['a', 'b'], ['b']])
++        verify_selection(rows, ['left', 'right'], record)
++
++    def test_exhaustive_small_matrices_match_lexicographic_maxima(self):
++        cases = ['left', 'right']
++        for scores in itertools.product(range(3), repeat=6):
++            rows = [candidate(str(i), scores[2*i:2*i+2]) for i in range(3)]
++            for reverse in [False, True]:
++                record = select(rows, cases, FixedOrder(reverse))
++                ordered = cases[::-1] if reverse else cases
++                vectors = {row['id']: tuple(row['scores'][case] for case in ordered) for row in rows}
++                self.assertEqual(vectors[record['selected']], max(vectors.values()))
++                verify_selection(rows, cases, record)
++
++    def test_independent_representation_buckets_have_independent_parents(self):
++        populations = {'Pi': [candidate('pi', [1, 2])],
++                       'Exp': [candidate('exp', [1000000, 2000000], 'Exp')]}
++        selected = select_buckets(populations, ['left', 'right'], random.Random(7), 3)
++        self.assertEqual([x['selected'] for x in selected['Pi']], ['pi'] * 3)
++        self.assertEqual([x['selected'] for x in selected['Exp']], ['exp'] * 3)
++        with self.assertRaises(ValueError):
++            select(populations['Pi'] + populations['Exp'], ['left', 'right'], random.Random(7))
++
++    def test_seeded_ties_and_population_permutations_replay(self):
++        rows = [candidate('a', [0, 0]), candidate('b', [0, 0]), candidate('c', [0, 0])]
++        first = select(rows, ['left', 'right'], random.Random(91))
++        self.assertEqual(first, select(rows[::-1], ['left', 'right'], random.Random(91)))
++        self.assertEqual(len(first['steps']), 2)
++        verify_selection(rows, ['left', 'right'], first)
++
++    def test_invalid_scores_and_incomplete_records_are_rejected(self):
++        for invalid in [-1, 1.5, True, None, '1']:
++            with self.subTest(score=invalid), self.assertRaises(ValueError):
++                select([candidate('a', [invalid, 0])], ['left', 'right'], random.Random(0))
++        for rows, cases in [([], ['left', 'right']), ([candidate('a', [1, 2])], []),
++                            ([candidate('a', [1, 2])], ['left', 'left']),
++                            ([candidate('a', [1, 2]), candidate('a', [3, 4])], ['left', 'right']),
++                            ([candidate('a', [1])], ['left', 'right'])]:
++            with self.assertRaises(ValueError):
++                select(rows, cases, random.Random(0))
++
++    def test_tampered_selection_evidence_is_rejected(self):
++        rows = [candidate('a', [5, 1]), candidate('b', [4, 8])]
++        original = select(rows, ['left', 'right'], FixedOrder())
++        variants = []
++        wrong = copy.deepcopy(original); wrong['selected'] = 'b'; variants.append(wrong)
++        wrong = copy.deepcopy(original); wrong['steps'][0]['worst_score'] += 1; variants.append(wrong)
++        wrong = copy.deepcopy(original); wrong['case_order'] = ['left', 'left']; variants.append(wrong)
++        wrong = copy.deepcopy(original); wrong['steps'][0]['survivors'].append('b'); variants.append(wrong)
++        wrong = copy.deepcopy(original); wrong['bucket'] = 'Exp'; variants.append(wrong)
++        for wrong in variants:
++            with self.assertRaises(ValueError):
++                verify_selection(rows, ['left', 'right'], wrong)
++
++
++if __name__ == '__main__':
++    unittest.main()

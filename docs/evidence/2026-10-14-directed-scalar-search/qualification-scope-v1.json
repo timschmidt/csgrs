@@ -1,0 +1,52 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v1/source",
+  "source_files": 10161,
+  "expected_delta_sha256": {
+    "crates/hyperreal/Cargo.toml": "80f1d901af08c712569f7800dffc70a148bfed369e210a32ad2b3e856dfecb14",
+    "crates/hyperreal/fuzz/README.md": "a8de73dd765886f89c72e8bc3c9c564fd9c197bb55a6e97da4476c2e0eb56b57",
+    "crates/hyperreal/examples/directed_scalar_probe.rs": "ccd016293e05d75d18fe4f53d6d78b261bc31f0a0001fab77d11a83b3c8228c2",
+    "crates/hyperreal/examples/directed_scalar_probe/oracle.rs": "0f121fca24f88e76535c52832bc3d04628afc8588f22c2380bfb79ac142630df",
+    "crates/hyperreal/examples/directed_scalar_probe/recipe.rs": "4cca44994dacf2934aa67c65acaab6e1b048477315bd36dd102983bc5abd7873",
+    "crates/hyperreal/fuzz/directed/evidence.py": "d3a90d63b5343ec0ad4320bfe97ccfcc4c96c912d34ecea71d7a0864ab23d269",
+    "crates/hyperreal/fuzz/directed/campaign.py": "c031214b2e1cc8bfd25a472dfbb8c46f215ccf7bb630ed75b46fc94fcf5c1714",
+    "crates/hyperreal/fuzz/directed/test_evidence.py": "b301392e5c6cde010f3b1583ad4c3fbd5a1914367024a0a3955f13199b5f4990",
+    "crates/hyperreal/fuzz/directed/test_lexicase.py": "3e7e239eb5c31a4ce6b5ddeadd6c417abcd1530a6d07ab77a58e08df994a2a35",
+    "crates/hyperreal/fuzz/directed/lexicase.py": "e55daf224219f90cad2ebf2fde0304419d0f8cd70d191bcce1069dff33cfe18e"
+  },
+  "commands": 11,
+  "validation": [
+    "Workspace formatting",
+    "Fuzz-manifest formatting",
+    "All Python selector and evidence tests",
+    "Strict Hyperreal all-target Clippy with serde and dispatch-trace",
+    "Strict Hyperreal all-target Clippy with all features",
+    "ASan/LSan example unit tests with serde and dispatch-trace and rebuilt std",
+    "ASan/LSan example unit tests with all features and rebuilt std",
+    "ASan/LSan probe build with serde and dispatch-trace and rebuilt std",
+    "Inventory of all 22 actual private classes",
+    "Three-generation directed campaign with eight candidates and four parent selections per representation per generation",
+    "Independent replay of every selection and mutation from the retained evidence"
+  ],
+  "command_wall_limit_seconds": 1800,
+  "campaign": {
+    "seed": 20261014,
+    "rounds": 3,
+    "population": 8,
+    "parents": 4,
+    "probe_timeout_seconds": 30,
+    "expected_completed_probes": 528,
+    "expected_selection_events": 264
+  },
+  "score_contract": "Median of three instrumented query-body wall-time samples; full samples retained. Search fitness only, no speedup or cross-library timing claim.",
+  "limits": [
+    "Finite scalar campaign only; other layers and the full P38 objective remain open.",
+    "MPFR intervals independently reject contradictions but interval overlap is not proof of exact symbolic identity.",
+    "Native GMP/MPFR code is not claimed sanitizer-instrumented.",
+    "Competitive benchmarking of retained cases is a subsequent required gate; this qualification does not fulfill it.",
+    "No full workspace CI or push-readiness claim."
+  ],
+  "no_extension_retry_filter_or_pooling": true,
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false
+}
