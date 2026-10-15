@@ -73,15 +73,31 @@ fn render_readme_curves() {
         "regular_ngon",
         &curve::regular_ngon(6, r(1.0)).expect("valid planar fixture"),
     );
-    render_curve("curve_arrow", &curve::arrow(r(2.2), r(0.35), r(0.8), r(1.0)));
+    render_curve(
+        "curve_arrow",
+        &curve::arrow(r(2.2), r(0.35), r(0.8), r(1.0)).expect("valid sampled profile fixture"),
+    );
     render_curve(
         "trapezoid",
-        &curve::trapezoid(r(1.2), r(2.2), r(1.4), r(0.45)),
+        &curve::trapezoid(r(1.2), r(2.2), r(1.4), r(0.45))
+            .expect("valid sampled profile fixture"),
     );
-    render_curve("star", &curve::star(5, r(1.1), r(0.45)));
-    render_curve("teardrop", &curve::teardrop(r(1.5), r(2.3), 96));
-    render_curve("curve_egg", &curve::egg(r(1.6), r(2.2), 96));
-    render_curve("squircle", &curve::squircle(r(2.0), r(1.6), 128));
+    render_curve(
+        "star",
+        &curve::star(5, r(1.1), r(0.45)).expect("valid sampled profile fixture"),
+    );
+    render_curve(
+        "teardrop",
+        &curve::teardrop(r(1.5), r(2.3), 96).expect("valid sampled profile fixture"),
+    );
+    render_curve(
+        "curve_egg",
+        &curve::egg(r(1.6), r(2.2), 96).expect("valid sampled profile fixture"),
+    );
+    render_curve(
+        "squircle",
+        &curve::squircle(r(2.0), r(1.6), 128).expect("valid sampled profile fixture"),
+    );
     render_curve(
         "keyhole",
         &curve::keyhole(
@@ -100,14 +116,21 @@ fn render_readme_curves() {
             .expect("Reuleaux intersections")
             .into_value(),
     );
-    render_curve("heart", &curve::heart(r(2.0), r(1.8), 160));
+    render_curve(
+        "heart",
+        &curve::heart(r(2.0), r(1.8), 160).expect("valid sampled profile fixture"),
+    );
     render_curve(
         "ring",
         &curve::ring(r(1.4), r(0.35), 96, &GeometryContext::APPROXIMATE_512)
             .expect("ring Boolean")
             .into_value(),
     );
-    render_curve("pie_slice", &curve::pie_slice(r(1.1), r(-35.0), r(115.0), 64));
+    render_curve(
+        "pie_slice",
+        &curve::pie_slice(r(1.1), r(-35.0), r(115.0), 64)
+            .expect("valid sampled profile fixture"),
+    );
     render_curve(
         "crescent",
         &curve::crescent(r(1.1), r(0.9), r(0.48), 96, &GeometryContext::APPROXIMATE_512)
@@ -116,7 +139,8 @@ fn render_readme_curves() {
     );
     render_curve(
         "supershape",
-        &curve::supershape(r(1.0), r(1.0), r(5.0), r(2.0), r(7.0), r(7.0), 160),
+        &curve::supershape(r(1.0), r(1.0), r(5.0), r(2.0), r(7.0), r(7.0), 160)
+            .expect("valid sampled profile fixture"),
     );
     render_curve(
         "circle_with_keyway",
@@ -346,7 +370,7 @@ fn render_readme_meshes() {
         .into_value(),
     );
 
-    let star = curve::star(5, r(1.0), r(0.45));
+    let star = curve::star(5, r(1.0), r(0.45)).expect("valid sampled profile fixture");
     render_mesh(
         "extrude",
         &curve::try_extrude(&star, r(0.65), &csgrs::GeometryContext::STRICT)

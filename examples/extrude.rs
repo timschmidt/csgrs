@@ -15,7 +15,7 @@ fn main() {
 
     let square = curve::square(r(1.5)).expect("valid planar fixture");
     let circle = curve::circle(r(0.5), 32).expect("valid planar fixture");
-    let star = curve::star(5, r(1.2), r(0.45));
+    let star = curve::star(5, r(1.2), r(0.45)).expect("valid sampled profile fixture");
 
     write_mesh(
         &curve::try_extrude(&square, r(1.0), &GeometryContext::STRICT)

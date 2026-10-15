@@ -138,9 +138,30 @@ exact coordinate rows, in a thread-local FIFO of at most 64 entries. Approximate
 requests may reuse those proofs but do not populate the cache. Failures are not
 cached. The limit counts entries, not heap bytes; scalar growth, secondary
 kernel allocation, total work and cancellation remain unbounded internally.
-The other infallible sampled-shape, gear and text constructors below still need
-their own typed-failure migration. End-to-end provenance remains a separate
-open contract from these operation-local certainty receipts.
+The sampled `arrow`, `trapezoid`, `star`, `teardrop`, `egg`, `squircle`,
+`pie_slice`, `heart`, and `supershape` constructors also return `Result`; each
+has a `_with_context` variant returning `GeometryOutcome`. Their existing
+positive-dimension restrictions and sampling formulas remain. An equal-width
+arrow now omits its duplicate shoulders and retains its shaft and triangular
+head. `teardrop_cylinder` propagates profile errors and joins construction and
+extrusion certainty. WASM star, teardrop, egg and heart constructors throw
+`GeometryError` with a diagnostic `code` instead of publishing failed profiles.
+
+Stars require at least three tips and `outer_radius > inner_radius > 0`;
+teardrops require `length > width / 2` and at least two semicircle chords.
+Eggs and squircles require at least three samples; hearts require eight.
+Sectors require a positive radius, a nonzero signed sweep of at most 360 degrees,
+and at least one chord. A full turn keeps the existing minimum of three circle
+samples. A successfully regularized zero-area sample, such as a one-chord
+semicircle, is canonical empty geometry. Supershapes require positive axes,
+nonzero `n1`, at least three samples and defined powers at every sample.
+Invalid input, undecided predicates, scalar-domain errors and capacity failures
+remain distinct from successful empty results. Native topology failures retain
+their cause. These sampled polygons carry no analytic-fidelity bound.
+
+Gear, text, airfoil and other legacy convenience operations still need their
+own typed-failure migration. End-to-end provenance remains a separate open
+contract from these operation-local certainty receipts.
 
 Rendered filled constructors:
 
@@ -154,19 +175,19 @@ Rendered filled constructors:
 | <img src="docs/rounded_rectangle.png" width="144" alt="Filled rounded rectangle with visible edges and vertices"/> | `curve::rounded_rectangle(width: Real, height: Real, corner_radius: Real, corner_segments: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/ellipse.png" width="144" alt="Filled sampled ellipse with visible edges and vertices"/> | `curve::ellipse(width: Real, height: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/regular_ngon.png" width="144" alt="Filled regular polygon with visible edges and vertices"/> | `curve::regular_ngon(sides: usize, radius: Real) -> Result<CurveRegion2, ValidationError>` |
-| <img src="docs/curve_arrow.png" width="144" alt="Filled planar arrow with visible edges and vertices"/> | `curve::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real) -> CurveRegion2` |
-| <img src="docs/trapezoid.png" width="144" alt="Filled trapezoid with visible edges and vertices"/> | `curve::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real) -> CurveRegion2` |
-| <img src="docs/star.png" width="144" alt="Filled star with visible edges and vertices"/> | `curve::star(num_points: usize, outer_radius: Real, inner_radius: Real) -> CurveRegion2` |
-| <img src="docs/teardrop.png" width="144" alt="Filled teardrop with visible edges and vertices"/> | `curve::teardrop(width: Real, length: Real, segments: usize) -> CurveRegion2` |
-| <img src="docs/curve_egg.png" width="144" alt="Filled egg with visible edges and vertices"/> | `curve::egg(width: Real, length: Real, segments: usize) -> CurveRegion2` |
-| <img src="docs/squircle.png" width="144" alt="Filled squircle with visible edges and vertices"/> | `curve::squircle(width: Real, height: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/curve_arrow.png" width="144" alt="Filled planar arrow with visible edges and vertices"/> | `curve::arrow(shaft_length: Real, shaft_width: Real, head_length: Real, head_width: Real) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/trapezoid.png" width="144" alt="Filled trapezoid with visible edges and vertices"/> | `curve::trapezoid(top_width: Real, bottom_width: Real, height: Real, top_offset: Real) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/star.png" width="144" alt="Filled star with visible edges and vertices"/> | `curve::star(num_points: usize, outer_radius: Real, inner_radius: Real) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/teardrop.png" width="144" alt="Filled teardrop with visible edges and vertices"/> | `curve::teardrop(width: Real, length: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/curve_egg.png" width="144" alt="Filled egg with visible edges and vertices"/> | `curve::egg(width: Real, length: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/squircle.png" width="144" alt="Filled squircle with visible edges and vertices"/> | `curve::squircle(width: Real, height: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/keyhole.png" width="144" alt="Filled keyhole with visible edges and vertices"/> | `curve::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
 | <img src="docs/reuleaux.png" width="144" alt="Filled Reuleaux polygon with visible exact curve edges and vertices"/> | `curve::reuleaux(sides: usize, diameter: Real, circle_segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
-| <img src="docs/heart.png" width="144" alt="Filled heart with visible edges and vertices"/> | `curve::heart(width: Real, height: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/heart.png" width="144" alt="Filled heart with visible edges and vertices"/> | `curve::heart(width: Real, height: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/ring.png" width="144" alt="Filled annulus with visible exact curve edges and vertices"/> | `curve::ring(inner_diameter: Real, thickness: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
-| <img src="docs/pie_slice.png" width="144" alt="Filled circular sector with visible edges and vertices"/> | `curve::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/pie_slice.png" width="144" alt="Filled circular sector with visible edges and vertices"/> | `curve::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/crescent.png" width="144" alt="Filled crescent with visible exact curve edges and vertices"/> | `curve::crescent(outer_radius: Real, inner_radius: Real, offset: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
-| <img src="docs/supershape.png" width="144" alt="Filled superformula shape with visible edges and vertices"/> | `curve::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize) -> CurveRegion2` |
+| <img src="docs/supershape.png" width="144" alt="Filled superformula shape with visible edges and vertices"/> | `curve::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/circle_with_keyway.png" width="144" alt="Circle with a keyway and visible exact curve edges"/> | `curve::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
 | <img src="docs/circle_with_flat.png" width="144" alt="Circle with one flat and visible exact curve edges"/> | `curve::circle_with_flat(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
 | <img src="docs/circle_with_two_flats.png" width="144" alt="Circle with two flats and visible exact curve edges"/> | `curve::circle_with_two_flats(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |

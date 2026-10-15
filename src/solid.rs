@@ -822,11 +822,16 @@ pub fn teardrop_cylinder(
     shape_segments: usize,
     context: &crate::GeometryContext,
 ) -> Result<crate::GeometryOutcome<TriangleMesh>, ValidationError> {
-    crate::curve::try_extrude(
-        &crate::curve::teardrop(width, length, shape_segments),
-        height,
+    let decisions = crate::context::GeometryDecisions::new(context);
+    let profile = decisions.consume_geometry(crate::curve::teardrop_with_context(
+        width,
+        length,
+        shape_segments,
         context,
-    )
+    )?);
+    let mesh =
+        decisions.consume_geometry(crate::curve::try_extrude(&profile, height, context)?);
+    Ok(decisions.finish(mesh))
 }
 
 /// Extruded involute spur gear.

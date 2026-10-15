@@ -606,30 +606,33 @@ impl CurveRegionJs {
     }
 
     pub fn star(points: usize, outer_radius: f64, inner_radius: f64) -> Result<Self, JsValue> {
-        Ok(curve::star(
+        curve::star(
             points,
-            real_from_js_named(outer_radius, "outerRadius")?,
-            real_from_js_named(inner_radius, "innerRadius")?,
+            crate::wasm::mesh_js::geometry_scalar(outer_radius, "outerRadius")?,
+            crate::wasm::mesh_js::geometry_scalar(inner_radius, "innerRadius")?,
         )
-        .into())
+        .map(Into::into)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn teardrop(width: f64, length: f64, segments: usize) -> Result<Self, JsValue> {
-        Ok(curve::teardrop(
-            real_from_js_named(width, "width")?,
-            real_from_js_named(length, "length")?,
+        curve::teardrop(
+            crate::wasm::mesh_js::geometry_scalar(width, "width")?,
+            crate::wasm::mesh_js::geometry_scalar(length, "length")?,
             segments,
         )
-        .into())
+        .map(Into::into)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn egg(width: f64, length: f64, segments: usize) -> Result<Self, JsValue> {
-        Ok(curve::egg(
-            real_from_js_named(width, "width")?,
-            real_from_js_named(length, "length")?,
+        curve::egg(
+            crate::wasm::mesh_js::geometry_scalar(width, "width")?,
+            crate::wasm::mesh_js::geometry_scalar(length, "length")?,
             segments,
         )
-        .into())
+        .map(Into::into)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn ring(
@@ -649,12 +652,13 @@ impl CurveRegionJs {
     }
 
     pub fn heart(width: f64, height: f64, segments: usize) -> Result<Self, JsValue> {
-        Ok(curve::heart(
-            real_from_js_named(width, "width")?,
-            real_from_js_named(height, "height")?,
+        curve::heart(
+            crate::wasm::mesh_js::geometry_scalar(width, "width")?,
+            crate::wasm::mesh_js::geometry_scalar(height, "height")?,
             segments,
         )
-        .into())
+        .map(Into::into)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn crescent(

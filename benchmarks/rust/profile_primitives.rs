@@ -92,9 +92,11 @@ fn main() {
     });
     run_profile(&config, "arrow", 64, || {
         curve::arrow(Real::from(6), Real::from(2), Real::from(3), Real::from(4))
+            .expect("valid sampled profile fixture")
     });
     run_profile(&config, "trapezoid", 64, || {
         curve::trapezoid(Real::from(4), Real::from(8), Real::from(4), Real::from(2))
+            .expect("valid sampled profile fixture")
     });
     run_profile(&config, "rounded_rectangle", 8, || {
         curve::rounded_rectangle(Real::from(12_u8), Real::from(8_u8), Real::from(2_u8), 8)
@@ -102,15 +104,18 @@ fn main() {
     });
     run_profile(&config, "star", 16, || {
         curve::star(12, Real::from(8_u8), Real::from(4_u8))
+            .expect("valid sampled profile fixture")
     });
     run_profile(&config, "teardrop", 8, || {
         curve::teardrop(Real::from(6), Real::from(10), 24)
+            .expect("valid sampled profile fixture")
     });
     run_profile(&config, "egg", 8, || {
-        curve::egg(Real::from(6), Real::from(10), 24)
+        curve::egg(Real::from(6), Real::from(10), 24).expect("valid sampled profile fixture")
     });
     run_profile(&config, "squircle", 4, || {
         curve::squircle(Real::from(8), Real::from(6), 24)
+            .expect("valid sampled profile fixture")
     });
     run_profile(&config, "keyhole", 4, || {
         compound_region(curve::keyhole(
@@ -139,6 +144,7 @@ fn main() {
     });
     run_profile(&config, "pie_slice", 8, || {
         curve::pie_slice(Real::from(4), Real::from(10), Real::from(100), 12)
+            .expect("valid sampled profile fixture")
     });
     run_profile(&config, "supershape", 4, || {
         curve::supershape(
@@ -150,6 +156,7 @@ fn main() {
             Real::from(2),
             32,
         )
+        .expect("valid sampled profile fixture")
     });
     run_profile(&config, "circle_with_keyway", 2, || {
         compound_region(curve::circle_with_keyway(
@@ -183,7 +190,7 @@ fn main() {
         curve::bspline_path(&bezier_control, 3, 8).expect("open B-spline path")
     });
     run_profile(&config, "heart", 4, || {
-        curve::heart(Real::from(8), Real::from(8), 32)
+        curve::heart(Real::from(8), Real::from(8), 32).expect("valid sampled profile fixture")
     });
     run_profile(&config, "crescent", 2, || {
         compound_region(curve::crescent(
