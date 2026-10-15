@@ -4,6 +4,15 @@ This matrix describes certified behavior in the current clean-break API.
 “Unsupported” means the operation returns a structured error; it never means
 that sampled or tolerance-based geometry is substituted.
 
+## Operation resources
+
+`OperationContext` shares explicit refinement and promotion allowances across
+a synchronous batch and its nested BREP/Hypercurve/Hypersolve calls. It returns
+typed resource exhaustion and admitted usage while retaining strict predicate
+authority. This is partial solver-work accounting: scalar precision, complete
+geometry work, memory, deadlines, cancellation and worker allocations are not
+covered. See the [operation-scope contract](ARCHITECTURE.md#operation-scopes).
+
 ## Spatial curve carriers
 
 | Family | Evaluate / derivatives | Bounds | Parameter location | Reverse / split | Persistence |

@@ -8,7 +8,7 @@
       "status": "in-progress",
       "plan": "crates/hyperbrep/docs/DEVELOPMENT_PLAN.md",
       "work_packages": "crates/hyperbrep/docs/IMPLEMENTATION_STATUS.json",
-      "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-14-retryable-caches/manifest.json",
+      "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-14-operation-context/manifest.json",
       "contract": "Pure Rust native/WASM exact CAD implementation; greenfield API/archive changes with direct caller updates and no compatibility shims.",
       "qualification": "See the work-package ledger for command-specific evidence. No whole-plan or property completion is inferred from the foundational increments."
     },

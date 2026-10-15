@@ -40,7 +40,7 @@ there is no parallel legacy model API.
 | --- | --- |
 | `ownership/` | Canonical public model references, scoped construction keys, owned operation results and transactions |
 | `construction.rs`, `boolean_kernel.rs`, `meshing.rs` | Private constructor, Boolean and derived-output algorithms |
-| `context.rs` | Strict curve-policy scope at fallible public operation boundaries, including calls nested inside provisional or display-preview scopes |
+| `context.rs` | Explicit strict operation configuration and shared Hypersolve budgets; strict authority at fallible public operation boundaries |
 | `cache.rs` | Shared publication of successful immutable certificates; failed queries remain retryable |
 | `topology/ids.rs`, `records.rs`, `correspondence.rs` | Typed identifiers, immutable topology records and exact parameter relations |
 | `topology/model.rs`, `builder.rs`, `error.rs` | Arena access, adjacency, staged construction/publication and typed failures |
@@ -49,8 +49,8 @@ there is no parallel legacy model API.
 | `topology/query.rs`, `measure.rs`, `transform.rs` | Classification, exact measurements and immutable transforms |
 | `topology/helpers.rs`, `tests.rs` | Shared exact support routines and topology regressions |
 
-This split preserves the existing algorithms and admitted families. Shared
-operation budgets, general curved-shell validation and retained algebraic
+This split preserves the existing algorithms and admitted families. Complete
+operation accounting, general curved-shell validation and retained algebraic
 parameters remain tracked in the
 [implementation ledger](IMPLEMENTATION_STATUS.json).
 
@@ -60,6 +60,34 @@ can benefit from stronger scalar evidence. Concurrent cold readers may repeat
 the calculation; publication keeps one successful value, and a failed reader
 uses a success published before its final cache check. Warm reads do not
 recompute. See the [cache regression evidence](evidence/2026-10-14-retryable-caches/manifest.json).
+
+## Operation scopes
+
+`OperationContext::strict` takes the existing Hypersolve `WorkBudget`, exposed
+at the crate root alongside `BudgetOutcome`, `BudgetExceeded`, `WorkKind` and
+`WorkUsage`. `evaluate` establishes one synchronous strict scope for a closure.
+Put a sequence of modeling operations inside that closure to share a total
+budget. Each evaluation of the reusable configuration creates a fresh scope;
+nested scopes also charge every parent and cannot reset a parent's allowance.
+A child with a smaller allowance may fail while its parent can still proceed.
+Unwinding restores the prior scope without refunding its already admitted work.
+
+Resource exhaustion is the outer `BudgetOutcome::result` error; the callback's
+domain errors, unknowns and completeness reports remain in its return type.
+An exhausted scope cannot return that value even when the callback ignores a
+nested denial. The scope does not roll back arbitrary caller side effects.
+The strict policy is queryable and suspends ambient Hypercurve approximation
+and preview authority. Existing individual BREP operations continue to enforce
+strict policy even outside a bounded batch.
+
+The two counters cover existing instrumented solver refinements and
+promotions, with the same units and cache-sensitive usage as
+`hypersolve::work_budget`. Scalar precision refinement, remaining geometry and
+elimination work, degree/coefficient growth and allocations are not completely
+charged. This is not a time or memory bound. Worker allocations, async scopes,
+cancellation, detailed proof-stage receipts and remaining counters are open
+WP01 work. The plan's broader `WorkLimits` sketch remains a target; unsupported
+limit fields are not exposed as if they were enforced.
 
 ## Canonical model
 

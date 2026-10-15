@@ -202,6 +202,32 @@
       "validation": "The baseline fails all three public bounds retries after scalar evidence strengthens. The regression, controlled concurrency schedule, 239 core tests, 8 integration tests and 2 doctests pass. Strict Clippy, rustdoc, WASM build, fuzz-bin Clippy, formatting and all 66 benchmark rows pass.",
       "cost_evidence": "Three paired CPU 0 trials preserve all receipts. Median of per-case median timing ratios is 1.00108; median process peak RSS changes from 21,740 to 21,652 KiB. Executable grows 6,776 bytes. Descriptive samples only. Largest sampled case ratio is 1.08850 (disjoint sphere union remap/validation).",
       "limits": "No transient public face-contour failure was reproduced; the rejected budget fixture is archived. Cold concurrent readers may duplicate work and failed calls recompute. Explicit contexts, full shared work budgets and all work-package completion gates remain open."
+    },
+    {
+      "id": "explicit-operation-context",
+      "work_packages": [
+        "WP00",
+        "WP01",
+        "WP21"
+      ],
+      "properties": [
+        "P4",
+        "P6",
+        "P8",
+        "P11",
+        "P14",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "kept for explicit solver resource control; not an optimization",
+      "change": "Expose immutable OperationContext::strict and synchronous evaluate using existing Hypersolve WorkBudget/BudgetOutcome types. Nested BREP, Hypercurve and solver calls share refinements/promotions; resource exhaustion stays outside the callback domain result. Add an exact direct/scoped cost benchmark.",
+      "source": "../src/context.rs",
+      "evidence": "evidence/2026-10-14-operation-context/manifest.json",
+      "validation": "Seven new integration tests and two deliberately failing mutants cover real BREP root queries, promotion limits, nested budgets, retry, warm results, strict authority and unwind restoration. All 239 core tests, 15 integration tests and 3 doctests pass, as do strict Clippy, rustdoc, WASM build, fuzz-bin Clippy and formatting. Both release harnesses pass all receipts.",
+      "cost_evidence": "The unchanged 66-case harness preserves every receipt in three paired trials: median of case median ratios 1.00617; largest sampled ratio 1.06225 (analytic_kernel/sphere_build_measure_classify); executable +96 bytes. Five direct/scoped trials measure line-query medians 678/709 ns and five-root query medians 329,898/331,251 ns, including scoped usage checks. Samples are descriptive, not statistical guarantees.",
+      "limits": "Only existing instrumented solver refinements/promotions are counted. Full geometry/scalar/elimination accounting, degree/coefficient and memory limits, worker allocation, cancellation, async propagation, proof-stage receipts and mandatory composed provenance remain open. No whole-operation time/memory bound or work-package completion is claimed."
     }
   ],
   "work_packages": [

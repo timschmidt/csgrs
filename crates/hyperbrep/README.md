@@ -20,6 +20,15 @@ Constructors and Booleans return owned `BodySet` or `SheetSet` selections.
 Typed arena positions in errors are diagnostic labels and cannot resolve a
 record through the public API.
 
+`OperationContext::strict(WorkBudget { refinements, promotions })` runs a
+synchronous batch through `context.evaluate(|| ...)`. Nested BREP, Hypercurve
+and Hypersolve calls share the admitted solver work. The returned
+`BudgetOutcome` separates resource exhaustion from the callback's domain
+result and reports actual usage. These counters cover instrumented root
+refinements and algebraic promotions; they do not bound all geometry work,
+scalar precision, time or memory. Scopes do not propagate to worker threads
+or futures. See [operation scopes](docs/ARCHITECTURE.md#operation-scopes).
+
 ## Exactness contract
 
 - Coordinates, parameters, domains, weights, knots, and transforms use `Real`.

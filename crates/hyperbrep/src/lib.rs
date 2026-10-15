@@ -44,6 +44,7 @@ pub(crate) use boolean_kernel::{
 pub use construction::{
     Axis, ConstructionError, LoftSection, RationalBezierSweepFrame, TensorPatch,
 };
+pub use context::OperationContext;
 pub use error::{GeometryError, GeometryResult};
 pub use geometry::{
     Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceIntersection,
@@ -55,6 +56,7 @@ pub use geometry::{
     SurfacePcurveCorrespondence, SurfaceSurfaceIntersection,
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
+pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};
 pub(crate) use persistence::ImportedModel;
 pub use persistence::PersistenceError;
 pub use topology::{
