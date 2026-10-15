@@ -1,0 +1,57 @@
+{
+  "status": "contract-before-implementation",
+  "owning_layer": "Hyperreal development-only competitive enclosure benchmark",
+  "qualification_dependency": "qualification-v3 must complete; a failed campaign cannot supply a successful selected-input inventory",
+  "inputs": "Every distinct final selected input from all 22 representation buckets; exact genomes and recipe source hashes frozen before execution. No case filtering or parameter reduction.",
+  "operation": "Construct the exact recipe and produce a certified closed rational enclosure whose absolute width is at most 2^-256.",
+  "backends": [
+    "Hyperreal native exact/computable arithmetic",
+    "Rug 1.30 / MPFR directed interval arithmetic"
+  ],
+  "matching_contract": {
+    "absolute_width": "1/2^256",
+    "precision_schedule_bits": [
+      256,
+      384,
+      512,
+      640,
+      768,
+      896,
+      1024,
+      1152,
+      1280,
+      1408,
+      1536,
+      1664,
+      1792,
+      1920,
+      2048
+    ],
+    "maximum_precision_bits": 2048,
+    "hyperreal": "Build one fresh Real per process; request each scheduled negative computable precision until the exact rational interval width meets the bound.",
+    "mpfr": "Evaluate directed MPFR interval expressions from exact rational parameters at each scheduled significand precision until the exact rational endpoint width meets the same bound.",
+    "exhaustion": "Explicit error; never silently lower accuracy or omit the case."
+  },
+  "timed_scope": "Exact expression construction, adaptive enclosure evaluation, native exact-rational endpoint extraction and width checking, and temporary/value destruction. Input JSON decoding, shared recipe-parameter decoding, process startup, output text encoding, independent correctness oracle and cleanup are outside the timer.",
+  "cold_contract": "One measured backend operation in a fresh process. No oracle or numeric warmup before the timer. No claim that OS page or allocator caches are cold.",
+  "samples_per_backend_per_input": 11,
+  "case_order": "Seeded shuffle of all cases per repetition, seed 20261014; backend order alternates by repetition and canonical case index.",
+  "measurement": "Native release build with serde, without dispatch-trace or sanitizers. Pin measurement descendants to one CPU from the allowed affinity mask and record the CPU and hardware.",
+  "correctness": "Independently parse all exact endpoints, enforce absolute width, compare with the 1024-bit directed reference enclosure, and retain all answers/precision steps. This rejects contradictions; overlapping intervals do not prove arbitrary symbolic identities.",
+  "statistics": "Retain all 11 samples; report per-input median, minimum, maximum and median ratio. No outlier removal, best-case substitution, retry, extension or pooled trials.",
+  "gates": [
+    "Formatting and strict affected all-target Clippy feature configurations",
+    "Sanitizer example tests for native backend adapters and exact width handling",
+    "All declared final selected inputs measured at the same accuracy contract",
+    "All raw result records replayed and source/binary hashes checked"
+  ],
+  "limits": [
+    "This compares interval enclosure operations on selected scalar inputs; it does not compare structural certificate APIs or establish whole-library rankings.",
+    "No warm-result performance claim, cross-machine generalization or matched cross-library allocation claim.",
+    "Native GMP/MPFR code is not claimed ASan-instrumented.",
+    "Other stack layers, exhaustive coverage, formal obligations and complete P38 remain open."
+  ],
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false
+}

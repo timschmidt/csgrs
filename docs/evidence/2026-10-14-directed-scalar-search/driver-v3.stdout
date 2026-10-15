@@ -1,0 +1,12 @@
+{"start": "format"}
+{"name": "format", "command": ["cargo", "fmt", "--all", "--", "--check"], "exit_code": 0, "process_wall_seconds": 10.671181201934814, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"start": "fuzz-format"}
+{"name": "fuzz-format", "command": ["cargo", "fmt", "--manifest-path", "crates/hyperreal/fuzz/Cargo.toml", "--", "--check"], "exit_code": 0, "process_wall_seconds": 0.05415561981499195, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"start": "python-tests"}
+{"name": "python-tests", "command": ["python3", "-B", "-m", "unittest", "discover", "-s", "crates/hyperreal/fuzz/directed", "-p", "test_*.py", "-v"], "exit_code": 0, "process_wall_seconds": 12.39028306864202, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "fa9f7f5f5e9eaf64ec0c4237aad33f8c582ba334c9e2a7e260c1f69846cfd844"}
+{"start": "probe-features-clippy"}
+{"name": "probe-features-clippy", "command": ["cargo", "clippy", "--locked", "--release", "-p", "hyperreal", "--all-targets", "--features", "serde,dispatch-trace", "--", "-D", "warnings"], "exit_code": 0, "process_wall_seconds": 11.060791745316237, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "fa51027d33eedc4a3d9af79db4b7515a9dbb1f6d62c4efc6813b64fdefabb237"}
+{"start": "all-features-clippy"}
+{"name": "all-features-clippy", "command": ["cargo", "clippy", "--locked", "--release", "-p", "hyperreal", "--all-targets", "--all-features", "--", "-D", "warnings"], "exit_code": 0, "process_wall_seconds": 4.743896249681711, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "463033dd6447c6e7bebbb9195b5f9bf265bbced625ef2aefa7a03e132cc38bca"}
+{"start": "probe-features-tests"}
+{"name": "probe-features-tests", "command": ["cargo", "test", "--locked", "--release", "-Zbuild-std", "--target", "x86_64-unknown-linux-gnu", "-p", "hyperreal", "--example", "directed_scalar_probe", "--features", "serde,dispatch-trace", "--", "--test-threads=2", "--show-output"], "exit_code": 101, "process_wall_seconds": 39.3083641869016, "stdout_sha256": "1e2529c82fcafaa1daadffb59e9640e10c6a5b405ce1b3a1d7632b9947e80b93", "stderr_sha256": "b4128a58d0bf77dbfbf4114be251c43e558c140d85fe04e697e70f2eb71d4a60"}

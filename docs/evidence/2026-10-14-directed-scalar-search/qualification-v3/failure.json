@@ -1,0 +1,47 @@
+{
+  "complete": false,
+  "failed_command": {
+    "name": "probe-features-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-Zbuild-std",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "--example",
+      "directed_scalar_probe",
+      "--features",
+      "serde,dispatch-trace",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "exit_code": 101,
+    "process_wall_seconds": 39.3083641869016,
+    "stdout_sha256": "1e2529c82fcafaa1daadffb59e9640e10c6a5b405ce1b3a1d7632b9947e80b93",
+    "stderr_sha256": "b4128a58d0bf77dbfbf4114be251c43e558c140d85fe04e697e70f2eb71d4a60"
+  },
+  "artifacts_sha256": {
+    "probe-features-tests.stderr": "b4128a58d0bf77dbfbf4114be251c43e558c140d85fe04e697e70f2eb71d4a60",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "probe-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "probe-features-tests.stdout": "1e2529c82fcafaa1daadffb59e9640e10c6a5b405ce1b3a1d7632b9947e80b93",
+    "probe-features-clippy.stderr": "fa51027d33eedc4a3d9af79db4b7515a9dbb1f6d62c4efc6813b64fdefabb237",
+    "all-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python-tests.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "bf6d54d147a4cd8f22a35feb8504fbe23e2b1cb5e5676f61d4475a03f0274b2f",
+    "fuzz-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fuzz-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.json": "91a81723d1aa38b72c0f851e7e0871c5d18a3a1bbacea24ccf398e7b776aaa01",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python-tests.stderr": "fa9f7f5f5e9eaf64ec0c4237aad33f8c582ba334c9e2a7e260c1f69846cfd844",
+    "all-features-clippy.stderr": "463033dd6447c6e7bebbb9195b5f9bf265bbced625ef2aefa7a03e132cc38bca",
+    "binaries.json": "809a28196243a884605304202a6eb5cfc6daf77c57c332ba9f7f6b20b35c4ee1"
+  },
+  "admitted": false,
+  "P38_complete": false
+}

@@ -1,0 +1,69 @@
+{
+  "status": "closed-failed",
+  "driver_terminal_exit_code_observed": 1,
+  "commands_executed": 6,
+  "command_exit_codes": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    101
+  ],
+  "python_tests_passed": 23,
+  "rust_tests_passed": 6,
+  "rust_tests_failed": 1,
+  "finding": "The regression test incorrectly assumed Hyperreal FromStr accepts the mixed-number form emitted by human Display. The failed unwrap is in the test reader for the old response, after the new probe and fraction encoder succeeded.",
+  "next_candidate_requirement": "Preserve the complete old input and response. Reconstruct each mixed display value independently as sign*(whole+fraction) using exact rational arithmetic, then compare it with the new explicit fraction output. Do not change production parsing or display.",
+  "sources_verified": {
+    "v1": 10161,
+    "v2": 10163,
+    "v3": 10166,
+    "main": 10153
+  },
+  "executed_binaries": {
+    "probe-features-tests/directed_scalar_probe-b4e29e084f4e51cb": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v3/sanitizer-target/x86_64-unknown-linux-gnu/release/examples/directed_scalar_probe-b4e29e084f4e51cb",
+      "sha256": "e78c8740d5b334cedf4b5207a4247d8455d70c7707489909e42163da6a9ec246",
+      "bytes": 9700424
+    }
+  },
+  "trial_artifacts_sha256": {
+    "probe-features-tests.stderr": "b4128a58d0bf77dbfbf4114be251c43e558c140d85fe04e697e70f2eb71d4a60",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "probe-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "probe-features-tests.stdout": "1e2529c82fcafaa1daadffb59e9640e10c6a5b405ce1b3a1d7632b9947e80b93",
+    "probe-features-clippy.stderr": "fa51027d33eedc4a3d9af79db4b7515a9dbb1f6d62c4efc6813b64fdefabb237",
+    "all-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python-tests.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "bf6d54d147a4cd8f22a35feb8504fbe23e2b1cb5e5676f61d4475a03f0274b2f",
+    "fuzz-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fuzz-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.json": "91a81723d1aa38b72c0f851e7e0871c5d18a3a1bbacea24ccf398e7b776aaa01",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "python-tests.stderr": "fa9f7f5f5e9eaf64ec0c4237aad33f8c582ba334c9e2a7e260c1f69846cfd844",
+    "failure.json": "e663f72381e5b3f637e809bfd6d106b1cc194bd3ba30b460920a3d584fdec892",
+    "all-features-clippy.stderr": "463033dd6447c6e7bebbb9195b5f9bf265bbced625ef2aefa7a03e132cc38bca",
+    "binaries.json": "809a28196243a884605304202a6eb5cfc6daf77c57c332ba9f7f6b20b35c4ee1"
+  },
+  "driver_logs_sha256": {
+    "driver-v3.stdout": "37117bc5e13191c5ab99832fab27dbf2b3b09963c5c9d20b98e7a38355bf0f59",
+    "driver-v3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "closure_sources_sha256": {
+    "close_v1.py": "0f490714057b8eec8b005db008177862702d30e24d5bb70de400c94bb1f444de",
+    "close_v3.py": "4d2478a349e117afa70fe6b95694bba54026660ac6e927b613d0d10185a313cc"
+  },
+  "sanitizer_error_markers_observed": false,
+  "campaign_started": false,
+  "competitive_contract_v1": {
+    "sha256": "13e7fb2d967cdf0f2109945792ce0213dfcb358a80e96e68ba0413416c7476d9",
+    "status": "dependency-failed-benchmark-not-started",
+    "reason": "The contract required a completed v3 campaign; v3 closed during unit tests."
+  },
+  "competitive_benchmark_complete": false,
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false,
+  "closed_trial_retried_resumed_filtered_extended_or_pooled": false
+}
