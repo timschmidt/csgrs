@@ -1163,10 +1163,8 @@ fn try_transform_with_known_orientation(
     reverse_winding: bool,
     decisions: &GeometryDecisions,
 ) -> Result<TriangleMesh, ValidationError> {
-    let transformed = decisions.consume_mesh(
-        mesh.try_transformed(decisions.mesh_context(), matrix)
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
+    let transformed =
+        decisions.consume_mesh(mesh.try_transformed(decisions.mesh_context(), matrix)?);
     Ok(if reverse_winding {
         transformed.reversed_winding()
     } else {
@@ -1174,9 +1172,14 @@ fn try_transform_with_known_orientation(
     })
 }
 
-/// Applies a homogeneous transform, returning empty geometry on uncertainty.
-pub fn transform(mesh: &TriangleMesh, matrix: &Matrix4) -> TriangleMesh {
-    try_transform(mesh, matrix).unwrap_or_else(|_| empty())
+/// Applies a homogeneous transform, preserving typed failures.
+///
+/// Equivalent to [`try_transform`]; singular, undecided, and unbounded results fail.
+pub fn transform(
+    mesh: &TriangleMesh,
+    matrix: &Matrix4,
+) -> Result<TriangleMesh, ValidationError> {
+    try_transform(mesh, matrix)
 }
 
 /// Rotates native geometry by Euler angles in degrees, reporting uncertainty.
@@ -1199,16 +1202,23 @@ pub fn try_rotate_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let rotated = decisions.consume_mesh(
-        mesh.try_rotated_xyz_degrees(decisions.mesh_context(), x, y, z)
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
+    let rotated = decisions.consume_mesh(mesh.try_rotated_xyz_degrees(
+        decisions.mesh_context(),
+        x,
+        y,
+        z,
+    )?);
     Ok(decisions.finish(rotated))
 }
 
 /// Rotates native geometry by Euler angles in degrees.
-pub fn rotate(mesh: &TriangleMesh, x: Real, y: Real, z: Real) -> TriangleMesh {
-    try_rotate(mesh, x, y, z).unwrap_or_else(|_| empty())
+pub fn rotate(
+    mesh: &TriangleMesh,
+    x: Real,
+    y: Real,
+    z: Real,
+) -> Result<TriangleMesh, ValidationError> {
+    try_rotate(mesh, x, y, z)
 }
 
 /// Scales native geometry independently along each axis, reporting degeneracy.
@@ -1254,8 +1264,13 @@ pub fn try_scale_with_context(
 }
 
 /// Scales native geometry independently along each axis.
-pub fn scale(mesh: &TriangleMesh, x: Real, y: Real, z: Real) -> TriangleMesh {
-    try_scale(mesh, x, y, z).unwrap_or_else(|_| empty())
+pub fn scale(
+    mesh: &TriangleMesh,
+    x: Real,
+    y: Real,
+    z: Real,
+) -> Result<TriangleMesh, ValidationError> {
+    try_scale(mesh, x, y, z)
 }
 
 /// Reflects native geometry across a plane, reporting an invalid plane.
@@ -1274,19 +1289,15 @@ pub fn try_mirror_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let matrix = decisions.consume_mesh(
-        plane
-            .reflection_matrix(decisions.mesh_context())
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
+    let matrix = decisions.consume_mesh(plane.reflection_matrix(decisions.mesh_context())?);
     // A valid plane reflection always reverses orientation.
     let mirrored = try_transform_with_known_orientation(mesh, &matrix, true, &decisions)?;
     Ok(decisions.finish(mirrored))
 }
 
 /// Reflects native geometry across a plane.
-pub fn mirror(mesh: &TriangleMesh, plane: &Plane) -> TriangleMesh {
-    try_mirror(mesh, plane).unwrap_or_else(|_| empty())
+pub fn mirror(mesh: &TriangleMesh, plane: &Plane) -> Result<TriangleMesh, ValidationError> {
+    try_mirror(mesh, plane)
 }
 
 /// Uniformly subdivides every native triangle.
@@ -2473,9 +2484,9 @@ pub trait SolidExt: Sized {
         context: &GeometryContext,
     ) -> HypermeshResult<GeometryOutcome<Self>>;
     /// Apply a homogeneous transform.
-    fn transformed(&self, matrix: &Matrix4) -> Self;
+    fn transformed(&self, matrix: &Matrix4) -> Result<Self, ValidationError>;
     /// Translate by an exact vector.
-    fn translated(&self, x: Real, y: Real, z: Real) -> Self;
+    fn translated(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError>;
     /// Return exact bounds.
     fn exact_bounds(&self) -> Aabb;
     /// Visit native triangles without constructing a csgrs mesh facade.
@@ -2533,11 +2544,11 @@ impl SolidExt for TriangleMesh {
         boolean_with_context(self, other, BooleanOp::SymmetricDifference, context)
     }
 
-    fn transformed(&self, matrix: &Matrix4) -> Self {
+    fn transformed(&self, matrix: &Matrix4) -> Result<Self, ValidationError> {
         transform(self, matrix)
     }
 
-    fn translated(&self, x: Real, y: Real, z: Real) -> Self {
+    fn translated(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError> {
         transform(self, &Matrix4::affine_translation([x, y, z]))
     }
 
@@ -2780,12 +2791,11 @@ mod tests {
 
         let cube = cube(Real::from(2_u8)).expect("valid primitive fixture");
         assert!(try_scale(&cube, Real::zero(), Real::one(), Real::one()).is_err());
-        assert!(
-            scale(&cube, Real::zero(), Real::one(), Real::one())
-                .triangles
-                .is_empty()
-        );
-        let reflected = scale(&cube, -Real::one(), Real::one(), Real::one());
+        assert!(matches!(
+            scale(&cube, Real::zero(), Real::one(), Real::one()),
+            Err(ValidationError::InvalidArguments)
+        ));
+        let reflected = scale(&cube, -Real::one(), Real::one(), Real::one()).unwrap();
         assert!(reflected.is_closed_manifold());
         assert!(signed_volume(&reflected) > 0.0);
         assert_eq!(
@@ -2797,7 +2807,7 @@ mod tests {
             )
         );
         let plane = Plane::axis_aligned(0, Real::zero());
-        let mirrored = mirror(&cube, &plane);
+        let mirrored = mirror(&cube, &plane).unwrap();
         assert!(mirrored.is_closed_manifold());
         assert!(signed_volume(&mirrored) > 0.0);
     }
@@ -2807,7 +2817,8 @@ mod tests {
         let left = cube(Real::from(2_u8)).expect("valid primitive fixture");
         let right = cube(Real::from(2_u8))
             .expect("valid primitive fixture")
-            .translated(Real::from(1_u8), Real::zero(), Real::zero());
+            .translated(Real::from(1_u8), Real::zero(), Real::zero())
+            .expect("valid transform fixture");
         let result: TriangleMesh = left
             .try_union(&right)
             .expect("native cube union must be certified");

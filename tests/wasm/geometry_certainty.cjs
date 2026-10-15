@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const path = require("node:path");
 const wasm = require(path.resolve(process.argv[2] || "target/properties-wasm/csgrs.js"));
 const {
-  CurveRegionJs, MeshJs, Point3Js, PlaneJs,
+  CurveRegionJs, MeshJs, Point3Js, PlaneJs, Matrix4Js,
   GeometryCertaintyJs: Certainty, GeometryQueryStatusJs: Status,
 } = wasm;
 
@@ -60,6 +60,24 @@ try {
   assert.equal(arrays.indices.length, 6);
 
   const cube = keep(MeshJs.cube(1));
+  const crossing = keep(cube.translate(-0.5, 0, 0));
+  const projective = keep(new Matrix4Js(0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0));
+  for (const [operation, code] of [
+    [() => cube.scale(0, 1, 1), "invalid_input"],
+    [() => cube.scaleWithContext(0, 1, 1, true), "invalid_input"],
+    [() => cube.translate(NaN, 0, 0), "invalid_input"],
+    [() => cube.rotateWithContext(0, Infinity, 0, false), "invalid_input"],
+    [() => cube.transform(projective), "unbounded"],
+    [() => crossing.transform(projective), "unbounded"],
+    [() => crossing.transformWithContext(projective, false), "unbounded"],
+    [() => crossing.transformWithContext(projective, true), "unbounded"],
+  ]) {
+    assert.throws(operation, (error) => error instanceof Error
+      && error.name === "GeometryError" && error.code === code
+      && error.message.length > 0);
+  }
+  const finiteProjective = keep(keep(cube.translate(1, 0, 0)).transform(projective));
+  assert.equal(finiteProjective.vertexCount(), 8);
   for (const [construct, code] of [
     [() => MeshJs.cube(NaN), "invalid_input"],
     [() => MeshJs.sphere(Infinity, 8, 4), "invalid_input"],

@@ -12,7 +12,10 @@ fn r(value: f64) -> Real {
 fn many_small_hyperreal_transforms_remain_composable() {
     let base = solid::center(&solid::cube(r(0.25)).expect("valid primitive fixture"));
     let combined = (0..8)
-        .map(|i| base.translated(r(i as f64) * r(0.5), r(0.0), r(0.0)))
+        .map(|i| {
+            base.translated(r(i as f64) * r(0.5), r(0.0), r(0.0))
+                .expect("valid transform fixture")
+        })
         .reduce(|left, right| left.try_union(&right).expect("certified union"))
         .expect("nonempty input");
 

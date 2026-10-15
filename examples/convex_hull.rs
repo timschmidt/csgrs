@@ -16,14 +16,17 @@ fn main() {
     let cube = solid::rotate(
         &solid::cube(r(2.0))
             .expect("valid primitive fixture")
-            .translated(r(0.8), r(0.0), r(0.0)),
+            .translated(r(0.8), r(0.0), r(0.0))
+            .expect("valid transform fixture"),
         r(0.0),
         r(35.0),
         r(0.0),
-    );
+    )
+    .expect("valid transform fixture");
     let sphere = solid::sphere(r(1.1), 32, 16)
         .expect("valid primitive fixture")
-        .translated(r(-0.5), r(0.0), r(0.0));
+        .translated(r(-0.5), r(0.0), r(0.0))
+        .expect("valid transform fixture");
     let union = cube.try_union(&sphere).unwrap();
 
     write_mesh(&union, "union");

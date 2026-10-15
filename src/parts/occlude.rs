@@ -665,10 +665,12 @@ mod tests {
     fn front_box_hides_rear_feature_edges() {
         let rear = solid::cube(Real::from(2))
             .expect("valid primitive fixture")
-            .translated(Real::from(1), Real::from(1), Real::zero());
+            .translated(Real::from(1), Real::from(1), Real::zero())
+            .expect("valid transform fixture");
         let front = solid::cube(Real::from(6))
             .expect("valid primitive fixture")
-            .translated(Real::from(-1), Real::from(-1), Real::from(3));
+            .translated(Real::from(-1), Real::from(-1), Real::from(3))
+            .expect("valid transform fixture");
         let (document, posed) = document_with(vec![("rear", rear), ("front", front)]);
         let report =
             blueprint_from_posed_mesh(&document, &posed, BlueprintProjection::Front, false);
@@ -691,7 +693,8 @@ mod tests {
         let rear = solid::cube(Real::from(4)).expect("valid primitive fixture");
         let front = solid::cube(Real::from(2))
             .expect("valid primitive fixture")
-            .translated(Real::zero(), Real::from(-1), Real::from(3));
+            .translated(Real::zero(), Real::from(-1), Real::from(3))
+            .expect("valid transform fixture");
         let (document, posed) = document_with(vec![("rear", rear), ("front", front)]);
         let report =
             blueprint_from_posed_mesh(&document, &posed, BlueprintProjection::Front, false);
@@ -721,10 +724,12 @@ mod tests {
     fn suppressed_front_box_still_hides_the_rear_box() {
         let rear = solid::cube(Real::from(2))
             .expect("valid primitive fixture")
-            .translated(Real::from(1), Real::from(1), Real::zero());
+            .translated(Real::from(1), Real::from(1), Real::zero())
+            .expect("valid transform fixture");
         let front = solid::cube(Real::from(6))
             .expect("valid primitive fixture")
-            .translated(Real::from(-1), Real::from(-1), Real::from(3));
+            .translated(Real::from(-1), Real::from(-1), Real::from(3))
+            .expect("valid transform fixture");
         let mut document = AssemblyDocument::new("occlusion", "main");
         document.node_mut(document.root()).expect("root").instructions = "n/a".into();
         document
@@ -776,10 +781,12 @@ mod tests {
     fn svg_snapshot_mentions_a_rear_coordinate() {
         let rear = solid::cube(Real::from(2))
             .expect("valid primitive fixture")
-            .translated(Real::from(1), Real::from(1), Real::zero());
+            .translated(Real::from(1), Real::from(1), Real::zero())
+            .expect("valid transform fixture");
         let front = solid::cube(Real::from(6))
             .expect("valid primitive fixture")
-            .translated(Real::from(-1), Real::from(-1), Real::from(3));
+            .translated(Real::from(-1), Real::from(-1), Real::from(3))
+            .expect("valid transform fixture");
         let (document, posed) = document_with(vec![("rear", rear), ("front", front)]);
         let report =
             blueprint_from_posed_mesh(&document, &posed, BlueprintProjection::Front, false);

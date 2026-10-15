@@ -46,7 +46,9 @@ fn signed_volume(mesh: &TriangleMesh) -> f64 {
 #[test]
 fn rational_booleans_stay_certified_with_either_context() {
     let left = solid::cube(Real::from(2)).expect("valid primitive fixture");
-    let right = left.translated(Real::one(), Real::zero(), Real::zero());
+    let right = left
+        .translated(Real::one(), Real::zero(), Real::zero())
+        .expect("valid transform fixture");
 
     for (operation, volume) in [
         (BooleanOp::Union, 12.0),
@@ -84,10 +86,12 @@ fn every_boolean_reports_approximation_without_affecting_later_strict_calls() {
     let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
     let left = solid::cube(Real::one())
         .expect("valid primitive fixture")
-        .translated(&sine - &Real::one(), Real::zero(), Real::zero());
+        .translated(&sine - &Real::one(), Real::zero(), Real::zero())
+        .expect("valid transform fixture");
     let right = solid::cube(Real::one())
         .expect("valid primitive fixture")
-        .translated(sine + unresolved_zero, Real::zero(), Real::zero());
+        .translated(sine + unresolved_zero, Real::zero(), Real::zero())
+        .expect("valid transform fixture");
 
     for (operation, volume) in [
         (BooleanOp::Union, 2.0),
@@ -148,7 +152,8 @@ fn drill_cylinder_uses_the_requested_context() {
         .expect("valid primitive fixture");
     let drill = solid::cylinder(Real::from(2), Real::from(6), 16)
         .expect("valid primitive fixture")
-        .translated(Real::from(6), Real::from(6), Real::from(-1));
+        .translated(Real::from(6), Real::from(6), Real::from(-1))
+        .expect("valid transform fixture");
     assert!(matches!(
         body.try_difference(&drill),
         Err(HypermeshError::PredicateUndecided { .. })

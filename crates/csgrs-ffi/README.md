@@ -74,12 +74,15 @@ finite region projections, and curve-to-solid operations.
   native geometry failure (`GEOMETRY_FAILED`). These statuses are additive;
   existing numeric values are unchanged. Proven zero-size solids succeed as
   empty geometry after all constructor parameters have been validated.
+- Mesh transforms retain native failure categories. A projective image that
+  reaches or crosses infinity reports `UNBOUNDED` (9). Invalid transforms and
+  undecided predicates remain distinct failures, and publish no model handle.
 - C++ exceptions retain the C status in `error::status()`; Python exceptions
-  retain it in `CsgrsError.status`. WASM primitive constructors throw a
+  retain it in `CsgrsError.status`. WASM primitive constructors and transforms throw a
   `GeometryError` with a string `code` (`invalid_input`, `undecided`,
-  `resource_exhausted`, `unsupported`, or `geometry_failure`) and a diagnostic
+  `resource_exhausted`, `unsupported`, `unbounded`, or `geometry_failure`) and a diagnostic
   message. Other binding operations that still flatten native error categories
-  remain outside this constructor migration.
+  remain outside this migration.
 - The last-error pointer is borrowed, thread-local, and valid only until the
   next ABI call on that thread.
 

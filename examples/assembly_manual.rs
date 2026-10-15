@@ -123,7 +123,8 @@ fn build_document() -> (AssemblyDocument, NodeId, NodeId) {
         "insert(M3): Heatfit insert M3",
         solid::cuboid(Real::from(4), Real::from(4), Real::from(6))
             .expect("valid primitive fixture")
-            .translated(Real::from(-2), Real::from(-2), Real::from(-6)),
+            .translated(Real::from(-2), Real::from(-2), Real::from(-6))
+            .expect("valid transform fixture"),
     );
     insert.placement = mate(&insert_seat, &hole).expect("insert mates onto the block");
     insert.attachments.push(insert_seat);
@@ -136,7 +137,8 @@ fn build_document() -> (AssemblyDocument, NodeId, NodeId) {
         "screw(M3): Screw M3 cap x 12mm",
         solid::cuboid(Real::from(3), Real::from(3), Real::from(12))
             .expect("valid primitive fixture")
-            .translated(Real::from(-1), Real::from(-1), Real::zero()),
+            .translated(Real::from(-1), Real::from(-1), Real::zero())
+            .expect("valid transform fixture"),
     );
     screw.placement = mate(&screw_seat, &screw_hole).expect("screw mates onto the block");
     screw.attachments.push(screw_seat);

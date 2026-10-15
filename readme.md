@@ -80,7 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &GeometryContext::STRICT,
     )?
     .into_value()
-    .translated(Real::from(4), Real::from(4), Real::from(-2));
+    .translated(Real::from(4), Real::from(4), Real::from(-2))?;
 
     let part = body.try_difference(&opening)?;
     std::fs::write("drilled_cube.stl", to_stl_binary(&part, "drilled_cube")?)?;
@@ -278,6 +278,21 @@ segments and, for spheres/ellipsoids, two stacks. Nonempty tori require
 `major_radius > minor_radius`; a zero minor radius represents the empty set.
 Only successful constructions enter the primitive cache.
 
+Modeling transforms (`solid::transform`, `rotate`, `scale`, `mirror`, and
+`SolidExt::{transformed, translated}`) also return `Result<TriangleMesh,
+ValidationError>`; propagate them with `?`. Their existing `try_` counterparts
+remain equivalent. Invalid indices, singular transforms, invalid planes,
+undecided predicates, and projective images crossing infinity fail explicitly.
+The shared Hypermesh implementation validates indices and certifies a nonzero
+homogeneous scale of constant sign on each triangle. Separate components may
+have opposite signs. Native diagnostics remain available in
+`ValidationError::Mesh` and `AdapterError::Construction`. Open surfaces and point
+sets remain supported transform inputs; a transform does not certify topology.
+Valid transforms of canonical empty geometry remain canonical empty.
+Context variants report operation-local predicate certainty; they do not certify
+the provenance of an earlier approximate construction. Transform work and
+allocation do not yet have an internal total-work, heap-byte, or cancellation bound.
+
 These constructors make strict numerical decisions and retain exact sampled
 coordinates. They do not certify fidelity to an analytic surface or attach
 end-to-end provenance to a mesh. Buffer capacity checks and fallible reservations
@@ -296,7 +311,7 @@ use csgrs::{GeometryContext, Real, solid::{self, SolidExt}};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let body = solid::cuboid(Real::from(12), Real::from(12), Real::from(4))?;
     let drill = solid::cylinder(Real::from(2), Real::from(6), 16)?
-        .translated(Real::from(6), Real::from(6), Real::from(-1));
+        .translated(Real::from(6), Real::from(6), Real::from(-1))?;
     let result = body.try_difference_with_context(
         &drill,
         &GeometryContext::APPROXIMATE_512,

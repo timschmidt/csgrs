@@ -432,7 +432,8 @@ fn javascript_mesh_results_expose_the_consumed_certainty() {
     let drill = MeshJs::from(
         solid::cylinder(Real::from(2), Real::from(6), 16)
             .expect("valid primitive fixture")
-            .translated(Real::from(6), Real::from(6), Real::from(-1)),
+            .translated(Real::from(6), Real::from(6), Real::from(-1))
+            .expect("valid transform fixture"),
     );
     let result = body.difference_with_context(&drill, true).unwrap();
     assert!(result.approximate_512_consumed());

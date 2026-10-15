@@ -127,8 +127,13 @@ pub enum HypermeshError {
         /// Arrangement invariant or triangulation stage that failed.
         reason: &'static str,
     },
-    /// A homogeneous point had zero or unknown homogeneous scale.
+    /// A homogeneous point had zero homogeneous scale.
     PointAtInfinity,
+    /// A transformed triangle crosses the plane at infinity between finite vertices.
+    UnboundedProjectiveTriangle {
+        /// Index of the triangle whose homogeneous scale changes sign.
+        triangle_index: usize,
+    },
 }
 
 impl fmt::Display for HypermeshError {
@@ -212,6 +217,9 @@ impl fmt::Display for HypermeshError {
                 write!(f, "could not construct exact surface arrangement: {reason}")
             }
             Self::PointAtInfinity => f.write_str("homogeneous point is at infinity"),
+            Self::UnboundedProjectiveTriangle { triangle_index } => {
+                write!(f, "transformed triangle {triangle_index} crosses infinity")
+            }
         }
     }
 }

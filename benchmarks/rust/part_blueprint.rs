@@ -48,7 +48,8 @@ fn main() {
                     Real::from(idx % 8) * Real::from(3),
                     Real::from(idx / 8),
                     Real::from(idx),
-                );
+                )
+                .expect("valid transform fixture");
             AttributedMesh::from_uniform(
                 geometry,
                 metadata(&format!("p{idx}"), vector(i64::from(idx), 0, 8)),

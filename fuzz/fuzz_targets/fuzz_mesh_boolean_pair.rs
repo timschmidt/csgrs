@@ -67,7 +67,8 @@ fuzz_target!(|bytes: &[u8]| {
         decode_real(bytes, &mut idx),
         decode_real(bytes, &mut idx),
         decode_real(bytes, &mut idx),
-    );
+    )
+    .expect("finite rational translation of valid indexed geometry");
     support::validate_triangle_mesh(&a, true);
     support::validate_triangle_mesh(&b, true);
     let result = match bytes[idx % bytes.len()] % 4 {

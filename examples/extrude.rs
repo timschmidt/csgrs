@@ -32,7 +32,8 @@ fn main() {
     let revolved = curve::revolve(&circle, r(360.0), 48, &GeometryContext::STRICT)
         .unwrap()
         .into_value()
-        .translated(r(1.5), r(0.0), r(0.0));
+        .translated(r(1.5), r(0.0), r(0.0))
+        .expect("valid transform fixture");
     write_mesh(&revolved, "circle_revolve");
 
     let path = (0..40)

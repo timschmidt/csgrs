@@ -16,7 +16,8 @@ fn main() {
     let cube = solid::cube(r(2.0)).expect("valid primitive fixture");
     let sphere = solid::sphere(r(1.35), 32, 16)
         .expect("valid primitive fixture")
-        .translated(r(0.55), r(0.25), r(0.2));
+        .translated(r(0.55), r(0.25), r(0.2))
+        .expect("valid transform fixture");
 
     write_mesh(&cube.try_union(&sphere).unwrap(), "union");
     write_mesh(&cube.try_difference(&sphere).unwrap(), "difference");
