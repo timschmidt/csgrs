@@ -1,0 +1,25 @@
+   Compiling autocfg v1.5.0
+   Compiling libc v0.2.186
+   Compiling num-traits v0.2.19
+    Checking num-integer v0.1.46
+    Checking num-complex v0.4.6
+    Checking num-bigint v0.4.6
+    Checking num-iter v0.1.45
+   Compiling jobserver v0.1.34
+   Compiling shlex v1.3.0
+   Compiling find-msvc-tools v0.1.9
+    Checking num-rational v0.4.2
+   Compiling cc v1.2.62
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking static_assertions v1.1.0
+    Checking ndshape v0.3.0
+   Compiling libfuzzer-sys v0.4.12
+    Checking glam v0.29.3
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking fast-surface-nets v0.2.1
+    Checking arbitrary v1.4.2
+    Checking hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+    Checking hypersdf-fuzz v0.0.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf/fuzz)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.43s

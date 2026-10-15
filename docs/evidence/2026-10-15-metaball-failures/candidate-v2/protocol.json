@@ -1,0 +1,105 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/metaball-failures/baseline-v1",
+  "preserved_prior_executables_sha256": {
+    "target/metaball-failures/baseline-v1/release/deps/metaball_failures-c029cd4bdf1b2a5b": "5867889940e50211eae438e0cf0d6d06083052921247fd74a0b9199cfc52dda0"
+  },
+  "base_commit": "5d49530eefcd156f448107577973e667e5fd12bb",
+  "runner_sha256": "bfebf6a9ebcb8975d5dc3d215f2e418154b127eb45c96c78139bde726e540ade",
+  "phase": "candidate-v2",
+  "commands": [
+    [
+      "focused-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--lib",
+        "--test",
+        "metaball_failures",
+        "--test",
+        "metaballs_diagnostics",
+        "--test",
+        "sdf_failures",
+        "--test",
+        "sdf_tpms_diagnostics",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "native-field-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypersdf",
+        "--all-features",
+        "--test",
+        "metaball_field",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "-p",
+        "hypersdf",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/metaball-failures/candidate-v2"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P18",
+    "P20",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "Hypersdf inverse-square field evaluation and conservative bounds",
+    "CSGRS metaball modeling and shared sampling",
+    "native Hypermesh standalone Surface Nets"
+  ],
+  "domain": "Positive-radius inverse-square metaballs, positive iso levels, nonnegative padding, declared sample grids, and canonical empty input after validation. Primary modeling failure remains typed. Exact continuous normalized field F=(iso-I)/(iso+I) with value -1 at poles replaces cutoff/sentinel/float extraction through an explicit geometry migration. Sampled output is not a fidelity certificate for the continuous field.",
+  "consumers": [
+    "solid::metaballs and diagnostics",
+    "MetaBall::influence",
+    "native Hypersdf field consumers",
+    "shared SDF/TPMS sampler",
+    "examples and benchmarks"
+  ],
+  "missing_acceptance_test": "tests/metaball_failures.rs",
+  "semantic_oracle": "Independent inverse-square rational values and normalized field identities; exact sampled unit-ball vertices 20201/60600 at the declared grid; native topology, signed volume and downstream composition; invalid/undecided/resource categories and recovery.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: 0a1ecb0ac and 5d49530ee committed typed SDF failures, standalone native extraction and their 17-command final qualification. The full properties goal remains active."
+}

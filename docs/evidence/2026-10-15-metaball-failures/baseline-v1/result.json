@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "metaball-regressions",
+      "exit_code": 101,
+      "seconds": 17.431588596198708,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/metaball-failures/baseline-v1/release/deps/metaball_failures-c029cd4bdf1b2a5b": "5867889940e50211eae438e0cf0d6d06083052921247fd74a0b9199cfc52dda0"
+      },
+      "stdout_sha256": "bee1fd642e5668c7f79a4d921a2c695963d770d8d1a86faaef472c564bb19c3c",
+      "stderr_sha256": "bb2bf8a70d9082fba3b60a0c558c471ce49fe8a705a2a1090bff8649b2c8b6d5"
+    }
+  ],
+  "passed": false
+}

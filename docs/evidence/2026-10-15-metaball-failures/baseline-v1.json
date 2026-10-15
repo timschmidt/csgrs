@@ -1,0 +1,18 @@
+[
+  [
+    "metaball-regressions",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--test",
+      "metaball_failures",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]

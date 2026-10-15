@@ -1,0 +1,234 @@
+{
+  "commands": [
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.410920875146985,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "fuzz-fmt",
+      "exit_code": 0,
+      "seconds": 1.7772521353326738,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "hypersdf-fuzz-fmt",
+      "exit_code": 0,
+      "seconds": 1.6568393725901842,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "hypersdf-fuzz-clippy",
+      "exit_code": 0,
+      "seconds": 9.123567196074873,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "a8be95b2f95ddace3e53eed908855bca38b285a6d4a3dd709eb06de7a0c19afd"
+    },
+    {
+      "name": "metaballs-only-clippy",
+      "exit_code": 0,
+      "seconds": 21.9862321857363,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "468b8dbc8b08f66e0e8c4de0dff85ee795577b6d1ab282b0ba9f9b820bab51cf"
+    },
+    {
+      "name": "metaballs-only-tests",
+      "exit_code": 0,
+      "seconds": 21.07534143421799,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/metaball-failures/native-v1/release/deps/metaball_failures-f1c016c1893f4030": "48d1e84cf3b82381857e46360eb19c623cea878496b6db17adfe4e9b81c59644",
+        "target/metaball-failures/native-v1/release/deps/metaballs_diagnostics-69dbfc5276d9c9b7": "7768ae880ec2beef9f40fbe1586e2bb436d720cf2996d05dcef66da90da005c9"
+      },
+      "stdout_sha256": "645537c95bf6b6790d02a9c1596793e79bfcb9f10e08cff8ffc7b5404513efc5",
+      "stderr_sha256": "9502dddf017108420a0502680691cbe4cfa7d5a90508805ae9024bd1f15704e5"
+    },
+    {
+      "name": "strict-clippy",
+      "exit_code": 0,
+      "seconds": 9.344223191030324,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ef117fb6cca86d76cfaaa8d60f53fb4d9fba74614c7f27bcd1717851a6eb20f3"
+    },
+    {
+      "name": "all-feature-tests",
+      "exit_code": 0,
+      "seconds": 75.01872751815245,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/metaball-failures/native-v1/release/deps/csgrs-7cb2efc2751cd581": "18bf1044402645d5c0b80f0793a6fd0badae767771cdb7f44085130e249b0358",
+        "target/metaball-failures/native-v1/release/deps/adversarial-aa8f7eb900ff711d": "6b3389ca4552c3640801efe49b388dd3a3922d47bd5090e5781cbe574e53bf5d",
+        "target/metaball-failures/native-v1/release/deps/adversarial_deep-5118e0b6d7de3ea6": "9a09c818fc4d9f963ad4765efd94ea75efc7a29a889dc5deec87f50256ffc71d",
+        "target/metaball-failures/native-v1/release/deps/adversarial_extrusions-aa8048fe0de3f594": "97b073bdea57b11dcb08240b7506ceed9113b9f615945675be595b9ff68baa8b",
+        "target/metaball-failures/native-v1/release/deps/adversarial_fixtures-cf11e31630975ad0": "c400bcbea9d9b820e96cfb3968b34ec99629883b9a902ebf794273e6f628cc3e",
+        "target/metaball-failures/native-v1/release/deps/adversarial_stress-d6d56cc4aa09a158": "20579b9bc9425ada88ce64d70fc535b92b3db96422ec8abf3291a1ff27ab2e0e",
+        "target/metaball-failures/native-v1/release/deps/bounds_failures-1de96205ff2a5e07": "e549fc8247c7f0c2ddfd5a280c32e13353303bf91064757b2c527c8ad552c824",
+        "target/metaball-failures/native-v1/release/deps/competitive-0b8b38c506725d57": "190a0fe9575fc468a15554d7e34a9c1d8872e9f086279c2c594c9418e60e6b50",
+        "target/metaball-failures/native-v1/release/deps/empty_composition-3a7164c2b9d5044a": "123100ce140e23e59b996068a6c0c12f5d41db12c56ceeb345c404e2d94693b9",
+        "target/metaball-failures/native-v1/release/deps/generated_benchmark_corpus-b45922908131dfbd": "527eb49c570f9bbeaa97a845a69963e7574dbd23d59f58c5ad524d139935fb8e",
+        "target/metaball-failures/native-v1/release/deps/geometry_context-e14123ad7d9b5126": "732980818a802b59e5e10141446cb955fa0deb3d08b6b85291ddc5381ccb7209",
+        "target/metaball-failures/native-v1/release/deps/mesh_boolean_context-9d9c68938c3691af": "a38f868e298a05b126a09e7d9630fd62e9fa090c7e169933742d4fd80f2d13e6",
+        "target/metaball-failures/native-v1/release/deps/metaball_failures-043b72a00404a6ff": "77ff19ff344e0c191f1e02d0a45fec101fd05a66b7d68f324cbded0588320a56",
+        "target/metaball-failures/native-v1/release/deps/metaball_workloads-4d7fe7b802e9560f": "c8652d63a082233f9fe91650fda8a80c0ee295b0616990013e09baadf8fbf92a",
+        "target/metaball-failures/native-v1/release/deps/metaballs_diagnostics-8dfd6522763c319c": "fd8a30384e484931b0a7104919bae804009a98f4eeb0a93f89ab4c4b98211d3b",
+        "target/metaball-failures/native-v1/release/deps/native_queries-f108d89258947ff9": "a76f71b746b258979bd1999574e347d4b5bb0129e6dbcaae0c6dc4c01cc4c2e5",
+        "target/metaball-failures/native-v1/release/deps/primitive_failures-aadd0e4e093d5243": "ec03aceefb0807feea9c43b8b12ae54bc9a0c321d4c03c81e87d79ef243fb2be",
+        "target/metaball-failures/native-v1/release/deps/readme-14ff37358f039d13": "2d813f7059d82c7e70225af15986944ade939bb8d21cafbd36ed0248ac881c4a",
+        "target/metaball-failures/native-v1/release/deps/readme_render_regression-c73ca6dc64fc3820": "db16bd93c8b2d221c5bb2e52ef2d683e66aff6e9d62ebbbfec13bab3802a820a",
+        "target/metaball-failures/native-v1/release/deps/sdf_failures-0e01156f99592da3": "175590aada50fe7824982e63e7f612f671d66af7c0350dbc77a7aefd1c6a51d1",
+        "target/metaball-failures/native-v1/release/deps/sdf_tpms_diagnostics-5aa3ece71b49182c": "f2c1097d4c14579e62d5acf071df8aa9972caa8a1bf2232fe7521c85f18c389e",
+        "target/metaball-failures/native-v1/release/deps/solid_cache-d34731e0e95db92a": "708d143ed78fa8a3d2234a885fa4ba549d7536013367f6ab69f5874186735333",
+        "target/metaball-failures/native-v1/release/deps/transform_failures-74f1159cb89f11ba": "ee9ccbc27c81dd2684152fe228a646da264c779695b5ff54d1ce89dc87d1fc5d",
+        "target/metaball-failures/native-v1/release/deps/wasm_certainty-d7c6e3b405f88647": "92d31ee5e590ebbd07c4657479f2592dea7336e0df3bea0a8eb30298d9c0233e"
+      },
+      "stdout_sha256": "fcf5f9606ed538879d9364356cb1322661e0b60a1f16d1e23ceeec9e5b7315b3",
+      "stderr_sha256": "225e2d97990b5fa11851fed19548737e61ef616badef206381b762393f3050fc"
+    },
+    {
+      "name": "minimal-tests",
+      "exit_code": 0,
+      "seconds": 8.693349137436599,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/metaball-failures/native-v1/release/deps/csgrs-12b72f0ccdd38706": "fbb501c2835a2904fa66a5f52bbac7c6be212acc490e7811b17093821cbdca6f",
+        "target/metaball-failures/native-v1/release/deps/bounds_failures-c661a92a5b4c7962": "447c884d683e3dfb4926d28742c86f33d0b096925c300ee0e7a18704f1e6f76f"
+      },
+      "stdout_sha256": "51dda61d93adb87bc71ca8a709846a293ea244143023606df07e693cc7d095f1",
+      "stderr_sha256": "78c68db01d65c81e4890c813de90a4359bcc9016e794f536c5e41b8380aa43f5"
+    },
+    {
+      "name": "sdf-only-tests",
+      "exit_code": 0,
+      "seconds": 8.253300191834569,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/metaball-failures/native-v1/release/deps/sdf_failures-ef9e460be9e301c3": "8ab7ae1c8f7caf3bc126077e8a52c3f2228c8dcbf9d0016d992b066f97b2c9ad",
+        "target/metaball-failures/native-v1/release/deps/sdf_tpms_diagnostics-9cde959a61ce554f": "ba5b3f906d7df5cbf043eebd7f33dcbfc0860feec24c2966aca2ddab96ccdea6"
+      },
+      "stdout_sha256": "7eb4a4452e07aad4628f6f73d2d56522949d27ffc1cf5a9c358d9e9dd5510311",
+      "stderr_sha256": "afbcd12c12a75d162af1ef1ab6f4dd9cb47334ade0c1e6ea8aaea089e1000386"
+    },
+    {
+      "name": "hypermesh-tests",
+      "exit_code": 0,
+      "seconds": 3.9736610860563815,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/metaball-failures/native-v1/release/deps/hypermesh-3f582b4ca1636641": "6586b6b65165cb087911a06b9fac0739c3a05d9bfaf8245b7cef65922067e85b",
+        "target/metaball-failures/native-v1/release/deps/boolean-5f62d1118823ec97": "55df3fc44a5b500baac7d4b272fb925b3a21a3d9abb4dc3a0d8850f0d85360b0",
+        "target/metaball-failures/native-v1/release/deps/competitive-6172fbc55a698b35": "5ed1ab06805de299534ee4758bc963da13dc586069e3574a432375cb73460dee",
+        "target/metaball-failures/native-v1/release/deps/corpus_manifest-70e8b02b4630cdcf": "a52de78bfa05ec0c0211ab20843fb0c9214cf2220007b59671f0678c4167864d",
+        "target/metaball-failures/native-v1/release/deps/intersection_corpus-fd36003a26964264": "ede865b837e5081a9a7a330a5ced9e0437be810b48098e513232f8fc2d4e6742",
+        "target/metaball-failures/native-v1/release/deps/predicate_policy-da601e01ee57d6f5": "6f74bc02ae37306f424a946ebff1059168bce0879a608021863a2a7c6da11af0",
+        "target/metaball-failures/native-v1/release/deps/readme-6edeb87a0e9ac66f": "95d4d8d1d3a5905bab4c825bf31042a73cac283881f5ca933a1438e008315143"
+      },
+      "stdout_sha256": "2557139f7b73b3218008d2240c55806340a395ebb11e754653d6124a4663dade",
+      "stderr_sha256": "bccb4cd21fb5d408952c99aa19d42b7ac0684295e9011e802cd38760d1c252d0"
+    },
+    {
+      "name": "hypersdf-all-feature-tests",
+      "exit_code": 0,
+      "seconds": 8.264895096886903,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/metaball-failures/native-v1/release/deps/hypersdf-0bad98822f7a9ce1": "f70d36962cc9345c88b8dfb3e42e32fd770d530e07dae8acdff227158ab1bddd",
+        "target/metaball-failures/native-v1/release/deps/adversarial-8c2a10e795879a70": "79c0f114ce477e6eb3d6819d48b140ffbe379010dd9df328d79fb9db42cde8bd",
+        "target/metaball-failures/native-v1/release/deps/dispatch_trace-f9027e5baa42f153": "d9ee2af34c61d46eac46aef775365ba172b64dc5998d1913af71006e409f5f54",
+        "target/metaball-failures/native-v1/release/deps/evaluation_errors-336cc11e1d9bcc1d": "9e03df5948c5570d9bc52e87afb10fc17495fce4a07f04c8630bfe5bba1ba9cb",
+        "target/metaball-failures/native-v1/release/deps/metaball_field-8fdb79172457092e": "e0a4e5dac876862d677a983ff7d813826abd68e846772393c555ad2bfe725be5",
+        "target/metaball-failures/native-v1/release/deps/readme-a1a2094e1cc05232": "2fee4d2dc11f3d3243d35bd3964cf2a84dfcdea739612315cc84a002dafde53e"
+      },
+      "stdout_sha256": "f0e0c20e93a6eba6501f10c4545ce668ff6e35d696e970777ebea145631190b9",
+      "stderr_sha256": "4daa6ca5d45667e633ebd688d06be9a167ed50aa3445c2f52344e65bc8b61d9c"
+    },
+    {
+      "name": "hypersdf-default-tests",
+      "exit_code": 0,
+      "seconds": 27.00553605472669,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/metaball-failures/native-v1/debug/deps/hypersdf-755a1dcc128e17c8": "91a984faf9f7457b193696ddb509450683c32b42ee513f09a1825f9ee43f036d",
+        "target/metaball-failures/native-v1/debug/deps/adversarial-df165d09efeec636": "ce7a361cf9891a311ce38e04c1160e9bf587557ef6bd9d0c99b9395289bee5bc",
+        "target/metaball-failures/native-v1/debug/deps/dispatch_trace-7753b99e91ebdc90": "81877f16394947851b0f155c9926341dfbfa5f2056ae45899ac16381bbb58e20",
+        "target/metaball-failures/native-v1/debug/deps/evaluation_errors-f9acc565efd95c8a": "0153acafa08bf3e7150a508c2a6fa8a48645c7da3598884c57cff35e1de73730",
+        "target/metaball-failures/native-v1/debug/deps/metaball_field-583e687c4dbb6329": "dafe1452b91055325057b7b3a90ea9d2896757b6e4fce125a0247a0c5d5f784a",
+        "target/metaball-failures/native-v1/debug/deps/readme-7ae9080dd2e9c3e8": "9da5e6968d203b61a16de1dc94c8a0e3c3e2c26f429d7cea999cebe66fa9d59d"
+      },
+      "stdout_sha256": "4410c62357a2a6df682e8c6598703d6234e6a8fc48764394f7d76a661a73d10c",
+      "stderr_sha256": "4238358a1bc65443ccf60b11e9ca86e6bfccb4f145d89295d2ba88c5ed0b98b8"
+    },
+    {
+      "name": "ffi-tests",
+      "exit_code": 0,
+      "seconds": 14.320650734938681,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/metaball-failures/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "aaf1bd3f5bb164528b97f52c610308af7701a62cff117e1805ced1ef4802eff1"
+      },
+      "stdout_sha256": "59ddb49de9256543d1ad3799f3552552febe07397b9f96a02f655d709e9850f7",
+      "stderr_sha256": "ea6fddb4c4d920efb9be8942e2e38ae86b00ae7d71932d5bc88f1f655dc1680f"
+    },
+    {
+      "name": "minimal-clippy",
+      "exit_code": 0,
+      "seconds": 2.9689056929200888,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "00992c6d1584d0b4f592ae6b3d9db044b1570b1410dbef4e5f617cde4d5c1a93"
+    },
+    {
+      "name": "sdf-only-clippy",
+      "exit_code": 0,
+      "seconds": 3.0947094657458365,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "b7df2eb10690b142de7aa5ac2e7cf547ad93dab31933e6dfd7a6be5ef2ccba4a"
+    },
+    {
+      "name": "fuzz-clippy",
+      "exit_code": 0,
+      "seconds": 44.69806713657454,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ae8636e116c0baa51ab71fde5f2b4285ad576f7844dd16e4500ab6b0e9dbdb41"
+    },
+    {
+      "name": "docs",
+      "exit_code": 0,
+      "seconds": 244.12378063425422,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "6d5ba450d0531fe070e36b30564cb6653dd6de24cf09c09ea6ed19d294dd951c"
+    },
+    {
+      "name": "doctests",
+      "exit_code": 0,
+      "seconds": 20.271029193885624,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "d33a489ed0143d4d4150e2e2e49888c1da1abebe4d79609ebf16ab5dd518ad36",
+      "stderr_sha256": "768ab9e8e6ac07ea5bdc500efd2f03d865df522b49cfab844b0cacb9502d74b3"
+    }
+  ],
+  "passed": true
+}

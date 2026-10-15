@@ -1,0 +1,39 @@
+{
+  "runner_sha256": "ebc6294d4b77a0893558c124580f1e8713dc9af2720f08783fc6bf423b2ad40b",
+  "authority_sha256": "53d5030e9935b2863b9581202e5a9fc6000cf76076689236c38e144439c885e9",
+  "phases": [
+    {
+      "removed_unexecuted_copy": "target/sdf-failures/baseline-v2/debug",
+      "bytes": 1974492464,
+      "protocol_sha256": "fcc9b70e95b499a4b4e8299ba1b2677c3770dbc45ce7e215819e799db3fafd92",
+      "terminal_result_sha256": "6f9e13bfbbbbdcf1ff330a2be1185130463d4d4a568c443ebc75dc25ebdbda15"
+    },
+    {
+      "removed_unexecuted_copy": "target/sdf-failures/candidate-v1/debug",
+      "bytes": 1974492464,
+      "protocol_sha256": "13d44ac45b49207d76d9aae3ff5faa5928573cc9502e5a7e7d10ed81fdca2ac6",
+      "terminal_result_sha256": "ed186a1aa9f730ad7ed67a74f83dadfbbb9ff913a101884ce1eb5d21de929c8c"
+    },
+    {
+      "removed_unexecuted_copy": "target/sdf-failures/candidate-v2/debug",
+      "bytes": 1974492464,
+      "protocol_sha256": "c1ad7f98e8dbb12868bb6ef9ed3853578e06a2524115c4d9133d972e3b98022e",
+      "terminal_result_sha256": "094151e0c43ddb8bcef830f27d7363cf3d4c7bb8bf66869f57824c81eedbf5ad"
+    },
+    {
+      "removed_unexecuted_copy": "target/sdf-failures/candidate-v3/debug",
+      "bytes": 1974492464,
+      "protocol_sha256": "6902d5c00e90fb246b3a739fac09ed5b4835ad9e6009b279e2757c41638ab004",
+      "terminal_result_sha256": "8535e51643ff31226169df5b277fb1e9eea6ce88796a88bf9f0e5df27466e14d"
+    },
+    {
+      "removed_unexecuted_copy": "target/sdf-failures/candidate-v4/debug",
+      "bytes": 1974492464,
+      "protocol_sha256": "dc5738bfb152d62e06abe4ce27e8600a6df3dc8f9fbbd38a74b62ed5e21b8b97",
+      "terminal_result_sha256": "173f7e0dccda951c7b6ebd0b529467c8e8b02d34f4af5b6f4c232ebde389025d"
+    }
+  ],
+  "reason": "These private trial directories executed only release-profile Cargo commands. Their debug trees were unused seed copies. Source archives, release/build artifacts, logs and all 330 observed artifacts are unchanged.",
+  "preserved_executables_verified": 330,
+  "reclaimed_bytes": 9872462320
+}

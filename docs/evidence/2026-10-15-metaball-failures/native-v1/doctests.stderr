@@ -1,0 +1,6 @@
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 17.33s
+   Doc-tests csgrs
+   Doc-tests hypermesh
+   Doc-tests hypersdf

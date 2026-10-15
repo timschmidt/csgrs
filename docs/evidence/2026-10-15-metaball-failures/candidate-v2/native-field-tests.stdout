@@ -1,0 +1,10 @@
+
+running 5 tests
+test conservative_bounds_have_exact_exterior_samples ... ok
+test domain_errors_and_uncertainty_are_distinct_before_shortcuts ... ok
+test inverse_square_values_remain_exact_at_near_and_far_points ... ok
+test iso_scaling_and_coincident_sources_preserve_the_normalized_field ... ok
+test normalized_values_match_independent_rationals_and_center_limits ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

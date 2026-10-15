@@ -1,0 +1,5 @@
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 7.21s
+     Running tests/metaball_failures.rs (target/metaball-failures/native-v1/release/deps/metaball_failures-f1c016c1893f4030)
+     Running tests/metaballs_diagnostics.rs (target/metaball-failures/native-v1/release/deps/metaballs_diagnostics-69dbfc5276d9c9b7)

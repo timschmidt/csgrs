@@ -1,0 +1,5 @@
+{
+  "target": "target/metaball-failures/baseline-v1",
+  "record": "docs/evidence/2026-10-15-metaball-failures/baseline-v1/result.json",
+  "release_only": true
+}

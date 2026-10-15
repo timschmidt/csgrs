@@ -1,0 +1,352 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/metaball-failures/candidate-v2",
+  "preserved_prior_executables_sha256": {
+    "target/metaball-failures/candidate-v2/release/deps/csgrs-7cb2efc2751cd581": "18bf1044402645d5c0b80f0793a6fd0badae767771cdb7f44085130e249b0358",
+    "target/metaball-failures/candidate-v2/release/deps/metaball_failures-043b72a00404a6ff": "77ff19ff344e0c191f1e02d0a45fec101fd05a66b7d68f324cbded0588320a56",
+    "target/metaball-failures/candidate-v2/release/deps/metaballs_diagnostics-8dfd6522763c319c": "fd8a30384e484931b0a7104919bae804009a98f4eeb0a93f89ab4c4b98211d3b",
+    "target/metaball-failures/candidate-v2/release/deps/sdf_failures-0e01156f99592da3": "175590aada50fe7824982e63e7f612f671d66af7c0350dbc77a7aefd1c6a51d1",
+    "target/metaball-failures/candidate-v2/release/deps/sdf_tpms_diagnostics-5aa3ece71b49182c": "f2c1097d4c14579e62d5acf071df8aa9972caa8a1bf2232fe7521c85f18c389e",
+    "target/metaball-failures/candidate-v2/release/deps/metaball_field-8fdb79172457092e": "e0a4e5dac876862d677a983ff7d813826abd68e846772393c555ad2bfe725be5"
+  },
+  "base_commit": "5d49530eefcd156f448107577973e667e5fd12bb",
+  "runner_sha256": "bfebf6a9ebcb8975d5dc3d215f2e418154b127eb45c96c78139bde726e540ade",
+  "phase": "native-v1",
+  "commands": [
+    [
+      "fmt",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "fuzz-fmt",
+      [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "hypersdf-fuzz-fmt",
+      [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "crates/hypersdf/fuzz/Cargo.toml",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "hypersdf-fuzz-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--manifest-path",
+        "crates/hypersdf/fuzz/Cargo.toml",
+        "--bins",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "metaballs-only-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "metaballs",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "metaballs-only-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "metaballs",
+        "--test",
+        "metaball_failures",
+        "--test",
+        "metaballs_diagnostics",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "strict-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypermesh",
+        "-p",
+        "csgrs",
+        "-p",
+        "csgrs-ffi",
+        "-p",
+        "hypersdf",
+        "--all-targets",
+        "--all-features",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "all-feature-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "minimal-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--lib",
+        "--test",
+        "bounds_failures",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "sdf-only-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "sdf",
+        "--test",
+        "sdf_failures",
+        "--test",
+        "sdf_tpms_diagnostics",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "hypermesh-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypermesh",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "hypersdf-all-feature-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypersdf",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "hypersdf-default-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hypersdf",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "ffi-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs-ffi"
+      ]
+    ],
+    [
+      "minimal-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "sdf-only-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "sdf",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "fuzz-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bins",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "docs",
+      [
+        "env",
+        "RUSTDOCFLAGS=-D warnings",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hypermesh",
+        "-p",
+        "csgrs",
+        "-p",
+        "csgrs-ffi",
+        "-p",
+        "hypersdf",
+        "--all-features",
+        "--no-deps"
+      ]
+    ],
+    [
+      "doctests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypermesh",
+        "-p",
+        "csgrs",
+        "-p",
+        "hypersdf",
+        "--all-features",
+        "--doc"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/metaball-failures/native-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P18",
+    "P20",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "Hypersdf inverse-square field evaluation and conservative bounds",
+    "CSGRS metaball modeling and shared sampling",
+    "native Hypermesh standalone Surface Nets"
+  ],
+  "domain": "Positive-radius inverse-square metaballs, positive iso levels, nonnegative padding, declared sample grids, and canonical empty input after validation. Primary modeling failure remains typed. Exact continuous normalized field F=(iso-I)/(iso+I) with value -1 at poles replaces cutoff/sentinel/float extraction through an explicit geometry migration. Sampled output is not a fidelity certificate for the continuous field.",
+  "consumers": [
+    "solid::metaballs and diagnostics",
+    "MetaBall::influence",
+    "native Hypersdf field consumers",
+    "shared SDF/TPMS sampler",
+    "examples and benchmarks"
+  ],
+  "missing_acceptance_test": "tests/metaball_failures.rs",
+  "semantic_oracle": "Independent inverse-square rational values and normalized field identities; exact sampled unit-ball vertices 20201/60600 at the declared grid; native topology, signed volume and downstream composition; invalid/undecided/resource categories and recovery.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: 0a1ecb0ac and 5d49530ee committed typed SDF failures, standalone native extraction and their 17-command final qualification. The full properties goal remains active."
+}

@@ -1,0 +1,102 @@
+
+running 10 tests
+test empty_input_does_not_hide_invalid_iso_value ... FAILED
+test empty_input_does_not_hide_invalid_padding ... FAILED
+test grid_overflow_is_resource_exhaustion ... FAILED
+test inverse_square_influence_does_not_discard_distant_contributions ... FAILED
+test negative_padding_is_invalid_input_instead_of_empty_geometry ... FAILED
+test normalized_level_field_has_independently_known_exact_sampled_vertices ... FAILED
+test resolution_is_validated_instead_of_silently_clamped ... FAILED
+test singular_inverse_square_influence_is_not_a_finite_sentinel ... FAILED
+test unresolved_radius_is_undecided_instead_of_invalid_or_empty ... FAILED
+test zero_radius_is_invalid_input_instead_of_empty_geometry ... FAILED
+
+failures:
+
+---- empty_input_does_not_hide_invalid_iso_value stdout ----
+
+thread 'empty_input_does_not_hide_invalid_iso_value' (171) panicked at tests/metaball_failures.rs:95:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- empty_input_does_not_hide_invalid_padding stdout ----
+
+thread 'empty_input_does_not_hide_invalid_padding' (172) panicked at tests/metaball_failures.rs:102:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+---- grid_overflow_is_resource_exhaustion stdout ----
+
+thread 'grid_overflow_is_resource_exhaustion' (173) panicked at tests/metaball_failures.rs:116:5:
+assertion `left == right` failed
+  left: None
+ right: Some(ResourceExhausted)
+
+---- inverse_square_influence_does_not_discard_distant_contributions stdout ----
+
+thread 'inverse_square_influence_does_not_discard_distant_contributions' (174) panicked at tests/metaball_failures.rs:132:5:
+assertion `left == right` failed
+  left: Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }
+ right: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 10000 }, class: One, computable: None, primitive_approx_cache: Empty }
+
+---- negative_padding_is_invalid_input_instead_of_empty_geometry stdout ----
+
+thread 'negative_padding_is_invalid_input_instead_of_empty_geometry' (175) panicked at tests/metaball_failures.rs:79:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+---- normalized_level_field_has_independently_known_exact_sampled_vertices stdout ----
+
+thread 'normalized_level_field_has_independently_known_exact_sampled_vertices' (176) panicked at tests/metaball_failures.rs:153:5:
+assertion failed: mesh.positions.iter().all(|p|
+        {
+            [&p.x, &p.y,
+                            &p.z].into_iter().all(|v|
+                    v == &coordinate || v == &(-&coordinate))
+        })
+
+---- resolution_is_validated_instead_of_silently_clamped stdout ----
+
+thread 'resolution_is_validated_instead_of_silently_clamped' (177) panicked at tests/metaball_failures.rs:109:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+---- singular_inverse_square_influence_is_not_a_finite_sentinel stdout ----
+
+thread 'singular_inverse_square_influence_is_not_a_finite_sentinel' (178) panicked at tests/metaball_failures.rs:136:5:
+assertion failed: ball(1.into()).influence(&Point3::origin()).rejects_singularity()
+
+---- unresolved_radius_is_undecided_instead_of_invalid_or_empty stdout ----
+
+thread 'unresolved_radius_is_undecided_instead_of_invalid_or_empty' (179) panicked at tests/metaball_failures.rs:87:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Undecided)
+
+---- zero_radius_is_invalid_input_instead_of_empty_geometry stdout ----
+
+thread 'zero_radius_is_invalid_input_instead_of_empty_geometry' (180) panicked at tests/metaball_failures.rs:72:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+
+failures:
+    empty_input_does_not_hide_invalid_iso_value
+    empty_input_does_not_hide_invalid_padding
+    grid_overflow_is_resource_exhaustion
+    inverse_square_influence_does_not_discard_distant_contributions
+    negative_padding_is_invalid_input_instead_of_empty_geometry
+    normalized_level_field_has_independently_known_exact_sampled_vertices
+    resolution_is_validated_instead_of_silently_clamped
+    singular_inverse_square_influence_is_not_a_finite_sentinel
+    unresolved_radius_is_undecided_instead_of_invalid_or_empty
+    zero_radius_is_invalid_input_instead_of_empty_geometry
+
+test result: FAILED. 0 passed; 10 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

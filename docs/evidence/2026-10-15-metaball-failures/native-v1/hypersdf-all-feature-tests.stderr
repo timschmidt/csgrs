@@ -1,0 +1,8 @@
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+    Finished `release` profile [optimized] target(s) in 6.56s
+     Running unittests src/lib.rs (target/metaball-failures/native-v1/release/deps/hypersdf-0bad98822f7a9ce1)
+     Running tests/adversarial.rs (target/metaball-failures/native-v1/release/deps/adversarial-8c2a10e795879a70)
+     Running tests/dispatch_trace.rs (target/metaball-failures/native-v1/release/deps/dispatch_trace-f9027e5baa42f153)
+     Running tests/evaluation_errors.rs (target/metaball-failures/native-v1/release/deps/evaluation_errors-336cc11e1d9bcc1d)
+     Running tests/metaball_field.rs (target/metaball-failures/native-v1/release/deps/metaball_field-8fdb79172457092e)
+     Running tests/readme.rs (target/metaball-failures/native-v1/release/deps/readme-a1a2094e1cc05232)

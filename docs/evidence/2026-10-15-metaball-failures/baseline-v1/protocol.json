@@ -1,0 +1,102 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/sdf-failures/native-v3",
+  "preserved_prior_executables_sha256": {
+    "target/sdf-failures/native-v3/release/deps/csgrs-d5e0741bbc5df635": "a26d639eed4e6fbc91b0edb39f5b546d0d0237807ac0aab1457e5f95bc9a0174",
+    "target/sdf-failures/native-v3/release/deps/adversarial-c03dde69c05f1cf2": "d2215fc1ca1db97224620af1ad420d85763fea06024e4b94133db39d499890a1",
+    "target/sdf-failures/native-v3/release/deps/adversarial_deep-5dea7b8952749c41": "8a8d70de64724eee8e7073a328cd9701aded59407f8660c078d18bbbf90f366f",
+    "target/sdf-failures/native-v3/release/deps/adversarial_extrusions-22c8c063f22c33de": "8c6aed583d6af7cfd37872d3e4323e6deccd15c9898e2cd24cb528c462495194",
+    "target/sdf-failures/native-v3/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/sdf-failures/native-v3/release/deps/adversarial_stress-8c747993ca7dff64": "2fdcd0efee56bd26be8564a22f61d720ad2b17c524d4ed2459d10031a0cfdd95",
+    "target/sdf-failures/native-v3/release/deps/bounds_failures-aecf08036656e9a3": "a58445113c26c73880af79144d8c15c49f78146db3578a3560888ec50047bf44",
+    "target/sdf-failures/native-v3/release/deps/competitive-8d824413442e1853": "c37d9754062b469c704364aad409b02e0911cfe07cdf8a1cdf28a6c433f3c48f",
+    "target/sdf-failures/native-v3/release/deps/empty_composition-1b2f2ba6943338cd": "3d8b39e9d3b3cc9a722c8600b80ebf8ef1609a775f7be29d505ea885ac612dbb",
+    "target/sdf-failures/native-v3/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "f0c18832aadaabeda035a3f300c89b6a62cecdd3405882c13e57142e6b5791da",
+    "target/sdf-failures/native-v3/release/deps/geometry_context-d256044952b39c9d": "13e75007d2711a5b782ba5c1ec94ac3ebb26e8e4aa487f31112409b2370e466f",
+    "target/sdf-failures/native-v3/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "bead690ee81e7643fae3e80f427dfdeea8592836e2bb13f34e227359bd329c73",
+    "target/sdf-failures/native-v3/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "3d4f95391219856ae72a57608f800726b6e0c3ca334d8fd158099e6bc8857212",
+    "target/sdf-failures/native-v3/release/deps/native_queries-32678419862dff6b": "a37a139867ea1a43d0d2cee87fb5b41ec283ced027adce987ab7757ee9d1cae0",
+    "target/sdf-failures/native-v3/release/deps/primitive_failures-8e6539f143e56577": "7f3d257c407740d52b36dfd094cd51d33bd2214f8d3e47bb0b8aa3ec755acdb0",
+    "target/sdf-failures/native-v3/release/deps/readme-d31b115aba933918": "bb254102f63b94ea33a8be78246db1d26aa4d939098a65e95c4f8ad2c230561c",
+    "target/sdf-failures/native-v3/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/sdf-failures/native-v3/release/deps/sdf_failures-1091ba3b6128f768": "a0ca483e2c0516f291957ecff709eaa9b4920dbab63e7e5b109cbef519b0eb2d",
+    "target/sdf-failures/native-v3/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "c7ed6535c5fc6b8ed11ea5db659288f2c4886f676c7a64cecff0d502bd3edb75",
+    "target/sdf-failures/native-v3/release/deps/solid_cache-f1483884916afc0e": "e43e1303adba96071aa078a266ea4fc01e323f437bdc9a78589e7a9b927dd958",
+    "target/sdf-failures/native-v3/release/deps/transform_failures-45db55e7bcff3889": "a17f592774b3fc61b6864c882baf543c33168cc35f37bf70b9d47b32ee41277f",
+    "target/sdf-failures/native-v3/release/deps/wasm_certainty-d7100c8fa594776c": "1f95720cf1a5fd766c5ca7ae915e276ab56a9bc9492a38edfbaf06436b6ff185",
+    "target/sdf-failures/native-v3/release/deps/csgrs-12b72f0ccdd38706": "6a4ab98e8a2da8eb445b00782f3cd68efc72071362a048d577737ec71af85159",
+    "target/sdf-failures/native-v3/release/deps/bounds_failures-c661a92a5b4c7962": "171988065a1fde8944a85252e750e8e56ecb3ceb0b24dae1669350d1ccd85872",
+    "target/sdf-failures/native-v3/release/deps/sdf_failures-ef9e460be9e301c3": "24349549a6ef67bc0c99bf7f6eed42364d559a8db236dbae81bf770cc13a2f14",
+    "target/sdf-failures/native-v3/release/deps/sdf_tpms_diagnostics-9cde959a61ce554f": "9d287433c4bc51d337287a5b036323776b0d26212490c573ad6a5a477c8a969d",
+    "target/sdf-failures/native-v3/release/deps/hypermesh-3f582b4ca1636641": "6586b6b65165cb087911a06b9fac0739c3a05d9bfaf8245b7cef65922067e85b",
+    "target/sdf-failures/native-v3/release/deps/boolean-5f62d1118823ec97": "55df3fc44a5b500baac7d4b272fb925b3a21a3d9abb4dc3a0d8850f0d85360b0",
+    "target/sdf-failures/native-v3/release/deps/competitive-6172fbc55a698b35": "5ed1ab06805de299534ee4758bc963da13dc586069e3574a432375cb73460dee",
+    "target/sdf-failures/native-v3/release/deps/corpus_manifest-70e8b02b4630cdcf": "a52de78bfa05ec0c0211ab20843fb0c9214cf2220007b59671f0678c4167864d",
+    "target/sdf-failures/native-v3/release/deps/intersection_corpus-fd36003a26964264": "ede865b837e5081a9a7a330a5ced9e0437be810b48098e513232f8fc2d4e6742",
+    "target/sdf-failures/native-v3/release/deps/predicate_policy-da601e01ee57d6f5": "6f74bc02ae37306f424a946ebff1059168bce0879a608021863a2a7c6da11af0",
+    "target/sdf-failures/native-v3/release/deps/readme-6edeb87a0e9ac66f": "95d4d8d1d3a5905bab4c825bf31042a73cac283881f5ca933a1438e008315143",
+    "target/sdf-failures/native-v3/release/deps/hypersdf-0bad98822f7a9ce1": "1ac93baa235a1e0e0f17fac80420979014f37df52f6aa91689293cc824a01b58",
+    "target/sdf-failures/native-v3/release/deps/adversarial-8c2a10e795879a70": "4e4c0473e0a46e170d12920c8b3128a07eafac24ab26c9fc910b3fd7228cb80f",
+    "target/sdf-failures/native-v3/release/deps/dispatch_trace-f9027e5baa42f153": "d32f7f5c20711b6d02ba2cd3881ed35e779338b6510806e081532a049fcc47a7",
+    "target/sdf-failures/native-v3/release/deps/evaluation_errors-336cc11e1d9bcc1d": "58940b9773b433645cd12d2920ca9fdd83fd77ed50cb7966e0dbedcffd5cf321",
+    "target/sdf-failures/native-v3/release/deps/readme-a1a2094e1cc05232": "3b1c14341d1fb2d6519cc7d33825dfe61c667e0d4abbabe94788b540687e64c3",
+    "target/sdf-failures/native-v3/release/deps/csgrs_ffi-393fd1eb2bc5369f": "eed819a2f514099608f4da3d74a2bfc3b16cd9ad54360ccc987a8739137031ca"
+  },
+  "base_commit": "5d49530eefcd156f448107577973e667e5fd12bb",
+  "runner_sha256": "eab00409cd77900cba4ff47c82c15e975aeedd8aa8ce94c767b918db0793e19e",
+  "phase": "baseline-v1",
+  "commands": [
+    [
+      "metaball-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--test",
+        "metaball_failures",
+        "--",
+        "--test-threads=1"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/metaball-failures/baseline-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P18",
+    "P20",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "Hypersdf inverse-square field evaluation and conservative bounds",
+    "CSGRS metaball modeling and shared sampling",
+    "native Hypermesh standalone Surface Nets"
+  ],
+  "domain": "Positive-radius inverse-square metaballs, positive iso levels, nonnegative padding, declared sample grids, and canonical empty input after validation. Primary modeling failure remains typed. Exact continuous normalized field F=(iso-I)/(1+I) with value -1 at poles replaces cutoff/sentinel/float extraction through an explicit geometry migration. Sampled output is not a fidelity certificate for the continuous field.",
+  "consumers": [
+    "solid::metaballs and diagnostics",
+    "MetaBall::influence",
+    "native Hypersdf field consumers",
+    "shared SDF/TPMS sampler",
+    "examples and benchmarks"
+  ],
+  "missing_acceptance_test": "tests/metaball_failures.rs",
+  "semantic_oracle": "Independent inverse-square rational values and normalized field identities; exact sampled unit-ball vertices 20201/60600 at the declared grid; native topology, signed volume and downstream composition; invalid/undecided/resource categories and recovery.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: 0a1ecb0ac and 5d49530ee committed typed SDF failures, standalone native extraction and their 17-command final qualification. The full properties goal remains active."
+}

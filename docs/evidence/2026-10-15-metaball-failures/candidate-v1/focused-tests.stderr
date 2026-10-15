@@ -1,0 +1,5 @@
+error: failed to parse manifest at `/home/tim/Documents/GitHub/workspace/csgrs/Cargo.toml`
+
+Caused by:
+  feature `sdf` includes `hypersdf`, but `hypersdf` is an optional dependency without an implicit feature
+  Use `dep:hypersdf` to enable the dependency.

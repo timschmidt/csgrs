@@ -1,0 +1,40 @@
+{
+  "commands": [
+    {
+      "name": "focused-tests",
+      "exit_code": 0,
+      "seconds": 44.405886782798916,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/metaball-failures/candidate-v2/release/deps/csgrs-7cb2efc2751cd581": "18bf1044402645d5c0b80f0793a6fd0badae767771cdb7f44085130e249b0358",
+        "target/metaball-failures/candidate-v2/release/deps/metaball_failures-043b72a00404a6ff": "77ff19ff344e0c191f1e02d0a45fec101fd05a66b7d68f324cbded0588320a56",
+        "target/metaball-failures/candidate-v2/release/deps/metaballs_diagnostics-8dfd6522763c319c": "fd8a30384e484931b0a7104919bae804009a98f4eeb0a93f89ab4c4b98211d3b",
+        "target/metaball-failures/candidate-v2/release/deps/sdf_failures-0e01156f99592da3": "175590aada50fe7824982e63e7f612f671d66af7c0350dbc77a7aefd1c6a51d1",
+        "target/metaball-failures/candidate-v2/release/deps/sdf_tpms_diagnostics-5aa3ece71b49182c": "f2c1097d4c14579e62d5acf071df8aa9972caa8a1bf2232fe7521c85f18c389e"
+      },
+      "stdout_sha256": "5ec182f1bbd99b6950d7757ab04f7e5e7c107125bdf2c30e7ef65a39d8bfd5da",
+      "stderr_sha256": "ac15bf0d250f571397620b94337457ba4517c1c9405b1f8032ad4892f693ffc8"
+    },
+    {
+      "name": "native-field-tests",
+      "exit_code": 0,
+      "seconds": 5.241642507258803,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/metaball-failures/candidate-v2/release/deps/metaball_field-8fdb79172457092e": "e0a4e5dac876862d677a983ff7d813826abd68e846772393c555ad2bfe725be5"
+      },
+      "stdout_sha256": "d0efe7081a1f4e3829ed7b374abb5c00a2ca6839f3cd7696e28415c2a4d4e562",
+      "stderr_sha256": "b40db3a9f5f8c0bb9afa5ccc34d5120a641ddfef6cc4415bd9be05dcdbb79c55"
+    },
+    {
+      "name": "clippy",
+      "exit_code": 0,
+      "seconds": 26.956668011378497,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "89f5d017c3760dcf8c870edad5500b838e897e22363d8dbd457e152fa222feb8"
+    }
+  ],
+  "passed": true
+}

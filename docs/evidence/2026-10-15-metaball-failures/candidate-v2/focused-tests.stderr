@@ -1,0 +1,8 @@
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 27.73s
+     Running unittests src/lib.rs (target/metaball-failures/candidate-v2/release/deps/csgrs-7cb2efc2751cd581)
+     Running tests/metaball_failures.rs (target/metaball-failures/candidate-v2/release/deps/metaball_failures-043b72a00404a6ff)
+     Running tests/metaballs_diagnostics.rs (target/metaball-failures/candidate-v2/release/deps/metaballs_diagnostics-8dfd6522763c319c)
+     Running tests/sdf_failures.rs (target/metaball-failures/candidate-v2/release/deps/sdf_failures-0e01156f99592da3)
+     Running tests/sdf_tpms_diagnostics.rs (target/metaball-failures/candidate-v2/release/deps/sdf_tpms_diagnostics-5aa3ece71b49182c)

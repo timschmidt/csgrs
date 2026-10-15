@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 5.75s
+     Running tests/sdf_failures.rs (target/metaball-failures/native-v1/release/deps/sdf_failures-ef9e460be9e301c3)
+     Running tests/sdf_tpms_diagnostics.rs (target/metaball-failures/native-v1/release/deps/sdf_tpms_diagnostics-9cde959a61ce554f)

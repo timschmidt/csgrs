@@ -1,0 +1,5 @@
+{
+  "removed": "target/metaball-failures/candidate-v1",
+  "reason": "Cargo exited during manifest parsing before any compilation or target executable ran. Only the unused seed copy was removed; source snapshots, logs and prior executed artifacts are preserved.",
+  "result_sha256": "169cae4a4689eb19ea405e8ef8b56db66f459b691de34afdfe97c5e2907defaf"
+}
