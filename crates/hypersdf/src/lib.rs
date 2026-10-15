@@ -10,6 +10,7 @@
 //! decisions, not only to individual scalar values.
 
 mod dual_contour;
+mod evaluation;
 mod expr;
 mod facts;
 mod gradient;
@@ -36,6 +37,7 @@ pub use dual_contour::{
     SdfDualGridSampleRecord, SdfDualNormalEvidence, SdfDualQefTerm, SdfDualVertexPlacementStatus,
     SdfGridSampleSign,
 };
+pub use evaluation::SdfEvaluationError;
 pub use expr::{SdfCoordinate, SdfExpr};
 pub use facts::SdfFacts;
 pub use gradient::{SdfGradientReport, SdfNormalReport};

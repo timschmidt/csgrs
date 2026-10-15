@@ -1361,7 +1361,9 @@ pub fn metaballs_with_diagnostics(
 ///
 /// Coordinates remain [`Real`] throughout construction. The regular sample
 /// grid still defines proposal topology; this is not a continuous-field
-/// topology certificate.
+/// topology certificate. Each grid dimension must be at least two. Invalid
+/// dimensions, undecided predicates, capacity failures and extraction errors
+/// return `Err`; successful empty geometry remains `Ok`.
 #[cfg(feature = "sdf")]
 pub fn sdf(
     field: impl Fn(&Point3) -> Real,
@@ -1369,8 +1371,16 @@ pub fn sdf(
     min: Point3,
     max: Point3,
     iso_value: Real,
-) -> TriangleMesh {
-    crate::implicit::sdf::sdf(field, resolution, min, max, iso_value)
+) -> Result<TriangleMesh, ValidationError> {
+    sdf_with_context(
+        field,
+        resolution,
+        min,
+        max,
+        iso_value,
+        &GeometryContext::STRICT,
+    )
+    .map(|outcome| outcome.value)
 }
 
 /// Samples an SDF into native triangle geometry and returns sampling diagnostics.
@@ -1381,15 +1391,25 @@ pub fn sdf_with_diagnostics(
     min: Point3,
     max: Point3,
     iso_value: Real,
-) -> (TriangleMesh, SdfDiagnostics) {
-    crate::implicit::sdf::sdf_with_diagnostics(field, resolution, min, max, iso_value)
+) -> Result<(TriangleMesh, SdfDiagnostics), ValidationError> {
+    sdf_with_diagnostics_and_context(
+        field,
+        resolution,
+        min,
+        max,
+        iso_value,
+        &GeometryContext::STRICT,
+    )
+    .map(|outcome| outcome.value)
 }
 
 /// Samples a Hypersdf expression with native-real Surface Nets.
 ///
 /// Coordinates remain [`Real`] throughout construction. The regular sample
 /// grid still defines proposal topology; this is not a continuous-field
-/// topology certificate.
+/// topology certificate. Each grid dimension must be at least two. Invalid
+/// dimensions, undecided predicates, capacity failures and extraction errors
+/// return `Err`; successful empty geometry remains `Ok`.
 #[cfg(feature = "sdf")]
 pub fn sdf_expr(
     expression: hypersdf::SdfExpr,
@@ -1397,8 +1417,16 @@ pub fn sdf_expr(
     min: Point3,
     max: Point3,
     iso_value: Real,
-) -> TriangleMesh {
-    crate::implicit::sdf::sdf_expr(expression, resolution, min, max, iso_value)
+) -> Result<TriangleMesh, ValidationError> {
+    sdf_expr_with_context(
+        expression,
+        resolution,
+        min,
+        max,
+        iso_value,
+        &GeometryContext::STRICT,
+    )
+    .map(|outcome| outcome.value)
 }
 
 /// Samples a retained SDF expression and returns sampling diagnostics.
@@ -1409,10 +1437,16 @@ pub fn sdf_expr_with_diagnostics(
     min: Point3,
     max: Point3,
     iso_value: Real,
-) -> (TriangleMesh, SdfDiagnostics) {
-    crate::implicit::sdf::sdf_expr_with_diagnostics(
-        expression, resolution, min, max, iso_value,
+) -> Result<(TriangleMesh, SdfDiagnostics), ValidationError> {
+    sdf_expr_with_diagnostics_and_context(
+        expression,
+        resolution,
+        min,
+        max,
+        iso_value,
+        &GeometryContext::STRICT,
     )
+    .map(|outcome| outcome.value)
 }
 
 /// Samples and meshes a scalar field with the selected policy, retaining errors and certainty.
@@ -1460,7 +1494,8 @@ pub fn sdf_with_diagnostics_and_context(
 }
 
 /// Samples a Hypersdf expression and meshes its scalar values with the selected policy.
-/// Expression evaluation retains Hypersdf's own domain checks.
+/// Expression domain and branch checks remain strict even when meshing permits
+/// approximate predicates. Evaluation errors retain their cause and sample index.
 #[cfg(feature = "sdf")]
 pub fn sdf_expr_with_context(
     expression: hypersdf::SdfExpr,
@@ -1470,29 +1505,27 @@ pub fn sdf_expr_with_context(
     iso_value: Real,
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
-    let sdf = hypersdf::Sdf::new(expression);
-    crate::implicit::sdf::sample_with_context(
-        |point| {
-            sdf.classify_point(&hyperlimit::Point3::new(
-                point.x.clone(),
-                point.y.clone(),
-                point.z.clone(),
-            ))
-            .scalar_value
-            .ok_or_else(|| {
-                ValidationError::Geometry(
-                    "SDF expression has no scalar value at a sample".into(),
-                )
-            })
-        },
-        resolution,
-        min,
-        max,
-        iso_value,
-        false,
-        context,
+    crate::implicit::sdf::sample_expr_with_context(
+        expression, resolution, min, max, iso_value, false, context,
     )
     .map(|outcome| outcome.map(|(mesh, _)| mesh))
+}
+
+/// Samples an expression with the selected policy and retains diagnostics and certainty.
+/// Expression domain and branch checks remain strict. Preview samples remain lossy,
+/// and their sign counts include only strict proofs, even under an approximate policy.
+#[cfg(feature = "sdf")]
+pub fn sdf_expr_with_diagnostics_and_context(
+    expression: hypersdf::SdfExpr,
+    resolution: (usize, usize, usize),
+    min: Point3,
+    max: Point3,
+    iso_value: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<(TriangleMesh, SdfDiagnostics)>, ValidationError> {
+    crate::implicit::sdf::sample_expr_with_context(
+        expression, resolution, min, max, iso_value, true, context,
+    )
 }
 
 /// Bounded gyroid solid sampled through the established SDF boundary.

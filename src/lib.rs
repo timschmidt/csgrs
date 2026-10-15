@@ -74,7 +74,7 @@ pub use hyperreal::Real;
 
 pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
     hyperlimit::PredicatePolicy::STRICT;
-#[cfg(any(test, feature = "sdf"))]
+#[cfg(test)]
 pub(crate) const MESH_CONTEXT: hypermesh::MeshContext =
     hypermesh::MeshContext::new(PREDICATE_POLICY);
 

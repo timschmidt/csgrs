@@ -69,6 +69,18 @@ impl Sdf {
         self.facts.metric_status
     }
 
+    /// Construct a retained scalar value with strict domain and branch checks.
+    ///
+    /// This preserves invalid-domain, undecided, and scalar arithmetic failures.
+    /// Success certifies construction of this value, not its sign, metric fidelity,
+    /// or the topology of a sampled or continuous field.
+    pub fn evaluate_point(
+        &self,
+        point: &Point3,
+    ) -> Result<hyperreal::Real, crate::SdfEvaluationError> {
+        crate::evaluation::evaluate_expr(&self.expr, point)
+    }
+
     /// Classify a point and return a report rather than a bare boolean.
     #[inline]
     pub fn classify_point(&self, point: &Point3) -> SdfPointClassificationReport {

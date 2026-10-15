@@ -82,18 +82,9 @@ fuzz_target!(|bytes: &[u8]| {
                 iso,
             )
         },
-        2 => match solid::gyroid(&base, res, period, iso) {
-            Ok(mesh) => mesh,
-            Err(_) => return,
-        },
-        3 => match solid::schwarz_p(&base, res, period, iso) {
-            Ok(mesh) => mesh,
-            Err(_) => return,
-        },
-        4 => match solid::schwarz_d(&base, res, period, iso) {
-            Ok(mesh) => mesh,
-            Err(_) => return,
-        },
+        2 => solid::gyroid(&base, res, period, iso),
+        3 => solid::schwarz_p(&base, res, period, iso),
+        4 => solid::schwarz_d(&base, res, period, iso),
         _ => {
             let sign = if bytes[idx % bytes.len()] & 1 == 0 {
                 Real::one()
@@ -110,5 +101,9 @@ fuzz_target!(|bytes: &[u8]| {
         },
     };
 
+    let mesh = match mesh {
+        Ok(mesh) => mesh,
+        Err(_) => return,
+    };
     assert_mesh_finite(&mesh);
 });

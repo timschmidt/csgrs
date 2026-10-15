@@ -3,8 +3,8 @@
 use hyperlimit::Point3;
 use hyperreal::Real;
 use hypersdf::{
-    SdfExpr, SdfGradientContourBlocker, SdfGradientContourReport, SdfPreviewGrid,
-    SdfSamplingPrecision, Sdf,
+    Sdf, SdfExpr, SdfGradientContourBlocker, SdfGradientContourReport, SdfPreviewGrid,
+    SdfSamplingPrecision,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -27,7 +27,11 @@ fuzz_target!(|data: &[u8]| {
         1 => Sdf::new(SdfExpr::x()),
         2 => Sdf::new(SdfExpr::sphere(p(0, 0, 0), r(25))),
         3 => Sdf::new(SdfExpr::x().tan()),
-        _ => Sdf::new(SdfExpr::x().mul_expr(SdfExpr::x()).sub_expr(SdfExpr::constant(r(4)))),
+        _ => Sdf::new(
+            SdfExpr::x()
+                .mul_expr(SdfExpr::x())
+                .sub_expr(SdfExpr::constant(r(4))),
+        ),
     };
     let grid = SdfPreviewGrid::new(
         p(origin_x, origin_y, origin_z),
@@ -39,21 +43,24 @@ fuzz_target!(|data: &[u8]| {
         .expect("positive fuzz grid");
     assert!(report.is_self_consistent());
     assert!(!report.is_validation_ready());
-    assert!(report
-        .blockers
-        .contains(&SdfGradientContourBlocker::LossyGradientApproximation));
+    assert!(
+        report
+            .blockers
+            .contains(&SdfGradientContourBlocker::LossyGradientApproximation)
+    );
     assert!(report.kept_projection_count() <= report.active_cell_count());
     assert_eq!(
         report.rejected_projection_count(),
-        report.active_cell_count()
+        report
+            .active_cell_count()
             .saturating_sub(report.kept_projection_count())
     );
     for projection in &report.projections {
         if projection.is_kept() {
             let point = projection.projected_point.expect("kept projection point");
-            for axis in 0..3 {
-                assert!(point[axis] >= projection.cell_bounds[0][axis]);
-                assert!(point[axis] <= projection.cell_bounds[1][axis]);
+            for (axis, coordinate) in point.into_iter().enumerate() {
+                assert!(coordinate >= projection.cell_bounds[0][axis]);
+                assert!(coordinate <= projection.cell_bounds[1][axis]);
             }
         }
     }
@@ -61,9 +68,11 @@ fuzz_target!(|data: &[u8]| {
     let sampled = SdfGradientContourReport::from_signed_grid_samples(report.grid_samples.clone());
     assert!(sampled.is_self_consistent());
     assert!(!sampled.is_validation_ready());
-    assert!(sampled
-        .blockers
-        .contains(&SdfGradientContourBlocker::LossyGradientApproximation));
+    assert!(
+        sampled
+            .blockers
+            .contains(&SdfGradientContourBlocker::LossyGradientApproximation)
+    );
 });
 
 fn r(value: i32) -> Real {

@@ -206,7 +206,7 @@ Functions in `csgrs::solid` return `TriangleMesh`:
 | <img src="docs/spur_gear_cycloid.png" width="144" alt="Cycloidal spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_cycloid(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, thickness: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/helical_involute_gear.png" width="144" alt="Helical involute gear with visible faces, edges, and vertices"/> | `solid::helical_involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_degrees: Real, slices: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/metaballs_3d.png" width="144" alt="Sampled metaball solid with visible faces, edges, and vertices"/> | `solid::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real) -> TriangleMesh` |
-| <img src="docs/sdf.png" width="144" alt="Sampled signed-distance-field solid with visible faces, edges, and vertices"/> | `solid::sdf(field: impl Fn(&Point3) -> Real, resolution: (usize, usize, usize), min: Point3, max: Point3, iso_value: Real) -> TriangleMesh` |
+| <img src="docs/sdf.png" width="144" alt="Sampled signed-distance-field solid with visible faces, edges, and vertices"/> | `solid::sdf(field: impl Fn(&Point3) -> Real, resolution: (usize, usize, usize), min: Point3, max: Point3, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/gyroid.png" width="144" alt="Bounded gyroid solid with visible faces, edges, and vertices"/> | `solid::gyroid_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/schwarz_p.png" width="144" alt="Bounded Schwarz-P solid with visible faces, edges, and vertices"/> | `solid::schwarz_p_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/schwarz_d.png" width="144" alt="Bounded Schwarz-D solid with visible faces, edges, and vertices"/> | `solid::schwarz_d_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
@@ -218,7 +218,34 @@ Functions in `csgrs::solid` return `TriangleMesh`:
 `metaballs_with_diagnostics` and `sdf_with_diagnostics` produce the same shape
 families while returning sampling reports. `sdf_expr` and
 `sdf_expr_with_diagnostics` accept retained `hypersdf::SdfExpr` values and
-produce the same SDF shape family.
+produce the same SDF shape family. All four SDF constructors now return `Result`:
+use `?` to propagate failures before passing a mesh downstream. Successful
+empty level surfaces remain `Ok`; invalid expression domains, undecided
+construction or extraction, and capacity exhaustion are errors with retained
+native causes. `ValidationError::SdfSample` also records the failing grid index.
+Grid dimensions below two are rejected instead of silently increased. Diagnostic
+queries also fail when their requested sign or extrema cannot be established.
+
+`*_with_context` variants retain the certainty of the decisions consumed under
+the selected policy, including `sdf_expr_with_diagnostics_and_context`.
+Expression construction remains strict under either meshing policy. Diagnostic
+previews remain lossy and preserve only strict sign evidence; they may withhold
+samples accepted approximately by the mesh operation. The display backend also
+uses a chunk boundary convention that can omit final-layer faces. The modeling
+path now uses Hypermesh's `surface_nets_standalone`, which includes all faces
+whose four incident cells are present in the grid. Hypermesh's existing
+`surface_nets` keeps its documented chunk convention. The modeling output
+correction is a contract migration, not a performance-only change.
+Numerical certification
+of the sampled level surface establishes neither closed topology nor fidelity
+to the continuous field. Check required topology separately and retain the
+source expression when that distinction matters.
+
+The SDF sampling path checks primary buffer capacities and reservations. Scalar
+expression growth, secondary extraction/preview allocations, total work and
+cancellation do not yet have internal bounds. The separate metaball convenience
+APIs still have their existing fallback and approximation behavior; this SDF
+migration does not qualify them.
 
 Sampling arguments such as segments, stacks, slices, and resolution are
 explicit tessellation choices; CSGRS has no global tolerance setting.
@@ -358,7 +385,7 @@ report. The existing convenience entry points retain their strict default.
 | Mesh bounds and queries | `solid::try_bounding_box_with_context`, `contains_point_with_context`, `polyline_intersections_with_context`, `dihedral_angle_with_context` |
 | Hulls, copies, and polygon caps | `solid::convex_hull_with_context`, `minkowski_sum_with_context`, `distribute_linear_with_context`, `distribute_grid_with_context`, `distribute_arc_with_context`, `polyhedron_with_context`, `loft_with_context` |
 | Projection and slicing | `solid::flatten_with_context`, `slice_z_with_context` |
-| Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context` |
+| Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context`, `sdf_expr_with_diagnostics_and_context` |
 | Curve construction | `curve::polygon_with_context`, `rectangle_with_context`, `square_with_context`, `circle_with_context`, `ellipse_with_context`, `regular_ngon_with_context`, `rounded_rectangle_with_context`, `bezier_region_with_context`, `bspline_path_with_context` |
 | Curve transforms and queries | `curve::try_transformed_with_context`, `try_translated_with_context`, `try_rotated_with_context`, `try_scaled_with_context`, `try_bounding_box_with_context`, `contains_xy_with_context`, `hilbert_strings_with_context` |
 | Mesh imports | `io::obj::from_obj_with_context`, `from_obj_attributed_with_context`, `io::dxf::from_dxf_with_context`, `io::vrml::from_vrml_with_context` |
