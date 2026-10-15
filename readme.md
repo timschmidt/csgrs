@@ -123,6 +123,16 @@ restrictions. A zero rounded-corner segment count selects the sharp rectangle;
 corner radii are clamped to half the smaller dimension. Sampling still defines
 a polygon and provides no analytic-surface fidelity bound.
 
+Rounded rectangles retain every nonzero straight side between their tangent
+endpoints. A positive `corner_segments = n` gives `n` equal-angle chords per
+quarter-circle and at most `4 * (n + 1)` vertices; only proven coincident
+endpoints are omitted. This corrects an earlier sampler that omitted distinct
+tangent endpoints, cutting away part of the intended polygon. For example,
+`rounded_rectangle(4, 2, 1/2, 1)` has area `15/2`, rather than `4`.
+Existing rounded-rectangle and Gerber obround outputs may therefore gain
+vertices and change exported bytes or previews. Regenerate derived artifacts;
+this is a geometry correction, not a performance-only change.
+
 The ring cache retains only successful strict constructions, keyed by owned
 exact coordinate rows, in a thread-local FIFO of at most 64 entries. Approximate
 requests may reuse those proofs but do not populate the cache. Failures are not
