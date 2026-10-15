@@ -1,0 +1,23 @@
+{
+  "complete": true,
+  "commands_all_zero": 2,
+  "all_frozen_sources_inputs_and_binaries_rechecked": true,
+  "artifacts_sha256": {
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "3465d719da28cc56b65c3d83115cedb669e56109f7aee52561bce99a7d06df3a",
+    "benchmark-clippy.stderr": "de18c4215a1d1ee8a0d25cdba7d86e9963bbd8a312a0977af6e5576ca487c12c",
+    "commands.json": "a4ef2645346730b75a73008ed44c7dd30943391e56b43284bdc3c025dc1b2e45",
+    "source-hashes.json.gz": "7a91adef2a60e9ab3d4b017f9f3aa81d3d565018b49f56a47e9c42b38739981e",
+    "benchmark-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "limits": [
+    "This corrects wording; the current algorithm still ranks elapsed times and averages best-of-five probes.",
+    "No directed lexicase campaign or per-representation selection is implemented by this change.",
+    "No historic generated report or closed numerical evidence is rewritten.",
+    "No runtime performance, full CI, or push-readiness claim."
+  ],
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false
+}

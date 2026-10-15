@@ -1,0 +1,38 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 10.511422439943999,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "benchmark-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--bench",
+      "adversarial_library",
+      "--features",
+      "simple",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 7.372108833864331,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "de18c4215a1d1ee8a0d25cdba7d86e9963bbd8a312a0977af6e5576ca487c12c"
+  }
+]

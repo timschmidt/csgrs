@@ -5430,6 +5430,18 @@
       ],
       "directed_lexicase_campaign_complete": false,
       "plan_complete": false
+    },
+    "scalar_adversarial_selection": {
+      "status": "current-timing-promotion-described-accurately-directed-selection-open",
+      "review": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-review-v1.json",
+      "qualification": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-wording-v1/result.json",
+      "admission": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-wording-admission-v1/admission.json",
+      "source_mapping": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-wording-admission-v1/source-hashes-after.json.gz",
+      "description_correction_admitted": true,
+      "selection_algorithm_changed": false,
+      "independent_representation_populations_implemented": false,
+      "P38_complete": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {

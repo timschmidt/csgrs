@@ -1,0 +1,40 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-selection-wording-v1/source",
+  "source_files": 10153,
+  "inputs_sha256": {
+    "qualify_scalar_selection_wording_v1.py": "ebdbea2bff3f6c89927d1b81266b7f8be0ae6476ed6051a8319e6267f6b4afb7",
+    "scalar-selection-wording-scope-v1.json": "bbb9ab01856df0dda0ceb93fac1683ecf2613bf62fc6998cc1616521c3e7f8ac",
+    "scalar-selection-wording-v1.patch": "8906c47c2890af99f5b62dcb4bef150b714bddb96b1aa508a24e7c33729389f6",
+    "scalar-selection-review-v1.json": "7432399f8933812067ce3feecbf492169be28cb2c136c31c35d0365de94f4063",
+    "structural-fuzz-inventory-admission-v5/source-hashes-after.json.gz": "9e8d570baf0054d44f07b7eb2ff7f7a4da5475b157e4ca48a7022c46d5ad1b34"
+  },
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-selection-wording-v1/target",
+    "RUSTUP_TOOLCHAIN": "stable",
+    "RUSTFLAGS": ""
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "preserved_binaries": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/qualification-target/x86_64-unknown-linux-gnu/release/deps/real_representations-4cfc6a52c9a097d4",
+      "sha256": "e1d44f0752dcd38b63495f2356015d64516931f27a768ebc4abc2636ce6e4eae",
+      "bytes": 2735464
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/qualification-target/x86_64-unknown-linux-gnu/release/deps/real_representations-7fffae914936c8dc",
+      "sha256": "9f85cc8202da0b1c655de249f052598342488a4bd5b997fe7c375568c1b79abc",
+      "bytes": 3855048
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/structural-fuzz-inventory-v5/fuzz-target/x86_64-unknown-linux-gnu/release/structural_representations",
+      "sha256": "f8ce7e0b311c19c9dd5df504d938b61dc02cc85b235587af0796bb186de7f1d8",
+      "bytes": 40462072
+    }
+  ],
+  "commands": 2,
+  "not_a_performance_measurement": true
+}

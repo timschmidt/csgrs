@@ -1,0 +1,21 @@
+{
+  "complete": true,
+  "admitted": true,
+  "admitted_files_sha256": {
+    "crates/hyperreal/benches/adversarial_library.rs": "4a04f30a7cc6d7640feb2421b4143724901a81e30445811b8e03246dc18fb129",
+    "crates/hyperreal/fuzz/README.md": "9933c888a4f25579da0ad1a1660c26170d447274e5f34756be93a548372fcb78"
+  },
+  "benchmark_code_changed_only_in_one_description_literal": true,
+  "historical_reports_and_closed_numeric_evidence_unchanged": true,
+  "qualification_result_sha256": "ae2689aaa957e354d99527ad6863ee0715cb60d9b640ca8ba0965b27b231b03e",
+  "source_mapping_after_sha256": "7637ab09a08c15e3ac7c239f1fad7a59c26ea93dfc6075b147f6da74b09cb92c",
+  "admission_script_sha256": "42a93e70a1590d3bb89f1472ddf45669af0e12ed3c3a92b7f7fc4d6664bc109c",
+  "limits": [
+    "This corrects wording; the current algorithm still ranks elapsed times and averages best-of-five probes.",
+    "No directed lexicase campaign or per-representation selection is implemented by this change.",
+    "No historic generated report or closed numerical evidence is rewritten.",
+    "No runtime performance, full CI, or push-readiness claim."
+  ],
+  "P38_complete": false,
+  "plan_complete": false
+}
