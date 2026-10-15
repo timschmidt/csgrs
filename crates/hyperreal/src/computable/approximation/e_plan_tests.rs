@@ -4,6 +4,7 @@ use std::collections::BTreeSet;
 use std::sync::{Arc, atomic::AtomicBool, atomic::Ordering};
 
 fn assert_e_enclosure(actual: &BigInt, p: i32) {
+    crate::mpfr_test::cleanup_on_thread_exit();
     let precision = p.unsigned_abs().max(64) + 192;
     let mut lower = Float::with_val(precision, 1);
     let mut upper = lower.clone();

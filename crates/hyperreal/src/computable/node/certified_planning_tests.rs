@@ -30,6 +30,7 @@ mod certified_planning_tests {
 
     #[test]
     fn chained_sum_product_uses_certified_precision() {
+        crate::mpfr_test::cleanup_on_thread_exit();
         for terms in [32, 128, 512, 1024] {
             let actual = pi_sum(terms).multiply(Computable::pi()).approx(0);
             let mut lower = Float::with_val_round(256, Constant::Pi, Round::Down).0;
@@ -48,6 +49,7 @@ mod certified_planning_tests {
 
     #[test]
     fn chained_sum_square_root_does_not_use_a_stale_zero_cutoff() {
+        crate::mpfr_test::cleanup_on_thread_exit();
         let actual = pi_sum(512).sqrt().approx(3);
         let mut lower = Float::with_val_round(256, Constant::Pi, Round::Down).0;
         let mut upper = Float::with_val_round(256, Constant::Pi, Round::Up).0;
@@ -105,6 +107,7 @@ mod certified_planning_tests {
 
     #[test]
     fn near_cancelled_reciprocals_use_certified_precision() {
+        crate::mpfr_test::cleanup_on_thread_exit();
         for denominator in [256_u64, 1000, 65_536, 16_777_216] {
             for with_pi in [false, true] {
                 let radicand = Rational::fraction((4 * denominator - 1) as i64, denominator).unwrap();

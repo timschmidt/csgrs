@@ -1,3 +1,6 @@
+#[path = "support/mpfr.rs"]
+mod mpfr;
+
 use hyperreal::{Problem, Real, ScientificCase};
 use rug::float::Round;
 use rug::{Float, Rational as Mpq};
@@ -95,6 +98,7 @@ fn exact_halfway_values_round_to_even_including_decade_carries() {
 
 #[test]
 fn generated_exact_rationals_match_directed_mpfr_reference_brackets() {
+    mpfr::cleanup_on_thread_exit();
     for denominator in [3_i64, 7, 11, 13, 17, 19, 23, 31, 97] {
         for index in -32_i64..32 {
             let numerator = index * 7919;
@@ -123,6 +127,7 @@ fn generated_exact_rationals_match_directed_mpfr_reference_brackets() {
 
 #[test]
 fn pi_and_square_root_match_directed_mpfr_reference_brackets() {
+    mpfr::cleanup_on_thread_exit();
     let pi = Real::pi();
     let root = Real::from(2).sqrt().unwrap();
     let (pi_lower, _) = Float::with_val_round(256, rug::float::Constant::Pi, Round::Down);

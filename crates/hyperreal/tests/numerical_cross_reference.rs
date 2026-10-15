@@ -1,3 +1,6 @@
+#[path = "support/mpfr.rs"]
+mod mpfr;
+
 use hyperreal::{Computable, Problem, Rational, Real};
 use num::{BigInt, Signed};
 use rug::{Float, Integer, Rational as RugRational, float::Round};
@@ -28,6 +31,7 @@ fn assert_close(actual: Real, expected: f64, context: &str) {
 
 #[test]
 fn core2_zimmermann_exp_inputs_match_mpfr_at_256_bits() {
+    mpfr::cleanup_on_thread_exit();
     for input in [
         "0.09407822313572878",
         "0.0000000000000009999999999999995",
@@ -91,6 +95,7 @@ fn core_compare_nested_radical_identity_is_certified_exactly() {
 
 #[test]
 fn core_heron_needle_triangles_match_exact_kahan_rearrangement_and_mpfr() {
+    mpfr::cleanup_on_thread_exit();
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum AreaStatus {
         Positive,
