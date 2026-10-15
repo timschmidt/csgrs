@@ -20,15 +20,28 @@ fn js_error(error: impl std::fmt::Display) -> JsValue {
 }
 
 fn construction_error(error: crate::errors::ValidationError) -> JsValue {
-    let exception = js_sys::Error::new(&error.to_string());
+    construction_exception(&error.to_string(), error.kind())
+}
+
+fn construction_exception(message: &str, kind: crate::errors::ValidationErrorKind) -> JsValue {
+    let exception = js_sys::Error::new(message);
     exception.set_name("GeometryError");
     Reflect::set(
         &exception,
         &JsValue::from_str("code"),
-        &JsValue::from_str(error.kind().as_str()),
+        &JsValue::from_str(kind.as_str()),
     )
     .expect("new Error object accepts a code property");
     exception.into()
+}
+
+fn construction_scalar(value: f64, name: &str) -> Result<crate::Real, JsValue> {
+    real_from_js(value).ok_or_else(|| {
+        construction_exception(
+            &format!("{name} must be finite"),
+            crate::errors::ValidationErrorKind::InvalidInput,
+        )
+    })
 }
 
 fn face_normal(points: &[Point3; 3]) -> Option<hyperlattice::Vector3> {
@@ -551,16 +564,16 @@ impl MeshJs {
     }
 
     pub fn cube(size: f64) -> Result<Self, JsValue> {
-        Ok(solid::cube(real_from_js_named(size, "size")?)
+        Ok(solid::cube(construction_scalar(size, "size")?)
             .map_err(construction_error)?
             .into())
     }
 
     pub fn cuboid(width: f64, length: f64, height: f64) -> Result<Self, JsValue> {
         Ok(solid::cuboid(
-            real_from_js_named(width, "width")?,
-            real_from_js_named(length, "length")?,
-            real_from_js_named(height, "height")?,
+            construction_scalar(width, "width")?,
+            construction_scalar(length, "length")?,
+            construction_scalar(height, "height")?,
         )
         .map_err(construction_error)?
         .into())
@@ -568,7 +581,7 @@ impl MeshJs {
 
     pub fn sphere(radius: f64, segments: usize, stacks: usize) -> Result<Self, JsValue> {
         Ok(
-            solid::sphere(real_from_js_named(radius, "radius")?, segments, stacks)
+            solid::sphere(construction_scalar(radius, "radius")?, segments, stacks)
                 .map_err(construction_error)?
                 .into(),
         )
@@ -576,8 +589,8 @@ impl MeshJs {
 
     pub fn cylinder(radius: f64, height: f64, segments: usize) -> Result<Self, JsValue> {
         Ok(solid::cylinder(
-            real_from_js_named(radius, "radius")?,
-            real_from_js_named(height, "height")?,
+            construction_scalar(radius, "radius")?,
+            construction_scalar(height, "height")?,
             segments,
         )
         .map_err(construction_error)?
@@ -591,9 +604,9 @@ impl MeshJs {
         segments: usize,
     ) -> Result<Self, JsValue> {
         Ok(solid::frustum(
-            real_from_js_named(bottom_radius, "bottomRadius")?,
-            real_from_js_named(top_radius, "topRadius")?,
-            real_from_js_named(height, "height")?,
+            construction_scalar(bottom_radius, "bottomRadius")?,
+            construction_scalar(top_radius, "topRadius")?,
+            construction_scalar(height, "height")?,
             segments,
         )
         .map_err(construction_error)?
@@ -608,9 +621,9 @@ impl MeshJs {
         stacks: usize,
     ) -> Result<Self, JsValue> {
         Ok(solid::ellipsoid(
-            real_from_js_named(rx, "rx")?,
-            real_from_js_named(ry, "ry")?,
-            real_from_js_named(rz, "rz")?,
+            construction_scalar(rx, "rx")?,
+            construction_scalar(ry, "ry")?,
+            construction_scalar(rz, "rz")?,
             segments,
             stacks,
         )
@@ -625,8 +638,8 @@ impl MeshJs {
         minor_segments: usize,
     ) -> Result<Self, JsValue> {
         Ok(solid::torus(
-            real_from_js_named(major_radius, "majorRadius")?,
-            real_from_js_named(minor_radius, "minorRadius")?,
+            construction_scalar(major_radius, "majorRadius")?,
+            construction_scalar(minor_radius, "minorRadius")?,
             major_segments,
             minor_segments,
         )
