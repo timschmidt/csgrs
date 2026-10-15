@@ -1,0 +1,26 @@
+{
+  "terminal_exit_code_observed": 101,
+  "complete": false,
+  "passed": [
+    "workspace formatting",
+    "included-source formatting",
+    "51 acceptance controls"
+  ],
+  "failed": "Default test compilation: the current-main tower reconstruction still called the old replacement setter, which is test-only in the candidate.",
+  "numerical_tests_executed": false,
+  "artifacts_sha256": {
+    "included-fmt.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "2976cb69f245d7a6a06ac2b892fe2af120bdfc9a62aab52e4b4d9684c9b8b746",
+    "result.json": "6e144dba7dd768ba9cea6b808b1599afb178f9c81f9a0871ef799895f27beba8",
+    "default-tests.stderr": "1d9f539425123f3d24db4656dcbf6a592e001f77d7ec6fdf1f7b8e4ebb0599b6",
+    "included-fmt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.json": "3eb75e210619de9f516b20e33b53b6f82a18f1d5c0a51f0cf25605591a799dc6",
+    "workspace-fmt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-tests.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "acceptance-controls.stderr": "bbb7e6223c8497bd5c1fcdbc36251c5e076c2a2112899b25f5e7d205cfe74f2d",
+    "workspace-fmt.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "acceptance-controls.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "source_record_sha256": "8bf3d577774d966302c0cd98ff5f0e11e7dfceecfbd00f7683f14d8288291435",
+  "runtime_admitted": false
+}

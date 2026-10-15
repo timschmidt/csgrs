@@ -1,0 +1,8 @@
+{
+  "complete": false,
+  "commands_executed": 4,
+  "commands_expected": 8,
+  "last_exit_code": 101,
+  "protocol_sha256": "2976cb69f245d7a6a06ac2b892fe2af120bdfc9a62aab52e4b4d9684c9b8b746",
+  "runtime_admitted": false
+}

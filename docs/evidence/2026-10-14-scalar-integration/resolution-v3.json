@@ -1,0 +1,28 @@
+{
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v3/source",
+  "source_parent": "preparation-v2/source-hashes.json.gz",
+  "source_parent_sha256": "cd4f9b72564e5fa67f5e26bf35043700bd009a8ecc2ee686b69d0d46d6261e23",
+  "runner_sha256": "5777742b9ad535c4314eb0b7013e646731b421cfe15302b0ed160701b432355d",
+  "resolutions": {
+    "crates/hyperreal/fuzz/fuzz_targets/structural_representations.rs": {
+      "conflicts": 1,
+      "sha256": "50e4e8c70cf70f84c9ae0f22eb36936c24df53634c84c7c4c4fd1f3a1469a5c4"
+    },
+    "crates/hyperreal/src/computable/node/certified_planning_tests.rs": {
+      "conflicts": 1,
+      "sha256": "7a30ffb3109a0de7938b9e51fefb34a536cea3d7175219db7d98cf731754dea5"
+    },
+    "crates/hyperreal/src/computable/node/tests.rs": {
+      "conflicts": 3,
+      "sha256": "0d579fd39c4e197400ef8b5b68273514da06fb09d09a61887ed6bac1d6a22740"
+    },
+    "crates/hyperreal/src/real/arithmetic/facts.rs": {
+      "conflicts": 1,
+      "sha256": "2a9ff433c1beb1351c9d82390655f6b4e8c7d04cbb11814c333158ae9a354f08"
+    }
+  },
+  "new_regression": "crates/hyperreal/src/real/tests.rs",
+  "new_regression_sha256_before_formatting": "ac45ddbecfe418ab7cc27b4b04a1f44a17167bc7ec6b78d2ce735357d9182855",
+  "scope": "Preserve P4 fuzz checks, MPFR thread cleanup and cache-only interval semantics while adapting the ordinary interval caller to Result. Formatting and all qualification remain pending.",
+  "runtime_admitted": false
+}

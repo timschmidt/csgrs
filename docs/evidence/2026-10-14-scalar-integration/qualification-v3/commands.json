@@ -1,0 +1,38 @@
+[
+  {
+    "name": "workspace-fmt",
+    "exit_code": 0,
+    "seconds": 11.691559000872076,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "test_batches": [],
+    "sources_unchanged": true
+  },
+  {
+    "name": "included-fmt",
+    "exit_code": 0,
+    "seconds": 1.6865715659223497,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "test_batches": [],
+    "sources_unchanged": true
+  },
+  {
+    "name": "acceptance-controls",
+    "exit_code": 0,
+    "seconds": 1.276426190044731,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "bbb7e6223c8497bd5c1fcdbc36251c5e076c2a2112899b25f5e7d205cfe74f2d",
+    "test_batches": [],
+    "sources_unchanged": true
+  },
+  {
+    "name": "default-tests",
+    "exit_code": 101,
+    "seconds": 7.973160338122398,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "1d9f539425123f3d24db4656dcbf6a592e001f77d7ec6fdf1f7b8e4ebb0599b6",
+    "test_batches": [],
+    "sources_unchanged": true
+  }
+]

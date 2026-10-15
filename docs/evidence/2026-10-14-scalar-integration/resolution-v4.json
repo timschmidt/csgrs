@@ -1,0 +1,92 @@
+{
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-main-integration-v4/source",
+  "source_parent": "freeze-v3/source-hashes.json.gz",
+  "source_parent_sha256": "8bf3d577774d966302c0cd98ff5f0e11e7dfceecfbd00f7683f14d8288291435",
+  "runner_sha256": "a9445e6c0cf03fe08915fd7fea44a70dbdda67f455202193ef1e1cf461bcc6a6",
+  "changes_from_failed_source_sha256": {
+    "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs": "623510c30a1f616bae0a5a24549c4ec55c621e13b2839c218ce1dd2f59bb9668",
+    "crates/hyperreal/src/computable/node/domain_bound_tests.rs": "042e907257be6ad68fead9e9417606c1c56e16c75e0b43d652c03dc1c9bf45fa",
+    "crates/hyperreal/src/computable/node/trig_operands_tests.rs": "189e5375f03ef7d63c1e58a1e5af8f81b60b419a7cf450c9265923ccf621287c",
+    "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs": "fcc6876679a43f130825994d0893886203d46b023c4999d8db0a89ba50ba6b96",
+    "crates/hyperreal/src/computable/node/log_range_probe_tests.rs": "ec8142c835753b2e54fc2360eb54f9a34598bd34e19f6af0ecd5ce6d2a26510b",
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": "9b63a29cf0715674a3f56fbd1e157dd04642f2392f7a9b8c0ca8b91447dd3b88",
+    "crates/hyperreal/src/computable/node/private_trig_range_tests.rs": "d1c00dfe84b9e391fc1476371923c3d50da9c2602d68dd9edc61a915e675af4a",
+    "crates/hyperreal/src/computable/node/evaluation_failure_tests.rs": "3735ee72a4930c706d0a5a6da6c859533bad3412294f42c28ad55885ec45401e",
+    "crates/hyperreal/src/computable/node/tests.rs": "83d3cfa736c23180f10d3cffd855e2c9347a71a0393b06d3f6b703f4495f30ee",
+    "crates/hyperreal/src/computable/node/trig_lattice_tests.rs": "e70ef04d20822537758282b730d0cee69990fb9a7a45224d7d796a40d1d03504",
+    "crates/hyperreal/src/computable/node/trig_periodic_tests.rs": "968a76f98c17d511950f5b35e0d15ab0b48010bbf401591a59ab0a8ca1a64f65",
+    "crates/hyperreal/src/computable/node/certified_planning_tests.rs": "b7f20eb777b50bf8458fd679f93e0ad700ed35db37dffd535ab0108729c8b11c"
+  },
+  "mpfr_thread_cleanup_registrations": [
+    {
+      "path": "crates/hyperreal/src/computable/node/certified_planning_tests.rs",
+      "function": "assert_enclosed"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/domain_bound_tests.rs",
+      "function": "oracle"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs",
+      "function": "shared_evaluation_budget_reuses_high_precision_signs"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs",
+      "function": "oracle"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/evaluation_failure_tests.rs",
+      "function": "cdf_bounds"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/log_range_probe_tests.rs",
+      "function": "log_bounds"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs",
+      "function": "tangent_enclosure"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs",
+      "function": "inverse_enclosure"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/private_trig_range_tests.rs",
+      "function": "enclosure"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/tests.rs",
+      "function": "check"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/tests.rs",
+      "function": "rounded_scaled"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/tests.rs",
+      "function": "check"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/trig_lattice_tests.rs",
+      "function": "nearby_finite_trig_values_are_not_mistaken_for_lattice_points"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/trig_operands_tests.rs",
+      "function": "symbolic_pi_operands_preserve_nonlinear_atoms_and_wrappers"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/trig_operands_tests.rs",
+      "function": "enclosure"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/trig_operands_tests.rs",
+      "function": "residual_enclosure"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/trig_periodic_tests.rs",
+      "function": "enclosure"
+    }
+  ],
+  "scope": "Use monotone sign publication in the integrated tower-source path. Extend existing test-only MPFR cleanup to newly introduced oracle functions. No oracle inputs or assertions change.",
+  "runtime_admitted": false
+}
