@@ -1,0 +1,90 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/bounds-failures/candidate-v1",
+  "preserved_prior_executables_sha256": {},
+  "base_commit": "5428712371fc5bf267e2d734f3353a3aee7faa3f",
+  "runner_sha256": "c5ba7f8a03ca8c3555fc0b49f9a596354d6f3cbb0dfb3f3fa9d62333376ac45b",
+  "phase": "candidate-v2",
+  "commands": [
+    [
+      "focused-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--lib",
+        "--test",
+        "bounds_failures",
+        "--test",
+        "geometry_context",
+        "--test",
+        "sdf_tpms_diagnostics",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "-p",
+        "csgrs-ffi",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/bounds-failures/candidate-v2"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "Hypermesh indexed bounds and retained position facts",
+    "CSGRS optional bounds and positioning",
+    "implicit TPMS consumers",
+    "scalar and language adapters"
+  ],
+  "domain": "Valid indexed point sets, open or closed meshes, and native curve regions. Empty bounds are absent; invalid indices and undecided predicates remain typed failures. Centering/floating and TPMS constructions compose on canonical empty after validating their parameters. TPMS uses strict predicates and unchanged valid sample resolutions.",
+  "consumers": [
+    "SolidExt",
+    "scalar adapters",
+    "C ABI",
+    "C++",
+    "Python",
+    "Go",
+    "WASM",
+    "TPMS",
+    "blueprint parts"
+  ],
+  "missing_acceptance_test": "tests/bounds_failures.rs",
+  "semantic_oracle": "Absence differs from a point at the origin; typed error payloads; index mutation does not bypass validation; independently derived coordinate extrema and placement; canonical empty composition.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: committed fallible transforms, native projective finiteness repair and native/downstream/binding qualification; overall goal remains active."
+}

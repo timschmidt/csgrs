@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 4.05s
+     Running unittests src/lib.rs (target/bounds-failures/native-v2/release/deps/csgrs-12b72f0ccdd38706)
+     Running tests/bounds_failures.rs (target/bounds-failures/native-v2/release/deps/bounds_failures-c661a92a5b4c7962)

@@ -1,0 +1,69 @@
+
+running 8 tests
+test bounds_reject_malformed_indices ... FAILED
+test cached_position_bounds_do_not_validate_mutated_indices ... FAILED
+test empty_bounds_are_absent_rather_than_a_point_at_the_origin ... FAILED
+test empty_curve_bounds_are_absent ... FAILED
+test tpms_consumers_preserve_bounds_and_capacity_failures ... FAILED
+test tpms_invalid_parameters_are_not_successful_empty_models ... FAILED
+test undecided_bounds_do_not_become_an_origin_box_or_empty_model ... FAILED
+test undecided_bounds_retain_their_category_through_the_adapter ... FAILED
+
+failures:
+
+---- bounds_reject_malformed_indices stdout ----
+
+thread 'bounds_reject_malformed_indices' (152) panicked at tests/bounds_failures.rs:75:5:
+assertion failed: mesh.exact_bounds(&csgrs::GeometryContext::STRICT.mesh_context()).is_err()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- cached_position_bounds_do_not_validate_mutated_indices stdout ----
+
+thread 'cached_position_bounds_do_not_validate_mutated_indices' (153) panicked at tests/bounds_failures.rs:87:5:
+assertion failed: solid::try_bounding_box(&mesh).is_err()
+
+---- empty_bounds_are_absent_rather_than_a_point_at_the_origin stdout ----
+
+thread 'empty_bounds_are_absent_rather_than_a_point_at_the_origin' (154) panicked at tests/bounds_failures.rs:60:5:
+assertion failed: solid::try_bounding_box(&mesh).checked().unwrap().is_none()
+
+---- empty_curve_bounds_are_absent stdout ----
+
+thread 'empty_curve_bounds_are_absent' (155) panicked at tests/bounds_failures.rs:104:5:
+assertion failed: csgrs::curve::try_bounding_box(&curve).checked().unwrap().is_none()
+
+---- tpms_consumers_preserve_bounds_and_capacity_failures stdout ----
+
+thread 'tpms_consumers_preserve_bounds_and_capacity_failures' (156) panicked at tests/bounds_failures.rs:121:5:
+assertion failed: solid::gyroid(&uncertain_points(), 4, 1.into(), 0.into()).checked().is_err()
+
+---- tpms_invalid_parameters_are_not_successful_empty_models stdout ----
+
+thread 'tpms_invalid_parameters_are_not_successful_empty_models' (157) panicked at tests/bounds_failures.rs:138:9:
+assertion failed: solid::gyroid(&mesh, 4, 0.into(), 0.into()).checked().is_err()
+
+---- undecided_bounds_do_not_become_an_origin_box_or_empty_model stdout ----
+
+thread 'undecided_bounds_do_not_become_an_origin_box_or_empty_model' (158) panicked at tests/bounds_failures.rs:67:5:
+assertion failed: solid::bounding_box(&mesh).checked().is_err()
+
+---- undecided_bounds_retain_their_category_through_the_adapter stdout ----
+
+thread 'undecided_bounds_retain_their_category_through_the_adapter' (159) panicked at tests/bounds_failures.rs:97:5:
+assertion `left == right` failed
+  left: Geometry
+ right: Undecided
+
+
+failures:
+    bounds_reject_malformed_indices
+    cached_position_bounds_do_not_validate_mutated_indices
+    empty_bounds_are_absent_rather_than_a_point_at_the_origin
+    empty_curve_bounds_are_absent
+    tpms_consumers_preserve_bounds_and_capacity_failures
+    tpms_invalid_parameters_are_not_successful_empty_models
+    undecided_bounds_do_not_become_an_origin_box_or_empty_model
+    undecided_bounds_retain_their_category_through_the_adapter
+
+test result: FAILED. 0 passed; 8 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

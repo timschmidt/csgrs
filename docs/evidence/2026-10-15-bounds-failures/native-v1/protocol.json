@@ -1,0 +1,204 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/bounds-failures/candidate-v2",
+  "preserved_prior_executables_sha256": {
+    "target/bounds-failures/candidate-v2/release/deps/csgrs-d5e0741bbc5df635": "c42763400da87a53507236e17d1a955809407fb516833b3a99d05ad412ad1415",
+    "target/bounds-failures/candidate-v2/release/deps/bounds_failures-aecf08036656e9a3": "6c400e6ed16b6fbbbd6744c828b9c5a7321954ac30f8693877b5c65a13f85a67",
+    "target/bounds-failures/candidate-v2/release/deps/geometry_context-d256044952b39c9d": "571f05923b892773d04249c35df60c5bef38db199f756bd45913fda2f1f6019c",
+    "target/bounds-failures/candidate-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "2f528638ee1a76cadb8912389ccf94cc59cd5188079fce3958407e8abfe5fec5"
+  },
+  "base_commit": "5428712371fc5bf267e2d734f3353a3aee7faa3f",
+  "runner_sha256": "c5ba7f8a03ca8c3555fc0b49f9a596354d6f3cbb0dfb3f3fa9d62333376ac45b",
+  "phase": "native-v1",
+  "commands": [
+    [
+      "fmt",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "fuzz-fmt",
+      [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "all-feature-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "minimal-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--lib",
+        "--test",
+        "bounds_failures",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "hypermesh-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypermesh",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "ffi-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs-ffi"
+      ]
+    ],
+    [
+      "strict-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypermesh",
+        "-p",
+        "csgrs",
+        "-p",
+        "csgrs-ffi",
+        "--all-targets",
+        "--all-features",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "fuzz-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bins",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "docs",
+      [
+        "env",
+        "RUSTDOCFLAGS=-D warnings",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hypermesh",
+        "-p",
+        "csgrs",
+        "-p",
+        "csgrs-ffi",
+        "--all-features",
+        "--no-deps"
+      ]
+    ],
+    [
+      "doctests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypermesh",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--doc"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/bounds-failures/native-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "Hypermesh indexed bounds and retained position facts",
+    "CSGRS optional bounds and positioning",
+    "implicit TPMS consumers",
+    "scalar and language adapters"
+  ],
+  "domain": "Valid indexed point sets, open or closed meshes, and native curve regions. Empty bounds are absent; invalid indices and undecided predicates remain typed failures. Centering/floating and TPMS constructions compose on canonical empty after validating their parameters. TPMS uses strict predicates and unchanged valid sample resolutions.",
+  "consumers": [
+    "SolidExt",
+    "scalar adapters",
+    "C ABI",
+    "C++",
+    "Python",
+    "Go",
+    "WASM",
+    "TPMS",
+    "blueprint parts"
+  ],
+  "missing_acceptance_test": "tests/bounds_failures.rs",
+  "semantic_oracle": "Absence differs from a point at the origin; typed error payloads; index mutation does not bypass validation; independently derived coordinate extrema and placement; canonical empty composition.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: committed fallible transforms, native projective finiteness repair and native/downstream/binding qualification; overall goal remains active."
+}

@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 15.45s
+     Running tests/bounds_failures.rs (target/bounds-failures/baseline-v1/release/deps/bounds_failures-aecf08036656e9a3)
+error: test failed, to rerun pass `-p csgrs --test bounds_failures`

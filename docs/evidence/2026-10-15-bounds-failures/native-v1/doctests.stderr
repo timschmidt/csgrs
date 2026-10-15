@@ -1,0 +1,6 @@
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 23.96s
+   Doc-tests csgrs
+   Doc-tests hypermesh

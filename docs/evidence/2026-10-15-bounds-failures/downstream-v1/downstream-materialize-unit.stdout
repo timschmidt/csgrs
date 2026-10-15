@@ -1,0 +1,15 @@
+
+running 10 tests
+test materialize::tests::additive_composition_preserves_holes_islands_and_duplicate_profiles ... ok
+test materialize::tests::approximate_materialization_marks_consumed_terminal_pad_ordering ... ok
+test materialize::tests::cubic_projection_handles_finite_coordinates_whose_raw_chord_overflows ... ok
+test materialize::tests::disjoint_additive_compound_does_not_invent_coincident_holes ... ok
+test materialize::tests::exact_compound_regions_replay_positive_and_negative_curve_loops ... ok
+test materialize::tests::overlapping_additive_union_does_not_reclassify_material_as_a_hole ... ok
+test materialize::tests::pad_local_rotation_precedes_translation_and_board_placement ... ok
+test materialize::tests::rounded_pads_retain_exact_arcs_and_union_without_boolean_blockers ... ok
+test materialize::tests::short_translated_line_stroke_remains_strictly_certified ... ok
+test materialize::tests::thermal_spoke_bounds_preserve_empty_clearance ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 18 filtered out; finished in 0.03s
+

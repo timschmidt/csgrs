@@ -1,0 +1,3 @@
+   Compiling hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Finished `release` profile [optimized] target(s) in 6.62s
+     Running tests/release_workflow.rs (target/bounds-failures/downstream-v1/release/deps/release_workflow-8839b395841dd475)

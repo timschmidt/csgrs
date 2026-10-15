@@ -1,0 +1,13 @@
+{
+  "release": "go1.27.2",
+  "file": {
+    "filename": "go1.27.2.linux-amd64.tar.gz",
+    "os": "linux",
+    "arch": "amd64",
+    "version": "go1.27.2",
+    "sha256": "ecbadb99091a3f46e31f5f934b068b1864eafa7995211b39eaddf76996045fe5",
+    "size": 70590635,
+    "kind": "archive"
+  },
+  "source": "https://go.dev/dl/?mode=json"
+}

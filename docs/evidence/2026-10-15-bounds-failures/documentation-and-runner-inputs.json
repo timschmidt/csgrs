@@ -1,0 +1,7 @@
+{
+  "readme.md": "9060f09f8618060524a62333e3febaa80fcbe75e57c16e99700ea7fad671328a",
+  "bindings/README.md": "f78386d302ad1ffb9356e259f11ca2def22d71fb59f6591659f26e2956f2fc8f",
+  "bindings/js/WASM.md": "52a379c208d1520a9d848ab33b5127f84be152c3dc48eb82fb5cca4d9e3c700d",
+  "crates/csgrs-ffi/README.md": "1e14508d9ae78cb91f61626c89cf32da8cbe8e3a6c65dca508ab7dafc0c08dd5",
+  "scripts/test-wasm-bindings.sh": "27fde7ac40e5d9ae29496a6e4c953701f8f67c70d3d3640a77af26457917c720"
+}

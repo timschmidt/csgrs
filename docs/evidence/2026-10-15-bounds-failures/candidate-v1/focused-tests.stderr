@@ -1,0 +1,138 @@
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+error[E0609]: no field `maxs` on type `Result<std::option::Option<hyperlattice::Aabb>, errors::ValidationError>`
+    --> src/curve/native.rs:3360:24
+     |
+3360 |             egg_bounds.maxs.x.clone() - egg_bounds.mins.x,
+     |                        ^^^^ unknown field
+
+error[E0609]: no field `mins` on type `Result<std::option::Option<hyperlattice::Aabb>, errors::ValidationError>`
+    --> src/curve/native.rs:3360:52
+     |
+3360 |             egg_bounds.maxs.x.clone() - egg_bounds.mins.x,
+     |                                                    ^^^^ unknown field
+
+error[E0609]: no field `maxs` on type `Result<std::option::Option<hyperlattice::Aabb>, errors::ValidationError>`
+    --> src/curve/native.rs:3364:24
+     |
+3364 |             egg_bounds.maxs.y.clone() - egg_bounds.mins.y,
+     |                        ^^^^ unknown field
+
+error[E0609]: no field `mins` on type `Result<std::option::Option<hyperlattice::Aabb>, errors::ValidationError>`
+    --> src/curve/native.rs:3364:52
+     |
+3364 |             egg_bounds.maxs.y.clone() - egg_bounds.mins.y,
+     |                                                    ^^^^ unknown field
+
+error[E0609]: no field `maxs` on type `Result<std::option::Option<hyperlattice::Aabb>, errors::ValidationError>`
+    --> src/curve/native.rs:3370:26
+     |
+3370 |             heart_bounds.maxs.x.clone() - heart_bounds.mins.x,
+     |                          ^^^^ unknown field
+
+error[E0609]: no field `mins` on type `Result<std::option::Option<hyperlattice::Aabb>, errors::ValidationError>`
+    --> src/curve/native.rs:3370:56
+     |
+3370 |             heart_bounds.maxs.x.clone() - heart_bounds.mins.x,
+     |                                                        ^^^^ unknown field
+
+error[E0609]: no field `maxs` on type `Result<std::option::Option<hyperlattice::Aabb>, errors::ValidationError>`
+    --> src/curve/native.rs:3374:26
+     |
+3374 |             heart_bounds.maxs.y.clone() - heart_bounds.mins.y,
+     |                          ^^^^ unknown field
+
+error[E0609]: no field `mins` on type `Result<std::option::Option<hyperlattice::Aabb>, errors::ValidationError>`
+    --> src/curve/native.rs:3374:56
+     |
+3374 |             heart_bounds.maxs.y.clone() - heart_bounds.mins.y,
+     |                                                        ^^^^ unknown field
+
+error[E0599]: no variant, associated function, or constant named `ExactCurve` found for enum `ValidationErrorKind` in the current scope
+  --> src/errors.rs:96:19
+   |
+83 | pub enum ValidationErrorKind {
+   | ---------------------------- variant, associated function, or constant `ExactCurve` not found for this enum
+...
+96 |             Self::ExactCurve(ExactCurveError::Blocked(blocker)) => match blocker.reason() {
+   |                   ^^^^^^^^^^ variant, associated function, or constant not found in `ValidationErrorKind`
+
+error[E0599]: no variant, associated function, or constant named `ExactCurve` found for enum `ValidationErrorKind` in the current scope
+   --> src/errors.rs:104:19
+    |
+ 83 | pub enum ValidationErrorKind {
+    | ---------------------------- variant, associated function, or constant `ExactCurve` not found for this enum
+...
+104 |             Self::ExactCurve(ExactCurveError::Invalid { .. }) => {
+    |                   ^^^^^^^^^^ variant, associated function, or constant not found in `ValidationErrorKind`
+
+error[E0599]: no variant, associated function, or constant named `SurfaceNets` found for enum `ValidationErrorKind` in the current scope
+   --> src/errors.rs:107:19
+    |
+ 83 | pub enum ValidationErrorKind {
+    | ---------------------------- variant, associated function, or constant `SurfaceNets` not found for this enum
+...
+107 |             Self::SurfaceNets(error) => match error {
+    |                   ^^^^^^^^^^^ variant, associated function, or constant not found in `ValidationErrorKind`
+
+error[E0308]: mismatched types
+  --> src/errors.rs:97:63
+   |
+94 |     pub const fn as_str(self) -> &'static str {
+   |                                  ------------ expected `&'static str` because of return type
+...
+97 |                 hypercurve::UncertaintyReason::Unsupported => ValidationErrorKind::Unsupported,
+   |                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `&str`, found `ValidationErrorKind`
+
+error[E0308]: mismatched types
+  --> src/errors.rs:99:21
+   |
+94 |     pub const fn as_str(self) -> &'static str {
+   |                                  ------------ expected `&'static str` because of return type
+...
+99 |                     ValidationErrorKind::ResourceExhausted
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `&str`, found `ValidationErrorKind`
+
+error[E0308]: mismatched types
+   --> src/errors.rs:105:17
+    |
+ 94 |     pub const fn as_str(self) -> &'static str {
+    |                                  ------------ expected `&'static str` because of return type
+...
+105 |                 ValidationErrorKind::InvalidInput
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `&str`, found `ValidationErrorKind`
+
+error[E0308]: mismatched types
+   --> src/errors.rs:110:21
+    |
+ 94 |     pub const fn as_str(self) -> &'static str {
+    |                                  ------------ expected `&'static str` because of return type
+...
+110 |                     ValidationErrorKind::Undecided
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `&str`, found `ValidationErrorKind`
+
+error[E0308]: mismatched types
+   --> src/errors.rs:113:21
+    |
+ 94 |     pub const fn as_str(self) -> &'static str {
+    |                                  ------------ expected `&'static str` because of return type
+...
+113 |                     ValidationErrorKind::ResourceExhausted
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `&str`, found `ValidationErrorKind`
+
+error[E0308]: mismatched types
+   --> src/errors.rs:117:21
+    |
+ 94 |     pub const fn as_str(self) -> &'static str {
+    |                                  ------------ expected `&'static str` because of return type
+...
+117 |                     ValidationErrorKind::InvalidInput
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `&str`, found `ValidationErrorKind`
+
+Some errors have detailed explanations: E0308, E0599.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `csgrs` (lib) due to 9 previous errors
+warning: build failed, waiting for other jobs to finish...
+Some errors have detailed explanations: E0308, E0599, E0609.
+error: could not compile `csgrs` (lib test) due to 17 previous errors

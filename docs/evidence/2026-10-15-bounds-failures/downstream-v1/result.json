@@ -1,0 +1,47 @@
+{
+  "commands": [
+    {
+      "name": "downstream-materialize-unit",
+      "exit_code": 0,
+      "seconds": 97.11011088220403,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/bounds-failures/downstream-v1/release/deps/hypercircuit-693cd2a2e3e98da3": "5b9229fad5594538677a6d59fecfb112a1c726fca794e598cd6bec5d402241ea"
+      },
+      "stdout_sha256": "e2dcb58b0f3ebda10916264077515598894c65f6197b8b0db9f943097b1a5326",
+      "stderr_sha256": "f55d9eb63255cea2e20fbf19ee21250369fa945ab10094199a83fa73afcc69e2"
+    },
+    {
+      "name": "downstream-materialize",
+      "exit_code": 0,
+      "seconds": 85.74324325611815,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/bounds-failures/downstream-v1/release/deps/materialize-3bf96dbebf733db9": "537d5adab575dd725d32008d1ba740dd016401327fd8e01f6509dab02f3de39a"
+      },
+      "stdout_sha256": "df2d3a10f9509f5ccaae3a2dab71e7473826534343729feff920e02738f3a81d",
+      "stderr_sha256": "8a8d419f1c4f632eb8adc46ccdd96e3fa060d8e430c0d35da8b9dbdea506b62d"
+    },
+    {
+      "name": "downstream-release-models",
+      "exit_code": 0,
+      "seconds": 8.670519098173827,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/bounds-failures/downstream-v1/release/deps/release_workflow-8839b395841dd475": "44b89aeb0b4fe0d4e31374942a2d30f82b3191f6cc1f89779017f596cdd11273"
+      },
+      "stdout_sha256": "8406edd5e23eb3cdf759be8db5367c4f92c9fd4accc461eb6de55c0f37dd8020",
+      "stderr_sha256": "3f69c9bfa73e6194a973735ef55d44c05638dcdc218d15e5df12a0b155923f61"
+    },
+    {
+      "name": "downstream-clippy",
+      "exit_code": 0,
+      "seconds": 23.24956616293639,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "4acd7caace831b148163258050db45d0fc0ccbfb9bd8817aded210674f8d9a9a"
+    }
+  ],
+  "passed": true
+}

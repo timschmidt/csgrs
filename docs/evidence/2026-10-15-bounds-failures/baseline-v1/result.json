@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "bounds-regressions",
+      "exit_code": 101,
+      "seconds": 17.221446631010622,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/bounds-failures/baseline-v1/release/deps/bounds_failures-aecf08036656e9a3": "ef53241dba82296861ef83964fbfe0553f605dc10f5465eeef3b41d909134966"
+      },
+      "stdout_sha256": "9248845a4d0c27ef871f3527f2948f942ba5b07630f0f9ddbbea98513cc744da",
+      "stderr_sha256": "97a0138acb4e895ed71e10a3c73321393d50f684dc7e069066ddff297f95483e"
+    }
+  ],
+  "passed": false
+}

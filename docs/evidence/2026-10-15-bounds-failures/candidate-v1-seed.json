@@ -1,0 +1,4 @@
+{
+  "target": "target/bounds-failures/baseline-v1",
+  "record": "docs/evidence/2026-10-15-bounds-failures/baseline-v1/result.json"
+}

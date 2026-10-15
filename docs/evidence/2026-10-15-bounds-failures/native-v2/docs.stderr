@@ -1,0 +1,5 @@
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+ Documenting csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+ Documenting csgrs-ffi v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/csgrs-ffi)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 58s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/bounds-failures/native-v2/doc/csgrs/index.html and 2 other files

@@ -1,0 +1,8 @@
+    Finished `release` profile [optimized] target(s) in 0.14s
+     Running unittests src/lib.rs (target/bounds-failures/native-v2/release/deps/hypermesh-3f582b4ca1636641)
+     Running tests/boolean.rs (target/bounds-failures/native-v2/release/deps/boolean-5f62d1118823ec97)
+     Running tests/competitive.rs (target/bounds-failures/native-v2/release/deps/competitive-6172fbc55a698b35)
+     Running tests/corpus_manifest.rs (target/bounds-failures/native-v2/release/deps/corpus_manifest-70e8b02b4630cdcf)
+     Running tests/intersection_corpus.rs (target/bounds-failures/native-v2/release/deps/intersection_corpus-fd36003a26964264)
+     Running tests/predicate_policy.rs (target/bounds-failures/native-v2/release/deps/predicate_policy-da601e01ee57d6f5)
+     Running tests/readme.rs (target/bounds-failures/native-v2/release/deps/readme-6edeb87a0e9ac66f)

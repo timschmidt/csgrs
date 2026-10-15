@@ -1,0 +1,1401 @@
+{
+  "qualification": {
+    "updated_on": "2026-10-15",
+    "status": "Optional bounds and positioning/TPMS failure migration implemented and locally qualified in the recorded scope.",
+    "properties": [
+      "P4",
+      "P6",
+      "P8",
+      "P9",
+      "P18",
+      "P20",
+      "P25",
+      "P30",
+      "P35",
+      "P37"
+    ],
+    "owners": [
+      "Hypermesh indexed bounds",
+      "CSGRS optional bounds and positioning",
+      "native curve bounds bridge",
+      "sampled TPMS extraction",
+      "scalar and language adapters",
+      "HyperCircuit thermal-clearance bounds"
+    ],
+    "domain": "Valid indexed point sets and open or closed meshes, canonical empty meshes, and native curve regions. Absence differs from nonempty zero-size bounds. Bounds queries do not certify closed-solid topology. TPMS numerical certainty applies to sampled geometry, not the continuous field; operation-local receipts do not certify inherited construction provenance.",
+    "migration": "Modeling and scalar-adapter bounds return Result<Option<Aabb>> or optional context receipts. Center/float and all six TPMS constructors return Result. C NO_BOUNDS=10 is additive and leaves output untouched; C++ optional, Python None, Go nil pointer with nil error, WASM undefined or isEmpty/optional endpoints expose absence. Go StatusError retains native category. HyperCircuit uses shared native optional bounds under its existing policy and retains typed curve failures. Resolution below two is deliberately rejected instead of clamped; period must be positive and wall thickness nonnegative.",
+    "semantic_evidence": [
+      "Origin point bounds are Some while canonical empty has None; exact centered/floated cuboids retain coordinate extrema, signed volume 48, required topology and subsequent Boolean composition.",
+      "Native indexed bounds reject malformed or subsequently mutated triangle indices before reusing position facts.",
+      "Strict/approximate/strict bounds and positioning retain policy admissibility and certainty; undecided failures preserve native payloads through adapters and opaque-real C status.",
+      "Empty curves retain absent bounds and completed empty Hilbert output after parameter validation.",
+      "All three TPMS sheet and solid families consume empty bounds; zero-thickness solids remain empty only after validating parameters. Invalid/unknown periods and thicknesses and overflowing resolution remain typed failures.",
+      "The shared sampled-field path preserves SurfaceNetsError and recovers on a subsequent constant field. Existing 10-resolution TPMS solid topology fixtures and other source fixture resolutions are unchanged."
+    ],
+    "baseline_and_failed_trials": "All eight baseline tests failed at 542871237 plus the original in-scope native changes. Candidate v1 failed compilation during migration. Candidate v2 passed 133 focused tests but failed strict Clippy on a WASM getter annotation. Native v1 passed its commands but exposed a minimal-feature unused-import warning and predates the final downstream/WASM call-site corrections; it is retained as historical evidence. Final accepted phases are recorded separately.",
+    "test_totals": {
+      "native-v2/fmt": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "native-v2/fuzz-fmt": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "native-v2/all-feature-tests": {
+        "passed": 202,
+        "failed": 0,
+        "ignored": 1,
+        "measured": 0,
+        "filtered": 0
+      },
+      "native-v2/minimal-tests": {
+        "passed": 38,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "native-v2/hypermesh-tests": {
+        "passed": 235,
+        "failed": 0,
+        "ignored": 7,
+        "measured": 0,
+        "filtered": 0
+      },
+      "native-v2/ffi-tests": {
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "native-v2/strict-clippy": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "native-v2/minimal-clippy": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "native-v2/fuzz-clippy": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "native-v2/docs": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "native-v2/doctests": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/cc-version": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/c++-version": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/python3-version": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/node-version": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/ffi-build": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/empty_composition-c-build": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/empty_composition-c-run": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/empty_composition-cpp-build": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/empty_composition-cpp-run": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/empty_composition-python": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/primitive_failures-c-build": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/primitive_failures-c-run": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/primitive_failures-cpp-build": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/primitive_failures-cpp-run": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/primitive_failures-python": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/transform_failures-c-build": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/transform_failures-c-run": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/transform_failures-cpp-build": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/transform_failures-cpp-run": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/transform_failures-python": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/bounds_failures-c-build": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/bounds_failures-c-run": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/bounds_failures-cpp-build": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/bounds_failures-cpp-run": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/bounds_failures-python": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/go-version": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/go-build": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/go-run": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "bindings-v1/wasm": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "downstream-v1/downstream-materialize-unit": {
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 18
+      },
+      "downstream-v1/downstream-materialize": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "downstream-v1/downstream-release-models": {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 7
+      },
+      "downstream-v1/downstream-clippy": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      }
+    },
+    "bindings": "Actual f64 C, C++, Python, and compiled cgo consumers exercise absence, positioning, error/recovery and composition. Opaque-real FFI tests verify absent/undecided output records remain untouched and failures publish no geometry handle. Generated Node WASM and strict generated TypeScript checks pass. Go toolchain metadata and SHA-256 are retained in go-toolchain.json.",
+    "resources": "Native bounds add an O(triangles) index-validation traversal before position-fact reuse. Primary sample buffers use checked capacity/reservation; secondary allocations, native extraction and scalar expression work remain unbounded internally. No total-work, heap-byte or cancellation contract is claimed. Commands use an external 1800-second wall limit. No performance improvement is claimed.",
+    "limitations": [
+      "Eight existing ignored tests remain unexecuted: one CSGRS rendering case and seven Hypermesh external-fixture/manual scale or memory cases.",
+      "This is not the complete workflow matrix, sanitizer admission, clean external release/MSRV validation, or a performance comparison.",
+      "The separate native JavaScript loader is supplied by consumers and remains unqualified. Go qualification uses the local cgo wrapper and actual native library, not a published Go module.",
+      "HyperCircuit thermal-spoke placement formulas are preserved. Their full geometric fidelity is not established by the bounds migration or the existing report-oriented integration fixtures; independent placement/set-equality coverage remains follow-up work.",
+      "Legacy SDF conveniences, distribution, projection/slicing and other silent fallback migrations remain open, together with end-to-end provenance, internal resource limits, ordinary strict workflow completion and prior scalar/native admission gaps."
+    ],
+    "evidence": "docs/evidence/2026-10-15-bounds-failures/closure-v1.json",
+    "implementation_commit": "6095f177ec586f1bf7091586460f9e5b5d118ae0",
+    "plan_complete": false
+  },
+  "closure_runner_sha256": "6faf5a40979b50083dbef0f8c58053d8277d32f525723d5a8287ffccd99556f4",
+  "prior_qualification_sha256": "bc51e2594f5240b4ef1389bf20a695045eb0b0d74412698da42f984e10ccf0c5",
+  "phase_results": {
+    "baseline-v1": {
+      "commands": [
+        {
+          "name": "bounds-regressions",
+          "exit_code": 101,
+          "seconds": 17.221446631010622,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/baseline-v1/release/deps/bounds_failures-aecf08036656e9a3": "ef53241dba82296861ef83964fbfe0553f605dc10f5465eeef3b41d909134966"
+          },
+          "stdout_sha256": "9248845a4d0c27ef871f3527f2948f942ba5b07630f0f9ddbbea98513cc744da",
+          "stderr_sha256": "97a0138acb4e895ed71e10a3c73321393d50f684dc7e069066ddff297f95483e"
+        }
+      ],
+      "passed": false
+    },
+    "candidate-v1": {
+      "commands": [
+        {
+          "name": "focused-tests",
+          "exit_code": 101,
+          "seconds": 14.467518589925021,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "7ff5cb18012cbcc3271cc8c6111d59dd07821cde21505ed05dfecfa20c790006"
+        }
+      ],
+      "passed": false
+    },
+    "candidate-v2": {
+      "commands": [
+        {
+          "name": "focused-tests",
+          "exit_code": 0,
+          "seconds": 30.10150445299223,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/candidate-v2/release/deps/csgrs-d5e0741bbc5df635": "c42763400da87a53507236e17d1a955809407fb516833b3a99d05ad412ad1415",
+            "target/bounds-failures/candidate-v2/release/deps/bounds_failures-aecf08036656e9a3": "6c400e6ed16b6fbbbd6744c828b9c5a7321954ac30f8693877b5c65a13f85a67",
+            "target/bounds-failures/candidate-v2/release/deps/geometry_context-d256044952b39c9d": "571f05923b892773d04249c35df60c5bef38db199f756bd45913fda2f1f6019c",
+            "target/bounds-failures/candidate-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "2f528638ee1a76cadb8912389ccf94cc59cd5188079fce3958407e8abfe5fec5"
+          },
+          "stdout_sha256": "93a7be1a1e608738f21973fda0da37a10f6cb205786e390d6d27a01b92a23f73",
+          "stderr_sha256": "339206d5b8183474b71b320b9de7a814ae9fde86242e7d80719c346fcf8107b7"
+        },
+        {
+          "name": "clippy",
+          "exit_code": 101,
+          "seconds": 5.3713032701052725,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "b1e19fb24829bc1f371217fb86c7726bf91a9349023f45a17ba72889ba6dc80e"
+        }
+      ],
+      "passed": false
+    },
+    "native-v1": {
+      "commands": [
+        {
+          "name": "fmt",
+          "exit_code": 0,
+          "seconds": 12.236374624073505,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "fuzz-fmt",
+          "exit_code": 0,
+          "seconds": 1.6496874643489718,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "all-feature-tests",
+          "exit_code": 0,
+          "seconds": 40.401612591929734,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/native-v1/release/deps/csgrs-d5e0741bbc5df635": "c1d764e78df95d15265e9b4be3c775a78a29625753e7f68157119eddead93324",
+            "target/bounds-failures/native-v1/release/deps/adversarial-c03dde69c05f1cf2": "21f0d21d8d3a66420152f9ce05d610a298aaa26d513af3fcf59db7b9da5078c6",
+            "target/bounds-failures/native-v1/release/deps/adversarial_deep-5dea7b8952749c41": "8ab35de5482b073ba020577e6a045942c84f9c8be1b9979d0a420f62d106e1b8",
+            "target/bounds-failures/native-v1/release/deps/adversarial_extrusions-22c8c063f22c33de": "aad96d59d0463d78d452816d425def3ae467a59a3cf8f9090ea4a23d3e9d5861",
+            "target/bounds-failures/native-v1/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+            "target/bounds-failures/native-v1/release/deps/adversarial_stress-8c747993ca7dff64": "f544c551fda9b1fc4e30a2b6154b8a287f888733cbc7d4ca676f258887f5ee0c",
+            "target/bounds-failures/native-v1/release/deps/bounds_failures-aecf08036656e9a3": "b927632d1d0d2f46c42f2f4e636227563a48b3c511b1234ed11d36a1a442d123",
+            "target/bounds-failures/native-v1/release/deps/competitive-8d824413442e1853": "e84bc2de65e13710efd1a1aa551af8fc5cb3d00b3f7647e2454c5a145ba450d7",
+            "target/bounds-failures/native-v1/release/deps/empty_composition-1b2f2ba6943338cd": "f9b1847150fb7016673ca87e20f919e8a4fd4c79b8acd571d16296c55f7cee33",
+            "target/bounds-failures/native-v1/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "b79e2e87d173a188e3b5a74c0c28d573bd6ffa680f7957ebfc4974a169526d57",
+            "target/bounds-failures/native-v1/release/deps/geometry_context-d256044952b39c9d": "ced54e31a6bc51d9a1d145a325f49d50458b2929183a898f502f3a65d9605261",
+            "target/bounds-failures/native-v1/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "6db19b0f3835c452c2eb0dc0e051299311db3907dcfc0eccda8f10631ec8f9af",
+            "target/bounds-failures/native-v1/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "5e42172bfbc1b18de0df9c32b1fd1978ef9b744bde83dcde79e4eb1815ca6745",
+            "target/bounds-failures/native-v1/release/deps/native_queries-32678419862dff6b": "220a28ec4ff70d5f4074c9153fc9dbcd14ca155a5cf5a19284ef428f50f4f367",
+            "target/bounds-failures/native-v1/release/deps/primitive_failures-8e6539f143e56577": "a49c9cd3ff5b7d849160bb72333f575923f8f1347a3e8574cb17d9df9e305087",
+            "target/bounds-failures/native-v1/release/deps/readme-d31b115aba933918": "8483edbeacef8fba5e18bc5540ab74f6d04af3fb977d7d8e7579705fd20eeaaf",
+            "target/bounds-failures/native-v1/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+            "target/bounds-failures/native-v1/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "96070451daf1f2f55175a41db855d9d4ddb3a38fa1089b2ac43502623485d916",
+            "target/bounds-failures/native-v1/release/deps/solid_cache-f1483884916afc0e": "77fe010aa715b2b0a3d4cb44f43d072113f478f219476a4a932d8468c9d1bfb0",
+            "target/bounds-failures/native-v1/release/deps/transform_failures-45db55e7bcff3889": "c32612647b5fa098e34fefa8996a5a99992bfc57da613711cc676b467075616f",
+            "target/bounds-failures/native-v1/release/deps/wasm_certainty-d7100c8fa594776c": "e6a5c9fd4a2896db43b5dba26f1972fdfbcf6777259f21dafe455dcf929a626f"
+          },
+          "stdout_sha256": "22ae813482539a41264d1e21d44c7ecb1381c4a682805f7ff038db08f821d9bf",
+          "stderr_sha256": "5c2a719da0c31ebc3e1e2a5b03118eae7eb46267cb090aa8134889980ee42fd9"
+        },
+        {
+          "name": "minimal-tests",
+          "exit_code": 0,
+          "seconds": 127.15556318406016,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/native-v1/release/deps/csgrs-12b72f0ccdd38706": "a9aaefd324b9cf383d3640cab2277b05fbef395c2c3341028c37bf88e2e5b92b",
+            "target/bounds-failures/native-v1/release/deps/bounds_failures-c661a92a5b4c7962": "e18153888cbaf414a1b20d6ae8962a6da39ced72f6bcaf0980244a7721c7fad2"
+          },
+          "stdout_sha256": "6e786a02b5555f05cae941e8151723c8a29c9a7dcbf08d65886fe9801c252153",
+          "stderr_sha256": "2691c73bd5e5758057b3ad817185409d26d8e6e62f477a1940cfd05d788d516f"
+        },
+        {
+          "name": "hypermesh-tests",
+          "exit_code": 0,
+          "seconds": 30.02036783704534,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/native-v1/release/deps/hypermesh-3f582b4ca1636641": "714ba486b019c2136dbb13acf76b083cc4bd0010fc552670df381e8427ca1064",
+            "target/bounds-failures/native-v1/release/deps/boolean-5f62d1118823ec97": "8367f96af174239b53c2d34968a437f40bda6a569e64c56aff4fe38e36e66b1e",
+            "target/bounds-failures/native-v1/release/deps/competitive-6172fbc55a698b35": "e976abd9a25f8cbeb75aa8ffb5e46c3daf9fc7fe7077549db45eeb74e37461b1",
+            "target/bounds-failures/native-v1/release/deps/corpus_manifest-70e8b02b4630cdcf": "6064ecc1061d45032a93393df62cb3f2806b80b033f3641c2c4a6c4c4963dc56",
+            "target/bounds-failures/native-v1/release/deps/intersection_corpus-fd36003a26964264": "d2da5dd138715d268235319cd5a67ee61d34ffb7cae4ca654d7c0b391bc34571",
+            "target/bounds-failures/native-v1/release/deps/predicate_policy-da601e01ee57d6f5": "7c4faeceb0aa0394aecc7f0c55116c00b473823489d750823b429d5d477f1ec8",
+            "target/bounds-failures/native-v1/release/deps/readme-6edeb87a0e9ac66f": "95d4d8d1d3a5905bab4c825bf31042a73cac283881f5ca933a1438e008315143"
+          },
+          "stdout_sha256": "00abdcd9a007ba2643785baf3dbef1c17e3d376998ab755acf608f5063ce8479",
+          "stderr_sha256": "4e85eda37dfbe5872455ab178a5dfb34ce9e316a0dbd4b2bd8618204171224af"
+        },
+        {
+          "name": "ffi-tests",
+          "exit_code": 0,
+          "seconds": 22.686657826881856,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "9bd2c34b1330e9f88a2e8493699d1180c433c942c1ae7ec65484c1b28ac5c90b"
+          },
+          "stdout_sha256": "59ddb49de9256543d1ad3799f3552552febe07397b9f96a02f655d709e9850f7",
+          "stderr_sha256": "d6a883c7b5ff0bd1d7279a2055e8317961138738372f8fac63d97a554e0b89e6"
+        },
+        {
+          "name": "strict-clippy",
+          "exit_code": 0,
+          "seconds": 9.31257324339822,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "0cac2edab2f775041cbcd4917fee1300897c3bc64bc00c21f7d0aead6c87a371"
+        },
+        {
+          "name": "fuzz-clippy",
+          "exit_code": 0,
+          "seconds": 4.671456405892968,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "c875268461c95b5c5fed87459787da100c8a481b4d13d89b7fc82f59f52fedd0"
+        },
+        {
+          "name": "docs",
+          "exit_code": 0,
+          "seconds": 181.16372138727456,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "95e82e7fbfff1d14d47644fd3ac19d27190abd9a28e2d8d399c61966c56199ba"
+        },
+        {
+          "name": "doctests",
+          "exit_code": 0,
+          "seconds": 26.844676400069147,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e1e077866a9096844cddf816e1875200a79c737f03dc777969ef8c81c950f368",
+          "stderr_sha256": "da1ec7712ba7b35a0e446f4e39dc6f24aeb9300b6065237ac2287d0d0c3bf928"
+        }
+      ],
+      "passed": true
+    },
+    "native-v2": {
+      "commands": [
+        {
+          "name": "fmt",
+          "exit_code": 0,
+          "seconds": 12.148516397923231,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "fuzz-fmt",
+          "exit_code": 0,
+          "seconds": 1.681128793861717,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "all-feature-tests",
+          "exit_code": 0,
+          "seconds": 40.28795706713572,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/native-v2/release/deps/csgrs-d5e0741bbc5df635": "3cce1ed60e9a81b92dc40a6a8256cc31a7accdb1faf7ca49c6a119debd9e38d4",
+            "target/bounds-failures/native-v2/release/deps/adversarial-c03dde69c05f1cf2": "544ecb365a31c1e76a10a4c5dac49b90ead84a3cd5b58ad8107e76bb6ae76fe7",
+            "target/bounds-failures/native-v2/release/deps/adversarial_deep-5dea7b8952749c41": "0355c877a797bf8a62875b366049d82dee6a3dbab20efef0df85e55ed563a176",
+            "target/bounds-failures/native-v2/release/deps/adversarial_extrusions-22c8c063f22c33de": "8faf6d9044c6f7a629e12a80eecdb36bc4e0065b773c63dd5f756422c70fdaa4",
+            "target/bounds-failures/native-v2/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+            "target/bounds-failures/native-v2/release/deps/adversarial_stress-8c747993ca7dff64": "3ab5e36f7b8ef638bcd7cac1a15de8151e434e6ddc6b25459ffcf8bc0d09f054",
+            "target/bounds-failures/native-v2/release/deps/bounds_failures-aecf08036656e9a3": "7c960bdb5bf8306f3cf8bfc32fda0bcab77a69797e32c61326907a692aa23512",
+            "target/bounds-failures/native-v2/release/deps/competitive-8d824413442e1853": "e84bc2de65e13710efd1a1aa551af8fc5cb3d00b3f7647e2454c5a145ba450d7",
+            "target/bounds-failures/native-v2/release/deps/empty_composition-1b2f2ba6943338cd": "f9b1847150fb7016673ca87e20f919e8a4fd4c79b8acd571d16296c55f7cee33",
+            "target/bounds-failures/native-v2/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "65d3cb635e4d8a4d6c426a1f4552cd50410abcb630052ee88232fbbec262c084",
+            "target/bounds-failures/native-v2/release/deps/geometry_context-d256044952b39c9d": "5861c5ab120d23f280b06c1d973b1a391287e09952b1766144755c8ed1bf41e7",
+            "target/bounds-failures/native-v2/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "6db19b0f3835c452c2eb0dc0e051299311db3907dcfc0eccda8f10631ec8f9af",
+            "target/bounds-failures/native-v2/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "41fb749f256c5f95bc02d04b01711e33b99c94580cec63f12ecd3ea243911034",
+            "target/bounds-failures/native-v2/release/deps/native_queries-32678419862dff6b": "220a28ec4ff70d5f4074c9153fc9dbcd14ca155a5cf5a19284ef428f50f4f367",
+            "target/bounds-failures/native-v2/release/deps/primitive_failures-8e6539f143e56577": "a49c9cd3ff5b7d849160bb72333f575923f8f1347a3e8574cb17d9df9e305087",
+            "target/bounds-failures/native-v2/release/deps/readme-d31b115aba933918": "8483edbeacef8fba5e18bc5540ab74f6d04af3fb977d7d8e7579705fd20eeaaf",
+            "target/bounds-failures/native-v2/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+            "target/bounds-failures/native-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "96070451daf1f2f55175a41db855d9d4ddb3a38fa1089b2ac43502623485d916",
+            "target/bounds-failures/native-v2/release/deps/solid_cache-f1483884916afc0e": "77fe010aa715b2b0a3d4cb44f43d072113f478f219476a4a932d8468c9d1bfb0",
+            "target/bounds-failures/native-v2/release/deps/transform_failures-45db55e7bcff3889": "c32612647b5fa098e34fefa8996a5a99992bfc57da613711cc676b467075616f",
+            "target/bounds-failures/native-v2/release/deps/wasm_certainty-d7100c8fa594776c": "b777096b2292bb6d7315a332a3c8b6ca4d3cf9c4ea7f680755349565aef91e64"
+          },
+          "stdout_sha256": "f876f364cb877fc241f1c963902524860faddfdf41728ce7a544a651f6be469a",
+          "stderr_sha256": "6d004123d7e65fefba8d169b3ba2352eafb708e2f557f8acd6b7fb336585014b"
+        },
+        {
+          "name": "minimal-tests",
+          "exit_code": 0,
+          "seconds": 5.805379090830684,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/native-v2/release/deps/csgrs-12b72f0ccdd38706": "a9aaefd324b9cf383d3640cab2277b05fbef395c2c3341028c37bf88e2e5b92b",
+            "target/bounds-failures/native-v2/release/deps/bounds_failures-c661a92a5b4c7962": "5eb0573d3633b0bc10d23fdbba5c7598aade3bbf57dae2292cbef5c91dd55296"
+          },
+          "stdout_sha256": "a2cd33d437ab34a5460ea1b525595abfcf12e8c120a56b2933f3393816af9f79",
+          "stderr_sha256": "eeb5a937f4d7dd7526950e0ae2bd45fc7279fdd2d55e7627814e663f6e1a4425"
+        },
+        {
+          "name": "hypermesh-tests",
+          "exit_code": 0,
+          "seconds": 4.053476074244827,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/native-v2/release/deps/hypermesh-3f582b4ca1636641": "714ba486b019c2136dbb13acf76b083cc4bd0010fc552670df381e8427ca1064",
+            "target/bounds-failures/native-v2/release/deps/boolean-5f62d1118823ec97": "8367f96af174239b53c2d34968a437f40bda6a569e64c56aff4fe38e36e66b1e",
+            "target/bounds-failures/native-v2/release/deps/competitive-6172fbc55a698b35": "e976abd9a25f8cbeb75aa8ffb5e46c3daf9fc7fe7077549db45eeb74e37461b1",
+            "target/bounds-failures/native-v2/release/deps/corpus_manifest-70e8b02b4630cdcf": "6064ecc1061d45032a93393df62cb3f2806b80b033f3641c2c4a6c4c4963dc56",
+            "target/bounds-failures/native-v2/release/deps/intersection_corpus-fd36003a26964264": "d2da5dd138715d268235319cd5a67ee61d34ffb7cae4ca654d7c0b391bc34571",
+            "target/bounds-failures/native-v2/release/deps/predicate_policy-da601e01ee57d6f5": "7c4faeceb0aa0394aecc7f0c55116c00b473823489d750823b429d5d477f1ec8",
+            "target/bounds-failures/native-v2/release/deps/readme-6edeb87a0e9ac66f": "95d4d8d1d3a5905bab4c825bf31042a73cac283881f5ca933a1438e008315143"
+          },
+          "stdout_sha256": "5a6a065e7ab2ba48b729b4708978da1bcb8b5005288fc6bdcef5fb26af610756",
+          "stderr_sha256": "bbde78b0d40df1e7ab70c3dfdb2696760e6e3445aea44f55c36552c32896a7d7"
+        },
+        {
+          "name": "ffi-tests",
+          "exit_code": 0,
+          "seconds": 13.08893378591165,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f": "9bd2c34b1330e9f88a2e8493699d1180c433c942c1ae7ec65484c1b28ac5c90b"
+          },
+          "stdout_sha256": "ad8ba3bc82ca2bf110d79b40413634d3f3c789de534061125d3b4750e5952053",
+          "stderr_sha256": "77c7d4b914860d5322ee87f1888154a674400515d7a03aeb76ee2f1b9b755a48"
+        },
+        {
+          "name": "strict-clippy",
+          "exit_code": 0,
+          "seconds": 6.803554571699351,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "0d2d430677785fb5d29940b600cb929e399f457a4fb9770a487cb009c4b23263"
+        },
+        {
+          "name": "minimal-clippy",
+          "exit_code": 0,
+          "seconds": 24.081377377733588,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "fd9701a40600ceb5df429120576044fc30c873791fa5c6badc6ef9736793a659"
+        },
+        {
+          "name": "fuzz-clippy",
+          "exit_code": 0,
+          "seconds": 1.8321297806687653,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "fecede7c2157efe2f16c8c8b9dce94b0fb4dd384dca8207046c8bf7636eb0ffe"
+        },
+        {
+          "name": "docs",
+          "exit_code": 0,
+          "seconds": 180.53887194534764,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "c7da4c3826f1f356744e74bd86767db9a7fa3eaec078eaf88372a79af09bbba9"
+        },
+        {
+          "name": "doctests",
+          "exit_code": 0,
+          "seconds": 16.853589032776654,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "7eb03ec6f1947c4241f59962b6dc9753a6bb84b7f5118484238b8999cfa5120c",
+          "stderr_sha256": "4e16f220517702a1decf3447ac66c37a11f36fb3be27022fe6915201f49dfd44"
+        }
+      ],
+      "passed": true
+    },
+    "bindings-v1": {
+      "commands": [
+        {
+          "name": "cc-version",
+          "exit_code": 0,
+          "seconds": 1.6651067310012877,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "0ff89e1159c58eb2b7dbe5944399106189239661696edc53961fc8d468099ae9",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "c++-version",
+          "exit_code": 0,
+          "seconds": 1.6596855227835476,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "846bcfe0938e1699440497f2fd5a63b5085049453c373e442190853a8534a420",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "python3-version",
+          "exit_code": 0,
+          "seconds": 1.68607183592394,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "0366d77cc1f1ac88ea458231ba4f639323d5caf34de0d50b7618277fd4395f1f",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "node-version",
+          "exit_code": 0,
+          "seconds": 1.7016959050670266,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "5a64071862e0a30c10895711c2317a83576c2999e2d255bf9d95756c466bd4ce",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "ffi-build",
+          "exit_code": 0,
+          "seconds": 20.766814552713186,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "f09518d26db5a6eb440760b1ec490cb1b7bd33f03e7895f975ff7d72fbdca3c3"
+        },
+        {
+          "name": "empty_composition-c-build",
+          "exit_code": 0,
+          "seconds": 1.8356708991341293,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "empty_composition-c-run",
+          "exit_code": 0,
+          "seconds": 1.6035807360894978,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "9129339c006d2d6c8870eaeade18c45c9302dabd88de9be2a1d9bdf24ba6f286",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "empty_composition-cpp-build",
+          "exit_code": 0,
+          "seconds": 2.094245518092066,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "empty_composition-cpp-run",
+          "exit_code": 0,
+          "seconds": 1.6690519219264388,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "338ae8643ba3e40ec977a07d50e13b739c9deac7bb1b08b598a848d3f92bf045",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "empty_composition-python",
+          "exit_code": 0,
+          "seconds": 1.717081742361188,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "bcc2468e5a7a09608b8b1a2e0a056984088d66dd03917be28ef41c96c12baeb0",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "primitive_failures-c-build",
+          "exit_code": 0,
+          "seconds": 1.677469703834504,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "primitive_failures-c-run",
+          "exit_code": 0,
+          "seconds": 1.6341610210947692,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "d61d5a70facff0cc93a2403a5cda7ff00c12d326786f966536f71195ce4c4b87",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "primitive_failures-cpp-build",
+          "exit_code": 0,
+          "seconds": 1.9498911760747433,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "primitive_failures-cpp-run",
+          "exit_code": 0,
+          "seconds": 1.640700533054769,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "primitive_failures-python",
+          "exit_code": 0,
+          "seconds": 1.8086926667019725,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "388333ab6f3d4da0a451bca380b08d0d0b214137984217e6d051580f87d019a1",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "transform_failures-c-build",
+          "exit_code": 0,
+          "seconds": 1.6854177601635456,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "transform_failures-c-run",
+          "exit_code": 0,
+          "seconds": 1.688357369042933,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "f5af062d1e9bee914e64ff931d3d363deefe4227f6ac14907b973165bc997319",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "transform_failures-cpp-build",
+          "exit_code": 0,
+          "seconds": 2.021457383874804,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "transform_failures-cpp-run",
+          "exit_code": 0,
+          "seconds": 1.6335836607031524,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "17feb916979e0fc6cef70474a8ff1dcf56b90ed3ee0f05f7049ed96c9048e6d4",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "transform_failures-python",
+          "exit_code": 0,
+          "seconds": 1.6976819201372564,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "fc758c3ac1be5e6a97c53bb5cc7d9fd00e727b31e6631a66de4e01e26dcb2b27",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "bounds_failures-c-build",
+          "exit_code": 0,
+          "seconds": 1.724628344643861,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "bounds_failures-c-run",
+          "exit_code": 0,
+          "seconds": 1.6319695212878287,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "f48e17a04823964fbbe756c7d83d6b76f80de72a14ff09f53b7ba6e9eb06469a",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "bounds_failures-cpp-build",
+          "exit_code": 0,
+          "seconds": 1.9473179522901773,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "bounds_failures-cpp-run",
+          "exit_code": 0,
+          "seconds": 1.606286829803139,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "79300e046c295fd3780ac823ca4e4d91e33a4f4ef24f4f1f91b6cb4173f4f79c",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "bounds_failures-python",
+          "exit_code": 0,
+          "seconds": 1.7134136031381786,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "2337d246a206b631af96870a69abb94b54603cd38817ca5ea23f515c85ed078c",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "go-version",
+          "exit_code": 0,
+          "seconds": 1.6125820991583169,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "ed4307d760c597256afdc696a61d47d13e832615d7741ead11c64966a440b376",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "go-build",
+          "exit_code": 0,
+          "seconds": 6.399014310911298,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "go-run",
+          "exit_code": 0,
+          "seconds": 1.7106588720344007,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "1227e65d054caf71b7a0e84b03ece5c7b8ec434df94d213cec1243be86254428",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "wasm",
+          "exit_code": 0,
+          "seconds": 24.5558622488752,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "70870ab9accd685edf7fc42949a7fa04f2536afa268ad1cf0bf230fbbd0a13fe",
+          "stderr_sha256": "cc8a1db0347923e48544169a0bbed3ba72bb66659a47e584fa084fb6db74b1f9"
+        }
+      ],
+      "passed": true
+    },
+    "downstream-v1": {
+      "commands": [
+        {
+          "name": "downstream-materialize-unit",
+          "exit_code": 0,
+          "seconds": 97.11011088220403,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/downstream-v1/release/deps/hypercircuit-693cd2a2e3e98da3": "5b9229fad5594538677a6d59fecfb112a1c726fca794e598cd6bec5d402241ea"
+          },
+          "stdout_sha256": "e2dcb58b0f3ebda10916264077515598894c65f6197b8b0db9f943097b1a5326",
+          "stderr_sha256": "f55d9eb63255cea2e20fbf19ee21250369fa945ab10094199a83fa73afcc69e2"
+        },
+        {
+          "name": "downstream-materialize",
+          "exit_code": 0,
+          "seconds": 85.74324325611815,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/downstream-v1/release/deps/materialize-3bf96dbebf733db9": "537d5adab575dd725d32008d1ba740dd016401327fd8e01f6509dab02f3de39a"
+          },
+          "stdout_sha256": "df2d3a10f9509f5ccaae3a2dab71e7473826534343729feff920e02738f3a81d",
+          "stderr_sha256": "8a8d419f1c4f632eb8adc46ccdd96e3fa060d8e430c0d35da8b9dbdea506b62d"
+        },
+        {
+          "name": "downstream-release-models",
+          "exit_code": 0,
+          "seconds": 8.670519098173827,
+          "sources_unchanged": true,
+          "binaries_sha256": {
+            "target/bounds-failures/downstream-v1/release/deps/release_workflow-8839b395841dd475": "44b89aeb0b4fe0d4e31374942a2d30f82b3191f6cc1f89779017f596cdd11273"
+          },
+          "stdout_sha256": "8406edd5e23eb3cdf759be8db5367c4f92c9fd4accc461eb6de55c0f37dd8020",
+          "stderr_sha256": "3f69c9bfa73e6194a973735ef55d44c05638dcdc218d15e5df12a0b155923f61"
+        },
+        {
+          "name": "downstream-clippy",
+          "exit_code": 0,
+          "seconds": 23.24956616293639,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "4acd7caace831b148163258050db45d0fc0ccbfb9bd8817aded210674f8d9a9a"
+        }
+      ],
+      "passed": true
+    }
+  },
+  "preserved_executables_sha256": {
+    "target/primitive-failures/baseline-v1/release/deps/primitive_failures-812823cb4c624c0c": "331636133b1d3da4cc076d3a8c9a571e3529894de0bd6c59611128b37e25da45",
+    "target/primitive-failures/candidate-v1/release/deps/csgrs-12b72f0ccdd38706": "5e77292733b40296c5520e65b48a7bda66581f3a7e0357afdbc1db5c5bdf5882",
+    "target/primitive-failures/candidate-v1/release/deps/empty_composition-329c8a68d57ad60d": "8b89888b0477a9c219bb573e0e90048a22200b76c87b0e846a092128905bb1a6",
+    "target/primitive-failures/candidate-v1/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "c156099d09b92f2d90d7f5b01238849210da15c6ec4df9cd1c6d7ae3f7b14064",
+    "target/primitive-failures/candidate-v1/release/deps/primitive_failures-812823cb4c624c0c": "38a4070200cc0f5fa9677e91f80841d4e2affe75f329b39e2d3435bf0c4d69e8",
+    "target/primitive-failures/candidate-v1/release/deps/solid_cache-07b265ceb2ca1c46": "1d2ca790b5f91cfffa4adc5bf07bfc8f0e56d0fed429740f01d3b95c531aa642",
+    "target/primitive-failures/candidate-v2/release/deps/csgrs-12b72f0ccdd38706": "df15a2cb02f1c9660fe90681388d2855ffa9e160f3f095cee807669e7b63631a",
+    "target/primitive-failures/candidate-v2/release/deps/empty_composition-329c8a68d57ad60d": "f995ddc297945f67cd37597e78f76cc49b8dfbcdff2d4fc02443d31f408df8fc",
+    "target/primitive-failures/candidate-v2/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "ee375860f62928b3feb6e7c54e5a71b1b5577e84b9e1eb75b1cf05360f5cbd63",
+    "target/primitive-failures/candidate-v2/release/deps/primitive_failures-812823cb4c624c0c": "f6728c9636f0cf8328dc457e3618b454b86997c29020034a75eaa97ea02b813c",
+    "target/primitive-failures/candidate-v2/release/deps/solid_cache-07b265ceb2ca1c46": "49a10ffed0634da519f30533e3e2c1ac35ee04e1ed6250613a14498476ea4fba",
+    "target/primitive-failures/native-v1/release/deps/csgrs-d5e0741bbc5df635": "e8fb648bf5f386acbae6bb7ad53224a3605313c9fe9096b52ae16bbc2f17914a",
+    "target/primitive-failures/native-v1/release/deps/adversarial-c03dde69c05f1cf2": "87cf2d02e0a4fcc352e28a802481b75354329baf7b12bc8a69d89bc35ad64f31",
+    "target/primitive-failures/native-v1/release/deps/adversarial_deep-5dea7b8952749c41": "87d97ab0c133aa1bf03b0f6e0df19c4bbc5d90a5cfc61b2a3e9f3010007f5e67",
+    "target/primitive-failures/native-v1/release/deps/adversarial_extrusions-22c8c063f22c33de": "6c67f0fd15807774cbddd6073db1187aa203c95c24e8810d2a49b1ede2ee486b",
+    "target/primitive-failures/native-v1/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/primitive-failures/native-v1/release/deps/adversarial_stress-8c747993ca7dff64": "17cbed60f3207fa5ea8b33c224699e6c8083db1bebf819eb55ab528ae1ff7efa",
+    "target/primitive-failures/native-v1/release/deps/competitive-8d824413442e1853": "1bf59b9d9d48c9c09a25523e01472466d67d16c4e412ff95c8e82acdcc1ef346",
+    "target/primitive-failures/native-v1/release/deps/empty_composition-1b2f2ba6943338cd": "5275f2caa7fa36d8e6669cd6c7e7e2fb30a0b3179a652f217138e1c75ba8984e",
+    "target/primitive-failures/native-v1/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "21d471bb135bbc9de322191bb5b2edeab9f7a00c2d8eecaf1cd2939e64662dd6",
+    "target/primitive-failures/native-v1/release/deps/geometry_context-d256044952b39c9d": "795a0fe3ba54e680f57a25e1b5afa3ff8f8b7e379734a5c3520137fc8cf35c54",
+    "target/primitive-failures/native-v1/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "b93263cc1a6692c453924b20c48b5b6e81db5f8f44fd8c93b5bd501c70e769b6",
+    "target/primitive-failures/native-v1/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "b53ec01472ca92bb42f9ae299a9ee2b91483d4feb2a2fe91614cc81e203462f0",
+    "target/primitive-failures/native-v1/release/deps/native_queries-32678419862dff6b": "a5f5a30b8454885810932d79b53e4dc79492e58735064263e8e054ee497d7feb",
+    "target/primitive-failures/native-v1/release/deps/primitive_failures-8e6539f143e56577": "bc80f7b103b9385a1409577963215fd1efd82e146ae20c7cf986b88ed235f164",
+    "target/primitive-failures/native-v1/release/deps/readme-d31b115aba933918": "e2c2e5a577640241a8ad5c895d3dcea14ef2e3c39e7132cefa074932e6ed7fc4",
+    "target/primitive-failures/native-v1/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/primitive-failures/native-v1/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "6b03e2856ee3cc0304a71cb137c109a351911d4e56346e86e1ee6d9040a3e2cd",
+    "target/primitive-failures/native-v1/release/deps/solid_cache-f1483884916afc0e": "1a362c4a88a4c58d54fadb2b27b03216c98f948dcfd3cbf0006f746c06a6a854",
+    "target/primitive-failures/native-v1/release/deps/wasm_certainty-d7100c8fa594776c": "ef9cfb823886e5151605c1d5a55e423149ce281df7952fabe7c67e1c0cc8baab",
+    "target/primitive-failures/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "3371076fee8b06984c5602328255a4435aa25cefb0bb7a39e501b5927590fd83",
+    "target/primitive-failures/native-v1/release/deps/release_workflow-594135c930ee78a9": "400283470ae02726d4562ce9ea1466d61755b1e426dfca920ad10be9a47a95a9",
+    "target/primitive-failures/native-v2/release/deps/csgrs-d5e0741bbc5df635": "7414550e1deb231c3fc83c0c3e417a8b76078e3a17ac598a77597408aedb0767",
+    "target/primitive-failures/native-v2/release/deps/adversarial-c03dde69c05f1cf2": "aaead9595151dbf1dfe3f0b5cc7e0e11bfbe8ffc459a78a5457be62c371488a6",
+    "target/primitive-failures/native-v2/release/deps/adversarial_deep-5dea7b8952749c41": "1597e504517c767fddd6679eea121a5ec4cc99532160b38087745eebd94c3661",
+    "target/primitive-failures/native-v2/release/deps/adversarial_extrusions-22c8c063f22c33de": "a280b0f052ee9a7ca8f04a3e92caf46681608810d33658540f2a785567c9be6a",
+    "target/primitive-failures/native-v2/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/primitive-failures/native-v2/release/deps/adversarial_stress-8c747993ca7dff64": "9fdbab8616d24f53e74594b7addf14cb23bc2721e08748e3ea069c25f5414979",
+    "target/primitive-failures/native-v2/release/deps/competitive-8d824413442e1853": "a4eb13e9af055d1a21f29a62dcae516f1aeab8fb8827deb0bc962b4db8176f5a",
+    "target/primitive-failures/native-v2/release/deps/empty_composition-1b2f2ba6943338cd": "6f0ed4ee5e435c0173831b949e4ef94bf169c7708a401a83c49b571f79e39aca",
+    "target/primitive-failures/native-v2/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "cf762d3c117746def771601d033f38f24de385f04aabdb70cd6acb82b2af1159",
+    "target/primitive-failures/native-v2/release/deps/geometry_context-d256044952b39c9d": "8fc8697e18ba9a645e9e8905d53ff3c7a100bcecd64ef9e8eecf1ccbdd2670b6",
+    "target/primitive-failures/native-v2/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "7880ef8e9840938b8920a492d01e173cc159c5a21d4c42e0299ad23faa01cfaa",
+    "target/primitive-failures/native-v2/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "49de09db800e87d92f2c49ff9514d943dd12786dd8d891f8b4f1db5a5514d1c8",
+    "target/primitive-failures/native-v2/release/deps/native_queries-32678419862dff6b": "64ea292bb25e7bb07bec57f790045e016fcc4f61926197ee217198797346dcd2",
+    "target/primitive-failures/native-v2/release/deps/primitive_failures-8e6539f143e56577": "51ea4f3ae8e12dfd71f20cad064020429ea52606ac3cb97787372fc9a91abd3a",
+    "target/primitive-failures/native-v2/release/deps/readme-d31b115aba933918": "e2c2e5a577640241a8ad5c895d3dcea14ef2e3c39e7132cefa074932e6ed7fc4",
+    "target/primitive-failures/native-v2/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/primitive-failures/native-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "93aadac265fd8ae46925aeaa903a1f39bc9c3e4a8e9af0260be1cddf644d62ee",
+    "target/primitive-failures/native-v2/release/deps/solid_cache-f1483884916afc0e": "20aa5cfee92d991cee5659a12b4434b4b5442267b5ae769909ad88babce11f1a",
+    "target/primitive-failures/native-v2/release/deps/wasm_certainty-d7100c8fa594776c": "e01d38e87b692aa8e31671a00571bc303634036ee712265e78b72f7d8442df4c",
+    "target/primitive-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f": "3371076fee8b06984c5602328255a4435aa25cefb0bb7a39e501b5927590fd83",
+    "target/primitive-failures/native-v2/release/deps/release_workflow-594135c930ee78a9": "400283470ae02726d4562ce9ea1466d61755b1e426dfca920ad10be9a47a95a9",
+    "target/primitive-failures/bindings-v1/release/libcsgrs_ffi.so": "c8feb230e4892e9718285f1bebdc4c7c57c35610389a4fa4fda574967f79c7d2",
+    "target/primitive-failures/bindings-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "5f6fb43af95973ec2665992428dc655220767175bbc3fafae367ee348ab61c49",
+    "target/primitive-failures/bindings-v1/empty_composition-c": "8b3e2dc62ac775dffd60db04484779e99c7fdf3f76aff4d2054bce57f5e2b423",
+    "target/primitive-failures/bindings-v1/empty_composition-cpp": "e7fe0b30ec0a552b92300d1296aad9c99e8e1689132bc793bd329d13ff6b076f",
+    "target/primitive-failures/bindings-v1/primitive_failures-c": "1998d1f4a48f79b8a2b9a2a1e3f8d7da21f8ba6e8a897daf805fd9889b12c25b",
+    "target/primitive-failures/bindings-v1/primitive_failures-cpp": "3d5fde845052d38ec64fc6e8d0966b4f646e5ef65e4378cd266d0a567a53f7aa",
+    "target/primitive-failures/bindings-v1/wasm-bindings-node/csgrs.js": "ca82d918f6887d28e9220097d9016d07677cf5c6836d1ef59b112e53fd953c02",
+    "target/primitive-failures/bindings-v1/wasm-bindings-node/csgrs.d.ts": "411a252a9bc51de012bf5be2bc7191cebba27aac8f37f41344ddad26f7f6e6fe",
+    "target/primitive-failures/bindings-v1/wasm-bindings-node/csgrs_bg.wasm": "b4f74b91e19c1afd1c4d481b8f200dec88f85a5cf1f3ca3f0038987d01e5f12a",
+    "target/primitive-failures/bindings-v2/wasm32-unknown-unknown/wasm/csgrs.wasm": "fc483cbd166696c688aae8dbe80020201549956ffb28a4a41c7fb04a206b1286",
+    "target/primitive-failures/bindings-v2/wasm-bindings-node/csgrs.js": "ca82d918f6887d28e9220097d9016d07677cf5c6836d1ef59b112e53fd953c02",
+    "target/primitive-failures/bindings-v2/wasm-bindings-node/csgrs.d.ts": "411a252a9bc51de012bf5be2bc7191cebba27aac8f37f41344ddad26f7f6e6fe",
+    "target/primitive-failures/bindings-v2/wasm-bindings-node/csgrs_bg.wasm": "fea1e6507e19383d81f078bb2a6346c635abaefca072243924d58e755aca5fb1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/baseline-v1/release/deps/empty_composition-329c8a68d57ad60d": "4c3ff457f2768596b30df2ad2670bef4203962271eb44e931e276126b0ae11bb",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/empty_composition-329c8a68d57ad60d": "0b052a1dbee4bad3fe82f3128d75ee387fbb319ad4fb8420e778f5a2a6e80977",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "e4b9dcf93902200c0cfe70ee55094e6ef067b6b47cdab93a72763f3218965913",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/solid_cache-07b265ceb2ca1c46": "45741c0db6ac171cc24138d7b87589539df553800d94c6eb9c3cbde8a04592a1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/release/libcsgrs_ffi.so": "3b80452ae5ee6c2f0b72eb108497e3d4d4106cfee1053b36ae66f5dcccfea2bd",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/empty-c-consumer": "cc345dc9a00a53e3a65488a4d128541f21efb783555c1e889be748c3b6c93a7e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/empty-cpp-consumer": "c2c5e56c5585b6f86f22fa6496c7bc579117a9af88842a39acfa90770f8160d7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "47aeb7ab2a44950bc943552584e8d153cbd9d68a3801cea289ce8fb5f5b655d2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs_bg.wasm": "202ecd8b97b57f8f5795c81740a5fb201f6a40da38288d11549cf5ace381c798",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs.js": "bab626941aaec3b5c78453fc3106060f07a809a230d89abd23ce1740df57967a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs.d.ts": "411a252a9bc51de012bf5be2bc7191cebba27aac8f37f41344ddad26f7f6e6fe",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/hypermesh-2b29b988ffb01c31": "a1b6859f3fad6299740f5d5b2d8df37ab654957c04d2997134969dd4f2dc9913",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/boolean-8c7aa124f327f010": "daaa1dd3e469bd16b671666cf36012fec77827867be087e60833b89e0a715549",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/csgrs-d5e0741bbc5df635": "a3749d16efbe3e027fe9c98d8b06d67465a1788b63e03179fbb13a8921572ff9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial-c03dde69c05f1cf2": "3558ab3fdf6439999b2518d15dfbfba83e4f78f2d23962dc8fb3fef40c3fb0d9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_deep-5dea7b8952749c41": "dcf3e0c907796ea910cdf6b118836029f0b3998e75804b2724c5fa7d4c7b3dc6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_extrusions-22c8c063f22c33de": "fa7241663a4f672fa5951a56f0c64b1500bba94f3ac12dbee5e3d064cceb00c2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_stress-8c747993ca7dff64": "1608199a4c5739fab18d4b17031314b1bdb3195520715a48eccbc8aa6335d68a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/competitive-8d824413442e1853": "7b2693c2a35e84e8f86df0ce1e69de5f52407e07901790d6c20a617009feb1ad",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/empty_composition-1b2f2ba6943338cd": "74f20b6d0fd14ea06b009f39c23efc1e9ce249ac271863607c9c97305113cffa",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "294ce9c0661efe78d7608501e3429c14a99d7c1869d1eba16cff78b26dfe487a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/geometry_context-d256044952b39c9d": "d1f227b6285275b3d55596d2a73e276247c7985826e252fa1bc3673d4a8db6a3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "8924a7c7571206d511e933803e4c7023089b1fe90a1d8bd7ea9200e5fb7143ec",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "af03aac2dd91027c9e9f6135a32f87245d341dc87cd0a7d54b97d073c33758ae",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/native_queries-32678419862dff6b": "aee3aaaf184ca7f347b1ccf111a372f4af3d77ea5c7f5ba6ba0225dea6e30d07",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/readme-d31b115aba933918": "426328dc9b5ca7d64d189456a44017ab552d7820f97634a9ba1b19be2fbdc6f3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "4310a05c435519987fe0fc896d63a33e36016fd2118cd758dfa5d8ea61000df0",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/solid_cache-f1483884916afc0e": "7c88e42bc8386f4150f4bf5be569427db5ef9e0ff017c38758bc0e9adc3e9cf0",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/wasm_certainty-d7100c8fa594776c": "b887d9ec4083dcea50898a540bb045377df8712c989b819bc2aa37f2b9d7df3d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "416a3e7e06e547da3921c73b4f2e5a7e0e3c5d0d1aa0c353e724438627f099ed",
+    "target/primitive-failures/downstream-v1/release/deps/release_workflow-8839b395841dd475": "932605a1db9b869b5e2ed74cedcb441886e29f7ec196468e5709ef7a94b9beea",
+    "target/transform-failures/baseline-v1/release/deps/transform_failures-5b7fe4d21c3ce0bd": "755964220b489b36bcd270f3e55b6121d52e8b9a2098e22043394bcc2b54ac60",
+    "target/transform-failures/candidate-v2/release/deps/csgrs-12b72f0ccdd38706": "8b0f41d9164b45ce4f1372b2a375c53f745ec301624f212a97f6eeae38512d93",
+    "target/transform-failures/candidate-v2/release/deps/empty_composition-329c8a68d57ad60d": "ef0c5a11b9652ec783ed9a80d6ee099067ef5d2dcf8843ecc61bda85280feee5",
+    "target/transform-failures/candidate-v2/release/deps/geometry_context-673fb3a0a6f0689a": "166eb9dbdbae2574a4412f728be5a2c9e6ce1166a658c563c22804739c35d2be",
+    "target/transform-failures/candidate-v2/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "08b77d75b89522fe1657c50a8514ca838c891d8d4ca13c963fcb9ad7094ef922",
+    "target/transform-failures/candidate-v2/release/deps/primitive_failures-812823cb4c624c0c": "f3a9d1c78f7d632e2fddd62496653c3891a4bf41eb7693e9253735e052603afd",
+    "target/transform-failures/candidate-v2/release/deps/transform_failures-5b7fe4d21c3ce0bd": "0f70f4624ce679d542569479d84d38108f9fb65762bf4d08013c13c713841bac",
+    "target/transform-failures/native-v2/release/deps/csgrs-d5e0741bbc5df635": "4208da57f691dae79a7509ba1bb0b1cad40289c517d0cbf703ccc6db1762eaaf",
+    "target/transform-failures/native-v2/release/deps/adversarial-c03dde69c05f1cf2": "134b0d687c09ef8ec2ed142da312cad7c0f6a4a133ac904cdeaddc416f150fef",
+    "target/transform-failures/native-v2/release/deps/adversarial_deep-5dea7b8952749c41": "9c6c755ba0e9d2e7bb9c41b7a11a491173e4359b3c5636743f16457b6dca3576",
+    "target/transform-failures/native-v2/release/deps/adversarial_extrusions-22c8c063f22c33de": "af35ef20928311c753a23497e0ab625714944c9a8d02ce182152a53303a7b778",
+    "target/transform-failures/native-v2/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/transform-failures/native-v2/release/deps/adversarial_stress-8c747993ca7dff64": "1b27024885a54a5199c5635efe9db3e6779154f59c9acac02b2ba84acb1d2647",
+    "target/transform-failures/native-v2/release/deps/competitive-8d824413442e1853": "410340c11994fde475408bee89d9c5ed0d59f827d2eadee66a8546647bb1b5ff",
+    "target/transform-failures/native-v2/release/deps/empty_composition-1b2f2ba6943338cd": "b46d340582c4850114656c3c7a1a61ecc5221e92158a2ab99fd644181d776cf6",
+    "target/transform-failures/native-v2/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "b77d5eddb2c6ea3b091fed0559ed5801ee4c1127385dc4742c291186c82f5015",
+    "target/transform-failures/native-v2/release/deps/geometry_context-d256044952b39c9d": "cc1ad3398742402862899d7c70aef136aa985434b16967e07d6aac6a50a9412b",
+    "target/transform-failures/native-v2/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "dac249b2aacda47a70869f22c53f8b78321c0711228bb4d26444881cb651efbc",
+    "target/transform-failures/native-v2/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "a824d61b7de80d4daf27a5bcba4501fcda352ef17c9592ffbb279199a5861e35",
+    "target/transform-failures/native-v2/release/deps/native_queries-32678419862dff6b": "2a5e79fef8ebfb4952cecb6ab7588bcff98b5227ac6593b7044664b847cb757e",
+    "target/transform-failures/native-v2/release/deps/primitive_failures-8e6539f143e56577": "bf4b0e22df2e3c6768714d789b649bead987c18ffdbfadcea51f6bd24f2127ce",
+    "target/transform-failures/native-v2/release/deps/readme-d31b115aba933918": "e9649c06810f4657de31bc888f7e1ff8287de09e1d82bdfecaf2ebe17e8b5360",
+    "target/transform-failures/native-v2/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/transform-failures/native-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "28ff69ed66c349d166652c0d7b7d649e5f511716fe096def9b426acfd4e38518",
+    "target/transform-failures/native-v2/release/deps/solid_cache-f1483884916afc0e": "60d941c9e964cd9a65fcdbfd71dcd2a0542fcfa2ae2d48a967b4746e8e02e559",
+    "target/transform-failures/native-v2/release/deps/transform_failures-45db55e7bcff3889": "31a3e06a7f7494ec39d9ede7cb26b0ccac4e08ba6fdbf894a4d23e18a522c1cb",
+    "target/transform-failures/native-v2/release/deps/wasm_certainty-d7100c8fa594776c": "03b434a70e4dbb954ed3b2eeb2c1bce20aa32c9568f9983c733cdd025a45be22",
+    "target/transform-failures/native-v2/release/deps/hypermesh-3f582b4ca1636641": "1094b4f2a2085b1844b874218d0a34e0797a7780a07ece7c6f36759b839d0a87",
+    "target/transform-failures/native-v2/release/deps/boolean-5f62d1118823ec97": "121fed8ade11b6de684a369fba5db057038cb475fdaec4db1664ca09e86c7128",
+    "target/transform-failures/native-v2/release/deps/competitive-6172fbc55a698b35": "368f3816552c743767b2f815f99160f0cacf29a4267a8bfa6bb0f15b9f3241fd",
+    "target/transform-failures/native-v2/release/deps/corpus_manifest-70e8b02b4630cdcf": "067c5b7209dcf3656080b4b4b7cbc000063aff2b6c3963c058cafa743a7ebb1b",
+    "target/transform-failures/native-v2/release/deps/intersection_corpus-fd36003a26964264": "3c5878443a3cef51b802852006381957796a1de65a117d651f3769f4290c4a04",
+    "target/transform-failures/native-v2/release/deps/predicate_policy-da601e01ee57d6f5": "738c296f873b39568db3c731f4b888a8e42a07399881fcdcb27ae88772be905e",
+    "target/transform-failures/native-v2/release/deps/readme-6edeb87a0e9ac66f": "95d4d8d1d3a5905bab4c825bf31042a73cac283881f5ca933a1438e008315143",
+    "target/transform-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f": "cb537752251b75ca2a17ab11a43f2b104148824935e59ab977f9fddee876dbd7",
+    "target/transform-failures/downstream-v1/release/deps/release_workflow-8839b395841dd475": "b68c84e89a50582acbe34dafff7e82ea94c8a192626fa9992e7084404caab342",
+    "target/transform-failures/bindings-v1/release/libcsgrs_ffi.so": "5495fd91ae3b03ab139e663fd564dea4b3a7665a7994ed5ef7c9f476e0f3054a",
+    "target/transform-failures/bindings-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "4c809a490e9971245dca771121f50bbd4b4f02786258f8709f0aa1c9e8c50721",
+    "target/transform-failures/bindings-v1/wasm-bindings-node/csgrs.js": "ca82d918f6887d28e9220097d9016d07677cf5c6836d1ef59b112e53fd953c02",
+    "target/transform-failures/bindings-v1/wasm-bindings-node/csgrs.d.ts": "411a252a9bc51de012bf5be2bc7191cebba27aac8f37f41344ddad26f7f6e6fe",
+    "target/transform-failures/bindings-v1/wasm-bindings-node/csgrs_bg.wasm": "d86e983cb5962a8df208b7e6f52cbdeba4183dc8a8b8dd6470c819fa8d5a12a8",
+    "target/transform-failures/bindings-v1/empty_composition-c": "c23b8d8e5e57f72d6edbf495a05e48c9e7f1adee7da842a1ba9c2f317304befd",
+    "target/transform-failures/bindings-v1/empty_composition-cpp": "36de820a4cb1ae7eaf557773383786e29920099dd912f31ffede1e83825b571f",
+    "target/transform-failures/bindings-v1/primitive_failures-c": "38f0788f7623f58f3d9ccb4928e905e62cff290792fa383639453a74ac8f9428",
+    "target/transform-failures/bindings-v1/primitive_failures-cpp": "77c1f6175fa2e82785c43f69cf99a4ae7ba0a1455f256ae9d0be4f5562821bee",
+    "target/transform-failures/bindings-v1/transform_failures-c": "0a13e8d3dc1a7103d60ffa5468999caa979e09e4a7e554f6c0f2dd68218eb77f",
+    "target/transform-failures/bindings-v1/transform_failures-cpp": "0ee97f923cd66a3678a5f6bc8e900a2af6a3ffd6dc1606c8da46593aba642910",
+    "target/bounds-failures/baseline-v1/release/deps/bounds_failures-aecf08036656e9a3": "ef53241dba82296861ef83964fbfe0553f605dc10f5465eeef3b41d909134966",
+    "target/bounds-failures/candidate-v2/release/deps/csgrs-d5e0741bbc5df635": "c42763400da87a53507236e17d1a955809407fb516833b3a99d05ad412ad1415",
+    "target/bounds-failures/candidate-v2/release/deps/bounds_failures-aecf08036656e9a3": "6c400e6ed16b6fbbbd6744c828b9c5a7321954ac30f8693877b5c65a13f85a67",
+    "target/bounds-failures/candidate-v2/release/deps/geometry_context-d256044952b39c9d": "571f05923b892773d04249c35df60c5bef38db199f756bd45913fda2f1f6019c",
+    "target/bounds-failures/candidate-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "2f528638ee1a76cadb8912389ccf94cc59cd5188079fce3958407e8abfe5fec5",
+    "target/bounds-failures/native-v1/release/deps/csgrs-d5e0741bbc5df635": "c1d764e78df95d15265e9b4be3c775a78a29625753e7f68157119eddead93324",
+    "target/bounds-failures/native-v1/release/deps/adversarial-c03dde69c05f1cf2": "21f0d21d8d3a66420152f9ce05d610a298aaa26d513af3fcf59db7b9da5078c6",
+    "target/bounds-failures/native-v1/release/deps/adversarial_deep-5dea7b8952749c41": "8ab35de5482b073ba020577e6a045942c84f9c8be1b9979d0a420f62d106e1b8",
+    "target/bounds-failures/native-v1/release/deps/adversarial_extrusions-22c8c063f22c33de": "aad96d59d0463d78d452816d425def3ae467a59a3cf8f9090ea4a23d3e9d5861",
+    "target/bounds-failures/native-v1/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/bounds-failures/native-v1/release/deps/adversarial_stress-8c747993ca7dff64": "f544c551fda9b1fc4e30a2b6154b8a287f888733cbc7d4ca676f258887f5ee0c",
+    "target/bounds-failures/native-v1/release/deps/bounds_failures-aecf08036656e9a3": "b927632d1d0d2f46c42f2f4e636227563a48b3c511b1234ed11d36a1a442d123",
+    "target/bounds-failures/native-v1/release/deps/competitive-8d824413442e1853": "e84bc2de65e13710efd1a1aa551af8fc5cb3d00b3f7647e2454c5a145ba450d7",
+    "target/bounds-failures/native-v1/release/deps/empty_composition-1b2f2ba6943338cd": "f9b1847150fb7016673ca87e20f919e8a4fd4c79b8acd571d16296c55f7cee33",
+    "target/bounds-failures/native-v1/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "b79e2e87d173a188e3b5a74c0c28d573bd6ffa680f7957ebfc4974a169526d57",
+    "target/bounds-failures/native-v1/release/deps/geometry_context-d256044952b39c9d": "ced54e31a6bc51d9a1d145a325f49d50458b2929183a898f502f3a65d9605261",
+    "target/bounds-failures/native-v1/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "6db19b0f3835c452c2eb0dc0e051299311db3907dcfc0eccda8f10631ec8f9af",
+    "target/bounds-failures/native-v1/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "5e42172bfbc1b18de0df9c32b1fd1978ef9b744bde83dcde79e4eb1815ca6745",
+    "target/bounds-failures/native-v1/release/deps/native_queries-32678419862dff6b": "220a28ec4ff70d5f4074c9153fc9dbcd14ca155a5cf5a19284ef428f50f4f367",
+    "target/bounds-failures/native-v1/release/deps/primitive_failures-8e6539f143e56577": "a49c9cd3ff5b7d849160bb72333f575923f8f1347a3e8574cb17d9df9e305087",
+    "target/bounds-failures/native-v1/release/deps/readme-d31b115aba933918": "8483edbeacef8fba5e18bc5540ab74f6d04af3fb977d7d8e7579705fd20eeaaf",
+    "target/bounds-failures/native-v1/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/bounds-failures/native-v1/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "96070451daf1f2f55175a41db855d9d4ddb3a38fa1089b2ac43502623485d916",
+    "target/bounds-failures/native-v1/release/deps/solid_cache-f1483884916afc0e": "77fe010aa715b2b0a3d4cb44f43d072113f478f219476a4a932d8468c9d1bfb0",
+    "target/bounds-failures/native-v1/release/deps/transform_failures-45db55e7bcff3889": "c32612647b5fa098e34fefa8996a5a99992bfc57da613711cc676b467075616f",
+    "target/bounds-failures/native-v1/release/deps/wasm_certainty-d7100c8fa594776c": "e6a5c9fd4a2896db43b5dba26f1972fdfbcf6777259f21dafe455dcf929a626f",
+    "target/bounds-failures/native-v1/release/deps/csgrs-12b72f0ccdd38706": "a9aaefd324b9cf383d3640cab2277b05fbef395c2c3341028c37bf88e2e5b92b",
+    "target/bounds-failures/native-v1/release/deps/bounds_failures-c661a92a5b4c7962": "e18153888cbaf414a1b20d6ae8962a6da39ced72f6bcaf0980244a7721c7fad2",
+    "target/bounds-failures/native-v1/release/deps/hypermesh-3f582b4ca1636641": "714ba486b019c2136dbb13acf76b083cc4bd0010fc552670df381e8427ca1064",
+    "target/bounds-failures/native-v1/release/deps/boolean-5f62d1118823ec97": "8367f96af174239b53c2d34968a437f40bda6a569e64c56aff4fe38e36e66b1e",
+    "target/bounds-failures/native-v1/release/deps/competitive-6172fbc55a698b35": "e976abd9a25f8cbeb75aa8ffb5e46c3daf9fc7fe7077549db45eeb74e37461b1",
+    "target/bounds-failures/native-v1/release/deps/corpus_manifest-70e8b02b4630cdcf": "6064ecc1061d45032a93393df62cb3f2806b80b033f3641c2c4a6c4c4963dc56",
+    "target/bounds-failures/native-v1/release/deps/intersection_corpus-fd36003a26964264": "d2da5dd138715d268235319cd5a67ee61d34ffb7cae4ca654d7c0b391bc34571",
+    "target/bounds-failures/native-v1/release/deps/predicate_policy-da601e01ee57d6f5": "7c4faeceb0aa0394aecc7f0c55116c00b473823489d750823b429d5d477f1ec8",
+    "target/bounds-failures/native-v1/release/deps/readme-6edeb87a0e9ac66f": "95d4d8d1d3a5905bab4c825bf31042a73cac283881f5ca933a1438e008315143",
+    "target/bounds-failures/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "9bd2c34b1330e9f88a2e8493699d1180c433c942c1ae7ec65484c1b28ac5c90b",
+    "target/bounds-failures/native-v2/release/deps/csgrs-d5e0741bbc5df635": "3cce1ed60e9a81b92dc40a6a8256cc31a7accdb1faf7ca49c6a119debd9e38d4",
+    "target/bounds-failures/native-v2/release/deps/adversarial-c03dde69c05f1cf2": "544ecb365a31c1e76a10a4c5dac49b90ead84a3cd5b58ad8107e76bb6ae76fe7",
+    "target/bounds-failures/native-v2/release/deps/adversarial_deep-5dea7b8952749c41": "0355c877a797bf8a62875b366049d82dee6a3dbab20efef0df85e55ed563a176",
+    "target/bounds-failures/native-v2/release/deps/adversarial_extrusions-22c8c063f22c33de": "8faf6d9044c6f7a629e12a80eecdb36bc4e0065b773c63dd5f756422c70fdaa4",
+    "target/bounds-failures/native-v2/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/bounds-failures/native-v2/release/deps/adversarial_stress-8c747993ca7dff64": "3ab5e36f7b8ef638bcd7cac1a15de8151e434e6ddc6b25459ffcf8bc0d09f054",
+    "target/bounds-failures/native-v2/release/deps/bounds_failures-aecf08036656e9a3": "7c960bdb5bf8306f3cf8bfc32fda0bcab77a69797e32c61326907a692aa23512",
+    "target/bounds-failures/native-v2/release/deps/competitive-8d824413442e1853": "e84bc2de65e13710efd1a1aa551af8fc5cb3d00b3f7647e2454c5a145ba450d7",
+    "target/bounds-failures/native-v2/release/deps/empty_composition-1b2f2ba6943338cd": "f9b1847150fb7016673ca87e20f919e8a4fd4c79b8acd571d16296c55f7cee33",
+    "target/bounds-failures/native-v2/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "65d3cb635e4d8a4d6c426a1f4552cd50410abcb630052ee88232fbbec262c084",
+    "target/bounds-failures/native-v2/release/deps/geometry_context-d256044952b39c9d": "5861c5ab120d23f280b06c1d973b1a391287e09952b1766144755c8ed1bf41e7",
+    "target/bounds-failures/native-v2/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "6db19b0f3835c452c2eb0dc0e051299311db3907dcfc0eccda8f10631ec8f9af",
+    "target/bounds-failures/native-v2/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "41fb749f256c5f95bc02d04b01711e33b99c94580cec63f12ecd3ea243911034",
+    "target/bounds-failures/native-v2/release/deps/native_queries-32678419862dff6b": "220a28ec4ff70d5f4074c9153fc9dbcd14ca155a5cf5a19284ef428f50f4f367",
+    "target/bounds-failures/native-v2/release/deps/primitive_failures-8e6539f143e56577": "a49c9cd3ff5b7d849160bb72333f575923f8f1347a3e8574cb17d9df9e305087",
+    "target/bounds-failures/native-v2/release/deps/readme-d31b115aba933918": "8483edbeacef8fba5e18bc5540ab74f6d04af3fb977d7d8e7579705fd20eeaaf",
+    "target/bounds-failures/native-v2/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/bounds-failures/native-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "96070451daf1f2f55175a41db855d9d4ddb3a38fa1089b2ac43502623485d916",
+    "target/bounds-failures/native-v2/release/deps/solid_cache-f1483884916afc0e": "77fe010aa715b2b0a3d4cb44f43d072113f478f219476a4a932d8468c9d1bfb0",
+    "target/bounds-failures/native-v2/release/deps/transform_failures-45db55e7bcff3889": "c32612647b5fa098e34fefa8996a5a99992bfc57da613711cc676b467075616f",
+    "target/bounds-failures/native-v2/release/deps/wasm_certainty-d7100c8fa594776c": "b777096b2292bb6d7315a332a3c8b6ca4d3cf9c4ea7f680755349565aef91e64",
+    "target/bounds-failures/native-v2/release/deps/csgrs-12b72f0ccdd38706": "a9aaefd324b9cf383d3640cab2277b05fbef395c2c3341028c37bf88e2e5b92b",
+    "target/bounds-failures/native-v2/release/deps/bounds_failures-c661a92a5b4c7962": "5eb0573d3633b0bc10d23fdbba5c7598aade3bbf57dae2292cbef5c91dd55296",
+    "target/bounds-failures/native-v2/release/deps/hypermesh-3f582b4ca1636641": "714ba486b019c2136dbb13acf76b083cc4bd0010fc552670df381e8427ca1064",
+    "target/bounds-failures/native-v2/release/deps/boolean-5f62d1118823ec97": "8367f96af174239b53c2d34968a437f40bda6a569e64c56aff4fe38e36e66b1e",
+    "target/bounds-failures/native-v2/release/deps/competitive-6172fbc55a698b35": "e976abd9a25f8cbeb75aa8ffb5e46c3daf9fc7fe7077549db45eeb74e37461b1",
+    "target/bounds-failures/native-v2/release/deps/corpus_manifest-70e8b02b4630cdcf": "6064ecc1061d45032a93393df62cb3f2806b80b033f3641c2c4a6c4c4963dc56",
+    "target/bounds-failures/native-v2/release/deps/intersection_corpus-fd36003a26964264": "d2da5dd138715d268235319cd5a67ee61d34ffb7cae4ca654d7c0b391bc34571",
+    "target/bounds-failures/native-v2/release/deps/predicate_policy-da601e01ee57d6f5": "7c4faeceb0aa0394aecc7f0c55116c00b473823489d750823b429d5d477f1ec8",
+    "target/bounds-failures/native-v2/release/deps/readme-6edeb87a0e9ac66f": "95d4d8d1d3a5905bab4c825bf31042a73cac283881f5ca933a1438e008315143",
+    "target/bounds-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f": "9bd2c34b1330e9f88a2e8493699d1180c433c942c1ae7ec65484c1b28ac5c90b",
+    "target/bounds-failures/downstream-v1/release/deps/hypercircuit-693cd2a2e3e98da3": "5b9229fad5594538677a6d59fecfb112a1c726fca794e598cd6bec5d402241ea",
+    "target/bounds-failures/downstream-v1/release/deps/materialize-3bf96dbebf733db9": "537d5adab575dd725d32008d1ba740dd016401327fd8e01f6509dab02f3de39a",
+    "target/bounds-failures/downstream-v1/release/deps/release_workflow-8839b395841dd475": "44b89aeb0b4fe0d4e31374942a2d30f82b3191f6cc1f89779017f596cdd11273",
+    "target/bounds-failures/bindings-v1/release/libcsgrs_ffi.so": "97fc68606f20a0eea30c75c2335252691accc46174f31f160a1b7335f64f685b",
+    "target/bounds-failures/bindings-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "a46bae9fa7f5703b33be7a6ea3141a6b45e6da0b5d4ff67ae603a0e6f9a951cc",
+    "target/bounds-failures/bindings-v1/wasm-bindings-node/csgrs.js": "918a84960af66b3868615031173ed5f53e032e8810faa43b262357363e29ffc7",
+    "target/bounds-failures/bindings-v1/wasm-bindings-node/csgrs.d.ts": "135cffc6a39504451a853e44610525b370e120e1349ac3021d8b0caa539b837d",
+    "target/bounds-failures/bindings-v1/wasm-bindings-node/csgrs_bg.wasm": "d34cd62f626a7a61ba90794b8060411e411af92c4dc53a405e5b108bada98d75",
+    "target/bounds-failures/bindings-v1/go-bounds.test": "ec4e5f544f8ca5842dc45327cc48f7fc5d9ca6f82ab2efdadbcdea05e0e287d3",
+    "target/bounds-failures/bindings-v1/empty_composition-c": "cc2969eb54429e98a38fa5261e97a7b516bfe8b88aaecce3021d2483e97c1835",
+    "target/bounds-failures/bindings-v1/empty_composition-cpp": "f9bcff0857f38c96ad6628a10b0bca12391ec7120eefdcfcaa6aa5914a28e5a4",
+    "target/bounds-failures/bindings-v1/primitive_failures-c": "7efecea8166e1ec70de55d550d37daf7f54c04a1f2192a3db52545fb31df830f",
+    "target/bounds-failures/bindings-v1/primitive_failures-cpp": "658b3717eab46144ad4264610586cf6260c629fdf9c27a7353aff3eb96af5768",
+    "target/bounds-failures/bindings-v1/transform_failures-c": "703f02e9c5dec5dca3b620780c53d5806e11ab7481510acf92a02d4128540832",
+    "target/bounds-failures/bindings-v1/transform_failures-cpp": "ec4b3507f6bec14645f2c53a75a0f22286c98db993eef0508aef63da13dd7a39",
+    "target/bounds-failures/bindings-v1/bounds_failures-c": "20324d25c9fb75562b2cbe6ff3dabb857f2924376e75b88c0bd0c5b511b2fe66",
+    "target/bounds-failures/bindings-v1/bounds_failures-cpp": "b9faddcead1d16bb60f26128bce6382ac4bf337565a9ea6fdf49939ee70b4d9e"
+  },
+  "retained_logs_sha256": {
+    "docs/evidence/2026-10-15-bounds-failures/baseline-v1/bounds-regressions.stdout": "9248845a4d0c27ef871f3527f2948f942ba5b07630f0f9ddbbea98513cc744da",
+    "docs/evidence/2026-10-15-bounds-failures/baseline-v1/bounds-regressions.stderr": "97a0138acb4e895ed71e10a3c73321393d50f684dc7e069066ddff297f95483e",
+    "docs/evidence/2026-10-15-bounds-failures/candidate-v1/focused-tests.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/candidate-v1/focused-tests.stderr": "7ff5cb18012cbcc3271cc8c6111d59dd07821cde21505ed05dfecfa20c790006",
+    "docs/evidence/2026-10-15-bounds-failures/candidate-v2/focused-tests.stdout": "93a7be1a1e608738f21973fda0da37a10f6cb205786e390d6d27a01b92a23f73",
+    "docs/evidence/2026-10-15-bounds-failures/candidate-v2/focused-tests.stderr": "339206d5b8183474b71b320b9de7a814ae9fde86242e7d80719c346fcf8107b7",
+    "docs/evidence/2026-10-15-bounds-failures/candidate-v2/clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/candidate-v2/clippy.stderr": "b1e19fb24829bc1f371217fb86c7726bf91a9349023f45a17ba72889ba6dc80e",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/fmt.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/fmt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/fuzz-fmt.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/fuzz-fmt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/all-feature-tests.stdout": "22ae813482539a41264d1e21d44c7ecb1381c4a682805f7ff038db08f821d9bf",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/all-feature-tests.stderr": "5c2a719da0c31ebc3e1e2a5b03118eae7eb46267cb090aa8134889980ee42fd9",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/minimal-tests.stdout": "6e786a02b5555f05cae941e8151723c8a29c9a7dcbf08d65886fe9801c252153",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/minimal-tests.stderr": "2691c73bd5e5758057b3ad817185409d26d8e6e62f477a1940cfd05d788d516f",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/hypermesh-tests.stdout": "00abdcd9a007ba2643785baf3dbef1c17e3d376998ab755acf608f5063ce8479",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/hypermesh-tests.stderr": "4e85eda37dfbe5872455ab178a5dfb34ce9e316a0dbd4b2bd8618204171224af",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/ffi-tests.stdout": "59ddb49de9256543d1ad3799f3552552febe07397b9f96a02f655d709e9850f7",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/ffi-tests.stderr": "d6a883c7b5ff0bd1d7279a2055e8317961138738372f8fac63d97a554e0b89e6",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/strict-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/strict-clippy.stderr": "0cac2edab2f775041cbcd4917fee1300897c3bc64bc00c21f7d0aead6c87a371",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/fuzz-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/fuzz-clippy.stderr": "c875268461c95b5c5fed87459787da100c8a481b4d13d89b7fc82f59f52fedd0",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/docs.stderr": "95e82e7fbfff1d14d47644fd3ac19d27190abd9a28e2d8d399c61966c56199ba",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/doctests.stdout": "e1e077866a9096844cddf816e1875200a79c737f03dc777969ef8c81c950f368",
+    "docs/evidence/2026-10-15-bounds-failures/native-v1/doctests.stderr": "da1ec7712ba7b35a0e446f4e39dc6f24aeb9300b6065237ac2287d0d0c3bf928",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/fmt.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/fmt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/fuzz-fmt.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/fuzz-fmt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/all-feature-tests.stdout": "f876f364cb877fc241f1c963902524860faddfdf41728ce7a544a651f6be469a",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/all-feature-tests.stderr": "6d004123d7e65fefba8d169b3ba2352eafb708e2f557f8acd6b7fb336585014b",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/minimal-tests.stdout": "a2cd33d437ab34a5460ea1b525595abfcf12e8c120a56b2933f3393816af9f79",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/minimal-tests.stderr": "eeb5a937f4d7dd7526950e0ae2bd45fc7279fdd2d55e7627814e663f6e1a4425",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/hypermesh-tests.stdout": "5a6a065e7ab2ba48b729b4708978da1bcb8b5005288fc6bdcef5fb26af610756",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/hypermesh-tests.stderr": "bbde78b0d40df1e7ab70c3dfdb2696760e6e3445aea44f55c36552c32896a7d7",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/ffi-tests.stdout": "ad8ba3bc82ca2bf110d79b40413634d3f3c789de534061125d3b4750e5952053",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/ffi-tests.stderr": "77c7d4b914860d5322ee87f1888154a674400515d7a03aeb76ee2f1b9b755a48",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/strict-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/strict-clippy.stderr": "0d2d430677785fb5d29940b600cb929e399f457a4fb9770a487cb009c4b23263",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/minimal-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/minimal-clippy.stderr": "fd9701a40600ceb5df429120576044fc30c873791fa5c6badc6ef9736793a659",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/fuzz-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/fuzz-clippy.stderr": "fecede7c2157efe2f16c8c8b9dce94b0fb4dd384dca8207046c8bf7636eb0ffe",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/docs.stderr": "c7da4c3826f1f356744e74bd86767db9a7fa3eaec078eaf88372a79af09bbba9",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/doctests.stdout": "7eb03ec6f1947c4241f59962b6dc9753a6bb84b7f5118484238b8999cfa5120c",
+    "docs/evidence/2026-10-15-bounds-failures/native-v2/doctests.stderr": "4e16f220517702a1decf3447ac66c37a11f36fb3be27022fe6915201f49dfd44",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/cc-version.stdout": "0ff89e1159c58eb2b7dbe5944399106189239661696edc53961fc8d468099ae9",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/cc-version.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/c++-version.stdout": "846bcfe0938e1699440497f2fd5a63b5085049453c373e442190853a8534a420",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/c++-version.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/python3-version.stdout": "0366d77cc1f1ac88ea458231ba4f639323d5caf34de0d50b7618277fd4395f1f",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/python3-version.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/node-version.stdout": "5a64071862e0a30c10895711c2317a83576c2999e2d255bf9d95756c466bd4ce",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/node-version.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/ffi-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/ffi-build.stderr": "f09518d26db5a6eb440760b1ec490cb1b7bd33f03e7895f975ff7d72fbdca3c3",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/empty_composition-c-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/empty_composition-c-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/empty_composition-c-run.stdout": "9129339c006d2d6c8870eaeade18c45c9302dabd88de9be2a1d9bdf24ba6f286",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/empty_composition-c-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/empty_composition-cpp-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/empty_composition-cpp-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/empty_composition-cpp-run.stdout": "338ae8643ba3e40ec977a07d50e13b739c9deac7bb1b08b598a848d3f92bf045",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/empty_composition-cpp-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/empty_composition-python.stdout": "bcc2468e5a7a09608b8b1a2e0a056984088d66dd03917be28ef41c96c12baeb0",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/empty_composition-python.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/primitive_failures-c-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/primitive_failures-c-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/primitive_failures-c-run.stdout": "d61d5a70facff0cc93a2403a5cda7ff00c12d326786f966536f71195ce4c4b87",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/primitive_failures-c-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/primitive_failures-cpp-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/primitive_failures-cpp-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/primitive_failures-cpp-run.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/primitive_failures-cpp-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/primitive_failures-python.stdout": "388333ab6f3d4da0a451bca380b08d0d0b214137984217e6d051580f87d019a1",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/primitive_failures-python.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/transform_failures-c-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/transform_failures-c-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/transform_failures-c-run.stdout": "f5af062d1e9bee914e64ff931d3d363deefe4227f6ac14907b973165bc997319",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/transform_failures-c-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/transform_failures-cpp-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/transform_failures-cpp-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/transform_failures-cpp-run.stdout": "17feb916979e0fc6cef70474a8ff1dcf56b90ed3ee0f05f7049ed96c9048e6d4",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/transform_failures-cpp-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/transform_failures-python.stdout": "fc758c3ac1be5e6a97c53bb5cc7d9fd00e727b31e6631a66de4e01e26dcb2b27",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/transform_failures-python.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/bounds_failures-c-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/bounds_failures-c-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/bounds_failures-c-run.stdout": "f48e17a04823964fbbe756c7d83d6b76f80de72a14ff09f53b7ba6e9eb06469a",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/bounds_failures-c-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/bounds_failures-cpp-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/bounds_failures-cpp-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/bounds_failures-cpp-run.stdout": "79300e046c295fd3780ac823ca4e4d91e33a4f4ef24f4f1f91b6cb4173f4f79c",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/bounds_failures-cpp-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/bounds_failures-python.stdout": "2337d246a206b631af96870a69abb94b54603cd38817ca5ea23f515c85ed078c",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/bounds_failures-python.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/go-version.stdout": "ed4307d760c597256afdc696a61d47d13e832615d7741ead11c64966a440b376",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/go-version.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/go-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/go-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/go-run.stdout": "1227e65d054caf71b7a0e84b03ece5c7b8ec434df94d213cec1243be86254428",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/go-run.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/wasm.stdout": "70870ab9accd685edf7fc42949a7fa04f2536afa268ad1cf0bf230fbbd0a13fe",
+    "docs/evidence/2026-10-15-bounds-failures/bindings-v1/wasm.stderr": "cc8a1db0347923e48544169a0bbed3ba72bb66659a47e584fa084fb6db74b1f9",
+    "docs/evidence/2026-10-15-bounds-failures/downstream-v1/downstream-materialize-unit.stdout": "e2dcb58b0f3ebda10916264077515598894c65f6197b8b0db9f943097b1a5326",
+    "docs/evidence/2026-10-15-bounds-failures/downstream-v1/downstream-materialize-unit.stderr": "f55d9eb63255cea2e20fbf19ee21250369fa945ab10094199a83fa73afcc69e2",
+    "docs/evidence/2026-10-15-bounds-failures/downstream-v1/downstream-materialize.stdout": "df2d3a10f9509f5ccaae3a2dab71e7473826534343729feff920e02738f3a81d",
+    "docs/evidence/2026-10-15-bounds-failures/downstream-v1/downstream-materialize.stderr": "8a8d419f1c4f632eb8adc46ccdd96e3fa060d8e430c0d35da8b9dbdea506b62d",
+    "docs/evidence/2026-10-15-bounds-failures/downstream-v1/downstream-release-models.stdout": "8406edd5e23eb3cdf759be8db5367c4f92c9fd4accc461eb6de55c0f37dd8020",
+    "docs/evidence/2026-10-15-bounds-failures/downstream-v1/downstream-release-models.stderr": "3f69c9bfa73e6194a973735ef55d44c05638dcdc218d15e5df12a0b155923f61",
+    "docs/evidence/2026-10-15-bounds-failures/downstream-v1/downstream-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/evidence/2026-10-15-bounds-failures/downstream-v1/downstream-clippy.stderr": "4acd7caace831b148163258050db45d0fc0ccbfb9bd8817aded210674f8d9a9a"
+  },
+  "pending_native_sha256": {
+    "crates/hypercurve/src/bbox.rs": "c145ab30c68433690f8827b7de7cc9c30c1707a1cdb7793cb81e33b3dba0ae4c",
+    "crates/hypercurve/src/bezier.rs": "257dc8fb654fa86f7d2d47089bd5137f5a1f53d3336127e76baf4cf7d05b8840",
+    "crates/hypercurve/src/bezier_fit.rs": "cbba8129249d814c997629e7d8373a985b6bf9b77ab2774dff4afff1bed4d762",
+    "crates/hypercurve/src/bezier_region.rs": "6ea7d9bb3bd2fadc96cb8736b59fc66b5f576460eee83ee5fb306b43a227bb1e",
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/src/bezier_region/offset_spans.rs": "4c6ffb8e36b5dfd3d9d030c016d96af7964f9a9e56f1b9c1abbbf91553f29ee6",
+    "crates/hypercurve/src/bezier_region/point_location.rs": "2d915ac75cd5d7a61b3440fecf0f0ffae8c6c25687e5c4f382077f8de3908672",
+    "crates/hypercurve/src/bezier_region/tests.rs": "c78ab04298572d06d51eec08aa3201e392a6fb663a0b1a65d5ce81e5c06c6318",
+    "crates/hypercurve/src/classify.rs": "6997d26ebfe4c50d3abf7ed296cb9cc121ab70754421172e21693bde005e81df",
+    "crates/hypercurve/src/contour.rs": "a6ef94566c3c68d6311f7fc7bd47f55e129858cb4d381ec6a8acde157fe4141c",
+    "crates/hypercurve/src/curve.rs": "5e9e1457cd9c7f875f0c730ef8ea88ce2f78a8eab1cd93b8e59463f57327468d",
+    "crates/hypercurve/src/curve_intersection.rs": "2d5b2566186174ed2cfc53de0c276560bc647c6f9a39004ffedcdd90f91f78f4",
+    "crates/hypercurve/src/curve_region_boolean.rs": "5d0a87272791632d128731c4ed78971fdac5717b594f33bd8513389401606471",
+    "crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs": "385a1080d7972a08a5082bb6c47ad19e2cfcc1012b4f6c45bfd618796b848344",
+    "crates/hypercurve/src/curve_region_boolean/regularization.rs": "5a542169b7e0dfe99e520da867a907303485a56b03b13491af4970044e9ca866",
+    "crates/hypercurve/src/offset.rs": "b83ee4f648f9ae4b0bcfc5b52f2553eaaf87f1c57c67e340d9ab101053bcffda",
+    "crates/hypercurve/src/policy.rs": "abbadb4d1345eb2ccdf50df57337e991abb999e479067851c5bb2e75f9f34202",
+    "crates/hypercurve/src/rational_bezier_general.rs": "372d81688c5c6e061ad62cff408dd974c7f4bc771dccb19389823e6edd8886ef",
+    "crates/hypercurve/src/segment.rs": "d253abef3276d8b56a99ad9a7273227d3c823b6f01a7b01a0ce3959b32057213",
+    "crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs": "ef2d56e6e5dcec355eb776a8218fba2c797db5b14eda9c1e2dd5ec79224b4fd0",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b",
+    "crates/hyperdrc/README.md": "3af373486b7b51887db4cbfd17b50c7f01c2c64b018a342b3ac970484c0acd9d",
+    "crates/hyperdrc/src/checks/area_tolerance.rs": "d659ed532de0f81477afaa00df6521f4625bb7ddf4af3e08d158f8300cc00d5b",
+    "crates/hyperdrc/src/checks/differential.rs": "90e491f2578abdb07a7c922058d0b579c1cbb1f3ccea872ffcdb9deb373a6951",
+    "crates/hyperdrc/src/checks/layer.rs": "df442cd2614061fadcb0a5a8019410aa36afa9999a5ccf128d91e52cd1ef6f06",
+    "crates/hyperdrc/src/checks/mod.rs": "7f085ea070136481b6a1550f1589ddf15d4dfec657e68679059a05fc93f05ca1",
+    "crates/hyperdrc/src/geometry.rs": "18826a139f20f4fa047ecf83b864ad8311c26e0965835d8df0c42412fdd37fc2",
+    "crates/hyperdrc/src/geometry/README.md": "f8145f2c515a5b35b70815c7b68d8fc50e893f9d41072d0913d00b22133c2eb0",
+    "crates/hyperdrc/src/geometry/primitives.rs": "a753ce71223326c4b1d92467ec64ce2ad1a7528bd2c3822135a62e0990b13070",
+    "crates/hyperdrc/src/geometry/stroke.rs": "193422c60cd9a6e86efb7d8f61cfd9baae4e7ce130d136a881c1150d270e212f",
+    "crates/hyperdrc/src/kicad.rs": "598c62dfddbb7cbc8840b5a31b02ddcb408b4e35771ee33d03994084ccd16f59",
+    "crates/hyperdrc/src/kicad/README.md": "01e8aca6832bce80152306ad74cfb20fae6ef7258ed833ff1c6692e842c204a7",
+    "crates/hyperdrc/src/kicad/tracks.rs": "6ea5c63821f0f79b7f548bdaf613e9fdce273dc42be5d2597070f7195f2ba227",
+    "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+    "crates/hyperdrc/tests/native_linear_strokes.rs": "84f86db87c666e019b54bad7bff57cbbb290fe23960cc891966134cddd0a7b74"
+  },
+  "documentation_and_runner_inputs_sha256": {
+    "readme.md": "9060f09f8618060524a62333e3febaa80fcbe75e57c16e99700ea7fad671328a",
+    "bindings/README.md": "f78386d302ad1ffb9356e259f11ca2def22d71fb59f6591659f26e2956f2fc8f",
+    "bindings/js/WASM.md": "52a379c208d1520a9d848ab33b5127f84be152c3dc48eb82fb5cca4d9e3c700d",
+    "crates/csgrs-ffi/README.md": "1e14508d9ae78cb91f61626c89cf32da8cbe8e3a6c65dca508ab7dafc0c08dd5",
+    "scripts/test-wasm-bindings.sh": "27fde7ac40e5d9ae29496a6e4c953701f8f67c70d3d3640a77af26457917c720"
+  },
+  "ledger_before_sha256": "f492f0196dbd208ad9638147c4bfc12161ed17b70484a7d0f0e9fe1fb135a1f3",
+  "ledger_after_sha256": "4525fcccfa2578809c669373d5bd0c2ead1d881d719aa59c5d8f8a4b7e588095",
+  "only_current_work_changed_in_ledger": true,
+  "full_plan_complete": false
+}

@@ -1,0 +1,18 @@
+[
+  [
+    "bounds-regressions",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--test",
+      "bounds_failures",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]

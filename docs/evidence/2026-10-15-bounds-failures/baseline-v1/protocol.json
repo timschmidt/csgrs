@@ -1,0 +1,96 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/transform-failures/native-v2",
+  "preserved_prior_executables_sha256": {
+    "target/transform-failures/native-v2/release/deps/csgrs-d5e0741bbc5df635": "4208da57f691dae79a7509ba1bb0b1cad40289c517d0cbf703ccc6db1762eaaf",
+    "target/transform-failures/native-v2/release/deps/adversarial-c03dde69c05f1cf2": "134b0d687c09ef8ec2ed142da312cad7c0f6a4a133ac904cdeaddc416f150fef",
+    "target/transform-failures/native-v2/release/deps/adversarial_deep-5dea7b8952749c41": "9c6c755ba0e9d2e7bb9c41b7a11a491173e4359b3c5636743f16457b6dca3576",
+    "target/transform-failures/native-v2/release/deps/adversarial_extrusions-22c8c063f22c33de": "af35ef20928311c753a23497e0ab625714944c9a8d02ce182152a53303a7b778",
+    "target/transform-failures/native-v2/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "target/transform-failures/native-v2/release/deps/adversarial_stress-8c747993ca7dff64": "1b27024885a54a5199c5635efe9db3e6779154f59c9acac02b2ba84acb1d2647",
+    "target/transform-failures/native-v2/release/deps/competitive-8d824413442e1853": "410340c11994fde475408bee89d9c5ed0d59f827d2eadee66a8546647bb1b5ff",
+    "target/transform-failures/native-v2/release/deps/empty_composition-1b2f2ba6943338cd": "b46d340582c4850114656c3c7a1a61ecc5221e92158a2ab99fd644181d776cf6",
+    "target/transform-failures/native-v2/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "b77d5eddb2c6ea3b091fed0559ed5801ee4c1127385dc4742c291186c82f5015",
+    "target/transform-failures/native-v2/release/deps/geometry_context-d256044952b39c9d": "cc1ad3398742402862899d7c70aef136aa985434b16967e07d6aac6a50a9412b",
+    "target/transform-failures/native-v2/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "dac249b2aacda47a70869f22c53f8b78321c0711228bb4d26444881cb651efbc",
+    "target/transform-failures/native-v2/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "a824d61b7de80d4daf27a5bcba4501fcda352ef17c9592ffbb279199a5861e35",
+    "target/transform-failures/native-v2/release/deps/native_queries-32678419862dff6b": "2a5e79fef8ebfb4952cecb6ab7588bcff98b5227ac6593b7044664b847cb757e",
+    "target/transform-failures/native-v2/release/deps/primitive_failures-8e6539f143e56577": "bf4b0e22df2e3c6768714d789b649bead987c18ffdbfadcea51f6bd24f2127ce",
+    "target/transform-failures/native-v2/release/deps/readme-d31b115aba933918": "e9649c06810f4657de31bc888f7e1ff8287de09e1d82bdfecaf2ebe17e8b5360",
+    "target/transform-failures/native-v2/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "target/transform-failures/native-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "28ff69ed66c349d166652c0d7b7d649e5f511716fe096def9b426acfd4e38518",
+    "target/transform-failures/native-v2/release/deps/solid_cache-f1483884916afc0e": "60d941c9e964cd9a65fcdbfd71dcd2a0542fcfa2ae2d48a967b4746e8e02e559",
+    "target/transform-failures/native-v2/release/deps/transform_failures-45db55e7bcff3889": "31a3e06a7f7494ec39d9ede7cb26b0ccac4e08ba6fdbf894a4d23e18a522c1cb",
+    "target/transform-failures/native-v2/release/deps/wasm_certainty-d7100c8fa594776c": "03b434a70e4dbb954ed3b2eeb2c1bce20aa32c9568f9983c733cdd025a45be22",
+    "target/transform-failures/native-v2/release/deps/hypermesh-3f582b4ca1636641": "1094b4f2a2085b1844b874218d0a34e0797a7780a07ece7c6f36759b839d0a87",
+    "target/transform-failures/native-v2/release/deps/boolean-5f62d1118823ec97": "121fed8ade11b6de684a369fba5db057038cb475fdaec4db1664ca09e86c7128",
+    "target/transform-failures/native-v2/release/deps/competitive-6172fbc55a698b35": "368f3816552c743767b2f815f99160f0cacf29a4267a8bfa6bb0f15b9f3241fd",
+    "target/transform-failures/native-v2/release/deps/corpus_manifest-70e8b02b4630cdcf": "067c5b7209dcf3656080b4b4b7cbc000063aff2b6c3963c058cafa743a7ebb1b",
+    "target/transform-failures/native-v2/release/deps/intersection_corpus-fd36003a26964264": "3c5878443a3cef51b802852006381957796a1de65a117d651f3769f4290c4a04",
+    "target/transform-failures/native-v2/release/deps/predicate_policy-da601e01ee57d6f5": "738c296f873b39568db3c731f4b888a8e42a07399881fcdcb27ae88772be905e",
+    "target/transform-failures/native-v2/release/deps/readme-6edeb87a0e9ac66f": "95d4d8d1d3a5905bab4c825bf31042a73cac283881f5ca933a1438e008315143",
+    "target/transform-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f": "cb537752251b75ca2a17ab11a43f2b104148824935e59ab977f9fddee876dbd7"
+  },
+  "base_commit": "5428712371fc5bf267e2d734f3353a3aee7faa3f",
+  "runner_sha256": "1cec18ad8b601382cd3b955d5599449aeb5f5d4e10cbebc5e7d65d63125fda71",
+  "phase": "baseline-v1",
+  "commands": [
+    [
+      "bounds-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--test",
+        "bounds_failures",
+        "--",
+        "--test-threads=1"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/bounds-failures/baseline-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "Hypermesh indexed bounds and retained position facts",
+    "CSGRS optional bounds and positioning",
+    "implicit TPMS consumers",
+    "scalar and language adapters"
+  ],
+  "domain": "Valid indexed point sets, open or closed meshes, and native curve regions. Empty bounds are absent; invalid indices and undecided predicates remain typed failures. Centering/floating and TPMS constructions compose on canonical empty after validating their parameters. TPMS uses strict predicates and unchanged valid sample resolutions.",
+  "consumers": [
+    "SolidExt",
+    "scalar adapters",
+    "C ABI",
+    "C++",
+    "Python",
+    "Go",
+    "WASM",
+    "TPMS",
+    "blueprint parts"
+  ],
+  "missing_acceptance_test": "tests/bounds_failures.rs",
+  "semantic_oracle": "Absence differs from a point at the origin; typed error payloads; index mutation does not bypass validation; independently derived coordinate extrema and placement; canonical empty composition.",
+  "wall_limit_seconds_per_command": 1800,
+  "limitations": "External wall containment only; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: committed fallible transforms, native projective finiteness repair and native/downstream/binding qualification; overall goal remains active."
+}

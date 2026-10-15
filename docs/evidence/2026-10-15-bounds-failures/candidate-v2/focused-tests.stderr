@@ -1,0 +1,6 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 24.93s
+     Running unittests src/lib.rs (target/bounds-failures/candidate-v2/release/deps/csgrs-d5e0741bbc5df635)
+     Running tests/bounds_failures.rs (target/bounds-failures/candidate-v2/release/deps/bounds_failures-aecf08036656e9a3)
+     Running tests/geometry_context.rs (target/bounds-failures/candidate-v2/release/deps/geometry_context-d256044952b39c9d)
+     Running tests/sdf_tpms_diagnostics.rs (target/bounds-failures/candidate-v2/release/deps/sdf_tpms_diagnostics-682919254ae69ba1)
