@@ -1,0 +1,7 @@
+
+running 2 tests
+test external_obj_vrml_and_gltf_package_models_resolve_with_digest_and_scene_identity ... ok
+test failed_package_model_transform_is_an_explicit_omission_with_recovery ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.23s
+

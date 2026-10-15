@@ -2984,7 +2984,12 @@ pub fn bounding_box(input: &CurveRegion2) -> Aabb {
 }
 
 /// Returns the same native solid translation helper used by the 3D grammar.
-pub fn translated_solid(mesh: &TriangleMesh, x: Real, y: Real, z: Real) -> TriangleMesh {
+pub fn translated_solid(
+    mesh: &TriangleMesh,
+    x: Real,
+    y: Real,
+    z: Real,
+) -> Result<TriangleMesh, ValidationError> {
     solid::SolidExt::translated(mesh, x, y, z)
 }
 

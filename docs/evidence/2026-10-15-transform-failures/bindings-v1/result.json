@@ -1,0 +1,158 @@
+{
+  "commands": [
+    {
+      "name": "ffi-build",
+      "exit_code": 0,
+      "seconds": 20.452759348787367,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "54d29a78c90662a48e44bb37a141ffe91088faa467562a34df08ba3b6eb5b3f4"
+    },
+    {
+      "name": "empty_composition-c-build",
+      "exit_code": 0,
+      "seconds": 1.8237005481496453,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "empty_composition-c-run",
+      "exit_code": 0,
+      "seconds": 1.6162966946139932,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "9129339c006d2d6c8870eaeade18c45c9302dabd88de9be2a1d9bdf24ba6f286",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "empty_composition-cpp-build",
+      "exit_code": 0,
+      "seconds": 2.004021026659757,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "empty_composition-cpp-run",
+      "exit_code": 0,
+      "seconds": 1.6815488659776747,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "338ae8643ba3e40ec977a07d50e13b739c9deac7bb1b08b598a848d3f92bf045",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "empty_composition-python",
+      "exit_code": 0,
+      "seconds": 1.7052408531308174,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "bcc2468e5a7a09608b8b1a2e0a056984088d66dd03917be28ef41c96c12baeb0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "primitive_failures-c-build",
+      "exit_code": 0,
+      "seconds": 1.6981156910769641,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "primitive_failures-c-run",
+      "exit_code": 0,
+      "seconds": 1.6488652941770852,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "d61d5a70facff0cc93a2403a5cda7ff00c12d326786f966536f71195ce4c4b87",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "primitive_failures-cpp-build",
+      "exit_code": 0,
+      "seconds": 1.907710884232074,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "primitive_failures-cpp-run",
+      "exit_code": 0,
+      "seconds": 1.642671458888799,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "primitive_failures-python",
+      "exit_code": 0,
+      "seconds": 1.6811894210986793,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "388333ab6f3d4da0a451bca380b08d0d0b214137984217e6d051580f87d019a1",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "transform_failures-c-build",
+      "exit_code": 0,
+      "seconds": 1.7727173902094364,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "transform_failures-c-run",
+      "exit_code": 0,
+      "seconds": 1.6461741686798632,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "f5af062d1e9bee914e64ff931d3d363deefe4227f6ac14907b973165bc997319",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "transform_failures-cpp-build",
+      "exit_code": 0,
+      "seconds": 2.0141933001577854,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "transform_failures-cpp-run",
+      "exit_code": 0,
+      "seconds": 1.6190658160485327,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "17feb916979e0fc6cef70474a8ff1dcf56b90ed3ee0f05f7049ed96c9048e6d4",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "transform_failures-python",
+      "exit_code": 0,
+      "seconds": 1.7008250658400357,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "fc758c3ac1be5e6a97c53bb5cc7d9fd00e727b31e6631a66de4e01e26dcb2b27",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "wasm",
+      "exit_code": 0,
+      "seconds": 24.906006946228445,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "70870ab9accd685edf7fc42949a7fa04f2536afa268ad1cf0bf230fbbd0a13fe",
+      "stderr_sha256": "e97bef32bdb5105bc98b636306a18afcd4646b0b0194c6d7046027fd7616e8ca"
+    }
+  ],
+  "passed": true
+}

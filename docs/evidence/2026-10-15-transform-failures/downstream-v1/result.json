@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "name": "downstream-release-models",
+      "exit_code": 0,
+      "seconds": 140.40066093113273,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/transform-failures/downstream-v1/release/deps/release_workflow-8839b395841dd475": "b68c84e89a50582acbe34dafff7e82ea94c8a192626fa9992e7084404caab342"
+      },
+      "stdout_sha256": "8406edd5e23eb3cdf759be8db5367c4f92c9fd4accc461eb6de55c0f37dd8020",
+      "stderr_sha256": "2048cf50b0f4474c97757a970c12323788073e2aaab78179c7c5066457b5fb29"
+    },
+    {
+      "name": "downstream-clippy",
+      "exit_code": 0,
+      "seconds": 19.715677788946778,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "696e6d2c0cf9675b486f7931a91b34fc280a01691f6599eb66cba9f9cd90b70a"
+    }
+  ],
+  "passed": true
+}

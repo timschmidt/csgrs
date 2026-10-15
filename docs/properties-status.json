@@ -5651,6 +5651,247 @@
         "retained_original": "docs/evidence/2026-10-15-primitive-failures/closure-v1.json",
         "retained_original_sha256": "79fa7c2db23d9edefb4040b9d72ca1a784ee8109e910bec708bfb5a09926e317"
       }
+    },
+    "transform_failure_visibility": {
+      "updated_on": "2026-10-15",
+      "status": "Transform failure migration and projective finiteness repair implemented and locally qualified in the recorded scope.",
+      "properties": [
+        "P4",
+        "P6",
+        "P8",
+        "P18",
+        "P20",
+        "P25",
+        "P30",
+        "P35",
+        "P37"
+      ],
+      "owners": [
+        "Hypermesh indexed projective transformation",
+        "CSGRS modeling transforms",
+        "scalar and language adapters",
+        "HyperCircuit package-model materialization"
+      ],
+      "domain": "Indexed open or closed meshes, point sets, and canonical empty geometry. Modeling transforms require invertibility and nonzero projective scale of constant sign on each triangle. Distinct finite components may have opposite signs. Numerical certainty is operation-local; topology and inherited provenance are separate.",
+      "migration": "solid::transform/rotate/scale/mirror, SolidExt::transformed/translated, and curve::translated_solid now return Result. Existing try_ entry points retain typed native Mesh errors. C UNBOUNDED=9 is additive; C++/Python retain status and WASM GeometryError.code distinguishes unbounded/invalid/undecided failures. Failed HyperCircuit placement produces a typed omission without publishing a model or resolution evidence.",
+      "semantic_evidence": [
+        "Singular transforms and invalid planes cannot become successful empty geometry.",
+        "Invalid triangle indices fail even after a previous successful transform; shared kernel checks serve modeling and adapters.",
+        "An exact rational triangle with finite vertices and an edge crossing x=0 rejects the invertible map (x,y,z)->(1/x,y/x,z/x).",
+        "Separate positive/negative-scale components retain independently derived exact coordinates and orientation.",
+        "Exact reflected/scaled/translated/rotated cubes preserve positive signed volume 24, required topology, empty-union composition, and subtraction to canonical empty.",
+        "Strict/approximate/strict failure sequences retain their category, and subsequent valid operations recover."
+      ],
+      "baseline_and_failed_trials": "All six baseline tests failed on 8850192f2 plus the original in-scope native changes. Candidate v1 failed compilation during call-site migration; candidate v2 passed 75 focused tests and strict minimal all-target Clippy. Native v1 exposed an unmigrated curve alias and an unused WASM import; native v2 qualifies their correction. All failed trials, sources, patches and observed binaries are retained.",
+      "test_totals": {
+        "native-v2/fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/all-feature-tests": {
+          "passed": 191,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/hypermesh-tests": {
+          "passed": 235,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/ffi-tests": {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-v2/doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/ffi-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/empty_composition-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/primitive_failures-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-c-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-c-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-cpp-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-cpp-run": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/transform_failures-python": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "bindings-v1/wasm": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "downstream-v1/downstream-release-models": {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 7
+        },
+        "downstream-v1/downstream-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "bindings": "Actual C f64, C++ and Python consumers execute empty composition, primitive failures and transform failures; actual generated Node WASM and strict TypeScript checks pass. Opaque-real FFI tests exercise undecided transform status without publishing a handle.",
+      "resources": "Index validation adds O(triangles) traversal; non-affine transforms retain O(vertices) projective signs and scan triangles for sign changes. No internal total-work, heap-byte or cancellation bound is claimed. Test commands use 1800-second external wall containment. No latency or allocation improvement is claimed.",
+      "limitations": [
+        "Eight existing ignored tests remain unexecuted: one CSGRS rendering test and seven Hypermesh external-fixture/manual scale or memory tests.",
+        "This is not the complete workflow matrix, sanitizer admission, clean external release/MSRV validation, or an optimization comparison.",
+        "Go and the separate native JS loader remain unqualified.",
+        "Bounds, positioning, distributions, projection/slicing and other legacy convenience failures remain open, as do end-to-end provenance, resource limits, strict workflow completion and prior scalar/native admission gaps."
+      ],
+      "evidence": "docs/evidence/2026-10-15-transform-failures/closure-v1.json",
+      "implementation_commit": "fc99c3fb6",
+      "plan_complete": false
     }
   },
   "status_meanings": {

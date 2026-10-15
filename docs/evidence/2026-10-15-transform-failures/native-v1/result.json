@@ -1,0 +1,32 @@
+{
+  "commands": [
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.609466284979135,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "fuzz-fmt",
+      "exit_code": 0,
+      "seconds": 1.8203375791199505,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "all-feature-tests",
+      "exit_code": 101,
+      "seconds": 14.971201070118695,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "18450949d6b91c46d3556792f1b2feca128b3f4fbe86fe25c1076989ad930876"
+    }
+  ],
+  "passed": false
+}

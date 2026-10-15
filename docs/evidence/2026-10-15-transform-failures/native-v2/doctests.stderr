@@ -1,0 +1,23 @@
+   Compiling bevy_reflect v0.18.1
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling bevy_ecs v0.18.1
+   Compiling bevy_math v0.18.1
+   Compiling bevy_app v0.18.1
+   Compiling bevy_time v0.18.1
+   Compiling bevy_diagnostic v0.18.1
+   Compiling bevy_log v0.18.1
+   Compiling bevy_asset v0.18.1
+   Compiling bevy_transform v0.18.1
+   Compiling toml_datetime v0.6.11
+   Compiling serde_spanned v0.6.9
+   Compiling toml_edit v0.22.27
+   Compiling bevy_mesh v0.18.1
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling tinytemplate v1.2.1
+   Compiling is-terminal v0.4.17
+   Compiling criterion v0.5.1
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling toml v0.8.23
+    Finished `release` profile [optimized] target(s) in 1m 28s
+   Doc-tests csgrs
+   Doc-tests hypermesh

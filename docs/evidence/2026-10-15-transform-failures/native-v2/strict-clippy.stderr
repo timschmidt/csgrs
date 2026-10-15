@@ -1,0 +1,39 @@
+    Checking indexmap v2.14.0
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking bevy_reflect v0.18.1
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking clap_lex v1.1.1
+    Checking anstyle v1.0.14
+    Checking plotters-backend v0.3.7
+    Checking plotters-svg v0.3.7
+    Checking clap_builder v4.6.7
+    Checking itertools v0.10.5
+    Checking bevy_ecs v0.18.1
+    Checking bevy_math v0.18.1
+    Checking toml_datetime v0.6.11
+    Checking serde_spanned v0.6.9
+    Checking cast v0.3.0
+    Checking winnow v0.7.15
+    Checking toml_write v0.1.2
+    Checking same-file v1.0.6
+    Checking walkdir v2.5.0
+    Checking toml_edit v0.22.27
+    Checking criterion-plot v0.5.0
+    Checking clap v4.6.7
+    Checking plotters v0.3.7
+    Checking tinytemplate v1.2.1
+    Checking is-terminal v0.4.17
+    Checking anes v0.1.6
+    Checking oorandom v11.1.5
+    Checking criterion v0.5.1
+    Checking bevy_app v0.18.1
+    Checking toml v0.8.23
+    Checking bevy_time v0.18.1
+    Checking bevy_log v0.18.1
+    Checking bevy_transform v0.18.1
+    Checking bevy_diagnostic v0.18.1
+    Checking bevy_asset v0.18.1
+    Checking bevy_mesh v0.18.1
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Checking csgrs-ffi v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/csgrs-ffi)
+    Finished `release` profile [optimized] target(s) in 18.24s
