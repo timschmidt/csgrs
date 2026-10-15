@@ -17,10 +17,10 @@ mod geometry;
 mod persistence;
 mod topology;
 
-pub mod boolean;
-pub mod builder;
+mod boolean_kernel;
+mod construction;
 #[cfg(feature = "tessellation")]
-pub mod tessellation;
+mod meshing;
 
 /// Predicate policy used by HyperBREP's strictly certified source-topology
 /// operations.
@@ -36,12 +36,13 @@ pub const STRICT_PREDICATES: hyperlimit::PredicatePolicy = hyperlimit::Predicate
 pub(crate) const TEST_ORACLE_PREDICATES: hyperlimit::PredicatePolicy =
     hyperlimit::PredicatePolicy::APPROXIMATE_512;
 
-pub use boolean::{
-    BooleanError, BooleanOperation, BooleanResult, ClassifiedFace, FacePairIntersection,
-    FacePairRelation, FacePairTrim, FaceSelection, FaceSelectionAction, SolidIntersectionGraph,
-    partition_contained_face_by_plane_region,
+pub(crate) use boolean_kernel::{
+    ArenaBooleanResult, ArenaClassifiedFace, ArenaFacePairIntersection, ArenaFaceSelection,
+    ArenaSolidIntersectionGraph,
 };
-pub use builder::{Axis, ConstructionError, LoftSection, RationalBezierSweepFrame, TensorPatch};
+pub use construction::{
+    Axis, ConstructionError, LoftSection, RationalBezierSweepFrame, TensorPatch,
+};
 pub use error::{GeometryError, GeometryResult};
 pub use geometry::{
     Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceIntersection,
@@ -53,12 +54,34 @@ pub use geometry::{
     SurfacePcurveCorrespondence, SurfaceSurfaceIntersection,
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
-pub use persistence::{PersistenceError, RawModel};
+pub(crate) use persistence::ImportedModel;
+pub use persistence::PersistenceError;
 pub use topology::{
-    BoundaryBridgeCurveSplit, BoundaryBridgeFaceSplit, BuildError, ClosedSurfaceCurveFaceSplit,
-    Curve3Id, CurveFaceSplit, Direction, Edge, EdgeId, EdgeSplit, EdgeUse, EdgeUseId, Edit,
-    EditError, Endpoint, EntityKind, Face, FaceId, FacePartition, FaceSplit, FaceTracePartition,
-    Model, ModelBuilder, ModelCounts, Orientation, ParameterCorrespondence, PcurveId, QueryError,
-    Shell, ShellId, Solid, SolidId, SolidPointLocation, SurfaceCurveFaceSplit, SurfaceId,
-    TopologyEditError, ValidationReport, Vertex, VertexId, Wire, WireId,
+    BuildError, Direction, EditError, Endpoint, EntityKind, GeometryReferenceError, ModelCounts,
+    Orientation, ParameterCorrespondence, QueryError, SolidPointLocation, TopologyEditError,
+    ValidationReport,
+};
+// Arena positions are diagnostic labels only; public operations take bound references.
+pub(crate) use topology::{
+    ArenaBoundaryBridgeCurveSplit, ArenaBoundaryBridgeFaceSplit, ArenaClosedSurfaceCurveFaceSplit,
+    ArenaCurveFaceSplit, ArenaEdgeSplit, ArenaEdit, ArenaFacePartition, ArenaFaceSplit,
+    ArenaFaceTracePartition, ArenaModel, ArenaModelBuilder, ArenaSurfaceCurveFaceSplit, Edge,
+    EdgeUse, Face, Solid,
+};
+pub use topology::{
+    Curve3Id, EdgeId, EdgeUseId, FaceId, PcurveId, ShellId, SolidId, SurfaceId, VertexId, WireId,
+};
+
+mod ownership;
+pub use ownership::boolean::{
+    ClassifiedFaceRef, FacePairIntersection, FacePairIntersectionRef, FaceSelection,
+    PartitionedModel, SolidIntersectionGraph, partition_contained_face_by_plane_region,
+};
+#[cfg(feature = "tessellation")]
+pub use ownership::tessellation;
+pub use ownership::*;
+pub use ownership::{boolean, builder};
+
+pub use boolean_kernel::{
+    BooleanError, BooleanOperation, FacePairRelation, FacePairTrim, FaceSelectionAction,
 };

@@ -2,7 +2,7 @@
 
 use crate::topology::*;
 
-impl ModelBuilder {
+impl ArenaModelBuilder {
     pub(in crate::topology) fn certified_cone_frustum_shell(
         &self,
         shell: ShellId,

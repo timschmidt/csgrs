@@ -4,7 +4,7 @@ use crate::topology::*;
 
 /// Stable identifiers produced by one exact edge split.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct EdgeSplit {
+pub struct ArenaEdgeSplit {
     /// Newly inserted vertex at the split point.
     pub vertex: VertexId,
     /// First canonical edge half; this retains the source edge ID.
@@ -17,7 +17,7 @@ pub struct EdgeSplit {
 
 /// Stable identifiers produced by one exact planar face split.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct FaceSplit {
+pub struct ArenaFaceSplit {
     /// Newly appended chord edge shared by the two resulting faces.
     pub edge: EdgeId,
     /// Oppositely directed chord uses, in first-face then second-face order.
@@ -34,13 +34,13 @@ pub struct FaceSplit {
 
 /// Stable identifiers produced by one exact curve-driven planar face split.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct CurveFaceSplit {
+pub struct ArenaCurveFaceSplit {
     /// Optional canonical edge split that attached the curve start.
-    pub start_edge: Option<EdgeSplit>,
+    pub start_edge: Option<ArenaEdgeSplit>,
     /// Optional canonical edge split that attached the curve end.
-    pub end_edge: Option<EdgeSplit>,
+    pub end_edge: Option<ArenaEdgeSplit>,
     /// The resulting identity-stitched face split.
-    pub face: FaceSplit,
+    pub face: ArenaFaceSplit,
 }
 
 /// Identifiers produced by an exact boundary-component bridge cycle.
@@ -50,7 +50,7 @@ pub struct CurveFaceSplit {
 /// fragment. The crossed boundary wires form a cycle and are compacted into
 /// the two descendant outer wires.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct BoundaryBridgeFaceSplit {
+pub struct ArenaBoundaryBridgeFaceSplit {
     /// Newly appended bridge edges in canonical trace order.
     pub edges: Vec<EdgeId>,
     /// Oppositely directed uses of each bridge, in first-face then second-face
@@ -73,31 +73,31 @@ pub struct BoundaryBridgeFaceSplit {
 
 /// Per-trace evidence for one member of a boundary-component bridge cycle.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct BoundaryBridgeCurveSplit {
+pub struct ArenaBoundaryBridgeCurveSplit {
     /// Optional canonical edge split that attached the curve start.
-    pub start_edge: Option<EdgeSplit>,
+    pub start_edge: Option<ArenaEdgeSplit>,
     /// Optional canonical edge split that attached the curve end.
-    pub end_edge: Option<EdgeSplit>,
-    /// Index of this trace's bridge in [`BoundaryBridgeFaceSplit::edges`].
+    pub end_edge: Option<ArenaEdgeSplit>,
+    /// Index of this trace's bridge in [`ArenaBoundaryBridgeFaceSplit::edges`].
     pub bridge_index: usize,
     /// Shared bridge-cycle topology result.
-    pub face: BoundaryBridgeFaceSplit,
+    pub face: ArenaBoundaryBridgeFaceSplit,
 }
 
 /// Stable result of one exact retained surface-curve split.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum SurfaceCurveFaceSplit {
+pub enum ArenaSurfaceCurveFaceSplit {
     /// An open trace attached to the source face's outer boundary.
-    Open(CurveFaceSplit),
+    Open(ArenaCurveFaceSplit),
     /// One member of a bridge cycle joining crossed boundary components.
-    Bridge(BoundaryBridgeCurveSplit),
+    Bridge(ArenaBoundaryBridgeCurveSplit),
     /// A closed trace wholly inside the source face's material region.
-    Closed(ClosedSurfaceCurveFaceSplit),
+    Closed(ArenaClosedSurfaceCurveFaceSplit),
 }
 
-impl SurfaceCurveFaceSplit {
+impl ArenaSurfaceCurveFaceSplit {
     /// Returns the outer-boundary chord result when this trace is open.
-    pub const fn open(&self) -> Option<&CurveFaceSplit> {
+    pub const fn open(&self) -> Option<&ArenaCurveFaceSplit> {
         match self {
             Self::Open(split) => Some(split),
             Self::Bridge(_) | Self::Closed(_) => None,
@@ -105,7 +105,7 @@ impl SurfaceCurveFaceSplit {
     }
 
     /// Returns boundary-component bridge evidence for this trace.
-    pub const fn bridge(&self) -> Option<&BoundaryBridgeCurveSplit> {
+    pub const fn bridge(&self) -> Option<&ArenaBoundaryBridgeCurveSplit> {
         match self {
             Self::Bridge(split) => Some(split),
             Self::Open(_) | Self::Closed(_) => None,
@@ -113,7 +113,7 @@ impl SurfaceCurveFaceSplit {
     }
 
     /// Returns the outer/inner-wire result when this trace is closed.
-    pub const fn closed(&self) -> Option<&ClosedSurfaceCurveFaceSplit> {
+    pub const fn closed(&self) -> Option<&ArenaClosedSurfaceCurveFaceSplit> {
         match self {
             Self::Open(_) | Self::Bridge(_) => None,
             Self::Closed(split) => Some(split),
@@ -141,7 +141,7 @@ impl SurfaceCurveFaceSplit {
 
 /// Stable identifiers produced by one closed surface curve.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ClosedSurfaceCurveFaceSplit {
+pub struct ArenaClosedSurfaceCurveFaceSplit {
     /// Newly inserted vertex at the retained curve's public-domain seam.
     pub seam_vertex: VertexId,
     /// Newly inserted vertex at the exact midpoint used to avoid a loop edge.
@@ -164,22 +164,24 @@ pub struct ClosedSurfaceCurveFaceSplit {
 
 /// Stable result of deterministic exact multi-trace face partitioning.
 #[derive(Clone, Debug)]
-pub struct FacePartition {
+pub struct ArenaFacePartition {
     /// Original face ID; this remains the first descendant.
     pub source_face: FaceId,
     /// Final descendant faces in deterministic split order.
     pub faces: Vec<FaceId>,
     /// Per-trace arrangement and edit records in canonical processing order.
-    pub traces: Vec<FaceTracePartition>,
+    pub traces: Vec<ArenaFaceTracePartition>,
 }
 
 /// Exact arrangement segments and topology edits for one source trace.
 #[derive(Clone, Debug)]
-pub struct FaceTracePartition {
+pub struct ArenaFaceTracePartition {
     /// Index in the caller's trace slice.
     pub source_index: usize,
     /// Canonically directed trace segments after exact crossing subdivision.
     pub segments: Vec<Curve3>,
     /// Identity-stitched face split corresponding to every segment.
-    pub splits: Vec<SurfaceCurveFaceSplit>,
+    pub splits: Vec<ArenaSurfaceCurveFaceSplit>,
+    /// Input and output revision for each retained split step.
+    pub(crate) snapshots: Vec<(ArenaModel, ArenaModel)>,
 }

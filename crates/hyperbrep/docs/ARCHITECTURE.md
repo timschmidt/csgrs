@@ -38,6 +38,8 @@ there is no parallel legacy model API.
 
 | Module | Responsibility |
 | --- | --- |
+| `ownership/` | Canonical public model references, scoped construction keys, owned operation results and transactions |
+| `construction.rs`, `boolean_kernel.rs`, `meshing.rs` | Private constructor, Boolean and derived-output algorithms |
 | `context.rs` | Strict curve-policy scope at fallible public operation boundaries, including calls nested inside provisional or display-preview scopes |
 | `topology/ids.rs`, `records.rs`, `correspondence.rs` | Typed identifiers, immutable topology records and exact parameter relations |
 | `topology/model.rs`, `builder.rs`, `error.rs` | Arena access, adjacency, staged construction/publication and typed failures |
@@ -46,8 +48,8 @@ there is no parallel legacy model API.
 | `topology/query.rs`, `measure.rs`, `transform.rs` | Classification, exact measurements and immutable transforms |
 | `topology/helpers.rs`, `tests.rs` | Shared exact support routines and topology regressions |
 
-This split preserves the existing algorithms and admitted families. Scoped
-model identity, general curved-shell validation and retained algebraic
+This split preserves the existing algorithms and admitted families. Shared
+operation budgets, general curved-shell validation and retained algebraic
 parameters remain tracked in the
 [implementation ledger](IMPLEMENTATION_STATUS.json).
 
@@ -65,6 +67,15 @@ An `Edge` owns one canonical spatial curve and exact parameter domain. Every
 incident `EdgeUse` owns its direction, face-local Hypercurve pcurve, and exact
 `ParameterCorrespondence`. Adjacency and ownership indexes are built once and
 retained for O(1) lookup.
+
+The public `VertexRef`, `EdgeRef`, `FaceRef`, `SolidRef` and corresponding
+reference types borrow one immutable revision. Traversal preserves that owner;
+arena positions alone cannot resolve entities. Builder keys resolve only in
+their construction scope and its published revision. Model clones share
+identity; transforms, committed edits and decoded archives create new
+revisions. Owned operation results retain the revisions needed by their
+borrowed detail views, including intermediate multi-trace split steps. See
+[ADR 0002](architecture/0002-model-ownership-and-validity.md).
 
 `ModelBuilder` is the publication boundary. Its noun-style methods stage
 records, while `finish` proves global ownership, closure, image agreement,
@@ -87,13 +98,13 @@ trees rather than inheriting Serde JSON's generic recursion ceiling, and wraps
 deserialization in a dynamically growing stack adapter before reconstruction;
 geometry and topology validation remain the trust boundary.
 
-`Model::split_edge` is a topology-changing exact edit. It splits every
+`EdgeRef::split` is a topology-changing exact edit. It splits every
 incident pcurve, updates forward and reversed wire traversal, and republishes
 only after complete validation. Affine correspondences are rederived from the
 new domains; angular correspondences invert through Hypercurve's certified
 rational-conic parameter solver.
 
-`Model::split_face` is the planar region counterpart. Two nonadjacent
+`FaceRef::split` is the planar region counterpart. Two nonadjacent
 outer-boundary vertices define one exact line chord. The chord is authored once
 as a canonical edge with opposite face-local uses; the source face/wire IDs are
 retained for one result, holes are reassigned by certified classification, and
@@ -606,7 +617,7 @@ For tensor carriers, `Surface::iso_curve` derives the complete exact
 homogeneous row or column at any represented constant parameter. The topology
 validator accepts an edge only when its full carrier or represented subcurve is
 projectively identical to that derived iso-curve. This lets
-`Model::split_face_by_surface_curve` attach an intersection to opposite
+`FaceRef::split_by_surface_curve` attach an intersection to opposite
 boundary edges and publish two identity-sharing rational Bézier or NURBS faces
 without downgrading validation to endpoint sampling. Complete
 non-isoparametric rational graph sections on translation tensors linear in either axis use
@@ -628,7 +639,7 @@ middle-control forgery. Factorized and sign-definite boundary components use
 native tensor iso-curves, so their existing complete-control proof remains the
 authoritative validator.
 
-`Model::split_face_by_surface_curves` accepts retained intersection objects
+`FaceRef::split_by_surface_curves` accepts retained intersection objects
 directly, uses an explicit operand selector for their first or second pcurve,
 canonicalizes each unordered spatial endpoint pair, and locates every
 successive fragment on exactly one current descendant. Before editing, every

@@ -10,9 +10,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         line(4, 3, 0, 3)?,
         line(0, 3, 0, 0)?,
     ])?;
-    let (model, face) =
+    let sheets =
         builder::planar_face(&boundary, &[], Point3::origin(), Vector3::x(), Vector3::y())?;
-    let area = model.face_area(face)?;
+    let model = sheets.model();
+    let area = sheets.faces().next().expect("one planar face").area()?;
     println!("edges: {}, exact area: {area}", model.counts().edges);
     assert_eq!(area, Real::from(12));
     Ok(())

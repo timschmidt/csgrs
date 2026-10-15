@@ -2,7 +2,7 @@
 
 use crate::topology::*;
 
-impl ModelBuilder {
+impl ArenaModelBuilder {
     pub(in crate::topology) fn certified_cylinder_side_faces(
         &self,
         _shell: ShellId,

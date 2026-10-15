@@ -2,7 +2,15 @@
 
 use crate::topology::*;
 
-impl Model {
+impl ArenaModel {
+    pub(crate) fn same_snapshot(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.data, &other.data)
+    }
+
+    pub(crate) fn snapshot_address(&self) -> usize {
+        Arc::as_ptr(&self.data) as usize
+    }
+
     /// Returns record counts without scanning the model.
     pub fn counts(&self) -> ModelCounts {
         ModelCounts {
@@ -20,14 +28,14 @@ impl Model {
     }
 
     /// Starts a transaction over an immutable shared snapshot.
-    pub fn edit(&self) -> Edit {
-        Edit {
+    pub fn edit(&self) -> ArenaEdit {
+        ArenaEdit {
             staged: self.clone(),
         }
     }
 
     pub(in crate::topology) fn revalidated(&self) -> Result<Self, ValidationReport> {
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         self.append_to_builder(&mut builder)
             .map_err(single_validation_error)?;
         builder.finish()
@@ -35,7 +43,7 @@ impl Model {
 
     pub(crate) fn append_to_builder(
         &self,
-        builder: &mut ModelBuilder,
+        builder: &mut ArenaModelBuilder,
     ) -> Result<Vec<SolidId>, BuildError> {
         let vertices = self
             .data

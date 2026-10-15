@@ -2,14 +2,14 @@
 
 use crate::topology::*;
 
-impl Model {
+impl ArenaModel {
     pub(in crate::topology) fn attach_surface_curve_split_endpoint(
         &self,
         face_id: FaceId,
         endpoint: Endpoint,
         point: &Point3,
         contacts: &[SurfaceIntersectionBoundaryContact],
-    ) -> Result<(Self, VertexId, Option<EdgeSplit>), TopologyEditError> {
+    ) -> Result<(Self, VertexId, Option<ArenaEdgeSplit>), TopologyEditError> {
         match self.locate_surface_curve_split_endpoint(face_id, endpoint, point, contacts)? {
             FaceSplitEndpointLocation::Vertex(vertex) => Ok((self.clone(), vertex, None)),
             FaceSplitEndpointLocation::Edge {

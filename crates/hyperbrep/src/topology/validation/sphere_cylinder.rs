@@ -2,7 +2,7 @@
 
 use crate::topology::*;
 
-impl ModelBuilder {
+impl ArenaModelBuilder {
     pub(in crate::topology) fn certified_sphere_cylinder_capped_shell(
         &self,
         shell: ShellId,

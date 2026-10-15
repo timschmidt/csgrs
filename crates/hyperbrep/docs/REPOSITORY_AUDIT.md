@@ -134,10 +134,10 @@ this is not an empty-crate implementation task.
 | --- | --- | --- |
 | [geometry.rs](../src/geometry.rs) | Curves, surfaces, derivatives, bounds, parameter location, analytic and selected spline intersections | Ordinary edge parameters and vertex coordinates require materialized `Real` values; generic intersections are incomplete |
 | [topology](../src/topology/mod.rs), `model.rs` at the audited baseline | Immutable arenas, adjacency, validation, classification, measurements, transactions and splitting | Solid publication depends on recognized shell families; general curved-shell validity is missing |
-| [builder.rs](../src/builder.rs) | Primitives, extrusion, revolution, supported sweeps/lofts, spline patches | Many exact but deliberately restricted construction domains |
-| [boolean.rs](../src/boolean.rs) | Specialized Booleans, intersection graph, face partition/classification/stitching | Curved coincidence, retained endpoints, general face partitioning and output validation limit closure |
+| [construction.rs](../src/construction.rs), `builder.rs` at the audited baseline | Primitives, extrusion, revolution, supported sweeps/lofts, spline patches | Many exact but deliberately restricted construction domains |
+| [boolean_kernel.rs](../src/boolean_kernel.rs), `boolean.rs` at the audited baseline | Specialized Booleans, intersection graph, face partition/classification/stitching | Curved coincidence, retained endpoints, general face partitioning and output validation limit closure |
 | [persistence.rs](../src/persistence.rs) | Version 8 JSON and untrusted replay through validation | No general retained intersection/proof graph format or comprehensive ingestion budget |
-| [tessellation.rs](../src/tessellation.rs) | Exact planar triangulation and explicit chordal approximation | Exact sample incidence does not certify interior approximation error or whole-body watertightness |
+| [meshing.rs](../src/meshing.rs), `tessellation.rs` at the audited baseline | Exact planar triangulation and explicit chordal approximation | Exact sample incidence does not certify interior approximation error or whole-body watertightness |
 | [error.rs](../src/error.rs) and [lib.rs](../src/lib.rs) | Public error/type boundary and strict policy | Error families and resource diagnostics need a coherent public contract |
 
 ### Geometry and construction already present

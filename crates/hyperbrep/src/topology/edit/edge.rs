@@ -2,19 +2,19 @@
 
 use crate::topology::*;
 
-impl Model {
+impl ArenaModel {
     /// Splits one canonical edge and every incident edge use at an exact
     /// interior edge parameter.
     ///
     /// The source edge ID is retained for its first canonical half. A vertex,
     /// second edge, split pcurves, and continuation edge uses are appended.
     /// Every owning wire is updated in traversal order, then the entire
-    /// snapshot is replayed through [`ModelBuilder`] before publication.
+    /// snapshot is replayed through [`ArenaModelBuilder`] before publication.
     pub fn split_edge(
         &self,
         edge_id: EdgeId,
         parameter: Real,
-    ) -> Result<(Self, EdgeSplit), TopologyEditError> {
+    ) -> Result<(Self, ArenaEdgeSplit), TopologyEditError> {
         crate::context::strict(|| self.split_edge_with_pcurve_parameter(edge_id, parameter, None))
     }
 
@@ -23,7 +23,7 @@ impl Model {
         edge_id: EdgeId,
         parameter: Real,
         retained_contact: Option<(EdgeUseId, CurvePoint2, Point3)>,
-    ) -> Result<(Self, EdgeSplit), TopologyEditError> {
+    ) -> Result<(Self, ArenaEdgeSplit), TopologyEditError> {
         let edge = self
             .edge(edge_id)
             .ok_or(TopologyEditError::InvalidReference {
@@ -256,7 +256,7 @@ impl Model {
             .map_err(TopologyEditError::Validation)?;
         Ok((
             validated,
-            EdgeSplit {
+            ArenaEdgeSplit {
                 vertex,
                 first: edge_id,
                 second,

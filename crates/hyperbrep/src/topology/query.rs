@@ -2,7 +2,7 @@
 
 use super::*;
 
-impl Model {
+impl ArenaModel {
     /// Classifies a point against a validated planar line-bounded solid.
     ///
     /// Face contours are materialized once from retained pcurves. Ray

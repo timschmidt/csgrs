@@ -2,7 +2,7 @@
 
 use crate::topology::*;
 
-impl Model {
+impl ArenaModel {
     /// Returns the exact area of a supported validated face.
     ///
     /// Whole spheres and periodic latitude caps use analytic spherical area.

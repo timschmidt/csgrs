@@ -349,7 +349,7 @@ The inspected source already contains important accelerators:
   Descartes/Bernstein count interfaces and sign bisection for owned isolated
   roots. “Avoid rebuilding Sturm for every bisection” is partly satisfied,
   not a new optimization to claim wholesale.
-- [boolean.rs](../src/boolean.rs), `intersection_graph`, already performs
+- [boolean_kernel.rs](../src/boolean_kernel.rs), `intersection_graph`, already performs
   certified bound rejection but visits the Cartesian product of face
   lists. A hierarchy should reduce pair visits, not merely add another
   bound test inside the same quadratic loop.

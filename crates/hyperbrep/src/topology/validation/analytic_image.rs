@@ -2,7 +2,7 @@
 
 use crate::topology::*;
 
-impl ModelBuilder {
+impl ArenaModelBuilder {
     pub(in crate::topology) fn validate_planar_circle_image(
         &self,
         curve: &Curve3,

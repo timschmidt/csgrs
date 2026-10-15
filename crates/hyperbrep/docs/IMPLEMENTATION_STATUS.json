@@ -155,6 +155,30 @@
       "evidence": "evidence/2026-10-14-strict-scope-fast-path/manifest.json",
       "validation": "8 checker tests passed; all 66 rows agree across the three historical logs and six new pinned trials. The rejected candidate also passed its recorded correctness/build checks.",
       "limits": "Receipt checking is not full geometric equivalence, successful-command evidence or statistical significance. WP00/WP01/WP21 remain incomplete."
+    },
+    {
+      "id": "model-bound-public-topology",
+      "work_packages": [
+        "WP00",
+        "WP01",
+        "WP21"
+      ],
+      "properties": [
+        "P6",
+        "P19",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "T13"
+      ],
+      "decision": "kept for correctness; not an optimization",
+      "change": "Replace the unscoped public arena API with borrowed model-bound entity references, builder-scoped keys and owned BodySet/SheetSet/results. Check every transaction relation before staging. Keep private compact arenas; directly migrate examples, benchmark and all fuzz targets. Preserve each multi-trace split revision so later edits cannot rebind historical positions.",
+      "source": "../src/ownership/mod.rs",
+      "evidence": "evidence/2026-10-14-model-ownership/manifest.json",
+      "validation": "238 core tests, 7 public ownership tests and 2 compile-fail doctests pass. Four deliberate ownership mutants fail focused assertions. All-target/all-feature strict Clippy, warning-denied rustdoc, WASM library compilation, fuzz-bin strict Clippy, both format checks and release build pass. All 66 benchmark receipts agree across three paired process trials.",
+      "cost_evidence": "Median of per-case median timing ratios 1.00679; largest sampled ratio 1.03985. Median process peak RSS increases from 21,360 to 21,756 KiB; executable grows 84,488 bytes. These are descriptive samples, not a performance guarantee. Initial RSS observations masked by the Python launcher are retained as rejected measurement evidence.",
+      "limits": "Native revision ownership only. Explicit shared operation budgets, detailed receipts, mandatory composed provenance and host handle registries remain open. Intermediate split arenas consume memory proportional to their retained sizes; large-history scaling and allocation counts are not qualified. No full workspace, WASM execution, ASan or new fuzz campaign is claimed."
     }
   ],
   "work_packages": [
@@ -328,7 +352,7 @@
     }
   ],
   "next_actions": [
-    "Complete model revision identity and borrowed references, explicit strict operation contexts, budget propagation, numeric-domain/allocation auditing, required certainty receipts and provenance in WP01.",
+    "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
     "Implement the WP02/G1 retained-parameter contact-to-split/persist/reload/composition vertical slice without requiring Real materialization.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."

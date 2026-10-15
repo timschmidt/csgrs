@@ -13,18 +13,19 @@ use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 use crate::geometry::{Curve3ExactData, resolve_planar_classification};
 use crate::topology::CertifiedSpherePairKind;
 use crate::{
-    BuildError, Curve3, Direction, EdgeId, FaceId, GeometryError, Model, ModelBuilder, Orientation,
-    ParameterCorrespondence, ParameterDomain, Pcurve, SolidId, Surface, ValidationReport, VertexId,
+    ArenaModel, ArenaModelBuilder, BuildError, Curve3, Direction, EdgeId, FaceId, GeometryError,
+    Orientation, ParameterCorrespondence, ParameterDomain, Pcurve, SolidId, Surface,
+    ValidationReport, VertexId,
 };
 
 /// Coordinate axis involved in a construction error.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Axis {
-    /// Model-space x axis.
+    /// ArenaModel-space x axis.
     X,
-    /// Model-space y axis.
+    /// ArenaModel-space y axis.
     Y,
-    /// Model-space z axis.
+    /// ArenaModel-space z axis.
     Z,
 }
 
@@ -84,7 +85,7 @@ pub enum ConstructionError {
     Validation(ValidationReport),
 }
 
-/// One closed prismatic cavity used by [`extrude_with_voids`].
+/// One closed prismatic cavity used by [`crate::builder::extrude_with_voids`].
 #[derive(Clone, Debug)]
 pub struct ExtrusionVoid {
     /// Counterclockwise or clockwise simple planar cavity profile.
@@ -95,7 +96,7 @@ pub struct ExtrusionVoid {
     pub z_max: Real,
 }
 
-/// One exact spherical cavity used by [`sphere_with_voids`].
+/// One exact spherical cavity used by [`crate::builder::sphere_with_voids`].
 #[derive(Clone, Debug)]
 pub struct SphereVoid {
     /// Exact cavity center in model space.
@@ -104,7 +105,7 @@ pub struct SphereVoid {
     pub radius: Real,
 }
 
-/// One planar polygon section supplied to [`loft`].
+/// One planar polygon section supplied to [`crate::builder::loft`].
 #[derive(Clone, Debug)]
 pub struct LoftSection {
     /// Exact simple polygon in the common loft x/y chart.
@@ -168,7 +169,7 @@ impl RationalBezierSweepFrame {
     }
 }
 
-/// One exact tensor patch supplied to [`tensor_patch_shell`].
+/// One exact tensor patch supplied to [`crate::builder::tensor_patch_shell`].
 #[derive(Clone, Debug)]
 pub enum TensorPatch {
     /// Tensor-product rational Bézier patch.
@@ -291,7 +292,7 @@ impl From<ValidationReport> for ConstructionError {
 /// The returned solid is bounded by six outward-oriented parameterized planes.
 /// Its twelve topological edges are shared by twenty-four independent face-local
 /// pcurves.
-pub fn cuboid(min: Point3, max: Point3) -> Result<(Model, SolidId), ConstructionError> {
+pub fn cuboid(min: Point3, max: Point3) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         require_increasing(&min.x, &max.x, Axis::X)?;
         require_increasing(&min.y, &max.y, Axis::Y)?;
@@ -321,7 +322,7 @@ pub fn planar_face(
     origin: Point3,
     u: Vector3,
     v: Vector3,
-) -> Result<(Model, FaceId), ConstructionError> {
+) -> Result<(ArenaModel, FaceId), ConstructionError> {
     crate::context::strict(|| {
         let outer = normalize_planar_path(outer, true)?;
         let holes = holes
@@ -331,7 +332,7 @@ pub fn planar_face(
         validate_planar_path_nesting(&outer, &holes)?;
 
         let surface = Surface::plane(origin, u, v)?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let surface_id = builder.surface(surface.clone())?;
         let outer_wire = add_planar_path_wire(&mut builder, &outer, &surface)?;
         let inner_wires = holes
@@ -356,7 +357,7 @@ pub fn extrusion_patch(
     direction: Vector3,
     v_start: Real,
     v_end: Real,
-) -> Result<(Model, FaceId), ConstructionError> {
+) -> Result<(ArenaModel, FaceId), ConstructionError> {
     crate::context::strict(|| {
         let v_domain = ParameterDomain::new(v_start, v_end)?;
         let u_start = profile.domain().start().clone();
@@ -402,7 +403,7 @@ pub fn revolution_patch(
     axis: Vector3,
     angle_start: Real,
     angle_end: Real,
-) -> Result<(Model, FaceId), ConstructionError> {
+) -> Result<(ArenaModel, FaceId), ConstructionError> {
     crate::context::strict(|| {
         let angle_domain = ParameterDomain::new(angle_start, angle_end)?;
         let angle_span = angle_domain.end() - angle_domain.start();
@@ -473,7 +474,7 @@ fn revolution_patch_geometry_error(error: GeometryError) -> ConstructionError {
 pub fn rational_bezier_patch(
     control_points: Vec<Vec<Point3>>,
     weights: Vec<Vec<Real>>,
-) -> Result<(Model, crate::FaceId), ConstructionError> {
+) -> Result<(ArenaModel, crate::FaceId), ConstructionError> {
     crate::context::strict(|| {
         let surface = Surface::rational_bezier(control_points.clone(), weights.clone())?;
         let u_last = control_points[0].len() - 1;
@@ -517,7 +518,7 @@ pub fn nurbs_patch(
     weights: Vec<Vec<Real>>,
     u_knots: Vec<Real>,
     v_knots: Vec<Real>,
-) -> Result<(Model, crate::FaceId), ConstructionError> {
+) -> Result<(ArenaModel, crate::FaceId), ConstructionError> {
     crate::context::strict(|| {
         let u_count = control_points.first().map_or(0, Vec::len);
         let v_count = control_points.len();
@@ -581,7 +582,7 @@ pub fn nurbs_patch(
 /// patches. Unmatched boundaries remain open-shell boundaries.
 pub fn tensor_patch_shell(
     patches: Vec<TensorPatch>,
-) -> Result<(Model, Vec<FaceId>), ConstructionError> {
+) -> Result<(ArenaModel, Vec<FaceId>), ConstructionError> {
     crate::context::strict(|| {
         if patches.is_empty() {
             return Err(ConstructionError::EmptyPatchShell);
@@ -590,7 +591,7 @@ pub fn tensor_patch_shell(
             .into_iter()
             .map(tensor_patch_build_data)
             .collect::<Result<Vec<_>, _>>()?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let mut vertices = Vec::<(Point3, VertexId)>::new();
         let mut shared_edges = Vec::<StitchedTensorEdge>::new();
         let mut faces = Vec::with_capacity(patches.len());
@@ -816,7 +817,7 @@ fn tensor_patch_build_data(patch: TensorPatch) -> Result<TensorPatchBuildData, C
 }
 
 fn exact_patch_vertex(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     vertices: &mut Vec<(Point3, VertexId)>,
     point: &Point3,
 ) -> Result<VertexId, ConstructionError> {
@@ -927,7 +928,7 @@ fn build_rectangular_face_patch(
     u_end: Real,
     v_start: Real,
     v_end: Real,
-) -> Result<(Model, crate::FaceId), ConstructionError> {
+) -> Result<(ArenaModel, crate::FaceId), ConstructionError> {
     let parameters = [
         CurvePoint2::new(u_start.clone(), v_start.clone()),
         CurvePoint2::new(u_end.clone(), v_start),
@@ -942,7 +943,7 @@ fn build_rectangular_face_patch(
                 .map_err(ConstructionError::from)
         })
         .collect::<Result<Vec<_>, _>>()?;
-    let mut builder = ModelBuilder::new();
+    let mut builder = ArenaModelBuilder::new();
     let vertices = points
         .into_iter()
         .map(|point| builder.vertex(point))
@@ -1000,10 +1001,10 @@ fn build_rectangular_face_patch(
 /// certified positive. The result uses four exact quarter-circle edges on
 /// each cap, four axial edges, two planar caps, and four trimmed faces sharing
 /// one native cylindrical surface. No polygonal approximation is introduced.
-pub fn cylinder(radius: Real, height: Real) -> Result<(Model, SolidId), ConstructionError> {
+pub fn cylinder(radius: Real, height: Real) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         require_increasing(&Real::zero(), &height, Axis::Z)?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let zero = Real::zero();
         let points_2d = [
             CurvePoint2::new(radius.clone(), zero.clone()),
@@ -1209,7 +1210,7 @@ pub fn cylinder(radius: Real, height: Real) -> Result<(Model, SolidId), Construc
 /// The sphere is represented by one complete closed-surface face. No
 /// artificial longitude seam, collapsed pole edge, or tolerance sewing is
 /// introduced.
-pub fn sphere(radius: Real) -> Result<(Model, SolidId), ConstructionError> {
+pub fn sphere(radius: Real) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| sphere_with_voids(radius, &[]))
 }
 
@@ -1220,7 +1221,7 @@ pub fn sphere(radius: Real) -> Result<(Model, SolidId), ConstructionError> {
 pub fn sphere_with_voids(
     radius: Real,
     voids: &[SphereVoid],
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let surface = Surface::sphere(
             Point3::origin(),
@@ -1229,7 +1230,7 @@ pub fn sphere_with_voids(
             Vector3::z(),
             radius,
         )?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let surface = builder.surface(surface)?;
         let face = builder.whole_face(surface, Orientation::Forward)?;
         let shell = builder.shell(vec![face])?;
@@ -1256,7 +1257,7 @@ pub(crate) fn sphere_pair_boolean(
     second_center: Point3,
     second_radius: Real,
     kind: CertifiedSpherePairKind,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     let displacement = &second_center - &first_center;
     let distance_squared = displacement.norm_squared();
     let distance = distance_squared
@@ -1287,7 +1288,7 @@ pub(crate) fn sphere_pair_boolean(
         .asin()
         .map_err(GeometryError::Numeric)?;
 
-    let mut builder = ModelBuilder::new();
+    let mut builder = ArenaModelBuilder::new();
     let full_circle = Curve3::circle_arc(
         circle_center,
         x.clone(),
@@ -1364,7 +1365,7 @@ pub(crate) fn sphere_pair_boolean(
 
 #[allow(clippy::too_many_arguments)]
 fn spherical_cap_face(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     surface: crate::SurfaceId,
     edges: &[EdgeId],
     latitude: Real,
@@ -1429,7 +1430,7 @@ pub fn cone_frustum(
     base_radius: Real,
     top_radius: Real,
     height: Real,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         require_increasing(&Real::zero(), &height, Axis::Z)?;
         require_frustum_radii(&base_radius, &top_radius)?;
@@ -1460,7 +1461,7 @@ pub fn cone_frustum(
             -Vector3::z(),
             semi_angle,
         )?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let cone_surface = builder.surface(cone.clone())?;
         // Author every incidence in the cone's retained meridian frame. Rebuilding
         // the cap centers and radii from the nominal inputs asks a general Real
@@ -1650,7 +1651,7 @@ pub fn cone_frustum(
 pub fn torus(
     major_radius: Real,
     minor_radius: Real,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let surface = Surface::torus(
             Point3::origin(),
@@ -1664,7 +1665,7 @@ pub fn torus(
         let angles = (0..4)
             .map(|index| &quarter * Real::from(index))
             .collect::<Vec<_>>();
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let surface_id = builder.surface(surface.clone())?;
         let mut points = Vec::with_capacity(16);
         for u in &angles {
@@ -1795,7 +1796,7 @@ pub fn extrude_contour(
     contour: &Contour2,
     z_min: Real,
     z_max: Real,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let (model, solids) =
             extrude_contour_regions(&[(contour.clone(), Vec::new())], z_min, z_max)?;
@@ -1812,7 +1813,7 @@ pub fn extrude_contour_regions(
     regions: &[(Contour2, Vec<Contour2>)],
     z_min: Real,
     z_max: Real,
-) -> Result<(Model, Vec<SolidId>), ConstructionError> {
+) -> Result<(ArenaModel, Vec<SolidId>), ConstructionError> {
     crate::context::strict(|| {
         require_increasing(&z_min, &z_max, Axis::Z)?;
         let normalized = regions
@@ -1827,7 +1828,7 @@ pub fn extrude_contour_regions(
                 Ok((outer, holes))
             })
             .collect::<Result<Vec<_>, ConstructionError>>()?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let mut solids = Vec::with_capacity(normalized.len());
         for (outer, holes) in normalized {
             let mut loops = Vec::with_capacity(holes.len() + 1);
@@ -1859,7 +1860,7 @@ pub fn extrude_path(
     path: &CurvePath2,
     z_min: Real,
     z_max: Real,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| extrude_path_region(path, &[], z_min, z_max))
 }
 
@@ -1869,7 +1870,7 @@ pub fn extrude_path_region(
     holes: &[CurvePath2],
     z_min: Real,
     z_max: Real,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let (model, solids) =
             extrude_path_regions(&[(outer.clone(), holes.to_vec())], z_min, z_max)?;
@@ -1887,7 +1888,7 @@ pub fn extrude_path_regions(
     regions: &[(CurvePath2, Vec<CurvePath2>)],
     z_min: Real,
     z_max: Real,
-) -> Result<(Model, Vec<SolidId>), ConstructionError> {
+) -> Result<(ArenaModel, Vec<SolidId>), ConstructionError> {
     crate::context::strict(|| {
         require_increasing(&z_min, &z_max, Axis::Z)?;
         let normalized = regions
@@ -1902,7 +1903,7 @@ pub fn extrude_path_regions(
                 Ok((outer, holes))
             })
             .collect::<Result<Vec<_>, ConstructionError>>()?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let mut solids = Vec::with_capacity(normalized.len());
         for (outer, holes) in normalized {
             let mut loops = Vec::with_capacity(holes.len() + 1);
@@ -1928,10 +1929,10 @@ pub(crate) fn extrude_curve_region(
     region: &CurveRegion2,
     z_min: Real,
     z_max: Real,
-) -> Result<(Model, Vec<SolidId>), ConstructionError> {
+) -> Result<(ArenaModel, Vec<SolidId>), ConstructionError> {
     require_increasing(&z_min, &z_max, Axis::Z)?;
     let components = region.material_components().map_err(GeometryError::from)?;
-    let mut builder = ModelBuilder::new();
+    let mut builder = ArenaModelBuilder::new();
     let mut solids = Vec::with_capacity(components.len());
     for component in components {
         let loops = component
@@ -2075,7 +2076,7 @@ fn validate_contour_nesting(outer: &Contour2, holes: &[Contour2]) -> Result<(), 
 }
 
 fn add_curve_path_region(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     loops: &[CurvePath2],
     z_min: Real,
     z_max: Real,
@@ -2088,7 +2089,7 @@ fn add_curve_path_region(
 }
 
 fn add_persistent_curve_region(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     loop_curves: &[Vec<Curve2>],
     z_min: Real,
     z_max: Real,
@@ -2394,11 +2395,11 @@ fn curve2_from_segment(segment: &Segment2) -> Curve2 {
 /// axial position. Clockwise input is normalized. Every line segment owns one
 /// revolution carrier split into four exact angular faces. The periodic seam
 /// shares meridian edges by identity rather than tolerance sewing.
-pub fn revolve(profile: &[Point2]) -> Result<(Model, SolidId), ConstructionError> {
+pub fn revolve(profile: &[Point2]) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let profile = normalize_profile(profile, true)?;
         validate_revolution_profile_radius(&profile)?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let shell =
             add_normalized_revolution_shell(&mut builder, &profile, ShellDirection::Outward)?;
         let solid = builder.solid(shell, Vec::new())?;
@@ -2414,7 +2415,7 @@ pub fn revolve(profile: &[Point2]) -> Result<(Model, SolidId), ConstructionError
 pub fn revolve_region(
     outer: &[Point2],
     holes: &[Vec<Point2>],
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let outer = normalize_profile(outer, true)?;
         let holes = holes
@@ -2426,7 +2427,7 @@ pub fn revolve_region(
             validate_revolution_profile_radius(hole)?;
         }
         validate_profile_nesting(&outer, &holes)?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let outer_shell =
             add_normalized_revolution_shell(&mut builder, &outer, ShellDirection::Outward)?;
         let voids = holes
@@ -2444,10 +2445,10 @@ pub fn revolve_region(
 /// positive. Every native line or circular-arc segment owns four periodic
 /// revolution faces. Curved meridians remain native circles; no flattening or
 /// tolerance sewing enters construction.
-pub fn revolve_contour(profile: &Contour2) -> Result<(Model, SolidId), ConstructionError> {
+pub fn revolve_contour(profile: &Contour2) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let profile = normalize_revolution_contour(profile)?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let shell = add_normalized_contour_revolution_shell(
             &mut builder,
             &profile,
@@ -2465,10 +2466,10 @@ pub fn revolve_contour(profile: &Contour2) -> Result<(Model, SolidId), Construct
 /// retained as the meridian of four periodic revolution faces. The preflight
 /// requires a complete exact simple-loop and orientation certificate; it never
 /// flattens the path to manufacture one.
-pub fn revolve_path(profile: &CurvePath2) -> Result<(Model, SolidId), ConstructionError> {
+pub fn revolve_path(profile: &CurvePath2) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let profile = normalize_revolution_path(profile)?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let shell = add_normalized_curve_path_revolution_shell(
             &mut builder,
             &profile,
@@ -2487,14 +2488,14 @@ pub fn revolve_path(profile: &CurvePath2) -> Result<(Model, SolidId), Constructi
 pub fn revolve_path_region(
     outer: &CurvePath2,
     holes: &[CurvePath2],
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let outer = normalize_revolution_path(outer)?;
         let holes = holes
             .iter()
             .map(normalize_revolution_path)
             .collect::<Result<Vec<_>, _>>()?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let outer_shell = add_normalized_curve_path_revolution_shell(
             &mut builder,
             &outer,
@@ -2519,7 +2520,7 @@ pub fn revolve_path_region(
 pub fn revolve_contour_region(
     outer: &Contour2,
     holes: &[Contour2],
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let outer = normalize_revolution_contour(outer)?;
         let holes = holes
@@ -2527,7 +2528,7 @@ pub fn revolve_contour_region(
             .map(normalize_revolution_contour)
             .collect::<Result<Vec<_>, _>>()?;
         validate_contour_nesting(&outer, &holes)?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let outer_shell =
             add_normalized_contour_revolution_shell(&mut builder, &outer, ShellDirection::Outward)?;
         let voids = holes
@@ -2554,7 +2555,7 @@ pub fn sweep(
     u: Vector3,
     v: Vector3,
     path: Vector3,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let (model, solid) = extrude(profile, Real::zero(), Real::one())?;
         place_linear_sweep(model, solid, origin, u, v, path)
@@ -2573,7 +2574,7 @@ pub fn sweep_region(
     u: Vector3,
     v: Vector3,
     path: Vector3,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let (model, solid) = extrude_region(outer, holes, Real::zero(), Real::one())?;
         place_linear_sweep(model, solid, origin, u, v, path)
@@ -2593,7 +2594,7 @@ pub fn sweep_curve(
     u: Vector3,
     v: Vector3,
     path: Curve3,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| sweep_curve_region(profile, &[], u, v, path))
 }
 
@@ -2611,7 +2612,7 @@ pub fn sweep_curve_region(
     u: Vector3,
     v: Vector3,
     path: Curve3,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         let Curve3ExactData::RationalBezier {
             control_points: origins,
@@ -2634,7 +2635,7 @@ pub fn sweep_curve_region(
 pub fn sweep_moving_frame(
     profile: &[Point2],
     frame: RationalBezierSweepFrame,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| sweep_moving_frame_region(profile, &[], frame))
 }
 
@@ -2650,7 +2651,7 @@ pub fn sweep_moving_frame_region(
     outer: &[Point2],
     holes: &[Vec<Point2>],
     frame: RationalBezierSweepFrame,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         sweep_rational_bezier_frame_region(
             outer,
@@ -2670,7 +2671,7 @@ fn sweep_rational_bezier_frame_region(
     u_axes: Vec<Vector3>,
     v_axes: Vec<Vector3>,
     weights: Vec<Real>,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     let outer = normalize_profile(outer, true)?;
     let holes = holes
         .iter()
@@ -2709,7 +2710,7 @@ fn sweep_rational_bezier_frame_region(
         .map(|point| path_end.clone() + upper_offset(point))
         .collect::<Vec<_>>();
 
-    let mut builder = ModelBuilder::new();
+    let mut builder = ArenaModelBuilder::new();
     let lower_vertices = lower_points
         .iter()
         .cloned()
@@ -3102,13 +3103,13 @@ fn certify_sweep_path_progress(
 }
 
 fn place_linear_sweep(
-    model: Model,
+    model: ArenaModel,
     solid: SolidId,
     origin: Point3,
     u: Vector3,
     v: Vector3,
     path: Vector3,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     let transform = crate::Matrix4::from_row_major([
         u.0[0].clone(),
         v.0[0].clone(),
@@ -3142,7 +3143,7 @@ fn place_linear_sweep(
 /// nearest-vertex correspondence, sampling, or tolerance sewing is used.
 /// Exact solid volume and classification cover every span; exact area of a
 /// general bilinear side remains unsupported.
-pub fn loft(sections: &[LoftSection]) -> Result<(Model, SolidId), ConstructionError> {
+pub fn loft(sections: &[LoftSection]) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         if sections.len() < 2 {
             return Err(ConstructionError::LoftNeedsAtLeastTwoSections);
@@ -3170,7 +3171,7 @@ pub fn loft(sections: &[LoftSection]) -> Result<(Model, SolidId), ConstructionEr
             })
             .collect::<Result<Vec<_>, ConstructionError>>()?;
 
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let mut vertices = Vec::with_capacity(sections.len());
         for (section, profile) in sections.iter().zip(&profiles) {
             let mut ring = Vec::with_capacity(count);
@@ -3237,7 +3238,7 @@ pub fn loft(sections: &[LoftSection]) -> Result<(Model, SolidId), ConstructionEr
             connectors.push(span_connectors);
         }
 
-        let cap_surface = |builder: &mut ModelBuilder, z: &Real| {
+        let cap_surface = |builder: &mut ArenaModelBuilder, z: &Real| {
             builder.surface(Surface::plane(
                 Point3::new(Real::zero(), Real::zero(), z.clone()),
                 Vector3::x(),
@@ -3860,7 +3861,7 @@ fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, Const
 }
 
 fn add_planar_path_wire(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     path: &CurvePath2,
     surface: &Surface,
 ) -> Result<crate::WireId, ConstructionError> {
@@ -4221,7 +4222,7 @@ fn spatial_revolution_segment(
 }
 
 fn add_normalized_curve_path_revolution_shell(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     profile: &CurvePath2,
     direction: ShellDirection,
 ) -> Result<crate::ShellId, ConstructionError> {
@@ -4398,7 +4399,7 @@ fn add_normalized_curve_path_revolution_shell(
 }
 
 fn add_normalized_contour_revolution_shell(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     profile: &Contour2,
     direction: ShellDirection,
 ) -> Result<crate::ShellId, ConstructionError> {
@@ -4551,7 +4552,7 @@ fn add_normalized_contour_revolution_shell(
 }
 
 fn add_normalized_revolution_shell(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     profile: &[Point2],
     direction: ShellDirection,
 ) -> Result<crate::ShellId, ConstructionError> {
@@ -4717,7 +4718,7 @@ pub fn extrude(
     profile: &[Point2],
     z_min: Real,
     z_max: Real,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| extrude_region(profile, &[], z_min, z_max))
 }
 
@@ -4731,11 +4732,11 @@ pub fn extrude_with_voids(
     z_min: Real,
     z_max: Real,
     voids: &[ExtrusionVoid],
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         require_increasing(&z_min, &z_max, Axis::Z)?;
         let profile = normalize_profile(profile, true)?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let outer = add_normalized_extrusion_shell(
             &mut builder,
             &[profile],
@@ -4766,7 +4767,7 @@ pub fn extrude_region(
     holes: &[Vec<Point2>],
     z_min: Real,
     z_max: Real,
-) -> Result<(Model, SolidId), ConstructionError> {
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
     crate::context::strict(|| {
         require_increasing(&z_min, &z_max, Axis::Z)?;
         let profile = normalize_profile(outer, true)?;
@@ -4790,10 +4791,10 @@ pub fn extrude_regions(
     regions: &[(Vec<Point2>, Vec<Vec<Point2>>)],
     z_min: Real,
     z_max: Real,
-) -> Result<(Model, Vec<SolidId>), ConstructionError> {
+) -> Result<(ArenaModel, Vec<SolidId>), ConstructionError> {
     crate::context::strict(|| {
         require_increasing(&z_min, &z_max, Axis::Z)?;
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let mut solids = Vec::with_capacity(regions.len());
         for (outer, holes) in regions {
             let outer = normalize_profile(outer, true)?;
@@ -4946,14 +4947,14 @@ fn extrude_normalized_loops(
     loops: &[Vec<Point2>],
     z_min: Real,
     z_max: Real,
-) -> Result<(Model, SolidId), ConstructionError> {
-    let mut builder = ModelBuilder::new();
+) -> Result<(ArenaModel, SolidId), ConstructionError> {
+    let mut builder = ArenaModelBuilder::new();
     let solid = add_normalized_extrusion(&mut builder, loops, z_min, z_max)?;
     Ok((builder.finish()?, solid))
 }
 
 fn add_normalized_extrusion(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     loops: &[Vec<Point2>],
     z_min: Real,
     z_max: Real,
@@ -4970,7 +4971,7 @@ enum ShellDirection {
 }
 
 fn add_normalized_extrusion_shell(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     loops: &[Vec<Point2>],
     z_min: Real,
     z_max: Real,
@@ -5106,7 +5107,7 @@ fn add_normalized_extrusion_shell(
 
 #[allow(clippy::too_many_arguments)]
 fn add_planar_face(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     points: &[Point3],
     vertices: &[VertexId],
     edges: &mut HashMap<(usize, usize), EdgeId>,
@@ -5132,7 +5133,7 @@ fn add_planar_face(
 
 #[allow(clippy::too_many_arguments)]
 fn add_planar_region_face(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     points: &[Point3],
     vertices: &[VertexId],
     edges: &mut HashMap<(usize, usize), EdgeId>,
@@ -5159,7 +5160,7 @@ fn add_planar_region_face(
 }
 
 fn add_planar_wire(
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     points: &[Point3],
     vertices: &[VertexId],
     edges: &mut HashMap<(usize, usize), EdgeId>,
@@ -5447,7 +5448,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let json = transformed.to_json().unwrap();
-        let replayed = crate::RawModel::from_json(&json)
+        let replayed = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -5598,7 +5599,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let json = transformed.to_json().unwrap();
-        let replayed = crate::RawModel::from_json(&json)
+        let replayed = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -5707,12 +5708,12 @@ mod tests {
             reflected.classify_point(solid, &p(-2, 0, 1)).unwrap(),
             SolidPointLocation::Boundary
         );
-        crate::RawModel::from_json(&reflected.to_json().unwrap())
+        crate::ImportedModel::from_json(&reflected.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
         let json = model.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -5802,7 +5803,7 @@ mod tests {
             reflected.classify_point(solid, &p(-8, -2, 7)).unwrap(),
             SolidPointLocation::Boundary
         );
-        let decoded = crate::RawModel::from_json(&reflected.to_json().unwrap())
+        let decoded = crate::ImportedModel::from_json(&reflected.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -5850,7 +5851,7 @@ mod tests {
             model.classify_point(solid, &p(-4, 0, 0)).unwrap(),
             SolidPointLocation::Inside
         );
-        crate::RawModel::from_json(&model.to_json().unwrap())
+        crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -5885,7 +5886,7 @@ mod tests {
 
     #[test]
     fn exact_edge_split_updates_affine_pcurves_and_wire_topology() {
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let points = [p(0, 0, 0), p(2, 0, 0), p(2, 2, 0), p(0, 2, 0)];
         let vertices = points
             .iter()
@@ -5987,7 +5988,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        crate::RawModel::from_json(&split_model.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6037,7 +6038,7 @@ mod tests {
 
     #[test]
     fn exact_planar_face_split_authors_one_shared_chord_and_two_valid_faces() {
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let points = [p(0, 0, 0), p(2, 0, 0), p(2, 2, 0), p(0, 2, 0)];
         let vertices = points
             .iter()
@@ -6132,7 +6133,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        crate::RawModel::from_json(&split_model.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6174,7 +6175,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        crate::RawModel::from_json(&split_model.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6208,7 +6209,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        crate::RawModel::from_json(&split_cylinder.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_cylinder.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6240,7 +6241,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        crate::RawModel::from_json(&split_holed.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_holed.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6297,7 +6298,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        crate::RawModel::from_json(&split_model.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6431,7 +6432,7 @@ mod tests {
             compare_reals(&area, &r(9), crate::STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
-        crate::RawModel::from_json(&forward.to_json().unwrap())
+        crate::ImportedModel::from_json(&forward.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6621,7 +6622,7 @@ mod tests {
         );
         let json = edited.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -6680,7 +6681,7 @@ mod tests {
             json.len() < 1_048_576,
             "two exact angular splits must retain a compact root-lineage representation"
         );
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -6728,7 +6729,7 @@ mod tests {
                 GeometryError::UnsupportedMeasurement
             ))
         );
-        crate::RawModel::from_json(&bezier.to_json().unwrap())
+        crate::ImportedModel::from_json(&bezier.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6747,14 +6748,14 @@ mod tests {
             5
         );
         assert_eq!(split.first, EdgeId::from_index(0).unwrap());
-        crate::RawModel::from_json(&split_bezier.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_bezier.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
         let transformed_bezier = bezier
             .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
             .unwrap();
-        crate::RawModel::from_json(&transformed_bezier.to_json().unwrap())
+        crate::ImportedModel::from_json(&transformed_bezier.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6788,21 +6789,21 @@ mod tests {
                 .kind(),
             crate::SurfaceKind::Nurbs
         );
-        crate::RawModel::from_json(&nurbs.to_json().unwrap())
+        crate::ImportedModel::from_json(&nurbs.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
         let (split_nurbs, _) = nurbs
             .split_edge(EdgeId::from_index(1).unwrap(), (r(7) / r(2)).unwrap())
             .unwrap();
-        crate::RawModel::from_json(&split_nurbs.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_nurbs.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
         let transformed_nurbs = nurbs
             .transformed(&crate::Matrix4::affine_translation([r(7), r(-3), r(5)]))
             .unwrap();
-        crate::RawModel::from_json(&transformed_nurbs.to_json().unwrap())
+        crate::ImportedModel::from_json(&transformed_nurbs.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6813,7 +6814,7 @@ mod tests {
                 Real::one(),
             ]))
             .unwrap();
-        crate::RawModel::from_json(&reflected_nurbs.to_json().unwrap())
+        crate::ImportedModel::from_json(&reflected_nurbs.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6870,7 +6871,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        let rebuilt_bezier = crate::RawModel::from_json(&scaled.to_json().unwrap())
+        let rebuilt_bezier = crate::ImportedModel::from_json(&scaled.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6896,7 +6897,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        let rebuilt_nurbs = crate::RawModel::from_json(&nurbs.to_json().unwrap())
+        let rebuilt_nurbs = crate::ImportedModel::from_json(&nurbs.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -6961,7 +6962,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        let rebuilt_bezier = crate::RawModel::from_json(&scaled_bezier.to_json().unwrap())
+        let rebuilt_bezier = crate::ImportedModel::from_json(&scaled_bezier.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -7012,7 +7013,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        let rebuilt_nurbs = crate::RawModel::from_json(&nurbs.to_json().unwrap())
+        let rebuilt_nurbs = crate::ImportedModel::from_json(&nurbs.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -7037,7 +7038,7 @@ mod tests {
         let first_weights = vec![vec![r(1), r(1)], vec![r(1), r(2)]];
         let second_controls = vec![vec![p(1, 0, 0), p(2, 0, 0)], vec![p(1, 1, 1), p(2, 1, 0)]];
         let second_weights = vec![vec![r(3), r(1)], vec![r(6), r(1)]];
-        let assert_shell = |model: &Model, faces: &[FaceId], kind| {
+        let assert_shell = |model: &ArenaModel, faces: &[FaceId], kind| {
             assert_eq!(faces.len(), 2);
             assert_eq!(
                 model.counts(),
@@ -7072,7 +7073,7 @@ mod tests {
                 model.edge_use(uses[0]).unwrap().direction(),
                 model.edge_use(uses[1]).unwrap().direction()
             );
-            crate::RawModel::from_json(&model.to_json().unwrap())
+            crate::ImportedModel::from_json(&model.to_json().unwrap())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -7116,7 +7117,7 @@ mod tests {
 
     #[test]
     fn exact_edge_split_inverts_angular_sweep_without_projection() {
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let radius = r(2);
         let points = [p(2, 0, 0), p(0, 2, 0), p(-2, 0, 0), p(0, -2, 0)];
         let planar = [
@@ -7221,7 +7222,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(split.edge_uses.len(), 1);
-        crate::RawModel::from_json(&split_model.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -7285,7 +7286,7 @@ mod tests {
                 .unwrap(),
             SolidPointLocation::Inside
         );
-        crate::RawModel::from_json(&split_cylinder.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_cylinder.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -7317,7 +7318,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        crate::RawModel::from_json(&split_torus.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_torus.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -7406,7 +7407,7 @@ mod tests {
             reflected.classify_point(solid, &p(-2, 0, 0)).unwrap(),
             SolidPointLocation::Boundary
         );
-        let decoded = crate::RawModel::from_json(&reflected.to_json().unwrap())
+        let decoded = crate::ImportedModel::from_json(&reflected.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -7514,7 +7515,7 @@ mod tests {
             reflected.classify_point(solid, &p(-4, 0, 0)).unwrap(),
             SolidPointLocation::Boundary
         );
-        let decoded = crate::RawModel::from_json(&reflected.to_json().unwrap())
+        let decoded = crate::ImportedModel::from_json(&reflected.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -7618,7 +7619,7 @@ mod tests {
             reflected.classify_point(solid, &p(-6, -1, 7)).unwrap(),
             SolidPointLocation::Inside
         );
-        let rebuilt = crate::RawModel::from_json(&reflected.to_json().unwrap())
+        let rebuilt = crate::ImportedModel::from_json(&reflected.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -7690,7 +7691,7 @@ mod tests {
         }
 
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -7758,7 +7759,7 @@ mod tests {
             SolidPointLocation::Inside
         );
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -7818,7 +7819,7 @@ mod tests {
         }
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7840,7 +7841,7 @@ mod tests {
             Some(std::cmp::Ordering::Greater)
         );
         let rational_json = rational_model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&rational_json)
+        let rebuilt = crate::ImportedModel::from_json(&rational_json)
             .unwrap()
             .validate()
             .unwrap();
@@ -7883,7 +7884,7 @@ mod tests {
             }
             let json = extruded.to_json().unwrap();
             assert_eq!(
-                crate::RawModel::from_json(&json)
+                crate::ImportedModel::from_json(&json)
                     .unwrap()
                     .validate()
                     .unwrap()
@@ -7959,7 +7960,7 @@ mod tests {
         );
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -8012,7 +8013,7 @@ mod tests {
             SolidPointLocation::Outside
         );
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8062,7 +8063,7 @@ mod tests {
         );
 
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8118,7 +8119,7 @@ mod tests {
         );
 
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8173,7 +8174,7 @@ mod tests {
         );
 
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8225,7 +8226,7 @@ mod tests {
         );
 
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8277,7 +8278,7 @@ mod tests {
         );
 
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8357,7 +8358,7 @@ mod tests {
         );
 
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8418,7 +8419,7 @@ mod tests {
         );
 
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8470,7 +8471,7 @@ mod tests {
         );
 
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8533,7 +8534,7 @@ mod tests {
         );
 
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8632,7 +8633,7 @@ mod tests {
             reflected.classify_point(solid, &p(-4, 0, 2)).unwrap(),
             SolidPointLocation::Inside
         );
-        let rebuilt = crate::RawModel::from_json(&reflected.to_json().unwrap())
+        let rebuilt = crate::ImportedModel::from_json(&reflected.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -8727,7 +8728,7 @@ mod tests {
             SolidPointLocation::Inside
         );
         let json = reflected.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8874,7 +8875,7 @@ mod tests {
         ] {
             assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
         }
-        let decoded = crate::RawModel::from_json(&model.to_json().unwrap())
+        let decoded = crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -8924,7 +8925,7 @@ mod tests {
         ] {
             assert_eq!(reoriented.classify_point(solid, &point).unwrap(), expected);
         }
-        let decoded_reoriented = crate::RawModel::from_json(&reoriented.to_json().unwrap())
+        let decoded_reoriented = crate::ImportedModel::from_json(&reoriented.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -9200,7 +9201,7 @@ mod tests {
         );
         let json = edited.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -9257,7 +9258,7 @@ mod tests {
         );
         let json = edited.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -9365,7 +9366,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        crate::RawModel::from_json(&model.to_json().unwrap())
+        crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -9462,7 +9463,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        let replayed = crate::RawModel::from_json(&transformed.to_json().unwrap())
+        let replayed = crate::ImportedModel::from_json(&transformed.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -9615,7 +9616,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        let rebuilt = crate::RawModel::from_json(&model.to_json().unwrap())
+        let rebuilt = crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -9763,7 +9764,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let json = reflected.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -9850,7 +9851,7 @@ mod tests {
             assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
         }
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -9956,7 +9957,7 @@ mod tests {
         }
 
         let json = model.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -10037,7 +10038,7 @@ mod tests {
         ] {
             assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
         }
-        let rebuilt = crate::RawModel::from_json(&model.to_json().unwrap())
+        let rebuilt = crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -10194,7 +10195,7 @@ mod tests {
             scaled.classify_point(solid, &p(4, 6, 4)).unwrap(),
             SolidPointLocation::Inside
         );
-        let rebuilt = crate::RawModel::from_json(&scaled.to_json().unwrap())
+        let rebuilt = crate::ImportedModel::from_json(&scaled.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -10255,7 +10256,7 @@ mod tests {
             );
         }
         let general_json = general.to_json().unwrap();
-        let general_rebuilt = crate::RawModel::from_json(&general_json)
+        let general_rebuilt = crate::ImportedModel::from_json(&general_json)
             .unwrap()
             .validate()
             .unwrap();
@@ -10379,7 +10380,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let json = scaled.to_json().unwrap();
-        let rebuilt = crate::RawModel::from_json(&json)
+        let rebuilt = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();

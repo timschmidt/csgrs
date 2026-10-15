@@ -416,7 +416,7 @@ callers working with open shells or individual patches can invoke that same
 exact operation without constructing a placeholder solid.
 
 Exact rational Bézier and NURBS tensor iso-curves can split their owning
-trimmed face through `Model::split_face_by_surface_curve`; the validator
+trimmed face through `FaceRef::split_by_surface_curve`; the validator
 certifies an interior homogeneous iso-curve or a boundary subrange rather than
 trusting endpoint agreement. A complete rational-Bézier or NURBS graph section
 on a translation tensor linear in either axis has the same topology path.
@@ -433,7 +433,7 @@ pcurve through untrusted format version 5 replay. Multi-span graphs retain one
 exact degree-elevated NURBS pcurve assembled from certified rational knot spans.
 Partially trimmed graph sections with represented roots use the same path,
 including same-boundary two-edge descendant faces. All fragments can be
-applied in one call through `Model::split_face_by_surface_curves`; an explicit
+applied in one call through `FaceRef::split_by_surface_curves`; an explicit
 `SurfaceIntersectionOperand` selects the retained pcurve, exact unordered
 endpoint sorting removes caller-order dependence, and each fragment must
 belong to exactly one current descendant. Certified intersections between
@@ -448,7 +448,7 @@ other nonplanar bounded faces and general curved regularization remain open.
 
 ## Local topology editing
 
-`Model::split_edge` splits a canonical edge and every incident use at an exact
+`EdgeRef::split` splits a canonical edge and every incident use at an exact
 interior edge parameter. Line and native circular pcurves are retained,
 forward/reversed uses remain ordered, typed IDs for the first half are stable,
 and the result is fully revalidated. The active prism, cylinder, frustum, and
@@ -457,14 +457,14 @@ on primitive edge counts. Angular correspondences split circular pcurves
 directly in retained root sweep space; nested edits do not round-trip through
 rational-Bézier parameters or accumulate equivalent expression trees.
 
-`Model::split_face` splits a trimmed planar face along an exact line chord
+`FaceRef::split` splits a trimmed planar face along an exact line chord
 between nonadjacent outer-boundary vertices. It authors one identity-shared
 edge with opposite uses, retains the first face and outer-wire IDs, reassigns
 holes by certified contour classification, updates the owning shell, and
 revalidates globally. Cap-region certificates accept the resulting internal
 face boundaries for line/arc prisms and native cylinders.
 
-`Model::split_face_by_curve` is the intersection-driven planar entry point.
+`FaceRef::split_by_curve` is the intersection-driven planar entry point.
 For an exact straight `Curve3` fragment, each endpoint either reuses a
 mathematically equal outer-boundary vertex or locates its unique represented
 parameter on a canonical boundary edge and invokes `split_edge`. It then uses
@@ -472,12 +472,12 @@ the same identity-stitched face split and complete revalidation path. Whole
 closed surfaces, nonplanar carriers, curved traces, and inner-wire endpoints
 remain explicit unsupported cases.
 
-`Model::split_face_by_curves` exact-orders straight traces by canonicalized
+`FaceRef::split_by_curves` exact-orders straight traces by canonicalized
 endpoints and rejects duplicates and positive-length overlaps. Every later
 trace is split at its exact finite intersections with earlier traces. Attaching
 those arranged segments splits already-shared internal edges, so all incident
 faces reuse one topological intersection vertex. `FacePartition` records final
-descendants and one `FaceTracePartition` per canonical source trace, including
+descendants and one `FaceTracePartitionRef` per canonical source trace, including
 its exact `Curve3` segments and corresponding local splits. Results are
 byte-identical across caller order and curve direction, including several
 traces concurrent at one point.

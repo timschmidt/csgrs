@@ -72,18 +72,18 @@ struct OrderedSurfaceCurveTrace {
 
 /// Immutable validated BREP arena.
 #[derive(Clone, Debug)]
-pub struct Model {
+pub struct ArenaModel {
     data: Arc<ModelData>,
 }
 
 /// Transactional copy-on-write model edit.
 ///
 /// Replacement operations may temporarily violate model invariants so related
-/// records can be changed together. [`Edit::commit`] replays the entire staged
-/// snapshot through [`ModelBuilder`]; failure leaves the source model intact.
+/// records can be changed together. [`ArenaEdit::commit`] replays the entire staged
+/// snapshot through [`ArenaModelBuilder`]; failure leaves the source model intact.
 #[derive(Clone, Debug)]
-pub struct Edit {
-    staged: Model,
+pub struct ArenaEdit {
+    staged: ArenaModel,
 }
 
 #[derive(Clone, Debug)]
@@ -648,7 +648,7 @@ struct FaceLineMaterial {
 
 /// Incremental constructor for a canonical validated model.
 #[derive(Debug, Default)]
-pub struct ModelBuilder {
+pub struct ArenaModelBuilder {
     vertices: Vec<Vertex>,
     curves: Vec<Curve3>,
     pcurves: Vec<Pcurve>,

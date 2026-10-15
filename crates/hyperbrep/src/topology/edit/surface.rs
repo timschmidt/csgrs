@@ -2,7 +2,7 @@
 
 use crate::topology::*;
 
-impl Model {
+impl ArenaModel {
     /// Splits a face along one retained exact surface curve.
     ///
     /// The supplied pcurve is materialized without inverse fitting and retains
@@ -17,7 +17,7 @@ impl Model {
         face_id: FaceId,
         intersection: &SurfaceIntersectionCurve,
         operand: SurfaceIntersectionOperand,
-    ) -> Result<(Self, SurfaceCurveFaceSplit), TopologyEditError> {
+    ) -> Result<(Self, ArenaSurfaceCurveFaceSplit), TopologyEditError> {
         crate::context::strict(|| {
             let curve = intersection.curve();
             let pcurve = intersection.pcurve(operand);
@@ -81,7 +81,7 @@ impl Model {
                         image_certificate,
                     )?
                 };
-                return Ok((model, SurfaceCurveFaceSplit::Closed(split)));
+                return Ok((model, ArenaSurfaceCurveFaceSplit::Closed(split)));
             }
             let Some(_) = face.outer() else {
                 return Err(TopologyEditError::WholeSurfaceFace(face_id));
@@ -120,7 +120,7 @@ impl Model {
             )?;
             Ok((
                 staged,
-                SurfaceCurveFaceSplit::Open(CurveFaceSplit {
+                ArenaSurfaceCurveFaceSplit::Open(ArenaCurveFaceSplit {
                     start_edge,
                     end_edge,
                     face,
@@ -135,7 +135,7 @@ impl Model {
         curve: &Curve3,
         pcurve: &SurfaceIntersectionPcurve,
         image_certificate: bool,
-    ) -> Result<(Self, ClosedSurfaceCurveFaceSplit), TopologyEditError> {
+    ) -> Result<(Self, ArenaClosedSurfaceCurveFaceSplit), TopologyEditError> {
         let face = self
             .face(face_id)
             .ok_or(TopologyEditError::InvalidReference {
@@ -322,7 +322,7 @@ impl Model {
             .map_err(TopologyEditError::Validation)?;
         Ok((
             validated,
-            ClosedSurfaceCurveFaceSplit {
+            ArenaClosedSurfaceCurveFaceSplit {
                 seam_vertex,
                 midpoint_vertex,
                 edges: [edges[0], edges[1]],
@@ -373,7 +373,7 @@ impl Model {
         curve: &Curve3,
         pcurve: &SurfaceIntersectionPcurve,
         image_certificate: bool,
-    ) -> Result<(Self, ClosedSurfaceCurveFaceSplit), TopologyEditError> {
+    ) -> Result<(Self, ArenaClosedSurfaceCurveFaceSplit), TopologyEditError> {
         let face = self
             .face(face_id)
             .ok_or(TopologyEditError::InvalidReference {
@@ -616,7 +616,7 @@ impl Model {
             .map_err(TopologyEditError::Validation)?;
         Ok((
             validated,
-            ClosedSurfaceCurveFaceSplit {
+            ArenaClosedSurfaceCurveFaceSplit {
                 seam_vertex,
                 midpoint_vertex,
                 edges: [edges[0], edges[1]],
@@ -636,7 +636,7 @@ impl Model {
         curve: &Curve3,
         pcurve: &SurfaceIntersectionPcurve,
         image_certificate: bool,
-    ) -> Result<(Self, ClosedSurfaceCurveFaceSplit), TopologyEditError> {
+    ) -> Result<(Self, ArenaClosedSurfaceCurveFaceSplit), TopologyEditError> {
         let face = self
             .face(face_id)
             .ok_or(TopologyEditError::InvalidReference {
@@ -892,7 +892,7 @@ impl Model {
             .map_err(TopologyEditError::Validation)?;
         Ok((
             validated,
-            ClosedSurfaceCurveFaceSplit {
+            ArenaClosedSurfaceCurveFaceSplit {
                 seam_vertex,
                 midpoint_vertex,
                 edges: [edges[0], edges[1]],

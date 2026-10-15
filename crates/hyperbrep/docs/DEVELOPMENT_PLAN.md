@@ -446,7 +446,8 @@ impl RawModel {
 }
 impl Model {
     pub fn edit(&self) -> Edit;
-    pub fn solid(&self, id: SolidId) -> Result<SolidRef<'_>, KernelError>;
+    pub fn solid(&self, key: &SolidKey) -> Result<SolidRef<'_>, GeometryReferenceError>;
+    pub fn solids(&self) -> impl ExactSizeIterator<Item = SolidRef<'_>>;
 }
 ```
 
@@ -454,6 +455,14 @@ Validation reports preserve unresolved and resource-limited checks separately
 from disproved invariants. Builder and raw validation do not heal implicitly.
 Transactions validate affected local and global invariants before returning a
 new immutable model. Failure leaves the original untouched.
+
+The initial ownership implementation uses builder-scoped keys for staged
+construction and model-bound borrowed references for published topology.
+Keys resolve only in the revision published by their builder or a clone of
+that revision. Diagnostic arena positions are not public resolution handles.
+See [ADR 0002](architecture/0002-model-ownership-and-validity.md) for the
+runtime identity contract; explicit operation contexts and durable host
+generations remain separate work.
 
 `BodySet` represents empty, single and disconnected multi-solid results
 without forcing an artificial union shell. Separate wire, sheet, volume and

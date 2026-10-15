@@ -2,7 +2,7 @@
 
 use crate::topology::*;
 
-impl Edit {
+impl ArenaEdit {
     /// Applies an orientation-preserving invertible affine transform in place.
     ///
     /// A failed transform leaves the previously staged snapshot untouched.
@@ -268,7 +268,7 @@ impl Edit {
     }
 
     /// Commits this transaction as a new immutable model.
-    pub fn commit(self) -> Result<Model, EditError> {
+    pub fn commit(self) -> Result<ArenaModel, EditError> {
         crate::context::strict(|| self.staged.revalidated().map_err(EditError::Validation))
     }
 }

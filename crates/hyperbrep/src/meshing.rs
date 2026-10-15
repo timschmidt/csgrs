@@ -13,7 +13,7 @@ use std::num::NonZeroUsize;
 
 use hyperlimit::{PredicateOutcome, compare_reals};
 
-use crate::{FaceId, GeometryError, Model, Orientation, Point2, Point3, Real, SurfaceKind};
+use crate::{ArenaModel, FaceId, GeometryError, Orientation, Point2, Point3, Real, SurfaceKind};
 
 const TRIANGULATION_CONTEXT: hypertri::TriangulationContext =
     hypertri::TriangulationContext::new(crate::STRICT_PREDICATES);
@@ -101,7 +101,7 @@ pub enum ChordalSourceRelation {
 /// this artifact. `parameters[index]` is retained for every `points[index]`,
 /// making the exact-at-vertices relation replayable.
 #[derive(Clone, Debug)]
-pub struct ChordalFaceApproximation {
+pub struct ArenaChordalFaceApproximation {
     source_face: FaceId,
     source_surface_kind: SurfaceKind,
     policy: ChordalApproximationPolicy,
@@ -110,7 +110,7 @@ pub struct ChordalFaceApproximation {
     triangles: Vec<[usize; 3]>,
 }
 
-impl ChordalFaceApproximation {
+impl ArenaChordalFaceApproximation {
     /// Returns the face from which this independent artifact was derived.
     pub const fn source_face(&self) -> FaceId {
         self.source_face
@@ -225,7 +225,7 @@ impl From<hypertri::Error> for TessellationError {
 /// source model, preserves every exact parameter/model-space vertex, and
 /// orients triangles consistently with the BREP face orientation.
 pub fn triangulate_planar_face(
-    model: &Model,
+    model: &ArenaModel,
     face_id: FaceId,
 ) -> Result<ExactPlanarFaceTriangulation, TessellationError> {
     crate::context::strict(|| {
@@ -276,10 +276,10 @@ pub fn triangulate_planar_face(
 /// Only vertices are certified to lie on the source. Triangle edges and
 /// interiors are model-space chords with no geometric error bound.
 pub fn approximate_face_chordally(
-    model: &Model,
+    model: &ArenaModel,
     face_id: FaceId,
     policy: ChordalApproximationPolicy,
-) -> Result<ChordalFaceApproximation, TessellationError> {
+) -> Result<ArenaChordalFaceApproximation, TessellationError> {
     crate::context::strict(|| {
         let face = model
             .face(face_id)
@@ -317,7 +317,7 @@ pub fn approximate_face_chordally(
             .map(|parameter| surface.point_at(parameter))
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(ChordalFaceApproximation {
+        Ok(ArenaChordalFaceApproximation {
             source_face: face_id,
             source_surface_kind: surface.kind(),
             policy,
@@ -333,7 +333,7 @@ fn approximate_complete_sphere_chordally(
     surface: &crate::Surface,
     orientation: Orientation,
     policy: ChordalApproximationPolicy,
-) -> Result<ChordalFaceApproximation, TessellationError> {
+) -> Result<ArenaChordalFaceApproximation, TessellationError> {
     let mut segments_per_quadrant = policy.boundary_segments.get();
     for _ in 0..policy.interior_refinement_levels {
         segments_per_quadrant = segments_per_quadrant
@@ -419,7 +419,7 @@ fn approximate_complete_sphere_chordally(
         .iter()
         .map(|parameter| surface.point_at(parameter))
         .collect::<Result<Vec<_>, _>>()?;
-    Ok(ChordalFaceApproximation {
+    Ok(ArenaChordalFaceApproximation {
         source_face: face_id,
         source_surface_kind: SurfaceKind::Sphere,
         policy,
@@ -430,7 +430,7 @@ fn approximate_complete_sphere_chordally(
 }
 
 fn sampled_boundaries(
-    model: &Model,
+    model: &ArenaModel,
     face_id: FaceId,
     segments_per_use: usize,
     lines_only: bool,
@@ -674,7 +674,7 @@ mod tests {
             Point2::new(r(3), r(3)),
             Point2::new(r(3), r(1)),
         ];
-        let (model, _) = crate::builder::extrude_region(&outer, &[hole], r(0), r(2)).unwrap();
+        let (model, _) = crate::construction::extrude_region(&outer, &[hole], r(0), r(2)).unwrap();
         let top = FaceId::from_index(1).unwrap();
         let mesh = triangulate_planar_face(&model, top).unwrap();
         assert_eq!(mesh.parameters().len(), 8);
@@ -713,7 +713,7 @@ mod tests {
 
     #[test]
     fn exact_planar_path_rejects_curved_and_nonplanar_faces() {
-        let (model, _) = crate::builder::cylinder(r(2), r(3)).unwrap();
+        let (model, _) = crate::construction::cylinder(r(2), r(3)).unwrap();
         assert_eq!(
             triangulate_planar_face(&model, FaceId::from_index(0).unwrap()).unwrap_err(),
             TessellationError::CurvedBoundary
@@ -747,7 +747,7 @@ mod tests {
             control_points,
             weights: vec![vec![r(1); 3]; 3],
         };
-        let (model, faces) = crate::builder::tensor_patch_shell(vec![patch]).unwrap();
+        let (model, faces) = crate::construction::tensor_patch_shell(vec![patch]).unwrap();
         let source_json = model.to_json().unwrap();
         let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(1).unwrap(), 2);
         let artifact = approximate_face_chordally(&model, faces[0], policy).unwrap();
@@ -798,7 +798,7 @@ mod tests {
             u_knots: vec![r(2), r(2), r(5), r(5)],
             v_knots: vec![r(-3), r(-3), r(1), r(1)],
         };
-        let (model, faces) = crate::builder::tensor_patch_shell(vec![patch]).unwrap();
+        let (model, faces) = crate::construction::tensor_patch_shell(vec![patch]).unwrap();
         let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(2).unwrap(), 1);
         let artifact = approximate_face_chordally(&model, faces[0], policy).unwrap();
         assert_eq!(artifact.source_surface_kind(), SurfaceKind::Nurbs);
@@ -814,7 +814,7 @@ mod tests {
     #[test]
     fn chordal_output_accepts_curved_trims_and_analytic_surfaces() {
         let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(3).unwrap(), 1);
-        let (cylinder, _) = crate::builder::cylinder(r(2), r(3)).unwrap();
+        let (cylinder, _) = crate::construction::cylinder(r(2), r(3)).unwrap();
         for face_index in 0..6 {
             let face_id = FaceId::from_index(face_index).unwrap();
             let artifact = approximate_face_chordally(&cylinder, face_id, policy).unwrap();
@@ -844,7 +844,7 @@ mod tests {
             }
         }
 
-        let (torus, _) = crate::builder::torus(r(3), r(1)).unwrap();
+        let (torus, _) = crate::construction::torus(r(3), r(1)).unwrap();
         let torus_face = FaceId::from_index(0).unwrap();
         let artifact = approximate_face_chordally(&torus, torus_face, policy).unwrap();
         assert_eq!(artifact.source_surface_kind(), SurfaceKind::Torus);
@@ -854,7 +854,7 @@ mod tests {
     #[test]
     fn chordal_output_derives_a_seam_without_mutating_a_whole_sphere() {
         let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(1).unwrap(), 1);
-        let (sphere, _) = crate::builder::sphere(r(2)).unwrap();
+        let (sphere, _) = crate::construction::sphere(r(2)).unwrap();
         let source_json = sphere.to_json().unwrap();
         let face_id = FaceId::from_index(0).unwrap();
         let artifact = approximate_face_chordally(&sphere, face_id, policy).unwrap();
@@ -904,7 +904,7 @@ mod tests {
     #[test]
     fn chordal_sphere_refinement_overflow_is_explicit() {
         let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(1).unwrap(), u8::MAX);
-        let (sphere, _) = crate::builder::sphere(r(2)).unwrap();
+        let (sphere, _) = crate::construction::sphere(r(2)).unwrap();
         assert_eq!(
             approximate_face_chordally(&sphere, FaceId::from_index(0).unwrap(), policy)
                 .unwrap_err(),

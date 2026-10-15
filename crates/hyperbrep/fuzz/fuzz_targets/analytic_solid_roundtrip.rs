@@ -7,27 +7,39 @@ use hyperbrep::{
 use hypercurve::{Curve2, CurvePath2, LineSeg2, Point2 as CurvePoint2};
 use libfuzzer_sys::fuzz_target;
 
+fn first_solid(model: &hyperbrep::Model) -> hyperbrep::SolidRef<'_> {
+    model.solids().next().expect("nonempty fixture")
+}
+
 fuzz_target!(|bytes: &[u8]| {
     if bytes.len() < 4 {
         return;
     }
     let positive = |index: usize| Real::from(i32::from(bytes[index]) + 1);
     let built = match bytes[0] % 15 {
-        0 => builder::cylinder(positive(1), positive(2)).ok(),
+        0 => builder::cylinder(positive(1), positive(2))
+            .map(|set| set.into_model())
+            .ok(),
         1 => {
             let top = positive(1);
             let base = &top + positive(2);
-            builder::cone_frustum(base, top, positive(3)).ok()
+            builder::cone_frustum(base, top, positive(3))
+                .map(|set| set.into_model())
+                .ok()
         }
         2 => {
             let minor = positive(1);
             let major = &minor + positive(2);
-            builder::torus(major, minor).ok()
+            builder::torus(major, minor)
+                .map(|set| set.into_model())
+                .ok()
         }
-        3 => builder::sphere(positive(1)).ok(),
+        3 => builder::sphere(positive(1))
+            .map(|set| set.into_model())
+            .ok(),
         4 => {
             let radius = positive(1);
-            let Ok((first, solid)) = builder::sphere(radius.clone()) else {
+            let Ok(first) = builder::sphere(radius.clone()).map(|set| set.into_model()) else {
                 return;
             };
             let Ok(second) = first.transformed(&Matrix4::affine_translation([
@@ -38,21 +50,24 @@ fuzz_target!(|bytes: &[u8]| {
                 return;
             };
             let result = match bytes[2] % 3 {
-                0 => boolean::union(&first, solid, &second, solid),
-                1 => boolean::intersection(&first, solid, &second, solid),
-                _ => boolean::difference(&first, solid, &second, solid),
+                0 => boolean::union(first_solid(&first), first_solid(&second)),
+                1 => boolean::intersection(first_solid(&first), first_solid(&second)),
+                _ => boolean::difference(first_solid(&first), first_solid(&second)),
             };
-            match result {
-                Ok(boolean::BooleanResult::Solid { model, solid }) => Some((model, solid)),
-                _ => None,
-            }
+            result
+                .ok()
+                .filter(|bodies| bodies.len() == 1)
+                .map(|bodies| bodies.into_model())
         }
         5 => {
             let radius = positive(1);
-            let Ok((first, solid)) = builder::cylinder(radius.clone(), positive(2)) else {
+            let Ok(first) =
+                builder::cylinder(radius.clone(), positive(2)).map(|set| set.into_model())
+            else {
                 return;
             };
-            let Ok((second, second_solid)) = builder::cylinder(radius, positive(3)) else {
+            let Ok(second) = builder::cylinder(radius, positive(3)).map(|set| set.into_model())
+            else {
                 return;
             };
             let orient = |offset: i32| {
@@ -72,28 +87,26 @@ fuzz_target!(|bytes: &[u8]| {
                 return;
             };
             let result = match bytes[2] % 3 {
-                0 => boolean::union(&first, solid, &second, second_solid),
-                1 => boolean::intersection(&first, solid, &second, second_solid),
-                _ => boolean::difference(&first, solid, &second, second_solid),
+                0 => boolean::union(first_solid(&first), first_solid(&second)),
+                1 => boolean::intersection(first_solid(&first), first_solid(&second)),
+                _ => boolean::difference(first_solid(&first), first_solid(&second)),
             };
-            match result {
-                Ok(boolean::BooleanResult::Solid { model, solid }) => Some((model, solid)),
-                Ok(boolean::BooleanResult::Solids { model, solids }) => {
-                    solids.first().copied().map(|solid| (model, solid))
-                }
-                _ => None,
-            }
+            result
+                .ok()
+                .filter(|bodies| !bodies.is_empty())
+                .map(|bodies| bodies.into_model())
         }
         6 => {
             let top = positive(1);
             let middle = &top + positive(2);
             let base = &middle + positive(3);
-            let Ok((outer, solid)) = builder::cone_frustum(base.clone(), top.clone(), &base - &top)
+            let Ok(outer) = builder::cone_frustum(base.clone(), top.clone(), &base - &top)
+                .map(|set| set.into_model())
             else {
                 return;
             };
-            let Ok((inner, inner_solid)) =
-                builder::cone_frustum(middle.clone(), top.clone(), &middle - &top)
+            let Ok(inner) = builder::cone_frustum(middle.clone(), top.clone(), &middle - &top)
+                .map(|set| set.into_model())
             else {
                 return;
             };
@@ -105,17 +118,14 @@ fuzz_target!(|bytes: &[u8]| {
                 return;
             };
             let result = match bytes[1] % 3 {
-                0 => boolean::union(&outer, solid, &inner, inner_solid),
-                1 => boolean::intersection(&outer, solid, &inner, inner_solid),
-                _ => boolean::difference(&outer, solid, &inner, inner_solid),
+                0 => boolean::union(first_solid(&outer), first_solid(&inner)),
+                1 => boolean::intersection(first_solid(&outer), first_solid(&inner)),
+                _ => boolean::difference(first_solid(&outer), first_solid(&inner)),
             };
-            match result {
-                Ok(boolean::BooleanResult::Solid { model, solid }) => Some((model, solid)),
-                Ok(boolean::BooleanResult::Solids { model, solids }) => {
-                    solids.first().copied().map(|solid| (model, solid))
-                }
-                _ => None,
-            }
+            result
+                .ok()
+                .filter(|bodies| !bodies.is_empty())
+                .map(|bodies| bodies.into_model())
         }
         7 => {
             let inner = positive(1);
@@ -127,6 +137,7 @@ fuzz_target!(|bytes: &[u8]| {
                 hyperbrep::Point2::new(outer, height.clone()),
                 hyperbrep::Point2::new(inner, height),
             ])
+            .map(|set| set.into_model())
             .ok()
         }
         8 => {
@@ -135,37 +146,36 @@ fuzz_target!(|bytes: &[u8]| {
             let overlap_height = positive(3);
             let first_outer = Real::one() + &radial_offset + &overlap_width;
             let first_top = Real::one() + &overlap_height;
-            let Ok((first, solid)) = builder::revolve(&[
+            let Ok(first) = builder::revolve(&[
                 hyperbrep::Point2::new(Real::one(), Real::zero()),
                 hyperbrep::Point2::new(first_outer.clone(), Real::zero()),
                 hyperbrep::Point2::new(first_outer.clone(), first_top.clone()),
                 hyperbrep::Point2::new(Real::one(), first_top),
-            ]) else {
+            ])
+            .map(|set| set.into_model()) else {
                 return;
             };
             let second_inner = Real::one() + radial_offset;
             let second_outer = &first_outer + Real::one();
             let second_top = &overlap_height + Real::from(2);
-            let Ok((second, second_solid)) = builder::revolve(&[
+            let Ok(second) = builder::revolve(&[
                 hyperbrep::Point2::new(second_inner.clone(), Real::one()),
                 hyperbrep::Point2::new(second_outer.clone(), Real::one()),
                 hyperbrep::Point2::new(second_outer, second_top.clone()),
                 hyperbrep::Point2::new(second_inner, second_top),
-            ]) else {
+            ])
+            .map(|set| set.into_model()) else {
                 return;
             };
             let result = match bytes[1] % 3 {
-                0 => boolean::union(&first, solid, &second, second_solid),
-                1 => boolean::intersection(&first, solid, &second, second_solid),
-                _ => boolean::difference(&first, solid, &second, second_solid),
+                0 => boolean::union(first_solid(&first), first_solid(&second)),
+                1 => boolean::intersection(first_solid(&first), first_solid(&second)),
+                _ => boolean::difference(first_solid(&first), first_solid(&second)),
             };
-            match result {
-                Ok(boolean::BooleanResult::Solid { model, solid }) => Some((model, solid)),
-                Ok(boolean::BooleanResult::Solids { model, solids }) => {
-                    solids.first().copied().map(|solid| (model, solid))
-                }
-                _ => None,
-            }
+            result
+                .ok()
+                .filter(|bodies| !bodies.is_empty())
+                .map(|bodies| bodies.into_model())
         }
         9 => {
             let width = positive(1);
@@ -183,6 +193,7 @@ fuzz_target!(|bytes: &[u8]| {
                 hyperbrep::Vector3::from_xyz(Real::zero(), Real::from(3), Real::zero()),
                 hyperbrep::Vector3::from_xyz(Real::one(), Real::zero(), height),
             )
+            .map(|set| set.into_model())
             .ok()
         }
         10 => {
@@ -215,6 +226,7 @@ fuzz_target!(|bytes: &[u8]| {
                 Vector3::y(),
                 path,
             )
+            .map(|set| set.into_model())
             .ok()
         }
         11 => {
@@ -240,7 +252,9 @@ fuzz_target!(|bytes: &[u8]| {
             ]) else {
                 return;
             };
-            builder::revolve_contour(&profile).ok()
+            builder::revolve_contour(&profile)
+                .map(|set| set.into_model())
+                .ok()
         }
         12 => {
             let width = positive(1);
@@ -272,17 +286,19 @@ fuzz_target!(|bytes: &[u8]| {
                 ],
                 frame,
             )
+            .map(|set| set.into_model())
             .ok()
         }
         13 => {
-            let Ok((model, solid)) = builder::cuboid(
+            let Ok(model) = builder::cuboid(
                 hyperbrep::Point3::origin(),
                 hyperbrep::Point3::new(Real::one(), Real::one(), Real::one()),
-            ) else {
+            )
+            .map(|set| set.into_model()) else {
                 return;
             };
-            let Some(cap_surface) = model.faces().find_map(|(_, face)| {
-                let surface = model.surface(face.surface())?;
+            let Some(cap_surface) = model.faces().find_map(|face| {
+                let surface = face.surface();
                 let origin = surface
                     .point_at(&hyperbrep::Point2::new(Real::zero(), Real::zero()))
                     .ok()?;
@@ -317,7 +333,7 @@ fuzz_target!(|bytes: &[u8]| {
             let Ok(_) = edit.replace_surface(cap_surface, tensor) else {
                 return;
             };
-            edit.commit().ok().map(|model| (model, solid))
+            edit.commit().ok()
         }
         _ => {
             let width = positive(1);
@@ -365,30 +381,26 @@ fuzz_target!(|bytes: &[u8]| {
                     z: Real::from(5),
                 });
             }
-            builder::loft(&sections).ok()
+            builder::loft(&sections).map(|set| set.into_model()).ok()
         }
     };
-    let Some((model, solid)) = built else {
+    let Some(model) = built else {
         return;
     };
-    let _ = model.solid_volume(solid);
-    let _ = model.classify_point(solid, &hyperbrep::Point3::origin());
-    let _ = boolean::intersection_graph(&model, solid, &model, solid);
+    let _ = first_solid(&model).volume();
+    let _ = first_solid(&model).classify_point(&hyperbrep::Point3::origin());
+    let _ = boolean::intersection_graph(first_solid(&model), first_solid(&model));
     let chordal_policy = hyperbrep::tessellation::ChordalApproximationPolicy::uniform(
         std::num::NonZeroUsize::new(usize::from(bytes[1] % 3) + 1)
             .expect("fuzz boundary subdivision is positive"),
         bytes[2] % 3,
     );
-    if let Some(face) = model
-        .solid(solid)
-        .and_then(|solid| model.shell(solid.outer()))
-        .and_then(|shell| {
-            shell
-                .faces()
-                .get(usize::from(bytes[3]) % shell.faces().len())
-        })
+    let shell = first_solid(&model).outer();
+    if let Some(face) = shell
+        .faces()
+        .nth(usize::from(bytes[3]) % shell.faces().len())
         && let Ok(artifact) =
-            hyperbrep::tessellation::approximate_face_chordally(&model, *face, chordal_policy)
+            hyperbrep::tessellation::approximate_face_chordally(face, chordal_policy)
     {
         assert_eq!(artifact.parameters().len(), artifact.points().len());
         for index in 0..artifact.parameters().len() {
@@ -418,12 +430,12 @@ fuzz_target!(|bytes: &[u8]| {
     let Ok(decoded) = raw.validate() else {
         panic!("validated analytic model failed exact persistence replay");
     };
-    let _ = decoded.solid_volume(solid);
-    let _ = boolean::intersection_graph(&model, solid, &decoded, solid);
+    let _ = first_solid(&decoded).volume();
+    let _ = boolean::intersection_graph(first_solid(&model), first_solid(&decoded));
 
     if bytes[0] % 14 == 1 {
-        let Ok((frustum, frustum_solid)) =
-            builder::cone_frustum(Real::from(4), Real::one(), Real::from(3))
+        let Ok(frustum) = builder::cone_frustum(Real::from(4), Real::one(), Real::from(3))
+            .map(|set| set.into_model())
         else {
             return;
         };
@@ -440,24 +452,31 @@ fuzz_target!(|bytes: &[u8]| {
         let Ok(frustum) = frustum.transformed(&parameter_rotation) else {
             return;
         };
-        let Ok((cutter, cutter_solid)) = builder::cuboid(
+        let Ok(cutter) = builder::cuboid(
             hyperbrep::Point3::new(Real::zero(), Real::from(-5), Real::from(-1)),
             hyperbrep::Point3::new(Real::from(5), Real::from(5), Real::from(4)),
-        ) else {
+        )
+        .map(|set| set.into_model()) else {
             return;
         };
         let result = if bytes[1].is_multiple_of(2) {
-            boolean::intersection(&frustum, frustum_solid, &cutter, cutter_solid)
+            boolean::intersection(first_solid(&frustum), first_solid(&cutter))
         } else {
-            boolean::difference(&frustum, frustum_solid, &cutter, cutter_solid)
+            boolean::difference(first_solid(&frustum), first_solid(&cutter))
         };
-        let Ok(boolean::BooleanResult::Solid { model, solid }) = result else {
-            panic!("certified axial frustum Boolean did not retain one solid: {result:?}");
+        let Ok(bodies) = result else {
+            panic!("certified axial frustum Boolean failed: {result:?}");
         };
+        assert_eq!(
+            bodies.len(),
+            1,
+            "certified axial frustum Boolean retains one solid"
+        );
+        let model = bodies.model();
         let expected = (Real::from(21) * Real::pi() / Real::from(2)).unwrap();
         assert_eq!(
             hyperlimit::compare_reals(
-                &model.solid_volume(solid).unwrap(),
+                &first_solid(model).volume().unwrap(),
                 &expected,
                 hyperbrep::STRICT_PREDICATES
             )
@@ -474,39 +493,41 @@ fuzz_target!(|bytes: &[u8]| {
     }
 
     let radius = positive(1);
-    let Ok((sphere, sphere_solid)) = builder::sphere(radius.clone()) else {
+    let Ok(sphere) = builder::sphere(radius.clone()).map(|set| set.into_model()) else {
         return;
     };
     let Ok(half_radius) = &radius / Real::from(2) else {
         return;
     };
     let extent = &radius * Real::from(2);
-    let Ok((trim_box, trim_box_solid)) = builder::cuboid(
+    let Ok(trim_box) = builder::cuboid(
         hyperbrep::Point3::new(half_radius.clone(), half_radius, -extent.clone()),
         hyperbrep::Point3::new(extent.clone(), extent.clone(), extent),
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
-    let _ = boolean::intersection_graph(&sphere, sphere_solid, &trim_box, trim_box_solid);
+    let _ = boolean::intersection_graph(first_solid(&sphere), first_solid(&trim_box));
 
     let width = positive(1);
     let depth = positive(2);
     let height = positive(3);
-    let Ok((first_box, first_box_solid)) = builder::cuboid(
+    let Ok(first_box) = builder::cuboid(
         hyperbrep::Point3::origin(),
         hyperbrep::Point3::new(width.clone(), depth.clone(), height.clone()),
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
     let gap_start = &width + Real::one();
-    let Ok((second_box, second_box_solid)) = builder::cuboid(
+    let Ok(second_box) = builder::cuboid(
         hyperbrep::Point3::new(gap_start.clone(), Real::zero(), Real::zero()),
         hyperbrep::Point3::new(gap_start + &width, depth.clone(), height.clone()),
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
-    let Ok(graph) =
-        boolean::intersection_graph(&first_box, first_box_solid, &second_box, second_box_solid)
+    let Ok(graph) = boolean::intersection_graph(first_solid(&first_box), first_solid(&second_box))
     else {
         return;
     };
@@ -520,14 +541,15 @@ fuzz_target!(|bytes: &[u8]| {
 
     let half_width = (&width / Real::from(2)).unwrap();
     let half_depth = (&depth / Real::from(2)).unwrap();
-    let Ok((overlap_box, overlap_box_solid)) = builder::cuboid(
+    let Ok(overlap_box) = builder::cuboid(
         hyperbrep::Point3::new(half_width.clone(), half_depth.clone(), Real::zero()),
         hyperbrep::Point3::new(&width + half_width, &depth + half_depth, height.clone()),
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
     let Ok(overlap_graph) =
-        boolean::intersection_graph(&first_box, first_box_solid, &overlap_box, overlap_box_solid)
+        boolean::intersection_graph(first_solid(&first_box), first_solid(&overlap_box))
     else {
         return;
     };
@@ -551,20 +573,22 @@ fuzz_target!(|bytes: &[u8]| {
     };
     let skew_result = match operation {
         boolean::BooleanOperation::Union => {
-            boolean::union(&first_box, first_box_solid, &skew_box, first_box_solid)
+            boolean::union(first_solid(&first_box), first_solid(&skew_box))
         }
         boolean::BooleanOperation::Intersection => {
-            boolean::intersection(&first_box, first_box_solid, &skew_box, first_box_solid)
+            boolean::intersection(first_solid(&first_box), first_solid(&skew_box))
         }
         boolean::BooleanOperation::Difference => {
-            boolean::difference(&first_box, first_box_solid, &skew_box, first_box_solid)
+            boolean::difference(first_solid(&first_box), first_solid(&skew_box))
         }
     };
-    let skew_model = match skew_result {
-        Ok(boolean::BooleanResult::Solid { model, .. })
-        | Ok(boolean::BooleanResult::Solids { model, .. }) => model,
-        Ok(boolean::BooleanResult::Empty) | Err(_) => return,
+    let Ok(skew_bodies) = skew_result else {
+        return;
     };
+    if skew_bodies.is_empty() {
+        return;
+    }
+    let skew_model = skew_bodies.into_model();
     let Ok(json) = skew_model.to_json() else {
         return;
     };
@@ -575,16 +599,18 @@ fuzz_target!(|bytes: &[u8]| {
         panic!("validated skew planar Boolean failed exact persistence replay");
     }
 
-    let Ok((void_outer, void_outer_solid)) = builder::cuboid(
+    let Ok(void_outer) = builder::cuboid(
         hyperbrep::Point3::origin(),
         hyperbrep::Point3::new(Real::from(2), Real::from(2), Real::from(2)),
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
-    let Ok((void_inner, void_inner_solid)) = builder::cuboid(
+    let Ok(void_inner) = builder::cuboid(
         hyperbrep::Point3::origin(),
         hyperbrep::Point3::new(Real::one(), Real::one(), Real::one()),
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
     let fraction = |numerator: i32| {
@@ -605,9 +631,10 @@ fuzz_target!(|bytes: &[u8]| {
     let Ok(void_inner) = void_inner.transformed(&void_transform) else {
         return;
     };
-    if let Ok(boolean::BooleanResult::Solid { model, .. }) =
-        boolean::difference(&void_outer, void_outer_solid, &void_inner, void_inner_solid)
+    if let Ok(bodies) = boolean::difference(first_solid(&void_outer), first_solid(&void_inner))
+        && bodies.len() == 1
     {
+        let model = bodies.model();
         let Ok(json) = model.to_json() else {
             return;
         };
@@ -749,15 +776,22 @@ fuzz_target!(|bytes: &[u8]| {
                     vec![Real::from(2), Real::from(2), Real::from(5), Real::from(5)],
                     vec![Real::from(-3), Real::from(-3), Real::from(7), Real::from(7)],
                 )
+                .map(|set| set.into_model())
             } else {
                 builder::rational_bezier_patch(bilinear_controls, bilinear_weights)
+                    .map(|set| set.into_model())
             };
-            let Ok((patch, face)) = patch else {
+            let Ok(patch) = patch else {
                 return;
             };
-            if let Ok((split, _)) =
-                patch.split_face_by_surface_curve(face, &curve, SurfaceIntersectionOperand::First)
+            let face = patch.faces().next().expect("fixture entity");
+            if let Ok(split_change) = patch
+                .faces()
+                .nth(face.index())
+                .expect("fixture entity survives this edit")
+                .split_by_surface_curve(&curve, SurfaceIntersectionOperand::First)
             {
+                let split = split_change.model();
                 let Ok(json) = split.to_json() else {
                     return;
                 };
@@ -844,12 +878,19 @@ fuzz_target!(|bytes: &[u8]| {
         let _ = curve.second_pcurve().point_at(&parameter);
     }
     if bytes[2] % 5 < 3 && !retained.is_empty() {
-        let Ok((patch, face)) = builder::rational_bezier_patch(pole_controls, pole_weights) else {
+        let Ok(patch) =
+            builder::rational_bezier_patch(pole_controls, pole_weights).map(|set| set.into_model())
+        else {
             return;
         };
-        if let Ok((split, _)) =
-            patch.split_face_by_surface_curves(face, &retained, SurfaceIntersectionOperand::First)
+        let face = patch.faces().next().expect("fixture entity");
+        if let Ok(split_change) = patch
+            .faces()
+            .nth(face.index())
+            .expect("fixture entity survives this edit")
+            .split_by_surface_curves(&retained, SurfaceIntersectionOperand::First)
         {
+            let split = split_change.model();
             let Ok(json) = split.to_json() else {
                 return;
             };
@@ -861,9 +902,12 @@ fuzz_target!(|bytes: &[u8]| {
             }
         }
     } else if bytes[2] % 5 == 4 {
-        let Ok((patch, face)) = builder::rational_bezier_patch(pole_controls, pole_weights) else {
+        let Ok(patch) =
+            builder::rational_bezier_patch(pole_controls, pole_weights).map(|set| set.into_model())
+        else {
             return;
         };
+        let face = patch.faces().next().expect("fixture entity");
         let rectangle = |min_x: i32, min_y: i32, max_x: i32, max_y: i32| {
             let points = [
                 CurvePoint2::new(Real::from(min_x), Real::from(min_y)),
@@ -891,19 +935,21 @@ fuzz_target!(|bytes: &[u8]| {
             1 => (rectangle(1, -1, 3, 3), Vec::new()),
             _ => (rectangle(-2, -2, 4, 4), vec![rectangle(-1, -1, 3, 3)]),
         };
-        let Ok((plane, plane_face)) = builder::planar_face(
+        let Ok(plane) = builder::planar_face(
             &outer,
             &holes,
             hyperbrep::Point3::origin(),
             Vector3::x(),
             Vector3::y(),
-        ) else {
+        )
+        .map(|set| set.into_model()) else {
             return;
         };
-        let Ok(Some(pair)) = boolean::intersect_faces(&patch, face, &plane, plane_face) else {
+        let plane_face = plane.faces().next().expect("fixture entity");
+        let Ok(Some(pair)) = boolean::intersect_faces(face, plane_face) else {
             return;
         };
-        match (bytes[3] % 3, pair.trim()) {
+        match (bytes[3] % 3, pair.details().trim()) {
             (
                 0,
                 boolean::FacePairTrim::SurfaceRegion {
@@ -930,7 +976,7 @@ fuzz_target!(|bytes: &[u8]| {
         }
     }
     if bytes[0] % 7 == 3 {
-        let Ok((graph_patch, graph_face)) = builder::rational_bezier_patch(
+        let Ok(graph_patch) = builder::rational_bezier_patch(
             vec![
                 vec![
                     hyperbrep::Point3::origin(),
@@ -950,21 +996,21 @@ fuzz_target!(|bytes: &[u8]| {
                 vec![Real::from(2), Real::from(2)],
                 vec![Real::from(3), Real::from(3)],
             ],
-        ) else {
+        )
+        .map(|set| set.into_model()) else {
             return;
         };
-        let graph_surface = graph_patch
-            .face(graph_face)
-            .and_then(|face| graph_patch.surface(face.surface()))
-            .expect("validated graph patch face has a surface");
+        let graph_face = graph_patch.faces().next().expect("fixture entity");
+        let graph_surface = graph_face.surface();
         if let Ok(SurfaceSurfaceIntersection::Curve(curve)) =
             graph_surface.intersect_surface(&oblique_plane)
-            && let Ok((split, _)) = graph_patch.split_face_by_surface_curve(
-                graph_face,
-                &curve,
-                SurfaceIntersectionOperand::First,
-            )
+            && let Ok(split_change) = graph_patch
+                .faces()
+                .nth(graph_face.index())
+                .expect("fixture entity survives this edit")
+                .split_by_surface_curve(&curve, SurfaceIntersectionOperand::First)
         {
+            let split = split_change.model();
             let Ok(json) = split.to_json() else {
                 return;
             };
@@ -975,7 +1021,7 @@ fuzz_target!(|bytes: &[u8]| {
                 panic!("validated non-isoparametric tensor split failed persistence replay");
             }
         }
-        let Ok((nurbs_graph_patch, nurbs_graph_face)) = builder::nurbs_patch(
+        let Ok(nurbs_graph_patch) = builder::nurbs_patch(
             1,
             2,
             vec![
@@ -1006,21 +1052,21 @@ fuzz_target!(|bytes: &[u8]| {
                 Real::from(5),
                 Real::from(5),
             ],
-        ) else {
+        )
+        .map(|set| set.into_model()) else {
             return;
         };
-        let nurbs_graph_surface = nurbs_graph_patch
-            .face(nurbs_graph_face)
-            .and_then(|face| nurbs_graph_patch.surface(face.surface()))
-            .expect("validated NURBS graph patch face has a surface");
+        let nurbs_graph_face = nurbs_graph_patch.faces().next().expect("fixture entity");
+        let nurbs_graph_surface = nurbs_graph_face.surface();
         if let Ok(SurfaceSurfaceIntersection::Curve(curve)) =
             nurbs_graph_surface.intersect_surface(&oblique_plane)
-            && let Ok((split, _)) = nurbs_graph_patch.split_face_by_surface_curve(
-                nurbs_graph_face,
-                &curve,
-                SurfaceIntersectionOperand::First,
-            )
+            && let Ok(split_change) = nurbs_graph_patch
+                .faces()
+                .nth(nurbs_graph_face.index())
+                .expect("fixture entity survives this edit")
+                .split_by_surface_curve(&curve, SurfaceIntersectionOperand::First)
         {
+            let split = split_change.model();
             let Ok(json) = split.to_json() else {
                 return;
             };
@@ -1031,7 +1077,7 @@ fuzz_target!(|bytes: &[u8]| {
                 panic!("validated NURBS tensor graph split failed persistence replay");
             }
         }
-        let Ok((v_nurbs_graph_patch, v_nurbs_graph_face)) = builder::nurbs_patch(
+        let Ok(v_nurbs_graph_patch) = builder::nurbs_patch(
             2,
             1,
             vec![
@@ -1062,21 +1108,21 @@ fuzz_target!(|bytes: &[u8]| {
                 Real::from(5),
             ],
             vec![Real::from(7), Real::from(7), Real::from(11), Real::from(11)],
-        ) else {
+        )
+        .map(|set| set.into_model()) else {
             return;
         };
-        let v_nurbs_graph_surface = v_nurbs_graph_patch
-            .face(v_nurbs_graph_face)
-            .and_then(|face| v_nurbs_graph_patch.surface(face.surface()))
-            .expect("validated v-linear NURBS graph patch face has a surface");
+        let v_nurbs_graph_face = v_nurbs_graph_patch.faces().next().expect("fixture entity");
+        let v_nurbs_graph_surface = v_nurbs_graph_face.surface();
         if let Ok(SurfaceSurfaceIntersection::Curve(curve)) =
             v_nurbs_graph_surface.intersect_surface(&oblique_plane)
-            && let Ok((split, _)) = v_nurbs_graph_patch.split_face_by_surface_curve(
-                v_nurbs_graph_face,
-                &curve,
-                SurfaceIntersectionOperand::First,
-            )
+            && let Ok(split_change) = v_nurbs_graph_patch
+                .faces()
+                .nth(v_nurbs_graph_face.index())
+                .expect("fixture entity survives this edit")
+                .split_by_surface_curve(&curve, SurfaceIntersectionOperand::First)
         {
+            let split = split_change.model();
             let Ok(json) = split.to_json() else {
                 return;
             };
@@ -1087,7 +1133,7 @@ fuzz_target!(|bytes: &[u8]| {
                 panic!("validated v-linear NURBS tensor graph split failed persistence replay");
             }
         }
-        let Ok((partial_graph_patch, partial_graph_face)) = builder::nurbs_patch(
+        let Ok(partial_graph_patch) = builder::nurbs_patch(
             1,
             1,
             vec![
@@ -1123,22 +1169,23 @@ fuzz_target!(|bytes: &[u8]| {
                 Real::from(6),
                 Real::from(6),
             ],
-        ) else {
+        )
+        .map(|set| set.into_model()) else {
             return;
         };
-        let partial_graph_surface = partial_graph_patch
-            .face(partial_graph_face)
-            .and_then(|face| partial_graph_patch.surface(face.surface()))
-            .expect("validated partial graph patch face has a surface");
+        let partial_graph_face = partial_graph_patch.faces().next().expect("fixture entity");
+        let partial_graph_surface = partial_graph_face.surface();
         if let Ok(SurfaceSurfaceIntersection::Curves(curves)) =
             partial_graph_surface.intersect_surface(&oblique_plane)
-            && let Ok((partitioned, partition)) = partial_graph_patch.split_face_by_surface_curves(
-                partial_graph_face,
-                &curves,
-                SurfaceIntersectionOperand::First,
-            )
+            && let Ok(partitioned_change) = partial_graph_patch
+                .faces()
+                .nth(partial_graph_face.index())
+                .expect("fixture entity survives this edit")
+                .split_by_surface_curves(&curves, SurfaceIntersectionOperand::First)
         {
-            assert_eq!(partition.faces.len(), curves.len() + 1);
+            let partitioned = partitioned_change.model();
+            let partition = partitioned_change.details();
+            assert_eq!(partition.faces().len(), curves.len() + 1);
             let Ok(json) = partitioned.to_json() else {
                 return;
             };
@@ -1159,7 +1206,7 @@ fuzz_target!(|bytes: &[u8]| {
             &positive(1) * positive(2) * Real::from(2),
         ],
     ];
-    let Ok((affine_patch, affine_face)) = builder::rational_bezier_patch(
+    let Ok(affine_patch) = builder::rational_bezier_patch(
         vec![
             vec![
                 hyperbrep::Point3::origin(),
@@ -1175,14 +1222,18 @@ fuzz_target!(|bytes: &[u8]| {
             ],
         ],
         affine_weights,
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
     let expected_affine_area = &crossing_width * &crossing_depth;
     assert_eq!(
         hyperlimit::compare_reals(
             &affine_patch
-                .face_area(affine_face)
+                .faces()
+                .next()
+                .expect("fixture face")
+                .area()
                 .expect("separable affine patch has exact area"),
             &expected_affine_area,
             hyperbrep::STRICT_PREDICATES
@@ -1200,7 +1251,10 @@ fuzz_target!(|bytes: &[u8]| {
     assert_eq!(
         hyperlimit::compare_reals(
             &replayed_affine
-                .face_area(affine_face)
+                .faces()
+                .next()
+                .expect("fixture face")
+                .area()
                 .expect("replayed separable affine patch has exact area"),
             &expected_affine_area,
             hyperbrep::STRICT_PREDICATES
@@ -1259,20 +1313,24 @@ fuzz_target!(|bytes: &[u8]| {
     };
     let planar_u_scale = positive(3);
     let planar_v_scale = positive(1);
-    let Ok((planar_model, planar_face)) = builder::planar_face(
+    let Ok(planar_model) = builder::planar_face(
         &planar_outer,
         &[],
         hyperbrep::Point3::origin(),
         Vector3::from_xyz(planar_u_scale.clone(), Real::zero(), Real::zero()),
         Vector3::from_xyz(positive(2), planar_v_scale.clone(), Real::zero()),
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
     let expected_planar_area = &planar_width * &planar_height * planar_u_scale * planar_v_scale;
     assert_eq!(
         hyperlimit::compare_reals(
             &planar_model
-                .face_area(planar_face)
+                .faces()
+                .next()
+                .expect("fixture face")
+                .area()
                 .expect("authored-frame planar spline region has exact area"),
             &expected_planar_area,
             hyperbrep::STRICT_PREDICATES
@@ -1290,7 +1348,10 @@ fuzz_target!(|bytes: &[u8]| {
     assert_eq!(
         hyperlimit::compare_reals(
             &replayed_planar
-                .face_area(planar_face)
+                .faces()
+                .next()
+                .expect("fixture face")
+                .area()
                 .expect("replayed planar spline region has exact area"),
             &expected_planar_area,
             hyperbrep::STRICT_PREDICATES
@@ -1300,16 +1361,17 @@ fuzz_target!(|bytes: &[u8]| {
     );
 
     let path_extrusion_height = positive(3);
-    let Ok((path_extrusion, path_extrusion_solid)) =
+    let Ok(path_extrusion) =
         builder::extrude_path(&planar_outer, Real::zero(), path_extrusion_height.clone())
+            .map(|set| set.into_model())
     else {
         return;
     };
     let expected_path_extrusion_volume = planar_width * planar_height * path_extrusion_height;
     assert_eq!(
         hyperlimit::compare_reals(
-            &path_extrusion
-                .solid_volume(path_extrusion_solid)
+            &first_solid(&path_extrusion)
+                .volume()
                 .expect("path extrusion has exact volume"),
             &expected_path_extrusion_volume,
             hyperbrep::STRICT_PREDICATES
@@ -1324,8 +1386,8 @@ fuzz_target!(|bytes: &[u8]| {
         .expect("path extrusion JSON revalidates");
     assert_eq!(
         hyperlimit::compare_reals(
-            &replayed_path_extrusion
-                .solid_volume(path_extrusion_solid)
+            &first_solid(&replayed_path_extrusion)
+                .volume()
                 .expect("replayed path extrusion has exact volume"),
             &expected_path_extrusion_volume,
             hyperbrep::STRICT_PREDICATES
@@ -1363,19 +1425,23 @@ fuzz_target!(|bytes: &[u8]| {
         return;
     };
     let extrusion_end = positive(1);
-    let Ok((extrusion_patch, extrusion_face)) = builder::extrusion_patch(
+    let Ok(extrusion_patch) = builder::extrusion_patch(
         spline_profile,
         Vector3::x(),
         -Real::one(),
         extrusion_end.clone(),
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
     let expected_extrusion_area = transverse_end * (extrusion_end + Real::one());
     assert_eq!(
         hyperlimit::compare_reals(
             &extrusion_patch
-                .face_area(extrusion_face)
+                .faces()
+                .next()
+                .expect("fixture face")
+                .area()
                 .expect("monotone planar spline extrusion has exact area"),
             &expected_extrusion_area,
             hyperbrep::STRICT_PREDICATES
@@ -1393,7 +1459,10 @@ fuzz_target!(|bytes: &[u8]| {
     assert_eq!(
         hyperlimit::compare_reals(
             &replayed_extrusion
-                .face_area(extrusion_face)
+                .faces()
+                .next()
+                .expect("fixture face")
+                .area()
                 .expect("replayed spline extrusion has exact area"),
             &expected_extrusion_area,
             hyperbrep::STRICT_PREDICATES
@@ -1442,13 +1511,14 @@ fuzz_target!(|bytes: &[u8]| {
         return;
     };
     let quarter = (Real::pi() / Real::from(2)).expect("two is nonzero");
-    let Ok((revolution_patch, revolution_face)) = builder::revolution_patch(
+    let Ok(revolution_patch) = builder::revolution_patch(
         revolution_profile,
         hyperbrep::Point3::origin(),
         Vector3::z(),
         Real::zero(),
         quarter,
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
     let meridian_step = (&revolution_radial_step * &revolution_radial_step
@@ -1459,7 +1529,10 @@ fuzz_target!(|bytes: &[u8]| {
     assert_eq!(
         hyperlimit::compare_reals(
             &revolution_patch
-                .face_area(revolution_face)
+                .faces()
+                .next()
+                .expect("fixture face")
+                .area()
                 .expect("rational line-image revolution has exact area"),
             &expected_revolution_area,
             hyperbrep::STRICT_PREDICATES
@@ -1477,7 +1550,10 @@ fuzz_target!(|bytes: &[u8]| {
     assert_eq!(
         hyperlimit::compare_reals(
             &replayed_revolution
-                .face_area(revolution_face)
+                .faces()
+                .next()
+                .expect("fixture face")
+                .area()
                 .expect("replayed spline revolution has exact area"),
             &expected_revolution_area,
             hyperbrep::STRICT_PREDICATES
@@ -1486,7 +1562,7 @@ fuzz_target!(|bytes: &[u8]| {
         Some(std::cmp::Ordering::Equal)
     );
 
-    let Ok((crossing_patch, crossing_face)) = builder::rational_bezier_patch(
+    let Ok(crossing_patch) = builder::rational_bezier_patch(
         vec![
             vec![
                 hyperbrep::Point3::origin(),
@@ -1502,13 +1578,12 @@ fuzz_target!(|bytes: &[u8]| {
             ],
         ],
         vec![vec![Real::one(), Real::one()]; 2],
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
-    let crossing_surface = crossing_patch
-        .face(crossing_face)
-        .and_then(|face| crossing_patch.surface(face.surface()))
-        .expect("validated crossing patch face has a surface");
+    let crossing_face = crossing_patch.faces().next().expect("fixture entity");
+    let crossing_surface = crossing_face.surface();
     let half_width = (&crossing_width / Real::from(2)).expect("two is nonzero");
     let half_depth = (&crossing_depth / Real::from(2)).expect("two is nonzero");
     let Ok(x_plane) = Surface::plane(
@@ -1536,16 +1611,17 @@ fuzz_target!(|bytes: &[u8]| {
         return;
     };
     let crossing_traces = [*x_trace, *y_trace];
-    let Ok((crossing_partitioned, crossing_partition)) = crossing_patch
-        .split_face_by_surface_curves(
-            crossing_face,
-            &crossing_traces,
-            SurfaceIntersectionOperand::First,
-        )
+    let Ok(crossing_partitioned_change) = crossing_patch
+        .faces()
+        .nth(crossing_face.index())
+        .expect("fixture entity survives this edit")
+        .split_by_surface_curves(&crossing_traces, SurfaceIntersectionOperand::First)
     else {
         panic!("represented transverse tensor traces must partition exactly");
     };
-    assert_eq!(crossing_partition.faces.len(), 4);
+    let crossing_partitioned = crossing_partitioned_change.model();
+    let crossing_partition = crossing_partitioned_change.details();
+    assert_eq!(crossing_partition.faces().len(), 4);
     let Ok(crossing_json) = crossing_partitioned.to_json() else {
         return;
     };
@@ -1572,13 +1648,14 @@ fuzz_target!(|bytes: &[u8]| {
         vec![Real::one(), Real::from(2), Real::one()],
         vec![Real::one(), Real::from(2), Real::one()],
     ];
-    let Ok((patch, patch_face)) =
-        builder::rational_bezier_patch(patch_controls.clone(), patch_weights.clone())
+    let Ok(patch) = builder::rational_bezier_patch(patch_controls.clone(), patch_weights.clone())
+        .map(|set| set.into_model())
     else {
         return;
     };
+    let patch_face = patch.faces().next().expect("fixture entity");
     if let Ok(artifact) =
-        hyperbrep::tessellation::approximate_face_chordally(&patch, patch_face, chordal_policy)
+        hyperbrep::tessellation::approximate_face_chordally(patch_face, chordal_policy)
     {
         assert_eq!(artifact.parameters().len(), artifact.points().len());
         for triangle in artifact.triangles() {
@@ -1590,23 +1667,19 @@ fuzz_target!(|bytes: &[u8]| {
         }
     }
     let plane_z = Real::from(bytes[0] % 4);
-    let Ok((plane_face_model, plane_solid)) = builder::cuboid(
+    let Ok(plane_face_model) = builder::cuboid(
         hyperbrep::Point3::new(Real::from(-1), Real::from(-1), plane_z.clone()),
         hyperbrep::Point3::new(Real::from(3), Real::from(3), plane_z + Real::one()),
-    ) else {
+    )
+    .map(|set| set.into_model()) else {
         return;
     };
-    let Some(plane_face) = plane_face_model
-        .solid(plane_solid)
-        .and_then(|solid| plane_face_model.shell(solid.outer()))
-        .and_then(|shell| shell.faces().first())
-        .copied()
-    else {
+    let plane_solid = plane_face_model.solids().next().expect("fixture entity");
+    let Some(plane_face) = plane_solid.outer().faces().next() else {
         panic!("validated cuboid has no outer-shell face");
     };
-    if let Ok(Some(pair)) =
-        boolean::intersect_faces(&patch, patch_face, &plane_face_model, plane_face)
-        && let boolean::FacePairTrim::SurfaceCurveFragments(fragments) = pair.trim()
+    if let Ok(Some(pair)) = boolean::intersect_faces(patch_face, plane_face)
+        && let boolean::FacePairTrim::SurfaceCurveFragments(fragments) = pair.details().trim()
     {
         for fragment in fragments {
             let domain = fragment.curve().domain();
@@ -1616,14 +1689,14 @@ fuzz_target!(|bytes: &[u8]| {
             let _ = fragment.curve().point_at(&parameter);
             let _ = fragment.first_pcurve().point_at(&parameter);
             let _ = fragment.second_pcurve().point_at(&parameter);
-            let _ = patch.split_face_by_surface_curve(
-                patch_face,
-                fragment,
-                SurfaceIntersectionOperand::First,
-            );
+            let _ = patch
+                .faces()
+                .nth(patch_face.index())
+                .expect("fixture entity survives this edit")
+                .split_by_surface_curve(fragment, SurfaceIntersectionOperand::First);
         }
     }
-    if let Ok((patch_shell, _)) = builder::tensor_patch_shell(vec![
+    if let Ok(patch_shell) = builder::tensor_patch_shell(vec![
         hyperbrep::TensorPatch::RationalBezier {
             control_points: patch_controls,
             weights: patch_weights,
@@ -1646,7 +1719,9 @@ fuzz_target!(|bytes: &[u8]| {
                 vec![Real::one(), Real::from(3), Real::one()],
             ],
         },
-    ]) {
+    ])
+    .map(|set| set.into_model())
+    {
         let Ok(json) = patch_shell.to_json() else {
             return;
         };

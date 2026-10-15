@@ -1,8 +1,12 @@
-//! Typed arena identifiers.
+//! Compact internal slots, also exposed as non-resolving diagnostic labels.
 
 macro_rules! model_id {
     ($name:ident, $description:literal) => {
         #[doc = $description]
+        ///
+        /// This is an arena position used in diagnostics, not a model-bound
+        /// reference. Public modeling APIs accept borrowed entity references
+        /// or construction keys; they never resolve a position by itself.
         #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
         pub struct $name(pub(super) u32);
 
@@ -11,7 +15,7 @@ macro_rules! model_id {
                 u32::try_from(index).ok().map(Self)
             }
 
-            /// Returns the deterministic arena index for this model-local ID.
+            /// Returns the deterministic position for diagnostics.
             pub const fn index(self) -> usize {
                 self.0 as usize
             }
@@ -19,13 +23,13 @@ macro_rules! model_id {
     };
 }
 
-model_id!(VertexId, "Model-local vertex identifier.");
-model_id!(Curve3Id, "Model-local spatial-curve identifier.");
-model_id!(PcurveId, "Model-local surface-parameter curve identifier.");
-model_id!(SurfaceId, "Model-local surface identifier.");
-model_id!(EdgeId, "Model-local edge identifier.");
-model_id!(EdgeUseId, "Model-local oriented edge-use identifier.");
-model_id!(WireId, "Model-local wire identifier.");
-model_id!(FaceId, "Model-local face identifier.");
-model_id!(ShellId, "Model-local shell identifier.");
-model_id!(SolidId, "Model-local solid identifier.");
+model_id!(VertexId, "Diagnostic vertex position.");
+model_id!(Curve3Id, "Diagnostic spatial-curve position.");
+model_id!(PcurveId, "Diagnostic surface-parameter curve position.");
+model_id!(SurfaceId, "Diagnostic surface position.");
+model_id!(EdgeId, "Diagnostic edge position.");
+model_id!(EdgeUseId, "Diagnostic oriented edge-use position.");
+model_id!(WireId, "Diagnostic wire position.");
+model_id!(FaceId, "Diagnostic face position.");
+model_id!(ShellId, "Diagnostic shell position.");
+model_id!(SolidId, "Diagnostic solid position.");

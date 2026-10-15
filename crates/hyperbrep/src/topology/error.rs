@@ -2,6 +2,37 @@
 
 use super::*;
 
+/// A reference belongs to a different construction scope or model revision.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum GeometryReferenceError {
+    /// A construction key was issued by another builder.
+    ForeignBuilder {
+        /// Entity family of the rejected key.
+        kind: EntityKind,
+    },
+    /// A reference or construction key belongs to another model revision.
+    ForeignModel {
+        /// Entity family of the rejected reference.
+        kind: EntityKind,
+    },
+}
+
+impl fmt::Display for GeometryReferenceError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ForeignBuilder { kind } => {
+                write!(formatter, "{kind:?} key belongs to another builder")
+            }
+            Self::ForeignModel { kind } => write!(
+                formatter,
+                "{kind:?} reference belongs to another model revision"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for GeometryReferenceError {}
+
 /// Kind of model record referenced by an invalid ID.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum EntityKind {
@@ -70,6 +101,8 @@ impl From<GeometryError> for QueryError {
 /// Failure while staging a transactional model edit.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum EditError {
+    /// A target or related entity belongs to another model revision.
+    Reference(GeometryReferenceError),
     /// Exact geometry transformation failed.
     Geometry(GeometryError),
     /// A replacement targeted an ID outside the staged model.
@@ -86,6 +119,7 @@ pub enum EditError {
 impl fmt::Display for EditError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Reference(error) => error.fmt(formatter),
             Self::Geometry(error) => error.fmt(formatter),
             Self::InvalidReference { kind, index } => {
                 write!(formatter, "invalid {kind:?} edit target at index {index}")
@@ -98,6 +132,7 @@ impl fmt::Display for EditError {
 impl std::error::Error for EditError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
+            Self::Reference(error) => Some(error),
             Self::Geometry(error) => Some(error),
             Self::Validation(report) => Some(report),
             _ => None,
@@ -114,6 +149,8 @@ impl From<GeometryError> for EditError {
 /// Failure while applying a topology-changing exact edit.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum TopologyEditError {
+    /// A related entity belongs to another model revision.
+    Reference(GeometryReferenceError),
     /// The target record does not exist in this model.
     InvalidReference {
         /// Referenced record family.
@@ -124,7 +161,7 @@ pub enum TopologyEditError {
     /// A face split was requested for a complete closed-surface face.
     WholeSurfaceFace(FaceId),
     /// The vertex-only chord API supports only parameterized planes; authored
-    /// surface curves use [`Model::split_face_by_surface_curve`].
+    /// surface curves use [`crate::FaceRef::split_by_surface_curve`].
     UnsupportedFaceSplitSurface(SurfaceKind),
     /// The requested curve family or parameter correspondence has no complete
     /// exact face-split certificate.
@@ -202,6 +239,7 @@ pub enum TopologyEditError {
 impl fmt::Display for TopologyEditError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Reference(error) => error.fmt(formatter),
             Self::InvalidReference { kind, index } => {
                 write!(
                     formatter,
@@ -292,6 +330,7 @@ impl fmt::Display for TopologyEditError {
 impl std::error::Error for TopologyEditError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
+            Self::Reference(error) => Some(error),
             Self::Geometry(error) => Some(error),
             Self::Build(error) => Some(error),
             Self::Validation(report) => Some(report),
@@ -324,6 +363,8 @@ pub enum Endpoint {
 /// Failure while staging or validating a canonical BREP model.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum BuildError {
+    /// An input key was issued by a different builder.
+    Reference(GeometryReferenceError),
     /// An arena cannot assign another compact identifier.
     CapacityExceeded(EntityKind),
     /// A supplied typed ID does not resolve in this builder.
@@ -473,6 +514,7 @@ impl fmt::Display for BuildError {
 impl std::error::Error for BuildError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
+            Self::Reference(error) => Some(error),
             Self::Geometry(error) => Some(error),
             _ => None,
         }

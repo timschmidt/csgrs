@@ -2,7 +2,7 @@
 
 use crate::topology::*;
 
-impl ModelBuilder {
+impl ArenaModelBuilder {
     pub(in crate::topology) fn validate_rational_tensor_graph_image(
         &self,
         curve: &Curve3,

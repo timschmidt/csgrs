@@ -3,13 +3,22 @@
 Hyper-native exact boundary representation for CAD.
 
 HyperBREP uses `hyperreal::Real` as its only authoritative scalar and familiar
-CAD vocabulary: `Vertex`, `Edge`, `EdgeUse`, `Wire`, `Face`, `Shell`, `Solid`,
+CAD vocabulary: vertices, edges, edge uses, wires, faces, shells, solids,
 `Curve3`, `Pcurve`, `Surface`, and `Model`.
 
 The source model is an immutable typed arena. Geometry and topology are staged
 through `ModelBuilder`; invalid references, disconnected wires, mismatched edge
 endpoints, and unsupported edge/pcurve/surface agreement cannot be published as
 a `Model`.
+
+Public topology is borrowed through `VertexRef`, `EdgeRef`, `FaceRef`,
+`SolidRef` and corresponding references for the other entity families.
+References retain their model revision through traversal. Cloned models share
+one revision; transforms, committed edits and decoded models publish new
+revisions. Builders issue scoped keys and reject foreign keys before mutation.
+Constructors and Booleans return owned `BodySet` or `SheetSet` selections.
+Typed arena positions in errors are diagnostic labels and cannot resolve a
+record through the public API.
 
 ## Exactness contract
 
@@ -388,7 +397,7 @@ The clean-break implementation currently provides:
   support traces for plane-face partitioning, while partial tensor-side
   partition remains explicit until inverse pcurves are representable;
 - exact `Surface::iso_curve` extraction in either tensor direction and
-  `Model::split_face_by_surface_curve` transfer for one retained rational
+  `FaceRef::split_by_surface_curve` transfer for one retained rational
   Bézier/NURBS iso-curve or complete rational-Bézier or NURBS
   translation-tensor graph sections in either axis, plus complete or clipped
   weighted bilinear rational-Bézier graph sections, including bounded
@@ -398,7 +407,7 @@ The clean-break implementation currently provides:
   curved-loop simplicity, same-boundary two-edge pockets, and orientation are
   recertified, interior endpoints split canonical boundary edges, the new curve
   is identity-shared by both descendants, and the complete open shell is
-  revalidated before publication; `Model::split_face_by_surface_curves`
+  revalidated before publication; `FaceRef::split_by_surface_curves`
   applies every retained fragment with an explicit first/second operand
   selector, exact endpoint ordering, deterministic descendant selection, and
   caller-order-independent topology; represented transverse pcurve contacts
@@ -457,11 +466,11 @@ The essential construction flow is:
 ```rust
 use hyperbrep::{Point3, Real, builder};
 
-let (model, solid) = builder::cuboid(
+let bodies = builder::cuboid(
     Point3::origin(),
     Point3::new(Real::from(2), Real::from(3), Real::from(5)),
 )?;
-let exact_volume = model.solid_volume(solid)?;
+let exact_volume = bodies.bodies().next().expect("one cuboid").volume()?;
 # let _ = exact_volume;
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```

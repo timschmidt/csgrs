@@ -2,6 +2,7 @@
 
 Status: Accepted
 Date: 2026-07-29
+Amended: 2026-10-14 (model-bound public references)
 
 ## Context
 
@@ -26,12 +27,40 @@ geometry: Curve3, Pcurve, Surface
 topology: Vertex, Edge, EdgeUse, Wire, Face, Shell, Solid
 ```
 
-Records have private fields. Public typed IDs are stable within one model and
-index their arenas in O(1). IDs are not pointers, global identifiers, or
-geometric hashes.
+Records have private fields and compact typed internal slots. Public Rust
+operations use borrowed `VertexRef`, `EdgeRef`, `FaceRef`, `SolidRef` and the
+corresponding references for other entity families. Each carries its owning
+immutable revision and a private slot. Traversal preserves that owner; callers
+do not pair a bare slot with a separate model. Typed slots exposed by errors
+are diagnostic positions, never resolution handles.
 
 `Model` is a cheap clone over immutable shared data. Cached facts and indexes
 are immutable or initialized once. There is no shared mutable topology.
+
+Clones share revision identity. Transforms, committed edits and archive replay
+create independent revisions, even when the resulting geometry is equal.
+Within the process, identity is `Arc::ptr_eq` on the immutable arena allocation.
+Borrowing keeps the allocation alive, preventing address reuse while a
+reference exists. This identity is used only for ownership and reference
+equality/hashing; it is not a geometric predicate, archive identity, or durable
+feature name. No global counter or platform-specific identifier is required.
+Rust documents allocation identity through
+[`Arc::ptr_eq`](https://doc.rust-lang.org/std/sync/struct.Arc.html#method.ptr_eq)
+and clone-on-write separation through
+[`Arc::make_mut`](https://doc.rust-lang.org/std/sync/struct.Arc.html#method.make_mut).
+Applying those contracts to immutable, borrowed revisions is this design's
+ownership argument; neither operation establishes geometric equality.
+
+`ModelBuilder` issues typed keys carrying an `Arc` construction scope. It
+checks every input key before mutating its staged arenas. Finishing consumes
+the builder and retains that scope in the published model, so keys can resolve
+there and in clones. They do not resolve after transform, edit commit or
+decode. Ordinary arena records remain compact and do not carry scope tokens.
+
+The [public ownership layer](../../src/ownership/mod.rs) is the sole exported
+topology API. The private arena algorithms retain their compact indexing;
+there is no exported unscoped compatibility route. Constructor and Boolean
+results own `BodySet` or `SheetSet`; their iterators return bound references.
 
 ### Required ownership
 
@@ -56,14 +85,29 @@ Queries do not reconstruct maps.
    references immediately.
 3. `Model` is immutable and globally validated.
 
-`ModelBuilder::finish()` and `RawModel::validate()` return either a `Model` or a
-structured `ValidationReport`. They never repair, sew, merge, or infer topology.
+`ModelBuilder::finish()` returns a `Model` or a structured `ValidationReport`.
+`RawModel::validate()` also accounts for archive errors through
+`PersistenceError`, which retains validation failures. Neither operation
+repairs, sews, merges, or infers topology.
 
 ### Editing
 
 `Model::edit()` creates a staged `Edit`. Commit validates the affected local
 region and all impacted global invariants before returning a new `Model`.
 Failure leaves the source model unchanged.
+
+An edit retains its original source revision. All targets and related
+references must belong to that revision, including references passed after a
+staged transform. A foreign or stale revision is rejected before mutation.
+Borrowed references to an old model remain valid for that old immutable model;
+they do not become references to its edited result.
+
+Topology-operation details borrow their result model and retain the source.
+Multi-trace partitions also retain each step's input and output revision.
+Later wire compaction cannot silently rebind an earlier split's positions.
+This retains intermediate arenas and has a memory cost; persistent arena
+sharing and composed history are later refinements. A wire-compaction map
+describes its own step, not durable feature naming or a composed history.
 
 The initial implementation may copy full arenas. Copy-on-write and localized
 validation are performance refinements that cannot alter edit semantics.
@@ -72,7 +116,7 @@ validation are performance refinements that cannot alter edit semantics.
 
 A `Model` guarantees:
 
-- every typed ID resolves;
+- every internal slot and published borrowed reference resolves in its owner;
 - every edge's curve evaluates to its endpoint vertices at the retained domain
   boundaries;
 - every wire is ordered, connected, and closed by topological identity;
@@ -93,6 +137,11 @@ Readiness reports are not the normal success surface. A successful constructor
 or operation returns the conventional model object or measurement. Detailed
 evidence is retained by validation and operation errors and may be requested
 for diagnostics.
+
+Explicit shared operation contexts, bounded resource accounting, detailed
+decision receipts, mandatory boundary provenance and generated host-handle
+registries remain unfinished WP01/WP17 work. This ownership amendment does not
+claim those contracts are implemented.
 
 ## Consequences
 

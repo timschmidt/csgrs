@@ -13,7 +13,7 @@ use hypercurve::{
 };
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
-use crate::builder::{
+use crate::construction::{
     ConstructionError, SphereVoid, extrude_curve_region, sphere_pair_boolean, sphere_with_voids,
 };
 use crate::geometry::{
@@ -25,28 +25,29 @@ use crate::topology::{
     CertifiedSphereProfile, CertifiedTorusProfile, CertifiedZPrismProfile,
 };
 use crate::{
-    Aabb, Curve3, CurveParameterLocation, FaceId, FacePartition, GeometryError, Matrix4, Model,
-    ModelBuilder, Point3, QueryError, Real, ShellId, SolidId, SolidPointLocation, Surface,
-    SurfaceBounds, SurfaceIntersectionCurve, SurfaceIntersectionLine, SurfaceIntersectionOperand,
-    SurfaceIntersectionRay, SurfaceSurfaceIntersection, TopologyEditError,
+    Aabb, ArenaFacePartition, ArenaModel, ArenaModelBuilder, Curve3, CurveParameterLocation,
+    FaceId, GeometryError, Matrix4, Point3, QueryError, Real, ShellId, SolidId, SolidPointLocation,
+    Surface, SurfaceBounds, SurfaceIntersectionCurve, SurfaceIntersectionLine,
+    SurfaceIntersectionOperand, SurfaceIntersectionRay, SurfaceSurfaceIntersection,
+    TopologyEditError,
 };
 
 /// A regularized Boolean result in the currently supported solid matrix.
 #[derive(Clone, Debug)]
-pub enum BooleanResult {
+pub enum ArenaBooleanResult {
     /// The exact result has no volume.
     Empty,
     /// One validated connected solid represents the exact result.
     Solid {
         /// Newly validated result model.
-        model: Model,
+        model: ArenaModel,
         /// Result solid in `model`.
         solid: SolidId,
     },
     /// Multiple validated connected solids represent a disconnected result.
     Solids {
         /// Newly validated result model.
-        model: Model,
+        model: ArenaModel,
         /// Result solids in deterministic planar-contour order.
         solids: Vec<SolidId>,
     },
@@ -78,7 +79,7 @@ pub enum FaceSelectionAction {
 
 /// One face fragment classified against the opposite solid.
 #[derive(Clone, Debug)]
-pub struct ClassifiedFace {
+pub struct ArenaClassifiedFace {
     /// Face in the partitioned operand model.
     pub face: FaceId,
     /// Exact parameter-interior point used for classification.
@@ -91,15 +92,15 @@ pub struct ClassifiedFace {
 
 /// Partitioned operand plus complete exact face-selection evidence.
 #[derive(Clone, Debug)]
-pub struct FaceSelection {
+pub struct ArenaFaceSelection {
     /// Operand model after retained intersection traces were applied.
-    pub model: Model,
+    pub model: ArenaModel,
     /// Operand solid, whose typed ID remains stable through partitioning.
     pub solid: SolidId,
     /// Exact source-face partition records.
-    pub partitions: Vec<FacePartition>,
+    pub partitions: Vec<ArenaFacePartition>,
     /// Every face in the partitioned solid, classified exactly.
-    pub faces: Vec<ClassifiedFace>,
+    pub faces: Vec<ArenaClassifiedFace>,
 }
 
 /// One exact or explicitly unsupported carrier relation in a solid
@@ -168,14 +169,14 @@ pub enum FacePairTrim {
 
 /// One retained candidate relation between model-local faces from two solids.
 #[derive(Clone, Debug)]
-pub struct FacePairIntersection {
+pub struct ArenaFacePairIntersection {
     first_face: FaceId,
     second_face: FaceId,
     relation: FacePairRelation,
     trim: FacePairTrim,
 }
 
-impl FacePairIntersection {
+impl ArenaFacePairIntersection {
     /// Returns the face ID from the first model.
     pub const fn first_face(&self) -> FaceId {
         self.first_face
@@ -205,10 +206,10 @@ impl FacePairIntersection {
 /// rejection, exact carrier disjointness, retained intersections/coincidence,
 /// unsupported carrier pairs, and unresolved trim decisions.
 #[derive(Clone, Debug)]
-pub struct SolidIntersectionGraph {
-    first_model: Model,
+pub struct ArenaSolidIntersectionGraph {
+    first_model: ArenaModel,
     first_solid: SolidId,
-    second_model: Model,
+    second_model: ArenaModel,
     second_solid: SolidId,
     candidate_pairs: usize,
     broad_phase_rejections: usize,
@@ -217,10 +218,10 @@ pub struct SolidIntersectionGraph {
     unsupported_pairs: usize,
     trimmed_curve_fragments: usize,
     unresolved_trim_pairs: usize,
-    intersections: Vec<FacePairIntersection>,
+    intersections: Vec<ArenaFacePairIntersection>,
 }
 
-impl SolidIntersectionGraph {
+impl ArenaSolidIntersectionGraph {
     /// Returns the complete Cartesian face-pair count before broad phase.
     pub const fn candidate_pairs(&self) -> usize {
         self.candidate_pairs
@@ -260,7 +261,7 @@ impl SolidIntersectionGraph {
     }
 
     /// Returns retained intersecting, coincident, and unsupported pairs.
-    pub fn intersections(&self) -> &[FacePairIntersection] {
+    pub fn intersections(&self) -> &[ArenaFacePairIntersection] {
         &self.intersections
     }
 
@@ -268,11 +269,11 @@ impl SolidIntersectionGraph {
     /// fragments.
     ///
     /// Source faces are processed by stable face ID. Each face's traces are
-    /// independently canonicalized by [`Model::split_face_by_curves`], so
+    /// independently canonicalized by [`ArenaModel::split_face_by_curves`], so
     /// face-pair enumeration and curve direction cannot alter result topology.
     pub fn partition_first_planar_faces(
         &self,
-    ) -> Result<(Model, Vec<FacePartition>), BooleanError> {
+    ) -> Result<(ArenaModel, Vec<ArenaFacePartition>), BooleanError> {
         crate::context::strict(|| partition_graph_planar_faces(&self.first_model, self, true))
     }
 
@@ -283,7 +284,7 @@ impl SolidIntersectionGraph {
     /// splitter is available.
     pub fn partition_second_planar_faces(
         &self,
-    ) -> Result<(Model, Vec<FacePartition>), BooleanError> {
+    ) -> Result<(ArenaModel, Vec<ArenaFacePartition>), BooleanError> {
         crate::context::strict(|| partition_graph_planar_faces(&self.second_model, self, false))
     }
 
@@ -292,7 +293,9 @@ impl SolidIntersectionGraph {
     /// Planar support traces and retained two-pcurve surface traces share one
     /// exact arrangement. A positive-length carrier without a transferable
     /// pcurve is an explicit error rather than a silently skipped face.
-    pub fn partition_first_faces(&self) -> Result<(Model, Vec<FacePartition>), BooleanError> {
+    pub fn partition_first_faces(
+        &self,
+    ) -> Result<(ArenaModel, Vec<ArenaFacePartition>), BooleanError> {
         crate::context::strict(|| partition_graph_faces(&self.first_model, self, true))
     }
 
@@ -301,7 +304,9 @@ impl SolidIntersectionGraph {
     /// Planar support traces and retained two-pcurve surface traces share one
     /// exact arrangement. A positive-length carrier without a transferable
     /// pcurve is an explicit error rather than a silently skipped face.
-    pub fn partition_second_faces(&self) -> Result<(Model, Vec<FacePartition>), BooleanError> {
+    pub fn partition_second_faces(
+        &self,
+    ) -> Result<(ArenaModel, Vec<ArenaFacePartition>), BooleanError> {
         crate::context::strict(|| partition_graph_faces(&self.second_model, self, false))
     }
 
@@ -309,7 +314,7 @@ impl SolidIntersectionGraph {
     pub fn select_first_faces(
         &self,
         operation: BooleanOperation,
-    ) -> Result<FaceSelection, BooleanError> {
+    ) -> Result<ArenaFaceSelection, BooleanError> {
         crate::context::strict(|| select_graph_faces(self, operation, true))
     }
 
@@ -317,7 +322,7 @@ impl SolidIntersectionGraph {
     pub fn select_second_faces(
         &self,
         operation: BooleanOperation,
-    ) -> Result<FaceSelection, BooleanError> {
+    ) -> Result<ArenaFaceSelection, BooleanError> {
         crate::context::strict(|| select_graph_faces(self, operation, false))
     }
 
@@ -326,7 +331,7 @@ impl SolidIntersectionGraph {
     pub fn stitch_selected_faces(
         &self,
         operation: BooleanOperation,
-    ) -> Result<BooleanResult, BooleanError> {
+    ) -> Result<ArenaBooleanResult, BooleanError> {
         crate::context::strict(|| stitch_graph_faces(self, operation))
     }
 }
@@ -520,10 +525,10 @@ impl From<QueryError> for BooleanError {
 }
 
 fn partition_graph_planar_faces(
-    model: &Model,
-    graph: &SolidIntersectionGraph,
+    model: &ArenaModel,
+    graph: &ArenaSolidIntersectionGraph,
     first: bool,
-) -> Result<(Model, Vec<FacePartition>), BooleanError> {
+) -> Result<(ArenaModel, Vec<ArenaFacePartition>), BooleanError> {
     let mut traces = BTreeMap::<FaceId, Vec<Curve3>>::new();
     for pair in &graph.intersections {
         let face = if first {
@@ -650,10 +655,10 @@ fn partition_graph_planar_faces(
 }
 
 fn partition_graph_faces(
-    model: &Model,
-    graph: &SolidIntersectionGraph,
+    model: &ArenaModel,
+    graph: &ArenaSolidIntersectionGraph,
     first: bool,
-) -> Result<(Model, Vec<FacePartition>), BooleanError> {
+) -> Result<(ArenaModel, Vec<ArenaFacePartition>), BooleanError> {
     let mut planar_traces = BTreeMap::<FaceId, Vec<Curve3>>::new();
     let mut surface_traces = BTreeMap::<FaceId, Vec<SurfaceIntersectionCurve>>::new();
     for pair in &graph.intersections {
@@ -854,7 +859,7 @@ fn partition_graph_faces(
 }
 
 fn retain_planar_surface_trace_boundary_contacts(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     curve: Curve3,
     surface: &Surface,
@@ -893,8 +898,8 @@ fn retain_planar_surface_trace_boundary_contacts(
 }
 
 fn surface_region_plane_traces(
-    graph: &SolidIntersectionGraph,
-    pair: &FacePairIntersection,
+    graph: &ArenaSolidIntersectionGraph,
+    pair: &ArenaFacePairIntersection,
 ) -> Result<Option<Vec<Curve3>>, BooleanError> {
     let FacePairRelation::Exact(SurfaceSurfaceIntersection::ContainedSurface(contained)) =
         &pair.relation
@@ -924,8 +929,8 @@ fn surface_region_plane_traces(
 }
 
 fn surface_region_contained_traces(
-    graph: &SolidIntersectionGraph,
-    pair: &FacePairIntersection,
+    graph: &ArenaSolidIntersectionGraph,
+    pair: &ArenaFacePairIntersection,
 ) -> Result<Option<Vec<SurfaceIntersectionCurve>>, BooleanError> {
     let FacePairRelation::Exact(SurfaceSurfaceIntersection::ContainedSurface(contained)) =
         &pair.relation
@@ -1103,9 +1108,9 @@ fn iso_v_constants(
 }
 
 fn add_opposite_planar_edge_supports(
-    source_model: &Model,
+    source_model: &ArenaModel,
     source_solid: SolidId,
-    opposite_model: &Model,
+    opposite_model: &ArenaModel,
     opposite_solid: SolidId,
     traces: &mut BTreeMap<FaceId, Vec<Curve3>>,
 ) -> Result<(), BooleanError> {
@@ -1205,7 +1210,7 @@ fn add_opposite_planar_edge_supports(
 }
 
 fn planar_trace_crosses_face_interior(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     trace: &Curve3,
 ) -> Result<bool, GeometryError> {
@@ -1228,7 +1233,7 @@ fn planar_trace_crosses_face_interior(
 }
 
 fn planar_line_support_split_traces(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     fragments: &[Curve3],
 ) -> Result<Vec<Curve3>, BooleanError> {
@@ -1281,10 +1286,10 @@ fn push_unique_planar_trace(
 }
 
 fn select_graph_faces(
-    graph: &SolidIntersectionGraph,
+    graph: &ArenaSolidIntersectionGraph,
     operation: BooleanOperation,
     first: bool,
-) -> Result<FaceSelection, BooleanError> {
+) -> Result<ArenaFaceSelection, BooleanError> {
     let (source_model, source_solid, opposite_model, opposite_solid) = if first {
         (
             &graph.first_model,
@@ -1328,14 +1333,14 @@ fn select_graph_faces(
         } else {
             face_selection_action(operation, first, location)
         };
-        faces.push(ClassifiedFace {
+        faces.push(ArenaClassifiedFace {
             face,
             witness,
             location,
             action,
         });
     }
-    Ok(FaceSelection {
+    Ok(ArenaFaceSelection {
         model,
         solid: source_solid,
         partitions,
@@ -1344,10 +1349,10 @@ fn select_graph_faces(
 }
 
 fn resolve_planar_boundary_action(
-    graph: &SolidIntersectionGraph,
+    graph: &ArenaSolidIntersectionGraph,
     operation: BooleanOperation,
     first: bool,
-    source_model: &Model,
+    source_model: &ArenaModel,
     face: FaceId,
     witness: &Point3,
 ) -> Result<FaceSelectionAction, BooleanError> {
@@ -1457,14 +1462,14 @@ fn face_selection_action(
     }
 }
 
-fn planar_face_interior_witness(model: &Model, face: FaceId) -> Result<Point3, BooleanError> {
+fn planar_face_interior_witness(model: &ArenaModel, face: FaceId) -> Result<Point3, BooleanError> {
     face_interior_witnesses(model, face)?
         .into_iter()
         .next()
         .ok_or(BooleanError::FaceInteriorWitnessUnavailable { face, reason: None })
 }
 
-fn face_interior_witnesses(model: &Model, face: FaceId) -> Result<Vec<Point3>, BooleanError> {
+fn face_interior_witnesses(model: &ArenaModel, face: FaceId) -> Result<Vec<Point3>, BooleanError> {
     let face_record = model.face(face).expect("validated face");
     let surface = model
         .surface(face_record.surface())
@@ -1645,7 +1650,7 @@ fn face_interior_witnesses(model: &Model, face: FaceId) -> Result<Vec<Point3>, B
 }
 
 fn append_curved_boundary_witness_candidates(
-    model: &Model,
+    model: &ArenaModel,
     outer: &CurvePath2,
     inner_wires: &[crate::WireId],
     vertices: &[hypercurve::Point2],
@@ -1794,9 +1799,9 @@ struct StitchedFace {
 }
 
 fn stitch_graph_faces(
-    graph: &SolidIntersectionGraph,
+    graph: &ArenaSolidIntersectionGraph,
     operation: BooleanOperation,
-) -> Result<BooleanResult, BooleanError> {
+) -> Result<ArenaBooleanResult, BooleanError> {
     let mut first = graph.select_first_faces(operation)?;
     let mut second = graph.select_second_faces(operation)?;
     let mut atomic_points = selected_edge_endpoints(&first)?;
@@ -1819,7 +1824,7 @@ fn stitch_graph_faces(
     let regularize_to_planar =
         selection_is_exactly_planar(&first)? && selection_is_exactly_planar(&second)?;
 
-    let mut builder = ModelBuilder::new();
+    let mut builder = ArenaModelBuilder::new();
     let mut vertices = Vec::<(Point3, crate::VertexId)>::new();
     let mut edges = Vec::<StitchedEdge>::new();
     let mut source_edges =
@@ -1854,7 +1859,7 @@ fn stitch_graph_faces(
         }
     }
     if faces.is_empty() {
-        return Ok(BooleanResult::Empty);
+        return Ok(ArenaBooleanResult::Empty);
     }
     let mut visited = vec![false; faces.len()];
     let mut outer_shells = Vec::new();
@@ -1963,16 +1968,16 @@ fn stitch_graph_faces(
     }
     let model = builder.finish().map_err(ConstructionError::from)?;
     Ok(if solids.len() == 1 {
-        BooleanResult::Solid {
+        ArenaBooleanResult::Solid {
             model,
             solid: solids[0],
         }
     } else {
-        BooleanResult::Solids { model, solids }
+        ArenaBooleanResult::Solids { model, solids }
     })
 }
 
-fn selection_is_exactly_planar(selection: &FaceSelection) -> Result<bool, BooleanError> {
+fn selection_is_exactly_planar(selection: &ArenaFaceSelection) -> Result<bool, BooleanError> {
     for classified in &selection.faces {
         if matches!(
             classified.action,
@@ -1998,7 +2003,7 @@ fn selection_is_exactly_planar(selection: &FaceSelection) -> Result<bool, Boolea
 }
 
 fn selected_edge_use_counts(
-    selection: &FaceSelection,
+    selection: &ArenaFaceSelection,
     is_first: bool,
 ) -> Result<BTreeMap<(bool, crate::EdgeId), usize>, BooleanError> {
     let mut counts = BTreeMap::new();
@@ -2038,7 +2043,9 @@ struct AtomicPoint {
     curve_parameters: Vec<(Curve3, Real)>,
 }
 
-fn selected_edge_endpoints(selection: &FaceSelection) -> Result<Vec<AtomicPoint>, BooleanError> {
+fn selected_edge_endpoints(
+    selection: &ArenaFaceSelection,
+) -> Result<Vec<AtomicPoint>, BooleanError> {
     let mut points = Vec::new();
     for classified in &selection.faces {
         if matches!(
@@ -2109,7 +2116,7 @@ fn push_atomic_point(points: &mut Vec<AtomicPoint>, mut candidate: AtomicPoint) 
 }
 
 fn atomize_selected_edges(
-    selection: &mut FaceSelection,
+    selection: &mut ArenaFaceSelection,
     points: &[AtomicPoint],
 ) -> Result<(), BooleanError> {
     let mut edge_ids = Vec::new();
@@ -2206,11 +2213,11 @@ fn insert_descending_real(values: &mut Vec<Real>, candidate: Real) -> Result<(),
 
 #[allow(clippy::too_many_arguments)]
 fn copy_selected_face(
-    model: &Model,
+    model: &ArenaModel,
     face_id: FaceId,
     is_first: bool,
     reversed: bool,
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     vertices: &mut Vec<(Point3, crate::VertexId)>,
     edges: &mut Vec<StitchedEdge>,
     source_edges: &mut BTreeMap<
@@ -2311,7 +2318,7 @@ fn copy_selected_face(
     })
 }
 
-fn source_face_is_outer_boundary(model: &Model, face: FaceId) -> Result<bool, BooleanError> {
+fn source_face_is_outer_boundary(model: &ArenaModel, face: FaceId) -> Result<bool, BooleanError> {
     let shell = model
         .shell_of_face(face)
         .ok_or(BooleanError::UnsupportedOperand)?;
@@ -2326,11 +2333,11 @@ fn source_face_is_outer_boundary(model: &Model, face: FaceId) -> Result<bool, Bo
 
 #[allow(clippy::too_many_arguments)]
 fn copy_selected_wire(
-    model: &Model,
+    model: &ArenaModel,
     wire_id: crate::WireId,
     is_first: bool,
     reversed: bool,
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     vertices: &mut Vec<(Point3, crate::VertexId)>,
     stitched_edges: &mut Vec<StitchedEdge>,
     source_edges: &mut BTreeMap<
@@ -2458,10 +2465,10 @@ fn copy_selected_wire(
 
 #[allow(clippy::too_many_arguments)]
 fn copy_or_match_selected_edge(
-    model: &Model,
+    model: &ArenaModel,
     source_edge_id: crate::EdgeId,
     is_first: bool,
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     vertices: &mut Vec<(Point3, crate::VertexId)>,
     stitched_edges: &mut Vec<StitchedEdge>,
     source_edges: &mut BTreeMap<
@@ -2609,7 +2616,7 @@ fn exact_edge_curve_equal(
 
 fn copy_or_match_vertex(
     point: &Point3,
-    builder: &mut ModelBuilder,
+    builder: &mut ArenaModelBuilder,
     vertices: &mut Vec<(Point3, crate::VertexId)>,
 ) -> Result<crate::VertexId, BooleanError> {
     for (candidate, id) in vertices.iter() {
@@ -2630,11 +2637,11 @@ fn copy_or_match_vertex(
 /// Use [`intersect_faces`] when the operands are validated faces that do not
 /// belong to solids, such as open tensor patches.
 pub fn intersection_graph(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
-) -> Result<SolidIntersectionGraph, BooleanError> {
+) -> Result<ArenaSolidIntersectionGraph, BooleanError> {
     crate::context::strict(|| {
         let first_faces = solid_faces(first_model, first_solid)?
             .into_iter()
@@ -2705,7 +2712,7 @@ pub fn intersection_graph(
                 + exact_intersection_pairs
                 + unsupported_pairs
         );
-        Ok(SolidIntersectionGraph {
+        Ok(ArenaSolidIntersectionGraph {
             first_model: first_model.clone(),
             first_solid,
             second_model: second_model.clone(),
@@ -2728,11 +2735,11 @@ pub fn intersection_graph(
 /// Otherwise the returned record retains either the exact carrier relation and
 /// its two-face trim evidence, or an explicit unsupported carrier pair.
 pub fn intersect_faces(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_face: FaceId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_face: FaceId,
-) -> Result<Option<FacePairIntersection>, BooleanError> {
+) -> Result<Option<ArenaFacePairIntersection>, BooleanError> {
     crate::context::strict(|| {
         if first_model.face(first_face).is_none() {
             return Err(QueryError::InvalidReference {
@@ -2766,11 +2773,11 @@ pub fn intersect_faces(
 /// returned `None` means the boundary family or tensor parameterization is not
 /// represented exactly by the current kernel.
 pub fn partition_contained_face_by_plane_region(
-    contained_model: &Model,
+    contained_model: &ArenaModel,
     contained_face: FaceId,
-    plane_model: &Model,
+    plane_model: &ArenaModel,
     plane_face: FaceId,
-) -> Result<Option<(Model, FacePartition)>, BooleanError> {
+) -> Result<Option<(ArenaModel, ArenaFacePartition)>, BooleanError> {
     crate::context::strict(|| {
         if contained_model.face(contained_face).is_none() {
             return Err(QueryError::InvalidReference {
@@ -2810,11 +2817,11 @@ pub fn partition_contained_face_by_plane_region(
 }
 
 fn intersect_face_carriers(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_face: FaceId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_face: FaceId,
-) -> Result<Option<FacePairIntersection>, BooleanError> {
+) -> Result<Option<ArenaFacePairIntersection>, BooleanError> {
     let first_surface = face_surface(first_model, first_face);
     let second_surface = face_surface(second_model, second_face);
     match first_surface.intersect_surface(second_surface) {
@@ -2827,14 +2834,14 @@ fn intersect_face_carriers(
                 second_face,
                 &intersection,
             )?;
-            Ok(Some(FacePairIntersection {
+            Ok(Some(ArenaFacePairIntersection {
                 first_face,
                 second_face,
                 relation: FacePairRelation::Exact(intersection),
                 trim,
             }))
         }
-        Err(GeometryError::UnsupportedIntersection) => Ok(Some(FacePairIntersection {
+        Err(GeometryError::UnsupportedIntersection) => Ok(Some(ArenaFacePairIntersection {
             first_face,
             second_face,
             relation: FacePairRelation::Unsupported,
@@ -2845,9 +2852,9 @@ fn intersect_face_carriers(
 }
 
 fn trim_face_pair_intersection(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_face: FaceId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_face: FaceId,
     intersection: &SurfaceSurfaceIntersection,
 ) -> Result<FacePairTrim, GeometryError> {
@@ -3090,9 +3097,9 @@ fn trim_face_pair_intersection(
 }
 
 fn trim_contained_surface_region(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_face: FaceId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_face: FaceId,
     contained: SurfaceIntersectionOperand,
 ) -> Result<FacePairTrim, GeometryError> {
@@ -3148,7 +3155,7 @@ fn trim_contained_surface_region(
 }
 
 fn project_face_region_to_plane(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     plane: &Surface,
 ) -> Result<Option<CurveRegion2>, GeometryError> {
@@ -3169,7 +3176,7 @@ fn project_face_region_to_plane(
 }
 
 fn project_face_boundary_paths_to_plane(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     plane: &Surface,
 ) -> Result<Option<Vec<CurvePath2>>, GeometryError> {
@@ -3215,9 +3222,9 @@ fn project_face_boundary_paths_to_plane(
 }
 
 pub(crate) fn contained_face_boundary_traces_on_plane(
-    contained_model: &Model,
+    contained_model: &ArenaModel,
     contained_face: FaceId,
-    plane_model: &Model,
+    plane_model: &ArenaModel,
     plane_face: FaceId,
 ) -> Result<Option<Vec<Curve3>>, BooleanError> {
     let plane = face_surface(plane_model, plane_face);
@@ -3266,9 +3273,9 @@ pub(crate) fn contained_face_boundary_traces_on_plane(
 }
 
 fn contained_face_boundary_traces_from_plane(
-    contained_model: &Model,
+    contained_model: &ArenaModel,
     contained_face: FaceId,
-    plane_model: &Model,
+    plane_model: &ArenaModel,
     plane_face: FaceId,
 ) -> Result<Option<Vec<SurfaceIntersectionCurve>>, BooleanError> {
     let plane = face_surface(plane_model, plane_face);
@@ -3544,7 +3551,7 @@ fn concatenate_closed_contained_spline_trace(
 }
 
 fn push_contained_face_curve_fragments(
-    contained_model: &Model,
+    contained_model: &ArenaModel,
     contained_face: FaceId,
     candidate: SurfaceIntersectionCurve,
     require_line_image: bool,
@@ -3661,9 +3668,9 @@ fn point_contacts_trim(mut points: Vec<Point3>) -> FacePairTrim {
 }
 
 fn trim_intersection_components(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_face: FaceId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_face: FaceId,
     components: &crate::SurfaceIntersectionComponents,
 ) -> Result<FacePairTrim, GeometryError> {
@@ -3724,9 +3731,9 @@ fn trim_intersection_components(
 }
 
 fn trim_retained_surface_curve(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_face: FaceId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_face: FaceId,
     intersection: &SurfaceIntersectionCurve,
 ) -> Result<FacePairTrim, GeometryError> {
@@ -3817,7 +3824,7 @@ struct CommonRetainedParameterInterval {
 type ExactParameterIntervals = Vec<FaceRetainedParameterInterval>;
 
 fn retained_curve_face_intervals(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     pcurve: &crate::SurfaceIntersectionPcurve,
     spatial_domain: &crate::ParameterDomain,
@@ -3910,7 +3917,7 @@ fn retained_curve_face_intervals(
 }
 
 fn model_boundary_contacts(
-    model: &Model,
+    model: &ArenaModel,
     face_id: FaceId,
     contacts: &[CurveRegionBoundaryContact2],
     canonical_surface: Option<&Surface>,
@@ -4075,9 +4082,9 @@ enum SupportedLineFaceTrim {
 }
 
 fn trim_supported_surface_rays(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_face: FaceId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_face: FaceId,
     rays: &[SurfaceIntersectionRay],
 ) -> Result<FacePairTrim, GeometryError> {
@@ -4151,9 +4158,9 @@ fn retained_ray_pcurve(
 }
 
 fn trim_supported_surface_lines(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_face: FaceId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_face: FaceId,
     lines: &[SurfaceIntersectionLine],
 ) -> Result<FacePairTrim, GeometryError> {
@@ -4253,7 +4260,7 @@ fn common_line_trim_intervals(
 }
 
 fn line_face_trim_intervals(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     line: &SurfaceIntersectionLine,
 ) -> Result<Classification<SupportedLineFaceTrim>, GeometryError> {
@@ -4268,7 +4275,7 @@ fn line_face_trim_intervals(
 }
 
 fn ray_face_trim_intervals(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     ray: &SurfaceIntersectionRay,
     operand: SurfaceIntersectionOperand,
@@ -4288,7 +4295,7 @@ fn ray_face_trim_intervals(
 }
 
 fn parameter_lines_face_trim_intervals(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     parameter_lines: Vec<(hypercurve::Point2, hypercurve::Point2)>,
 ) -> Result<Classification<SupportedLineFaceTrim>, GeometryError> {
@@ -4562,9 +4569,9 @@ fn boolean_witness_geometry_error(error: BooleanError) -> GeometryError {
 }
 
 fn coplanar_boundary_split_traces(
-    source_model: &Model,
+    source_model: &ArenaModel,
     source_face: FaceId,
-    target_model: &Model,
+    target_model: &ArenaModel,
     target_face: FaceId,
 ) -> Result<Classification<Option<Vec<Curve3>>>, GeometryError> {
     let target_surface = face_surface(target_model, target_face);
@@ -4677,9 +4684,9 @@ fn coplanar_boundary_split_traces(
 }
 
 fn trim_point_contact(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_face: FaceId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_face: FaceId,
     point: &Point3,
 ) -> Result<FacePairTrim, GeometryError> {
@@ -4703,7 +4710,7 @@ fn trim_point_contact(
 }
 
 fn point_in_supported_face_trim(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     point: &Point3,
 ) -> Result<Option<Classification<bool>>, GeometryError> {
@@ -4857,13 +4864,13 @@ fn canonical_periodic_angles(angle: Real) -> Result<Vec<Real>, GeometryError> {
     Ok(angles)
 }
 
-fn face_is_boundaryless(model: &Model, face: FaceId) -> bool {
+fn face_is_boundaryless(model: &ArenaModel, face: FaceId) -> bool {
     let face = model.face(face).expect("validated graph face");
     face.outer().is_none() && face.inner().is_empty()
 }
 
 fn spanning_segment_on_planar_face(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     point: &Point3,
     direction: &crate::Vector3,
@@ -4932,7 +4939,7 @@ fn spanning_segment_on_planar_face(
 }
 
 fn trim_segment_to_planar_face(
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     start: &Point3,
     end: &Point3,
@@ -5023,7 +5030,7 @@ fn insert_sorted_parameter(
     Ok(())
 }
 
-fn planar_face_region(model: &Model, face: FaceId) -> Result<CurveRegion2, GeometryError> {
+fn planar_face_region(model: &ArenaModel, face: FaceId) -> Result<CurveRegion2, GeometryError> {
     let contours = model.face_contours(face)?;
     Ok(CurveRegion2::try_from_native_contours(
         vec![contours[0].clone()],
@@ -5132,13 +5139,13 @@ fn project_to_plane(
     ))
 }
 
-fn face_surface(model: &Model, face: FaceId) -> &Surface {
+fn face_surface(model: &ArenaModel, face: FaceId) -> &Surface {
     model
         .surface(model.face(face).expect("validated graph face").surface())
         .expect("validated graph surface")
 }
 
-fn solid_faces(model: &Model, solid: SolidId) -> Result<Vec<FaceId>, BooleanError> {
+fn solid_faces(model: &ArenaModel, solid: SolidId) -> Result<Vec<FaceId>, BooleanError> {
     let solid = model.solid(solid).ok_or(BooleanError::UnsupportedOperand)?;
     let mut faces = Vec::new();
     for shell in std::iter::once(solid.outer()).chain(solid.voids().iter().copied()) {
@@ -5147,7 +5154,7 @@ fn solid_faces(model: &Model, solid: SolidId) -> Result<Vec<FaceId>, BooleanErro
     Ok(faces)
 }
 
-fn certified_face_bounds(model: &Model, face: FaceId) -> Result<Option<Aabb>, GeometryError> {
+fn certified_face_bounds(model: &ArenaModel, face: FaceId) -> Result<Option<Aabb>, GeometryError> {
     let face = model.face(face).expect("validated face");
     let surface = model
         .surface(face.surface())
@@ -5240,11 +5247,11 @@ fn aabbs_strictly_separated(first: &Aabb, second: &Aabb) -> Result<bool, Geometr
 
 /// Returns the regularized union of two supported exact solids.
 pub fn union(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
-) -> Result<BooleanResult, BooleanError> {
+) -> Result<ArenaBooleanResult, BooleanError> {
     crate::context::strict(|| {
         boolean(
             first_model,
@@ -5258,11 +5265,11 @@ pub fn union(
 
 /// Returns the regularized intersection of two supported exact solids.
 pub fn intersection(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
-) -> Result<BooleanResult, BooleanError> {
+) -> Result<ArenaBooleanResult, BooleanError> {
     crate::context::strict(|| {
         boolean(
             first_model,
@@ -5276,11 +5283,11 @@ pub fn intersection(
 
 /// Returns the regularized difference of two supported exact solids.
 pub fn difference(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
-) -> Result<BooleanResult, BooleanError> {
+) -> Result<ArenaBooleanResult, BooleanError> {
     crate::context::strict(|| {
         boolean(
             first_model,
@@ -5293,12 +5300,12 @@ pub fn difference(
 }
 
 fn boolean(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
     operation: BooleanOp,
-) -> Result<BooleanResult, BooleanError> {
+) -> Result<ArenaBooleanResult, BooleanError> {
     if let Some(result) = disjoint_boolean(
         first_model,
         first_solid,
@@ -5395,12 +5402,12 @@ fn boolean(
 }
 
 fn sphere_cylinder_containment_boolean(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
     operation: BooleanOp,
-) -> Result<Option<BooleanResult>, BooleanError> {
+) -> Result<Option<ArenaBooleanResult>, BooleanError> {
     let first_sphere = first_model.certified_sphere_profile(first_solid);
     let first_cylinder = first_model.certified_cylinder_profile(first_solid);
     let second_sphere = second_model.certified_sphere_profile(second_solid);
@@ -5437,12 +5444,12 @@ fn sphere_cylinder_containment_boolean(
     Ok(Some(match operation {
         BooleanOp::Union => {
             if relation == Ordering::Greater {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: first_model.clone(),
                     solid: first_solid,
                 }
             } else {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: second_model.clone(),
                     solid: second_solid,
                 }
@@ -5450,18 +5457,18 @@ fn sphere_cylinder_containment_boolean(
         }
         BooleanOp::Intersection => {
             if relation == Ordering::Greater {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: second_model.clone(),
                     solid: second_solid,
                 }
             } else {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: first_model.clone(),
                     solid: first_solid,
                 }
             }
         }
-        BooleanOp::Difference if relation == Ordering::Less => BooleanResult::Empty,
+        BooleanOp::Difference if relation == Ordering::Less => ArenaBooleanResult::Empty,
         BooleanOp::Difference => {
             contained_solid_difference(first_model, first_solid, second_model, second_solid)?
         }
@@ -5470,12 +5477,12 @@ fn sphere_cylinder_containment_boolean(
 }
 
 fn contained_solid_difference(
-    outer_model: &Model,
+    outer_model: &ArenaModel,
     outer_solid: SolidId,
-    inner_model: &Model,
+    inner_model: &ArenaModel,
     inner_solid: SolidId,
-) -> Result<BooleanResult, BooleanError> {
-    let mut builder = ModelBuilder::new();
+) -> Result<ArenaBooleanResult, BooleanError> {
+    let mut builder = ArenaModelBuilder::new();
     let mut vertices = Vec::<(Point3, crate::VertexId)>::new();
     let mut edges = Vec::<StitchedEdge>::new();
     let mut source_edges =
@@ -5530,16 +5537,16 @@ fn contained_solid_difference(
         .solid(outer, vec![inner])
         .map_err(ConstructionError::from)?;
     let model = builder.finish().map_err(ConstructionError::from)?;
-    Ok(BooleanResult::Solid { model, solid })
+    Ok(ArenaBooleanResult::Solid { model, solid })
 }
 
 fn coaxial_revolution_boolean(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
     operation: BooleanOp,
-) -> Result<Option<BooleanResult>, BooleanError> {
+) -> Result<Option<ArenaBooleanResult>, BooleanError> {
     let Some(first) = first_model.certified_revolution_profile(first_solid) else {
         return Ok(None);
     };
@@ -5574,7 +5581,7 @@ fn coaxial_revolution_boolean(
         .boolean_region(&second_region, operation)
         .map_err(GeometryError::from)?;
     if result.is_empty() {
-        return Ok(Some(BooleanResult::Empty));
+        return Ok(Some(ArenaBooleanResult::Empty));
     }
     let profiles = match native_contour_profiles(&result)? {
         Classification::Decided(profiles) => profiles,
@@ -5597,7 +5604,7 @@ fn coaxial_revolution_boolean(
     }
     Ok(Some(if solids.len() == 1 {
         let (model, solid) = solids.pop().expect("one revolution result");
-        BooleanResult::Solid { model, solid }
+        ArenaBooleanResult::Solid { model, solid }
     } else {
         merge_owned_solids(solids)?
     }))
@@ -5660,8 +5667,8 @@ fn oriented_revolution_region(
     holes: &[Vec<crate::Point2>],
     origin: &Point3,
     axis: &crate::Vector3,
-) -> Result<(Model, SolidId), BooleanError> {
-    let (model, solid) = crate::builder::revolve_region(outer, holes)?;
+) -> Result<(ArenaModel, SolidId), BooleanError> {
+    let (model, solid) = crate::construction::revolve_region(outer, holes)?;
     let (x, y) = axis
         .orthonormal_basis_checked()
         .map_err(GeometryError::Numeric)?;
@@ -5673,12 +5680,12 @@ fn oriented_revolution_region(
 }
 
 fn z_prism_boolean(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
     operation: BooleanOp,
-) -> Result<BooleanResult, BooleanError> {
+) -> Result<ArenaBooleanResult, BooleanError> {
     let CertifiedZPrismProfile {
         region: first,
         z_min: first_min,
@@ -5698,7 +5705,7 @@ fn z_prism_boolean(
             let z_min = exact_max(&first_min, &second_min)?;
             let z_max = exact_min(&first_max, &second_max)?;
             if exact_order(&z_min, &z_max)? != Ordering::Less {
-                return Ok(BooleanResult::Empty);
+                return Ok(ArenaBooleanResult::Empty);
             }
             (z_min, z_max)
         }
@@ -5717,26 +5724,26 @@ fn z_prism_boolean(
         .boolean_region(&second, operation)
         .map_err(GeometryError::from)?;
     if result.is_empty() {
-        return Ok(BooleanResult::Empty);
+        return Ok(ArenaBooleanResult::Empty);
     }
     let (model, solids) = extrude_curve_region(&result, z_min, z_max)?;
     if solids.len() == 1 {
-        Ok(BooleanResult::Solid {
+        Ok(ArenaBooleanResult::Solid {
             model,
             solid: solids[0],
         })
     } else {
-        Ok(BooleanResult::Solids { model, solids })
+        Ok(ArenaBooleanResult::Solids { model, solids })
     }
 }
 
 fn identical_torus_boolean(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
     operation: BooleanOp,
-) -> Result<Option<BooleanResult>, BooleanError> {
+) -> Result<Option<ArenaBooleanResult>, BooleanError> {
     let Some(CertifiedTorusProfile {
         center: first_center,
         axis: first_axis,
@@ -5765,22 +5772,22 @@ fn identical_torus_boolean(
         return Ok(None);
     }
     Ok(Some(match operation {
-        BooleanOp::Union | BooleanOp::Intersection => BooleanResult::Solid {
+        BooleanOp::Union | BooleanOp::Intersection => ArenaBooleanResult::Solid {
             model: first_model.clone(),
             solid: first_solid,
         },
-        BooleanOp::Difference => BooleanResult::Empty,
+        BooleanOp::Difference => ArenaBooleanResult::Empty,
         BooleanOp::Xor => unreachable!("not exposed by HyperBREP"),
     }))
 }
 
 fn oriented_cylinder_boolean(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
     operation: BooleanOp,
-) -> Result<Option<BooleanResult>, BooleanError> {
+) -> Result<Option<ArenaBooleanResult>, BooleanError> {
     let Some(first) = first_model.certified_cylinder_profile(first_solid) else {
         return Ok(None);
     };
@@ -5842,13 +5849,13 @@ fn oriented_cylinder_boolean(
 
 #[allow(clippy::too_many_arguments)]
 fn coaxial_cylinder_interval_boolean(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
     first: &CertifiedCylinderProfile,
     second: &CertifiedCylinderProfile,
     axial_offset: Real,
     operation: BooleanOp,
-) -> Result<BooleanResult, BooleanError> {
+) -> Result<ArenaBooleanResult, BooleanError> {
     let first_min = first.v_min.clone();
     let first_max = first.v_max.clone();
     let second_min = &axial_offset + &second.v_min;
@@ -5860,7 +5867,7 @@ fn coaxial_cylinder_interval_boolean(
     match operation {
         BooleanOp::Intersection => {
             if !has_volume_overlap {
-                Ok(BooleanResult::Empty)
+                Ok(ArenaBooleanResult::Empty)
             } else {
                 cylinder_interval_result(first, overlap_min, overlap_max)
             }
@@ -5883,7 +5890,7 @@ fn coaxial_cylinder_interval_boolean(
         }
         BooleanOp::Difference => {
             if !has_volume_overlap {
-                return Ok(BooleanResult::Solid {
+                return Ok(ArenaBooleanResult::Solid {
                     model: first_model.clone(),
                     solid: first_solid,
                 });
@@ -5891,7 +5898,7 @@ fn coaxial_cylinder_interval_boolean(
             let retain_below = exact_order(&first_min, &overlap_min)? == Ordering::Less;
             let retain_above = exact_order(&overlap_max, &first_max)? == Ordering::Less;
             match (retain_below, retain_above) {
-                (false, false) => Ok(BooleanResult::Empty),
+                (false, false) => Ok(ArenaBooleanResult::Empty),
                 (true, false) => cylinder_interval_result(first, first_min, overlap_min),
                 (false, true) => cylinder_interval_result(first, overlap_max, first_max),
                 (true, true) => {
@@ -5909,19 +5916,19 @@ fn cylinder_interval_result(
     profile: &CertifiedCylinderProfile,
     minimum: Real,
     maximum: Real,
-) -> Result<BooleanResult, BooleanError> {
+) -> Result<ArenaBooleanResult, BooleanError> {
     let (model, solid) = oriented_cylinder_segment(profile, minimum, maximum)?;
-    Ok(BooleanResult::Solid { model, solid })
+    Ok(ArenaBooleanResult::Solid { model, solid })
 }
 
 fn oriented_cylinder_segment(
     profile: &CertifiedCylinderProfile,
     minimum: Real,
     maximum: Real,
-) -> Result<(Model, SolidId), BooleanError> {
+) -> Result<(ArenaModel, SolidId), BooleanError> {
     let height = &maximum - &minimum;
     let base = profile.origin.clone() + profile.axis.clone() * minimum;
-    let (model, solid) = crate::builder::cylinder(profile.radius.clone(), height)?;
+    let (model, solid) = crate::construction::cylinder(profile.radius.clone(), height)?;
     let (x, y) = profile
         .axis
         .orthonormal_basis_checked()
@@ -5970,12 +5977,12 @@ fn vectors_exactly_opposite(
 }
 
 fn cone_frustum_interval_boolean(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
     operation: BooleanOp,
-) -> Result<Option<BooleanResult>, BooleanError> {
+) -> Result<Option<ArenaBooleanResult>, BooleanError> {
     let Some(first) = first_model.certified_cone_frustum_profile(first_solid) else {
         return Ok(None);
     };
@@ -5996,7 +6003,7 @@ fn cone_frustum_interval_boolean(
             if has_volume_overlap {
                 cone_frustum_interval_result(&first, overlap_min, overlap_max)?
             } else {
-                BooleanResult::Empty
+                ArenaBooleanResult::Empty
             }
         }
         BooleanOp::Union => {
@@ -6025,7 +6032,7 @@ fn cone_frustum_interval_boolean(
         }
         BooleanOp::Difference => {
             if !has_volume_overlap {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: first_model.clone(),
                     solid: first_solid,
                 }
@@ -6033,7 +6040,7 @@ fn cone_frustum_interval_boolean(
                 let retain_below = exact_order(&first.v_min, &overlap_min)? == Ordering::Less;
                 let retain_above = exact_order(&overlap_max, &first.v_max)? == Ordering::Less;
                 match (retain_below, retain_above) {
-                    (false, false) => BooleanResult::Empty,
+                    (false, false) => ArenaBooleanResult::Empty,
                     (true, false) => {
                         cone_frustum_interval_result(&first, first.v_min.clone(), overlap_min)?
                     }
@@ -6055,22 +6062,22 @@ fn cone_frustum_interval_result(
     profile: &CertifiedConeFrustumProfile,
     minimum: Real,
     maximum: Real,
-) -> Result<BooleanResult, BooleanError> {
+) -> Result<ArenaBooleanResult, BooleanError> {
     let (model, solid) = oriented_cone_frustum_segment(profile, minimum, maximum)?;
-    Ok(BooleanResult::Solid { model, solid })
+    Ok(ArenaBooleanResult::Solid { model, solid })
 }
 
 fn oriented_cone_frustum_segment(
     profile: &CertifiedConeFrustumProfile,
     minimum: Real,
     maximum: Real,
-) -> Result<(Model, SolidId), BooleanError> {
+) -> Result<(ArenaModel, SolidId), BooleanError> {
     let sine = profile.semi_angle.clone().sin();
     let cosine = profile.semi_angle.clone().cos();
     let base_radius = &maximum * &sine;
     let top_radius = &minimum * sine;
     let height = (&maximum - &minimum) * &cosine;
-    let (model, solid) = crate::builder::cone_frustum(base_radius, top_radius, height)?;
+    let (model, solid) = crate::construction::cone_frustum(base_radius, top_radius, height)?;
     let local_z = -profile.axis.clone();
     let (x, y) = local_z
         .orthonormal_basis_checked()
@@ -6098,24 +6105,26 @@ fn points_exactly_equal(first: &Point3, second: &Point3) -> Result<bool, Geometr
 }
 
 fn transform_boolean_result(
-    result: BooleanResult,
+    result: ArenaBooleanResult,
     transform: &Matrix4,
-) -> Result<BooleanResult, GeometryError> {
+) -> Result<ArenaBooleanResult, GeometryError> {
     Ok(match result {
-        BooleanResult::Empty => BooleanResult::Empty,
-        BooleanResult::Solid { model, solid } => BooleanResult::Solid {
+        ArenaBooleanResult::Empty => ArenaBooleanResult::Empty,
+        ArenaBooleanResult::Solid { model, solid } => ArenaBooleanResult::Solid {
             model: model.transformed(transform)?,
             solid,
         },
-        BooleanResult::Solids { model, solids } => BooleanResult::Solids {
+        ArenaBooleanResult::Solids { model, solids } => ArenaBooleanResult::Solids {
             model: model.transformed(transform)?,
             solids,
         },
     })
 }
 
-fn merge_owned_solids(sources: Vec<(Model, SolidId)>) -> Result<BooleanResult, BooleanError> {
-    let mut builder = ModelBuilder::new();
+fn merge_owned_solids(
+    sources: Vec<(ArenaModel, SolidId)>,
+) -> Result<ArenaBooleanResult, BooleanError> {
+    let mut builder = ArenaModelBuilder::new();
     let mut solids = Vec::with_capacity(sources.len());
     for (model, solid) in sources {
         let remapped = model
@@ -6127,16 +6136,16 @@ fn merge_owned_solids(sources: Vec<(Model, SolidId)>) -> Result<BooleanResult, B
         .finish()
         .map_err(ConstructionError::from)
         .map_err(BooleanError::from)?;
-    Ok(BooleanResult::Solids { model, solids })
+    Ok(ArenaBooleanResult::Solids { model, solids })
 }
 
 fn sphere_boolean(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
     operation: BooleanOp,
-) -> Result<Option<BooleanResult>, BooleanError> {
+) -> Result<Option<ArenaBooleanResult>, BooleanError> {
     let Some(CertifiedSphereProfile {
         center: first_center,
         radius: first_radius,
@@ -6156,19 +6165,19 @@ fn sphere_boolean(
     let centers_equal = exact_order(&distance_squared, &Real::zero())? == Ordering::Equal;
     if centers_equal && radii_equal {
         return Ok(Some(match operation {
-            BooleanOp::Union | BooleanOp::Intersection => BooleanResult::Solid {
+            BooleanOp::Union | BooleanOp::Intersection => ArenaBooleanResult::Solid {
                 model: first_model.clone(),
                 solid: first_solid,
             },
-            BooleanOp::Difference => BooleanResult::Empty,
+            BooleanOp::Difference => ArenaBooleanResult::Empty,
             BooleanOp::Xor => unreachable!("not exposed by HyperBREP"),
         }));
     }
     let radius_sum = &first_radius + &second_radius;
     if exact_order(&distance_squared, &(&radius_sum * &radius_sum))? == Ordering::Equal {
         return Ok(match operation {
-            BooleanOp::Intersection => Some(BooleanResult::Empty),
-            BooleanOp::Difference => Some(BooleanResult::Solid {
+            BooleanOp::Intersection => Some(ArenaBooleanResult::Empty),
+            BooleanOp::Difference => Some(ArenaBooleanResult::Solid {
                 model: first_model.clone(),
                 solid: first_solid,
             }),
@@ -6186,28 +6195,28 @@ fn sphere_boolean(
         let first_is_outer = exact_order(&first_radius, &second_radius)? == Ordering::Greater;
         return Ok(match operation {
             BooleanOp::Union => Some(if first_is_outer {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: first_model.clone(),
                     solid: first_solid,
                 }
             } else {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: second_model.clone(),
                     solid: second_solid,
                 }
             }),
             BooleanOp::Intersection => Some(if first_is_outer {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: second_model.clone(),
                     solid: second_solid,
                 }
             } else {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: first_model.clone(),
                     solid: first_solid,
                 }
             }),
-            BooleanOp::Difference if !first_is_outer => Some(BooleanResult::Empty),
+            BooleanOp::Difference if !first_is_outer => Some(ArenaBooleanResult::Empty),
             BooleanOp::Difference => None,
             BooleanOp::Xor => unreachable!("not exposed by HyperBREP"),
         });
@@ -6239,17 +6248,17 @@ fn sphere_boolean(
             second_radius,
             kind,
         )?;
-        return Ok(Some(BooleanResult::Solid { model, solid }));
+        return Ok(Some(ArenaBooleanResult::Solid { model, solid }));
     }
     Ok(Some(match operation {
         BooleanOp::Union => {
             if first_contains_second {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: first_model.clone(),
                     solid: first_solid,
                 }
             } else {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: second_model.clone(),
                     solid: second_solid,
                 }
@@ -6257,18 +6266,18 @@ fn sphere_boolean(
         }
         BooleanOp::Intersection => {
             if first_contains_second {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: second_model.clone(),
                     solid: second_solid,
                 }
             } else {
-                BooleanResult::Solid {
+                ArenaBooleanResult::Solid {
                     model: first_model.clone(),
                     solid: first_solid,
                 }
             }
         }
-        BooleanOp::Difference if second_contains_first => BooleanResult::Empty,
+        BooleanOp::Difference if second_contains_first => ArenaBooleanResult::Empty,
         BooleanOp::Difference => {
             let relative_center = &second_center - &first_center;
             let (model, solid) = sphere_with_voids(
@@ -6283,7 +6292,7 @@ fn sphere_boolean(
                 first_center.y,
                 first_center.z,
             ]))?;
-            BooleanResult::Solid { model, solid }
+            ArenaBooleanResult::Solid { model, solid }
         }
         BooleanOp::Xor => unreachable!("not exposed by HyperBREP"),
     }))
@@ -6302,12 +6311,12 @@ fn sphere_strictly_contains(
 }
 
 fn disjoint_boolean(
-    first_model: &Model,
+    first_model: &ArenaModel,
     first_solid: SolidId,
-    second_model: &Model,
+    second_model: &ArenaModel,
     second_solid: SolidId,
     operation: BooleanOp,
-) -> Result<Option<BooleanResult>, BooleanError> {
+) -> Result<Option<ArenaBooleanResult>, BooleanError> {
     if first_model.counts().solids != 1
         || second_model.counts().solids != 1
         || first_model.solid(first_solid).is_none()
@@ -6337,13 +6346,13 @@ fn disjoint_boolean(
         return Ok(None);
     }
     Ok(Some(match operation {
-        BooleanOp::Intersection => BooleanResult::Empty,
-        BooleanOp::Difference => BooleanResult::Solid {
+        BooleanOp::Intersection => ArenaBooleanResult::Empty,
+        BooleanOp::Difference => ArenaBooleanResult::Solid {
             model: first_model.clone(),
             solid: first_solid,
         },
         BooleanOp::Union => {
-            let mut builder = ModelBuilder::new();
+            let mut builder = ArenaModelBuilder::new();
             let first = first_model
                 .append_to_builder(&mut builder)
                 .map_err(ConstructionError::from)?[0];
@@ -6351,7 +6360,7 @@ fn disjoint_boolean(
                 .append_to_builder(&mut builder)
                 .map_err(ConstructionError::from)?[0];
             let model = builder.finish().map_err(ConstructionError::from)?;
-            BooleanResult::Solids {
+            ArenaBooleanResult::Solids {
                 model,
                 solids: vec![first, second],
             }
@@ -6387,7 +6396,7 @@ fn exact_max(left: &Real, right: &Real) -> Result<Real, GeometryError> {
 
 fn trim_conic_to_planar_face(
     curve: &Curve3,
-    model: &Model,
+    model: &ArenaModel,
     face: FaceId,
     operand: SurfaceIntersectionOperand,
     opposite_surface: &Surface,
@@ -6754,8 +6763,9 @@ mod tests {
         );
     }
 
-    fn unit_affine_tensor_cap(nurbs: bool) -> (Model, SolidId, FaceId) {
-        let (source, solid) = crate::builder::cuboid(p(0, 0, 0), p(1, 1, 1)).expect("unit cuboid");
+    fn unit_affine_tensor_cap(nurbs: bool) -> (ArenaModel, SolidId, FaceId) {
+        let (source, solid) =
+            crate::construction::cuboid(p(0, 0, 0), p(1, 1, 1)).expect("unit cuboid");
         let (face, surface, origin, u, v) = source
             .faces()
             .find_map(|(face_id, face)| {
@@ -6819,7 +6829,7 @@ mod tests {
                 .collect(),
         )
         .unwrap();
-        let (plane, plane_face) = crate::builder::planar_face(
+        let (plane, plane_face) = crate::construction::planar_face(
             &outer,
             &[],
             p(0, 0, 1),
@@ -6910,7 +6920,7 @@ mod tests {
         );
         let json = first_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -6948,7 +6958,7 @@ mod tests {
             .commit()
             .expect("partitioned NURBS cap revalidates");
 
-        let (cutter, cutter_solid) = crate::builder::cuboid(
+        let (cutter, cutter_solid) = crate::construction::cuboid(
             crate::Point3::new(
                 (Real::one() / Real::from(2)).unwrap(),
                 Real::from(-1),
@@ -6979,7 +6989,7 @@ mod tests {
         let pair = intersect_faces(&tensor, tensor_face, &cutter, cutter_face)
             .unwrap()
             .expect("partial tensor/cutter caps intersect");
-        let graph = SolidIntersectionGraph {
+        let graph = ArenaSolidIntersectionGraph {
             first_model: tensor.clone(),
             first_solid: solid,
             second_model: cutter,
@@ -7015,7 +7025,9 @@ mod tests {
             .expect("graph partition result revalidates");
     }
 
-    fn unit_affine_tensor_cap_with_holes(holes: &[Vec<crate::Point2>]) -> (Model, SolidId, FaceId) {
+    fn unit_affine_tensor_cap_with_holes(
+        holes: &[Vec<crate::Point2>],
+    ) -> (ArenaModel, SolidId, FaceId) {
         let outer = [
             crate::Point2::new(Real::zero(), Real::zero()),
             crate::Point2::new(Real::one(), Real::zero()),
@@ -7023,7 +7035,7 @@ mod tests {
             crate::Point2::new(Real::zero(), Real::one()),
         ];
         let (source, solid) =
-            crate::builder::extrude_region(&outer, holes, Real::zero(), Real::one()).unwrap();
+            crate::construction::extrude_region(&outer, holes, Real::zero(), Real::one()).unwrap();
         let (face, surface, origin, u, v) = source
             .faces()
             .find_map(|(face_id, face)| {
@@ -7062,7 +7074,7 @@ mod tests {
         )
     }
 
-    fn unit_holed_affine_tensor_cap() -> (Model, SolidId, FaceId) {
+    fn unit_holed_affine_tensor_cap() -> (ArenaModel, SolidId, FaceId) {
         let quarter = (Real::one() / Real::from(4)).unwrap();
         let three_quarters = (Real::from(3) / Real::from(4)).unwrap();
         let hole = vec![
@@ -7112,7 +7124,7 @@ mod tests {
             ),
         ])
         .unwrap();
-        let (plane, plane_face) = crate::builder::planar_face(
+        let (plane, plane_face) = crate::construction::planar_face(
             &outer,
             &[],
             p(0, 0, 1),
@@ -7147,7 +7159,7 @@ mod tests {
         assert_eq!(second_partition.faces.len(), 2);
         assert!(matches!(
             first_partition.traces[0].splits.as_slice(),
-            [crate::SurfaceCurveFaceSplit::Open(_)]
+            [crate::ArenaSurfaceCurveFaceSplit::Open(_)]
         ));
         assert_eq!(first.to_json().unwrap(), second.to_json().unwrap());
         assert_eq!(
@@ -7161,7 +7173,7 @@ mod tests {
         );
         let json = first.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7173,7 +7185,7 @@ mod tests {
 
     #[test]
     fn curved_region_partitions_mobius_reparameterized_affine_tensor_exactly() {
-        let (tensor, tensor_face) = crate::builder::rational_bezier_patch(
+        let (tensor, tensor_face) = crate::construction::rational_bezier_patch(
             vec![vec![p(0, 0, 1), p(1, 0, 1)], vec![p(0, 1, 1), p(1, 1, 1)]],
             vec![
                 vec![Real::one(), Real::from(2)],
@@ -7216,7 +7228,7 @@ mod tests {
             ),
         ])
         .unwrap();
-        let (plane, plane_face) = crate::builder::planar_face(
+        let (plane, plane_face) = crate::construction::planar_face(
             &outer,
             &[],
             p(0, 0, 1),
@@ -7281,7 +7293,7 @@ mod tests {
         assert_eq!(partition.faces.len(), 2);
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7290,7 +7302,7 @@ mod tests {
             json
         );
 
-        let (nurbs, nurbs_face) = crate::builder::nurbs_patch(
+        let (nurbs, nurbs_face) = crate::construction::nurbs_patch(
             1,
             1,
             vec![vec![p(0, 0, 1), p(1, 0, 1)], vec![p(0, 1, 1), p(1, 1, 1)]],
@@ -7365,7 +7377,7 @@ mod tests {
         assert_eq!(contained_nurbs_partition.faces.len(), 2);
         let json = partitioned_nurbs.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7441,7 +7453,7 @@ mod tests {
             ),
         ])
         .unwrap();
-        let (plane, plane_face) = crate::builder::planar_face(
+        let (plane, plane_face) = crate::construction::planar_face(
             &outer,
             &[],
             p(0, 0, 1),
@@ -7471,7 +7483,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7504,7 +7516,7 @@ mod tests {
             ),
         ])
         .unwrap();
-        let (plane, plane_face) = crate::builder::planar_face(
+        let (plane, plane_face) = crate::construction::planar_face(
             &outer,
             &[],
             p(0, 0, 1),
@@ -7543,7 +7555,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7590,7 +7602,7 @@ mod tests {
         )
         .unwrap();
         let outer = CurvePath2::try_new(vec![upper, lower]).unwrap();
-        let (plane, plane_face) = crate::builder::planar_face(
+        let (plane, plane_face) = crate::construction::planar_face(
             &outer,
             &[],
             p(0, 0, 1),
@@ -7635,7 +7647,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7669,7 +7681,7 @@ mod tests {
                 .collect(),
         )
         .unwrap();
-        let (plane, plane_face) = crate::builder::planar_face(
+        let (plane, plane_face) = crate::construction::planar_face(
             &outer,
             &[],
             p(0, 0, 1),
@@ -7708,7 +7720,7 @@ mod tests {
         assert!(first_partition.traces.iter().all(|trace| {
             matches!(
                 trace.splits.as_slice(),
-                [crate::SurfaceCurveFaceSplit::Bridge(_)]
+                [crate::ArenaSurfaceCurveFaceSplit::Bridge(_)]
             )
         }));
         assert_eq!(first.to_json().unwrap(), second.to_json().unwrap());
@@ -7724,7 +7736,7 @@ mod tests {
         );
         let json = first.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7776,7 +7788,7 @@ mod tests {
                 .collect(),
         )
         .unwrap();
-        let (plane, plane_face) = crate::builder::planar_face(
+        let (plane, plane_face) = crate::construction::planar_face(
             &outer,
             &[],
             p(0, 0, 1),
@@ -7812,7 +7824,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7864,7 +7876,7 @@ mod tests {
                 .collect(),
         )
         .unwrap();
-        let (plane, plane_face) = crate::builder::planar_face(
+        let (plane, plane_face) = crate::construction::planar_face(
             &outer,
             &[],
             p(0, 0, 1),
@@ -7933,7 +7945,7 @@ mod tests {
         );
         let json = first.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -7957,11 +7969,11 @@ mod tests {
         )
     }
 
-    fn assert_volume(result: BooleanResult, expected: i32) {
+    fn assert_volume(result: ArenaBooleanResult, expected: i32) {
         let (model, solids) = match result {
-            BooleanResult::Solid { model, solid } => (model, vec![solid]),
-            BooleanResult::Solids { model, solids } => (model, solids),
-            BooleanResult::Empty => panic!("expected nonempty Boolean solid"),
+            ArenaBooleanResult::Solid { model, solid } => (model, vec![solid]),
+            ArenaBooleanResult::Solids { model, solids } => (model, solids),
+            ArenaBooleanResult::Empty => panic!("expected nonempty Boolean solid"),
         };
         let volume = solids
             .into_iter()
@@ -7974,8 +7986,8 @@ mod tests {
     }
     #[test]
     fn intersection_graph_retains_exact_sphere_carrier_intersections() {
-        let (first, first_solid) = crate::builder::sphere(Real::from(2)).unwrap();
-        let (second, second_solid) = crate::builder::sphere(Real::from(2)).unwrap();
+        let (first, first_solid) = crate::construction::sphere(Real::from(2)).unwrap();
+        let (second, second_solid) = crate::construction::sphere(Real::from(2)).unwrap();
         let second = second
             .transformed(&crate::Matrix4::affine_translation([
                 Real::from(2),
@@ -8021,8 +8033,8 @@ mod tests {
 
     #[test]
     fn axial_sphere_graph_partitions_both_whole_faces_from_retained_pcurves() {
-        let (first, first_solid) = crate::builder::sphere(Real::from(2)).unwrap();
-        let (second, second_solid) = crate::builder::sphere(Real::from(2)).unwrap();
+        let (first, first_solid) = crate::construction::sphere(Real::from(2)).unwrap();
+        let (second, second_solid) = crate::construction::sphere(Real::from(2)).unwrap();
         let second = second
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -8077,7 +8089,7 @@ mod tests {
             Some(Ordering::Equal)
         );
 
-        let (mirrored, mirrored_solid) = crate::builder::sphere(Real::from(2)).unwrap();
+        let (mirrored, mirrored_solid) = crate::construction::sphere(Real::from(2)).unwrap();
         let mirrored = mirrored
             .transformed(&Matrix4::affine_orthonormal(
                 [
@@ -8132,9 +8144,9 @@ mod tests {
 
     #[test]
     fn coaxial_sphere_cylinder_intersection_stitches_exact_mixed_shell() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(3)).unwrap();
         let (cylinder, cylinder_solid) =
-            crate::builder::cylinder(Real::from(2), Real::from(6)).unwrap();
+            crate::construction::cylinder(Real::from(2), Real::from(6)).unwrap();
         let cylinder = cylinder
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -8172,7 +8184,7 @@ mod tests {
         );
         let sphere_json = partitioned_sphere.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&sphere_json)
+            crate::ImportedModel::from_json(&sphere_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -8199,7 +8211,7 @@ mod tests {
         );
         let cylinder_json = partitioned_cylinder.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&cylinder_json)
+            crate::ImportedModel::from_json(&cylinder_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -8208,7 +8220,7 @@ mod tests {
             cylinder_json
         );
 
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap()
         else {
@@ -8268,7 +8280,7 @@ mod tests {
             assert_eq!(model.classify_point(solid, &point).unwrap(), location);
         }
         let json = model.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8288,7 +8300,7 @@ mod tests {
         let (_, reversed_sphere_partitions) = reversed.partition_second_faces().unwrap();
         assert_eq!(reversed_sphere_partitions.len(), 1);
         assert_eq!(reversed_sphere_partitions[0].traces.len(), 2);
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: reversed_model,
             solid: reversed_solid,
         } = reversed
@@ -8313,7 +8325,7 @@ mod tests {
         .into_iter()
         .enumerate()
         {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("standard operand order {index} must retain the exact mixed solid");
             };
             assert_eq!(
@@ -8348,7 +8360,7 @@ mod tests {
         let (_, oriented_sphere_partitions) = oriented.partition_first_faces().unwrap();
         assert_eq!(oriented_sphere_partitions.len(), 1);
         assert_eq!(oriented_sphere_partitions[0].traces.len(), 2);
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented_model,
             solid: oriented_solid,
         } = oriented
@@ -8386,9 +8398,9 @@ mod tests {
 
     #[test]
     fn coaxial_sphere_minus_cylinder_stitches_an_exact_napkin_ring() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(3)).unwrap();
         let (cylinder, cylinder_solid) =
-            crate::builder::cylinder(Real::from(2), Real::from(6)).unwrap();
+            crate::construction::cylinder(Real::from(2), Real::from(6)).unwrap();
         let cylinder = cylinder
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -8397,7 +8409,7 @@ mod tests {
             ]))
             .unwrap();
         let graph = intersection_graph(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap();
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Difference)
             .unwrap()
         else {
@@ -8444,7 +8456,7 @@ mod tests {
             assert_eq!(model.classify_point(solid, &point).unwrap(), location);
         }
 
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: standard,
             solid: standard_solid,
         } = difference(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap()
@@ -8461,7 +8473,7 @@ mod tests {
             Some(Ordering::Equal)
         );
         let json = standard.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8486,7 +8498,7 @@ mod tests {
         );
         let oriented_sphere = sphere.transformed(&cyclic).unwrap();
         let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented,
             solid: oriented_solid,
         } = difference(
@@ -8528,9 +8540,9 @@ mod tests {
 
     #[test]
     fn coaxial_cylinder_minus_sphere_stitches_two_exact_components() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(3)).unwrap();
         let (cylinder, cylinder_solid) =
-            crate::builder::cylinder(Real::from(2), Real::from(8)).unwrap();
+            crate::construction::cylinder(Real::from(2), Real::from(8)).unwrap();
         let cylinder = cylinder
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -8539,7 +8551,7 @@ mod tests {
             ]))
             .unwrap();
         let graph = intersection_graph(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap();
-        let BooleanResult::Solids { model, solids } = graph
+        let ArenaBooleanResult::Solids { model, solids } = graph
             .stitch_selected_faces(BooleanOperation::Difference)
             .unwrap()
         else {
@@ -8640,7 +8652,7 @@ mod tests {
             SolidPointLocation::Outside
         );
 
-        let BooleanResult::Solids {
+        let ArenaBooleanResult::Solids {
             model: standard,
             solids: standard_solids,
         } = difference(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap()
@@ -8666,7 +8678,7 @@ mod tests {
             Some(Ordering::Equal)
         );
         let json = standard.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8690,7 +8702,7 @@ mod tests {
         );
         let oriented_sphere = sphere.transformed(&cyclic).unwrap();
         let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
-        let BooleanResult::Solids {
+        let ArenaBooleanResult::Solids {
             model: oriented,
             solids: oriented_solids,
         } = difference(
@@ -8730,9 +8742,9 @@ mod tests {
 
     #[test]
     fn coaxial_sphere_cylinder_union_stitches_one_exact_extended_shell() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(3)).unwrap();
         let (cylinder, cylinder_solid) =
-            crate::builder::cylinder(Real::from(2), Real::from(8)).unwrap();
+            crate::construction::cylinder(Real::from(2), Real::from(8)).unwrap();
         let cylinder = cylinder
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -8741,7 +8753,7 @@ mod tests {
             ]))
             .unwrap();
         let graph = intersection_graph(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap();
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Union)
             .unwrap()
         else {
@@ -8815,7 +8827,7 @@ mod tests {
         .into_iter()
         .enumerate()
         {
-            let BooleanResult::Solid {
+            let ArenaBooleanResult::Solid {
                 model: standard,
                 solid: standard_solid,
             } = result
@@ -8845,7 +8857,7 @@ mod tests {
             );
         }
 
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: standard,
             solid: standard_solid,
         } = union(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap()
@@ -8853,7 +8865,7 @@ mod tests {
             unreachable!("standard union was checked above");
         };
         let json = standard.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -8878,7 +8890,7 @@ mod tests {
         );
         let oriented_sphere = sphere.transformed(&cyclic).unwrap();
         let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented,
             solid: oriented_solid,
         } = union(
@@ -8920,9 +8932,9 @@ mod tests {
 
     #[test]
     fn one_sided_finite_sphere_cylinder_intersection_retains_exact_cap_band() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(3)).unwrap();
         let (cylinder, cylinder_solid) =
-            crate::builder::cylinder(Real::from(2), Real::from(4)).unwrap();
+            crate::construction::cylinder(Real::from(2), Real::from(4)).unwrap();
         let cylinder = cylinder
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -8931,7 +8943,7 @@ mod tests {
             ]))
             .unwrap();
         let graph = intersection_graph(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap();
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap()
         else {
@@ -8994,7 +9006,7 @@ mod tests {
             intersection(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap(),
             intersection(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap(),
         ] {
-            let BooleanResult::Solid {
+            let ArenaBooleanResult::Solid {
                 model: standard,
                 solid: standard_solid,
             } = result
@@ -9019,7 +9031,7 @@ mod tests {
             union(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap(),
             union(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap(),
         ] {
-            let BooleanResult::Solid {
+            let ArenaBooleanResult::Solid {
                 model: union_model,
                 solid: union_solid,
             } = result
@@ -9069,7 +9081,7 @@ mod tests {
             ((Real::from(54) + Real::from(10) * &sqrt_five) * Real::pi() / Real::from(3)).unwrap();
         let expected_sphere_difference_area =
             (Real::from(22) + Real::from(10) * &sqrt_five) * Real::pi();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: sphere_difference,
             solid: sphere_difference_solid,
         } = difference(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap()
@@ -9124,7 +9136,7 @@ mod tests {
 
         let expected_cylinder_difference =
             ((Real::from(10) * &sqrt_five - Real::from(6)) * Real::pi() / Real::from(3)).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: cylinder_difference,
             solid: cylinder_difference_solid,
         } = difference(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap()
@@ -9158,7 +9170,7 @@ mod tests {
             Some(Ordering::Equal)
         );
 
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: union_replay,
             solid: union_replay_solid,
         } = union(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap()
@@ -9180,7 +9192,7 @@ mod tests {
             ),
         ] {
             let json = result_model.to_json().unwrap();
-            let decoded = crate::RawModel::from_json(&json)
+            let decoded = crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -9265,7 +9277,7 @@ mod tests {
                 &expected_sphere_difference,
             ),
         ] {
-            let BooleanResult::Solid {
+            let ArenaBooleanResult::Solid {
                 model: oriented,
                 solid: oriented_solid,
             } = result
@@ -9286,9 +9298,9 @@ mod tests {
 
     #[test]
     fn sphere_minus_strictly_contained_cylinder_retains_exact_native_void() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(3)).unwrap();
         let (cylinder, cylinder_solid) =
-            crate::builder::cylinder(Real::one(), Real::from(2)).unwrap();
+            crate::construction::cylinder(Real::one(), Real::from(2)).unwrap();
         let cylinder = cylinder
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -9296,7 +9308,7 @@ mod tests {
                 -Real::one(),
             ]))
             .unwrap();
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             difference(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap()
         else {
             panic!("a strictly contained cylinder must become one native void");
@@ -9339,7 +9351,7 @@ mod tests {
             union(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap(),
             union(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap(),
         ] {
-            let BooleanResult::Solid {
+            let ArenaBooleanResult::Solid {
                 model: union_model,
                 solid: union_solid,
             } = result
@@ -9361,7 +9373,7 @@ mod tests {
             intersection(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap(),
             intersection(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap(),
         ] {
-            let BooleanResult::Solid {
+            let ArenaBooleanResult::Solid {
                 model: intersection_model,
                 solid: intersection_solid,
             } = result
@@ -9385,7 +9397,7 @@ mod tests {
         }
         assert!(matches!(
             difference(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
 
         let json = model.to_json().unwrap();
@@ -9393,7 +9405,7 @@ mod tests {
             json.len() < 100_000,
             "canonical mixed-shell pcurves must not retain arrangement-expression history"
         );
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -9417,7 +9429,7 @@ mod tests {
         );
         let oriented_sphere = sphere.transformed(&cyclic).unwrap();
         let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented,
             solid: oriented_solid,
         } = difference(
@@ -9460,7 +9472,7 @@ mod tests {
     #[test]
     fn cylinder_minus_strictly_contained_sphere_retains_exact_native_void() {
         let (cylinder, cylinder_solid) =
-            crate::builder::cylinder(Real::from(2), Real::from(4)).unwrap();
+            crate::construction::cylinder(Real::from(2), Real::from(4)).unwrap();
         let cylinder = cylinder
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -9468,8 +9480,8 @@ mod tests {
                 -Real::from(2),
             ]))
             .unwrap();
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::one()).unwrap();
-        let BooleanResult::Solid { model, solid } =
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::one()).unwrap();
+        let ArenaBooleanResult::Solid { model, solid } =
             difference(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap()
         else {
             panic!("a strictly contained sphere must become one native void");
@@ -9527,7 +9539,7 @@ mod tests {
             union(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap(),
             union(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap(),
         ] {
-            let BooleanResult::Solid {
+            let ArenaBooleanResult::Solid {
                 model: union_model,
                 solid: union_solid,
             } = result
@@ -9553,7 +9565,7 @@ mod tests {
             intersection(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap(),
             intersection(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap(),
         ] {
-            let BooleanResult::Solid {
+            let ArenaBooleanResult::Solid {
                 model: intersection_model,
                 solid: intersection_solid,
             } = result
@@ -9578,11 +9590,11 @@ mod tests {
         }
         assert!(matches!(
             difference(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
 
         let json = model.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -9606,7 +9618,7 @@ mod tests {
         );
         let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
         let oriented_sphere = sphere.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented,
             solid: oriented_solid,
         } = difference(
@@ -9648,9 +9660,9 @@ mod tests {
 
     #[test]
     fn off_axis_sphere_cylinder_containment_bypasses_unsupported_carriers_exactly() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(5)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(5)).unwrap();
         let (inner_cylinder, inner_cylinder_solid) =
-            crate::builder::cylinder(Real::one(), Real::from(2)).unwrap();
+            crate::construction::cylinder(Real::one(), Real::from(2)).unwrap();
         let inner_cylinder = inner_cylinder
             .transformed(&Matrix4::affine_translation([
                 Real::one(),
@@ -9684,7 +9696,7 @@ mod tests {
                 inner_cylinder_volume,
             ),
         ] {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("strict off-axis containment must retain one whole operand");
             };
             assert_eq!(
@@ -9699,9 +9711,9 @@ mod tests {
         }
         assert!(matches!(
             difference(&inner_cylinder, inner_cylinder_solid, &sphere, sphere_solid).unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: bored_sphere,
             solid: bored_sphere_solid,
         } = difference(&sphere, sphere_solid, &inner_cylinder, inner_cylinder_solid).unwrap()
@@ -9738,7 +9750,7 @@ mod tests {
                 .is_none()
         );
         let json = bored_sphere.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -9762,7 +9774,7 @@ mod tests {
         );
         let oriented_sphere = sphere.transformed(&cyclic).unwrap();
         let oriented_inner_cylinder = inner_cylinder.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented_bored_sphere,
             solid: oriented_bored_sphere_solid,
         } = difference(
@@ -9804,7 +9816,7 @@ mod tests {
         );
 
         let (outer_cylinder, outer_cylinder_solid) =
-            crate::builder::cylinder(Real::from(4), Real::from(6)).unwrap();
+            crate::construction::cylinder(Real::from(4), Real::from(6)).unwrap();
         let outer_cylinder = outer_cylinder
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -9812,7 +9824,7 @@ mod tests {
                 -Real::from(3),
             ]))
             .unwrap();
-        let (inner_sphere, inner_sphere_solid) = crate::builder::sphere(Real::one()).unwrap();
+        let (inner_sphere, inner_sphere_solid) = crate::construction::sphere(Real::one()).unwrap();
         let inner_sphere = inner_sphere
             .transformed(&Matrix4::affine_translation([
                 Real::one(),
@@ -9831,7 +9843,7 @@ mod tests {
             .unsupported_pairs()
                 > 0
         );
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: hollow_cylinder,
             solid: hollow_cylinder_solid,
         } = difference(
@@ -9873,7 +9885,7 @@ mod tests {
                 .is_none()
         );
         let hollow_json = hollow_cylinder.to_json().unwrap();
-        let decoded_hollow = crate::RawModel::from_json(&hollow_json)
+        let decoded_hollow = crate::ImportedModel::from_json(&hollow_json)
             .unwrap()
             .validate()
             .unwrap();
@@ -9895,7 +9907,7 @@ mod tests {
                 outer_cylinder_solid
             )
             .unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
         for (result, expected) in [
             (
@@ -9919,7 +9931,7 @@ mod tests {
                 (Real::from(4) * Real::pi() / Real::from(3)).unwrap(),
             ),
         ] {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("reverse off-axis containment must retain one whole operand");
             };
             assert_eq!(
@@ -9935,9 +9947,9 @@ mod tests {
 
         let tangent_radius = Real::from(26).sqrt().unwrap();
         let (tangent_sphere, tangent_sphere_solid) =
-            crate::builder::sphere(tangent_radius).unwrap();
+            crate::construction::sphere(tangent_radius).unwrap();
         let (tangent_cylinder, tangent_cylinder_solid) =
-            crate::builder::cylinder(Real::one(), Real::from(2)).unwrap();
+            crate::construction::cylinder(Real::one(), Real::from(2)).unwrap();
         let tangent_cylinder = tangent_cylinder
             .transformed(&Matrix4::affine_translation([
                 Real::from(4),
@@ -9959,8 +9971,8 @@ mod tests {
 
     #[test]
     fn axial_sphere_halfspace_intersection_stitches_an_exact_cap() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(2)).unwrap();
-        let (slab, slab_solid) = crate::builder::cuboid(p(-3, -3, 1), p(3, 3, 3)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(2)).unwrap();
+        let (slab, slab_solid) = crate::construction::cuboid(p(-3, -3, 1), p(3, 3, 3)).unwrap();
         let graph = intersection_graph(&sphere, sphere_solid, &slab, slab_solid).unwrap();
         let retained = graph
             .intersections()
@@ -9998,7 +10010,7 @@ mod tests {
             Some(Ordering::Equal)
         );
 
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap()
         else {
@@ -10030,7 +10042,7 @@ mod tests {
             assert_eq!(model.classify_point(solid, &point).unwrap(), location);
         }
         let json = model.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -10052,7 +10064,7 @@ mod tests {
         .into_iter()
         .enumerate()
         {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("operand order {index} must retain one exact spherical cap");
             };
             assert_eq!(
@@ -10077,7 +10089,7 @@ mod tests {
         );
         let oriented_sphere = sphere.transformed(&cyclic).unwrap();
         let oriented_slab = slab.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented,
             solid: oriented_solid,
         } = intersection(&oriented_sphere, sphere_solid, &oriented_slab, slab_solid).unwrap()
@@ -10114,8 +10126,8 @@ mod tests {
 
     #[test]
     fn axial_sphere_slab_intersection_stitches_an_exact_band() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(2)).unwrap();
-        let (slab, slab_solid) = crate::builder::cuboid(p(-3, -3, -1), p(3, 3, 1)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(2)).unwrap();
+        let (slab, slab_solid) = crate::construction::cuboid(p(-3, -3, -1), p(3, 3, 1)).unwrap();
         let graph = intersection_graph(&sphere, sphere_solid, &slab, slab_solid).unwrap();
         let retained = graph
             .intersections()
@@ -10157,7 +10169,7 @@ mod tests {
             Some(Ordering::Equal)
         );
 
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap()
         else {
@@ -10189,7 +10201,7 @@ mod tests {
             assert_eq!(model.classify_point(solid, &point).unwrap(), location);
         }
         let json = model.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -10211,7 +10223,7 @@ mod tests {
         .into_iter()
         .enumerate()
         {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("operand order {index} must retain one exact spherical band");
             };
             assert_eq!(
@@ -10236,7 +10248,7 @@ mod tests {
         );
         let oriented_sphere = sphere.transformed(&cyclic).unwrap();
         let oriented_slab = slab.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented,
             solid: oriented_solid,
         } = intersection(&oriented_sphere, sphere_solid, &oriented_slab, slab_solid).unwrap()
@@ -10272,8 +10284,8 @@ mod tests {
 
     #[test]
     fn intersection_graph_certifiably_rejects_disjoint_trimmed_planes() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
-        let (second, second_solid) = crate::builder::cuboid(p(3, 0, 0), p(4, 1, 1)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
+        let (second, second_solid) = crate::construction::cuboid(p(3, 0, 0), p(4, 1, 1)).unwrap();
 
         let graph = intersection_graph(&first, first_solid, &second, second_solid).unwrap();
         assert_eq!(graph.candidate_pairs(), 36);
@@ -10284,7 +10296,7 @@ mod tests {
 
     #[test]
     fn intersection_graph_distinguishes_exact_disjoint_and_unsupported_pairs() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(2)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(2)).unwrap();
         let disjoint = sphere
             .transformed(&crate::Matrix4::affine_translation([
                 Real::from(3),
@@ -10298,7 +10310,7 @@ mod tests {
         assert_eq!(graph.exact_disjoint_pairs(), 1);
         assert!(graph.intersections().is_empty());
 
-        let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (torus, torus_solid) = crate::construction::torus(Real::from(3), Real::one()).unwrap();
         let torus = torus
             .transformed(&Matrix4::affine_translation([
                 Real::one(),
@@ -10319,8 +10331,8 @@ mod tests {
 
     #[test]
     fn intersection_graph_clips_transverse_planar_carriers_to_both_faces() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
-        let (second, second_solid) = crate::builder::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (second, second_solid) = crate::construction::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
         let graph = intersection_graph(&first, first_solid, &second, second_solid).unwrap();
         let fragments = graph
             .intersections()
@@ -10389,8 +10401,8 @@ mod tests {
         )
         .unwrap();
         let (extruded, extruded_solid) =
-            crate::builder::extrude_contour(&profile, Real::zero(), Real::from(3)).unwrap();
-        let (cutter, cutter_solid) = crate::builder::cuboid(p(1, -1, 1), p(3, 3, 2)).unwrap();
+            crate::construction::extrude_contour(&profile, Real::zero(), Real::from(3)).unwrap();
+        let (cutter, cutter_solid) = crate::construction::cuboid(p(1, -1, 1), p(3, 3, 2)).unwrap();
         let graph = intersection_graph(&extruded, extruded_solid, &cutter, cutter_solid).unwrap();
         for pair in graph.intersections() {
             let FacePairTrim::SurfaceCurveFragments(fragments) = pair.trim() else {
@@ -10507,10 +10519,14 @@ mod tests {
             vec![Real::one(), Real::one(), Real::one()],
         )
         .unwrap();
-        let (sweep, sweep_solid) =
-            crate::builder::sweep_curve(&profile, crate::Vector3::x(), crate::Vector3::y(), path)
-                .unwrap();
-        let (slab, slab_solid) = crate::builder::cuboid(p(1, -1, -1), p(3, 5, 5)).unwrap();
+        let (sweep, sweep_solid) = crate::construction::sweep_curve(
+            &profile,
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+            path,
+        )
+        .unwrap();
+        let (slab, slab_solid) = crate::construction::cuboid(p(1, -1, -1), p(3, 5, 5)).unwrap();
         let graph = intersection_graph(&sweep, sweep_solid, &slab, slab_solid).unwrap();
         let (caps_partitioned, cap_partitions) = graph.partition_first_planar_faces().unwrap();
         assert!(!cap_partitions.is_empty());
@@ -10523,7 +10539,7 @@ mod tests {
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        crate::RawModel::from_json(&caps_partitioned.to_json().unwrap())
+        crate::ImportedModel::from_json(&caps_partitioned.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -10541,7 +10557,7 @@ mod tests {
         );
         let all_json = all_partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&all_json)
+            crate::ImportedModel::from_json(&all_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -10592,7 +10608,7 @@ mod tests {
         );
         let selected_json = selected.model.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&selected_json)
+            crate::ImportedModel::from_json(&selected_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -10601,7 +10617,7 @@ mod tests {
             selected_json
         );
 
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: stitched,
             solid: stitched_solid,
         } = graph
@@ -10627,7 +10643,7 @@ mod tests {
         );
         let stitched_json = stitched.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&stitched_json)
+            crate::ImportedModel::from_json(&stitched_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -10635,7 +10651,7 @@ mod tests {
                 .unwrap(),
             stitched_json
         );
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: standard,
             solid: standard_solid,
         } = intersection(&sweep, sweep_solid, &slab, slab_solid).unwrap()
@@ -10653,7 +10669,7 @@ mod tests {
         );
 
         let (transverse_slab, transverse_slab_solid) =
-            crate::builder::cuboid(p(-10, -10, 1), p(10, 10, 3)).unwrap();
+            crate::construction::cuboid(p(-10, -10, 1), p(10, 10, 3)).unwrap();
         let transverse_graph =
             intersection_graph(&sweep, sweep_solid, &transverse_slab, transverse_slab_solid)
                 .unwrap();
@@ -10661,7 +10677,7 @@ mod tests {
             .select_first_faces(BooleanOperation::Intersection)
             .unwrap();
         assert!(transverse_selection.partitions.len() >= 4);
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: transverse_stitched,
             solid: transverse_stitched_solid,
         } = transverse_graph
@@ -10687,7 +10703,7 @@ mod tests {
         );
         let transverse_json = transverse_stitched.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&transverse_json)
+            crate::ImportedModel::from_json(&transverse_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -10711,7 +10727,7 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: transverse_standard,
             solid: transverse_standard_solid,
         } = intersection(&sweep, sweep_solid, &transverse_slab, transverse_slab_solid).unwrap()
@@ -10729,7 +10745,7 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: reversed_operands,
             solid: reversed_solid,
         } = intersection(&transverse_slab, transverse_slab_solid, &sweep, sweep_solid).unwrap()
@@ -10794,7 +10810,7 @@ mod tests {
         }
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -10814,8 +10830,10 @@ mod tests {
             vec![Real::one(), Real::from(2), Real::one()],
             vec![Real::one(), Real::from(2), Real::one()],
         ];
-        let (patch, patch_face) = crate::builder::rational_bezier_patch(controls, weights).unwrap();
-        let (plane_model, plane_solid) = crate::builder::cuboid(p(-1, -1, 1), p(3, 3, 2)).unwrap();
+        let (patch, patch_face) =
+            crate::construction::rational_bezier_patch(controls, weights).unwrap();
+        let (plane_model, plane_solid) =
+            crate::construction::cuboid(p(-1, -1, 1), p(3, 3, 2)).unwrap();
         let plane_face = FaceId::from_index(0).unwrap();
         assert!(
             plane_model
@@ -10884,7 +10902,7 @@ mod tests {
                 .kind(),
             crate::Curve3Kind::RationalBezier
         );
-        crate::RawModel::from_json(&split_patch.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_patch.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -10911,7 +10929,7 @@ mod tests {
             Some(true)
         );
 
-        let (nurbs, nurbs_face) = crate::builder::nurbs_patch(
+        let (nurbs, nurbs_face) = crate::construction::nurbs_patch(
             2,
             1,
             vec![
@@ -10984,8 +11002,8 @@ mod tests {
 
     #[test]
     fn planar_graph_fragments_drive_exact_boundary_attached_face_splits() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
-        let (second, second_solid) = crate::builder::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (second, second_solid) = crate::construction::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
         let graph = intersection_graph(&first, first_solid, &second, second_solid).unwrap();
         let split = graph.intersections().iter().find_map(|pair| {
             let FacePairTrim::CurveFragments(fragments) = pair.trim() else {
@@ -11008,7 +11026,7 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        crate::RawModel::from_json(&split_model.to_json().unwrap())
+        crate::ImportedModel::from_json(&split_model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -11017,8 +11035,8 @@ mod tests {
     #[test]
     fn axial_cylinder_slab_intersection_retains_exact_latitude_pcurves() {
         let (cylinder, cylinder_solid) =
-            crate::builder::cylinder(Real::from(2), Real::from(4)).unwrap();
-        let (slab, slab_solid) = crate::builder::cuboid(p(-3, -3, 1), p(3, 3, 3)).unwrap();
+            crate::construction::cylinder(Real::from(2), Real::from(4)).unwrap();
+        let (slab, slab_solid) = crate::construction::cuboid(p(-3, -3, 1), p(3, 3, 3)).unwrap();
         let graph = intersection_graph(&cylinder, cylinder_solid, &slab, slab_solid).unwrap();
         let latitude_pairs = graph
             .intersections()
@@ -11069,7 +11087,7 @@ mod tests {
         let result = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap();
-        let BooleanResult::Solid { model, solid } = result else {
+        let ArenaBooleanResult::Solid { model, solid } = result else {
             panic!("axial cylinder/slab clipping must retain one exact cylinder");
         };
         let expected = Real::from(8) * Real::pi();
@@ -11087,7 +11105,7 @@ mod tests {
         );
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -11100,7 +11118,7 @@ mod tests {
             intersection(&cylinder, cylinder_solid, &slab, slab_solid).unwrap(),
             intersection(&slab, slab_solid, &cylinder, cylinder_solid).unwrap(),
         ] {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("the standard API must preserve the exact axial cylinder clip");
             };
             assert_eq!(
@@ -11124,7 +11142,7 @@ mod tests {
         );
         let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
         let oriented_slab = slab.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented,
             solid: oriented_solid,
         } = intersection(
@@ -11168,8 +11186,8 @@ mod tests {
     #[test]
     fn transverse_cone_frustum_slab_intersection_retains_exact_latitude_pcurves() {
         let (frustum, frustum_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();
-        let (slab, slab_solid) = crate::builder::cuboid(p(-5, -5, 1), p(5, 5, 2)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();
+        let (slab, slab_solid) = crate::construction::cuboid(p(-5, -5, 1), p(5, 5, 2)).unwrap();
         let graph = intersection_graph(&frustum, frustum_solid, &slab, slab_solid).unwrap();
         let latitude_pairs = graph
             .intersections()
@@ -11206,7 +11224,7 @@ mod tests {
         let (_, slab_partitions) = graph.partition_second_faces().unwrap();
         assert_eq!(slab_partitions.len(), 2);
 
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap()
         else {
@@ -11227,7 +11245,7 @@ mod tests {
         );
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -11243,7 +11261,7 @@ mod tests {
         .into_iter()
         .enumerate()
         {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("the standard API must preserve the exact transverse frustum clip");
             };
             assert_eq!(
@@ -11268,7 +11286,7 @@ mod tests {
         );
         let oriented_frustum = frustum.transformed(&cyclic).unwrap();
         let oriented_slab = slab.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented,
             solid: oriented_solid,
         } = intersection(&oriented_frustum, frustum_solid, &oriented_slab, slab_solid).unwrap()
@@ -11305,14 +11323,14 @@ mod tests {
 
     #[test]
     fn transverse_revolution_slab_intersection_retains_exact_profile_sections() {
-        let (revolution, revolution_solid) = crate::builder::revolve(&[
+        let (revolution, revolution_solid) = crate::construction::revolve(&[
             crate::Point2::new(Real::one(), Real::zero()),
             crate::Point2::new(Real::from(4), Real::zero()),
             crate::Point2::new(Real::from(4), Real::from(3)),
             crate::Point2::new(Real::one(), Real::from(3)),
         ])
         .unwrap();
-        let (slab, slab_solid) = crate::builder::cuboid(p(-5, -5, 1), p(5, 5, 2)).unwrap();
+        let (slab, slab_solid) = crate::construction::cuboid(p(-5, -5, 1), p(5, 5, 2)).unwrap();
         let graph = intersection_graph(&revolution, revolution_solid, &slab, slab_solid).unwrap();
         assert_eq!(graph.unsupported_pairs(), 0);
         let retained = graph
@@ -11357,7 +11375,7 @@ mod tests {
             Some(Ordering::Equal)
         );
 
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap()
         else {
@@ -11414,7 +11432,7 @@ mod tests {
         }
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -11426,7 +11444,7 @@ mod tests {
             intersection(&revolution, revolution_solid, &slab, slab_solid).unwrap(),
             intersection(&slab, slab_solid, &revolution, revolution_solid).unwrap(),
         ] {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("the standard API must retain the revolution slab clip");
             };
             assert_eq!(
@@ -11464,7 +11482,7 @@ mod tests {
             hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
         ])
         .unwrap();
-        let (revolution, revolution_solid) = crate::builder::revolve_path(&profile).unwrap();
+        let (revolution, revolution_solid) = crate::construction::revolve_path(&profile).unwrap();
         let slab_min = Point3::new(
             Real::from(-6),
             Real::from(-6),
@@ -11475,11 +11493,11 @@ mod tests {
             Real::from(6),
             (Real::from(3) / Real::from(2)).unwrap(),
         );
-        let (slab, slab_solid) = crate::builder::cuboid(slab_min, slab_max).unwrap();
+        let (slab, slab_solid) = crate::construction::cuboid(slab_min, slab_max).unwrap();
 
         let graph = intersection_graph(&revolution, revolution_solid, &slab, slab_solid).unwrap();
         assert_eq!(graph.unsupported_pairs(), 0);
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap()
         else {
@@ -11502,7 +11520,7 @@ mod tests {
         );
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -11515,7 +11533,7 @@ mod tests {
             intersection(&revolution, revolution_solid, &slab, slab_solid).unwrap(),
             intersection(&slab, slab_solid, &revolution, revolution_solid).unwrap(),
         ] {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("the standard API must retain the exact NURBS revolution clip");
             };
             assert_eq!(
@@ -11552,18 +11570,18 @@ mod tests {
             hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
         ])
         .unwrap();
-        let (revolution, revolution_solid) = crate::builder::revolve_path(&profile).unwrap();
+        let (revolution, revolution_solid) = crate::construction::revolve_path(&profile).unwrap();
         let slab_min = p(-6, -6, 1);
         let slab_max = Point3::new(
             Real::from(6),
             Real::from(6),
             (Real::from(3) / Real::from(2)).unwrap(),
         );
-        let (slab, slab_solid) = crate::builder::cuboid(slab_min, slab_max).unwrap();
+        let (slab, slab_solid) = crate::construction::cuboid(slab_min, slab_max).unwrap();
 
         let graph = intersection_graph(&revolution, revolution_solid, &slab, slab_solid).unwrap();
         assert_eq!(graph.unsupported_pairs(), 0);
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap()
         else {
@@ -11612,7 +11630,7 @@ mod tests {
         }
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -11625,7 +11643,7 @@ mod tests {
             intersection(&revolution, revolution_solid, &slab, slab_solid).unwrap(),
             intersection(&slab, slab_solid, &revolution, revolution_solid).unwrap(),
         ] {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("the standard API must retain the exact multi-span NURBS clip");
             };
             assert_eq!(
@@ -11643,7 +11661,7 @@ mod tests {
     #[test]
     fn axial_cone_rays_partition_an_exact_half_frustum_cut() {
         let (frustum, frustum_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();
         let diagonal = (Real::one() / Real::from(2).sqrt().unwrap()).unwrap();
         let frame_rotation = Matrix4::affine_orthonormal(
             [
@@ -11654,7 +11672,7 @@ mod tests {
             [Real::zero(), Real::zero(), Real::zero()],
         );
         let frustum = frustum.transformed(&frame_rotation).unwrap();
-        let (cutter, cutter_solid) = crate::builder::cuboid(p(0, -5, -1), p(5, 5, 4)).unwrap();
+        let (cutter, cutter_solid) = crate::construction::cuboid(p(0, -5, -1), p(5, 5, 4)).unwrap();
 
         let graph = intersection_graph(&frustum, frustum_solid, &cutter, cutter_solid).unwrap();
         assert_eq!(graph.unsupported_pairs(), 0);
@@ -11696,7 +11714,7 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap()
         else {
@@ -11770,7 +11788,7 @@ mod tests {
         }
 
         let json = model.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -11797,7 +11815,7 @@ mod tests {
         .into_iter()
         .enumerate()
         {
-            let BooleanResult::Solid {
+            let ArenaBooleanResult::Solid {
                 model: standard,
                 solid: standard_solid,
             } = result
@@ -11849,7 +11867,7 @@ mod tests {
                 standard_json.len() < 100_000,
                 "operation {index} must retain canonical mixed-shell pcurves"
             );
-            let standard_decoded = crate::RawModel::from_json(&standard_json)
+            let standard_decoded = crate::ImportedModel::from_json(&standard_json)
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -11881,7 +11899,7 @@ mod tests {
             "reflection must retain canonical mixed-shell pcurves"
         );
         assert_eq!(
-            crate::RawModel::from_json(&reflected_json)
+            crate::ImportedModel::from_json(&reflected_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -11900,7 +11918,7 @@ mod tests {
         );
         let oriented_frustum = frustum.transformed(&cyclic).unwrap();
         let oriented_cutter = cutter.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented,
             solid: oriented_solid,
         } = intersection(
@@ -11933,7 +11951,7 @@ mod tests {
     #[test]
     fn rationally_rotated_axial_frustum_difference_stitches_exactly() {
         let (frustum, frustum_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();
         let three_fifths = (Real::from(3) / Real::from(5)).unwrap();
         let four_fifths = (Real::from(4) / Real::from(5)).unwrap();
         let rotation = Matrix4::affine_orthonormal(
@@ -11945,9 +11963,9 @@ mod tests {
             [Real::zero(), Real::zero(), Real::zero()],
         );
         let frustum = frustum.transformed(&rotation).unwrap();
-        let (cutter, cutter_solid) = crate::builder::cuboid(p(0, -5, -1), p(5, 5, 4)).unwrap();
+        let (cutter, cutter_solid) = crate::construction::cuboid(p(0, -5, -1), p(5, 5, 4)).unwrap();
 
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             difference(&frustum, frustum_solid, &cutter, cutter_solid).unwrap()
         else {
             panic!("the rationally rotated axial difference must retain one exact half-frustum");
@@ -11963,7 +11981,7 @@ mod tests {
             Some(Ordering::Equal),
         );
         let json = model.to_json().unwrap();
-        let replayed = crate::RawModel::from_json(&json)
+        let replayed = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -11981,9 +11999,9 @@ mod tests {
 
     #[test]
     fn transverse_torus_graph_partitions_both_exact_circle_supports() {
-        let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (torus, torus_solid) = crate::construction::torus(Real::from(3), Real::one()).unwrap();
         let half = (Real::one() / Real::from(2)).unwrap();
-        let (slab, slab_solid) = crate::builder::cuboid(
+        let (slab, slab_solid) = crate::construction::cuboid(
             Point3::new(-Real::from(5), -Real::from(5), half),
             p(5, 5, 2),
         )
@@ -12027,7 +12045,7 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap()
         else {
@@ -12048,8 +12066,9 @@ mod tests {
 
     #[test]
     fn coaxial_torus_graph_partitions_both_exact_latitude_supports() {
-        let (first, first_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
-        let (second, second_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (first, first_solid) = crate::construction::torus(Real::from(3), Real::one()).unwrap();
+        let (second, second_solid) =
+            crate::construction::torus(Real::from(3), Real::one()).unwrap();
         let second = second
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -12113,14 +12132,15 @@ mod tests {
         );
         for model in [&partitioned_first, &partitioned_second] {
             let json = model.to_json().unwrap();
-            let decoded = crate::RawModel::from_json(&json)
+            let decoded = crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap();
             assert_eq!(decoded.to_json().unwrap(), json);
         }
 
-        let (mirrored, mirrored_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (mirrored, mirrored_solid) =
+            crate::construction::torus(Real::from(3), Real::one()).unwrap();
         let mirrored = mirrored
             .transformed(&Matrix4::affine_orthonormal(
                 [
@@ -12190,8 +12210,8 @@ mod tests {
 
     #[test]
     fn coaxial_sphere_torus_graph_partitions_both_exact_latitude_supports() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
-        let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(3)).unwrap();
+        let (torus, torus_solid) = crate::construction::torus(Real::from(3), Real::one()).unwrap();
         let graph = intersection_graph(&sphere, sphere_solid, &torus, torus_solid).unwrap();
         assert_eq!(graph.unsupported_pairs(), 0);
         let retained = graph
@@ -12243,14 +12263,15 @@ mod tests {
         );
         for model in [&partitioned_sphere, &partitioned_torus] {
             let json = model.to_json().unwrap();
-            let decoded = crate::RawModel::from_json(&json)
+            let decoded = crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap();
             assert_eq!(decoded.to_json().unwrap(), json);
         }
 
-        let (mirrored, mirrored_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (mirrored, mirrored_solid) =
+            crate::construction::torus(Real::from(3), Real::one()).unwrap();
         let mirrored = mirrored
             .transformed(&Matrix4::affine_orthonormal(
                 [
@@ -12320,7 +12341,7 @@ mod tests {
     #[test]
     fn coaxial_cylinder_torus_graph_partitions_both_exact_latitude_supports() {
         let (cylinder, cylinder_solid) =
-            crate::builder::cylinder((Real::from(7) / Real::from(2)).unwrap(), Real::from(4))
+            crate::construction::cylinder((Real::from(7) / Real::from(2)).unwrap(), Real::from(4))
                 .unwrap();
         let cylinder = cylinder
             .transformed(&Matrix4::affine_translation([
@@ -12329,7 +12350,7 @@ mod tests {
                 -Real::from(2),
             ]))
             .unwrap();
-        let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (torus, torus_solid) = crate::construction::torus(Real::from(3), Real::one()).unwrap();
         let graph = intersection_graph(&cylinder, cylinder_solid, &torus, torus_solid).unwrap();
         assert_eq!(graph.unsupported_pairs(), 0);
         let retained = graph
@@ -12389,14 +12410,15 @@ mod tests {
         );
         for model in [&partitioned_cylinder, &partitioned_torus] {
             let json = model.to_json().unwrap();
-            let decoded = crate::RawModel::from_json(&json)
+            let decoded = crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap();
             assert_eq!(decoded.to_json().unwrap(), json);
         }
 
-        let (mirrored, mirrored_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (mirrored, mirrored_solid) =
+            crate::construction::torus(Real::from(3), Real::one()).unwrap();
         let mirrored = mirrored
             .transformed(&Matrix4::affine_orthonormal(
                 [
@@ -12471,9 +12493,10 @@ mod tests {
     #[test]
     fn coaxial_cone_torus_graph_partitions_both_exact_latitude_supports() {
         let (frustum, frustum_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
         let (torus, torus_solid) =
-            crate::builder::torus(Real::from(3), (Real::one() / Real::from(2)).unwrap()).unwrap();
+            crate::construction::torus(Real::from(3), (Real::one() / Real::from(2)).unwrap())
+                .unwrap();
         let torus = torus
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -12567,7 +12590,7 @@ mod tests {
         );
         for model in [&partitioned_frustum, &partitioned_torus] {
             let json = model.to_json().unwrap();
-            let decoded = crate::RawModel::from_json(&json)
+            let decoded = crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -12575,7 +12598,8 @@ mod tests {
         }
 
         let (matching, matching_solid) =
-            crate::builder::torus(Real::from(3), (Real::one() / Real::from(2)).unwrap()).unwrap();
+            crate::construction::torus(Real::from(3), (Real::one() / Real::from(2)).unwrap())
+                .unwrap();
         let matching = matching
             .transformed(&Matrix4::affine_orthonormal(
                 [
@@ -12637,8 +12661,8 @@ mod tests {
 
     #[test]
     fn axial_torus_graph_partitions_both_exact_meridian_supports() {
-        let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
-        let (cutter, cutter_solid) = crate::builder::cuboid(p(0, -5, -5), p(5, 5, 5)).unwrap();
+        let (torus, torus_solid) = crate::construction::torus(Real::from(3), Real::one()).unwrap();
+        let (cutter, cutter_solid) = crate::construction::cuboid(p(0, -5, -5), p(5, 5, 5)).unwrap();
         let diagonal = (Real::one() / Real::from(2).sqrt().unwrap()).unwrap();
         let rotation = Matrix4::affine_orthonormal(
             [
@@ -12689,7 +12713,7 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        let BooleanResult::Solid { model, solid } = graph
+        let ArenaBooleanResult::Solid { model, solid } = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap()
         else {
@@ -12752,7 +12776,7 @@ mod tests {
         }
 
         let json = model.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -12779,7 +12803,7 @@ mod tests {
         .into_iter()
         .enumerate()
         {
-            let BooleanResult::Solid {
+            let ArenaBooleanResult::Solid {
                 model: standard,
                 solid: standard_solid,
             } = result
@@ -12825,7 +12849,7 @@ mod tests {
                 "operation {index}"
             );
             let standard_json = standard.to_json().unwrap();
-            let standard_decoded = crate::RawModel::from_json(&standard_json)
+            let standard_decoded = crate::ImportedModel::from_json(&standard_json)
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -12869,7 +12893,7 @@ mod tests {
             SolidPointLocation::Inside
         );
         let reflected_json = reflected.to_json().unwrap();
-        let reflected_decoded = crate::RawModel::from_json(&reflected_json)
+        let reflected_decoded = crate::ImportedModel::from_json(&reflected_json)
             .unwrap()
             .validate()
             .unwrap();
@@ -12900,7 +12924,7 @@ mod tests {
         );
         let oriented_torus = torus.transformed(&cyclic).unwrap();
         let oriented_cutter = cutter.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented,
             solid: oriented_solid,
         } = intersection(&oriented_torus, torus_solid, &oriented_cutter, cutter_solid).unwrap()
@@ -12931,9 +12955,9 @@ mod tests {
 
     #[test]
     fn transverse_torus_central_band_stitches_as_an_exact_solid() {
-        let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (torus, torus_solid) = crate::construction::torus(Real::from(3), Real::one()).unwrap();
         let half = (Real::one() / Real::from(2)).unwrap();
-        let (slab, slab_solid) = crate::builder::cuboid(
+        let (slab, slab_solid) = crate::construction::cuboid(
             Point3::new(-Real::from(5), -Real::from(5), -half.clone()),
             Point3::new(Real::from(5), Real::from(5), half),
         )
@@ -12942,7 +12966,7 @@ mod tests {
         let result = graph
             .stitch_selected_faces(BooleanOperation::Intersection)
             .unwrap();
-        let BooleanResult::Solid { model, solid } = result else {
+        let ArenaBooleanResult::Solid { model, solid } = result else {
             panic!("the transverse central torus band must be one exact solid");
         };
         let expected = Real::from(2) * Real::pi() * Real::pi()
@@ -12980,7 +13004,7 @@ mod tests {
             assert_eq!(model.classify_point(solid, &point).unwrap(), location);
         }
         let json = model.to_json().unwrap();
-        let decoded = crate::RawModel::from_json(&json)
+        let decoded = crate::ImportedModel::from_json(&json)
             .unwrap()
             .validate()
             .unwrap();
@@ -13002,7 +13026,7 @@ mod tests {
         .into_iter()
         .enumerate()
         {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("operand order {index} must preserve the exact torus band");
             };
             assert_eq!(
@@ -13027,7 +13051,7 @@ mod tests {
         );
         let oriented_torus = torus.transformed(&cyclic).unwrap();
         let oriented_slab = slab.transformed(&cyclic).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: oriented,
             solid: oriented_solid,
         } = intersection(&oriented_torus, torus_solid, &oriented_slab, slab_solid).unwrap()
@@ -13064,8 +13088,8 @@ mod tests {
 
     #[test]
     fn planar_graph_partitions_both_models_in_deterministic_face_order() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
-        let (second, second_solid) = crate::builder::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (second, second_solid) = crate::construction::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
         let graph = intersection_graph(&first, first_solid, &second, second_solid).unwrap();
 
         let (first_partitioned, first_partitions) = graph.partition_first_planar_faces().unwrap();
@@ -13105,7 +13129,7 @@ mod tests {
             Some(Ordering::Equal)
         );
         for model in [first_partitioned, second_partitioned] {
-            crate::RawModel::from_json(&model.to_json().unwrap())
+            crate::ImportedModel::from_json(&model.to_json().unwrap())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -13114,8 +13138,9 @@ mod tests {
 
     #[test]
     fn planar_face_selection_classifies_exact_witnesses_and_applies_operation_matrix() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
-        let (disjoint, disjoint_solid) = crate::builder::cuboid(p(3, 0, 0), p(5, 2, 2)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (disjoint, disjoint_solid) =
+            crate::construction::cuboid(p(3, 0, 0), p(5, 2, 2)).unwrap();
         let disjoint_graph =
             intersection_graph(&first, first_solid, &disjoint, disjoint_solid).unwrap();
 
@@ -13156,7 +13181,7 @@ mod tests {
         );
 
         let (overlapping, overlapping_solid) =
-            crate::builder::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
+            crate::construction::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
         let overlapping_graph =
             intersection_graph(&first, first_solid, &overlapping, overlapping_solid).unwrap();
         let selected = overlapping_graph
@@ -13219,7 +13244,7 @@ mod tests {
                     .all(|face| face.action == FaceSelectionAction::Discard)
             );
         }
-        crate::RawModel::from_json(&selected.model.to_json().unwrap())
+        crate::ImportedModel::from_json(&selected.model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -13240,8 +13265,8 @@ mod tests {
 
     #[test]
     fn all_face_selection_classifies_boundaryless_spheres_without_fake_seams() {
-        let (outer, outer_solid) = crate::builder::sphere(Real::from(2)).unwrap();
-        let (inner, inner_solid) = crate::builder::sphere(Real::one()).unwrap();
+        let (outer, outer_solid) = crate::construction::sphere(Real::from(2)).unwrap();
+        let (inner, inner_solid) = crate::construction::sphere(Real::one()).unwrap();
         let graph = intersection_graph(&outer, outer_solid, &inner, inner_solid).unwrap();
 
         let outer_intersection = graph
@@ -13296,7 +13321,7 @@ mod tests {
                 (Real::from(28) * Real::pi() / Real::from(3)).unwrap(),
             ),
         ] {
-            let BooleanResult::Solid { model, solid } =
+            let ArenaBooleanResult::Solid { model, solid } =
                 graph.stitch_selected_faces(operation).unwrap()
             else {
                 panic!("nested spheres have one connected volumetric result");
@@ -13312,7 +13337,7 @@ mod tests {
             );
             let json = model.to_json().unwrap();
             assert_eq!(
-                crate::RawModel::from_json(&json)
+                crate::ImportedModel::from_json(&json)
                     .unwrap()
                     .validate()
                     .unwrap()
@@ -13325,8 +13350,9 @@ mod tests {
 
     #[test]
     fn all_face_stitching_transfers_intact_curved_shells_without_planar_fallbacks() {
-        let (first, first_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
-        let (second, second_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (first, first_solid) = crate::construction::torus(Real::from(3), Real::one()).unwrap();
+        let (second, second_solid) =
+            crate::construction::torus(Real::from(3), Real::one()).unwrap();
         let second = second
             .transformed(&crate::Matrix4::affine_translation([
                 Real::from(10),
@@ -13335,7 +13361,7 @@ mod tests {
             ]))
             .unwrap();
         let graph = intersection_graph(&first, first_solid, &second, second_solid).unwrap();
-        let BooleanResult::Solids { model, solids } = graph
+        let ArenaBooleanResult::Solids { model, solids } = graph
             .stitch_selected_faces(BooleanOperation::Union)
             .unwrap()
         else {
@@ -13360,7 +13386,7 @@ mod tests {
         );
         let json = model.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13372,7 +13398,7 @@ mod tests {
 
     #[test]
     fn coincident_planar_ownership_uses_material_side_truth_table() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
         let identical_graph = intersection_graph(&first, first_solid, &first, first_solid).unwrap();
         for operation in [
             BooleanOperation::Union,
@@ -13392,7 +13418,8 @@ mod tests {
             }));
         }
 
-        let (touching, touching_solid) = crate::builder::cuboid(p(2, 0, 0), p(4, 2, 2)).unwrap();
+        let (touching, touching_solid) =
+            crate::construction::cuboid(p(2, 0, 0), p(4, 2, 2)).unwrap();
         let touching_graph =
             intersection_graph(&first, first_solid, &touching, touching_solid).unwrap();
         for operation in [
@@ -13426,8 +13453,8 @@ mod tests {
 
     #[test]
     fn selected_planar_faces_stitch_into_exact_regularized_solids() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
-        let (second, second_solid) = crate::builder::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (second, second_solid) = crate::construction::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
         let graph = intersection_graph(&first, first_solid, &second, second_solid).unwrap();
         for (operation, expected_volume) in [
             (BooleanOperation::Union, Real::from(14)),
@@ -13438,9 +13465,9 @@ mod tests {
                 .stitch_selected_faces(operation)
                 .unwrap_or_else(|error| panic!("{operation:?} stitching failed: {error:?}"));
             let (model, solids) = match result {
-                BooleanResult::Solid { model, solid } => (model, vec![solid]),
-                BooleanResult::Solids { model, solids } => (model, solids),
-                BooleanResult::Empty => panic!("overlapping cuboids have a volumetric result"),
+                ArenaBooleanResult::Solid { model, solid } => (model, vec![solid]),
+                ArenaBooleanResult::Solids { model, solids } => (model, solids),
+                ArenaBooleanResult::Empty => panic!("overlapping cuboids have a volumetric result"),
             };
             assert_eq!(solids.len(), 1);
             assert_eq!(
@@ -13452,22 +13479,23 @@ mod tests {
                 .value(),
                 Some(Ordering::Equal)
             );
-            crate::RawModel::from_json(&model.to_json().unwrap())
+            crate::ImportedModel::from_json(&model.to_json().unwrap())
                 .unwrap()
                 .validate()
                 .unwrap();
         }
 
-        let (disjoint, disjoint_solid) = crate::builder::cuboid(p(4, 0, 0), p(6, 2, 2)).unwrap();
+        let (disjoint, disjoint_solid) =
+            crate::construction::cuboid(p(4, 0, 0), p(6, 2, 2)).unwrap();
         let disjoint_graph =
             intersection_graph(&first, first_solid, &disjoint, disjoint_solid).unwrap();
         assert!(matches!(
             disjoint_graph
                 .stitch_selected_faces(BooleanOperation::Intersection)
                 .unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
-        let BooleanResult::Solids { model, solids } = disjoint_graph
+        let ArenaBooleanResult::Solids { model, solids } = disjoint_graph
             .stitch_selected_faces(BooleanOperation::Union)
             .unwrap()
         else {
@@ -13489,21 +13517,21 @@ mod tests {
             identical_graph
                 .stitch_selected_faces(BooleanOperation::Difference)
                 .unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
     }
 
     #[test]
     fn contained_planar_selection_stitches_inner_walls_and_through_holes() {
-        let (outer, outer_solid) = crate::builder::cuboid(p(0, 0, 0), p(4, 4, 2)).unwrap();
-        let (inner, inner_solid) = crate::builder::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
+        let (outer, outer_solid) = crate::construction::cuboid(p(0, 0, 0), p(4, 4, 2)).unwrap();
+        let (inner, inner_solid) = crate::construction::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
         let graph = intersection_graph(&outer, outer_solid, &inner, inner_solid).unwrap();
         for (operation, expected_volume) in [
             (BooleanOperation::Union, Real::from(32)),
             (BooleanOperation::Intersection, Real::from(8)),
             (BooleanOperation::Difference, Real::from(24)),
         ] {
-            let BooleanResult::Solid { model, solid } =
+            let ArenaBooleanResult::Solid { model, solid } =
                 graph.stitch_selected_faces(operation).unwrap()
             else {
                 panic!("contained planar Boolean must produce one connected solid");
@@ -13530,7 +13558,7 @@ mod tests {
                     SolidPointLocation::Inside
                 );
             }
-            crate::RawModel::from_json(&model.to_json().unwrap())
+            crate::ImportedModel::from_json(&model.to_json().unwrap())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -13539,8 +13567,8 @@ mod tests {
 
     #[test]
     fn standard_boolean_api_falls_through_to_oriented_planar_brep_stitching() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
-        let (second, second_solid) = crate::builder::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (second, second_solid) = crate::construction::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
         let three_fifths = (Real::from(3) / Real::from(5)).unwrap();
         let four_fifths = (Real::from(4) / Real::from(5)).unwrap();
         let transform = Matrix4::affine_orthonormal(
@@ -13569,7 +13597,7 @@ mod tests {
                     difference(&first, first_solid, &second, second_solid).unwrap()
                 }
             };
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("oriented overlapping cuboids must produce one solid");
             };
             assert_eq!(
@@ -13583,8 +13611,8 @@ mod tests {
             );
         }
 
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
-        let (second, second_solid) = crate::builder::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (second, second_solid) = crate::construction::cuboid(p(1, 1, 0), p(3, 3, 2)).unwrap();
         let cyclic = Matrix4::affine_orthonormal(
             [
                 [Real::zero(), Real::zero(), Real::one()],
@@ -13605,7 +13633,7 @@ mod tests {
                 Real::from(6),
             ),
         ] {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("incompatible world-z slabs must fall through to planar stitching");
             };
             assert_eq!(
@@ -13622,8 +13650,8 @@ mod tests {
 
     #[test]
     fn skew_cuboid_booleans_publish_exact_planar_shells() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
-        let (second, second_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (second, second_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
         let three_fifths = (Real::from(3) / Real::from(5)).unwrap();
         let four_fifths = (Real::from(4) / Real::from(5)).unwrap();
         let half = (Real::one() / Real::from(2)).unwrap();
@@ -13636,7 +13664,7 @@ mod tests {
             [half.clone(), half.clone(), half],
         );
         let second = second.transformed(&transform).unwrap();
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             intersection(&first, first_solid, &second, second_solid).unwrap()
         else {
             panic!("overlapping skew cuboids must produce one convex solid");
@@ -13653,7 +13681,7 @@ mod tests {
             Ordering::Greater
         );
         let intersection_volume = model.solid_volume(solid).unwrap();
-        crate::RawModel::from_json(&model.to_json().unwrap())
+        crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -13668,14 +13696,14 @@ mod tests {
                 Real::from(8) - intersection_volume,
             ),
         ] {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("overlapping skew cuboid union/difference must remain connected");
             };
             assert_eq!(
                 exact_order(&model.solid_volume(solid).unwrap(), &expected_volume).unwrap(),
                 Ordering::Equal
             );
-            crate::RawModel::from_json(&model.to_json().unwrap())
+            crate::ImportedModel::from_json(&model.to_json().unwrap())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -13684,8 +13712,8 @@ mod tests {
 
     #[test]
     fn difference_rejects_a_non_manifold_exact_line_contact() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
-        let (second, second_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (second, second_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
         let three_fifths = (Real::from(3) / Real::from(5)).unwrap();
         let four_fifths = (Real::from(4) / Real::from(5)).unwrap();
         let transform = Matrix4::affine_orthonormal(
@@ -13715,11 +13743,11 @@ mod tests {
 
     #[test]
     fn contained_skew_planar_difference_publishes_an_exact_void_shell() {
-        let (outer, outer_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
-        let (inner, inner_solid) = crate::builder::cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
+        let (outer, outer_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (inner, inner_solid) = crate::construction::cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
         let transform = rational_corner_transform(13);
         let inner = inner.transformed(&transform).unwrap();
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             difference(&outer, outer_solid, &inner, inner_solid).unwrap()
         else {
             panic!("strictly contained skew cuboid must become one void shell");
@@ -13737,7 +13765,7 @@ mod tests {
             model.classify_point(solid, &inner_center).unwrap(),
             SolidPointLocation::Outside
         );
-        crate::RawModel::from_json(&model.to_json().unwrap())
+        crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -13745,8 +13773,8 @@ mod tests {
 
     #[test]
     fn contained_skew_planar_difference_rejects_exact_point_contact() {
-        let (outer, outer_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
-        let (inner, inner_solid) = crate::builder::cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
+        let (outer, outer_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (inner, inner_solid) = crate::construction::cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
         let inner = inner.transformed(&rational_corner_transform(12)).unwrap();
         assert!(matches!(
             difference(&outer, outer_solid, &inner, inner_solid),
@@ -13762,9 +13790,9 @@ mod tests {
 
     #[test]
     fn intersection_graph_classifies_planar_point_contacts_against_face_trims() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::one()).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::one()).unwrap();
         let (containing_face, containing_solid) =
-            crate::builder::cuboid(p(1, -2, -2), p(3, 2, 2)).unwrap();
+            crate::construction::cuboid(p(1, -2, -2), p(3, 2, 2)).unwrap();
         let graph =
             intersection_graph(&sphere, sphere_solid, &containing_face, containing_solid).unwrap();
         let point_contacts = graph
@@ -13778,7 +13806,7 @@ mod tests {
         assert_eq!(point_contacts, vec![&p(1, 0, 0)]);
 
         let (missing_face, missing_solid) =
-            crate::builder::cuboid(p(1, 1, -2), p(3, 3, 2)).unwrap();
+            crate::construction::cuboid(p(1, 1, -2), p(3, 3, 2)).unwrap();
         let graph =
             intersection_graph(&sphere, sphere_solid, &missing_face, missing_solid).unwrap();
         let trimmed_points = graph
@@ -13802,8 +13830,9 @@ mod tests {
     #[test]
     fn intersection_graph_bounds_reject_unreachable_cone_apex_carriers() {
         let (frustum, frustum_solid) =
-            crate::builder::cone_frustum(Real::from(2), Real::one(), Real::from(3)).unwrap();
-        let (apex_plane, apex_solid) = crate::builder::cuboid(p(-1, -1, 6), p(1, 1, 7)).unwrap();
+            crate::construction::cone_frustum(Real::from(2), Real::one(), Real::from(3)).unwrap();
+        let (apex_plane, apex_solid) =
+            crate::construction::cuboid(p(-1, -1, 6), p(1, 1, 7)).unwrap();
         let graph = intersection_graph(&frustum, frustum_solid, &apex_plane, apex_solid).unwrap();
         let apex_pairs = graph
             .intersections()
@@ -13835,8 +13864,9 @@ mod tests {
             crate::Point2::new(Real::from(3), Real::one()),
         ];
         let (holed, holed_solid) =
-            crate::builder::extrude_region(&outer, &[hole], Real::zero(), Real::from(2)).unwrap();
-        let (cutter, cutter_solid) = crate::builder::cuboid(p(-1, 2, 1), p(5, 5, 3)).unwrap();
+            crate::construction::extrude_region(&outer, &[hole], Real::zero(), Real::from(2))
+                .unwrap();
+        let (cutter, cutter_solid) = crate::construction::cuboid(p(-1, 2, 1), p(5, 5, 3)).unwrap();
         let top = FaceId::from_index(1).unwrap();
         let graph = intersection_graph(&holed, holed_solid, &cutter, cutter_solid).unwrap();
         let top_fragments = graph
@@ -13867,8 +13897,8 @@ mod tests {
 
     #[test]
     fn intersection_graph_clips_spherical_conics_to_planar_face_regions() {
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(2)).unwrap();
-        let (box_model, box_solid) = crate::builder::cuboid(p(1, 1, -3), p(3, 3, 3)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(2)).unwrap();
+        let (box_model, box_solid) = crate::construction::cuboid(p(1, 1, -3), p(3, 3, 3)).unwrap();
         let graph = intersection_graph(&sphere, sphere_solid, &box_model, box_solid).unwrap();
         let conic_pairs = graph
             .intersections()
@@ -13944,7 +13974,7 @@ mod tests {
 
     #[test]
     fn intersection_graph_rejects_unknown_solid_ids() {
-        let (model, solid) = crate::builder::sphere(Real::one()).unwrap();
+        let (model, solid) = crate::construction::sphere(Real::one()).unwrap();
         let invalid = SolidId::from_index(solid.index() + 1).unwrap();
         assert!(matches!(
             intersection_graph(&model, invalid, &model, solid),
@@ -13955,8 +13985,8 @@ mod tests {
     #[test]
     fn coaxial_sphere_cone_graph_retains_quarter_circle_pcurves() {
         let (frustum, frustum_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(3)).unwrap();
         let sphere = sphere
             .transformed(&Matrix4::affine_orthonormal(
                 [
@@ -13994,8 +14024,8 @@ mod tests {
     #[test]
     fn coaxial_sphere_cone_graph_clips_mixed_carrier_components() {
         let (frustum, frustum_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(3)).unwrap();
         let sphere = sphere
             .transformed(&Matrix4::affine_orthonormal(
                 [
@@ -14032,7 +14062,7 @@ mod tests {
 
     #[test]
     fn mixed_component_trim_retains_points_and_curves_together() {
-        let (first, _) = crate::builder::sphere(Real::from(2)).unwrap();
+        let (first, _) = crate::construction::sphere(Real::from(2)).unwrap();
         let second = first.clone();
         let first_face = first.faces().next().unwrap().0;
         let second_face = second.faces().next().unwrap().0;
@@ -14074,9 +14104,9 @@ mod tests {
     #[test]
     fn coaxial_cylinder_cone_graph_retains_quarter_circle_pcurves() {
         let (frustum, frustum_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
         let (cylinder, cylinder_solid) =
-            crate::builder::cylinder(Real::from(3), Real::from(2)).unwrap();
+            crate::construction::cylinder(Real::from(3), Real::from(2)).unwrap();
         let cylinder = cylinder
             .transformed(&Matrix4::affine_orthonormal(
                 [
@@ -14113,9 +14143,9 @@ mod tests {
     #[test]
     fn mirrored_coaxial_graphs_retain_reversed_angular_pcurves() {
         let (frustum, frustum_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
 
-        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (sphere, sphere_solid) = crate::construction::sphere(Real::from(3)).unwrap();
         let sphere = sphere
             .transformed(&Matrix4::affine_translation([
                 Real::zero(),
@@ -14164,7 +14194,7 @@ mod tests {
         }
 
         let (cylinder, cylinder_solid) =
-            crate::builder::cylinder(Real::from(3), Real::from(2)).unwrap();
+            crate::construction::cylinder(Real::from(3), Real::from(2)).unwrap();
         let cylinder_graph =
             intersection_graph(&cylinder, cylinder_solid, &frustum, frustum_solid).unwrap();
         assert_eq!(cylinder_graph.unsupported_pairs(), 0);
@@ -14207,9 +14237,9 @@ mod tests {
     #[test]
     fn coaxial_cone_graph_retains_quarter_circle_pcurves() {
         let (wide, wide_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
         let (narrow, narrow_solid) =
-            crate::builder::cone_frustum(Real::from(3), Real::from(2), Real::from(2)).unwrap();
+            crate::construction::cone_frustum(Real::from(3), Real::from(2), Real::from(2)).unwrap();
         let narrow = narrow
             .transformed(&Matrix4::affine_orthonormal(
                 [
@@ -14263,9 +14293,9 @@ mod tests {
                 .collect::<Vec<_>>()
         };
         let (first, first_solid) =
-            crate::builder::revolve(&profile(&[(2, 0), (8, 0), (8, 6), (2, 6)])).unwrap();
+            crate::construction::revolve(&profile(&[(2, 0), (8, 0), (8, 6), (2, 6)])).unwrap();
         let (second, second_solid) =
-            crate::builder::revolve(&profile(&[(4, -2), (10, 2), (6, 8), (3, 4)])).unwrap();
+            crate::construction::revolve(&profile(&[(4, -2), (10, 2), (6, 8), (3, 4)])).unwrap();
         let graph = intersection_graph(&first, first_solid, &second, second_solid).unwrap();
         assert_eq!(graph.unsupported_pairs(), 0);
         assert_eq!(graph.unresolved_trim_pairs(), 0);
@@ -14293,9 +14323,9 @@ mod tests {
     #[test]
     fn counteroriented_coaxial_cone_graph_reverses_angular_pcurves() {
         let (first, first_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
         let (second, second_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
         let second = second
             .transformed(&Matrix4::affine_orthonormal(
                 [
@@ -14355,8 +14385,8 @@ mod tests {
 
     #[test]
     fn certified_aabb_disjoint_booleans_support_nonprismatic_solids() {
-        let (first, first_solid) = crate::builder::sphere(Real::one()).unwrap();
-        let (second, second_solid) = crate::builder::sphere(Real::one()).unwrap();
+        let (first, first_solid) = crate::construction::sphere(Real::one()).unwrap();
+        let (second, second_solid) = crate::construction::sphere(Real::one()).unwrap();
         let second = second
             .transformed(&crate::Matrix4::affine_translation([
                 Real::from(5),
@@ -14367,9 +14397,9 @@ mod tests {
 
         assert!(matches!(
             intersection(&first, first_solid, &second, second_solid).unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             difference(&first, first_solid, &second, second_solid).unwrap()
         else {
             panic!("disjoint difference must retain the first solid");
@@ -14384,7 +14414,7 @@ mod tests {
             Some(Ordering::Equal)
         );
 
-        let BooleanResult::Solids { model, solids } =
+        let ArenaBooleanResult::Solids { model, solids } =
             union(&first, first_solid, &second, second_solid).unwrap()
         else {
             panic!("disjoint union must return two merged-model solids");
@@ -14404,12 +14434,12 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        crate::RawModel::from_json(&model.to_json().unwrap())
+        crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
 
-        let touching = crate::builder::sphere(Real::one())
+        let touching = crate::construction::sphere(Real::one())
             .unwrap()
             .0
             .transformed(&crate::Matrix4::affine_translation([
@@ -14425,17 +14455,17 @@ mod tests {
         ));
         assert!(matches!(
             intersection(&first, first_solid, &touching, second_solid).unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
         assert!(matches!(
             difference(&first, first_solid, &touching, second_solid).unwrap(),
-            BooleanResult::Solid { .. }
+            ArenaBooleanResult::Solid { .. }
         ));
     }
 
     #[test]
     fn contained_sphere_booleans_retain_exact_spherical_cavities() {
-        let (outer, outer_solid) = crate::builder::sphere(Real::from(5)).unwrap();
+        let (outer, outer_solid) = crate::construction::sphere(Real::from(5)).unwrap();
         let outer = outer
             .transformed(&crate::Matrix4::affine_translation([
                 Real::from(10),
@@ -14443,7 +14473,7 @@ mod tests {
                 Real::zero(),
             ]))
             .unwrap();
-        let (inner, inner_solid) = crate::builder::sphere(Real::from(2)).unwrap();
+        let (inner, inner_solid) = crate::construction::sphere(Real::from(2)).unwrap();
         let inner = inner
             .transformed(&crate::Matrix4::affine_translation([
                 Real::from(11),
@@ -14452,7 +14482,7 @@ mod tests {
             ]))
             .unwrap();
 
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             union(&outer, outer_solid, &inner, inner_solid).unwrap()
         else {
             panic!("contained sphere union must retain the outer sphere");
@@ -14466,7 +14496,7 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             intersection(&outer, outer_solid, &inner, inner_solid).unwrap()
         else {
             panic!("contained sphere intersection must retain the inner sphere");
@@ -14480,7 +14510,7 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             difference(&outer, outer_solid, &inner, inner_solid).unwrap()
         else {
             panic!("contained sphere difference must author a spherical void");
@@ -14502,18 +14532,20 @@ mod tests {
             model.classify_point(solid, &p(6, 0, 0)).unwrap(),
             crate::SolidPointLocation::Inside
         );
-        crate::RawModel::from_json(&model.to_json().unwrap())
+        crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
 
         assert!(matches!(
             difference(&inner, inner_solid, &outer, outer_solid).unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
 
-        let (tangent_outer, tangent_outer_solid) = crate::builder::sphere(Real::from(3)).unwrap();
-        let (tangent_inner, tangent_inner_solid) = crate::builder::sphere(Real::one()).unwrap();
+        let (tangent_outer, tangent_outer_solid) =
+            crate::construction::sphere(Real::from(3)).unwrap();
+        let (tangent_inner, tangent_inner_solid) =
+            crate::construction::sphere(Real::one()).unwrap();
         let tangent_inner = tangent_inner
             .transformed(&crate::Matrix4::affine_translation([
                 Real::from(2),
@@ -14529,7 +14561,7 @@ mod tests {
                 tangent_inner_solid
             )
             .unwrap(),
-            BooleanResult::Solid { .. }
+            ArenaBooleanResult::Solid { .. }
         ));
         assert!(matches!(
             intersection(
@@ -14539,7 +14571,7 @@ mod tests {
                 tangent_inner_solid
             )
             .unwrap(),
-            BooleanResult::Solid { .. }
+            ArenaBooleanResult::Solid { .. }
         ));
         assert!(matches!(
             difference(
@@ -14549,7 +14581,7 @@ mod tests {
                 tangent_outer_solid
             )
             .unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
         assert!(matches!(
             difference(
@@ -14565,8 +14597,8 @@ mod tests {
 
     #[test]
     fn partially_overlapping_spheres_build_two_exact_periodic_caps() {
-        let (first, first_solid) = crate::builder::sphere(Real::from(2)).unwrap();
-        let (second, second_solid) = crate::builder::sphere(Real::from(2)).unwrap();
+        let (first, first_solid) = crate::construction::sphere(Real::from(2)).unwrap();
+        let (second, second_solid) = crate::construction::sphere(Real::from(2)).unwrap();
         let second = second
             .transformed(&crate::Matrix4::affine_translation([
                 Real::from(2),
@@ -14598,7 +14630,7 @@ mod tests {
             ),
         ];
         for (result, expected_volume, expected_area, interior, expected_location) in cases {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("partial sphere Boolean must produce one stitched solid");
             };
             assert_eq!(model.counts().faces, 2);
@@ -14630,7 +14662,7 @@ mod tests {
                 model.classify_point(solid, &circle_point).unwrap(),
                 crate::SolidPointLocation::Boundary
             );
-            let decoded = crate::RawModel::from_json(&model.to_json().unwrap())
+            let decoded = crate::ImportedModel::from_json(&model.to_json().unwrap())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -14673,7 +14705,7 @@ mod tests {
                     Real::one(),
                 ]))
                 .unwrap();
-            let reflected = crate::RawModel::from_json(&reflected.to_json().unwrap())
+            let reflected = crate::ImportedModel::from_json(&reflected.to_json().unwrap())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -14689,11 +14721,11 @@ mod tests {
         }
     }
 
-    fn result_volume(result: BooleanResult) -> Real {
+    fn result_volume(result: ArenaBooleanResult) -> Real {
         match result {
-            BooleanResult::Empty => Real::zero(),
-            BooleanResult::Solid { model, solid } => model.solid_volume(solid).unwrap(),
-            BooleanResult::Solids { model, solids } => solids
+            ArenaBooleanResult::Empty => Real::zero(),
+            ArenaBooleanResult::Solid { model, solid } => model.solid_volume(solid).unwrap(),
+            ArenaBooleanResult::Solids { model, solids } => solids
                 .into_iter()
                 .map(|solid| model.solid_volume(solid).unwrap())
                 .fold(Real::zero(), |sum, volume| sum + volume),
@@ -14702,43 +14734,44 @@ mod tests {
 
     #[test]
     fn exact_z_prism_booleans_build_valid_regularized_results() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(3, 3, 2)).unwrap();
-        let (second, second_solid) = crate::builder::cuboid(p(1, 1, 1), p(4, 4, 3)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(3, 3, 2)).unwrap();
+        let (second, second_solid) = crate::construction::cuboid(p(1, 1, 1), p(4, 4, 3)).unwrap();
         assert_volume(
             intersection(&first, first_solid, &second, second_solid).unwrap(),
             4,
         );
 
-        let (left, left_solid) = crate::builder::cuboid(p(0, 0, 0), p(2, 1, 2)).unwrap();
-        let (right, right_solid) = crate::builder::cuboid(p(1, 0, 0), p(3, 1, 2)).unwrap();
+        let (left, left_solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 1, 2)).unwrap();
+        let (right, right_solid) = crate::construction::cuboid(p(1, 0, 0), p(3, 1, 2)).unwrap();
         assert_volume(union(&left, left_solid, &right, right_solid).unwrap(), 6);
 
-        let (whole, whole_solid) = crate::builder::cuboid(p(0, 0, 0), p(3, 1, 2)).unwrap();
-        let (cut, cut_solid) = crate::builder::cuboid(p(2, 0, 0), p(3, 1, 2)).unwrap();
+        let (whole, whole_solid) = crate::construction::cuboid(p(0, 0, 0), p(3, 1, 2)).unwrap();
+        let (cut, cut_solid) = crate::construction::cuboid(p(2, 0, 0), p(3, 1, 2)).unwrap();
         assert_volume(difference(&whole, whole_solid, &cut, cut_solid).unwrap(), 4);
     }
 
     #[test]
     fn exact_z_prism_boolean_empty_disconnected_and_holed_results_are_explicit() {
-        let (first, first_solid) = crate::builder::cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
-        let (second, second_solid) = crate::builder::cuboid(p(2, 2, 2), p(3, 3, 3)).unwrap();
+        let (first, first_solid) = crate::construction::cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
+        let (second, second_solid) = crate::construction::cuboid(p(2, 2, 2), p(3, 3, 3)).unwrap();
         assert!(matches!(
             intersection(&first, first_solid, &second, second_solid).unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
 
-        let (same_slab, same_slab_solid) = crate::builder::cuboid(p(2, 2, 0), p(3, 3, 1)).unwrap();
+        let (same_slab, same_slab_solid) =
+            crate::construction::cuboid(p(2, 2, 0), p(3, 3, 1)).unwrap();
         let disconnected = union(&first, first_solid, &same_slab, same_slab_solid).unwrap();
-        let BooleanResult::Solids { solids, .. } = disconnected else {
+        let ArenaBooleanResult::Solids { solids, .. } = disconnected else {
             panic!("disjoint union must retain separate solids");
         };
         assert_eq!(solids.len(), 2);
 
-        let (outer, outer_solid) = crate::builder::cuboid(p(0, 0, 0), p(4, 4, 1)).unwrap();
-        let (inner, inner_solid) = crate::builder::cuboid(p(1, 1, 0), p(3, 3, 1)).unwrap();
+        let (outer, outer_solid) = crate::construction::cuboid(p(0, 0, 0), p(4, 4, 1)).unwrap();
+        let (inner, inner_solid) = crate::construction::cuboid(p(1, 1, 0), p(3, 3, 1)).unwrap();
         let ring = difference(&outer, outer_solid, &inner, inner_solid).unwrap();
         assert_volume(ring.clone(), 12);
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: ring_model,
             solid: ring_solid,
         } = ring
@@ -14747,7 +14780,7 @@ mod tests {
         };
         assert!(matches!(
             intersection(&ring_model, ring_solid, &inner, inner_solid).unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
         assert_volume(
             union(&ring_model, ring_solid, &inner, inner_solid).unwrap(),
@@ -14757,7 +14790,8 @@ mod tests {
 
     #[test]
     fn overlapping_native_cylinders_produce_an_exact_arc_bounded_lens() {
-        let (first, first_solid) = crate::builder::cylinder(Real::from(2), Real::from(3)).unwrap();
+        let (first, first_solid) =
+            crate::construction::cylinder(Real::from(2), Real::from(3)).unwrap();
         let second = first
             .transformed(&crate::Matrix4::affine_translation([
                 Real::one(),
@@ -14766,7 +14800,7 @@ mod tests {
             ]))
             .unwrap();
         let result = intersection(&first, first_solid, &second, first_solid).unwrap();
-        let BooleanResult::Solid { model, solid } = result else {
+        let ArenaBooleanResult::Solid { model, solid } = result else {
             panic!("overlapping equal cylinders must produce one lens solid");
         };
         let quarter = (Real::one() / Real::from(4)).unwrap();
@@ -14790,7 +14824,7 @@ mod tests {
             model.classify_point(solid, &p(-2, 0, 1)).unwrap(),
             crate::SolidPointLocation::Outside
         );
-        crate::RawModel::from_json(&model.to_json().unwrap())
+        crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -14808,10 +14842,10 @@ mod tests {
                 [Real::from(base_x), Real::zero(), Real::zero()],
             )
         };
-        let (first, solid) = crate::builder::cylinder(Real::from(2), Real::from(4)).unwrap();
+        let (first, solid) = crate::construction::cylinder(Real::from(2), Real::from(4)).unwrap();
         let first = first.transformed(&orient(10)).unwrap();
         let (second, second_solid) =
-            crate::builder::cylinder(Real::from(2), Real::from(4)).unwrap();
+            crate::construction::cylinder(Real::from(2), Real::from(4)).unwrap();
         let second = second.transformed(&orient(12)).unwrap();
 
         let cases = [
@@ -14829,7 +14863,7 @@ mod tests {
             ),
         ];
         for (result, expected) in cases {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("overlapping coaxial interval result must be connected");
             };
             assert_eq!(
@@ -14841,14 +14875,14 @@ mod tests {
                 .value(),
                 Some(Ordering::Equal)
             );
-            crate::RawModel::from_json(&model.to_json().unwrap())
+            crate::ImportedModel::from_json(&model.to_json().unwrap())
                 .unwrap()
                 .validate()
                 .unwrap();
         }
 
         let (reversed, reversed_solid) =
-            crate::builder::cylinder(Real::from(2), Real::from(2)).unwrap();
+            crate::construction::cylinder(Real::from(2), Real::from(2)).unwrap();
         let reversed = reversed
             .transformed(&crate::Matrix4::affine_orthonormal(
                 [
@@ -14859,7 +14893,7 @@ mod tests {
                 [Real::from(14), Real::zero(), Real::zero()],
             ))
             .unwrap();
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             intersection(&first, solid, &reversed, reversed_solid).unwrap()
         else {
             panic!("antiparallel coaxial cylinders must share one exact interval");
@@ -14874,9 +14908,9 @@ mod tests {
             Some(Ordering::Equal)
         );
 
-        let (cut, cut_solid) = crate::builder::cylinder(Real::from(2), Real::one()).unwrap();
+        let (cut, cut_solid) = crate::construction::cylinder(Real::from(2), Real::one()).unwrap();
         let cut = cut.transformed(&orient(11)).unwrap();
-        let BooleanResult::Solids { model, solids } =
+        let ArenaBooleanResult::Solids { model, solids } =
             difference(&first, solid, &cut, cut_solid).unwrap()
         else {
             panic!("interior axial interval removal must return two cylinders");
@@ -14903,15 +14937,15 @@ mod tests {
             model.classify_point(solids[1], &p(13, 0, 0)).unwrap(),
             crate::SolidPointLocation::Inside
         );
-        crate::RawModel::from_json(&model.to_json().unwrap())
+        crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
 
         let (separate, separate_solid) =
-            crate::builder::cylinder(Real::from(2), Real::one()).unwrap();
+            crate::construction::cylinder(Real::from(2), Real::one()).unwrap();
         let separate = separate.transformed(&orient(20)).unwrap();
-        let BooleanResult::Solids { model, solids } =
+        let ArenaBooleanResult::Solids { model, solids } =
             union(&first, solid, &separate, separate_solid).unwrap()
         else {
             panic!("axially separated cylinders must remain separate solids");
@@ -14932,13 +14966,13 @@ mod tests {
         );
 
         let (touching, touching_solid) =
-            crate::builder::cylinder(Real::from(2), Real::one()).unwrap();
+            crate::construction::cylinder(Real::from(2), Real::one()).unwrap();
         let touching = touching.transformed(&orient(14)).unwrap();
         assert!(matches!(
             intersection(&first, solid, &touching, touching_solid).unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             union(&first, solid, &touching, touching_solid).unwrap()
         else {
             panic!("coaxial cylinders meeting on a cap must merge exactly");
@@ -14966,10 +15000,11 @@ mod tests {
                 [Real::from(10), Real::from(radial_y), Real::zero()],
             )
         };
-        let (canonical, solid) = crate::builder::cylinder(Real::from(2), Real::from(3)).unwrap();
+        let (canonical, solid) =
+            crate::construction::cylinder(Real::from(2), Real::from(3)).unwrap();
         let first = canonical.transformed(&transform(0)).unwrap();
         let second = canonical.transformed(&transform(1)).unwrap();
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             intersection(&first, solid, &second, solid).unwrap()
         else {
             panic!("oriented parallel cylinders must return one exact lens");
@@ -14991,7 +15026,7 @@ mod tests {
             model.classify_point(solid, &p(11, 1, 0)).unwrap(),
             crate::SolidPointLocation::Inside
         );
-        crate::RawModel::from_json(&model.to_json().unwrap())
+        crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -15008,10 +15043,10 @@ mod tests {
             [Real::from(10), Real::zero(), Real::zero()],
         );
         let (outer, outer_solid) =
-            crate::builder::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();
+            crate::construction::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();
         let outer = outer.transformed(&orient).unwrap();
         let (cut, cut_solid) =
-            crate::builder::cone_frustum(Real::from(3), Real::from(2), Real::one()).unwrap();
+            crate::construction::cone_frustum(Real::from(3), Real::from(2), Real::one()).unwrap();
         let cut = cut
             .transformed(&crate::Matrix4::affine_translation([
                 Real::zero(),
@@ -15022,7 +15057,7 @@ mod tests {
             .transformed(&orient)
             .unwrap();
 
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             intersection(&outer, outer_solid, &cut, cut_solid).unwrap()
         else {
             panic!("coincident frustum interval intersection must be one solid");
@@ -15037,7 +15072,7 @@ mod tests {
             Some(Ordering::Equal)
         );
 
-        let BooleanResult::Solids { model, solids } =
+        let ArenaBooleanResult::Solids { model, solids } =
             difference(&outer, outer_solid, &cut, cut_solid).unwrap()
         else {
             panic!("interior frustum interval cut must return two solids");
@@ -15056,12 +15091,12 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
-        crate::RawModel::from_json(&model.to_json().unwrap())
+        crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
 
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             union(&outer, outer_solid, &cut, cut_solid).unwrap()
         else {
             panic!("contained frustum interval union must retain one span");
@@ -15079,7 +15114,7 @@ mod tests {
 
     #[test]
     fn identical_tori_ignore_periodic_frame_axis_reversal() {
-        let (first, solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (first, solid) = crate::construction::torus(Real::from(3), Real::one()).unwrap();
         let second = first
             .transformed(&crate::Matrix4::affine_nonuniform_scale([
                 Real::one(),
@@ -15091,7 +15126,7 @@ mod tests {
             union(&first, solid, &second, solid).unwrap(),
             intersection(&first, solid, &second, solid).unwrap(),
         ] {
-            let BooleanResult::Solid { model, solid } = result else {
+            let ArenaBooleanResult::Solid { model, solid } = result else {
                 panic!("identical torus Boolean must retain one solid");
             };
             assert_eq!(
@@ -15103,14 +15138,14 @@ mod tests {
                 .value(),
                 Some(Ordering::Equal)
             );
-            crate::RawModel::from_json(&model.to_json().unwrap())
+            crate::ImportedModel::from_json(&model.to_json().unwrap())
                 .unwrap()
                 .validate()
                 .unwrap();
         }
         assert!(matches!(
             difference(&first, solid, &second, solid).unwrap(),
-            BooleanResult::Empty
+            ArenaBooleanResult::Empty
         ));
     }
 
@@ -15123,9 +15158,9 @@ mod tests {
                 .collect::<Vec<_>>()
         };
         let (first, first_solid) =
-            crate::builder::revolve(&profile(&[(1, 0), (3, 0), (3, 2), (1, 2)])).unwrap();
+            crate::construction::revolve(&profile(&[(1, 0), (3, 0), (3, 2), (1, 2)])).unwrap();
         let (second, second_solid) =
-            crate::builder::revolve(&profile(&[(2, -3), (4, -3), (4, -1), (2, -1)])).unwrap();
+            crate::construction::revolve(&profile(&[(2, -3), (4, -3), (4, -1), (2, -1)])).unwrap();
         let reverse_axis = crate::Matrix4::affine_orthonormal(
             [
                 [Real::one(), Real::zero(), Real::zero()],
@@ -15151,9 +15186,9 @@ mod tests {
             ),
         ] {
             let (model, solids) = match operation {
-                BooleanResult::Solid { model, solid } => (model, vec![solid]),
-                BooleanResult::Solids { model, solids } => (model, solids),
-                BooleanResult::Empty => panic!("overlapping revolution result has volume"),
+                ArenaBooleanResult::Solid { model, solid } => (model, vec![solid]),
+                ArenaBooleanResult::Solids { model, solids } => (model, solids),
+                ArenaBooleanResult::Empty => panic!("overlapping revolution result has volume"),
             };
             let volume = solids
                 .iter()
@@ -15163,7 +15198,7 @@ mod tests {
                 compare_reals(&volume, &expected, crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
-            let rebuilt = crate::RawModel::from_json(&model.to_json().unwrap())
+            let rebuilt = crate::ImportedModel::from_json(&model.to_json().unwrap())
                 .unwrap()
                 .validate()
                 .unwrap();
@@ -15177,7 +15212,7 @@ mod tests {
             );
         }
 
-        let BooleanResult::Solid { model, solid } =
+        let ArenaBooleanResult::Solid { model, solid } =
             intersection(&first, first_solid, &second, second_solid).unwrap()
         else {
             panic!("rectangular profile intersection is connected");
@@ -15196,10 +15231,10 @@ mod tests {
         );
 
         let (outer, outer_solid) =
-            crate::builder::revolve(&profile(&[(1, 0), (5, 0), (5, 4), (1, 4)])).unwrap();
+            crate::construction::revolve(&profile(&[(1, 0), (5, 0), (5, 4), (1, 4)])).unwrap();
         let (cavity, cavity_solid) =
-            crate::builder::revolve(&profile(&[(2, 1), (3, 1), (3, 2), (2, 2)])).unwrap();
-        let BooleanResult::Solid {
+            crate::construction::revolve(&profile(&[(2, 1), (3, 1), (3, 2), (2, 2)])).unwrap();
+        let ArenaBooleanResult::Solid {
             model: cut,
             solid: cut_solid,
         } = difference(&outer, outer_solid, &cavity, cavity_solid).unwrap()
@@ -15219,7 +15254,7 @@ mod tests {
             cut.classify_point(cut_solid, &p(2, 0, 1)).unwrap(),
             crate::SolidPointLocation::Boundary
         );
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: refilled,
             solid: refilled_solid,
         } = union(&cut, cut_solid, &cavity, cavity_solid).unwrap()
@@ -15239,10 +15274,12 @@ mod tests {
 
     #[test]
     fn curved_boolean_results_retain_holes_and_disconnected_components() {
-        let (outer, outer_solid) = crate::builder::cylinder(Real::from(3), Real::from(2)).unwrap();
-        let (inner, inner_solid) = crate::builder::cylinder(Real::one(), Real::from(2)).unwrap();
+        let (outer, outer_solid) =
+            crate::construction::cylinder(Real::from(3), Real::from(2)).unwrap();
+        let (inner, inner_solid) =
+            crate::construction::cylinder(Real::one(), Real::from(2)).unwrap();
         let ring = difference(&outer, outer_solid, &inner, inner_solid).unwrap();
-        let BooleanResult::Solid {
+        let ArenaBooleanResult::Solid {
             model: ring_model,
             solid: ring_solid,
         } = ring
@@ -15266,7 +15303,7 @@ mod tests {
             ring_model.classify_point(ring_solid, &p(2, 0, 1)).unwrap(),
             crate::SolidPointLocation::Inside
         );
-        let decoded_ring = crate::RawModel::from_json(&ring_model.to_json().unwrap())
+        let decoded_ring = crate::ImportedModel::from_json(&ring_model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -15280,7 +15317,8 @@ mod tests {
             Some(Ordering::Equal)
         );
 
-        let (first, first_solid) = crate::builder::cylinder(Real::one(), Real::from(2)).unwrap();
+        let (first, first_solid) =
+            crate::construction::cylinder(Real::one(), Real::from(2)).unwrap();
         let second = first
             .transformed(&crate::Matrix4::affine_translation([
                 Real::from(5),
@@ -15289,7 +15327,7 @@ mod tests {
             ]))
             .unwrap();
         let separated = union(&first, first_solid, &second, first_solid).unwrap();
-        let BooleanResult::Solids { model, solids } = separated else {
+        let ArenaBooleanResult::Solids { model, solids } = separated else {
             panic!("disjoint cylinders must remain separate solids");
         };
         assert_eq!(solids.len(), 2);
@@ -15321,8 +15359,8 @@ mod tests {
         ) {
             let second_end = second_start + second_width;
             let (first, first_solid) =
-                crate::builder::cuboid(p(0, 0, 0), p(first_width, depth, height)).unwrap();
-            let (second, second_solid) = crate::builder::cuboid(
+                crate::construction::cuboid(p(0, 0, 0), p(first_width, depth, height)).unwrap();
+            let (second, second_solid) = crate::construction::cuboid(
                 p(second_start, 0, 0),
                 p(second_end, depth, height),
             )

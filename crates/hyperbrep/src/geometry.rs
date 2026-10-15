@@ -12226,7 +12226,7 @@ mod tests {
             vec![p(0, 4, 3), p(2, 4, 3)],
         ];
         let weights = vec![vec![r(1), r(1)]; controls.len()];
-        let (patch, face) = crate::builder::nurbs_patch(
+        let (patch, face) = crate::construction::nurbs_patch(
             1,
             1,
             controls,
@@ -12292,7 +12292,7 @@ mod tests {
         );
         let partitioned_json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&partitioned_json)
+            crate::ImportedModel::from_json(&partitioned_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12334,7 +12334,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12348,7 +12348,7 @@ mod tests {
     fn crossing_tensor_surface_curves_are_atomized_by_exact_pcurve_contacts() {
         let controls = vec![vec![p(0, 0, 0), p(2, 0, 0)], vec![p(0, 2, 0), p(2, 2, 0)]];
         let weights = vec![vec![Real::one(), Real::one()]; 2];
-        let (patch, face) = crate::builder::rational_bezier_patch(controls, weights).unwrap();
+        let (patch, face) = crate::construction::rational_bezier_patch(controls, weights).unwrap();
         let surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let x_plane = Surface::plane(p(1, 0, 0), Vector3::y(), Vector3::z()).unwrap();
         let y_plane = Surface::plane(p(0, 1, 0), Vector3::x(), Vector3::z()).unwrap();
@@ -12410,7 +12410,7 @@ mod tests {
         let json = partitioned.to_json().unwrap();
         assert_eq!(reversed.to_json().unwrap(), json);
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12422,7 +12422,7 @@ mod tests {
 
     #[test]
     fn closed_planar_surface_curve_authors_identity_shared_outer_and_inner_wires() {
-        let (model, solid) = crate::builder::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
+        let (model, solid) = crate::construction::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
         let (face, surface) = model
             .faces()
             .find_map(|(face, record)| {
@@ -12498,7 +12498,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12521,7 +12521,7 @@ mod tests {
 
     #[test]
     fn nested_closed_surface_curves_partition_descendants_independent_of_order_and_direction() {
-        let (model, solid) = crate::builder::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
+        let (model, solid) = crate::construction::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
         let (face, surface) = model
             .faces()
             .find_map(|(face, record)| {
@@ -12621,7 +12621,7 @@ mod tests {
         let json = partitioned.to_json().unwrap();
         assert_eq!(reversed.to_json().unwrap(), json);
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12633,7 +12633,7 @@ mod tests {
 
     #[test]
     fn boundary_trace_atomizes_a_closed_curve_into_unambiguous_descendant_segments() {
-        let (model, solid) = crate::builder::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
+        let (model, solid) = crate::construction::cuboid(p(0, 0, 0), p(10, 10, 10)).unwrap();
         let (face, surface) = model
             .faces()
             .find_map(|(face, record)| {
@@ -12726,7 +12726,7 @@ mod tests {
         let json = partitioned.to_json().unwrap();
         assert_eq!(reversed.to_json().unwrap(), json);
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12801,7 +12801,7 @@ mod tests {
         );
 
         let (rational_patch, rational_face) =
-            crate::builder::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
+            crate::construction::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
         let rational_surface = rational_patch
             .surface(rational_patch.face(rational_face).unwrap().surface())
             .unwrap();
@@ -12820,7 +12820,7 @@ mod tests {
         assert_eq!(rational_split.counts().faces, 2);
         let rational_json = rational_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&rational_json)
+            crate::ImportedModel::from_json(&rational_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12829,7 +12829,7 @@ mod tests {
             rational_json
         );
 
-        let (nurbs_patch, nurbs_face) = crate::builder::nurbs_patch(
+        let (nurbs_patch, nurbs_face) = crate::construction::nurbs_patch(
             2,
             1,
             controls,
@@ -12856,7 +12856,7 @@ mod tests {
         assert_eq!(nurbs_split.counts().faces, 2);
         let nurbs_json = nurbs_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&nurbs_json)
+            crate::ImportedModel::from_json(&nurbs_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -12874,7 +12874,7 @@ mod tests {
             vec![p(0, 2, 2), p(2, 2, 2)],
         ];
         let weights = vec![vec![r(1), r(1)], vec![r(2), r(2)], vec![r(3), r(3)]];
-        let (patch, face) = crate::builder::rational_bezier_patch(controls, weights).unwrap();
+        let (patch, face) = crate::construction::rational_bezier_patch(controls, weights).unwrap();
         let surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let plane = Surface::plane(
             p(2, 0, 0),
@@ -12914,7 +12914,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13111,7 +13111,7 @@ mod tests {
         assert_points_equal(&translated.curve().point_at(&q(1, 2)).unwrap(), &expected);
 
         let (patch, face) =
-            crate::builder::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
+            crate::construction::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
         let patch_surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let SurfaceSurfaceIntersection::Curve(patch_section) =
             patch_surface.intersect_surface(&section_plane).unwrap()
@@ -13145,7 +13145,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13165,7 +13165,7 @@ mod tests {
         assert_eq!(partial_split.counts().faces, 2);
         let partial_json = partial_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&partial_json)
+            crate::ImportedModel::from_json(&partial_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13408,7 +13408,7 @@ mod tests {
         assert_points_equal(&translated.curve().point_at(&q(1, 2)).unwrap(), &expected);
 
         let (patch, face) =
-            crate::builder::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
+            crate::construction::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
         let patch_surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let SurfaceSurfaceIntersection::Curve(patch_section) =
             patch_surface.intersect_surface(&section_plane).unwrap()
@@ -13442,7 +13442,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13462,7 +13462,7 @@ mod tests {
         assert_eq!(partial_split.counts().faces, 2);
         let partial_json = partial_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&partial_json)
+            crate::ImportedModel::from_json(&partial_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13471,7 +13471,7 @@ mod tests {
             partial_json
         );
 
-        let (native_patch, native_face) = crate::builder::nurbs_patch(
+        let (native_patch, native_face) = crate::construction::nurbs_patch(
             1,
             1,
             controls,
@@ -13527,7 +13527,7 @@ mod tests {
         );
         let json = native_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13665,7 +13665,8 @@ mod tests {
             Point2::new(q(1, 2), r(1))
         );
         let (factorized_patch, factorized_face) =
-            crate::builder::rational_bezier_patch(factorized_controls, weights.clone()).unwrap();
+            crate::construction::rational_bezier_patch(factorized_controls, weights.clone())
+                .unwrap();
         let (factorized_partition, factorized_record) = factorized_patch
             .split_face_by_surface_curves(
                 factorized_face,
@@ -13677,7 +13678,7 @@ mod tests {
         assert_eq!(factorized_partition.counts().faces, 4);
         let factorized_json = factorized_partition.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&factorized_json)
+            crate::ImportedModel::from_json(&factorized_json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -13778,7 +13779,7 @@ mod tests {
             SurfaceSurfaceIntersection::ContainedSurface(SurfaceIntersectionOperand::Second)
         ));
 
-        let (planar_patch, planar_face) = crate::builder::rational_bezier_patch(
+        let (planar_patch, planar_face) = crate::construction::rational_bezier_patch(
             planar_controls,
             vec![vec![r(1), r(1)], vec![r(1), r(1)]],
         )
@@ -13786,7 +13787,7 @@ mod tests {
         let patch_surface = planar_patch
             .surface(planar_patch.face(planar_face).unwrap().surface())
             .unwrap();
-        let (cube, cube_solid) = crate::builder::cuboid(p(-1, -1, 0), p(3, 3, 1)).unwrap();
+        let (cube, cube_solid) = crate::construction::cuboid(p(-1, -1, 0), p(3, 3, 1)).unwrap();
         let cube_faces = cube
             .shell(cube.solid(cube_solid).unwrap().outer())
             .unwrap()
@@ -13806,10 +13807,14 @@ mod tests {
                 )
             })
             .expect("one cuboid cap plane must contain the complete tensor carrier");
-        let face_pair =
-            crate::boolean::intersect_faces(&planar_patch, planar_face, &cube, containing_face)
-                .unwrap()
-                .expect("contained tensor/plane carriers must retain an exact face relation");
+        let face_pair = crate::boolean_kernel::intersect_faces(
+            &planar_patch,
+            planar_face,
+            &cube,
+            containing_face,
+        )
+        .unwrap()
+        .expect("contained tensor/plane carriers must retain an exact face relation");
         assert!(matches!(
             face_pair.relation(),
             crate::FacePairRelation::Exact(SurfaceSurfaceIntersection::ContainedSurface(
@@ -13830,7 +13835,7 @@ mod tests {
             crate::error::classified(region.loop_role_counts()).unwrap(),
             hypercurve::Classification::Decided((1, 0))
         ));
-        let complete_plane_traces = crate::boolean::contained_face_boundary_traces_on_plane(
+        let complete_plane_traces = crate::boolean_kernel::contained_face_boundary_traces_on_plane(
             &planar_patch,
             planar_face,
             &cube,
@@ -13865,7 +13870,7 @@ mod tests {
                 .collect(),
         )
         .unwrap();
-        let (partial_plane, partial_face) = crate::builder::planar_face(
+        let (partial_plane, partial_face) = crate::construction::planar_face(
             &partial_outline,
             &[],
             p(0, 0, 0),
@@ -13873,7 +13878,7 @@ mod tests {
             Vector3::from_xyz(r(0), r(1), r(0)),
         )
         .unwrap();
-        let partial_plane_traces = crate::boolean::contained_face_boundary_traces_on_plane(
+        let partial_plane_traces = crate::boolean_kernel::contained_face_boundary_traces_on_plane(
             &planar_patch,
             planar_face,
             &partial_plane,
@@ -13892,7 +13897,7 @@ mod tests {
         );
         for (pair, expected_parameter_operand) in [
             (
-                crate::boolean::intersect_faces(
+                crate::boolean_kernel::intersect_faces(
                     &planar_patch,
                     planar_face,
                     &partial_plane,
@@ -13903,7 +13908,7 @@ mod tests {
                 SurfaceIntersectionOperand::Second,
             ),
             (
-                crate::boolean::intersect_faces(
+                crate::boolean_kernel::intersect_faces(
                     &partial_plane,
                     partial_face,
                     &planar_patch,
@@ -13959,7 +13964,7 @@ mod tests {
         };
         let excluded_outer = rectangle_path(-2, -2, 4, 4);
         let excluded_hole = rectangle_path(-1, -1, 3, 3);
-        let (excluded_plane, excluded_face) = crate::builder::planar_face(
+        let (excluded_plane, excluded_face) = crate::construction::planar_face(
             &excluded_outer,
             &[excluded_hole],
             p(0, 0, 0),
@@ -13967,7 +13972,7 @@ mod tests {
             Vector3::from_xyz(r(0), r(1), r(0)),
         )
         .unwrap();
-        let excluded = crate::boolean::intersect_faces(
+        let excluded = crate::boolean_kernel::intersect_faces(
             &planar_patch,
             planar_face,
             &excluded_plane,
@@ -13993,7 +13998,7 @@ mod tests {
             assert_points_equal(&translated.curve().point_at(&q(1, 2)).unwrap(), &expected);
         }
 
-        let (patch, face) = crate::builder::rational_bezier_patch(controls, weights).unwrap();
+        let (patch, face) = crate::construction::rational_bezier_patch(controls, weights).unwrap();
         let patch_surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let SurfaceSurfaceIntersection::Curves(patch_branches) =
             patch_surface.intersect_surface(&plane).unwrap()
@@ -14017,7 +14022,7 @@ mod tests {
         );
         let json = partitioned.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -14035,7 +14040,7 @@ mod tests {
             vec![p(0, 2, 2), p(2, 2, 2)],
         ];
         let weights = vec![vec![r(1), r(1)], vec![r(2), r(2)], vec![r(3), r(3)]];
-        let (patch, face) = crate::builder::nurbs_patch(
+        let (patch, face) = crate::construction::nurbs_patch(
             1,
             2,
             controls,
@@ -14078,7 +14083,7 @@ mod tests {
         assert_eq!(split.counts().faces, 2);
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -14102,7 +14107,7 @@ mod tests {
             vec![r(3), r(3)],
             vec![r(1), r(1)],
         ];
-        let (patch, face) = crate::builder::nurbs_patch(
+        let (patch, face) = crate::construction::nurbs_patch(
             1,
             2,
             controls,
@@ -14181,7 +14186,7 @@ mod tests {
         );
         let json = split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&json)
+            crate::ImportedModel::from_json(&json)
                 .unwrap()
                 .validate()
                 .unwrap()
@@ -14190,7 +14195,7 @@ mod tests {
             json
         );
 
-        let (v_patch, v_face) = crate::builder::nurbs_patch(
+        let (v_patch, v_face) = crate::construction::nurbs_patch(
             2,
             1,
             vec![
@@ -14222,7 +14227,7 @@ mod tests {
         assert_eq!(v_split.counts().faces, 2);
         let v_json = v_split.to_json().unwrap();
         assert_eq!(
-            crate::RawModel::from_json(&v_json)
+            crate::ImportedModel::from_json(&v_json)
                 .unwrap()
                 .validate()
                 .unwrap()

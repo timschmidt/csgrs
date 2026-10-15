@@ -2,20 +2,20 @@
 
 use crate::topology::*;
 
-impl Model {
+impl ArenaModel {
     /// Splits a trimmed planar face along one exact straight curve fragment.
     ///
     /// Each fragment endpoint is attached by mathematical identity: an
     /// existing outer-boundary vertex is reused, otherwise the unique
     /// containing canonical edge is split at its exact represented parameter.
     /// The resulting boundary vertices are then passed through
-    /// [`Model::split_face`], so the chord is shared by identity and the
+    /// [`ArenaModel::split_face`], so the chord is shared by identity and the
     /// complete model is revalidated before publication.
     pub fn split_face_by_curve(
         &self,
         face_id: FaceId,
         curve: &Curve3,
-    ) -> Result<(Self, CurveFaceSplit), TopologyEditError> {
+    ) -> Result<(Self, ArenaCurveFaceSplit), TopologyEditError> {
         crate::context::strict(|| {
             let face = self
                 .face(face_id)
@@ -47,7 +47,7 @@ impl Model {
             let (staged, face) = staged.split_face(face_id, start_vertex, end_vertex)?;
             Ok((
                 staged,
-                CurveFaceSplit {
+                ArenaCurveFaceSplit {
                     start_edge,
                     end_edge,
                     face,
@@ -61,7 +61,7 @@ impl Model {
         face_id: FaceId,
         endpoint: Endpoint,
         point: &Point3,
-    ) -> Result<(Self, VertexId, Option<EdgeSplit>), TopologyEditError> {
+    ) -> Result<(Self, VertexId, Option<ArenaEdgeSplit>), TopologyEditError> {
         match self.locate_face_split_endpoint(face_id, endpoint, point)? {
             FaceSplitEndpointLocation::Vertex(vertex) => Ok((self.clone(), vertex, None)),
             FaceSplitEndpointLocation::Edge {
@@ -78,7 +78,7 @@ impl Model {
         face_id: FaceId,
         endpoint: Endpoint,
         point: &Point3,
-    ) -> Result<(Self, WireId, VertexId, Option<EdgeSplit>), TopologyEditError> {
+    ) -> Result<(Self, WireId, VertexId, Option<ArenaEdgeSplit>), TopologyEditError> {
         let (wire, location) =
             self.locate_face_boundary_split_endpoint(face_id, endpoint, point)?;
         match location {
@@ -302,13 +302,13 @@ impl Model {
     /// The chord is one canonical edge with two opposite face-local uses.
     /// Existing holes are assigned to exactly one result by certified contour
     /// classification. The owning shell is updated, then the complete snapshot
-    /// is replayed through [`ModelBuilder`] before publication.
+    /// is replayed through [`ArenaModelBuilder`] before publication.
     pub fn split_face(
         &self,
         face_id: FaceId,
         start: VertexId,
         end: VertexId,
-    ) -> Result<(Self, FaceSplit), TopologyEditError> {
+    ) -> Result<(Self, ArenaFaceSplit), TopologyEditError> {
         crate::context::strict(|| self.split_face_with_geometry(face_id, start, end, None))
     }
 
@@ -318,7 +318,7 @@ impl Model {
         start: VertexId,
         end: VertexId,
         authored: Option<(Curve3, Pcurve, ParameterCorrespondence, bool)>,
-    ) -> Result<(Self, FaceSplit), TopologyEditError> {
+    ) -> Result<(Self, ArenaFaceSplit), TopologyEditError> {
         let face = self
             .face(face_id)
             .ok_or(TopologyEditError::InvalidReference {
@@ -591,7 +591,7 @@ impl Model {
             .map_err(TopologyEditError::Validation)?;
         Ok((
             validated,
-            FaceSplit {
+            ArenaFaceSplit {
                 edge,
                 edge_uses: [first_use, second_use],
                 first_wire: outer,

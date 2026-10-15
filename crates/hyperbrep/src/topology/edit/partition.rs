@@ -2,7 +2,7 @@
 
 use crate::topology::*;
 
-impl Model {
+impl ArenaModel {
     /// Deterministically partitions one face by retained exact
     /// surface-intersection curves.
     ///
@@ -18,7 +18,7 @@ impl Model {
         face_id: FaceId,
         curves: &[SurfaceIntersectionCurve],
         operand: SurfaceIntersectionOperand,
-    ) -> Result<(Self, FacePartition), TopologyEditError> {
+    ) -> Result<(Self, ArenaFacePartition), TopologyEditError> {
         crate::context::strict(|| {
             self.face(face_id)
                 .ok_or(TopologyEditError::InvalidReference {
@@ -152,6 +152,7 @@ impl Model {
                     .map(|range| trace.intersection.subcurve(&range[0], &range[1]))
                     .collect::<Result<Vec<_>, _>>()?;
                 let mut splits = Vec::with_capacity(segments.len());
+                let mut snapshots = Vec::with_capacity(segments.len());
                 let whole_closed_trace = segments.len() == 1
                     && matches!(
                         point3_equal(
@@ -188,6 +189,7 @@ impl Model {
                             });
                         }
                     };
+                    snapshots.push((staged.clone(), next.clone()));
                     staged = next;
                     faces[face_index] = split.first_face();
                     faces.insert(face_index + 1, split.second_face());
@@ -280,23 +282,25 @@ impl Model {
                     };
                     let (next, split) =
                         staged.split_face_by_surface_curve(candidate, segment, operand)?;
+                    snapshots.push((staged.clone(), next.clone()));
                     staged = next;
                     faces[face_index] = split.first_face();
                     faces.insert(face_index + 1, split.second_face());
                     splits.push(split);
                 }
-                traces.push(FaceTracePartition {
+                traces.push(ArenaFaceTracePartition {
                     source_index: trace.source_index,
                     segments: segments
                         .into_iter()
                         .map(|segment| segment.curve().clone())
                         .collect(),
                     splits,
+                    snapshots,
                 });
             }
             Ok((
                 staged,
-                FacePartition {
+                ArenaFacePartition {
                     source_face: face_id,
                     faces,
                     traces,
@@ -317,7 +321,7 @@ impl Model {
         &self,
         face_id: FaceId,
         curves: &[Curve3],
-    ) -> Result<(Self, FacePartition), TopologyEditError> {
+    ) -> Result<(Self, ArenaFacePartition), TopologyEditError> {
         crate::context::strict(|| {
             let face = self
                 .face(face_id)
@@ -392,6 +396,7 @@ impl Model {
                 let planar = projected_face_split_line(surface, &trace)?;
                 let segments = arranged_face_split_segments(&trace, &planar, &prior_lines)?;
                 let mut trace_splits = Vec::with_capacity(segments.len());
+                let mut snapshots = Vec::with_capacity(segments.len());
                 for (segment_index, segment) in segments.iter().enumerate() {
                     let start = segment.start()?;
                     let end = segment.end()?;
@@ -436,21 +441,23 @@ impl Model {
                         }
                     };
                     let (next, split) = staged.split_face_by_curve(candidate, segment)?;
+                    snapshots.push((staged.clone(), next.clone()));
                     staged = next;
                     faces[face_index] = split.face.first_face;
                     faces.insert(face_index + 1, split.face.second_face);
-                    trace_splits.push(SurfaceCurveFaceSplit::Open(split));
+                    trace_splits.push(ArenaSurfaceCurveFaceSplit::Open(split));
                 }
                 prior_lines.push((trace.source_index, planar));
-                partitioned_traces.push(FaceTracePartition {
+                partitioned_traces.push(ArenaFaceTracePartition {
                     source_index: trace.source_index,
                     segments,
                     splits: trace_splits,
+                    snapshots,
                 });
             }
             Ok((
                 staged,
-                FacePartition {
+                ArenaFacePartition {
                     source_face: face_id,
                     faces,
                     traces: partitioned_traces,
@@ -464,7 +471,7 @@ impl Model {
         face_id: FaceId,
         bridges: &[(usize, &SurfaceIntersectionCurve)],
         operand: SurfaceIntersectionOperand,
-    ) -> Result<Option<(Self, FacePartition)>, TopologyEditError> {
+    ) -> Result<Option<(Self, ArenaFacePartition)>, TopologyEditError> {
         let face = self.face(face_id).expect("surface split prevalidates face");
         let FaceBoundary::Trimmed {
             outer,
@@ -551,8 +558,8 @@ impl Model {
             intersection: SurfaceIntersectionCurve,
             start_vertex: VertexId,
             end_vertex: VertexId,
-            start_edge: Option<EdgeSplit>,
-            end_edge: Option<EdgeSplit>,
+            start_edge: Option<ArenaEdgeSplit>,
+            end_edge: Option<ArenaEdgeSplit>,
             start_wire: WireId,
             end_wire: WireId,
         }
@@ -599,7 +606,7 @@ impl Model {
             return Err(TopologyEditError::DegenerateFaceSplit);
         }
 
-        let directed_start = |model: &Model, edge_use_id: EdgeUseId| {
+        let directed_start = |model: &ArenaModel, edge_use_id: EdgeUseId| {
             let edge_use = model.edge_use(edge_use_id).expect("validated edge use");
             let edge = model.edge(edge_use.edge).expect("validated edge");
             match edge_use.direction {
@@ -607,14 +614,14 @@ impl Model {
                 Direction::Reversed => edge.end,
             }
         };
-        let wire_uses = |model: &Model, wire: WireId| {
+        let wire_uses = |model: &ArenaModel, wire: WireId| {
             model
                 .wire(wire)
                 .expect("validated bridge boundary wire")
                 .edge_uses
                 .clone()
         };
-        let unique_index = |model: &Model,
+        let unique_index = |model: &ArenaModel,
                             uses: &[EdgeUseId],
                             vertex: VertexId|
          -> Result<usize, TopologyEditError> {
@@ -928,7 +935,7 @@ impl Model {
             .revalidated()
             .map_err(TopologyEditError::Validation)?;
 
-        let split = BoundaryBridgeFaceSplit {
+        let split = ArenaBoundaryBridgeFaceSplit {
             edges: bridge_edges,
             edge_uses: first_face_bridge_uses
                 .into_iter()
@@ -944,20 +951,23 @@ impl Model {
         let traces = attached
             .into_iter()
             .enumerate()
-            .map(|(bridge_index, bridge)| FaceTracePartition {
+            .map(|(bridge_index, bridge)| ArenaFaceTracePartition {
                 source_index: bridge.source_index,
                 segments: vec![bridge.intersection.curve().clone()],
-                splits: vec![SurfaceCurveFaceSplit::Bridge(BoundaryBridgeCurveSplit {
-                    start_edge: bridge.start_edge,
-                    end_edge: bridge.end_edge,
-                    bridge_index,
-                    face: split.clone(),
-                })],
+                splits: vec![ArenaSurfaceCurveFaceSplit::Bridge(
+                    ArenaBoundaryBridgeCurveSplit {
+                        start_edge: bridge.start_edge,
+                        end_edge: bridge.end_edge,
+                        bridge_index,
+                        face: split.clone(),
+                    },
+                )],
+                snapshots: vec![(self.clone(), staged.clone())],
             })
             .collect();
         Ok(Some((
             staged,
-            FacePartition {
+            ArenaFacePartition {
                 source_face: face_id,
                 faces: vec![face_id, second_face],
                 traces,

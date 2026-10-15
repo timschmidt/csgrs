@@ -41,9 +41,9 @@ fuzz_target!(|bytes: &[u8]| {
             return;
         };
         let Ok(edge) = builder.edge(
-            vertices[index],
-            vertices[next],
-            curve,
+            &vertices[index],
+            &vertices[next],
+            &curve,
             ParameterDomain::unit(),
         ) else {
             return;
@@ -56,16 +56,16 @@ fuzz_target!(|bytes: &[u8]| {
             return;
         };
         let Ok(edge_use) = builder.edge_use(
-            edge,
+            &edge,
             Direction::Forward,
-            pcurve,
+            &pcurve,
             ParameterCorrespondence::identity(),
         ) else {
             return;
         };
         edge_uses.push(edge_use);
     }
-    let Ok(wire) = builder.wire(edge_uses) else {
+    let Ok(wire) = builder.wire(&edge_uses) else {
         return;
     };
     let Ok(surface) = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()) else {
@@ -74,10 +74,10 @@ fuzz_target!(|bytes: &[u8]| {
     let Ok(surface) = builder.surface(surface) else {
         return;
     };
-    let Ok(face) = builder.face(surface, Orientation::Forward, wire, Vec::new()) else {
+    let Ok(face) = builder.face(&surface, Orientation::Forward, &wire, &[]) else {
         return;
     };
-    let Ok(_) = builder.shell(vec![face]) else {
+    let Ok(_) = builder.shell(&[face]) else {
         return;
     };
     let _ = builder.finish();

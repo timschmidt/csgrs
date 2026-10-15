@@ -21,7 +21,7 @@ pub enum ParameterCorrespondence {
     /// domain.
     ///
     /// This relation is valid only for a native circular-arc pcurve and a
-    /// spatial circular arc. Model validation certifies the complete image,
+    /// spatial circular arc. ArenaModel validation certifies the complete image,
     /// support frame, orientation, and sweep before publication.
     AngularSweep,
 }

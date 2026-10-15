@@ -11,9 +11,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::geometry::{Curve3ExactData, EllipseArcExactData, Line3ExactData, SurfaceExactData};
 use crate::{
-    BuildError, Curve3, Curve3Id, Curve3Kind, Direction, EdgeId, EdgeUseId, FaceId, GeometryError,
-    Model, ModelBuilder, Orientation, ParameterCorrespondence, ParameterDomain, Pcurve, PcurveId,
-    ShellId, Surface, SurfaceId, SurfaceKind, ValidationReport, VertexId, WireId,
+    ArenaModel, ArenaModelBuilder, BuildError, Curve3, Curve3Id, Curve3Kind, Direction, EdgeId,
+    EdgeUseId, FaceId, GeometryError, Orientation, ParameterCorrespondence, ParameterDomain,
+    Pcurve, PcurveId, ShellId, Surface, SurfaceId, SurfaceKind, ValidationReport, VertexId, WireId,
 };
 
 const FORMAT_VERSION: u32 = 8;
@@ -89,15 +89,15 @@ impl From<ValidationReport> for PersistenceError {
 
 /// Untrusted serialized-model carrier.
 ///
-/// A `RawModel` deliberately has no geometry or measurement operations.
-/// [`RawModel::validate`] replays all records through [`ModelBuilder`] before
-/// returning a trusted [`Model`].
+/// A `ImportedModel` deliberately has no geometry or measurement operations.
+/// [`ImportedModel::validate`] replays all records through [`ArenaModelBuilder`] before
+/// returning a trusted [`ArenaModel`].
 #[derive(Clone, Debug)]
-pub struct RawModel {
+pub struct ImportedModel {
     data: RawModelData,
 }
 
-impl RawModel {
+impl ImportedModel {
     /// Parses exact JSON without claiming that the encoded topology is valid.
     pub fn from_json(json: &str) -> Result<Self, PersistenceError> {
         crate::context::strict(|| {
@@ -119,12 +119,12 @@ impl RawModel {
     }
 
     /// Validates every local and global invariant and publishes a trusted model.
-    pub fn validate(self) -> Result<Model, PersistenceError> {
+    pub fn validate(self) -> Result<ArenaModel, PersistenceError> {
         crate::context::strict(|| {
             if self.data.version != FORMAT_VERSION {
                 return Err(PersistenceError::UnsupportedVersion(self.data.version));
             }
-            let mut builder = ModelBuilder::new();
+            let mut builder = ArenaModelBuilder::new();
             for point in self.data.vertices {
                 builder.vertex(point3(point))?;
             }
@@ -277,14 +277,14 @@ impl RawModel {
     }
 }
 
-impl Model {
+impl ArenaModel {
     /// Converts this trusted model into an untrusted persistence carrier.
     ///
     /// Every current `Curve3` and `Surface` family is retained exactly.
     /// Pcurves retain native lines, circular arcs, rational quadratics,
     /// general rational Béziers, and NURBS; other Hypercurve families return
     /// an explicit unsupported-family error.
-    pub fn to_raw(&self) -> Result<RawModel, PersistenceError> {
+    pub fn to_raw(&self) -> Result<ImportedModel, PersistenceError> {
         crate::context::strict(|| {
             let mut vertices = self
                 .vertices()
@@ -578,7 +578,7 @@ impl Model {
                     voids: solid.voids().iter().map(|id| id.index()).collect(),
                 })
                 .collect();
-            Ok(RawModel {
+            Ok(ImportedModel {
                 data: RawModelData {
                     version: FORMAT_VERSION,
                     vertices,
@@ -1276,7 +1276,7 @@ mod tests {
 
     use super::*;
     use crate::Point2;
-    use crate::builder::{self, ExtrusionVoid};
+    use crate::construction::{self as builder, ExtrusionVoid};
 
     fn p(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
@@ -1287,7 +1287,7 @@ mod tests {
         let (model, solid) = builder::cuboid(p(-2, -3, -5), p(7, 11, 13)).unwrap();
         let json = model.to_json().unwrap();
         assert_eq!(json, model.to_json().unwrap());
-        let rebuilt = RawModel::from_json(&json).unwrap().validate().unwrap();
+        let rebuilt = ImportedModel::from_json(&json).unwrap().validate().unwrap();
         assert_eq!(rebuilt.counts(), model.counts());
         assert_eq!(
             compare_reals(
@@ -1313,13 +1313,13 @@ mod tests {
         else {
             panic!("the semicircle endpoints must be finite");
         };
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let id = builder
             .pcurve(Pcurve::new(Curve2::from(curve.clone())))
             .unwrap();
         let model = builder.finish().unwrap();
         let json = model.to_json().unwrap();
-        let rebuilt = RawModel::from_json(&json).unwrap().validate().unwrap();
+        let rebuilt = ImportedModel::from_json(&json).unwrap().validate().unwrap();
         let Some(CurveGeometry2::RationalBezier(restored)) =
             rebuilt.pcurve(id).unwrap().curve().geometry()
         else {
@@ -1369,13 +1369,13 @@ mod tests {
         .unwrap();
         assert!(finite.affine_control_points().is_none());
         for source in [finite, periodic] {
-            let mut builder = ModelBuilder::new();
+            let mut builder = ArenaModelBuilder::new();
             let id = builder
                 .pcurve(Pcurve::new(Curve2::from(source.clone())))
                 .unwrap();
             let model = builder.finish().unwrap();
             let json = model.to_json().unwrap();
-            let rebuilt = RawModel::from_json(&json).unwrap().validate().unwrap();
+            let rebuilt = ImportedModel::from_json(&json).unwrap().validate().unwrap();
             let Some(CurveGeometry2::Nurbs(restored)) =
                 rebuilt.pcurve(id).unwrap().curve().geometry()
             else {
@@ -1405,7 +1405,7 @@ mod tests {
         raw["edges"][0]["start"] = serde_json::Value::from(999_u64);
         let json = serde_json::to_string(&raw).unwrap();
         assert!(matches!(
-            RawModel::from_json(&json).unwrap().validate(),
+            ImportedModel::from_json(&json).unwrap().validate(),
             Err(PersistenceError::Build(BuildError::InvalidReference { .. }))
         ));
     }
@@ -1423,7 +1423,8 @@ mod tests {
             json.push(']');
         }
         json.push('}');
-        RawModel::from_json(&json).expect("deep untrusted JSON must use the growing stack adapter");
+        ImportedModel::from_json(&json)
+            .expect("deep untrusted JSON must use the growing stack adapter");
     }
 
     #[test]
@@ -1447,7 +1448,7 @@ mod tests {
         let (model, solid) =
             builder::extrude_with_voids(&outer, Real::zero(), Real::from(5), &[cavity]).unwrap();
         let json = model.to_json().unwrap();
-        let rebuilt = RawModel::from_json(&json).unwrap().validate().unwrap();
+        let rebuilt = ImportedModel::from_json(&json).unwrap().validate().unwrap();
         assert_eq!(rebuilt.solid(solid).unwrap().voids().len(), 1);
         assert_eq!(
             compare_reals(
@@ -1463,7 +1464,7 @@ mod tests {
 
     #[test]
     fn every_current_exact_curve_and_surface_carrier_round_trips() {
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         let line = Curve3::line(p(0, 0, 0), p(1, 2, 3)).unwrap();
         let rational = Curve3::rational_bezier(
             vec![p(0, 0, 0), p(1, 2, 0), p(3, 1, 0)],
@@ -1573,7 +1574,7 @@ mod tests {
 
         let model = builder.finish().unwrap();
         let json = model.to_json().unwrap();
-        let rebuilt = RawModel::from_json(&json).unwrap().validate().unwrap();
+        let rebuilt = ImportedModel::from_json(&json).unwrap().validate().unwrap();
         assert_eq!(rebuilt.counts(), model.counts());
         assert_eq!(
             rebuilt
@@ -1611,7 +1612,7 @@ mod tests {
 
     #[test]
     fn raw_import_revalidates_nonplanar_geometry_fields() {
-        let mut builder = ModelBuilder::new();
+        let mut builder = ArenaModelBuilder::new();
         builder
             .curve(
                 Curve3::circle_arc(
@@ -1630,7 +1631,7 @@ mod tests {
         raw["curves"][0]["EllipseArc"]["direction"] = serde_json::Value::from(0);
         let json = serde_json::to_string(&raw).unwrap();
         assert!(matches!(
-            RawModel::from_json(&json).unwrap().validate(),
+            ImportedModel::from_json(&json).unwrap().validate(),
             Err(PersistenceError::Build(BuildError::Geometry(
                 GeometryError::InvalidParameterDomain
             )))

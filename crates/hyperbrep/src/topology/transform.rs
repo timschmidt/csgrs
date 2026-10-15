@@ -2,7 +2,7 @@
 
 use crate::topology::*;
 
-impl Model {
+impl ArenaModel {
     /// Applies one certified invertible affine transform to the entire model.
     ///
     /// Topology and typed IDs are retained. Exact curve and surface carriers

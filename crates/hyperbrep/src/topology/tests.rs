@@ -45,8 +45,8 @@ fn construction_error_chain_retains_numeric_failure() {
         build,
         BuildError::Geometry(GeometryError::Numeric(Problem::DivideByZero))
     );
-    let construction = crate::builder::ConstructionError::from(build);
-    let boolean = crate::boolean::BooleanError::from(construction);
+    let construction = crate::construction::ConstructionError::from(build);
+    let boolean = crate::boolean_kernel::BooleanError::from(construction);
     let mut cause: &(dyn Error + 'static) = &boolean;
     while let Some(source) = cause.source() {
         cause = source;
@@ -67,7 +67,7 @@ fn bernstein_degree_overflow_is_a_range_error() {
     );
 }
 
-fn add_planar_triangle(builder: &mut ModelBuilder) -> (FaceId, [EdgeId; 3]) {
+fn add_planar_triangle(builder: &mut ArenaModelBuilder) -> (FaceId, [EdgeId; 3]) {
     let vertices = [
         builder.vertex(p(0, 0, 0)).unwrap(),
         builder.vertex(p(2, 0, 0)).unwrap(),
@@ -120,8 +120,8 @@ fn add_planar_triangle(builder: &mut ModelBuilder) -> (FaceId, [EdgeId; 3]) {
     (face, edges.try_into().unwrap())
 }
 
-fn planar_circle_model() -> (Model, [EdgeUseId; 4]) {
-    let mut builder = ModelBuilder::new();
+fn planar_circle_model() -> (ArenaModel, [EdgeUseId; 4]) {
+    let mut builder = ArenaModelBuilder::new();
     let points = [p(2, 0, 0), p(0, 2, 0), p(-2, 0, 0), p(0, -2, 0)];
     let parameters = [uv(2, 0), uv(0, 2), uv(-2, 0), uv(0, -2)];
     let vertices = points
@@ -224,7 +224,7 @@ fn angular_sweep_correspondence_certifies_a_complete_planar_circle() {
 
     let json = model.to_json().unwrap();
     assert!(json.contains("\"AngularSweep\""));
-    let decoded = crate::RawModel::from_json(&json)
+    let decoded = crate::ImportedModel::from_json(&json)
         .unwrap()
         .validate()
         .unwrap();
@@ -254,7 +254,7 @@ fn revolution_patch_certifies_complete_meridian_and_latitude_images() {
         .iter()
         .map(|parameter| surface.point_at(parameter).unwrap())
         .collect::<Vec<_>>();
-    let mut builder = ModelBuilder::new();
+    let mut builder = ArenaModelBuilder::new();
     let vertices = points
         .iter()
         .cloned()
@@ -357,7 +357,7 @@ fn revolution_patch_certifies_complete_meridian_and_latitude_images() {
 
 #[test]
 fn analytic_image_certificate_rejects_a_sheared_arc_between_matching_endpoints() {
-    let mut builder = ModelBuilder::new();
+    let mut builder = ArenaModelBuilder::new();
     let vertices = [
         builder.vertex(p(1, 0, 0)).unwrap(),
         builder.vertex(p(-1, 0, 0)).unwrap(),
@@ -427,7 +427,7 @@ fn analytic_image_certificate_rejects_a_sheared_arc_between_matching_endpoints()
     );
 }
 
-fn add_planar_wire(builder: &mut ModelBuilder, coordinates: &[(i32, i32)]) -> WireId {
+fn add_planar_wire(builder: &mut ArenaModelBuilder, coordinates: &[(i32, i32)]) -> WireId {
     let vertices = coordinates
         .iter()
         .map(|(x, y)| builder.vertex(p(*x, *y, 0)).unwrap())
@@ -469,7 +469,7 @@ fn add_planar_wire(builder: &mut ModelBuilder, coordinates: &[(i32, i32)]) -> Wi
 
 #[test]
 fn builder_commits_private_typed_arenas_with_retained_adjacency() {
-    let mut builder = ModelBuilder::new();
+    let mut builder = ArenaModelBuilder::new();
     let (face, edges) = add_planar_triangle(&mut builder);
     let shell = builder.shell(vec![face]).unwrap();
     let model = builder.finish().unwrap();
@@ -502,7 +502,7 @@ fn builder_commits_private_typed_arenas_with_retained_adjacency() {
 
 #[test]
 fn builder_rejects_topologically_disconnected_wires() {
-    let mut builder = ModelBuilder::new();
+    let mut builder = ArenaModelBuilder::new();
     let vertices = [
         builder.vertex(p(0, 0, 0)).unwrap(),
         builder.vertex(p(1, 0, 0)).unwrap(),
@@ -545,7 +545,7 @@ fn builder_rejects_topologically_disconnected_wires() {
 
 #[test]
 fn finish_reports_orphan_topology_instead_of_publishing_invalid_model() {
-    let mut builder = ModelBuilder::new();
+    let mut builder = ArenaModelBuilder::new();
     let start = builder.vertex(p(0, 0, 0)).unwrap();
     let end = builder.vertex(p(1, 0, 0)).unwrap();
     let curve = builder
@@ -607,13 +607,14 @@ fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_sp
     ];
     for profile in profiles {
         let (model, face) =
-            crate::builder::extrusion_patch(profile, Vector3::z(), Real::zero(), r(3)).unwrap();
+            crate::construction::extrusion_patch(profile, Vector3::z(), Real::zero(), r(3))
+                .unwrap();
         let area = model.face_area(face).unwrap();
         assert_eq!(
             compare_reals(&area, &r(6), crate::STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
-        let replayed = crate::RawModel::from_json(&model.to_json().unwrap())
+        let replayed = crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -645,7 +646,8 @@ fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_sp
     for profile in planar_profiles {
         assert!(certified_monotone_planar_extrusion_image(&profile, &Vector3::x()).unwrap());
         let (model, face) =
-            crate::builder::extrusion_patch(profile, Vector3::x(), Real::zero(), r(3)).unwrap();
+            crate::construction::extrusion_patch(profile, Vector3::x(), Real::zero(), r(3))
+                .unwrap();
         assert_eq!(
             compare_reals(
                 &model.face_area(face).unwrap(),
@@ -655,7 +657,7 @@ fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_sp
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
-        let replayed = crate::RawModel::from_json(&model.to_json().unwrap())
+        let replayed = crate::ImportedModel::from_json(&model.to_json().unwrap())
             .unwrap()
             .validate()
             .unwrap();
@@ -676,7 +678,7 @@ fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_sp
     )
     .unwrap();
     let (model, face) =
-        crate::builder::extrusion_patch(curved, Vector3::z(), Real::zero(), r(3)).unwrap();
+        crate::construction::extrusion_patch(curved, Vector3::z(), Real::zero(), r(3)).unwrap();
     assert_eq!(
         model.face_area(face),
         Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
@@ -689,7 +691,8 @@ fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_sp
     .unwrap();
     assert!(!certified_monotone_planar_extrusion_image(&backtracking, &Vector3::x()).unwrap());
     let (backtracking_model, backtracking_face) =
-        crate::builder::extrusion_patch(backtracking, Vector3::x(), Real::zero(), r(3)).unwrap();
+        crate::construction::extrusion_patch(backtracking, Vector3::x(), Real::zero(), r(3))
+            .unwrap();
     assert_eq!(
         backtracking_model.face_area(backtracking_face),
         Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
@@ -705,7 +708,8 @@ fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_sp
     )
     .unwrap();
     let (normal_model, normal_face) =
-        crate::builder::extrusion_patch(circle.clone(), Vector3::z(), Real::zero(), r(3)).unwrap();
+        crate::construction::extrusion_patch(circle.clone(), Vector3::z(), Real::zero(), r(3))
+            .unwrap();
     assert_eq!(
         compare_reals(
             &normal_model.face_area(normal_face).unwrap(),
@@ -715,7 +719,7 @@ fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_sp
         .value(),
         Some(std::cmp::Ordering::Equal)
     );
-    let (oblique_model, oblique_face) = crate::builder::extrusion_patch(
+    let (oblique_model, oblique_face) = crate::construction::extrusion_patch(
         circle,
         Vector3::from_xyz(Real::one(), Real::zero(), Real::one()),
         Real::zero(),
@@ -738,7 +742,7 @@ fn extrusion_area_certifies_constant_and_line_image_laws_and_rejects_variable_sp
     )
     .unwrap();
     let (ellipse_model, ellipse_face) =
-        crate::builder::extrusion_patch(ellipse, Vector3::z(), Real::zero(), r(3)).unwrap();
+        crate::construction::extrusion_patch(ellipse, Vector3::z(), Real::zero(), r(3)).unwrap();
     assert_eq!(
         ellipse_model.face_area(ellipse_face),
         Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
@@ -752,12 +756,12 @@ fn canonical_model_and_geometry_are_send_and_sync() {
     assert_send_sync::<Curve3>();
     assert_send_sync::<Pcurve>();
     assert_send_sync::<Surface>();
-    assert_send_sync::<Model>();
+    assert_send_sync::<ArenaModel>();
 }
 
 #[test]
 fn planar_face_certifies_inner_wire_orientation_nesting_and_area() {
-    let mut builder = ModelBuilder::new();
+    let mut builder = ArenaModelBuilder::new();
     let outer = add_planar_wire(&mut builder, &[(0, 0), (10, 0), (10, 10), (0, 10)]);
     let inner = add_planar_wire(&mut builder, &[(3, 3), (3, 7), (7, 7), (7, 3)]);
     let surface = builder
@@ -778,7 +782,7 @@ fn planar_face_certifies_inner_wire_orientation_nesting_and_area() {
         Some(std::cmp::Ordering::Equal)
     );
 
-    let mut wrong_orientation = ModelBuilder::new();
+    let mut wrong_orientation = ArenaModelBuilder::new();
     let outer = add_planar_wire(
         &mut wrong_orientation,
         &[(0, 0), (10, 0), (10, 10), (0, 10)],
@@ -792,7 +796,7 @@ fn planar_face_certifies_inner_wire_orientation_nesting_and_area() {
         Err(BuildError::InconsistentWireOrientation(inner))
     );
 
-    let mut outside = ModelBuilder::new();
+    let mut outside = ArenaModelBuilder::new();
     let outer = add_planar_wire(&mut outside, &[(0, 0), (10, 0), (10, 10), (0, 10)]);
     let inner = add_planar_wire(&mut outside, &[(12, 2), (12, 4), (14, 4), (14, 2)]);
     let surface = outside

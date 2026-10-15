@@ -2,7 +2,7 @@
 
 use crate::topology::*;
 
-impl ModelBuilder {
+impl ArenaModelBuilder {
     /// Constructs an empty model builder.
     pub fn new() -> Self {
         Self::default()
@@ -601,7 +601,7 @@ impl ModelBuilder {
     }
 
     /// Validates global ownership and commits an immutable model.
-    pub fn finish(mut self) -> Result<Model, ValidationReport> {
+    pub fn finish(mut self) -> Result<ArenaModel, ValidationReport> {
         crate::context::strict(|| {
             let mut errors = Vec::new();
             for (index, owner) in self.edge_use_wire.iter().enumerate() {
@@ -773,7 +773,7 @@ impl ModelBuilder {
                 .map_err(|error| ValidationReport {
                     errors: vec![error],
                 })?;
-            Ok(Model {
+            Ok(ArenaModel {
                 data: Arc::new(ModelData {
                     vertices: self.vertices,
                     curves: self.curves,
