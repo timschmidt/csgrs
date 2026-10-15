@@ -1,0 +1,88 @@
+
+running 13 tests
+test boundary_inside_outside_and_empty_queries_remain_definite ... ok
+test canonical_empty_transforms_feed_subsequent_composition ... ok
+test contextual_query_retains_the_native_blocker ... FAILED
+test matrix_admission_uses_the_selected_policy_without_certainty_upgrade ... FAILED
+test out_of_plane_geometry_is_not_silently_projected ... FAILED
+test perspective_is_not_silently_discarded ... FAILED
+test primary_query_distinguishes_uncertainty_from_boundary ... FAILED
+test primary_scale_rejects_singular_input_including_empty ... FAILED
+test primary_transform_rejects_singular_input_including_empty ... FAILED
+test strict_transforms_keep_holes_area_and_extrusion_volume ... ok
+test supported_homogeneous_scale_is_divided_out ... FAILED
+test unknown_scale_does_not_become_empty_geometry ... FAILED
+test zero_homogeneous_weight_is_not_finite_geometry ... FAILED
+
+failures:
+
+---- contextual_query_retains_the_native_blocker stdout ----
+
+thread 'contextual_query_retains_the_native_blocker' (101) panicked at tests/planar_operation_failures.rs:85:5:
+assertion `left == right` failed
+  left: Geometry
+ right: Undecided
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- matrix_admission_uses_the_selected_policy_without_certainty_upgrade stdout ----
+
+thread 'matrix_admission_uses_the_selected_policy_without_certainty_upgrade' (102) panicked at tests/planar_operation_failures.rs:167:18:
+undecided plane constraint was ignored: GeometryOutcome { value: CurveRegion2 { boundary_loops: [CurveRegionBoundaryLoop2 { fragments: [AlgebraicChord(BezierAlgebraicChord2 { data: BezierAlgebraicChordData2 { start: CurvePoint2(Exact(Point2 { x: Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, y: Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty } })), end: CurvePoint2(Exact(Point2 { x: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, y: Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty } })), parameter_axis: BezierAlgebraicChordParameterAxis2 { axis: X, coordinate_increases: true }, certified_axis_aligned: true, certified_unit_tangent: None, certified_circle_transverse_endpoints: 0, parallel_tangent_contacts: None, source: None, reversed: false, policy: CurveContext(0) } }), AlgebraicChord(BezierAlgebraicChord2 { data: BezierAlgebraicChordData2 { start: CurvePoint2(Exact(Point2 { x: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, y: Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty } })), end: CurvePoint2(Exact(Point2 { x: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, y: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty } })), parameter_axis: BezierAlgebraicChordParameterAxis2 { axis: Y, coordinate_increases: true }, certified_axis_aligned: true, certified_unit_tangent: None, certified_circle_transverse_endpoints: 0, parallel_tangent_contacts: None, source: None, reversed: false, policy: CurveContext(0) } }), AlgebraicChord(BezierAlgebraicChord2 { data: BezierAlgebraicChordData2 { start: CurvePoint2(Exact(Point2 { x: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, y: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty } })), end: CurvePoint2(Exact(Point2 { x: Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, y: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty } })), parameter_axis: BezierAlgebraicChordParameterAxis2 { axis: X, coordinate_increases: false }, certified_axis_aligned: true, certified_unit_tangent: None, certified_circle_transverse_endpoints: 0, parallel_tangent_contacts: None, source: None, reversed: false, policy: CurveContext(0) } }), AlgebraicChord(BezierAlgebraicChord2 { data: BezierAlgebraicChordData2 { start: CurvePoint2(Exact(Point2 { x: Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, y: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty } })), end: CurvePoint2(Exact(Point2 { x: Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, y: Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty } })), parameter_axis: BezierAlgebraicChordParameterAxis2 { axis: Y, coordinate_increases: false }, certified_axis_aligned: true, certified_unit_tangent: None, certified_circle_transverse_endpoints: 0, parallel_tangent_contacts: None, source: None, reversed: false, policy: CurveContext(0) } })], connectivity_policy: Some(CurveContext(0)), curves: OnceLock(<uninit>), rational_evaluators: OnceLock(<uninit>), query_bounds: OnceLock(<uninit>), arrangement_sources: Some([CurveRegionFragmentSource2 { arrangement_fragment_index: 0, source_curve_index: 0, source_fragment_index: 0 }, CurveRegionFragmentSource2 { arrangement_fragment_index: 1, source_curve_index: 1, source_fragment_index: 0 }, CurveRegionFragmentSource2 { arrangement_fragment_index: 2, source_curve_index: 2, source_fragment_index: 0 }, CurveRegionFragmentSource2 { arrangement_fragment_index: 3, source_curve_index: 3, source_fragment_index: 0 }]) }], certified_loop_roles: Some([Material]), state: Normalized(CurveContext(0)) }, certainty: Certified }
+
+---- out_of_plane_geometry_is_not_silently_projected stdout ----
+
+thread 'out_of_plane_geometry_is_not_silently_projected' (103) panicked at tests/planar_operation_failures.rs:135:18:
+out-of-plane image became an XY projection: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- perspective_is_not_silently_discarded stdout ----
+
+thread 'perspective_is_not_silently_discarded' (104) panicked at tests/planar_operation_failures.rs:122:14:
+perspective became an affine identity: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- primary_query_distinguishes_uncertainty_from_boundary stdout ----
+
+thread 'primary_query_distinguishes_uncertainty_from_boundary' (105) panicked at tests/planar_operation_failures.rs:72:10:
+unknown point location became a boundary result: None
+
+---- primary_scale_rejects_singular_input_including_empty stdout ----
+
+thread 'primary_scale_rejects_singular_input_including_empty' (106) panicked at tests/planar_operation_failures.rs:42:14:
+singular scale became successful geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- primary_transform_rejects_singular_input_including_empty stdout ----
+
+thread 'primary_transform_rejects_singular_input_including_empty' (107) panicked at tests/planar_operation_failures.rs:51:9:
+assertion failed: curve::transformed(&region, &matrix).attempt().is_err()
+
+---- supported_homogeneous_scale_is_divided_out stdout ----
+
+thread 'supported_homogeneous_scale_is_divided_out' (109) panicked at tests/planar_operation_failures.rs:105:9:
+assertion `left == right` failed
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 24, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 6, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+
+---- unknown_scale_does_not_become_empty_geometry stdout ----
+
+thread 'unknown_scale_does_not_become_empty_geometry' (110) panicked at tests/planar_operation_failures.rs:63:6:
+unknown determinant became successful geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- zero_homogeneous_weight_is_not_finite_geometry stdout ----
+
+thread 'zero_homogeneous_weight_is_not_finite_geometry' (111) panicked at tests/planar_operation_failures.rs:148:14:
+zero homogeneous weight became finite geometry: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+
+failures:
+    contextual_query_retains_the_native_blocker
+    matrix_admission_uses_the_selected_policy_without_certainty_upgrade
+    out_of_plane_geometry_is_not_silently_projected
+    perspective_is_not_silently_discarded
+    primary_query_distinguishes_uncertainty_from_boundary
+    primary_scale_rejects_singular_input_including_empty
+    primary_transform_rejects_singular_input_including_empty
+    supported_homogeneous_scale_is_divided_out
+    unknown_scale_does_not_become_empty_geometry
+    zero_homogeneous_weight_is_not_finite_geometry
+
+test result: FAILED. 3 passed; 10 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

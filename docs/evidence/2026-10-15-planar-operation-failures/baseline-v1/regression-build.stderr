@@ -1,0 +1,148 @@
+error: unexpected `cfg` condition name: `test`
+  --> tests/planar_operation_failures.rs:37:1
+   |
+37 | #[test]
+   | ^^^^^^^
+   |
+   = help: expected names are: `feature` and 32 more
+   = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+   = note: `-D unexpected-cfgs` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(unexpected_cfgs)]`
+
+error: unexpected `cfg` condition name: `test`
+  --> tests/planar_operation_failures.rs:47:1
+   |
+47 | #[test]
+   | ^^^^^^^
+   |
+   = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> tests/planar_operation_failures.rs:55:1
+   |
+55 | #[test]
+   | ^^^^^^^
+   |
+   = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> tests/planar_operation_failures.rs:67:1
+   |
+67 | #[test]
+   | ^^^^^^^
+   |
+   = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> tests/planar_operation_failures.rs:76:1
+   |
+76 | #[test]
+   | ^^^^^^^
+   |
+   = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> tests/planar_operation_failures.rs:96:1
+   |
+96 | #[test]
+   | ^^^^^^^
+   |
+   = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> tests/planar_operation_failures.rs:114:1
+    |
+114 | #[test]
+    | ^^^^^^^
+    |
+    = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> tests/planar_operation_failures.rs:127:1
+    |
+127 | #[test]
+    | ^^^^^^^
+    |
+    = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> tests/planar_operation_failures.rs:141:1
+    |
+141 | #[test]
+    | ^^^^^^^
+    |
+    = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> tests/planar_operation_failures.rs:153:1
+    |
+153 | #[test]
+    | ^^^^^^^
+    |
+    = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> tests/planar_operation_failures.rs:177:1
+    |
+177 | #[test]
+    | ^^^^^^^
+    |
+    = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> tests/planar_operation_failures.rs:195:1
+    |
+195 | #[test]
+    | ^^^^^^^
+    |
+    = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> tests/planar_operation_failures.rs:219:1
+    |
+219 | #[test]
+    | ^^^^^^^
+    |
+    = note: using a cfg inside a attribute macro will use the cfgs from the destination crate and not the ones from the defining crate
+    = help: try referring to `test` crate for guidance on how handle this unexpected cfg
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: aborting due to 13 previous errors
+

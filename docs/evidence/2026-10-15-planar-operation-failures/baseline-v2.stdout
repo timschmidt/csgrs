@@ -1,0 +1,6 @@
+{"started": "prepare-target", "phase": "baseline-v2"}
+{"name": "prepare-target", "exit_code": 0, "seconds": 1.9362978590652347, "sources_unchanged": true, "binaries_sha256": {}, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "resources_sha256": "cc6155ed762ef287e932a3e6b0e5cbdd6ab011f58333d576f099a9880d690092"}
+{"started": "regression-build", "phase": "baseline-v2"}
+{"name": "regression-build", "exit_code": 0, "seconds": 2.9025078918784857, "sources_unchanged": true, "binaries_sha256": {}, "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "resources_sha256": "f6f1738721a84dd85d82981f021821bfc4f6fd987465b543a370307dc1137102"}
+{"started": "regressions", "phase": "baseline-v2"}
+{"name": "regressions", "exit_code": 101, "seconds": 1.9120762199163437, "sources_unchanged": true, "binaries_sha256": {}, "stdout_sha256": "52ff441f431e04ff859e9b98f6a376ea7ad506b05208c80bb9f4a6ad262bc43b", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "resources_sha256": "5c42078381c1f71e3642112e5370c9e85aa26a073ba83c216c97e50a3863b167"}
