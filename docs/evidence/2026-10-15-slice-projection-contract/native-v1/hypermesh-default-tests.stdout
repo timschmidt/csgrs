@@ -1,0 +1,284 @@
+
+running 183 tests
+test bvh::tests::approximate_split_axis_uses_finite_span_and_stable_ties ... ok
+test bvh::tests::canonical_self_candidates_cover_exact_brute_force_under_both_policies ... ok
+test bvh::tests::canonical_self_candidates_handle_empty_and_singleton_hierarchies ... ok
+test bvh::tests::canonical_self_candidates_reject_malformed_hierarchy_storage ... ok
+test bvh::tests::canonical_self_candidates_retain_binary32_false_positives_for_exact_consumers ... ok
+test bvh::tests::certified_filter_only_rejects_exactly_disjoint_rational_bounds ... ok
+test bvh::tests::compact_query_hierarchy_handles_empty_input ... ok
+test bvh::tests::compact_query_hierarchy_matches_full_bvh_under_both_policies ... ok
+test bvh::tests::compact_query_hierarchy_rejects_missing_or_malformed_provenance ... ok
+test bvh::tests::compact_query_hierarchy_rejects_stale_polygon_storage ... ok
+test bvh::tests::out_of_binary64_rational_filter_declines_to_exact_policy_aware_overlap ... ok
+test bvh::tests::outward_binary32_conversion_contains_every_finite_binary64_input ... ok
+test bvh::tests::subnormal_binary32_filter_declines_to_exact_policy_aware_overlap ... ok
+test bvh::tests::unavailable_symbolic_filter_declines_to_exact_policy_aware_overlap ... ok
+test clip::tests::clip_polygon_to_aabb_preserves_closed_boundary_faces ... ok
+test context::tests::policy_context_and_certainty_are_one_byte ... ok
+test convex_hull::tests::coplanar_input_is_rejected ... ok
+test convex_hull::tests::cube_hull_rejects_interior_and_duplicate_points ... ok
+test convex_hull::tests::dense_grid_rejects_all_interior_points ... ok
+test convex_hull::tests::hull_deduplicates_numeric_points_with_distinct_representations ... ok
+test convex_hull::tests::hull_retains_exact_offsets_beyond_f64_resolution ... ok
+test convex_hull::tests::irregular_cloud_is_contained_by_every_hull_halfspace ... ok
+test convex_hull::tests::moment_curve_retains_every_extreme_point ... ok
+test convex_hull::tests::orient3_sign_is_opposite_hull_plane_expression ... ok
+test convex_hull::tests::retained_ruled_surface_generators_certify_coplanarity ... ok
+test convex_hull::tests::tetrahedron_hull_is_closed_and_outward ... ok
+test geometry::tests::axis_split_value_handles_non_unit_normal_exactly ... ok
+test geometry::tests::optimized_point_nondegeneracy_matches_previous_exact_rational_path ... ok
+test geometry::tests::point_nondegeneracy_matches_materialized_plane_validation ... ok
+test geometry::tests::wide_dyadic_plane_uses_primitive_normal_before_offset_construction ... ok
+test gpu::tests::approximation_failure_is_explicit_at_each_precision ... ok
+test gpu::tests::approximation_rejects_an_incomplete_triangle_list ... ok
+test gpu::tests::approximation_rejects_an_invalid_index ... ok
+test gpu::tests::boolean_mesh_exports_flat_shaded_gpu_rows ... ok
+test gpu::tests::boolean_mesh_rejects_an_invalid_source_index ... ok
+test gpu::tests::exact_gpu_exports_certify_computable_triangle_normals ... ok
+test gpu::tests::exact_gpu_exports_reject_degenerate_triangle_normals ... ok
+test gpu::tests::exact_triangle_rows_approximate_to_gpu_buffers ... ok
+test intersection::tests::approximate_cached_exclusion_does_not_override_retained_vertex_identity ... ok
+test intersection::tests::certified_deferred_ratio_order_matches_materialized_exact_rationals ... ok
+test intersection::tests::compact_event_tag_reserves_are_checked_and_round_trip ... ok
+test intersection::tests::compact_graph_preserves_stream_order_without_per_face_vectors ... ok
+test intersection::tests::compact_graph_retains_every_pairwise_intersection_dimension ... ok
+test intersection::tests::conservative_binary32_bvh_candidate_is_rejected_by_exact_narrow_phase ... ok
+test intersection::tests::deferred_coplanar_point_deduplication_retains_capacity_and_canonical_recipe ... ok
+test intersection::tests::deferred_support_line_carrier_stays_stack_compact ... ok
+test intersection::tests::empty_face_index_uses_one_u32_offset_per_face_and_a_terminal ... ok
+test intersection::tests::equal_slice_endpoints_choose_the_canonical_construction_identity ... ok
+test intersection::tests::exact_aliases_choose_order_independent_canonical_recipe ... ok
+test intersection::tests::exact_closed_slice_intervals_cover_every_overlap_dimension_and_order ... ok
+test intersection::tests::exact_segment_endpoints_share_one_compact_point_arena ... ok
+test intersection::tests::intrinsic_source_features_are_not_duplicated_as_intersection_events ... ok
+test intersection::tests::invalid_face_append_fails_without_mutating_the_arena ... ok
+test intersection::tests::later_certified_support_component_avoids_terminal_approximation ... ok
+test intersection::tests::manifold_edge_skip_requires_shared_construction_identity ... ok
+test intersection::tests::pair_append_failures_leave_no_half_edge_or_orphan_segment ... ok
+test intersection::tests::pairwise_scratch_resets_coplanar_facts_and_schedules ... ok
+test intersection::tests::polygon_vertex_arena_flattens_known_empty_and_constructed_rows ... ok
+test intersection::tests::retained_graph_points_carry_canonical_crossing_recipes ... ok
+test intersection::tests::retained_shared_vertex_schedule_obeys_terminal_policy ... ok
+test intersection::tests::retained_shared_vertex_side_proof_precedes_pairwise_construction ... ok
+test intersection::tests::retained_vertex_slice_proof_covers_every_triangle_classification ... ok
+test intersection::tests::self_pair_is_rejected_without_mutation ... ok
+test intersection::tests::sign_only_two_product_difference_matches_materialized_value ... ok
+test intersection::tests::structural_recipe_interning_disambiguates_fingerprint_collisions ... ok
+test intersection::tests::structural_recipe_interning_rejects_exact_materialization_contradictions ... ok
+test intersection::tests::structural_recipe_interning_shares_symbolic_points_without_equality ... ok
+test intersection::tests::surviving_deferred_crossing_materializes_from_its_retained_ratio ... ok
+test intersection::tests::surviving_lazy_crossing_constructs_the_exact_ratio_on_demand ... ok
+test intersection::tests::symbolic_segment_endpoints_do_not_add_an_equality_decision ... ok
+test intersection::tests::symbolic_slice_endpoint_equality_obeys_terminal_policy ... ok
+test intersection::tests::symbolic_support_parallelism_obeys_terminal_policy ... ok
+test intersection::tests::symmetric_segment_events_share_one_segment_and_endpoint_record ... ok
+test intersection::tests::triangle_plane_prepass_rejects_only_one_open_halfspace ... ok
+test intersection::tests::triangle_support_values_are_shared_only_across_two_proper_crossings ... ok
+test mesh::fact_identity_tests::borrowed_view_can_use_a_larger_position_buffer_than_its_origin ... ok
+test mesh::fact_identity_tests::borrowed_view_prefix_length_is_part_of_cache_identity ... ok
+test mesh::fact_identity_tests::borrowed_view_slices_neither_reuse_nor_publish_original_geometry_facts ... ok
+test mesh::fact_identity_tests::bounds_follow_replaced_and_copy_on_write_positions ... ok
+test mesh::fact_identity_tests::cache_guards_preserve_unchanged_facts_without_owning_source_buffers ... ok
+test mesh::fact_identity_tests::cached_empty_bounds_do_not_hide_replacement_geometry ... ok
+test mesh::fact_identity_tests::changed_vertices_invalidate_box_facts_without_polluting_original ... ok
+test mesh::fact_identity_tests::copy_on_write_triangle_edits_recheck_winding_balance ... ok
+test mesh::fact_identity_tests::edited_clones_neither_read_nor_publish_original_bounds ... ok
+test mesh::fact_identity_tests::edited_topology_is_revalidated_through_derived_meshes ... ok
+test mesh::fact_identity_tests::source_planes_follow_replaced_positions_and_reindexed_triangles ... ok
+test mesh::fact_identity_tests::wide_plane_schedule_is_recomputed_for_changed_coordinates ... ok
+test mesh::tests::approximate_pwn_facts_obey_later_operation_policy ... ok
+test mesh::tests::borrowed_mesh_view_does_not_publish_source_polygon_geometry ... ok
+test mesh::tests::borrowed_source_planes_materialize_only_on_exact_demand ... ok
+test mesh::tests::bounds_exact_dyadic_scan_falls_back_for_later_general_rational ... ok
+test mesh::tests::exact_native_queries_reject_invalid_triangle_indices ... ok
+test mesh::tests::exact_triangle_quality_canonicalizes_positions_and_rejects_duplicate_faces ... ok
+test mesh::tests::geometric_closure_uses_numeric_point_equality ... ok
+test mesh::tests::indexed_edge_balance_canonicalizes_coincident_input_vertices ... ok
+test mesh::tests::mesh_fact_header_stays_compact ... ok
+test mesh::tests::native_mesh_retains_only_certified_source_polygon_geometry ... ok
+test mesh::tests::polygon_soup_counts_only_referenced_source_vertex_identities ... ok
+test mesh::tests::retained_source_planes_are_restamped_for_each_operand_position ... ok
+test mesh::tests::reversed_winding_shares_positions_without_retaining_derived_indices ... ok
+test mesh::tests::source_polygon_plane_storage_uses_only_lossless_tiers ... ok
+test mesh::tests::source_polygon_vertex_cycles_share_one_checked_position_owner ... ok
+test mesh::tests::strict_soup_validation_upgrades_an_approximate_cached_pwn_fact ... ok
+test output::tests::bounded_results_convert_with_one_shared_position_allocation ... ok
+test output::tests::closure_evidence_reports_degenerate_duplicate_and_open_topology ... ok
+test output::tests::conversion_rejects_every_malformed_carrier_path ... ok
+test point_interner::tests::candidate_epoch_wrap_preserves_general_matches ... ok
+test point_interner::tests::certified_intervals_only_reject_provably_distinct_points ... ok
+test point_interner::tests::construction_identity_precedes_policy_aware_numeric_equality ... ok
+test point_interner::tests::exact_fingerprint_merges_equal_values_with_distinct_storage ... ok
+test point_interner::tests::exact_fingerprint_separates_values_with_identical_f64_keys ... ok
+test point_interner::tests::exact_prefix_promotion_preserves_terminal_policy ... ok
+test point_interner::tests::general_interner_promotes_without_losing_exact_points ... ok
+test point_interner::tests::terminal_equality_obeys_policy_and_updates_aggregate_certainty ... ok
+test point_interner::tests::undecided_candidate_does_not_hide_a_later_structural_match ... ok
+test polygon::tests::compact_source_triangle_identity_overflow_is_rejected_before_mutation ... ok
+test polygon::tests::inverted_polygon_preserves_interior_edge_halfspaces ... ok
+test polygon::tests::retained_source_planes_reject_misaligned_compact_rows ... ok
+test polygon::tests::retained_source_predicate_queries_follow_referenced_vertex_ids ... ok
+test polygon::tests::source_edge_orientation_is_fixed_by_the_valid_triangle_identity ... ok
+test polygon::tests::source_triangle_identities_expand_from_compact_descriptor ... ok
+test polygon::tests::wide_dyadic_triangle_uses_primitive_support_and_edge_planes ... ok
+test polygon::tests::wide_plane_schedule_requires_affine_numerator_content ... ok
+test predicate::tests::exact_crossing_schedule_uses_scalar_storage_cost_not_geometry_identity ... ok
+test predicate::tests::exact_real_comparison_matches_rational_ordering ... ok
+test predicate::tests::linear_form_filter_cache_clears_at_bounded_capacity ... ok
+test predicate::tests::linear_form_filter_cache_retains_owners_and_probes_collisions ... ok
+test predicate::tests::point_plane_predicate_reuses_one_complete_plane_schedule ... ok
+test predicate::tests::point_query_matches_direct_exact_classification ... ok
+test predicate::tests::projective_exact_dispatch_respects_homogeneous_weight ... ok
+test predicate::tests::symbolic_coefficients_preserve_general_exact_fallback ... ok
+test predicate::tests::wide_dyadic_point_plane_sign_uses_complete_exact_path_under_both_policies ... ok
+test section::tests::on_plane_edge_has_one_sided_incidence ... ok
+test section::tests::transverse_section_retains_exact_source_parameters_and_direction ... ok
+test storage_hash::tests::identity_hash_preserves_full_word ... ok
+test surface_arrangement::tests::bounded_face_pslg_keeps_disconnected_inner_cells ... ok
+test surface_arrangement::tests::bounded_face_pslg_keeps_nested_constraint_loops ... ok
+test surface_arrangement::tests::coincident_facet_transition_overflow_is_reported_atomically ... ok
+test surface_arrangement::tests::coincident_shells_bundle_multiplicity_before_cell_assembly ... ok
+test surface_arrangement::tests::collinear_overlaps_and_t_junctions_split_into_one_edge_set ... ok
+test surface_arrangement::tests::crossing_face_constraints_share_one_triple_point ... ok
+test surface_arrangement::tests::crossing_split_lines_produce_the_canonical_plane_triple_identity ... ok
+test surface_arrangement::tests::dense_crossing_discovery_exhausts_the_finite_grid_without_a_pass_limit ... ok
+test surface_arrangement::tests::direct_materialization_accepts_empty_and_balanced_nonmanifold_outputs ... ok
+test surface_arrangement::tests::direct_materialization_rejects_every_malformed_output_path ... ok
+test surface_arrangement::tests::directed_graph_events_reuse_one_arrangement_point_transfer ... ok
+test surface_arrangement::tests::directed_sheet_balance_recovers_only_one_geometric_outer_pair ... ok
+test surface_arrangement::tests::disconnected_nested_shells_receive_global_absolute_windings ... ok
+test surface_arrangement::tests::disconnected_shell_scaling_preserves_every_exact_component ... ok
+test surface_arrangement::tests::edge_tangent_closed_shells_build_one_nonmanifold_radial_component ... ok
+test surface_arrangement::tests::exact_embedding_and_operand_permutation_preserve_cell_truth ... ok
+test surface_arrangement::tests::exact_radial_tetrahedron_builds_two_reciprocal_cells ... ok
+test surface_arrangement::tests::flat_constraint_schedules_preserve_canonical_order_and_identity ... ok
+test surface_arrangement::tests::forty_operands_share_one_arrangement_and_batched_truth_table ... ok
+test surface_arrangement::tests::genus_one_voxel_ring_has_one_inside_and_one_outside_cell ... ok
+test surface_arrangement::tests::isolated_face_contact_is_retained_as_a_triangulation_vertex ... ok
+test surface_arrangement::tests::nested_negative_shell_forms_an_exact_cavity ... ok
+test surface_arrangement::tests::one_arrangement_materializes_every_builtin_operation_deterministically ... ok
+test surface_arrangement::tests::one_cell_table_evaluates_batched_arbitrary_multi_operand_expressions ... ok
+test surface_arrangement::tests::open_surface_is_rejected_by_exact_radial_topology ... ok
+test surface_arrangement::tests::opposite_side_face_coincidence_classifies_shared_interface_once ... ok
+test surface_arrangement::tests::opposite_winding_coincident_faces_reuse_one_point_set ... ok
+test surface_arrangement::tests::output_certification_obeys_the_strict_and_approximate_512_terminal_policy ... ok
+test surface_arrangement::tests::partial_coplanar_overlap_reuses_the_same_bounded_cell_triangulation ... ok
+test surface_arrangement::tests::point_aliasing_obeys_strict_and_approximate_512_terminal_policy ... ok
+test surface_arrangement::tests::radial_equality_obeys_strict_and_approximate_512_terminal_policy ... ok
+test surface_arrangement::tests::retained_component_balance_prevents_coincident_layer_bypass ... ok
+test surface_arrangement::tests::retained_radial_separation_requires_shared_face_or_proved_pair ... ok
+test surface_arrangement::tests::retained_two_face_transverse_ring_matches_complete_radial_order ... ok
+test surface_arrangement::tests::same_operand_opposite_side_coincidence_removes_the_internal_sheet_cycle ... ok
+test surface_arrangement::tests::same_operand_transverse_pwn_preserves_winding_multiplicity ... ok
+test surface_arrangement::tests::sign_only_radial_dot_matches_the_factored_exact_polynomial ... ok
+test surface_arrangement::tests::source_winding_ray_ignores_artificial_corefinement_edges ... ok
+test surface_arrangement::tests::surface_topology_rejects_malformed_incidence_and_winding_dimensions ... ok
+test surface_arrangement::tests::transverse_overlapping_shells_form_all_four_winding_cells ... ok
+test surface_arrangement::tests::unchanged_face_work_keeps_its_boundary_inline ... ok
+test surface_nets::tests::affine_plane_vertices_retain_non_binary_coordinate ... ok
+test surface_nets::tests::affine_planes_cover_first_and_last_cell_layers_on_every_axis ... ok
+test surface_nets::tests::rejects_mismatched_sample_count ... ok
+test winding::tests::in_place_transition_reports_checked_overflow_without_wrapping ... ok
+test winding::tests::propagate_wnv_applies_full_transition ... ok
+test winding::tests::propagate_wnv_rejects_dimension_mismatch ... ok
+test winding::tests::propagate_wnv_reports_checked_overflow ... ok
+
+test result: ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+
+running 10 tests
+test arbitrary_truth_dag_handles_reverse_difference_and_unbounded_complement ... ok
+test boolean_terminal_equality_obeys_strict_and_approximate_512 ... ok
+test corner_coincident_same_operand_shells_have_consistent_surface_cells ... ok
+test one_program_reuses_the_arrangement_for_all_builtin_results ... ok
+test overlapping_boxes_materialize_every_operation_under_both_policies ... ok
+test public_boolean_reports_every_program_and_input_rejection ... ok
+test same_operand_coplanar_shell_overlap_is_order_invariant ... ok
+test subdivided_face_coincident_shell_stack_has_consistent_surface_cells ... ok
+test subdivided_same_operand_overlap_has_empty_disjoint_intersection ... ok
+test unary_disjoint_containment_and_contact_paths_are_total ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+
+running 20 tests
+test boolmesh_and_manifold_match_hypermesh_on_shared_boolean_corpus ... ok
+test competitor_input_adapters_preserve_fixture_geometry ... ok
+test deep_symbolic_translation_obeys_policy_at_every_depth ... ok
+test dense_crossing_grid_exhausts_the_public_arrangement_under_both_policies ... ok
+test dense_crossing_grid_large_policy_outputs_are_exactly_equal ... ignored, manual 1,572-triangle / 16,900-crossing exact policy-equality gate
+test full_resolution_yeahright_reaches_and_validates_in_hypermesh ... ignored, requires the opt-in external benchmark fixture (YEAHRIGHT_BENCH=1)
+test full_resolution_yeahright_rotated_intersection_certifies_empty ... ignored, manual 11,894-by-11,894 certified-empty memory-ceiling test
+test hypermesh_boolean_outputs_are_valid_tri_mesh_half_edge_inputs ... ok
+test large_boolean_benchmark_inputs_are_closed_and_keep_the_intended_scale ... ok
+test larger_yeahright_fixtures_expose_memory_pressure ... ignored, manual 3,360/13,440-triangle memory-pressure stress
+test lower_dimensional_closed_pwn_contacts_are_total_under_both_policies ... ok
+test opposite_diagonal_coplanar_overlay_is_exact_under_both_policies ... ok
+test shared_arrangement_matches_all_four_cgal_boolean_outputs_under_both_policies ... ok
+test sparse_multishell_arrangement_scales_componentwise_under_both_policies ... ok
+test thin_dyadic_affine_embedding_preserves_every_boolean_under_both_policies ... ok
+test transverse_self_pwn_clusters_scale_under_both_policies ... ok
+test wide_rational_similarity_preserves_every_boolean_under_both_policies ... ok
+test yeahright_benchmark_inputs_reach_every_competitor ... ignored, requires the opt-in external benchmark fixture (YEAHRIGHT_BENCH=1)
+test yeahright_exact_hypermesh_outputs_remain_boundaryless_for_every_operation ... ignored, requires the opt-in external benchmark fixture (YEAHRIGHT_BENCH=1)
+test yeahright_single_and_multi_expression_results_remain_consistent ... ignored, requires the opt-in external benchmark fixture (YEAHRIGHT_BENCH=1)
+
+test result: ok. 13 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 2.67s
+
+
+running 17 tests
+test clipped_voxel_torus_family_spans_medium_large_and_xl_exactly ... ok
+test corpus_spans_initial_replacement_path_classes ... ok
+test deep_symbolic_family_scales_construction_depth_at_fixed_topology ... ok
+test dense_coplanar_family_scales_mesh_work_at_fixed_coordinate_complexity ... ok
+test dense_crossing_grid_scales_complete_public_cavity_recovery ... ok
+test every_in_process_competitive_case_has_a_manifest_record ... ok
+test every_large_heap_fixture_has_a_distinct_probe_selector ... ok
+test exact_pairwise_microcases_cover_every_public_intersection_variant ... ok
+test fixture_manifest_is_complete_unique_and_reproducible ... ok
+test full_yeahright_fixture_pins_one_shared_exact_generator ... ok
+test large_box_heap_fixture_covers_certified_and_general_paths ... ok
+test lower_dimensional_contact_fuzz_seeds_are_pinned_and_executable ... ok
+test removed_engine_tests_have_complete_pinned_migration_coverage ... ok
+test sparse_multishell_family_scales_components_at_fixed_local_topology ... ok
+test thin_dyadic_family_scales_exact_near_degeneracy_without_changing_topology ... ok
+test transverse_self_pwn_family_scales_same_operand_intersections ... ok
+test wide_rational_family_scales_scalar_width_without_changing_topology ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+
+running 3 tests
+test coplanar_rectangle_classifier_matches_exact_open_interval_oracle ... ok
+test exact_pairwise_intersection_corpus_covers_policy_order_and_orientation ... ok
+test noncoplanar_rectangle_slices_match_exact_closed_interval_oracle ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+
+running 9 tests
+test dihedral_normal_domain_obeys_the_selected_policy ... ok
+test exact_rational_work_stays_certified_under_both_policies ... ok
+test multi_comparison_geometry_aggregates_terminal_certainty ... ok
+test native_bounds_do_not_bypass_the_selected_policy ... ok
+test native_edit_operations_reject_invalid_indices ... ok
+test pairwise_contact_classification_obeys_terminal_equality_policy ... ok
+test point_classification_reports_terminal_policy_consumption ... ok
+test projective_transform_finiteness_obeys_the_selected_policy ... ok
+test reflection_normal_domain_obeys_the_selected_policy ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

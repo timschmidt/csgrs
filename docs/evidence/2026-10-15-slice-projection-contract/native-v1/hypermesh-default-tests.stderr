@@ -1,0 +1,14 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Finished `release` profile [optimized] target(s) in 51.29s
+     Running unittests src/lib.rs (target/slice-projection-contract/native-v1/release/deps/hypermesh-2b29b988ffb01c31)
+     Running tests/boolean.rs (target/slice-projection-contract/native-v1/release/deps/boolean-8c7aa124f327f010)
+     Running tests/competitive.rs (target/slice-projection-contract/native-v1/release/deps/competitive-4619cf6e8e9d9d60)
+     Running tests/corpus_manifest.rs (target/slice-projection-contract/native-v1/release/deps/corpus_manifest-7c4ce8798fca0eac)
+     Running tests/intersection_corpus.rs (target/slice-projection-contract/native-v1/release/deps/intersection_corpus-469bfdf83da370da)
+     Running tests/predicate_policy.rs (target/slice-projection-contract/native-v1/release/deps/predicate_policy-a344bae08a75cbd8)
+     Running tests/readme.rs (target/slice-projection-contract/native-v1/release/deps/readme-15401b5f96fe4f6d)
+   Doc-tests hypermesh

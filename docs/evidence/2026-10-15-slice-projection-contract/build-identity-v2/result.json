@@ -1,0 +1,86 @@
+{
+  "commands": [
+    {
+      "name": "baseline-libcsgrs.rlib",
+      "exit_code": 0,
+      "stdout_sha256": "f8d28ac36cf8130ce3b5fdffea16bed09564fe6c5e5c451bd4e695ccc5eb739d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "baseline-libhyperlattice-64c0cb923a8aa061.rlib",
+      "exit_code": 0,
+      "stdout_sha256": "089920c1e6ccc1b2c44b58e6c6baceb0a9eb767b63f3a99c7f2171c40a7ebae9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "baseline-libhypercurve-65c0df1f5cff6824.rlib",
+      "exit_code": 0,
+      "stdout_sha256": "852c895fe3dff5aa01fefef0e8d995770aa200063357dd2848825c77a92d9f89",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "candidate-libcsgrs.rlib",
+      "exit_code": 0,
+      "stdout_sha256": "44a8c468c20f127788b0f609f8c6278950025068df71226ccb0d30bb40bc6fe8",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "candidate-libhyperlattice-64c0cb923a8aa061.rlib",
+      "exit_code": 0,
+      "stdout_sha256": "792e090090758da550562cac0ab9647939c242b53bbea45197e97fadc6b4c5c9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "candidate-libhypercurve-65c0df1f5cff6824.rlib",
+      "exit_code": 0,
+      "stdout_sha256": "bfb6286ffadbf8390065e74c9b30dd094663a8c397666f0e44566dfda10b0fc0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "passed": true,
+  "core_sources_and_locked_configuration_identical": 901,
+  "same_toolchain_and_build_command": true,
+  "actual_compiled_graphs": {
+    "libcsgrs.rlib": {
+      "same_actual_dependency_names_and_abi": true,
+      "baseline_sha256": "2beb76b39e1325ee51fa5a4c2c45e328c8569fa9485775644a053d1c0b4f51cb",
+      "candidate_sha256": "2b4c058fdca687f2b5ac1fb773fdc75c6fb0230dcca97105cd4055cd61e8e4ec",
+      "same_compiled_crate_hashes": false
+    },
+    "libhyperlattice-64c0cb923a8aa061.rlib": {
+      "same_actual_dependency_names_and_abi": true,
+      "baseline_sha256": "800b437402fdf7cca3571b7b3e358d6aaedee242bce3728ccc1ff65c807f6374",
+      "candidate_sha256": "ac2c3dc6c63c11e1c5a142f70ff9d5e6dc18a3ca666fe9f02dd0cd5d98da20d8",
+      "same_compiled_crate_hashes": false
+    },
+    "libhypercurve-65c0df1f5cff6824.rlib": {
+      "same_actual_dependency_names_and_abi": true,
+      "baseline_sha256": "4acd11c9511fd28299a477276199fb114cb7dff661a62707a7fc59d993644d0e",
+      "candidate_sha256": "3ff24c76c37faae8a06abae0cf67ae61b3a65a1d813c0738f01be2e9fa4e8a5c",
+      "same_compiled_crate_hashes": false
+    }
+  },
+  "core_cargo_compilation_units": {
+    "hyperlattice-64c0cb923a8aa061": [
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/cost-build-v1/release/.fingerprint/hyperlattice-64c0cb923a8aa061/lib-hyperlattice.json",
+        "sha256": "4626e850e23ed1f719a7aae79b98de599e6eca6778c861b0ef300c9c1dc6edc7"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/native-v1/release/.fingerprint/hyperlattice-64c0cb923a8aa061/lib-hyperlattice.json",
+        "sha256": "4626e850e23ed1f719a7aae79b98de599e6eca6778c861b0ef300c9c1dc6edc7"
+      }
+    ],
+    "hypercurve-65c0df1f5cff6824": [
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/cost-build-v1/release/.fingerprint/hypercurve-65c0df1f5cff6824/lib-hypercurve.json",
+        "sha256": "d3d01df0be58b15b41cf76800819fe60a73b6769c128faf975fc22457c2f1f83"
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/native-v1/release/.fingerprint/hypercurve-65c0df1f5cff6824/lib-hypercurve.json",
+        "sha256": "d3d01df0be58b15b41cf76800819fe60a73b6769c128faf975fc22457c2f1f83"
+      }
+    ]
+  },
+  "qualification": "Fresh and seeded builds have different encoded crate hashes despite identical sources, toolchain, Cargo compilation units and actual resolved dependency names/ABI. The cause is not established. Archive bytes are not claimed identical. The cost probe must link each revision against its own exact libraries and validate every completed output. This is a rebuild-controlled before/after probe, not evidence of a performance optimization or a bit-identical dependency binary experiment."
+}

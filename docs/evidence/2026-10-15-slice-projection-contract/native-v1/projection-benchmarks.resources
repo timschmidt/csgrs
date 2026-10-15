@@ -1,0 +1,23 @@
+	Command being timed: "env CSGRS_BENCH_FILTER=feature/mesh_profile_projection/ CSGRS_BENCH_SAMPLES=3 CSGRS_BENCH_WARMUP=2 cargo bench --locked -p csgrs --all-features --bench feature_pipeline"
+	User time (seconds): 6.55
+	System time (seconds): 0.54
+	Percent of CPU this job got: 135%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:05.25
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 380456
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 199
+	Minor (reclaiming a frame) page faults: 140680
+	Voluntary context switches: 4675
+	Involuntary context switches: 800
+	Swaps: 0
+	File system inputs: 5664
+	File system outputs: 84344
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

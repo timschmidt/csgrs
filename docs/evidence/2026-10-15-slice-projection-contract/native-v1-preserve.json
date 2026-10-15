@@ -1,0 +1,12 @@
+{
+  "target/planar-operation-failures/cost-build-v1/release/deps/libcsgrs.rlib": "2beb76b39e1325ee51fa5a4c2c45e328c8569fa9485775644a053d1c0b4f51cb",
+  "target/planar-operation-failures/cost-build-v1/release/deps/libhyperlattice-64c0cb923a8aa061.rlib": "800b437402fdf7cca3571b7b3e358d6aaedee242bce3728ccc1ff65c807f6374",
+  "target/planar-operation-failures/cost-build-v1/release/deps/libhypercurve-65c0df1f5cff6824.rlib": "4acd11c9511fd28299a477276199fb114cb7dff661a62707a7fc59d993644d0e",
+  "target/slice-projection-contract/baseline-v1/regressions": "79549d9663d6d3d55e5bbc57f2d7118fe285a289588f2872e1c8c86258d57e8f",
+  "target/slice-projection-contract/candidate-v1/release/deps/slice_projection_contract-d851c0e3c1271069": "ff7613eb119f944a693431d2f85829b685ebb29982d1db513307054d95ee2fda",
+  "target/slice-projection-contract/candidate-v1/release/deps/hypermesh-3f582b4ca1636641": "08f6c9ccfe799eb33c6889ab50612d902f18909df814a6336aa74c9a4fad27c7",
+  "target/slice-projection-contract/candidate-v2/release/deps/slice_projection_contract-d851c0e3c1271069": "b04fc73db8b29b3978f84102c5e973efbc98b3d6b9736a4de013e16c4d53fc72",
+  "target/slice-projection-contract/candidate-v3/release/deps/slice_projection_contract-d851c0e3c1271069": "64708102821cff5319042c49c1debf84544b8af8528c1e789abdacecf33a3a99",
+  "target/slice-projection-contract/candidate-v4/release/deps/slice_projection_contract-d851c0e3c1271069": "468733a0cc08eeb44c14fab4ab5f7919a7b09dc0fd6b5d4a3e3dc2066beb4176",
+  "target/slice-projection-contract/candidate-v4/release/deps/hypermesh-3f582b4ca1636641": "21ca67b08ce277117c8297a8ee624062448b3dc3f698413b4169828a2ba1149d"
+}

@@ -1,0 +1,41 @@
+{
+  "commands": [
+    {
+      "name": "baseline-csgrs",
+      "exit_code": 0,
+      "stdout_sha256": "f8d28ac36cf8130ce3b5fdffea16bed09564fe6c5e5c451bd4e695ccc5eb739d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "baseline-hyperlattice",
+      "exit_code": 0,
+      "stdout_sha256": "089920c1e6ccc1b2c44b58e6c6baceb0a9eb767b63f3a99c7f2171c40a7ebae9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "baseline-hypercurve",
+      "exit_code": 0,
+      "stdout_sha256": "852c895fe3dff5aa01fefef0e8d995770aa200063357dd2848825c77a92d9f89",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "candidate-csgrs",
+      "exit_code": 0,
+      "stdout_sha256": "44a8c468c20f127788b0f609f8c6278950025068df71226ccb0d30bb40bc6fe8",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "candidate-hyperlattice",
+      "exit_code": 0,
+      "stdout_sha256": "792e090090758da550562cac0ab9647939c242b53bbea45197e97fadc6b4c5c9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "candidate-hypercurve",
+      "exit_code": 0,
+      "stdout_sha256": "bfb6286ffadbf8390065e74c9b30dd094663a8c397666f0e44566dfda10b0fc0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "passed": true
+}

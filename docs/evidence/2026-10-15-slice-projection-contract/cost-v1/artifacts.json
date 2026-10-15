@@ -1,0 +1,18 @@
+{
+  "target/slice-projection-contract/cost-v1/baseline": {
+    "sha256": "b768ba546ad8ae0d8bedf6780fec7641e3c86d32dc93ef38af1e4c8aacd3cdeb",
+    "bytes": 35585368
+  },
+  "target/slice-projection-contract/cost-v1/candidate": {
+    "sha256": "7fab48eea8412559121d73b17a65a0ca68180c847839f6cd5a8f57ff5438c1fe",
+    "bytes": 35743976
+  },
+  "target/planar-operation-failures/cost-build-v1/release/deps/libcsgrs.rlib": {
+    "sha256": "2beb76b39e1325ee51fa5a4c2c45e328c8569fa9485775644a053d1c0b4f51cb",
+    "bytes": 9852650
+  },
+  "target/slice-projection-contract/native-v1/release/deps/libcsgrs.rlib": {
+    "sha256": "2b4c058fdca687f2b5ac1fb773fdc75c6fb0230dcca97105cd4055cd61e8e4ec",
+    "bytes": 9842470
+  }
+}

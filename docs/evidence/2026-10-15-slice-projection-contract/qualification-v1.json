@@ -1,0 +1,664 @@
+{
+  "implementation_commit": "07258a70d",
+  "baseline_reproduction_commit": "490d46ce7",
+  "owning_layers": [
+    "Hypermesh oriented section intersections and directed chain decomposition",
+    "Hypercurve signed nonzero winding and regularization",
+    "CSGRS modeling composition, typed failures and retained operation certainty"
+  ],
+  "properties": [
+    "P4",
+    "P8",
+    "P13",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P25",
+    "P27",
+    "P35",
+    "P37",
+    "P39"
+  ],
+  "result": "Qualified slice/projection correctness repair; full properties goal remains active.",
+  "meaning": "Holes, nested and duplicated winding, opposite traversals, disconnected components, shared on-plane edges, unindexed position rows and qualified uncertainty survive supported section composition. Primary errors do not become successful empty geometry.",
+  "migration": "flatten and slice_z now return Result. Corrected topology and traversal/subdivision/serialization changes are intentional, not a performance-only patch. Existing example and benchmark fixtures and policies are unchanged.",
+  "semantic_evidence": "25 modeling regressions; exact rational areas, membership, native source-edge parameter replay, determinant volumes and separate manifold checks. Face permutations and cache disabled/warm/evicted/mutated/concurrent cases retain mathematical meaning.",
+  "native_validation": {
+    "baseline-v1/regressions": [
+      6,
+      10,
+      0
+    ],
+    "baseline-v2/regressions": [
+      8,
+      13,
+      0
+    ],
+    "candidate-v1/regressions": [
+      21,
+      0,
+      0
+    ],
+    "candidate-v1/native-section-tests": [
+      39,
+      0,
+      0
+    ],
+    "candidate-v2/regressions": [
+      23,
+      0,
+      0
+    ],
+    "candidate-v3/regressions": [
+      24,
+      1,
+      0
+    ],
+    "candidate-v4/regressions": [
+      25,
+      0,
+      0
+    ],
+    "candidate-v4/native-section-tests": [
+      39,
+      0,
+      0
+    ],
+    "native-v1/hypermesh-default-tests": [
+      237,
+      0,
+      7
+    ],
+    "native-v1/hypermesh-all-tests": [
+      238,
+      0,
+      7
+    ],
+    "native-v1/all-feature-tests": [
+      338,
+      0,
+      1
+    ],
+    "native-v1/minimal-tests": [
+      96,
+      0,
+      0
+    ],
+    "native-v1/curve-tests": [
+      231,
+      0,
+      0
+    ],
+    "native-v1/doctests": [
+      1,
+      0,
+      0
+    ]
+  },
+  "phase_results": {
+    "baseline-v1": {
+      "passed": false,
+      "commands": 3,
+      "result_sha256": "438a8ab1cd16e88eb6e41f33fe9d7586401c0da801e62af119e7bf4e7233e015",
+      "tests_passed_failed_ignored": [
+        6,
+        10,
+        0
+      ]
+    },
+    "baseline-v2": {
+      "passed": false,
+      "commands": 3,
+      "result_sha256": "156cb3d2cf42004c192a0f9ba3bdf6a13792f23da8f6413d98a121581629f76a",
+      "tests_passed_failed_ignored": [
+        8,
+        13,
+        0
+      ]
+    },
+    "candidate-v1": {
+      "passed": true,
+      "commands": 2,
+      "result_sha256": "4b06d6f96f404e62d6585442a2c010378fea94de11d1bfb71edcdd978aac06cf",
+      "tests_passed_failed_ignored": [
+        60,
+        0,
+        0
+      ]
+    },
+    "candidate-v2": {
+      "passed": true,
+      "commands": 1,
+      "result_sha256": "8bc6ef4990849adcaf7bb939f0ae2a0f86ed2bf3500f8cdc50f11ccd71ca3e46",
+      "tests_passed_failed_ignored": [
+        23,
+        0,
+        0
+      ]
+    },
+    "candidate-v3": {
+      "passed": false,
+      "commands": 1,
+      "result_sha256": "372ed1465ee3554e1644f306727c9a8ae1c73b07bab957fb4e66e9a4e7aac8d0",
+      "tests_passed_failed_ignored": [
+        24,
+        1,
+        0
+      ]
+    },
+    "candidate-v4": {
+      "passed": true,
+      "commands": 4,
+      "result_sha256": "4687d9d8679028fd2184cab7b8f5b843218927b5be61647c63f68b10fe8db592",
+      "tests_passed_failed_ignored": [
+        64,
+        0,
+        0
+      ]
+    },
+    "native-v1": {
+      "passed": true,
+      "commands": 14,
+      "result_sha256": "a4549d3c5bc8e87836c0e8077250bf842d919a9679d211f6c3dce0a64d529332",
+      "tests_passed_failed_ignored": [
+        1141,
+        0,
+        15
+      ]
+    },
+    "renderer-v1": {
+      "passed": true,
+      "commands": 2,
+      "result_sha256": "65c847b96613424e199e3a30aaad7c55563670e0e3e53cbcc49ab63d77b113a7",
+      "tests_passed_failed_ignored": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "projection_benchmark_rows": [
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "feature",
+      "benchmark": "mesh_profile_projection",
+      "case": "slice_and_flatten",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "260",
+      "work_units": "528",
+      "output_size": "2",
+      "checksum": "2"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "feature",
+      "benchmark": "mesh_profile_projection",
+      "case": "slice_and_flatten",
+      "sample": "1",
+      "iterations": "1",
+      "elapsed_ns": "130",
+      "work_units": "528",
+      "output_size": "2",
+      "checksum": "2"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "feature",
+      "benchmark": "mesh_profile_projection",
+      "case": "slice_and_flatten",
+      "sample": "2",
+      "iterations": "1",
+      "elapsed_ns": "130",
+      "work_units": "528",
+      "output_size": "2",
+      "checksum": "2"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "feature",
+      "benchmark": "mesh_profile_projection",
+      "case": "slice",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "120",
+      "work_units": "528",
+      "output_size": "1",
+      "checksum": "1"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "feature",
+      "benchmark": "mesh_profile_projection",
+      "case": "slice",
+      "sample": "1",
+      "iterations": "1",
+      "elapsed_ns": "100",
+      "work_units": "528",
+      "output_size": "1",
+      "checksum": "1"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "feature",
+      "benchmark": "mesh_profile_projection",
+      "case": "slice",
+      "sample": "2",
+      "iterations": "1",
+      "elapsed_ns": "110",
+      "work_units": "528",
+      "output_size": "1",
+      "checksum": "1"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "feature",
+      "benchmark": "mesh_profile_projection",
+      "case": "flatten",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "50",
+      "work_units": "528",
+      "output_size": "1",
+      "checksum": "1"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "feature",
+      "benchmark": "mesh_profile_projection",
+      "case": "flatten",
+      "sample": "1",
+      "iterations": "1",
+      "elapsed_ns": "60",
+      "work_units": "528",
+      "output_size": "1",
+      "checksum": "1"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "feature",
+      "benchmark": "mesh_profile_projection",
+      "case": "flatten",
+      "sample": "2",
+      "iterations": "1",
+      "elapsed_ns": "50",
+      "work_units": "528",
+      "output_size": "1",
+      "checksum": "1"
+    }
+  ],
+  "renderer_images": 73,
+  "cost_probe": {
+    "commands": 82,
+    "fresh_process_samples": 72,
+    "completed_timed_operations": 9216,
+    "dump_variants_per_revision": 512,
+    "statistics_per_operation": {
+      "slice_middle": {
+        "warm": {
+          "baseline": {
+            "nanos": 7982.1875,
+            "allocations": 57.0,
+            "requested_bytes": 8975.0,
+            "retained_byte_delta": 0.0,
+            "peak_live_bytes_above_start": 32.4921875,
+            "output_bytes": 725.0
+          },
+          "candidate": {
+            "nanos": 7635.1796875,
+            "allocations": 57.0,
+            "requested_bytes": 8975.0,
+            "retained_byte_delta": 0.0,
+            "peak_live_bytes_above_start": 32.4921875,
+            "output_bytes": 725.0
+          },
+          "latency_percent_change": -4.347277140508165
+        },
+        "varied": {
+          "baseline": {
+            "nanos": 77943.71875,
+            "allocations": 599.6328125,
+            "requested_bytes": 82012.90625,
+            "retained_byte_delta": 27.3125,
+            "peak_live_bytes_above_start": 216.1875,
+            "output_bytes": 729.6875
+          },
+          "candidate": {
+            "nanos": 328435.9140625,
+            "allocations": 3300.03125,
+            "requested_bytes": 370358.15625,
+            "retained_byte_delta": 2.125,
+            "peak_live_bytes_above_start": 449.1875,
+            "output_bytes": 729.6875
+          },
+          "latency_percent_change": 321.37573024445925
+        },
+        "disabled": {
+          "baseline": {
+            "nanos": 72726.8046875,
+            "allocations": 599.6328125,
+            "requested_bytes": 82012.90625,
+            "retained_byte_delta": 24.875,
+            "peak_live_bytes_above_start": 247.25,
+            "output_bytes": 729.6875
+          },
+          "candidate": {
+            "nanos": 306505.6171875,
+            "allocations": 3300.03125,
+            "requested_bytes": 370358.15625,
+            "retained_byte_delta": 2.125,
+            "peak_live_bytes_above_start": 482.125,
+            "output_bytes": 729.6875
+          },
+          "latency_percent_change": 321.44793588075925
+        }
+      },
+      "slice_bottom": {
+        "warm": {
+          "baseline": {
+            "nanos": 8577.3046875,
+            "allocations": 57.0,
+            "requested_bytes": 8975.0,
+            "retained_byte_delta": 0.0,
+            "peak_live_bytes_above_start": 32.4921875,
+            "output_bytes": 725.0
+          },
+          "candidate": {
+            "nanos": 7288.40625,
+            "allocations": 57.0,
+            "requested_bytes": 8975.0,
+            "retained_byte_delta": 0.0,
+            "peak_live_bytes_above_start": 32.4921875,
+            "output_bytes": 725.0
+          },
+          "latency_percent_change": -15.02684682961486
+        },
+        "varied": {
+          "baseline": {
+            "nanos": 427886.828125,
+            "allocations": 4259.0625,
+            "requested_bytes": 513795.46875,
+            "retained_byte_delta": 26.0,
+            "peak_live_bytes_above_start": 311.1015625,
+            "output_bytes": 729.6875
+          },
+          "candidate": {
+            "nanos": 410907.8359375,
+            "allocations": 4151.2421875,
+            "requested_bytes": 477184.21875,
+            "retained_byte_delta": 26.0,
+            "peak_live_bytes_above_start": 468.015625,
+            "output_bytes": 729.6875
+          },
+          "latency_percent_change": -3.9681034964086037
+        },
+        "disabled": {
+          "baseline": {
+            "nanos": 417233.578125,
+            "allocations": 4259.0625,
+            "requested_bytes": 513795.46875,
+            "retained_byte_delta": 26.0,
+            "peak_live_bytes_above_start": 350.6015625,
+            "output_bytes": 729.6875
+          },
+          "candidate": {
+            "nanos": 401545.1171875,
+            "allocations": 4151.2421875,
+            "requested_bytes": 477184.21875,
+            "retained_byte_delta": 26.0,
+            "peak_live_bytes_above_start": 507.640625,
+            "output_bytes": 729.6875
+          },
+          "latency_percent_change": -3.7601146599950397
+        }
+      },
+      "slice_top": {
+        "warm": {
+          "baseline": {
+            "nanos": 8729.3203125,
+            "allocations": 57.0,
+            "requested_bytes": 8975.0,
+            "retained_byte_delta": 0.0,
+            "peak_live_bytes_above_start": 32.4921875,
+            "output_bytes": 725.0
+          },
+          "candidate": {
+            "nanos": 9291.3203125,
+            "allocations": 57.0,
+            "requested_bytes": 8975.0,
+            "retained_byte_delta": 0.0,
+            "peak_live_bytes_above_start": 32.4921875,
+            "output_bytes": 725.0
+          },
+          "latency_percent_change": 6.438072838216757
+        },
+        "varied": {
+          "baseline": {
+            "nanos": 292314.0234375,
+            "allocations": 2219.984375,
+            "requested_bytes": 273824.15625,
+            "retained_byte_delta": 28.125,
+            "peak_live_bytes_above_start": 313.2265625,
+            "output_bytes": 729.6875
+          },
+          "candidate": {
+            "nanos": 262509.2578125,
+            "allocations": 2168.5,
+            "requested_bytes": 239877.21875,
+            "retained_byte_delta": 28.125,
+            "peak_live_bytes_above_start": 473.828125,
+            "output_bytes": 729.6875
+          },
+          "latency_percent_change": -10.196146347858193
+        },
+        "disabled": {
+          "baseline": {
+            "nanos": 272377.6484375,
+            "allocations": 2219.984375,
+            "requested_bytes": 273824.15625,
+            "retained_byte_delta": 28.125,
+            "peak_live_bytes_above_start": 352.7265625,
+            "output_bytes": 729.6875
+          },
+          "candidate": {
+            "nanos": 259471.5,
+            "allocations": 2168.5,
+            "requested_bytes": 239877.21875,
+            "retained_byte_delta": 28.125,
+            "peak_live_bytes_above_start": 512.140625,
+            "output_bytes": 729.6875
+          },
+          "latency_percent_change": -4.738328754777199
+        }
+      },
+      "flatten": {
+        "warm": {
+          "baseline": {
+            "nanos": 8404.1953125,
+            "allocations": 57.0,
+            "requested_bytes": 8975.0,
+            "retained_byte_delta": 0.0,
+            "peak_live_bytes_above_start": 32.4921875,
+            "output_bytes": 725.0
+          },
+          "candidate": {
+            "nanos": 8382.4765625,
+            "allocations": 57.0,
+            "requested_bytes": 8975.0,
+            "retained_byte_delta": 0.0,
+            "peak_live_bytes_above_start": 32.4921875,
+            "output_bytes": 725.0
+          },
+          "latency_percent_change": -0.2584274780917606
+        },
+        "varied": {
+          "baseline": {
+            "nanos": 617682.171875,
+            "allocations": 5685.3515625,
+            "requested_bytes": 660911.71875,
+            "retained_byte_delta": 26.0,
+            "peak_live_bytes_above_start": 290.0703125,
+            "output_bytes": 729.6875
+          },
+          "candidate": {
+            "nanos": 605028.8203125,
+            "allocations": 5685.3515625,
+            "requested_bytes": 660911.71875,
+            "retained_byte_delta": 26.0,
+            "peak_live_bytes_above_start": 290.0703125,
+            "output_bytes": 729.6875
+          },
+          "latency_percent_change": -2.0485214141910957
+        },
+        "disabled": {
+          "baseline": {
+            "nanos": 622602.1484375,
+            "allocations": 5685.3515625,
+            "requested_bytes": 660911.71875,
+            "retained_byte_delta": 26.0,
+            "peak_live_bytes_above_start": 330.8828125,
+            "output_bytes": 729.6875
+          },
+          "candidate": {
+            "nanos": 606863.7734375,
+            "allocations": 5685.3515625,
+            "requested_bytes": 660911.71875,
+            "retained_byte_delta": 26.0,
+            "peak_live_bytes_above_start": 330.8828125,
+            "output_bytes": 729.6875
+          },
+          "latency_percent_change": -2.527838209279787
+        }
+      }
+    },
+    "actual_serialized_rows": {
+      "slice_middle": {
+        "rows": 128,
+        "identical_serialization": true,
+        "baseline": {
+          "bytes": 93657,
+          "sha256": "530e2c1675ec9b559cc7c412f0c0aa508ba8bc805d060365e760ad53f0ac4c41"
+        },
+        "candidate": {
+          "bytes": 93657,
+          "sha256": "530e2c1675ec9b559cc7c412f0c0aa508ba8bc805d060365e760ad53f0ac4c41"
+        },
+        "semantic_equality": "Both revisions passed the independent exact square-set oracle for all 128 inputs."
+      },
+      "slice_bottom": {
+        "rows": 128,
+        "identical_serialization": false,
+        "baseline": {
+          "bytes": 93657,
+          "sha256": "3ebd44568244325518145fa6028ad8384198579c5a0785205b0259e66f0c2961"
+        },
+        "candidate": {
+          "bytes": 93657,
+          "sha256": "530e2c1675ec9b559cc7c412f0c0aa508ba8bc805d060365e760ad53f0ac4c41"
+        },
+        "semantic_equality": "Both revisions passed the independent exact square-set oracle for all 128 inputs."
+      },
+      "slice_top": {
+        "rows": 128,
+        "identical_serialization": true,
+        "baseline": {
+          "bytes": 93657,
+          "sha256": "530e2c1675ec9b559cc7c412f0c0aa508ba8bc805d060365e760ad53f0ac4c41"
+        },
+        "candidate": {
+          "bytes": 93657,
+          "sha256": "530e2c1675ec9b559cc7c412f0c0aa508ba8bc805d060365e760ad53f0ac4c41"
+        },
+        "semantic_equality": "Both revisions passed the independent exact square-set oracle for all 128 inputs."
+      },
+      "flatten": {
+        "rows": 128,
+        "identical_serialization": true,
+        "baseline": {
+          "bytes": 93657,
+          "sha256": "3ebd44568244325518145fa6028ad8384198579c5a0785205b0259e66f0c2961"
+        },
+        "candidate": {
+          "bytes": 93657,
+          "sha256": "3ebd44568244325518145fa6028ad8384198579c5a0785205b0259e66f0c2961"
+        },
+        "semantic_equality": "Both revisions passed the independent exact square-set oracle for all 128 inputs."
+      }
+    },
+    "binary_bytes": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/planar-operation-failures/cost-build-v1/release/deps/libcsgrs.rlib": 9852650,
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/native-v1/release/deps/libcsgrs.rlib": 9842470,
+      "target/planar-operation-failures/cost-build-v1/release/deps/libhypermesh-98c5db38df7e7da0.rlib": 4847866,
+      "target/slice-projection-contract/cost-v1/baseline": 35585368,
+      "target/slice-projection-contract/native-v1/release/deps/libhypermesh-98c5db38df7e7da0.rlib": 5017602,
+      "target/slice-projection-contract/cost-v1/candidate": 35743976
+    },
+    "limitations": "Instrumented allocations and shared unpinned host. Fresh and seeded dependency archives have different crate hashes, despite the same core sources, toolchain, actual dependency names/ABI and Cargo compilation units; cause not established. No optimization, bit-identical-dependency or corpus-wide speedup claim."
+  },
+  "remaining": [
+    "End-to-end construction provenance is not established; native section source indices/parameters refer to the call input and the planar result does not expose these mesh-source records.",
+    "No internal total-work, retained-byte or cancellation bound; trials use external 1800-second wall and 8 GiB per-process address-space limits.",
+    "Clean external release/package admission and full CI matrix remain pending. No push performed.",
+    "Thirty-five pre-existing native files remain byte-identical and unadmitted. Seven previously reproduced Hypercircuit snapshot/golden failures remain unresolved; they were not re-executed by this slice.",
+    "Seven existing Hypermesh tests and one existing all-feature CSGRS test remain ignored under their original conditions."
+  ],
+  "implementation_files_sha256": {
+    "src/solid.rs": "bb132a780bd7acd7d1e88d1c0d04b6ebb8366dd7fe33bc34caf6cb4dc632f219",
+    "crates/hypermesh/src/section.rs": "79634958cb26b00e87cbc6b53706643d07fe03bf8322978cbf53dc196ca952da",
+    "crates/hypermesh/src/mesh.rs": "b5aea5768f440efe36681ca885cd6566a139e429baf15fcb785bee2455c158a0",
+    "crates/hypermesh/src/lib.rs": "f3257e44e83014618d708eb2b5a5f87eeac7c2f2d2f642f6540d4ae62a450c41",
+    "crates/hypermesh/README.md": "3bc2ce1c188bb475c0cfded710d2cb032a893c61f6b50f2e61dcdb2ee0fa33f3",
+    "tests/slice_projection_contract.rs": "1fb177dcd475ea382a5c226ad4a4ba46c6eb1858fd565f80f659944244ad258c",
+    "examples/readme_renders.rs": "782cf8a4878201091ff67e2f6f55ab90876f171f95bafe311bf2a96ee5f8529b",
+    "benchmarks/rust/feature_pipeline.rs": "3bfa448b26da703eda584315676a6fa4614d3f20317b876928a0ec6fb36803ff",
+    "readme.md": "59050bd1434fd0f76f1c3b87dc4fa93ed026cc6f9ac70fa285d6b70c5641b654"
+  },
+  "pending_native_sha256": {
+    "crates/hypercurve/src/bbox.rs": "c145ab30c68433690f8827b7de7cc9c30c1707a1cdb7793cb81e33b3dba0ae4c",
+    "crates/hypercurve/src/bezier.rs": "257dc8fb654fa86f7d2d47089bd5137f5a1f53d3336127e76baf4cf7d05b8840",
+    "crates/hypercurve/src/bezier_fit.rs": "cbba8129249d814c997629e7d8373a985b6bf9b77ab2774dff4afff1bed4d762",
+    "crates/hypercurve/src/bezier_region.rs": "6ea7d9bb3bd2fadc96cb8736b59fc66b5f576460eee83ee5fb306b43a227bb1e",
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/src/bezier_region/offset_spans.rs": "4c6ffb8e36b5dfd3d9d030c016d96af7964f9a9e56f1b9c1abbbf91553f29ee6",
+    "crates/hypercurve/src/bezier_region/point_location.rs": "2d915ac75cd5d7a61b3440fecf0f0ffae8c6c25687e5c4f382077f8de3908672",
+    "crates/hypercurve/src/bezier_region/tests.rs": "c78ab04298572d06d51eec08aa3201e392a6fb663a0b1a65d5ce81e5c06c6318",
+    "crates/hypercurve/src/classify.rs": "6997d26ebfe4c50d3abf7ed296cb9cc121ab70754421172e21693bde005e81df",
+    "crates/hypercurve/src/contour.rs": "a6ef94566c3c68d6311f7fc7bd47f55e129858cb4d381ec6a8acde157fe4141c",
+    "crates/hypercurve/src/curve.rs": "5e9e1457cd9c7f875f0c730ef8ea88ce2f78a8eab1cd93b8e59463f57327468d",
+    "crates/hypercurve/src/curve_intersection.rs": "2d5b2566186174ed2cfc53de0c276560bc647c6f9a39004ffedcdd90f91f78f4",
+    "crates/hypercurve/src/curve_region_boolean.rs": "5d0a87272791632d128731c4ed78971fdac5717b594f33bd8513389401606471",
+    "crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs": "385a1080d7972a08a5082bb6c47ad19e2cfcc1012b4f6c45bfd618796b848344",
+    "crates/hypercurve/src/curve_region_boolean/regularization.rs": "5a542169b7e0dfe99e520da867a907303485a56b03b13491af4970044e9ca866",
+    "crates/hypercurve/src/offset.rs": "b83ee4f648f9ae4b0bcfc5b52f2553eaaf87f1c57c67e340d9ab101053bcffda",
+    "crates/hypercurve/src/policy.rs": "abbadb4d1345eb2ccdf50df57337e991abb999e479067851c5bb2e75f9f34202",
+    "crates/hypercurve/src/rational_bezier_general.rs": "372d81688c5c6e061ad62cff408dd974c7f4bc771dccb19389823e6edd8886ef",
+    "crates/hypercurve/src/segment.rs": "d253abef3276d8b56a99ad9a7273227d3c823b6f01a7b01a0ce3959b32057213",
+    "crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs": "ef2d56e6e5dcec355eb776a8218fba2c797db5b14eda9c1e2dd5ec79224b4fd0",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b",
+    "crates/hyperdrc/README.md": "3af373486b7b51887db4cbfd17b50c7f01c2c64b018a342b3ac970484c0acd9d",
+    "crates/hyperdrc/src/checks/area_tolerance.rs": "d659ed532de0f81477afaa00df6521f4625bb7ddf4af3e08d158f8300cc00d5b",
+    "crates/hyperdrc/src/checks/differential.rs": "90e491f2578abdb07a7c922058d0b579c1cbb1f3ccea872ffcdb9deb373a6951",
+    "crates/hyperdrc/src/checks/layer.rs": "df442cd2614061fadcb0a5a8019410aa36afa9999a5ccf128d91e52cd1ef6f06",
+    "crates/hyperdrc/src/checks/mod.rs": "7f085ea070136481b6a1550f1589ddf15d4dfec657e68679059a05fc93f05ca1",
+    "crates/hyperdrc/src/geometry.rs": "18826a139f20f4fa047ecf83b864ad8311c26e0965835d8df0c42412fdd37fc2",
+    "crates/hyperdrc/src/geometry/README.md": "f8145f2c515a5b35b70815c7b68d8fc50e893f9d41072d0913d00b22133c2eb0",
+    "crates/hyperdrc/src/geometry/primitives.rs": "a753ce71223326c4b1d92467ec64ce2ad1a7528bd2c3822135a62e0990b13070",
+    "crates/hyperdrc/src/geometry/stroke.rs": "193422c60cd9a6e86efb7d8f61cfd9baae4e7ce130d136a881c1150d270e212f",
+    "crates/hyperdrc/src/kicad.rs": "598c62dfddbb7cbc8840b5a31b02ddcb408b4e35771ee33d03994084ccd16f59",
+    "crates/hyperdrc/src/kicad/README.md": "01e8aca6832bce80152306ad74cfb20fae6ef7258ed833ff1c6692e842c204a7",
+    "crates/hyperdrc/src/kicad/tracks.rs": "6ea5c63821f0f79b7f548bdaf613e9fdce273dc42be5d2597070f7195f2ba227",
+    "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+    "crates/hyperdrc/tests/native_linear_strokes.rs": "84f86db87c666e019b54bad7bff57cbbb290fe23960cc891966134cddd0a7b74"
+  },
+  "full_plan_complete": false
+}

@@ -1,0 +1,54 @@
+Crate info:
+name hyperlattice-64c0cb923a8aa061
+hash 98a63710191f71618e4b08ca27e0cf91 stable_crate_id StableCrateId(16891524696742885722)
+proc_macro false
+triple x86_64-unknown-linux-gnu
+edition 2024
+symbol_mangling_version V0
+required_panic_strategy None panic_in_drop_strategy Unwind
+has_global_allocator false has_alloc_error_handler false has_panic_handler false has_default_lib_allocator false
+compiler_builtins false needs_allocator false needs_panic_runtime false no_builtins false panic_runtime false profiler_runtime false
+=External Dependencies=
+1 std-64f5f36fb0927694 hash 32c61de8c7366ead82c3de471236156d host_hash None kind Unconditional public
+2 core-df1bddb45adbe94b hash 4c6a77fa41db53e52ef11c4c52cdc6ca host_hash None kind Unconditional public
+3 alloc-1ad4f876c768bda9 hash 2a8e72d3dd58ba9ba2020c95ebda31aa host_hash None kind Unconditional public
+4 compiler_builtins-2d2ab9fb0fe1def5 hash 6056cb873436b83e895a25e53c89f207 host_hash None kind Unconditional private
+5 libc-06449a08aaab5e30 hash d746ab69ed3328eb7b67d81e0c47f3c4 host_hash None kind Unconditional public
+6 rustc_std_workspace_core-cb0d4d77988d81b5 hash 4725cfde80a569134522e460f97bfb80 host_hash None kind Unconditional public
+7 unwind-3ec41d3a5a80a4a4 hash 4597cd4570d5dbf0c90e8919ce29c622 host_hash None kind Unconditional private
+8 miniz_oxide-e44eaef1807e5fc0 hash 4a13b0a8c64c0d9ec262f082f8b038d0 host_hash None kind Unconditional private
+9 adler2-dca52f01a59c33e7 hash 9f425524442f50364179a9ed6c1b391f host_hash None kind Unconditional private
+10 hashbrown-143c77bb957d9940 hash 657bfdf985160df715aef35819c8b899 host_hash None kind Unconditional private
+11 rustc_std_workspace_alloc-145a318e0772276c hash ed257a5fb7f2fadcf7b68f0dc0a885f0 host_hash None kind Unconditional public
+12 std_detect-f99feda5ce9e492a hash 3f0444b20538dbe3072aec301783284b host_hash None kind Unconditional public
+13 rustc_demangle-cfd0ab54bb33760e hash 95acbdee12d3d58a5672e5658e6a25b5 host_hash None kind Unconditional private
+14 cfg_if-360da4ba13154744 hash 6fd79543a79ed58ca907971bbbce7dcd host_hash None kind Unconditional public
+15 addr2line-09755979c57b7e64 hash 2df60317f7f6de47c85c59fa8eb2638b host_hash None kind Unconditional private
+16 gimli-9a1fede77fbbf2f0 hash 0779acf9e5de44a7aa60cd1fc451b1a2 host_hash None kind Unconditional private
+17 object-7ff85ea729a864ff hash edcb7a2efa76cbe2bbce09468202f61f host_hash None kind Unconditional private
+18 memchr-0e3477fb2664a277 hash f94f9dfd8f550e3db6f53c31b25d989e host_hash None kind Unconditional public
+19 panic_unwind-549498e8b2e4d924 hash 47994b966f54be0fae8b6c6a978e15ff host_hash None kind Conditional private
+20 hyperreal-8040aeb6a6d9c5b1 hash 24aa7f0f0e8ed372ff4d35ec5a57c1b6 host_hash None kind Unconditional public
+21 num-139851d70681c2b3 hash d753fe6adffea136e129d08125e1985a host_hash None kind Unconditional public
+22 num_bigint-b68c95f027840409 hash 14f040cfce5a432d3debc9ebbd9c92f3 host_hash None kind Unconditional public
+23 num_integer-15d7a815a4ce369c hash 5920c14d2c60f92e480ca99658977691 host_hash None kind Unconditional public
+24 num_traits-425baf489a184607 hash 1c4c735a3cee472f6be554969df7118a host_hash None kind Unconditional public
+25 serde-b64ac4cbdaac0978 hash adfaedab69c463c5ff34fbfe120c2ded host_hash None kind Unconditional public
+26 serde_derive-d8d30c0490079a21 hash ce2675d218288401b211906d45f44598 host_hash None kind MacrosOnly public
+27 serde_core-b63e7008cd4ae304 hash f37da95bd4992cf1f938d0352d27f07e host_hash None kind Unconditional public
+28 num_complex-fdd891d533882cfa hash 3992cca083f94c7494b8693f4e94750f host_hash None kind Unconditional public
+29 num_rational-e50e23f3dd2bf3cd hash 59dbfe359eb1d35d33b3a9640831622c host_hash None kind Unconditional public
+30 num_iter-44476dd0c6498daa hash 646b657449314eb455fcf4e338e5355c host_hash None kind Unconditional public
+31 ciborium-8fe151bf87d56b1e hash b7da630a22cb533d838063058eefb98a host_hash None kind Unconditional public
+32 ciborium_io-3a4adaa66b7f5966 hash f9464fd0920197df3ced8d5c1d429382 host_hash None kind Unconditional public
+33 ciborium_ll-d9c3e595d4a422a4 hash abade9a5fd23e8a8812c1e1791bfd9f1 host_hash None kind Unconditional public
+34 half-f33b940f3d94acc1 hash 2c940a33364c9f6e335ae95f6b73cf07 host_hash None kind Unconditional public
+35 zerocopy-fe02eb1d47397f7b hash 6a8f0c87b09b5a0f35d4190bea36bef2 host_hash None kind Unconditional public
+36 zerocopy_derive-2a532339c49e2875 hash 6281ecd61299f35cef800e9c8fb3d216 host_hash None kind MacrosOnly public
+37 cfg_if-ddd3ad37e1f30421 hash e510238431385ee31e90c7d58b35e951 host_hash None kind Unconditional public
+38 serde_json-c986de8966ab4b5d hash 54d44f79789442684df96dc5a236461b host_hash None kind Unconditional public
+39 zmij-6a067c35437a9e4c hash 00483f175296b5919bd5d9cbf78e069a host_hash None kind Unconditional public
+40 itoa-3f1e1c9af425c136 hash ed7ab0bcd6b10f590d13d62272c7b31b host_hash None kind Unconditional public
+41 memchr-71bb4d2e07c8fc97 hash 91acc9b2f4d10f096b939d96655753fb host_hash None kind Unconditional public
+
+

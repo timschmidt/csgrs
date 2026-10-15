@@ -1,0 +1,17 @@
+[
+  [
+    "prepare-target",
+    [
+      "mkdir",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/renderer-v1"
+    ]
+  ],
+  [
+    "renderer",
+    [
+      "env",
+      "README_RENDER_OUTPUT_DIR=/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/renderer-v1/images",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/native-v1/release/examples/readme_renders"
+    ]
+  ]
+]

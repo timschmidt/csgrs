@@ -1,0 +1,10 @@
+engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum
+csgrs,warm,feature,mesh_profile_projection,slice_and_flatten,0,1,260,528,2,2
+csgrs,warm,feature,mesh_profile_projection,slice_and_flatten,1,1,130,528,2,2
+csgrs,warm,feature,mesh_profile_projection,slice_and_flatten,2,1,130,528,2,2
+csgrs,warm,feature,mesh_profile_projection,slice,0,1,120,528,1,1
+csgrs,warm,feature,mesh_profile_projection,slice,1,1,100,528,1,1
+csgrs,warm,feature,mesh_profile_projection,slice,2,1,110,528,1,1
+csgrs,warm,feature,mesh_profile_projection,flatten,0,1,50,528,1,1
+csgrs,warm,feature,mesh_profile_projection,flatten,1,1,60,528,1,1
+csgrs,warm,feature,mesh_profile_projection,flatten,2,1,50,528,1,1
