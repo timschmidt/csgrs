@@ -1,0 +1,3301 @@
+{
+  "status": "qualified scalar identity; retention decision is recorded separately; strict drilled-body completion remains open",
+  "baseline_commit": "f1092edb1",
+  "implementation_commit": "775af8774",
+  "implementation_sha256": {
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "293e8830947d259423f675e62313348c8684f3a8581523416145b90aa384f51f",
+    "crates/hyperreal/src/real/arithmetic/linear_algebra.rs": "b1b4a19c3c622bfe55874a6574b74a1b86ab88284893dd8f98b815cdcda6e583",
+    "crates/hyperreal/tests/determinant_product_cancellation.rs": "ecd1482d3b6da8e12324d2950cd479ef4bb1f3d41d798be955ea06659e6699fe",
+    "crates/hypermesh/tests/symbolic_plane_normals.rs": "0d6ca8e9ca86a6f8c776e8fedb31b957cc386cf863d2744791447976c14157ef"
+  },
+  "properties": [
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P7",
+    "P8",
+    "P9",
+    "P24",
+    "P25",
+    "P35",
+    "P36",
+    "P37",
+    "P39"
+  ],
+  "proof": "For valid Real operands, structural equality proves matching factors. Commutativity and opposite signs prove a*b-b*a=0 in either order. Unknown equality never cancels. Exact-rational reduction remains first. A shared helper serves specialized and generic product sums; no tolerance, refinement, cache, or native workaround is added.",
+  "domain": "Exactly two opposite-sign two-factor products with structural factor matches. Other signs, arities and factors retain the original arithmetic path. Near-distinct 1e-12 controls remain strictly nonzero.",
+  "tests_by_configuration": {
+    "scalar-default": {
+      "passed": 886,
+      "failed": 0,
+      "ignored": 0,
+      "test_executables_or_doc_groups": 23
+    },
+    "scalar-all-features": {
+      "passed": 991,
+      "failed": 0,
+      "ignored": 0,
+      "test_executables_or_doc_groups": 24
+    },
+    "foundations": {
+      "passed": 1544,
+      "failed": 0,
+      "ignored": 0,
+      "test_executables_or_doc_groups": 46
+    },
+    "native-mesh": {
+      "passed": 240,
+      "failed": 0,
+      "ignored": 7,
+      "test_executables_or_doc_groups": 8
+    },
+    "root-curve": {
+      "passed": 231,
+      "failed": 0,
+      "ignored": 0,
+      "test_executables_or_doc_groups": 28
+    },
+    "curve-native": {
+      "passed": 2493,
+      "failed": 0,
+      "ignored": 33,
+      "test_executables_or_doc_groups": 51
+    },
+    "root-minimal": {
+      "passed": 96,
+      "failed": 0,
+      "ignored": 0,
+      "test_executables_or_doc_groups": 24
+    },
+    "root-all-features": {
+      "passed": 338,
+      "failed": 0,
+      "ignored": 1,
+      "test_executables_or_doc_groups": 32
+    },
+    "scalar-docs": {
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0,
+      "test_executables_or_doc_groups": 1
+    }
+  },
+  "new_regressions": {
+    "scalar": 8,
+    "native_plane": 2
+  },
+  "qualified_commands": [
+    {
+      "name": "workspace-fmt",
+      "exit_code": 0,
+      "seconds": 12.847059573978186,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "27428ed2afa1e20f1892fc452a44d6b65442cf9e2eeb724e0d939754c24ffe71"
+    },
+    {
+      "name": "scalar-default",
+      "exit_code": 0,
+      "seconds": 64.70575440721586,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hyperreal-4234254b1d45f4c0": "22577685ce9b00673ee2a8340634cedb51c42c473f9f1eadbe77777dc868ce11",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_props-23fbfb7cef5ee581": "64b6efac8acde2b90012f4ba7603963023f711e49179b6ff1f5deb078000c8f7",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_regressions-5d04d217656421b6": "c978ddc4ecefa286c0712812cf79d96a78013b01d4e099e8bca8c3bce5e0cae0",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_semantics-58675a723c625f67": "8f7cdcf3d4fba4d93d9d620fec2a43af89da0b63d046ef194be217b4fee54322",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/calculator_diagnostics-ef064cc07ef2d04f": "f9b86d69981e3e08bf5f0ca74d9bb97bf4bc453b7eeffae50e39675cf4ff9149",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/checked_decimal-70cdb742d44f70fc": "f2d7068e9bb0ecef2f4ec0657507d94a44c0fb631c4dfabfa6853fb0ffc139d1",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/checked_scientific-c0a643059fb8dee3": "3b035af6c484ba0b4b982055983026f4d20675a589d8e37a462616bbbf9b1046",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/cli-2de71b6772144cd0": "3f13e07f28e86472146934d9bad2f2cb2dc3d135cf542f7a5bfaa5a6c972205c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/determinant_product_cancellation-e600622a4bab9527": "555edccb0e4027f500dcb6347e09d6762490c89e5f729916aa5025bb2baca8a9",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/exact_quadratic_normal_form-2b06dd32d996fe94": "0b3d450888ee85399756675b8a363c8433e8200b17106f3facf0612d09bc4633",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/fixed_decimal-851c01731054de6e": "b279f9c51fe69101f8299c966305807233562b3dfecb9efcebfc6b3791f17151",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/gmp_api_coverage-d2fe8e97878365c4": "bdabf9bd0de1c8d20a0ed9f0d4466e4e539e5347ea7163a825425fb9b249235b",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/multiquadratic_normal_form-5a8898b00f5a2c4f": "36b79ffd7585df3a1ca12907258b2a8750554fde93c0d0e30d9a3b8ca30273f9",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/numeric_roundtrip_formats-67b8aa72c4c5f7ba": "cf455efed27f1e056173d2fc85124409c1a82c264057101121742c61b7bde532",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/numerical_cross_reference-af795541e14f3ef3": "f7e6902a97c50f07f8ffdea38503a47642fe7b2a5c181bd466a948f4072bfb34",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/precision_limits-6feea55c62b10a74": "7066dc92a1eb17de630e0bc4a11e3bc119865ef8ab628922cde29223e899e46a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/public_numeric_semantics-957b7ccaec5dc726": "be35d6659343fd6d630df84f29c1be7a9b8d5dbb7e11f2ca390c27218b4e08ba",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/rational_oracle-523dc6e3ab602e66": "065bd54e9573fd01a0550bb83c9105d7bc080b6810ce577add3e67b503b95a90",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme-07bcd81331b412f5": "5ce7b2949973c54f05f05d8c98a9ff7bc05b91981d353f4b409f74b1f98a5923",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme_metadata-c60fc91560bcc0ff": "e28650d139b61478e672153edb8ae4939cb2dc72dc13af7463a4aa7626fca5af",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/real_representations-f48380d1329521e3": "8925c3a6cda96c29424fb1f0358f98de088baf2256a404a942cea502d8195339"
+      },
+      "stdout_sha256": "36353552d2df42df79dc1b468a8d1b91051d50484bd0af75030d1c24ecb1e66f",
+      "stderr_sha256": "2effd4e66603fadd567b1952669e1001837367d2d889e179f585cca2a3ca9568",
+      "resources_sha256": "60da13a55d2ceb903123e74edc99dc5db5d63f81ace296b80d5b1d22b3bb5dd7"
+    },
+    {
+      "name": "scalar-all-features",
+      "exit_code": 0,
+      "seconds": 68.52441481407732,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hyperreal-c4ce5bbc6487bbcc": "ef388c5658faf31208848dfe799ac5e8c1c750b93ff0c8db3f7638df56091c79",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hyperreal-87f8ffbf1b6d3d7d": "fbb7a1ce56b6c114f7cf8e9fded350b09aa69c305feb2f092b48f050db504f1b",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_props-b2df4244a2be7046": "d6835333a7fdc751e9592265b740e63cc3db06ba23bf67b6d7bb13081b74aa53",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_regressions-a2370f1bc476be5c": "7f1ccfdfcf22118fcf7de72654741d379edff9d21902ae1d1c21677e856655fb",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_semantics-772cfe9fd6c49175": "4f0266bdb1230f6372705492680e8525e5cd595e56c85927db8cba40133d60f3",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/calculator_diagnostics-f4de7f2df586345e": "29fa1aae632c527a32688f88239b8b25d2779cbbd5ffbf8c6aaaf0ced0ae421b",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/checked_decimal-eaf657b48704c6c0": "1e5a93073741ba22c6afff61e648bb8faab7dc7ec47f53553cd6eceea9ce6b18",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/checked_scientific-ec92ee1f4e21310b": "f8399fb28cd1b1aa32562288f7e387d228c77778999f61083a05c69812a08e7e",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/cli-a07596aa07a74f9f": "a7c97d1b8016fd4e238834bd5d0c8b03c09bc936a7ef13c379cbabca66af5742",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/determinant_product_cancellation-deb76c121b9f0e0c": "bd8c5d024272e460f4c8b9ffbc1aa71598279e4142f57032830dfffaf3d35f16",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/exact_quadratic_normal_form-b8aa58d0f6956f83": "a3885d6418105a743073265a520059f40fb4d3bbd3c4e13fd7fe4686a6372edb",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/fixed_decimal-e384c2439cc7d7af": "502f1285507caf84a615e407fd96a02f8d6455e02e704d8caf8a77dd692bc2e1",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/gmp_api_coverage-bb7769b6ee1db20a": "5cce372b980a777b14ab35cb05d8a631ee2ba85324c1769b7d5e2685dff34f90",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/multiquadratic_normal_form-68cfa5d8ab51b25f": "5b1cc4057c12e90bd560ad903e6e40dd69f0de7b1fc54eda63182beab906522f",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/numeric_roundtrip_formats-1490f2ba30313dc2": "9980b81b1af9d37a45c890e4674d1d3642699229795458e3407573ff79964975",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/numerical_cross_reference-993f4002c933107a": "aff605868a5e7f8faf8e0e940d441ede80eff3114db9fe14fba6cde9dbd1129c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/precision_limits-26b129af62be481f": "661421915cff24a16b280ebd481e2d152e920ce7243a23f0e55a905074e7e52e",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/public_numeric_semantics-8fa3758efe94dca0": "15b0bf45918acd9473782c9e14fb6bc9203edd3f0d94fa01533cfaffb1b4e56f",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/rational_oracle-ceb4312bcb7faa4a": "b52d91f71cb8564c5de320b456cac7db0a544ba6b37e8aefb5e65bc158fab5c7",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme-1ac495475795a7f2": "dc0def88757467165ad39738ac0206a97a75ad1cb7e8262cd1d7307919a672a5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme_metadata-40cef18327edcaa1": "e0a4028d5684f62f7b9e189dcbf67b63596bb255d4004cb6a47ba63b298beb8c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/real_representations-ca445881b4a05174": "ed5c64ec9de5b7ff92fd92e8379c3645ca234b1a1c85983896820c91bfa0ba26"
+      },
+      "stdout_sha256": "d689ecbde4871ab7e34bdbac30381f58b6720c1f74ef429112d1b1e4e693da6d",
+      "stderr_sha256": "6f2905aa691e82ee72650afe8a22d998cc05745f2fa75c759a4f22f1c6107cf5",
+      "resources_sha256": "38175091160b8be97c31d8234e0571c9ea75e8323d190f84d71810378c1595ea"
+    },
+    {
+      "name": "foundations",
+      "exit_code": 0,
+      "seconds": 321.00721977092326,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hyperlattice-69d1f065d097fe8f": "e0638584c56d5534f389afdf4d5f880b2c80c770bc501227080c232d07bb986a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_borrowed_owned-76b846fa031dc3f7": "fedeff40100c3310c6e46ee7171554fc19bcb571e7fe591e771c4a58dda7f451",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_constraint_props-0fc3f5d6f220bd33": "5123826a1e4b3bcf028c479f66402669de2bc38f147c59f0db7abfcee6b9fb55",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_matrix_invariants-8a6c14a1f4897f79": "9c86a988f54daf6fb910882c970228e3816d88035b67af342609b643a5b78d84",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_props-0900a22a61be644f": "fe838ada872e2c24baf29dc01303608755f2c8a5067142e2f525a732276fadd8",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_regressions-de90ec02c70cc277": "25e481bf54ae8acd7969b4fb34f5c102ef286ca323d653ff2b610e84d09d3d2c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_scalar_semantics-28c6b8e7add844cb": "2f5f3a62ccc8869e016b3b7b19c9e42ebd626787f24632bcd43509d9177106f5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/api_surface_coverage-a9f4c8c033d8a4ad": "f13a8e1a9496b2fed0c007bb098fea51d73adf1998cc24c6e6af9f4d75a1566e",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/borrowed_ops-74d4636a70679139": "9c938d881c101abaf015b3ef15bde2912e649448eff47ba6d1e587482285e853",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/complex-bbb80108f0a96270": "3c293a1e752bef6d0c3d8533d3ce1fbfbbd7e52dba1d65b3dda75dea1a010304",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/diagnostic_display-85ffcd249f3e47e9": "2c9e6910f77b8e224a2e03faadf571481b5d40ea4fe63e86f0daeb82a044f01a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/geometric-586c6462d9374bab": "2b88db38ec10bda5cd296d0451be8a098fb3dece454ed52d023cd662883e7e97",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/gmp_benchmark_coverage-5f0882fe37754204": "6cd9ad2c1e5439798ebf4781f7a793f19f1825b9c6bd24bbf965e5ae69fa5aec",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/matrix-1790b6354e20326f": "41355921a43bc947a3eb6517276468619fdf53b05e58ae51cf3b08a09db7fccb",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/matrix_api_surface_coverage-01a48a681c54c4b0": "cf0c3036e58ee8b03bde75c49d9e37bbad3a306cfd4c13107a5a13d3ef339075",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme-62ff7f4fb38647d0": "ee05f386c6f3a185fc76afbab68c83b66cfb7e8db34d727cc9f94f51595d2d7d",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/real_representations-f10edd8fa1a2823d": "2e7e0a02becd1f4b7f6bcfd2674a5f7b27b5e07db93494c59ebd75d7120089c7",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/scalar-0999c335956609e9": "d16e19dd81067b7df918baabfdd255649382d8e04e5567155aa9cbd40e4355c6",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/vector-7b74fc35a39f7432": "ccb762f8a58cf080c38df5f2b6dc07ee4665579c6a1e9998826d84d933d963d5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hyperlimit-70b3a076ef5bb771": "777c5b06ffa1ed84a53acc10729f29a68114a55c6487ce76fc6e10f899d8c0ec",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_degeneracies-da53ff721617a4b7": "644c2d7e861163cc1a26d222261aa3c966a4cb4db2a0e9e955f094339956536c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_predicates-a84b62765db53a75": "c82106b898aaa2480e723c67948cf5b0d9936328362faeb04064c0e119105d19",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_props-78892f45a372c65b": "166b8059c24efaf445af2e8571f7e21489640c95e4900e731ce8b0f4363725e0",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/batch-ccc9d7bea7fa4a6f": "1140664941b6fcb8f590320c830423596b1e59a2b7281b4eaf6e7d630af71680",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/classification_contracts-fb6798a8c7c2b84b": "ac9ffdd81c8e6370f8c400ad61d5b85599048fa3841e653167d88e343f9de34f",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/composite_policy-b1e50a15fab771e0": "4ca1ea857353e3dfe5812b4462f81f8c7a7a963e1fef7b7eee0c60899eb953e6",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/exactcore_xinwei-b4a9090a2033a4a3": "43bf0da6e78c53141ea18353967d935cc39456d1fa73998e90f54ef14f319b94",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/halfspace_feasibility-42168706410cc064": "2305892cb594b24190579776ed802aafc07b8c98ee75a680e9018f2caa3a70c4",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/nd_predicates-4e909348e9ba0f07": "a46e295d6890d11d23b718561be41e121dbfd70000503538852c60a6029f4efb",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/point_equality-dc502a26d8f614b3": "cefcbe0ce14b7772993ea23b4b506b626c186d059729440c33a249b60bda3125",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/promoted_mesh_helpers-5f58b659d6658099": "6ad04171493078626208f7d41a346834f2d88d73aeeb17ce590765a1e41a2bec",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme-a9d1459c6a329406": "600c4b2ac50cc7f2a97ac522090d4c9ab129673663955c001bac9fedd2221828",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/real_representations-0fad10c089b835b3": "07dc9f87e1ee4134e05421b1c1e9ca72c35ff20c3ddbc10c570e84f8bb4426c7",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/retained_report_contracts-30086fdd5d3a1de3": "52007dafb99d416635d9226f2be2d07a1eb3e574fa07620efcd4dfb038fb5fbf",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/robust_parity-1fae674a37c6f9f7": "c93bd3a5c48a8a576dfdb00bbf059cc097aafae69e98553da8009f592bc70f87",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/support_dop-163ec49f8fe3e800": "273bfdd9416d4b8aa35597d7258b73cdf6fd8edba7fd7dc3e4e925dcdd813152",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypersolve-7debed7c6ea5187b": "6fd967f2fee3b2b1224b795c2f6d8274a2ad91f8becab0458085360a514443fa",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/exact_value_root-e1285b0874f3f270": "e3ef37d41e3197fed26ff03dff97979762c3d70f2683899a8eafd2c4ab2c75f1",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/exactcore_root_families-c55375604beeed94": "489274f7e413e39f1267e370ecbd035d017c36ab9ccca5c57dae1f354f658771",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/quadratic_extraction-d12610244fd74333": "743d87711098b3723b7cdfc04b11230c5b396658604de6bfc72480db6683f9e1",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme-ef380713dd6e8c11": "0d0bf65f811bbd892063354afd34c5e66cb641ed37032d4357bfcbe08f4af7a9",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/real_representations-08631fcaf1fde296": "ea0c663c1c8f65b478c0a2eecae703dca61972e0fd6adecf961a30cc30025040",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/residual_props-c7e2e010935289b8": "77f07cb7085fc58d274e45ddee80a9a79b4f6e434be23d3aa01730552adf556d",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/smoke-69fcd2dda5523d5c": "c159c12b41d5894901e5a3961bdc5e34b89990e62f4d89bb2477eee8bde46fd6",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/square_free_growth-0cc59873efd7cc43": "5374ed8a48a485a746fde4474981458f593b9af0f2180fc15a9d1799808792d8",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/tensor_remainder_scale-d73caadc37d1e74d": "bd35316fb7a97b6fe4db344ea778f6fa1d489500a37573181d9cbddbcdc2087c"
+      },
+      "stdout_sha256": "1386b2b2e2390e28f647b5713ac0e01c70cc525a657b5837463ad8f410ae408f",
+      "stderr_sha256": "81873b227705de80b501baf404214c6305797028538819cda318d57cb934e514",
+      "resources_sha256": "7c2734114990a8c7660d727a661e1ce1e006b1d9faf491790454c10586c97162"
+    },
+    {
+      "name": "native-mesh",
+      "exit_code": 0,
+      "seconds": 86.07820891402662,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypermesh-3f582b4ca1636641": "1f290f1d0e667d7044edaa9987c4322b23a8f7051fe20e2bb16ceb8e173bf806",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/boolean-5f62d1118823ec97": "c6c01fe17bc2e72730c378dad5fbeef6c2f07d0dff4a285a4a01c2fbc90ccc3e",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/competitive-6172fbc55a698b35": "bf2d86fe11723c6ec4901d09d9a6fdb494a15ff80439e0b610bde24a3b381823",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/corpus_manifest-70e8b02b4630cdcf": "d04f6c01f95cfdf8ffa573c0ce774e147970b7e43c182698e095f18fd9918512",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/intersection_corpus-fd36003a26964264": "e59c4d86f4c416f2c28b82ffa96953410e524f8449003c608afb7d8032042fb7",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/predicate_policy-da601e01ee57d6f5": "ade86cb8a2a16960727fe497a1fd1903c9fac9abd5f38cfcd5b7aef5dc2494dc",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme-6edeb87a0e9ac66f": "2d1dbfd9be03a7f835822b6862b3792f4b3ea57db2fa7b73cc9039c94a41b096",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/symbolic_plane_normals-c88d849271f3b9cb": "f81638e31b473a179d1a577eaa6d472d51e864b970e26a2e0fb119a6bd92b7ba"
+      },
+      "stdout_sha256": "8424d757a3577d2f94962d6de6f387877a32c26a591ddf355e874e4ca7e49c56",
+      "stderr_sha256": "41333a3b0af02f7a2256bbd4f4da2141ffd10cc2ce77f2ae3bcf718317a8d3c8",
+      "resources_sha256": "ef0346c683c8a1c285f39d270b8c068c7b038953d2bec74452277f10a4fafeff"
+    },
+    {
+      "name": "scalar-native-clippy",
+      "exit_code": 0,
+      "seconds": 57.308336331974715,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "bb589609394a1c401ec42ecd1153f7cf3aab10d54d77f7a5a3ecb5c21c3ebdf7",
+      "resources_sha256": "0445a7c2deabde1ca74df8e02d44e3db7741a79acd860721288da6a351f86daa"
+    },
+    {
+      "name": "root-curve",
+      "exit_code": 0,
+      "seconds": 155.84961610427126,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/csgrs-fbfb4e9daf55c3e5": "1f2bead8adfcb4136237f5a5ace8cc9f8d468cf0d777df1458e6e75eed344ad4",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial-842c3e2893ea39a9": "96748f8e37fc2a3d6ccace899c0ffdb5cd12799eb7cdb1c7eb474dbba2171071",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_deep-03ea85c4a3ca4e09": "5067c88d5ef06413aba921ed3b298fa78cca565fde0897dbd236d222a369836d",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_extrusions-9f72380cdc0e9866": "dda89aa48ab70ff9513859bfb98edc6bcd33a0b84511cac6f8c4e5b73cffbc0b",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_fixtures-1bfbbb2b3102ac94": "0e61a9532728bf1e6b4f0189b930ef73943223d17806168eca4972824b8c7d98",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_stress-60d545275d51acf7": "e9396f139779f2c1d2ffcb4fbdb1c295fc015b8da3c887bd66bae2f967e5681d",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/bounds_failures-1388f390547a412c": "c49e4dfdbfcffcde4cb39134409ab9f6dc7bf9722878613265aa98cd7db29576",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_constructor_failures-526a2455ed7f2aed": "64b21b06f7e1861eb70dc9294db17f2ebd35e567494cb6ac08ea0821c9dfe277",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_metaball_failures-12e31ddc3ba50cf2": "54eca7baf804be7e9357fb05b03e451ef47cea0ef6c036b1bac6f8f7ae40b8d3",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_metaball_workloads-8635ced8c7051c75": "31be65ec44f0ce68bb06416048a22c6fd2dc3d91c0db7b9f936fda820405fffd",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/empty_composition-434e04985eb52b80": "ffa8765124a50dd03140c2f5011c6b33a966fc19fc8b3383fe20df1ea2ce4a1a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/exact_linear_modeling-5c01586b36c4ea83": "794ced897bdc4e62e22912d7bd11ef4f1fc32eb7b2a6d49f30f7060ce4963ef6",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/geometry_context-4fb8bb3cfb8b9774": "5a5017477996636b2aa55b7cf027dfd21f35960f69fe9824bfa0d92adc88e65f",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/mesh_boolean_context-45ce3ac7fe067ff8": "2ef7552acac261ba99c0e5d7017aadb9d1c7b7a6c48589d7012b93737afc6714",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/metaball_failures-042d98eda3a0eaed": "f9759eef3bfc571c7aed1cce3cc59c0e01cfc8da8a327e87ed81b5ad6d3e2a4f",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/metaball_workloads-cea9b8eab267209a": "99711a26f174b612ba874972dccd31413568c0ee864a40b2f716e52d84e799f3",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/native_queries-6415915da68f7139": "9e64055fd3b7fe7ffa69d29ebab6eabe64f79422704e8bf8cd18c0cf9b0f10ab",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/planar_operation_failures-0b782b7bdcc231b2": "2809235845734c337c9a88994ae5676876ab8ae37aa45f5b985916c082d837a4",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/primitive_failures-e022743191ca6ff4": "26f79aa3ab2d747f0621816da47ecc38c181d777c44d63697f31a162137f3918",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme-10272e602cfa4187": "e84f2c53ea3c13b178337b88b041ffa59ee738753ebb5d9496da157d7d092f00",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme_render_regression-5e34f4233b1639e0": "592c095377e5d3968dae5b69ad815f4330e74f93008a5f8afca55709ec45fa05",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/rounded_rectangle_fidelity-fedfafd26a0fcb2d": "8810281dc7b705611bf27a1040df3b6fb35416c62f8920880c08693e94589023",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/sampled_profile_failures-6a6a901356d0e649": "c509cc5a397c1e489d25fde047c42911057b86c1941343c7c2fd2fa0604191a1",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/sdf_failures-08d68b11031d84a7": "905b32b2161844e220be41afb209c737ddaa2b34d78f86cc23f6a49d59b3deeb",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/slice_projection_contract-d851c0e3c1271069": "17c31eba9526a73227ab30cfde4e2311018e50ccf01d0c050bbe6dc3328d7abe",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/solid_cache-3e4a978118c941ec": "a7046d3a9361e07a1df20b906849fe824031b16a5066665d37f876ded792f2b8",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/transform_failures-eb8d3811598e9f83": "2cfdb69b7e463dbb2cb7da50703e00e382b69e49fd515bc066c0835b6dbf7ec0",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/wasm_certainty-21ae39f414ececc8": "4cd216fbc015eecd347f35a08e996d6d313e24510011918f8a03e88cee51e7dd"
+      },
+      "stdout_sha256": "6f625ea9e9d389652e22641c3dc61a9e630e9fee0983f10da731236ff40e5b71",
+      "stderr_sha256": "f75ee619ca18a5e5050ce97465392506cb9aac8621053161ad94fb9623ab6495",
+      "resources_sha256": "8011077536c712ab9634d2593a1f85ab34b5eb32f11980a936c3280938319a82"
+    },
+    {
+      "name": "curve-native",
+      "exit_code": 0,
+      "seconds": 1361.3344921697862,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve-c64b9a6905916d79": "dbb9333bac41293a2069cbdb7f54718030e86777db65bec6dfaa298ca41a03d2",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/bbox_initial_pair-42009948bb13c480": "065a20ff587827f8336377edbeff881938f70a518f7ac5272c932755ef687775",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/contour_area_normal_form-4bb910b60a3a7465": "0bdd3386f0791866b32894b7d93b7ec0f80fad5095ffeb7e1a8412dff68657cc",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/exact_structural_facts-76451eec1ebb234c": "f18328ac37f056a89c17f07070adc57e804dce63f51d5cb0d2a0c4ec2dbf620c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_adversarial_polygons-648061a661d2d4d2": "f88236823fc26bef622f836bd65345e4f4cbb3682991331c1d2ea50f3f71657e",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_analytic_parallel_region-726d47dc1888e58a": "99b6a7fbd93fb9405a7f89d8805d132c3f76bdd622d592bad5dbfeb4d6d4225c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_arc_bezier-1e373a41b9ebc9c7": "950d493129dc39bada8720d0925baae537614982b4ec48fbe7992b7bdd966466",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_bbox-fd4e6060656a9e53": "da802fdaa66640d8a08f38f5ec109d071628c8b4dd169a526a4e93aa543a6114",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_bezier_algebraic_parameter-b3c101ceb1f03d27": "9c40c92bf9624ac28281d0d26ac3ca828d90fae7c897a5468616eaf56a44940c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_bezier_evaluation-2b2af0cd20a58eb6": "13ea398cc9436031d3c12f0dd7e606feaaa10f82f509eeb22be326f847280bc4",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_bezier_fit_offset-000e6dcd62486581": "bd5eba65759c4e6e0cd11d549d20defbeda3b3cc40d0b7a37fc8d09b0082a2bd",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_circle_predicates-6a21d60fefd977d6": "d8511e49c5e0588ca8ccde93b0bd0491431a16900ba3bd15e6a14bf0b2e53917",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_composed_workloads-00d318fe4aa418d9": "f4797aa642f73d0db22883a6806611fd07882d5036e8ac8af5dbb9e960817863",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_contour-4ebf43d4cac44124": "03f6d5267f1165ec6201ceb84c9ded8cdd1ba4829c1da6c123aae8dfe3385e2b",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_curve-9910e4ca7e304f6a": "fd5b70a71ff1a5e27814edbcdbf3cf0124b0e7e481dd7657093469111952d386",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_curve_intersection-84afdd00f969615e": "4bdae3bd1419def6f457f3bd6760796807ff142ba7672c4930a000f12a4e9ffe",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_curve_point-723c0db0e305158f": "8dd8b241ba971c29f895cf8041134e0faac8d9ba5e04421ef68ba443bf769f76",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_curve_range-ce272b03c5af5e60": "47242960c05d7c94a7f6e51ba71f31071332d1ba6ad6266f53f4be3ea2ff56a6",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_curve_region_boolean-73f474d9f89ada3b": "dcaa2609e8160bbbbb76bb565138aa83d6bd4b32143147abac6c8fddf8f01f2c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_curve_region_boolean_fuzz-2e74957ca48860d4": "f50f8236e9f4ad4b27e423c0d92dbbd31b03e41fe59165e227b541cff67bade9",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_curve_region_promotion-e3e18c6ed854aea1": "47d44533f4b40319ba62c76fb5f1df9176e15d2e92eca6618daea57b961d4398",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_curve_region_stroke-e159e365a3ffcb56": "0551d36f4817f291a7e2f230df1a3b727774b7626ad1ee0c872894832817a81b",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_curve_string-a6f5cb6c05aed1b9": "a228aa1ec199db88c28e98ebde011d15b4c81abd17a59c811388229cf957a5c5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_derivative_completeness-3b7db4764a27ca62": "d2db8ca3a891b0d2aca66c6c8e353ad3f439d1ced16a452f7a2bacb1b2cb294a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_dispatch_trace-19500280b30d6468": "103cd62e3387fc5f2c5c387fdb1414d0301cef60013661844143bc5bca363799",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_events-c6fa78e0298355bc": "4dade363700ef53aa7f0c635de184ea5487ce961acb031b446bb531fa96c6054",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_exact_closure-321fd937dd57609f": "fdab0c2d62328647b968f952a4f19115108f3107ba1753b0f808e427594ab24c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_fragments-531bd9eccf3a410b": "82e1e716043f8a7530fdf5c46bd746b1f3300f5db5746a9805b2005adb00bf3e",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_fuzz_regressions-76bc9ae059bb9293": "e5eda52a8f73b9f9052a49abbe13da88453d2d1e999d91d5d53aad825ba444aa",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_geo_regressions-1b602cdcbb4fe85c": "6a03055c2b1bba853c1fa1c8dbb7d6db82d8f1a651a72cee5c1fd7ab02eaf29f",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_nurbs_interpolation-eebf1e52f536fb73": "fae893f4ba6a8dc10972b1dea9c1010219a94f77088ee5a0b13f9048405595b4",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_offset-13a102504eed15de": "a3600f0a9da0274d9c80a0ea5cf9213566b687ed2b6b0f9f0139f6e54fadcc59",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_open_path_compositions-24ae05f9efc2f345": "f58f8283d6fbcd0a8b7aa3116f94faaba159bb17514047833d22fd0ef520fdc5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_path_closure-13e4ed5ea986002d": "1bcd5260b4aeaecb8abe49225a6c47cefd93ddb996c132c3ee74e7a08bdb2950",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_pcb_boolean_regressions-6789f90d07d16ed5": "a93a69eb6623d9dfcc4ba6fe7d10be52eae250ca03103d54a502c1491c78dcdd",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_pr59_shape_regressions-83b1fc0d5a794bdf": "3babb6a54fc7bcd13bac081d5092e6546e3d1688795b7cf198e59f52337e3475",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_rational_bezier-ebc5ec163d658b4d": "faa60b86c72c79750c4adab72ef1827e8276a4c77eb98e2e24f98d89f6868f53",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_reconstruct-a445dce1f120dd8a": "f247fbbdb7879dc01a35c53968c3e3d5564951951c4138ae9b546a9f164d41ba",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_self_contacts-6c627d173f5b69e1": "288829f0a143734db75be57e3b587bfffe547eb5f31f99f5b31b3f481f885366",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_split-6e8c2606d715ddf3": "3b34881889d97239d3ac973a2ef33e99b1c1266ee070e916de004446bf541eb7",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_stationary_fillets-bb316e3e756ce796": "2dd8298bfea0438c16676308867f35fc60418de3ee28bb6335a1fbeb3287c917",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_svg-556a1ede74b5cd05": "f2bd955e804dc101cd0d97719101051c516855aa0b2529af406b13d96587d16a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/hypercurve_triangulation-352ff74abe37fd6e": "c6e4cae6e0c189083f38813c7ac617f8a01475272cd27684e55961cd042c08cf",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/line_constant_coordinates-d121d91fba5474b4": "c4a0e6e00111f797ac7802a26d740c0705ddd413cdf53385d2193f90467285a7",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/line_fragment_orientation-f9fa75a347463c52": "1cb0b1703e2b7024713fd578349fe4ab16cd9fc7e58453156898b8449dd8bfda",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/marching_squares-038ea04afeca3641": "48f7e2b03bf97ef98446cd071813308ab133c71e276cc7803fdc1df4a070ca68",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/native_linear_stroke-5eb5c1ee2586089c": "75e25d61ac081d59e06b567e575e4304674e1ec3ba926c913144f15a3408776b",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/pathological_benchmark_fixture-376aa6ef985840a8": "e6b87ea85bedb7531aee3d9fcf287c460b320de2f76610e7504ffadc759c85a7",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/ray_filter_extreme_coordinates-9d17ed123cd5307c": "0f6d2cb37b769407f6d38038247da96d6ee35ac1b760070ebee39cb02832e7b5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme-e31e3117e75caf45": "85ddc418cd5857a4267aab017d708d146a9a8b17ecf27f652f1e9cca10c22faa",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/work_budget-9fefc193fdafb511": "ba2b5d6d3d4a1aa1b26cd858d3ab3a58156ccc81214f9325f214a36c84ec2178"
+      },
+      "stdout_sha256": "bcd007e17687b6422c163e06d48632b4b07bd688d63d8de65ea24002de97637a",
+      "stderr_sha256": "4a13d9922aac95edaa326f56a1bb2deb7e96798825d46fbd37e62a7d431099b6",
+      "resources_sha256": "32f16bcc82b5b455bf117d6048caaab0be2d60e040b623ff7aa091b1108d34a9"
+    },
+    {
+      "name": "root-curve-clippy",
+      "exit_code": 0,
+      "seconds": 27.335888779256493,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "5279477db8ed63d8c7729f2dab2613b2721e0605b1e44b366b8b0f6cadac37a9",
+      "resources_sha256": "595dcde68ccf143bf32e7c05da02f4160ea1e20fb4142474eb83045147aa2559"
+    },
+    {
+      "name": "root-minimal",
+      "exit_code": 0,
+      "seconds": 15.160392982885242,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/csgrs-12b72f0ccdd38706": "a869704475eb4956254ae5f808b082ad5ed40727b95ae7dd4eec2a11847b3daf",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_fixtures-f3fb997ef2084a11": "5dac5b84671177ce3d262555314f7669cbcf62502e8aa06bac05abcd5d3b437f",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/bounds_failures-c661a92a5b4c7962": "8514d3123a29a6d54753aea7ec79879e6f546c6d910b899a2c926df8ec44db0d",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_constructor_failures-fd8f13d67d2561c4": "6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_metaball_failures-100955c99151bd1c": "138b61bc832cd460e4d4dba5de0b6638df032af3c1b14961e425e6e96aca9ce0",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_metaball_workloads-93eb9e05f68c5c8b": "f81d63774abaa7f5d90152904922972dae56f2f0428e267daef0158a8c506339",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/empty_composition-329c8a68d57ad60d": "f9ee8a688f43645b99a7b1abeaf843b63bb04782d8a7361a98effec40c520a0a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/exact_linear_modeling-f01de976de318a36": "c6e97dcb258e46009c992b103a4ae871228e5fbdc5a0e0f6d49cf64c911345ec",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/geometry_context-673fb3a0a6f0689a": "a882511f67ea50a4d59eebc5f85d3fd53891039759e83401ce7d499742cda4df",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "11e2b8f8b51b3ef6b1ad4a4596c409f7d9d748e82627ec7a4349664664dce603",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/metaball_failures-02f33d21474432af": "35b3571cdafac22ce4013b03c66903595a9a8198c394d67ae85e16b6efa5e62c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/metaball_workloads-51226a10ba4c7506": "8860a20077e9b2340069df7f32a175ec3a576eab1134f8e4f672e8b8bea20d47",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/native_queries-c72418af2e8884f8": "3acdeabd05aaedcbaaff9a828634bbd776932df1a97fcf927ffcf0ba83bb695f",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/planar_operation_failures-cb132bda92ed78c2": "7630f6bd592c778afa35d6fa067bb3e084e5deecf62533746374d604d4e0615a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/primitive_failures-812823cb4c624c0c": "56d5e3e3c2bb0162c66e95d4b0b92d729d8637b02c1934257380203353e801c5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme-114567bf52c105c8": "2bc9d0ff394b90a9e8ac00a06ee998287c17fcd26158c33dafe0213cdb8189b9",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme_render_regression-13a0224cc2b1eb67": "7f887519cc6719a558a14fb039d9b170cfedb89f15b81e13b6e4b1f2de1dd2d7",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/rounded_rectangle_fidelity-1435e79a4c8f8808": "0326a0c9f5da56b219cf3c0db28ed85672d53d140696d7927b40ea9590d6844a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/sampled_profile_failures-59ed42fadf98b620": "40dce8f51aed77737a19b16a5aedcb200ac4d619a9285c55f73bf25c7eb41ae4",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/sdf_failures-0fb37e01688c21a0": "7a21e36eb9f175a7dcd1d299d5d6e405ba05bdb2d8dc15e2d4e43d4cb9ffe2a9",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/slice_projection_contract-9b033a35ae634fdd": "da642a310125099793b4cc5d297f01f3993ce1d8ab366467f1db7bf2c6b48c2a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/solid_cache-07b265ceb2ca1c46": "806b36cde6ef2aff1d3ccd008a17b1e234e5b580217f7533ef754e6261a53f76",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/transform_failures-5b7fe4d21c3ce0bd": "0c2db70bc43825f8874254b16cd308d3dd8ec90d3da2882c0cbef82ed9e9e913",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/wasm_certainty-65de70dfe11e3e06": "d8e8d09df2a9eea388be56b3ed93d6e562d7f37630a19f07a014d19430c30fb6"
+      },
+      "stdout_sha256": "f1ab906b08f4842dd726302b5791fc47da5604dbe0fc9a3b4a019beb4225c644",
+      "stderr_sha256": "dffdea1243aae057f13feefd07f55b406eff63897da674def049f63aa5f4a43c",
+      "resources_sha256": "911344ba84b87a63475bf920992a08301b4a33ca0501d70bf5c2239ab2fb3cc3"
+    },
+    {
+      "name": "root-all-features",
+      "exit_code": 0,
+      "seconds": 489.55930571909994,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/csgrs-7cb2efc2751cd581": "49438baaf7608a1b5e6e207ce5e961eae59732ca297797fd15034812dd84d9a9",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial-aa8f7eb900ff711d": "afe206ee6692592b9e116b274576ae4d1577ef6fc5415cd4d6a5f51d7a8793a9",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_deep-5118e0b6d7de3ea6": "953e9be7e2f0752eef17a2a309170403600af465ba3e8a2c09065ae2a06e2cab",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_extrusions-aa8048fe0de3f594": "8c516b1d594b2266292e4147748f698ff0c0e00f6160143e64a91f38f5ef10f8",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_fixtures-cf11e31630975ad0": "c400bcbea9d9b820e96cfb3968b34ec99629883b9a902ebf794273e6f628cc3e",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_stress-d6d56cc4aa09a158": "f326d05e26ea4a62a86bb58721a0491ba8b977d70dbfd41058d9954eacacb527",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/bounds_failures-1de96205ff2a5e07": "b41e687c4ac96923a2661d3f7486285d094ccf7d742dedf53dda3ad6a317416d",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/competitive-0b8b38c506725d57": "761e8d1f0f5c0643c2207fb0dc9e83e6c1107686f297d963b7e558cad63cca0c",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_constructor_failures-e22c3b5ab72457a8": "b7e7167f15118aa916b633d38c8089d6bf95557ddbe4dfd3a9f445af1c41b86d",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_metaball_failures-cdc5511c980183da": "68c88005df7ee9d45957d8f99fcfd94a3ca40592c4278270eccb746bf599c471",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_metaball_workloads-37ab722afd06f275": "730f5a1de35f4f57ce342b2bc1ad927b514a001fc86b8fc215a8533129f58a17",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/empty_composition-3a7164c2b9d5044a": "991f6fde8aa7fe4b5c19bc4472ca756c53d953b0b7cd713c9d141851da173da0",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/exact_linear_modeling-26d44c8491c2f7a7": "73222e74c2935b8beddf776e2775471bc56f94c53f515cb9bd4116dbbfc412da",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/generated_benchmark_corpus-b45922908131dfbd": "ed3bfee6b8dfbfa27f8c49e43a191679dee7f772a0fc3394e371e0366048f0d5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/geometry_context-e14123ad7d9b5126": "094b98d0a56b46015d39a62ab1e9f38159da47397415c3d306afd492218fc785",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/mesh_boolean_context-9d9c68938c3691af": "9e62c2a2903bfad46d9598afaa7cfb6c0059aaddab82529b59fb239d4a65d4b5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/metaball_failures-043b72a00404a6ff": "31b947f271002ae9548ede0e62685cc03b71a6a8342abd1cf6ac37f43feff72d",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/metaball_workloads-4d7fe7b802e9560f": "65a2e7265dca2e58af91b063e0286d3ab29b41d3ae8eb40b54962ee6567b7939",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/metaballs_diagnostics-8dfd6522763c319c": "b949cdc7af5d9306657e111230c80e9043e5340a60a19e397e71a02d42dc1ca5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/native_queries-f108d89258947ff9": "6488f7ff1428164daaf81bbdf631076d60412b4cb2695ac60ff1d35606d4e5de",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/planar_operation_failures-5a01641d88b598a7": "57f44004077a09e7f152c4da47cfb86b6f75832f07912c5a786a231e762c9b40",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/primitive_failures-aadd0e4e093d5243": "4a9f999da85fdea27888bf30860ab5f1fa307c5833a4562436688ab1902b71f5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme-14ff37358f039d13": "2c5385f6cdae2e7dc69ace9e55289f71b87910dc0472a1dc47ecc9770a00ace5",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme_render_regression-c73ca6dc64fc3820": "db16bd93c8b2d221c5bb2e52ef2d683e66aff6e9d62ebbbfec13bab3802a820a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/rounded_rectangle_fidelity-ec164e77ee6b2ff4": "cd0bd33e93ed3f1f46626b3944b68eb5aff3e59cc069ea34e3485375e59a7526",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/sampled_profile_failures-41fee3c75c404f62": "67acb52b649b6c5944da779fbc034dfc986aa36b1efa80b4a1861ca4345ab195",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/sdf_failures-0e01156f99592da3": "02671e807a433f4db52c2c3d81cec3e762695c9a46f93eb30d5db116bc0c77e7",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/sdf_tpms_diagnostics-5aa3ece71b49182c": "eb63d719dcaf533225ef6d0011cff3127f4797a4f764c98d26fefad56a9cc40e",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/slice_projection_contract-28d257a6e8fba167": "9353d3785b84a1338c624c8374274133d9d47135dea6c13192b366c28d0780af",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/solid_cache-d34731e0e95db92a": "04830da20013d0fd5491621f535301928f9c515ee126dddeb94d957abbacce0a",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/transform_failures-74f1159cb89f11ba": "76669ac0b4e51acc3aff95b4c0c7ed0d72720f7eba800a3f1f2668d31122a701",
+        "/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/wasm_certainty-d7c6e3b405f88647": "3698d36ea2ca6303f959d9710488aafe68d193b1c4e3f3a26b1d969cd8c9270a"
+      },
+      "stdout_sha256": "a5ff178d5d0d4f4fc6a15f4b9b5f84d9a1e3122e2e7a526adff53d9801b5ed2b",
+      "stderr_sha256": "64c9156c9ebd627dc6c5806bef28dfeb78841f5bd3d0d885a54f03f7c382460d",
+      "resources_sha256": "90efcd318a5d7b4921c7fc8d75d429f99a9efa1a64bb9939cb321986079c3936"
+    },
+    {
+      "name": "root-all-feature-clippy",
+      "exit_code": 0,
+      "seconds": 195.90110598132014,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "2e4e53280ad07932755af95dbb1ccbb0e467a575f914b13194bea4edea2e8dcd",
+      "resources_sha256": "3a075fdfc2d2944e7ee94e5994e8de1d351ad580a82e9edc27611f3d9aa19e6b"
+    },
+    {
+      "name": "scalar-docs",
+      "exit_code": 0,
+      "seconds": 3.051873814780265,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "53218d38fa68c9741f0e328e240df438a6f4c8f41d8a80fea349bec5a0de6e01",
+      "stderr_sha256": "fbaf4bb295921de90507cb4c7b437e2c5eac97af64a6d6d88754618c5914c33f",
+      "resources_sha256": "1e80357cd1c3895c24ba89fb815caccaf678400352df57758596585526880301"
+    }
+  ],
+  "paired_scalar_cost": [
+    {
+      "case": "cancel",
+      "method": "diff_of_products",
+      "prepared": false,
+      "both_contracts_completed": false,
+      "latency_change_percent_for_completed_contract": null,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 11533729,
+              "allocations": 189312,
+              "requested_bytes": 8038400,
+              "peak_live_bytes": 6120,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 12288117,
+              "allocations": 189312,
+              "requested_bytes": 8038400,
+              "peak_live_bytes": 6120,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 11569946,
+              "allocations": 189312,
+              "requested_bytes": 8038400,
+              "peak_live_bytes": 6120,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 90390.203125,
+          "allocations_per_operation_median": 1479.0,
+          "requested_bytes_per_operation_median": 62800.0,
+          "peak_live_bytes_median": 6120,
+          "retained_bytes_median": 0,
+          "certified_total": 0,
+          "unknown_total": 384
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 842762,
+              "allocations": 15872,
+              "requested_bytes": 780288,
+              "peak_live_bytes": 2072,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 619307,
+              "allocations": 15872,
+              "requested_bytes": 780288,
+              "peak_live_bytes": 2072,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 694312,
+              "allocations": 15872,
+              "requested_bytes": 780288,
+              "peak_live_bytes": 2072,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 5424.3125,
+          "allocations_per_operation_median": 124.0,
+          "requested_bytes_per_operation_median": 6096.0,
+          "peak_live_bytes_median": 2072,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "cancel",
+      "method": "diff_of_products",
+      "prepared": true,
+      "both_contracts_completed": false,
+      "latency_change_percent_for_completed_contract": null,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 1474699,
+              "allocations": 29824,
+              "requested_bytes": 1721344,
+              "peak_live_bytes": 3224,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 1355717,
+              "allocations": 29824,
+              "requested_bytes": 1721344,
+              "peak_live_bytes": 3224,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 1354747,
+              "allocations": 29824,
+              "requested_bytes": 1721344,
+              "peak_live_bytes": 3224,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 10591.5390625,
+          "allocations_per_operation_median": 233.0,
+          "requested_bytes_per_operation_median": 13448.0,
+          "peak_live_bytes_median": 3224,
+          "retained_bytes_median": 0,
+          "certified_total": 0,
+          "unknown_total": 384
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 6779,
+              "allocations": 0,
+              "requested_bytes": 0,
+              "peak_live_bytes": 0,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 5470,
+              "allocations": 0,
+              "requested_bytes": 0,
+              "peak_live_bytes": 0,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 5739,
+              "allocations": 0,
+              "requested_bytes": 0,
+              "peak_live_bytes": 0,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 44.8359375,
+          "allocations_per_operation_median": 0.0,
+          "requested_bytes_per_operation_median": 0.0,
+          "peak_live_bytes_median": 0,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "cancel",
+      "method": "signed_product_sum",
+      "prepared": false,
+      "both_contracts_completed": false,
+      "latency_change_percent_for_completed_contract": null,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 11776132,
+              "allocations": 189312,
+              "requested_bytes": 8038400,
+              "peak_live_bytes": 6120,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 11675769,
+              "allocations": 189312,
+              "requested_bytes": 8038400,
+              "peak_live_bytes": 6120,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 11225960,
+              "allocations": 189312,
+              "requested_bytes": 8038400,
+              "peak_live_bytes": 6120,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 91216.9453125,
+          "allocations_per_operation_median": 1479.0,
+          "requested_bytes_per_operation_median": 62800.0,
+          "peak_live_bytes_median": 6120,
+          "retained_bytes_median": 0,
+          "certified_total": 0,
+          "unknown_total": 384
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 761187,
+              "allocations": 15872,
+              "requested_bytes": 780288,
+              "peak_live_bytes": 2072,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 609888,
+              "allocations": 15872,
+              "requested_bytes": 780288,
+              "peak_live_bytes": 2072,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 709951,
+              "allocations": 15872,
+              "requested_bytes": 780288,
+              "peak_live_bytes": 2072,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 5546.4921875,
+          "allocations_per_operation_median": 124.0,
+          "requested_bytes_per_operation_median": 6096.0,
+          "peak_live_bytes_median": 2072,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "cancel",
+      "method": "signed_product_sum",
+      "prepared": true,
+      "both_contracts_completed": false,
+      "latency_change_percent_for_completed_contract": null,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 1482428,
+              "allocations": 29824,
+              "requested_bytes": 1721344,
+              "peak_live_bytes": 3224,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 1366036,
+              "allocations": 29824,
+              "requested_bytes": 1721344,
+              "peak_live_bytes": 3224,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 1404673,
+              "allocations": 29824,
+              "requested_bytes": 1721344,
+              "peak_live_bytes": 3224,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 10974.0078125,
+          "allocations_per_operation_median": 233.0,
+          "requested_bytes_per_operation_median": 13448.0,
+          "peak_live_bytes_median": 3224,
+          "retained_bytes_median": 0,
+          "certified_total": 0,
+          "unknown_total": 384
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 8370,
+              "allocations": 0,
+              "requested_bytes": 0,
+              "peak_live_bytes": 0,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 6740,
+              "allocations": 0,
+              "requested_bytes": 0,
+              "peak_live_bytes": 0,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 7550,
+              "allocations": 0,
+              "requested_bytes": 0,
+              "peak_live_bytes": 0,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 58.984375,
+          "allocations_per_operation_median": 0.0,
+          "requested_bytes_per_operation_median": 0.0,
+          "peak_live_bytes_median": 0,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "cancel",
+      "method": "active_signed_product_sum",
+      "prepared": false,
+      "both_contracts_completed": false,
+      "latency_change_percent_for_completed_contract": null,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 11766582,
+              "allocations": 189312,
+              "requested_bytes": 8038400,
+              "peak_live_bytes": 6120,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 12067312,
+              "allocations": 189312,
+              "requested_bytes": 8038400,
+              "peak_live_bytes": 6120,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 11640682,
+              "allocations": 189312,
+              "requested_bytes": 8038400,
+              "peak_live_bytes": 6120,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 91926.421875,
+          "allocations_per_operation_median": 1479.0,
+          "requested_bytes_per_operation_median": 62800.0,
+          "peak_live_bytes_median": 6120,
+          "retained_bytes_median": 0,
+          "certified_total": 0,
+          "unknown_total": 384
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 722490,
+              "allocations": 15872,
+              "requested_bytes": 780288,
+              "peak_live_bytes": 2072,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 595729,
+              "allocations": 15872,
+              "requested_bytes": 780288,
+              "peak_live_bytes": 2072,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 696692,
+              "allocations": 15872,
+              "requested_bytes": 780288,
+              "peak_live_bytes": 2072,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 5442.90625,
+          "allocations_per_operation_median": 124.0,
+          "requested_bytes_per_operation_median": 6096.0,
+          "peak_live_bytes_median": 2072,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "cancel",
+      "method": "active_signed_product_sum",
+      "prepared": true,
+      "both_contracts_completed": false,
+      "latency_change_percent_for_completed_contract": null,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 1435612,
+              "allocations": 29824,
+              "requested_bytes": 1721344,
+              "peak_live_bytes": 3224,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 1356947,
+              "allocations": 29824,
+              "requested_bytes": 1721344,
+              "peak_live_bytes": 3224,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 0,
+              "unknown": 128,
+              "nanoseconds": 1368646,
+              "allocations": 29824,
+              "requested_bytes": 1721344,
+              "peak_live_bytes": 3224,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 10692.546875,
+          "allocations_per_operation_median": 233.0,
+          "requested_bytes_per_operation_median": 13448.0,
+          "peak_live_bytes_median": 3224,
+          "retained_bytes_median": 0,
+          "certified_total": 0,
+          "unknown_total": 384
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 6020,
+              "allocations": 0,
+              "requested_bytes": 0,
+              "peak_live_bytes": 0,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 6139,
+              "allocations": 0,
+              "requested_bytes": 0,
+              "peak_live_bytes": 0,
+              "retained_bytes": 0
+            },
+            {
+              "case": "cancel",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 6560,
+              "allocations": 0,
+              "requested_bytes": 0,
+              "peak_live_bytes": 0,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 47.9609375,
+          "allocations_per_operation_median": 0.0,
+          "requested_bytes_per_operation_median": 0.0,
+          "peak_live_bytes_median": 0,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "rational",
+      "method": "diff_of_products",
+      "prepared": false,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 22.27077313411798,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 52986,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 61706,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 56756,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 443.40625,
+          "allocations_per_operation_median": 18.0,
+          "requested_bytes_per_operation_median": 888.0,
+          "peak_live_bytes_median": 888,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 69396,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 61096,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 82454,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 542.15625,
+          "allocations_per_operation_median": 18.0,
+          "requested_bytes_per_operation_median": 888.0,
+          "peak_live_bytes_median": 888,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "rational",
+      "method": "diff_of_products",
+      "prepared": true,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 15.710578127796682,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 21009,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 22348,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 29868,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 174.59375,
+          "allocations_per_operation_median": 6.0,
+          "requested_bytes_per_operation_median": 312.0,
+          "peak_live_bytes_median": 312,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 25859,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 22589,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 36758,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 202.0234375,
+          "allocations_per_operation_median": 6.0,
+          "requested_bytes_per_operation_median": 312.0,
+          "peak_live_bytes_median": 312,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "rational",
+      "method": "signed_product_sum",
+      "prepared": false,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 23.009224896617543,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 56586,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 55996,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 66175,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 442.078125,
+          "allocations_per_operation_median": 18.0,
+          "requested_bytes_per_operation_median": 888.0,
+          "peak_live_bytes_median": 888,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 69606,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 60086,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 86424,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 543.796875,
+          "allocations_per_operation_median": 18.0,
+          "requested_bytes_per_operation_median": 888.0,
+          "peak_live_bytes_median": 888,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "rational",
+      "method": "signed_product_sum",
+      "prepared": true,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 19.41904720241481,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 22859,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 22379,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 32927,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 178.5859375,
+          "allocations_per_operation_median": 6.0,
+          "requested_bytes_per_operation_median": 312.0,
+          "peak_live_bytes_median": 312,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 27298,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 23638,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 41337,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 213.265625,
+          "allocations_per_operation_median": 6.0,
+          "requested_bytes_per_operation_median": 312.0,
+          "peak_live_bytes_median": 312,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "rational",
+      "method": "active_signed_product_sum",
+      "prepared": false,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 25.74611181168558,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 55306,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 57096,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 67885,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 446.0625,
+          "allocations_per_operation_median": 18.0,
+          "requested_bytes_per_operation_median": 888.0,
+          "peak_live_bytes_median": 888,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 71796,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 61056,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 87674,
+              "allocations": 2304,
+              "requested_bytes": 113664,
+              "peak_live_bytes": 888,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 560.90625,
+          "allocations_per_operation_median": 18.0,
+          "requested_bytes_per_operation_median": 888.0,
+          "peak_live_bytes_median": 888,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "rational",
+      "method": "active_signed_product_sum",
+      "prepared": true,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 22.601158587046477,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 32958,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 22959,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 22538,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 179.3671875,
+          "allocations_per_operation_median": 6.0,
+          "requested_bytes_per_operation_median": 312.0,
+          "peak_live_bytes_median": 312,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 28148,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 22889,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            },
+            {
+              "case": "rational",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 41067,
+              "allocations": 768,
+              "requested_bytes": 39936,
+              "peak_live_bytes": 312,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 219.90625,
+          "allocations_per_operation_median": 6.0,
+          "requested_bytes_per_operation_median": 312.0,
+          "peak_live_bytes_median": 312,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "same_sign",
+      "method": "diff_of_products",
+      "prepared": false,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 6.203531652546412,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1343238,
+              "allocations": 26240,
+              "requested_bytes": 1076224,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1275412,
+              "allocations": 26240,
+              "requested_bytes": 1076224,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1289991,
+              "allocations": 26240,
+              "requested_bytes": 1076224,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 10078.0546875,
+          "allocations_per_operation_median": 205.0,
+          "requested_bytes_per_operation_median": 8408.0,
+          "peak_live_bytes_median": 2352,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1370076,
+              "allocations": 26240,
+              "requested_bytes": 1075200,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1264083,
+              "allocations": 26240,
+              "requested_bytes": 1075200,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1370016,
+              "allocations": 26240,
+              "requested_bytes": 1075200,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 10703.25,
+          "allocations_per_operation_median": 205.0,
+          "requested_bytes_per_operation_median": 8400.0,
+          "peak_live_bytes_median": 2352,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "same_sign",
+      "method": "diff_of_products",
+      "prepared": true,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 3.288647315413251,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 43787,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 42197,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 44287,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 342.0859375,
+          "allocations_per_operation_median": 3.0,
+          "requested_bytes_per_operation_median": 216.0,
+          "peak_live_bytes_median": 216,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 45167,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 45227,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 59216,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 353.3359375,
+          "allocations_per_operation_median": 3.0,
+          "requested_bytes_per_operation_median": 216.0,
+          "peak_live_bytes_median": 216,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "same_sign",
+      "method": "signed_product_sum",
+      "prepared": false,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 6.485601586693401,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1332729,
+              "allocations": 26240,
+              "requested_bytes": 1076224,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1301140,
+              "allocations": 26240,
+              "requested_bytes": 1076224,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1302331,
+              "allocations": 26240,
+              "requested_bytes": 1076224,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 10174.4609375,
+          "allocations_per_operation_median": 205.0,
+          "requested_bytes_per_operation_median": 8408.0,
+          "peak_live_bytes_median": 2352,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1518366,
+              "allocations": 26240,
+              "requested_bytes": 1075200,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1277662,
+              "allocations": 26240,
+              "requested_bytes": 1075200,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1386795,
+              "allocations": 26240,
+              "requested_bytes": 1075200,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 10834.3359375,
+          "allocations_per_operation_median": 205.0,
+          "requested_bytes_per_operation_median": 8400.0,
+          "peak_live_bytes_median": 2352,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "same_sign",
+      "method": "signed_product_sum",
+      "prepared": true,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 9.796844985156294,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 51537,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 50986,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 52186,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 402.6328125,
+          "allocations_per_operation_median": 3.0,
+          "requested_bytes_per_operation_median": 216.0,
+          "peak_live_bytes_median": 216,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 67486,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 52156,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 56586,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 442.078125,
+          "allocations_per_operation_median": 3.0,
+          "requested_bytes_per_operation_median": 216.0,
+          "peak_live_bytes_median": 216,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "same_sign",
+      "method": "active_signed_product_sum",
+      "prepared": false,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 7.382940740929067,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1307900,
+              "allocations": 26240,
+              "requested_bytes": 1076224,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1297911,
+              "allocations": 26240,
+              "requested_bytes": 1076224,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1296391,
+              "allocations": 26240,
+              "requested_bytes": 1076224,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 10139.9296875,
+          "allocations_per_operation_median": 205.0,
+          "requested_bytes_per_operation_median": 8408.0,
+          "peak_live_bytes_median": 2352,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1713212,
+              "allocations": 26240,
+              "requested_bytes": 1075200,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1268663,
+              "allocations": 26240,
+              "requested_bytes": 1075200,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 1393735,
+              "allocations": 26240,
+              "requested_bytes": 1075200,
+              "peak_live_bytes": 2352,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 10888.5546875,
+          "allocations_per_operation_median": 205.0,
+          "requested_bytes_per_operation_median": 8400.0,
+          "peak_live_bytes_median": 2352,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "same_sign",
+      "method": "active_signed_product_sum",
+      "prepared": true,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 31.28730621142053,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 49087,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 49066,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 51436,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 383.4921875,
+          "allocations_per_operation_median": 3.0,
+          "requested_bytes_per_operation_median": 216.0,
+          "peak_live_bytes_median": 216,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 64445,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 50717,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            },
+            {
+              "case": "same_sign",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 87364,
+              "allocations": 384,
+              "requested_bytes": 27648,
+              "peak_live_bytes": 216,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 503.4765625,
+          "allocations_per_operation_median": 3.0,
+          "requested_bytes_per_operation_median": 216.0,
+          "peak_live_bytes_median": 216,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "unequal",
+      "method": "diff_of_products",
+      "prepared": false,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 26.506514374038815,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2558245,
+              "allocations": 47872,
+              "requested_bytes": 1515520,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2437763,
+              "allocations": 47872,
+              "requested_bytes": 1515520,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2422224,
+              "allocations": 47872,
+              "requested_bytes": 1515520,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 19045.0234375,
+          "allocations_per_operation_median": 374.0,
+          "requested_bytes_per_operation_median": 11840.0,
+          "peak_live_bytes_median": 2872,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 3426155,
+              "allocations": 47872,
+              "requested_bytes": 1510400,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 3083929,
+              "allocations": 47872,
+              "requested_bytes": 1510400,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2677456,
+              "allocations": 47872,
+              "requested_bytes": 1510400,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 24093.1953125,
+          "allocations_per_operation_median": 374.0,
+          "requested_bytes_per_operation_median": 11800.0,
+          "peak_live_bytes_median": 2872,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "unequal",
+      "method": "diff_of_products",
+      "prepared": true,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 8.271606953991405,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 555052,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 551223,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 534203,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 4306.4296875,
+          "allocations_per_operation_median": 96.0,
+          "requested_bytes_per_operation_median": 3200.0,
+          "peak_live_bytes_median": 1672,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 687053,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 582770,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 0,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 596818,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 4662.640625,
+          "allocations_per_operation_median": 96.0,
+          "requested_bytes_per_operation_median": 3200.0,
+          "peak_live_bytes_median": 1672,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "unequal",
+      "method": "signed_product_sum",
+      "prepared": false,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 14.312286373127892,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2492410,
+              "allocations": 47872,
+              "requested_bytes": 1515520,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2433273,
+              "allocations": 47872,
+              "requested_bytes": 1515520,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2418724,
+              "allocations": 47872,
+              "requested_bytes": 1515520,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 19009.9453125,
+          "allocations_per_operation_median": 374.0,
+          "requested_bytes_per_operation_median": 11840.0,
+          "peak_live_bytes_median": 2872,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2781530,
+              "allocations": 47872,
+              "requested_bytes": 1510400,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2939659,
+              "allocations": 47872,
+              "requested_bytes": 1510400,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2717174,
+              "allocations": 47872,
+              "requested_bytes": 1510400,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 21730.703125,
+          "allocations_per_operation_median": 374.0,
+          "requested_bytes_per_operation_median": 11800.0,
+          "peak_live_bytes_median": 2872,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "unequal",
+      "method": "signed_product_sum",
+      "prepared": true,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 5.324892156177707,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 543842,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 538603,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 549243,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 4248.765625,
+          "allocations_per_operation_median": 96.0,
+          "requested_bytes_per_operation_median": 3200.0,
+          "peak_live_bytes_median": 1672,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 551542,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 572801,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 1,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 585860,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 4475.0078125,
+          "allocations_per_operation_median": 96.0,
+          "requested_bytes_per_operation_median": 3200.0,
+          "peak_live_bytes_median": 1672,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "unequal",
+      "method": "active_signed_product_sum",
+      "prepared": false,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 0.1547454870026277,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2511268,
+              "allocations": 47872,
+              "requested_bytes": 1515520,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2412305,
+              "allocations": 47872,
+              "requested_bytes": 1515520,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2423334,
+              "allocations": 47872,
+              "requested_bytes": 1515520,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 18932.296875,
+          "allocations_per_operation_median": 374.0,
+          "requested_bytes_per_operation_median": 11840.0,
+          "peak_live_bytes_median": 2872,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2427084,
+              "allocations": 47872,
+              "requested_bytes": 1510400,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2389166,
+              "allocations": 47872,
+              "requested_bytes": 1510400,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": false,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 2572203,
+              "allocations": 47872,
+              "requested_bytes": 1510400,
+              "peak_live_bytes": 2872,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 18961.59375,
+          "allocations_per_operation_median": 374.0,
+          "requested_bytes_per_operation_median": 11800.0,
+          "peak_live_bytes_median": 2872,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    },
+    {
+      "case": "unequal",
+      "method": "active_signed_product_sum",
+      "prepared": true,
+      "both_contracts_completed": true,
+      "latency_change_percent_for_completed_contract": 0.7942029938293516,
+      "measurements": {
+        "baseline": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 560992,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 532854,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 547593,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 4278.0703125,
+          "allocations_per_operation_median": 96.0,
+          "requested_bytes_per_operation_median": 3200.0,
+          "peak_live_bytes_median": 1672,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        },
+        "candidate": {
+          "raw_samples": [
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 551942,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 540933,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            },
+            {
+              "case": "unequal",
+              "method": 2,
+              "prepared": true,
+              "iterations": 128,
+              "certified": 128,
+              "unknown": 0,
+              "nanoseconds": 583630,
+              "allocations": 12288,
+              "requested_bytes": 409600,
+              "peak_live_bytes": 1672,
+              "retained_bytes": 0
+            }
+          ],
+          "nanoseconds_per_operation_median": 4312.046875,
+          "allocations_per_operation_median": 96.0,
+          "requested_bytes_per_operation_median": 3200.0,
+          "peak_live_bytes_median": 1672,
+          "retained_bytes_median": 0,
+          "certified_total": 384,
+          "unknown_total": 0
+        }
+      }
+    }
+  ],
+  "cost_artifacts": {
+    "/tmp/csgrs-strict-drilled-workflows/cost-v2/candidate": {
+      "sha256": "272023b9818a2e8de4018436f7cf09549ef5861605373dcd792532eaca2fcc96",
+      "bytes": 6055736
+    },
+    "/tmp/csgrs-strict-drilled-workflows/cost-v2/libhyperreal_candidate.rlib": {
+      "sha256": "f34ac5c676fa2f1deee045295461f9d7f8b6f286543139d0991c625894ec3cbc",
+      "bytes": 8045198
+    },
+    "/tmp/csgrs-strict-drilled-workflows/cost-v2/baseline": {
+      "sha256": "bf7a061dc6eebcb36984f702b67476836aa125046e591894e2123a17c9932a44",
+      "bytes": 6055080
+    },
+    "/tmp/csgrs-strict-drilled-workflows/cost-v2/libhyperreal_baseline.rlib": {
+      "sha256": "49f212e35858b5c368e3dde59eee636ece1697a4140f95d2e68967304f5b8fd5",
+      "bytes": 8040816
+    }
+  },
+  "cost_scope": {
+    "baseline": "f1092edb1 Hyperreal production source",
+    "num_dependency": {
+      "path": "/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps/libnum-4e6167d0c6b63d8a.rlib",
+      "sha256": "84ae3701117d1fa136f46cca158c8461abe06393d12ceb5f67c8a9314441118e"
+    },
+    "candidate": "Current source; only facts.rs and linear_algebra.rs differ in the copies",
+    "candidate_source_sha256": {
+      "lib.rs": "a95aafa088c9daee1033031e0a4d1bb72ba10549c4c88fbcc204ca3b38b69352",
+      "simple.rs": "a6a70cd37c7cf485b319a6c8141eae5adb68a41c0392e612e52a231c34e26931",
+      "main.rs": "343b9d572953fffae1707da4abbeb918fc11c7ad42ca47da7e30fd9c28f94b92",
+      "trace.rs": "379e1cc310d081c0cd7caae6ebcc59e059a0b65428c659cf0424a799f5a03222",
+      "dispatch_trace.rs": "bc110215433a88291763f32a91c067dbf7790394af6a1289bef860332ac9e834",
+      "problem.rs": "6985d78b1061ecddd0cac28aad91e985bcec091a473d34028d4a4461bc2c8663",
+      "serde.rs": "eb1652610ef810b2db067f2ae8b7064c248525c58788bbc154f264935f43b65f",
+      "structural.rs": "2ccd1ffc065ff92b4813ad1b26fac26aef572d4d112c99cdf29cee0f1ae39aaa",
+      "computable/mod.rs": "0893c3f730a2d435524ef0b8e3cb06f090a9dbb5ff03f976d947910786021006",
+      "computable/node.rs": "6946a854188dc1a7f4e91db7a83e151ae4bc45ab4112698e87e89c15eaad52c9",
+      "computable/approximation.rs": "1c2c4edbf1b69387dabe891e8bdfa426004f8c0804f1d2172b1c1b317774dd73",
+      "computable/constants.rs": "85fb1a0f88654e990f6c4a9bf5eda3392db04f9b3f54f31207ca5d3206eba8a4",
+      "computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+      "real/mod.rs": "5038db252c0bf553ae85f8f6197b806e57d9b517f94fcb35e419313a78068471",
+      "real/exact_set.rs": "5696f1a19a2b2b3471357bd89b62f90cd777edac3fd9635460beace72e6d7f1f",
+      "real/tests.rs": "f4ffb900827d76afa883380ec15196fb6753db720977b1fbb649632b2ccf465a",
+      "real/linear_combination.rs": "23a45ce96520d3f5f8c5214150ca07e89ede1983934bfb5cf823a9270071c21c",
+      "real/convert.rs": "4d7f275abbd1b51bc0766a2c98afc7737fed0cdbd93f7bda47e185f1ebf8a291",
+      "real/facts.rs": "748bc773c193cce377d89acbe9551a8f3c7e379778143bdd3941522193615174",
+      "real/arithmetic.rs": "5849f25f4edad07b6c1207aa4ef80250f6e804781f640dc2393dbfa4eda946a9",
+      "real/constructors.rs": "9df1f6461c721e2b8f601aef917707cf2bd1d9458b1a416ee8bc9fa840ec7a21",
+      "real/approximation.rs": "87bc6ec38e9e21bb600a675a766ca9b471d1cd519756662180f1faa95186894d",
+      "real/normal_reference.rs": "cbc1dc4caefc2d31fe0a664e681830f39261f728363be81ede22a54103dbecf7",
+      "verified/aggregate.rs": "446a40bd55378ee04e6d3760646d93312727a156dbc67628d4ec6bf73e6c32f9",
+      "verified/mod.rs": "be729856835810d26315c4b6e525e796421e6c39e868a4f7653986a369336756",
+      "verified/float.rs": "9e770026a2a723fb343c00ff1e9efd1994d73d2c308c30aebb4eb88bf7b5f373",
+      "verified/division.rs": "e5d1b9a29ddf017ec421ffe51e24a197b8186e76f804437a5a216c64fc5cae34",
+      "verified/lehmer.rs": "2d48c7616a324ea460c32e926272c1c8364a85dce09027e5bd02660d8201ffb6",
+      "verified/dyadic.rs": "fa7fe3e7e4b554846e01bf7d200eb650a7e55829e7909c1183c65d6604b93db0",
+      "verified/word.rs": "cc61661f89136537654a24e0977e47512cb8e5de324a303c90d9d276055baf92",
+      "verified/product.rs": "0cf9d15d809d3346683964e37135916780380e5d78408925b9104427059edb10",
+      "verified/fixed_gcd.rs": "43b3341f2f1b65f18d50c4af4a457959ec42daa13496f7ba77a97961c287a6e1",
+      "verified/accumulate.rs": "2de8f6b68a1759dd2ccbed6080dbd4644889d7e20e0dfce0e33b0bd87bb08a64",
+      "verified/limbs.rs": "e9ca4cfff89d1d3ef4c0876d958027288e120ca3eca784313bfc06cdffb3f333",
+      "verified/gcd.rs": "0fd60ca5b0ebaebd6b63e8665d3dd6cf2b4f150fbe44a013f51a3661d38cbbb5",
+      "verified/fraction.rs": "406faff9417c001f05a56850065bcdf06683ab090781ed50ece8a48433e7f1f3",
+      "rational/mod.rs": "7359ce7238042faa9249f70eb70d2fffc6db9b8aa49d3ae0ab43e3ad6ab42b6c",
+      "rational/convert.rs": "c84f46852ff44db898eaa09dfcec75c878063d986e916855a2de0ccfb08e96b2",
+      "rational/arithmetic.rs": "6d0267b29263539a0e3e4efe4ccd460f3928f1985e116f437a7b0f7cecf4e3c9",
+      "rational/parse.rs": "5fbef4663228b20089802845c86d23215fbbd6f9ba0d44500028efcf3081f4f9",
+      "rational/arithmetic/comparison.rs": "f783483141e4762e9f487597440bf8433bb37609007b623aa5591cd413ca725c",
+      "rational/arithmetic/toom4_multiplication.rs": "880dd405c14506c1c9f1a7875d227cb9df73117ecca478792318e7e8ceedc7fe",
+      "rational/arithmetic/toom6_multiplication.rs": "555d7d72d216fc511dc155fb258811700068420e1c812bd5576b6488f138036e",
+      "rational/arithmetic/aggregate_products.rs": "d9b41df790ef9fac422ce9d7d6a7a70c5223fd72eba70b46b81ce2a8b72a2a66",
+      "rational/arithmetic/queries_conversion.rs": "efd5258b2111325451ad2b396a03e5f0e0c180351a11d501fe85f78a4a62aab6",
+      "rational/arithmetic/tests.rs": "ca02e28060a1387978f860730df855d7ed274effb3bb8503d3f185205d9f6c53",
+      "rational/arithmetic/barrett_division.rs": "8e25f57908690d4312ed288a0604e4c947ce9347a550beb4261e54714f150e5d",
+      "rational/arithmetic/ops.rs": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+      "rational/arithmetic/representation.rs": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9",
+      "rational/arithmetic/algorithm_dispatch.rs": "d792bbfba44c09db2d174078a7a43f90c3fc91a71ad5da29eb4d2f4ad2310aa5",
+      "rational/arithmetic/ntt_multiplication.rs": "307de84e93811bb77569abe1fb91a6e3fb6b32bcb6795af1144a88324da7cc3b",
+      "rational/arithmetic/squares_powers.rs": "3105cea7ca98cae95bd7a5a07e81de1447c038e0c949ffe72b70a8cfee6008a8",
+      "rational/arithmetic/toom8_multiplication.rs": "47a99119a60ff8243cbd4646811f5247bc44c3a85d3271800bd65f285c53e931",
+      "rational/arithmetic/construction.rs": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+      "rational/arithmetic/as_ref.rs": "6ab3b9bfed2d24687d7b682a05bafaa57443feaa370e0cfc8f09f73d69d6fe61",
+      "rational/arithmetic/format_parse.rs": "650f92e47f72f9e6e55a9c599b14406da4a3eff341c11fb2528fafdf051d8d92",
+      "real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+      "real/arithmetic/quadratic_tower_sign_retention_tests.rs": "d82d4c28c00e3ee1a0f682996d340c83f676a84ad06b967ac1bab8ab71f39d03",
+      "real/arithmetic/comparison.rs": "ce02d790ba764b2a07a6aa1d884951d2dc7b31f49a2a411629262433a870658a",
+      "real/arithmetic/elementary_functions.rs": "46e3e19125a205306982e3a054fdcf39bdbe8beb8cefc1a91194058490bf88db",
+      "real/arithmetic/inversion.rs": "37a1ded495dd29e1da014e2d00e0849fc974c540c1b30f6bdcd959f772d05b9f",
+      "real/arithmetic/canonical_constants.rs": "228139ba0bf111f6974d7142df717a9644782f44349407bf1d22febca7024b83",
+      "real/arithmetic/tests.rs": "e6cacc8971ee1248b0352ee04146f99af30fc9a37841ef85cb1ef37edc412278",
+      "real/arithmetic/structural_helpers.rs": "ab7ea957c8b46c21a321f832f2794172de717ba12c3ac35ab7b5b9caabb57568",
+      "real/arithmetic/mul_div.rs": "0ec8e8570e24c027a2af7e48039b7551dba3012cfcc1d134b64705d7ef60b356",
+      "real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14",
+      "real/arithmetic/facts.rs": "293e8830947d259423f675e62313348c8684f3a8581523416145b90aa384f51f",
+      "real/arithmetic/decimal.rs": "3d4754ca17edc273c4648d2ca556451ef9d20a3a31ac8aff914fe37a24f73e22",
+      "real/arithmetic/add_sub.rs": "1aa96da52677cafc6c7ceb82730ee319ef3ca1fae4c1e1cd7cd449228abe1f34",
+      "real/arithmetic/linear_algebra.rs": "b1b4a19c3c622bfe55874a6574b74a1b86ab88284893dd8f98b815cdcda6e583",
+      "real/arithmetic/scientific.rs": "bc30b0bfdbaf8e030837c7e82ebdfd1ca736e3b6256f7d001b86dd5157366af4",
+      "real/arithmetic/pi_laurent_compaction.rs": "ab51ce183d89db6c2ace7d92a38be60a2b4140423cc1d574ccf309eb9a7e96a3",
+      "real/arithmetic/quadratic_tower_sign.rs": "4eeb2ac63238cca5dcd4fe1b9637f92d0adfe0b45b3b2f922d14b891a4f6fd39",
+      "real/arithmetic/format_parse.rs": "32a0b666ca3e0bb9097d4ede71edf944b9b01cb701e1d62a646f0f8791a8d197",
+      "computable/node/certified_planning_tests.rs": "4867cae76633e2670a092921fdc3e5925e026763c23e99f1f38328f31781747a",
+      "computable/node/precision_boundary_tests.rs": "8a29b30c571aac7b909a546f7d20f004ea1db5a5847d399d8029abedf6aea008",
+      "computable/node/logarithms.rs": "9874420245a129a67ab7e38fd2a87befa0bf418dcafa9b3f177600b30a2eb971",
+      "computable/node/tests.rs": "fffbd4d8c35eefbe3dbbbfa1914947a6d5904edd77b6b535fa855553521058c5",
+      "computable/node/linear_demand_tests.rs": "4a45fbfadb57c852fdfacd41fb8560357cf44d1aa22febb1b80c46679c9d1bf1",
+      "computable/node/algebra.rs": "344ff1fedb272531999a61836c9689bdd24ecfa528ab87b04a25632c09ddcd9d",
+      "computable/node/fractional_separation_tests.rs": "cb7ec9978691908d2a4b875f4e281a46a250ab2251e5411bda66c7340740ca2e",
+      "computable/node/approximation_queries.rs": "36c7bb2791a9738d74d9021b31e1813811d4eb317e5470d16d1d4345ac9d7ca8",
+      "computable/node/quadratic_tower.rs": "30946504f063620fb115ee1b59f09e0a33f01bb9c8a4fcc19f0c558d9a2fcab0",
+      "computable/node/representation.rs": "ad937e21fa6568e56a0dc9a9fa9e27b5758a85cc94e813719f74d50d686cee31",
+      "computable/node/exp_relation.rs": "f9f4cb450f83b91b94ba813c721a4410cba18bf9cec62c4c3e3468c62b106df2",
+      "computable/node/bounds.rs": "fe98a730f5da97e168cf6a8d68b3a8c42f1e623af445146795d0a0ba56af3948",
+      "computable/node/roots_inverse_hyperbolic.rs": "ec631190625f987238bf7d1f76a2f9e88633f42671c0e1870e63ad28f65282ae",
+      "computable/node/cache_rescale_tests.rs": "759110f39c1c689ef6e22b16741d669d116a6fca3aa7126e530b5c665e53918d",
+      "computable/node/magnitude_boundary_tests.rs": "f3d0aae47eede2e04cfa7f74fefc663074e59008507cced54118af1e1675c883",
+      "computable/node/exp_relation_tests.rs": "409f9fdc3522eb120665687e97047422c1394cd4dbded51311d4ec423101d7cd",
+      "computable/node/structural_analysis.rs": "631f2975f4498cbe98d524c30476abd9495442c902612f238dfd4beee7671933",
+      "computable/node/exp_relation_reuse.rs": "49e099199c7c86f7a3c24e7b61b1743d85867863ec1f8b2356a0a09d7e762dcd",
+      "computable/node/exp_relation_reuse_tests.rs": "7fe615354bb3c857b98fe67949ec8196d0f871b450ba3ca12d86aec287395790",
+      "computable/node/scale.rs": "22cfa6be575550541c1132489dbc396824e02918e6898866bdfbc28c23c66f1d",
+      "computable/node/primitive_constructors.rs": "22fa8cf51c5134d5023d066f09a18f68e23dbbcf22d59441a0e731dce3954478",
+      "computable/node/radical_tower.rs": "c8715bce27fab1406b8a6a705f586210ae3f22b393697ab4ebca951a8c4abb7f",
+      "computable/node/exp_trig.rs": "28d4e515eb4f3412ff4936c06b327ab27399087d349b18694436caae14277b1d",
+      "computable/approximation/inverse_hyperbolic.rs": "dd28f60617c20bbf0a35ba9d2261726f349e52035f30b7d011a3a26858c25e43",
+      "computable/approximation/logarithms.rs": "eb05426db39726dfc3b5e5e121850656fe7e6fd03c6bade0fe0533779319952b",
+      "computable/approximation/statistics.rs": "7ea93b6099b0d2dd9e7ac51c8c7dc20f42fb1fa7dc62896b25ebebbe0a8faa3d",
+      "computable/approximation/representation.rs": "c18e32769063a4afb47c77f67591c31572ca28afcead8a3172073305f6bf54e8",
+      "computable/approximation/trig.rs": "52ef2bfad7e8823b2966f2613bee335231ca72af2626a1fa403a01a02f888fa0",
+      "computable/approximation/precision_tests.rs": "066330f99f37534519d88e3bf69d354475acaf013c8dc80e1597894f040cb43b",
+      "computable/approximation/inverse_trig.rs": "a4ee2646773a3cc1f7a934a7cf6dbf8cf6ef614e102123abb6d8595160f5bed1",
+      "computable/approximation/exp_sqrt.rs": "2521a22ae139df4d60f9547b5ae7e3a001b185c978ff17b8d8176aeb299b7942",
+      "computable/approximation/arithmetic_kernels.rs": "240b4f8d1d898d4c85ff763956ef70c47dcfd3225c9f9e33e29909337517a91c",
+      "computable/approximation/dispatch.rs": "387244693a08166bccc44b32e1dc20f222b5539e574fdb71314267a6691f7501",
+      "computable/approximation/e_plan_tests.rs": "8a4cf5a1a8f2d168367cb033833734ca20e8646d451e015ddaf44389061f5334",
+      "computable/approximation/constants.rs": "2b93f0f44a2f2ee6b7368ce1ef43f672a3fe7169527d077b769e5776b98c6397"
+    },
+    "kind": "Paired scalar completion/resource probe, not a complete-workflow speed claim",
+    "flags": "Both direct rustc builds use identical command arguments except source/output paths. Default scalar feature, same frozen num and transitive dependencies. Separate real Cargo qualification covers default/all-features and downstream behavior.",
+    "samples": "Three fresh processes per revision, alternating order. Each process runs four cases by three APIs by two construction boundaries, 32 warmups and 128 measured operations per row. Prepared mode constructs operands once outside timing; rebuilt mode includes operand construction/drop. Scalar constant caches are not globally cold.",
+    "oracle": "Independent product cancellation and integer result; sign bounds for positive shifted sine factors and a strictly positive 1e-12 displacement. Certification is counted, never inferred from exit zero. All controls require certified correct signs. Baseline commutator Unknown is explicitly counted; its timing is not a faster/slower successful cancellation.",
+    "boundaries": "Timing includes operation, exact rational checks where applicable, certificate query, result materialization as Real and drop. Printing metric rows is outside timing. No scalar serialization or mesh output is timed. This is a scalar-construction/proof contract only.",
+    "resources": "System allocator counters for successful allocation calls, requested bytes, peak and retained live bytes above post-warmup baseline. Not total RSS or allocations outside System. External 8 GiB address space and 1800-second wall containment. No internal total-work/byte/cancellation bound claimed.",
+    "artifact_migration": "Opposite identical symbolic products now construct exact rational zero, so newly generated expression serialization may differ. Existing encoded expressions remain valid; no wire schema or public signature changes. This is a completeness extension, not a serialization-preserving optimization.",
+    "hardware": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           48 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  16\nOn-line CPU(s) list:                     0-15\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 7 5800X3D 8-Core Processor\nCPU family:                              25\nModel:                                   33\nThread(s) per core:                      2\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      91%\nCPU max MHz:                             4552.9521\nCPU min MHz:                             575.9760\nBogoMIPS:                                6800.15\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nVirtualization:                          AMD-V\nL1d cache:                               256 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                4 MiB (8 instances)\nL3 cache:                                96 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-15\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; Safe RET\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Mitigation; Clear CPU buffers\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+    "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+    "cargo_lock_sha256": "fe9041efcc584bf1884abbcaa2d893ad36c4a9b7a87fa62201f3c5a56d9fb647",
+    "limitations": "Shared host without CPU pinning; instrumented, small focused samples. No downstream speedup or unchanged mesh artifact claim.",
+    "retry": "cost-v1 failed before measurement: direct rustc omitted --check-cfg cfg(test). cost-v2 adds that expected configuration name to both library commands without enabling tests or relaxing -D warnings. Source copies, dependencies, probe, assertions, sample counts and all limits are unchanged; outputs use a fresh directory."
+  },
+  "pending_native_sha256": {
+    "crates/hypercurve/src/bbox.rs": "c145ab30c68433690f8827b7de7cc9c30c1707a1cdb7793cb81e33b3dba0ae4c",
+    "crates/hypercurve/src/bezier.rs": "257dc8fb654fa86f7d2d47089bd5137f5a1f53d3336127e76baf4cf7d05b8840",
+    "crates/hypercurve/src/bezier_fit.rs": "cbba8129249d814c997629e7d8373a985b6bf9b77ab2774dff4afff1bed4d762",
+    "crates/hypercurve/src/bezier_region.rs": "6ea7d9bb3bd2fadc96cb8736b59fc66b5f576460eee83ee5fb306b43a227bb1e",
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/src/bezier_region/offset_spans.rs": "4c6ffb8e36b5dfd3d9d030c016d96af7964f9a9e56f1b9c1abbbf91553f29ee6",
+    "crates/hypercurve/src/bezier_region/point_location.rs": "2d915ac75cd5d7a61b3440fecf0f0ffae8c6c25687e5c4f382077f8de3908672",
+    "crates/hypercurve/src/bezier_region/tests.rs": "c78ab04298572d06d51eec08aa3201e392a6fb663a0b1a65d5ce81e5c06c6318",
+    "crates/hypercurve/src/classify.rs": "6997d26ebfe4c50d3abf7ed296cb9cc121ab70754421172e21693bde005e81df",
+    "crates/hypercurve/src/contour.rs": "a6ef94566c3c68d6311f7fc7bd47f55e129858cb4d381ec6a8acde157fe4141c",
+    "crates/hypercurve/src/curve.rs": "5e9e1457cd9c7f875f0c730ef8ea88ce2f78a8eab1cd93b8e59463f57327468d",
+    "crates/hypercurve/src/curve_intersection.rs": "2d5b2566186174ed2cfc53de0c276560bc647c6f9a39004ffedcdd90f91f78f4",
+    "crates/hypercurve/src/curve_region_boolean.rs": "5d0a87272791632d128731c4ed78971fdac5717b594f33bd8513389401606471",
+    "crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs": "385a1080d7972a08a5082bb6c47ad19e2cfcc1012b4f6c45bfd618796b848344",
+    "crates/hypercurve/src/curve_region_boolean/regularization.rs": "5a542169b7e0dfe99e520da867a907303485a56b03b13491af4970044e9ca866",
+    "crates/hypercurve/src/offset.rs": "b83ee4f648f9ae4b0bcfc5b52f2553eaaf87f1c57c67e340d9ab101053bcffda",
+    "crates/hypercurve/src/policy.rs": "abbadb4d1345eb2ccdf50df57337e991abb999e479067851c5bb2e75f9f34202",
+    "crates/hypercurve/src/rational_bezier_general.rs": "372d81688c5c6e061ad62cff408dd974c7f4bc771dccb19389823e6edd8886ef",
+    "crates/hypercurve/src/segment.rs": "d253abef3276d8b56a99ad9a7273227d3c823b6f01a7b01a0ce3959b32057213",
+    "crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs": "ef2d56e6e5dcec355eb776a8218fba2c797db5b14eda9c1e2dd5ec79224b4fd0",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b",
+    "crates/hyperdrc/README.md": "3af373486b7b51887db4cbfd17b50c7f01c2c64b018a342b3ac970484c0acd9d",
+    "crates/hyperdrc/src/checks/area_tolerance.rs": "d659ed532de0f81477afaa00df6521f4625bb7ddf4af3e08d158f8300cc00d5b",
+    "crates/hyperdrc/src/checks/differential.rs": "90e491f2578abdb07a7c922058d0b579c1cbb1f3ccea872ffcdb9deb373a6951",
+    "crates/hyperdrc/src/checks/layer.rs": "df442cd2614061fadcb0a5a8019410aa36afa9999a5ccf128d91e52cd1ef6f06",
+    "crates/hyperdrc/src/checks/mod.rs": "7f085ea070136481b6a1550f1589ddf15d4dfec657e68679059a05fc93f05ca1",
+    "crates/hyperdrc/src/geometry.rs": "18826a139f20f4fa047ecf83b864ad8311c26e0965835d8df0c42412fdd37fc2",
+    "crates/hyperdrc/src/geometry/README.md": "f8145f2c515a5b35b70815c7b68d8fc50e893f9d41072d0913d00b22133c2eb0",
+    "crates/hyperdrc/src/geometry/primitives.rs": "a753ce71223326c4b1d92467ec64ce2ad1a7528bd2c3822135a62e0990b13070",
+    "crates/hyperdrc/src/geometry/stroke.rs": "193422c60cd9a6e86efb7d8f61cfd9baae4e7ce130d136a881c1150d270e212f",
+    "crates/hyperdrc/src/kicad.rs": "598c62dfddbb7cbc8840b5a31b02ddcb408b4e35771ee33d03994084ccd16f59",
+    "crates/hyperdrc/src/kicad/README.md": "01e8aca6832bce80152306ad74cfb20fae6ef7258ed833ff1c6692e842c204a7",
+    "crates/hyperdrc/src/kicad/tracks.rs": "6ea5c63821f0f79b7f548bdaf613e9fdce273dc42be5d2597070f7195f2ba227",
+    "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+    "crates/hyperdrc/tests/native_linear_strokes.rs": "84f86db87c666e019b54bad7bff57cbbb290fe23960cc891966134cddd0a7b74"
+  },
+  "workflow_frontier": {
+    "strict_certified_segments": [
+      8,
+      24
+    ],
+    "strict_undecided_segments": [
+      16,
+      32
+    ],
+    "qualified_approximate_segments": [
+      16,
+      32
+    ],
+    "original_16_segment_fixture_unchanged": true,
+    "exact_volume_comparison_16_segments": "unresolved",
+    "next_blocker": "The second neighboring-triangle coplanarity test retains the affine identity h(v-o)u-h(u-o)v-[h(v-o)o-h(u-o)o]=0 as an opaque expression. Diagnostic-v3 preserves the current trace. No trigonometric identity is required for that cancellation."
+  },
+  "representation_migration": "Opposite identical symbolic products now construct exact rational zero, so newly generated expression serialization may differ. Existing encoded expressions remain valid; no wire schema or public signature changes. This is a completeness extension, not a serialization-preserving optimization.",
+  "preserved_failed_trials": [
+    "diagnostic-v1: mixed Hypermesh dependency types",
+    "scalar-baseline-v1: incorrect positive precision exponents in two new controls",
+    "scalar-baseline-v2: two genuine reversed-product regressions",
+    "qualification-v1: OS disk quota in downstream dependency compilation",
+    "narrow-format-v1-failure.json: pre-write formatting equivalence check",
+    "cost-preparation-v1-failure.json: ambiguous num dependency selection",
+    "cost-v1: missing direct-rustc expected cfg(test) declaration; failed before measurement"
+  ],
+  "limitations": [
+    "Current ordinary strict drill is still undecided; successful scalar completion does not establish completed mesh geometry.",
+    "Existing 35 native curve/DRC edits remain unadmitted and byte-identical; original full-board cost failures and circuit fixture differences were not rerun here.",
+    "Structural comparisons use the existing DAG walk. Four factor comparisons bound the number of equality calls, not their input-dependent work or heap bytes. No new total-work, cancellation or retained-memory contract is claimed.",
+    "Eight GiB address-space and 1800-second wall limits are external containment, not kernel budgets.",
+    "No full CI/pre-push, released-package, MSRV, binding, sanitizer, formal-proof or whole-stack admission is claimed. No push performed.",
+    "Scalar cost samples are instrumented on a shared unpinned host. Baseline Unknown latency is not a successful-operation comparison; no downstream speedup or full mesh artifact equality claim."
+  ],
+  "strict_drilled_body_complete": false,
+  "full_plan_complete": false
+}

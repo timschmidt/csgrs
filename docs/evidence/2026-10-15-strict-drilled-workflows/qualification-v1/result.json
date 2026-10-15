@@ -1,0 +1,100 @@
+{
+  "commands": [
+    {
+      "name": "workspace-fmt",
+      "exit_code": 0,
+      "seconds": 12.83150506298989,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "1aefab589ad574ecb5d4ccdabd493a780e6516531993bc593477d923bc268c14"
+    },
+    {
+      "name": "included-fmt",
+      "exit_code": 0,
+      "seconds": 1.9542956543155015,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "115175e27b6263ba7ba5f2ba579c6ba46ac59ce5111b400d034918bd8e5da9db"
+    },
+    {
+      "name": "scalar-default",
+      "exit_code": 0,
+      "seconds": 36.68287600995973,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/hyperreal-4234254b1d45f4c0": "b6b788329991fff58179241f9af2158481cb67d3ad78a66267b52fccdb947071",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/adversarial_props-23fbfb7cef5ee581": "9447be7576197f297ad48d3c74d5cf8652e9ddce94c576b60c17957a39eadac4",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/adversarial_regressions-5d04d217656421b6": "f231dc4be9ed2e26f32f51bbfc3ef8f6977504b806b53f8b8595f040c273eac4",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/adversarial_semantics-58675a723c625f67": "2fe35d039279645f227f68be307af16031c5e340d91e79f587f2a344c46f255f",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/calculator_diagnostics-ef064cc07ef2d04f": "f9b86d69981e3e08bf5f0ca74d9bb97bf4bc453b7eeffae50e39675cf4ff9149",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/checked_decimal-70cdb742d44f70fc": "e5a35a07b3b757f1dd3c107056dec441128179237c64f49ebdfa8a5b525b1d53",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/checked_scientific-c0a643059fb8dee3": "f7429cd19e1cb823bb1cb8f7df57592e49b5084350e95f8a5ef261640f9c97ea",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/cli-2de71b6772144cd0": "3f13e07f28e86472146934d9bad2f2cb2dc3d135cf542f7a5bfaa5a6c972205c",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/determinant_product_cancellation-e600622a4bab9527": "0caf2556454674a43ae226ba6c05dfd8a59851fa92e1418b1135b2ab0d12edb0",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/exact_quadratic_normal_form-2b06dd32d996fe94": "b603438291208e66f9abdbcebc7221cf30df7e4942d98f0e8e5542667ccf2359",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/fixed_decimal-851c01731054de6e": "4749b3809eeda573ab3a06718d74a8e773a21c3a0d349bdf7a69a1d029d1318d",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/gmp_api_coverage-d2fe8e97878365c4": "bdabf9bd0de1c8d20a0ed9f0d4466e4e539e5347ea7163a825425fb9b249235b",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/multiquadratic_normal_form-5a8898b00f5a2c4f": "94e513c2f3393a1a154a9e8436b083558def5024ee4cf5c5732671468a0d188d",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/numeric_roundtrip_formats-67b8aa72c4c5f7ba": "cf455efed27f1e056173d2fc85124409c1a82c264057101121742c61b7bde532",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/numerical_cross_reference-af795541e14f3ef3": "51e0c960ef3cd941ee0df6703b790f542ab7404bf49de5062526ffc1233b3b70",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/precision_limits-6feea55c62b10a74": "ac46a479eb6a03af10699b463d36cb965a11b0f2293921a98f3c1198da615450",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/public_numeric_semantics-957b7ccaec5dc726": "57fc2908805e744852d17f4cb80e6bee2ec04553f88d259c14a52f14f2080c9c",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/rational_oracle-523dc6e3ab602e66": "fc61f1ba2e4f144c3de0d5e1e2b00cb3c2ea42fda37bfc9924a41e3e86f1ce1c",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/readme-07bcd81331b412f5": "5ce7b2949973c54f05f05d8c98a9ff7bc05b91981d353f4b409f74b1f98a5923",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/readme_metadata-c60fc91560bcc0ff": "e28650d139b61478e672153edb8ae4939cb2dc72dc13af7463a4aa7626fca5af",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/real_representations-f48380d1329521e3": "a91f474c99f1fb6bfbc0a373c11bff421dee135019ec066d3a9190db901a9f79"
+      },
+      "stdout_sha256": "579c058447ec3b372a2e5dccd9c5a104b8f975556df2633426fdef751b7de867",
+      "stderr_sha256": "859dc42c8210a9a1ee3a5ae5bbe9b85a32d2a278215aa4c3100680d0bde1b170",
+      "resources_sha256": "ecd77dfc398e7237befec074c33b271072a2e10f1e0cbec2bd8f33ef8ea8aefe"
+    },
+    {
+      "name": "scalar-all-features",
+      "exit_code": 0,
+      "seconds": 70.07376706879586,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/hyperreal-c4ce5bbc6487bbcc": "0ab28e8a23785dc66a80e5935d283675831d595c79c4d7e53eb3aa6c5f244d59",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/hyperreal-87f8ffbf1b6d3d7d": "fbb7a1ce56b6c114f7cf8e9fded350b09aa69c305feb2f092b48f050db504f1b",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/adversarial_props-b2df4244a2be7046": "4763f8a6809a071023e1b07bdda6dbe82ee7729ab75642ea5197d4e0552ff3e0",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/adversarial_regressions-a2370f1bc476be5c": "6a35fe5b99cbaded51352d26aa6b196411592527f79921e0ff4831060263c3c9",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/adversarial_semantics-772cfe9fd6c49175": "278016fb29b48a250e0c4bcc96aa6cfe8993e95f15bc07a64a45c5f65a9f76f0",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/calculator_diagnostics-f4de7f2df586345e": "778e2f8c99c5d7f035e229344cbf3f999866bef1452d7b24e0535c22657aa77c",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/checked_decimal-eaf657b48704c6c0": "4d2e9583342ac73e8261a968b8f833eccecdd59420539241cbdcfbc089fe0ae2",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/checked_scientific-ec92ee1f4e21310b": "927041e792bf9bf3ef534c37102d3cfd3dfb5d8231c3c50aeff09165e211399d",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/cli-a07596aa07a74f9f": "9e69b89fbb05cd7550abe243ff960f45b195d43d850fd93e139a01340096c77a",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/determinant_product_cancellation-deb76c121b9f0e0c": "e0cf2bfea6331b31b03217b1e36585d9e2b4ece492ca3edb5ecc1971487ba0e5",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/exact_quadratic_normal_form-b8aa58d0f6956f83": "b2a85663d6a1162ec8f1918d9df82182786e047c412048d9a1bb0d513e5675a5",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/fixed_decimal-e384c2439cc7d7af": "d10dbdb26669399f46c8f124944428998e3205e4a2949d72230eac2c29d9de1b",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/gmp_api_coverage-bb7769b6ee1db20a": "5cce372b980a777b14ab35cb05d8a631ee2ba85324c1769b7d5e2685dff34f90",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/multiquadratic_normal_form-68cfa5d8ab51b25f": "a67122d5861d22f9685f1cd2c0d565f3b0565e30806d763645b6d4e84f3f573e",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/numeric_roundtrip_formats-1490f2ba30313dc2": "8f5c5478102e63fd48b9acb0ea20366c6c524cf199453cc056d1c2419e852da4",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/numerical_cross_reference-993f4002c933107a": "fe977cffce1c72ede3ffc0b0635c814acb7bc0fce9b3d8c7990d1d1f7128eabb",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/precision_limits-26b129af62be481f": "7be60b78d81314782f56bdb39835bd9b62b7d3d01eb590e0c505e09ee2e5de7d",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/public_numeric_semantics-8fa3758efe94dca0": "8719b89511af638129d9e66e013f4c2d01c5daffed50e8578b9ea415c1e4725d",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/rational_oracle-ceb4312bcb7faa4a": "bbebaff29a03e58f61213e365f034b25d4bbf1773f5ced96bff6bdb0699dba1f",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/readme-1ac495475795a7f2": "dc0def88757467165ad39738ac0206a97a75ad1cb7e8262cd1d7307919a672a5",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/readme_metadata-40cef18327edcaa1": "e0a4028d5684f62f7b9e189dcbf67b63596bb255d4004cb6a47ba63b298beb8c",
+        "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/real_representations-ca445881b4a05174": "0deab340963bb2a2f82338b1ed8945f1445c3cdc55f3d72fa696ea6f18561bdd"
+      },
+      "stdout_sha256": "7c697ca79279d3a9106018c776a2492bb6d7c5e408e293e7453f725287878275",
+      "stderr_sha256": "08598b9f1ef6ba4a97a0ab9b380f599796d4f513a9eb2106126f9e5b24d2471b",
+      "resources_sha256": "d3f9a297da6249257459e29206ee920e221021269df3b5680982aa18b9b2bc8e"
+    },
+    {
+      "name": "foundations",
+      "exit_code": 101,
+      "seconds": 317.257393641863,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "bd5792abea0f4fea18dc7d3e4fdb648b92271304e0c10ac613f30fd9832d9930",
+      "resources_sha256": "da714971c6730dd0d921cc729d2dcb46cc2682a4b3cb8fe4c7b569cd8110e74b"
+    }
+  ],
+  "passed": false
+}

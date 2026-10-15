@@ -1,0 +1,13 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--reflink=auto",
+    "/tmp/csgrs-strict-drilled-workflows/candidate-v1/release",
+    "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "585d30be03beca8e1583477e539c888810252215f0b8f90d621bc76e35358019",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

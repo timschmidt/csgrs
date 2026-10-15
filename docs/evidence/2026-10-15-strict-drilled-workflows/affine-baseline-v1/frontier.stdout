@@ -1,0 +1,5 @@
+affine_zero_normal_form=None
+affine_zero_sign_0=Unknown { min_precision: 0 }
+affine_zero_sign_-512=Unknown { min_precision: -512 }
+affine_zero_sign_0=Unknown { min_precision: 0 }
+positive_displacement_sign=Known { sign: Positive, certificate: BoundedRefinement { min_precision: -512 } }

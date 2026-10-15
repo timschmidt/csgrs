@@ -1,0 +1,77 @@
+   Compiling serde_core v1.0.228
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling serde v1.0.228
+   Compiling libc v0.2.186
+   Compiling zmij v1.0.21
+   Compiling memchr v2.8.0
+   Compiling bitflags v2.11.1
+   Compiling camino v1.2.4
+   Compiling serde_json v1.0.149
+   Compiling error-chain v0.12.4
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling getrandom v0.4.2
+   Compiling rustix v1.1.4
+   Compiling itoa v1.0.18
+   Compiling cfg-if v1.0.4
+   Compiling linux-raw-sys v0.12.1
+   Compiling pulldown-cmark v0.9.6
+   Compiling cargo-platform v0.1.9
+   Compiling semver v1.0.28
+   Compiling same-file v1.0.6
+   Compiling fastrand v2.4.1
+   Compiling once_cell v1.21.4
+   Compiling unicase v2.9.0
+   Compiling tempfile v3.27.0
+   Compiling walkdir v2.5.0
+   Compiling cargo_metadata v0.14.2
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling glob v0.3.3
+   Compiling bytecount v0.6.9
+   Compiling skeptic v0.13.7
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling syn v3.0.6
+   Compiling peg-runtime v0.6.3
+   Compiling peg-macros v0.6.3
+   Compiling thiserror-impl v2.0.21
+   Compiling ply-rs v0.1.3
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling peg v0.6.3
+   Compiling rusty-fork v0.3.1
+   Compiling doc-image-embed v0.2.1
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling thiserror v2.0.21
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling linked-hash-map v0.5.6
+   Compiling proptest v1.11.0
+   Compiling quick-xml v0.39.4
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 2m 28s
+     Running unittests src/lib.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/csgrs-fbfb4e9daf55c3e5)
+     Running tests/adversarial.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial-842c3e2893ea39a9)
+     Running tests/adversarial_deep.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_deep-03ea85c4a3ca4e09)
+     Running tests/adversarial_extrusions.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_extrusions-9f72380cdc0e9866)
+     Running tests/adversarial_fixtures.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_fixtures-1bfbbb2b3102ac94)
+     Running tests/adversarial_stress.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/adversarial_stress-60d545275d51acf7)
+     Running tests/bounds_failures.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/bounds_failures-1388f390547a412c)
+     Running tests/curve_constructor_failures.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_constructor_failures-526a2455ed7f2aed)
+     Running tests/curve_metaball_failures.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_metaball_failures-12e31ddc3ba50cf2)
+     Running tests/curve_metaball_workloads.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/curve_metaball_workloads-8635ced8c7051c75)
+     Running tests/empty_composition.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/empty_composition-434e04985eb52b80)
+     Running tests/exact_linear_modeling.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/exact_linear_modeling-5c01586b36c4ea83)
+     Running tests/geometry_context.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/geometry_context-4fb8bb3cfb8b9774)
+     Running tests/mesh_boolean_context.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/mesh_boolean_context-45ce3ac7fe067ff8)
+     Running tests/metaball_failures.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/metaball_failures-042d98eda3a0eaed)
+     Running tests/metaball_workloads.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/metaball_workloads-cea9b8eab267209a)
+     Running tests/native_queries.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/native_queries-6415915da68f7139)
+     Running tests/planar_operation_failures.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/planar_operation_failures-0b782b7bdcc231b2)
+     Running tests/primitive_failures.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/primitive_failures-e022743191ca6ff4)
+     Running tests/readme.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme-10272e602cfa4187)
+     Running tests/readme_render_regression.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/readme_render_regression-5e34f4233b1639e0)
+     Running tests/rounded_rectangle_fidelity.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/rounded_rectangle_fidelity-fedfafd26a0fcb2d)
+     Running tests/sampled_profile_failures.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/sampled_profile_failures-6a6a901356d0e649)
+     Running tests/sdf_failures.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/sdf_failures-08d68b11031d84a7)
+     Running tests/slice_projection_contract.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/slice_projection_contract-d851c0e3c1271069)
+     Running tests/solid_cache.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/solid_cache-3e4a978118c941ec)
+     Running tests/transform_failures.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/transform_failures-eb8d3811598e9f83)
+     Running tests/wasm_certainty.rs (/run/user/1000/csgrs-strict-drilled-workflows/qualification-v2/release/deps/wasm_certainty-21ae39f414ececc8)

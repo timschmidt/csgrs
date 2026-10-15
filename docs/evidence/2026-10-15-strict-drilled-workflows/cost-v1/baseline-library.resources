@@ -1,0 +1,24 @@
+Command exited with non-zero status 1
+	Command being timed: "rustc --crate-name hyperreal --crate-type rlib --edition=2024 -C opt-level=3 -C embed-bitcode=no -D warnings --check-cfg cfg(verus_keep_ghost) --check-cfg cfg(feature, values("default", "simple", "cached-f32-approx", "cached-f64-approx", "dispatch-trace", "serde")) --cfg feature="default" --extern num=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps/libnum-4e6167d0c6b63d8a.rlib -L dependency=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/lib.rs -o /tmp/csgrs-strict-drilled-workflows/cost-v1/libhyperreal_baseline.rlib"
+	User time (seconds): 1.34
+	System time (seconds): 0.14
+	Percent of CPU this job got: 97%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.53
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 314428
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 28
+	Minor (reclaiming a frame) page faults: 57437
+	Voluntary context switches: 75
+	Involuntary context switches: 32
+	Swaps: 0
+	File system inputs: 4176
+	File system outputs: 32
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 1

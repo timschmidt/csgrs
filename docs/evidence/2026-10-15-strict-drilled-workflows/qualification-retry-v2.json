@@ -1,0 +1,6 @@
+{
+  "reason": "Preserved v1 ended with OS disk quota exceeded while compiling downstream dependencies, before foundations tests ran. 886 default and 991 all-feature scalar tests passed. Identical closed artifacts were consolidated, freeing 523423524 logical bytes; a fresh runtime-directory target avoids the /tmp quota. No failed target is resumed.",
+  "source_change": "Only unrelated formatting in the two included scalar files was restored; narrow-format-v2 proves identical rustfmt output. Workspace cargo fmt remains required. Standalone include formatting was already noncanonical on baseline, and is not widened into this correctness patch.",
+  "commands": "All semantic/lint/doc commands retained; native curve and all-feature CSGRS tests/Clippy added. No policy, fixture, or assertion weakened.",
+  "full_plan_complete": false
+}

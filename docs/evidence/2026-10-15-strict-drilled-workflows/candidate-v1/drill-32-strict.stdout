@@ -1,0 +1,2 @@
+segments=32 context=GeometryContext { predicates: PredicatePolicy(0) } body_faces=12 drill_faces=128
+outcome=PredicateUndecided { predicate: "Real sign classification" }

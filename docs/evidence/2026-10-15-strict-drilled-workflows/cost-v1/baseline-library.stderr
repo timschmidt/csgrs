@@ -1,0 +1,329 @@
+error: unexpected `cfg` condition name: `test`
+  --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/lib.rs:60:7
+   |
+60 | #[cfg(test)]
+   |       ^^^^
+   |
+   = help: expected names are: `feature` and `verus_keep_ghost` and 32 more
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+   = note: `-D unexpected-cfgs` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(unexpected_cfgs)]`
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/rational/arithmetic/algorithm_dispatch.rs:8:39
+  |
+8 | #[cfg(any(feature = "dispatch-trace", test))]
+  |                                       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/rational/arithmetic/algorithm_dispatch.rs:29:39
+   |
+29 | #[cfg(any(feature = "dispatch-trace", test))]
+   |                                       ^^^^
+   |
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/rational/arithmetic/algorithm_dispatch.rs:37:39
+   |
+37 | #[cfg(any(feature = "dispatch-trace", test))]
+   |                                       ^^^^
+   |
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/rational/arithmetic/tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/rational/arithmetic/algorithm_dispatch.rs:66:43
+   |
+66 |     #[cfg(any(feature = "dispatch-trace", test))]
+   |                                           ^^^^
+   |
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/rational/arithmetic/algorithm_dispatch.rs:73:43
+   |
+73 |     #[cfg(any(feature = "dispatch-trace", test))]
+   |                                           ^^^^
+   |
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/rational/arithmetic/algorithm_dispatch.rs:97:43
+   |
+97 |     #[cfg(any(feature = "dispatch-trace", test))]
+   |                                           ^^^^
+   |
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/rational/arithmetic/algorithm_dispatch.rs:112:43
+    |
+112 |     #[cfg(any(feature = "dispatch-trace", test))]
+    |                                           ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/rational/convert.rs:166:7
+    |
+166 | #[cfg(test)]
+    |       ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/approximation.rs:23:7
+   |
+23 | #[cfg(test)]
+   |       ^^^^
+   |
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/approximation.rs:27:7
+   |
+27 | #[cfg(test)]
+   |       ^^^^
+   |
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/approximation.rs:31:7
+   |
+31 | #[cfg(test)]
+   |       ^^^^
+   |
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/format.rs:299:7
+    |
+299 | #[cfg(test)]
+    |       ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/algebra.rs:9:7
+  |
+9 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/quadratic_tower.rs:892:7
+    |
+892 | #[cfg(test)]
+    |       ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/exp_relation_tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/exp_relation_reuse_tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/linear_demand_tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/fractional_separation_tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/cache_rescale_tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/precision_boundary_tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/magnitude_boundary_tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/certified_planning_tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/representation.rs:126:11
+    |
+126 |     #[cfg(test)]
+    |           ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+    --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/structural_analysis.rs:1333:11
+     |
+1333 |     #[cfg(test)]
+     |           ^^^^
+     |
+     = help: to expect this configuration use `--check-cfg=cfg(test)`
+     = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/computable/node/exp_relation.rs:144:11
+    |
+144 |     #[cfg(test)]
+    |           ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/real/mod.rs:16:7
+   |
+16 | #[cfg(test)]
+   |       ^^^^
+   |
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+  --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/real/arithmetic/pi_laurent_compaction.rs:32:7
+   |
+32 | #[cfg(test)]
+   |       ^^^^
+   |
+   = help: to expect this configuration use `--check-cfg=cfg(test)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/real/arithmetic/quadratic_tower_sign.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/real/arithmetic/quadratic_tower_sign.rs:136:7
+    |
+136 | #[cfg(test)]
+    |       ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/real/arithmetic/quadratic_tower_sign.rs:355:7
+    |
+355 | #[cfg(test)]
+    |       ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/real/arithmetic/tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/real/convert.rs:620:7
+    |
+620 | #[cfg(test)]
+    |       ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+ --> /tmp/csgrs-strict-drilled-workflows/cost-v1-source/baseline/src/real/tests.rs:1:7
+  |
+1 | #[cfg(test)]
+  |       ^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(test)`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: aborting due to 36 previous errors
+

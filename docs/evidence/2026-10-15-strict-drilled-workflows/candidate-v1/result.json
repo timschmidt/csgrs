@@ -1,0 +1,117 @@
+{
+  "commands": [
+    {
+      "name": "scalar-regressions",
+      "exit_code": 0,
+      "seconds": 47.1948082651943,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps/determinant_product_cancellation-e600622a4bab9527": "1da8233e1a8c2245d8f5879cc83b85e7f7eac0174dfb417b2682672a1917a8db"
+      },
+      "stdout_sha256": "469634da8341b9a91503dbd97de255dbc58cf11cbe902e0ef9038874236e9dbd",
+      "stderr_sha256": "fd103e837086b97df379e9b3a0306c78dd360762415d7e811169c0a43b334bec",
+      "resources_sha256": "80dc90b5fc65899b5142752ad22bbe38d4a599a635e17dd2484ef497397de33b"
+    },
+    {
+      "name": "root-library",
+      "exit_code": 0,
+      "seconds": 128.27793487906456,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "b9c8e657b0fad79e4d6dba2118ea8c2424ae1b00e3685cd11742eff01e682e62",
+      "resources_sha256": "e719a62caa3ae68cc3237f1fc8173d44f61f81ba55c41ec55fbcd764b6eda451"
+    },
+    {
+      "name": "probe-build",
+      "exit_code": 0,
+      "seconds": 2.5150349480099976,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "0423d987d88ddb79be23fb319e89f0e79368b9f705c40cfc78b21c739ad73810"
+    },
+    {
+      "name": "drill-16-strict",
+      "exit_code": 0,
+      "seconds": 1.9799542129039764,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "9748453ab821118020a3548185cf77fef106ec10722a43c38151cfd52f2f7133",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "d890d872e9f29ac1b2ecb3f945adea1a26a068392526d75787828fea691ac4eb"
+    },
+    {
+      "name": "drill-16-approximate",
+      "exit_code": 0,
+      "seconds": 2.197030908893794,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "43f0f925a927d5bcb48ac0f728cf7f38bd826397007b91d88453b6fd3a351853",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "32c15d636ec9bbe7311d8fe2b0abeb0f6dd0cd9a1ee479e21a7a8dae725ebaeb"
+    },
+    {
+      "name": "drill-8-strict",
+      "exit_code": 0,
+      "seconds": 1.994933774229139,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "02c2d7e2c1331914d8c0ba7aebf895c8bf9b0ba0efcbbe73986cb36486995508",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "5482a3bafd2056d301477c1b7646ced0ad3d6de8558ab66c8b128a2828d6a597"
+    },
+    {
+      "name": "drill-8-approximate",
+      "exit_code": 0,
+      "seconds": 1.9799102651886642,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "72a565dcb2554196181053d4df073bcfd74bdb67516368e4f91edf4072867aac",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "633f18b1559aed374f7f1bea68645f3cf933f076cf298d6a670cf70517986b39"
+    },
+    {
+      "name": "drill-24-strict",
+      "exit_code": 0,
+      "seconds": 2.4974836632609367,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "9ffae3af03e777f50f99befba7fcdc1e9c2ffb9997318b0c460d4d74b2b51065",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "a64f37a5d09729d6ff62d8605ec47bd246b645e63ac44be3975ee67cdeacd598"
+    },
+    {
+      "name": "drill-24-approximate",
+      "exit_code": 0,
+      "seconds": 2.5210846229456365,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "a5a308e59ccc7bdb11e934bb5098a8701f1aff216e74c69c4b47f84d0f3a41d3",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "4dd6c177cd07d51b2a15bb7e52d2c58524a9202fd071a136dd576b0a1710d07a"
+    },
+    {
+      "name": "drill-32-strict",
+      "exit_code": 0,
+      "seconds": 1.9360630363225937,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "91a6971aeec90d0c96b0c2e513c0219a10a9be0804f62bc234d49f509642f329",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "744b91ee6513bab1147f6fd1d10168ecd3af11a0d2494d0e926ca9190f9c5f7b"
+    },
+    {
+      "name": "drill-32-approximate",
+      "exit_code": 0,
+      "seconds": 2.8385397088713944,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "c9a7c7523f63d7ec9f69fd441288f33fc1de95f70417ee12a4a6eab5a5f0ca81",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "3eafddce6ee461acd71939138970adc77ab9ec76aaad7bea28d274fda913bcdb"
+    }
+  ],
+  "passed": true
+}

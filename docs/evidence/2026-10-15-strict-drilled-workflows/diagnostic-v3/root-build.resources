@@ -1,0 +1,23 @@
+	Command being timed: "rustc --crate-name csgrs --crate-type rlib --edition=2024 -C opt-level=3 -C debuginfo=1 -C force-frame-pointers=yes -D warnings /home/tim/Documents/GitHub/workspace/csgrs/src/lib.rs -L dependency=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps -L dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/strict-drilled-workflows/diagnostic-v3 -o /home/tim/Documents/GitHub/workspace/csgrs/target/strict-drilled-workflows/diagnostic-v3/libcsgrs.rlib --cfg feature="curve" --extern hyperreal=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps/libhyperreal-bd1ab828184ac69a.rlib --extern hyperlattice=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps/libhyperlattice-5ffa110827bfce9d.rlib --extern hyperlimit=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps/libhyperlimit-6781fa9073ad42e6.rlib --extern hypertri=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps/libhypertri-2f991b7c287fd1c7.rlib --extern hypercurve=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps/libhypercurve-ddc651da5358133b.rlib --extern hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/strict-drilled-workflows/diagnostic-v3/libhypermesh.rlib --extern hyperphysics=/home/tim/Documents/GitHub/workspace/csgrs/target/strict-drilled-workflows/diagnostic-v3/libhyperphysics.rlib --extern thiserror=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps/libthiserror-5e8fef11be9f720a.rlib"
+	User time (seconds): 12.92
+	System time (seconds): 0.53
+	Percent of CPU this job got: 407%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.30
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 492088
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 194285
+	Voluntary context switches: 164
+	Involuntary context switches: 3892
+	Swaps: 0
+	File system inputs: 64
+	File system outputs: 88400
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

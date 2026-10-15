@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.8541954080574214,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "5eac34b727ce9f52c322558dc4a1c2c24f10fe2baaf4b2b83f9dcd1462ee358f"
+    },
+    {
+      "name": "baseline-library",
+      "exit_code": 1,
+      "seconds": 3.409651231020689,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "81e12fe7a556979ef5c3a4b9c99165e3d1cf46d363426a8c12c67e6b056f0470",
+      "resources_sha256": "35cca0f08b3e115e5eddcfcc3b5f8e80cc58d05b26cd54acc912792a60290e5e"
+    }
+  ],
+  "passed": false
+}

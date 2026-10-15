@@ -1,0 +1,207 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {
+    "target/strict-drilled-workflows/diagnostic-v2/probe": "f6db449ed32435bc51d789957f912f57192b130795abdd76e8a683b772314972",
+    "target/strict-drilled-workflows/diagnostic-v2/libhyperphysics.rlib": "59e9203cdccab8988f3b61520726a54462e93099c8213d0681b5220d267429ca",
+    "target/strict-drilled-workflows/diagnostic-v2/libcsgrs.rlib": "bfb5e6e964bcb617e2f55c86221fbf785d50e223c4311af58c8194aa74ab549b",
+    "target/strict-drilled-workflows/scalar-baseline-v1/regressions": "dfe628f55d7c08e1357438b8359ed318f38d19168eeb93ba1db43ca37556fe6c",
+    "target/strict-drilled-workflows/diagnostic-v1/libhypermesh.rlib": "68e087e080eca641c7863ec058a66d33764f53f0cf955af4f40f7e27c2c463a1",
+    "target/strict-drilled-workflows/baseline-v1/probe": "11f2b3273e12d94b1666bbe3e9115ea1f77e8ee3bf44074ee5d1c97b472e4dbc",
+    "target/strict-drilled-workflows/scalar-baseline-v2/regressions": "6dacf3be2f223ec0e7dbbe61eb35e267c13d7bc1be11917ffd4528180c4a488e",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/lib.rs": "f3257e44e83014618d708eb2b5a5f87eeac7c2f2d2f642f6540d4ae62a450c41",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/polygon.rs": "987632334463b857db15cf588e958d92aedbf43be216f19156d08adeee491b4c",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/geometry.rs": "cdb39e75c18da274f0b7d8889954c23f21c9e27f0c1dbb647524bd2b6b018392",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/test_support.rs": "964458cf6762113e751af206632dc2c2b6bd05b603132dab804b252a320510f6",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/boolean.rs": "480e79adbf54b64ecfe55253231e2b768750f5120325c0cbe34d80ff13035b74",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/bvh.rs": "59077578e8420eddfa0b7cbaafef1763fa836a1f46911c2ddda77340531d1c8b",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/surface_nets.rs": "fdaee2a9d3f349ff9332913fa49faddb80caa6796a04e8d28d8e4709b25f5b58",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/storage_hash.rs": "e44b486dbe5c9d7fb32847c22cbcff55fb5e52e692ffd8da1ba4c1962087653d",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/convex_hull.rs": "189cfebf09064054543d4c5e1752536ceaf487719b156fc811e667fba1ce46b6",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/intersection.rs": "be645cac823431ade0543123c66287d7e6174a68b793e1dcff860111133bded4",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/point_interner.rs": "3cf6dd2b4323c448f590afca6ec239927807f2822d209df6c06caa76ef191fdb",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/winding.rs": "9c44eb96ec1d9777b881f06f22b48e6be343589c7f491b843d0f6863a6b52ae0",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/mesh.rs": "b5aea5768f440efe36681ca885cd6566a139e429baf15fcb785bee2455c158a0",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/clip.rs": "20b73eec0fa0d42c8ca56fbacb50d77be5f694d57acfec172e08e4c0dba42869",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/error.rs": "17c17476bf5a6a4204ecbe888247c864b7866a643bacffbc91bbe8fdfbe7459f",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/gpu.rs": "8f3acdd3d2782156a1723f62bdd66380bc00d9f2d9b8ca8fcb651a568e867ab1",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/trace.rs": "9ccb81cb1ea1ecaddccd0023dbeaf16001d5a796763a38c97ec85fad3adc4077",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/output.rs": "6d553f8699da66fe37fc1d3ea954c21a1b780e9e8e7b28015988e9c26a378cc7",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/section.rs": "79634958cb26b00e87cbc6b53706643d07fe03bf8322978cbf53dc196ca952da",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/predicate.rs": "ef384d4d8bf3516aaa8a0f1b7f7246c5fa610fedb4e2d5ab7defa268c7a4d9b3",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/context.rs": "19e766631db74d9ca23d3af2a9970f15cf100b96bc0ca80e2a4741ad4e81d1e7",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/surface_arrangement.rs": "cf5ac56fdea3439c89ac98c47143a090aadab827dc02f97b1085dda0dee6e736",
+    "/tmp/csgrs-strict-drilled-workflows/diagnostic-v1/hypermesh/src/mesh/fact_identity_tests.rs": "7287ff9e14d53111778af4b2878d3796646cca0f22919dce439f611b07fb0aac",
+    "docs/evidence/2026-10-15-strict-drilled-workflows/drill_probe_v1.rs": "6e75df85847d4f64f463efd46da78891349447f1457166a9d22369e1a33cfaa5",
+    "docs/evidence/2026-10-15-strict-drilled-workflows/validate_v2.py": "585d30be03beca8e1583477e539c888810252215f0b8f90d621bc76e35358019"
+  },
+  "base_commit": "f1092edb1b1e8819a5a9d0448e943ac494c3bbe5",
+  "runner_sha256": "585d30be03beca8e1583477e539c888810252215f0b8f90d621bc76e35358019",
+  "phase": "candidate-v1",
+  "commands": [
+    [
+      "scalar-regressions",
+      [
+        "cargo",
+        "test",
+        "-p",
+        "hyperreal",
+        "--release",
+        "--test",
+        "determinant_product_cancellation",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "root-library",
+      [
+        "cargo",
+        "build",
+        "-p",
+        "csgrs",
+        "--release",
+        "--lib",
+        "--no-default-features",
+        "--features",
+        "curve"
+      ]
+    ],
+    [
+      "probe-build",
+      [
+        "rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=3",
+        "-D",
+        "warnings",
+        "--extern",
+        "csgrs=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/libcsgrs.rlib",
+        "-L",
+        "dependency=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-strict-drilled-workflows/drill_probe_v1.rs",
+        "-o",
+        "/tmp/csgrs-strict-drilled-workflows/candidate-v1/probe"
+      ]
+    ],
+    [
+      "drill-16-strict",
+      [
+        "/tmp/csgrs-strict-drilled-workflows/candidate-v1/probe",
+        "16",
+        "strict"
+      ]
+    ],
+    [
+      "drill-16-approximate",
+      [
+        "/tmp/csgrs-strict-drilled-workflows/candidate-v1/probe",
+        "16",
+        "approximate"
+      ]
+    ],
+    [
+      "drill-8-strict",
+      [
+        "/tmp/csgrs-strict-drilled-workflows/candidate-v1/probe",
+        "8",
+        "strict"
+      ]
+    ],
+    [
+      "drill-8-approximate",
+      [
+        "/tmp/csgrs-strict-drilled-workflows/candidate-v1/probe",
+        "8",
+        "approximate"
+      ]
+    ],
+    [
+      "drill-24-strict",
+      [
+        "/tmp/csgrs-strict-drilled-workflows/candidate-v1/probe",
+        "24",
+        "strict"
+      ]
+    ],
+    [
+      "drill-24-approximate",
+      [
+        "/tmp/csgrs-strict-drilled-workflows/candidate-v1/probe",
+        "24",
+        "approximate"
+      ]
+    ],
+    [
+      "drill-32-strict",
+      [
+        "/tmp/csgrs-strict-drilled-workflows/candidate-v1/probe",
+        "32",
+        "strict"
+      ]
+    ],
+    [
+      "drill-32-approximate",
+      [
+        "/tmp/csgrs-strict-drilled-workflows/candidate-v1/probe",
+        "32",
+        "approximate"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/tmp/csgrs-strict-drilled-workflows/candidate-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P7",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P20",
+    "P21",
+    "P24",
+    "P25",
+    "P27",
+    "P35",
+    "P36",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "Hyperreal exact structural product identities",
+    "Hypermesh plane predicates and Boolean topology",
+    "CSGRS modeling composition and certainty"
+  ],
+  "domain": "Opposite products of two structurally equal Real factors, with either factor order, are exactly zero without refinement. Same-sign products and unequal factors must retain their value. Downstream target is the unchanged 16-segment radius-2 polygonal drill through a 12 by 12 by 4 cuboid; no analytic-cylinder claim.",
+  "consumers": [
+    "Real::diff_of_products",
+    "Real::signed_product_sum",
+    "Real::active_signed_product_sum",
+    "Hypermesh cross products, planes and Boolean arrangement",
+    "CSGRS strict drilled-body workflow"
+  ],
+  "missing_acceptance_test": [
+    "crates/hyperreal/tests/determinant_product_cancellation.rs",
+    "Original tests/mesh_boolean_context.rs drill fixture, currently expected undecided; no policy or resolution weakening"
+  ],
+  "semantic_oracle": "Independent ring identity a*b-b*a=0, exact negative nonzero and same-sign controls. Downstream acceptance additionally needs independent point membership, polygonal volume and a separate topology check; program exit zero alone is not certified completion.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: 33dbf0359 admits identical section proof reuse with preserved exact output, certainty and explicit cost trade-offs. Current work reproduces ordinary strict drilled-solid failure; 35 pending native files and full goal remain open."
+}

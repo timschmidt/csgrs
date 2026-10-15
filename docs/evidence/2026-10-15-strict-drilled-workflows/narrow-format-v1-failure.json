@@ -1,0 +1,1 @@
+{"status":"pre-write assertion failed","reason":"The reconstructed patch retained one extra blank line before the new identity check; rustfmt outputs were not byte-identical. No source was written. Corrected preparation is separately versioned as v2."}

@@ -1,0 +1,33 @@
+[
+  [
+    "prepare-target",
+    [
+      "mkdir",
+      "/tmp/csgrs-strict-drilled-workflows/affine-baseline-v1"
+    ]
+  ],
+  [
+    "probe-build",
+    [
+      "rustc",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-D",
+      "warnings",
+      "--extern",
+      "hyperreal=/tmp/csgrs-strict-drilled-workflows/cost-v2/libhyperreal_candidate.rlib",
+      "-L",
+      "dependency=/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-strict-drilled-workflows/affine_plane_probe_v1.rs",
+      "-o",
+      "/tmp/csgrs-strict-drilled-workflows/affine-baseline-v1/probe"
+    ]
+  ],
+  [
+    "frontier",
+    [
+      "/tmp/csgrs-strict-drilled-workflows/affine-baseline-v1/probe"
+    ]
+  ]
+]

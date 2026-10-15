@@ -1,0 +1,23 @@
+	Command being timed: "cargo test --locked --release -p hyperreal --all-features --lib --tests -- --test-threads=2"
+	User time (seconds): 127.36
+	System time (seconds): 4.84
+	Percent of CPU this job got: 198%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:06.56
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 860840
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 7
+	Minor (reclaiming a frame) page faults: 1696255
+	Voluntary context switches: 29210
+	Involuntary context switches: 16039
+	Swaps: 0
+	File system inputs: 920
+	File system outputs: 184
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

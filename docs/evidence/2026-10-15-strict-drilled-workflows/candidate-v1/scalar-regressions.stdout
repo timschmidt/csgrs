@@ -1,0 +1,10 @@
+
+running 5 tests
+test equal_ordered_symbolic_products_keep_the_identity ... ok
+test equal_sign_products_are_added ... ok
+test independently_reconstructed_factors_keep_the_identity ... ok
+test nearby_unequal_factors_do_not_cancel ... ok
+test reversed_symbolic_products_cancel_before_refinement ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

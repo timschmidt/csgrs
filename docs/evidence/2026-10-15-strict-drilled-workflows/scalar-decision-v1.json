@@ -1,0 +1,37 @@
+{
+  "status": "kept",
+  "kind": "exact scalar completion extension with disclosed lower-priority cost tradeoffs",
+  "baseline_commit": "f1092edb1",
+  "implementation_commit": "775af8774",
+  "assessment": "scalar-assessment-v1.json",
+  "confirmation_evidence": "cost-confirmation-assessment-v1.json",
+  "acceptance_record": "scalar-acceptance.md",
+  "reason": "Structural equality and commutativity prove cancellation before product expansion. Eight scalar regressions and two native plane regressions establish the extension and nonzero controls. All 13 final-source qualification commands pass. The shared helper preserves the exact-rational fast path, opposite-sign requirement and existing fallbacks. It adds certified work without weakening policy, fixtures, evidence or error behavior.",
+  "cost": {
+    "scope": "Instrumented scalar construction and sign proof, prepared and rebuilt inputs, three APIs. Shared unpinned host; no application speedup or statistical-significance claim.",
+    "short_batches": "Three fixed process pairs, 128 operations per row. Baseline: 6912 certified and 2304 Unknown; candidate: 9216 certified and zero Unknown. All 18 completed-control medians were slower by 0.15% to 31.29%. These observations and every raw sample remain preserved.",
+    "long_batches": "Five fixed process pairs using the same frozen binaries, 4096 operations per row. Baseline: 368640 certified and 122880 Unknown; candidate: 491520 certified and zero Unknown. Completed-control median changes range from -10.54% to +4.66%; individual pair ratios remain available and include larger adverse variation.",
+    "adverse_completed_controls": "Long-batch prepared positive-sum controls are 1.50% to 4.66% slower; prepared unequal-factor controls are 0.88% to 1.76% slower. The prepared rational active-product-sum median is 3.39% slower. These costs are retained as a tradeoff for the higher-priority certified completion extension.",
+    "memory": "Existing controls have unchanged allocation-call counts and peak live bytes. All measured rows retain zero additional live bytes. Newly certified prepared cancellation uses zero allocations; rebuilt cancellation uses 124 allocations per operation. The undecided baseline used 233 and 1479 respectively, which is not a comparison of equally completed contracts.",
+    "size": "Probe executable increases by 656 bytes and direct-rustc Hyperreal archive by 4382 bytes. These are focused artifacts, not release-distribution size estimates.",
+    "representation": "New opposite identical products construct rational zero and may serialize differently from the previously retained expression. No signature or wire-schema change; existing encoded expressions remain valid. Canonical artifact expectations must distinguish source revisions. This is not a serialization-preserving optimization.",
+    "evidence": [
+      "docs/evidence/2026-10-15-strict-drilled-workflows/scalar-assessment-v1.json",
+      "docs/evidence/2026-10-15-strict-drilled-workflows/cost-confirmation-assessment-v1.json"
+    ]
+  },
+  "next_frontier": {
+    "evidence": "affine-baseline-v1/frontier.stdout",
+    "identity": "h(v-o)u-h(u-o)v-[h(v-o)o-h(u-o)o]=0",
+    "observed": "Exact rational normal form is None; signs at precision 0, -512, 0 remain Unknown. Adding exact 1/10^12 certifies Positive. The retained original 16- and 32-segment strict drilled-body fixtures remain undecided.",
+    "required": "A scalar-owned proof of the distributive identity under a declared resource contract, followed by the unchanged full workflow and semantic/topological acceptance checks. No trigonometric identity is needed for this reduced cancellation."
+  },
+  "limits": [
+    "No internal total-work, heap-byte or cancellation bound is introduced. At most four structural equality calls is not a bound on their DAG work. Tests use external 8 GiB per-process address-space and 1800-second wall containment.",
+    "The 35 pending native curve/DRC files remain byte-identical and unadmitted. Original full-board cost failures and seven previously reproduced circuit fixture failures remain open and were not rerun here.",
+    "The first qualification failed on disk quota. Failed diagnostic, harness and cost trials remain preserved; fresh targets were used for retries. Standalone formatting churn was removed after proving formatted Rust equivalence, because those included files were already noncanonical before this change.",
+    "No full CI/pre-push, released-package, MSRV, bindings, sanitizer, formal-verification or whole-stack admission is claimed. No push performed."
+  ],
+  "strict_drilled_body_complete": false,
+  "full_plan_complete": false
+}

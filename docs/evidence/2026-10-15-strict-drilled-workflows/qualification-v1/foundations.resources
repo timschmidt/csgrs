@@ -1,0 +1,24 @@
+Command exited with non-zero status 101
+	Command being timed: "cargo test --locked --release -p hyperlimit -p hyperlattice -p hypersolve --all-features --lib --tests -- --test-threads=2"
+	User time (seconds): 520.48
+	System time (seconds): 19.27
+	Percent of CPU this job got: 174%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 5:09.58
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2133844
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1318
+	Minor (reclaiming a frame) page faults: 7376010
+	Voluntary context switches: 30586
+	Involuntary context switches: 45380
+	Swaps: 0
+	File system inputs: 260296
+	File system outputs: 72
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 101

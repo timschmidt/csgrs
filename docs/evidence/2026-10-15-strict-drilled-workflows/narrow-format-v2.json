@@ -1,0 +1,19 @@
+{
+  "files": {
+    "crates/hyperreal/src/real/arithmetic/facts.rs": {
+      "baseline_sha256": "195c6abd8ba22527a0ec5712e8cb949665ff51f3c85ec7c215d3210750e4353b",
+      "tested_v1_sha256": "d75dbf5cca2ff572caec363c6605ea36a4bd4a74912d4c6b3a07399ccdf105d5",
+      "final_sha256": "293e8830947d259423f675e62313348c8684f3a8581523416145b90aa384f51f",
+      "formatted_rust_identical": true,
+      "baseline_already_matches_standalone_formatter": false
+    },
+    "crates/hyperreal/src/real/arithmetic/linear_algebra.rs": {
+      "baseline_sha256": "642e6aa0c79baa0d6939acb4bcb442643df1087e8fc11cec38f1e342efd2538a",
+      "tested_v1_sha256": "1d303a5ae4676488a9c4b7c5460702b5694da4a18c436d5fdeae807b050fddd6",
+      "final_sha256": "b1b4a19c3c622bfe55874a6574b74a1b86ab88284893dd8f98b815cdcda6e583",
+      "formatted_rust_identical": true,
+      "baseline_already_matches_standalone_formatter": false
+    }
+  },
+  "scope": "Both included files already differ from standalone rustfmt on the baseline. Preserve existing unrelated formatting. New source produces exactly the same rustfmt output as the fully formatted candidate; Cargo workspace formatting remains required. Final checks run on the narrowed patch."
+}
