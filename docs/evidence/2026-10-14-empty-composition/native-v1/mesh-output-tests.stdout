@@ -1,0 +1,8 @@
+
+running 3 tests
+test output::tests::bounded_results_convert_with_one_shared_position_allocation ... ok
+test output::tests::closure_evidence_reports_degenerate_duplicate_and_open_topology ... ok
+test output::tests::conversion_rejects_every_malformed_carrier_path ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 177 filtered out; finished in 0.00s
+

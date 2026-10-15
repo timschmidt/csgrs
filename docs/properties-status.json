@@ -3,7 +3,7 @@
   "base_revision": "0c5508b89",
   "scope": "All 39 properties, all 14 known open targets, and crate-specific future work remain in scope. Inventory and documentation alone do not prove implementation.",
   "current_work": {
-    "updated_on": "2026-10-14",
+    "updated_on": "2026-10-15",
     "existing_worktree_changes_in_scope": true,
     "accepted_cache_contract": "Warming may strengthen Unknown into Certified and reuse prior higher-precision proofs; it must never contradict or weaken an available certificate.",
     "main_scalar_api": {
@@ -5500,6 +5500,80 @@
         "qualified_ast_and_bytecode_identical": true,
         "frozen_campaign_sources_preserved": true
       }
+    },
+    "empty_result_composition": {
+      "updated_on": "2026-10-15",
+      "status": "Implemented with the recorded local and binding qualification; broader plan requirements remain open.",
+      "properties": [
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P25",
+        "P35",
+        "P37"
+      ],
+      "owners": [
+        "CSGRS modeling Boolean composition",
+        "Hypermesh batch-to-mesh conversion"
+      ],
+      "domain": "Canonical empty geometry and the existing nonempty closed-PWN domain, under STRICT or APPROXIMATE_512. Noncanonical emptiness, malformed topology and undecided validation remain typed failures.",
+      "implementation": "Reduce one-empty operations through the kernel truth program, retain original operand indices in diagnostics, and convert empty batch rows to zero positions and zero triangles. Nonempty rows retain their shared arena.",
+      "baseline": "Eight new acceptance tests failed on the target revision; the initial candidate passed all eight plus 13 existing tests. The final suite adds hole/disconnected and post-warming mutation cases, for ten acceptance tests.",
+      "native_test_totals": {
+        "mesh-output-tests": {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 177
+        },
+        "mesh-boolean-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "csgrs-all-feature-tests": {
+          "passed": 167,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-tests": {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "binding_consumers": [
+        "C f64 ABI",
+        "C++ F64 wrapper",
+        "Python TriangleMeshF64 wrapper",
+        "Generated WASM JavaScript runtime and TypeScript declarations"
+      ],
+      "checks": [
+        "Final workspace formatting",
+        "Strict minimal-feature Clippy",
+        "Strict all-feature/all-target Clippy for csgrs, hypermesh and csgrs-ffi",
+        "Strict all-feature rustdoc for csgrs, hypermesh and csgrs-ffi"
+      ],
+      "evidence": "docs/evidence/2026-10-14-empty-composition/closure-v1.json",
+      "remaining": [
+        "Primary constructors and convenience operations still contain silent-empty fallbacks; typed failures through all adapters and bindings require further work.",
+        "These receipts describe operation-local decisions. End-to-end construction provenance, including export/import, remains open.",
+        "Ordinary strict-mode completion, including the original drilled-body case, remains open; no policies or fixtures were weakened here.",
+        "Internal total-work, heap-byte and cancellation contracts are not established by these externally contained checks.",
+        "The existing ignored README PNG regeneration test was not run. No new sanitizer or directed-fuzz campaign is claimed for this change.",
+        "This is not the full repository pre-push matrix or a clean external package/release validation; no push was performed.",
+        "The original 35 pending native changes remain byte-identical. Their earlier DRC runtime failures, including the closed scalar-integration trial, were neither resolved nor rerun here."
+      ],
+      "plan_complete": false
     }
   },
   "status_meanings": {

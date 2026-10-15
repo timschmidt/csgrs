@@ -1,0 +1,35 @@
+[
+  {
+    "name": "workspace-fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "diff-whitespace",
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "--",
+      "src/solid.rs",
+      "crates/hypermesh/src/output.rs",
+      "readme.md",
+      "tests/empty_composition.rs",
+      "tests/wasm/geometry_certainty.cjs",
+      "tests/ffi/empty_composition.c",
+      "tests/ffi/empty_composition.cpp",
+      "tests/ffi/empty_composition.py"
+    ],
+    "exit_code": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

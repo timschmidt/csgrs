@@ -1,0 +1,3 @@
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Finished `release` profile [optimized] target(s) in 9.02s
+     Running tests/boolean.rs (target/empty-composition/native-v1/release/deps/boolean-8c7aa124f327f010)

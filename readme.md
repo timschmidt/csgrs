@@ -255,6 +255,15 @@ Hypermesh retains reusable bounds, topology, transform, convexity, and
 Boolean facts on `TriangleMesh`. Cloning a mesh shares its immutable geometry
 and retained facts.
 
+`solid::empty()` is a valid operand for every modeling Boolean. Union can
+accumulate from empty, and a subtraction that removes everything can feed the
+next operation. Canonical empty geometry has neither positions nor triangles;
+a mesh missing just one of those arrays remains an input error. The other
+operand is still validated and regularized under the selected policy, even
+when the result is necessarily empty. Conversion from a shared Hypermesh
+Boolean batch now gives empty rows zero positions as well as zero triangles;
+nonempty rows continue sharing the batch's position allocation.
+
 For sampled curved solids whose predicates remain undecided in strict mode,
 select `GeometryContext::APPROXIMATE_512` explicitly:
 

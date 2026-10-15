@@ -1,0 +1,122 @@
+{
+  "base_commit": "4e2ab080113a1917974cbdc09de785700e3bd6da",
+  "commands": [
+    [
+      "mesh-output-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypermesh",
+        "--lib",
+        "output::tests::",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "mesh-boolean-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypermesh",
+        "--test",
+        "boolean",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "csgrs-all-feature-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "ffi-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs-ffi"
+      ]
+    ],
+    [
+      "all-feature-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "-p",
+        "hypermesh",
+        "-p",
+        "csgrs-ffi",
+        "--all-targets",
+        "--all-features",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "strict-docs",
+      [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "csgrs",
+        "-p",
+        "hypermesh",
+        "-p",
+        "csgrs-ffi",
+        "--all-features",
+        "--no-deps"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1",
+    "RUSTDOCFLAGS": "-D warnings",
+    "CSGRS_LIBRARY": "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/libcsgrs_ffi.so",
+    "WASM_BINDGEN": "/tmp/csgrs-properties-tools/bin/wasm-bindgen",
+    "TSC": "/home/tim/Documents/GitHub/workspace/csgrs/tests/wasm/node_modules/.bin/tsc"
+  },
+  "preserved_executables_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/baseline-v1/release/deps/empty_composition-329c8a68d57ad60d": "4c3ff457f2768596b30df2ad2670bef4203962271eb44e931e276126b0ae11bb",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/empty_composition-329c8a68d57ad60d": "0b052a1dbee4bad3fe82f3128d75ee387fbb319ad4fb8420e778f5a2a6e80977",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "e4b9dcf93902200c0cfe70ee55094e6ef067b6b47cdab93a72763f3218965913",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/solid_cache-07b265ceb2ca1c46": "45741c0db6ac171cc24138d7b87589539df553800d94c6eb9c3cbde8a04592a1"
+  },
+  "runner_sha256": "0a044c3ba111cb7ab49ce992b1353ceb7755fc958b6e3a3833ab618848fb3a3b",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "scope": "Affected local and downstream consumers; not the complete repository pre-push matrix, registry installation, or proof of plan completion.",
+  "wall_limit_seconds_per_command": 1800,
+  "stop_on_first_failure": true,
+  "no_retry_resume_filter_or_pool": true
+}

@@ -7,7 +7,10 @@
 use crate::context::{GeometryContext, GeometryDecisions, GeometryOutcome};
 use crate::errors::ValidationError;
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
-use hypermesh::{BooleanOp, BooleanProgram, HypermeshResult, Plane, Triangle, TriangleMesh};
+use hypermesh::{
+    BooleanExpression, BooleanOp, BooleanProgram, HypermeshError, HypermeshResult, Plane,
+    Triangle, TriangleMesh,
+};
 use hyperreal::RealSign;
 use std::num::NonZeroU32;
 
@@ -986,6 +989,11 @@ pub fn boolean(
 /// certification. The returned certainty records whether any predicate consumed
 /// the approximate 512-bit terminal; choosing an approximate context does not
 /// by itself make a certified result approximate.
+///
+/// Canonical empty geometry (no positions and no triangles) is a valid operand.
+/// The other operand is still validated and regularized by Hypermesh, including
+/// when the requested set is empty. A mesh missing only positions or only
+/// triangles is not canonical empty geometry and remains a typed input error.
 pub fn boolean_with_context(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -993,11 +1001,62 @@ pub fn boolean_with_context(
     context: &GeometryContext,
 ) -> HypermeshResult<GeometryOutcome<TriangleMesh>> {
     let decisions = GeometryDecisions::new(context);
-    let batch = decisions.consume_mesh(hypermesh::boolean(
-        decisions.mesh_context(),
-        &[left.as_ref(), right.as_ref()],
-        BooleanProgram::Operation(operation),
-    )?);
+    let left_empty = left.positions.is_empty() && left.triangles.is_empty();
+    let right_empty = right.positions.is_empty() && right.triangles.is_empty();
+    let outcome = match (left_empty, right_empty) {
+        (true, true) => return Ok(decisions.finish(empty())),
+        (false, false) => hypermesh::boolean(
+            decisions.mesh_context(),
+            &[left.as_ref(), right.as_ref()],
+            BooleanProgram::Operation(operation),
+        )?,
+        _ => {
+            // Bridge the kernel's nonempty-input contract with its own truth
+            // program. Returning the operand directly would skip validation
+            // and leave repeated/canceling PWN boundaries unregularized.
+            let (operand, mesh_index, winding) = if left_empty {
+                (right, 1, [0, 1])
+            } else {
+                (left, 0, [1, 0])
+            };
+            let node = if operation.contains(&winding) {
+                BooleanExpression::Operand(0)
+            } else {
+                BooleanExpression::False
+            };
+            hypermesh::boolean(
+                decisions.mesh_context(),
+                &[operand.as_ref()],
+                BooleanProgram::Expressions {
+                    nodes: &[node],
+                    roots: &[0],
+                },
+            )
+            .map_err(|error| match error {
+                HypermeshError::EmptyMesh { .. } => HypermeshError::EmptyMesh { mesh_index },
+                HypermeshError::DegenerateTriangle { triangle_index, .. } => {
+                    HypermeshError::DegenerateTriangle {
+                        mesh_index,
+                        triangle_index,
+                    }
+                },
+                HypermeshError::OpenInput { boundary_edges, .. } => {
+                    HypermeshError::OpenInput {
+                        mesh_index,
+                        boundary_edges,
+                    }
+                },
+                HypermeshError::NonPwnInput {
+                    unbalanced_edges, ..
+                } => HypermeshError::NonPwnInput {
+                    mesh_index,
+                    unbalanced_edges,
+                },
+                other => other,
+            })?
+        },
+    };
+    let batch = decisions.consume_mesh(outcome);
     let mut meshes = batch.into_triangle_meshes()?;
     let mesh = meshes
         .pop()

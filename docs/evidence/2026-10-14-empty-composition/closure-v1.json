@@ -1,0 +1,371 @@
+{
+  "qualification": {
+    "updated_on": "2026-10-15",
+    "status": "Implemented with the recorded local and binding qualification; broader plan requirements remain open.",
+    "properties": [
+      "P6",
+      "P8",
+      "P9",
+      "P17",
+      "P18",
+      "P25",
+      "P35",
+      "P37"
+    ],
+    "owners": [
+      "CSGRS modeling Boolean composition",
+      "Hypermesh batch-to-mesh conversion"
+    ],
+    "domain": "Canonical empty geometry and the existing nonempty closed-PWN domain, under STRICT or APPROXIMATE_512. Noncanonical emptiness, malformed topology and undecided validation remain typed failures.",
+    "implementation": "Reduce one-empty operations through the kernel truth program, retain original operand indices in diagnostics, and convert empty batch rows to zero positions and zero triangles. Nonempty rows retain their shared arena.",
+    "baseline": "Eight new acceptance tests failed on the target revision; the initial candidate passed all eight plus 13 existing tests. The final suite adds hole/disconnected and post-warming mutation cases, for ten acceptance tests.",
+    "native_test_totals": {
+      "mesh-output-tests": {
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 177
+      },
+      "mesh-boolean-tests": {
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      },
+      "csgrs-all-feature-tests": {
+        "passed": 167,
+        "failed": 0,
+        "ignored": 1,
+        "measured": 0,
+        "filtered": 0
+      },
+      "ffi-tests": {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered": 0
+      }
+    },
+    "binding_consumers": [
+      "C f64 ABI",
+      "C++ F64 wrapper",
+      "Python TriangleMeshF64 wrapper",
+      "Generated WASM JavaScript runtime and TypeScript declarations"
+    ],
+    "checks": [
+      "Final workspace formatting",
+      "Strict minimal-feature Clippy",
+      "Strict all-feature/all-target Clippy for csgrs, hypermesh and csgrs-ffi",
+      "Strict all-feature rustdoc for csgrs, hypermesh and csgrs-ffi"
+    ],
+    "evidence": "docs/evidence/2026-10-14-empty-composition/closure-v1.json",
+    "remaining": [
+      "Primary constructors and convenience operations still contain silent-empty fallbacks; typed failures through all adapters and bindings require further work.",
+      "These receipts describe operation-local decisions. End-to-end construction provenance, including export/import, remains open.",
+      "Ordinary strict-mode completion, including the original drilled-body case, remains open; no policies or fixtures were weakened here.",
+      "Internal total-work, heap-byte and cancellation contracts are not established by these externally contained checks.",
+      "The existing ignored README PNG regeneration test was not run. No new sanitizer or directed-fuzz campaign is claimed for this change.",
+      "This is not the full repository pre-push matrix or a clean external package/release validation; no push was performed.",
+      "The original 35 pending native changes remain byte-identical. Their earlier DRC runtime failures, including the closed scalar-integration trial, were neither resolved nor rerun here."
+    ],
+    "plan_complete": false
+  },
+  "command_records": {
+    "baseline-v1": {
+      "commands": [
+        {
+          "name": "empty-composition",
+          "exit_code": 101,
+          "seconds": 160.6649310439825,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "7fe3ad69e6af8cdc15863a382cbae41d473a5620c987b1e9c5131ce7da33a75d",
+          "stderr_sha256": "9a2f52e43f728ba6599dda32c4aa09695c3a638bf3545263a07e73d4bbf5f140"
+        }
+      ],
+      "passed": false
+    },
+    "candidate-v1": {
+      "commands": [
+        {
+          "name": "fmt",
+          "exit_code": 0,
+          "seconds": 12.318640843965113,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "focused-tests",
+          "exit_code": 0,
+          "seconds": 159.00603047013283,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "5d16501b0b9fba049a7a5af8a88721c966f66f01891ab7c9a6acf838e6661418",
+          "stderr_sha256": "1116fdfb86e978935d20c37063d39174c9aafd0bbcf230c711acf7a7f15454ba"
+        },
+        {
+          "name": "clippy-minimal",
+          "exit_code": 0,
+          "seconds": 25.862229177728295,
+          "sources_unchanged": true,
+          "binaries_sha256": {},
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "195bd7fec4ff4aff4b9995710564f96d2e097cb1f973738e50be7525114b437f"
+        }
+      ],
+      "passed": true
+    },
+    "bindings-v1": {
+      "commands": [
+        {
+          "name": "ffi-build",
+          "exit_code": 0,
+          "seconds": 130.10986763006076,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "ea9df062eeac448553057639cdb1f02da3b7155f6bd39bdc8c92c0e38d5c3294",
+          "warnings": []
+        },
+        {
+          "name": "c-build",
+          "exit_code": 0,
+          "seconds": 1.9352356949821115,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "warnings": []
+        },
+        {
+          "name": "c-consumer",
+          "exit_code": 0,
+          "seconds": 1.8432112392038107,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "9129339c006d2d6c8870eaeade18c45c9302dabd88de9be2a1d9bdf24ba6f286",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "warnings": []
+        },
+        {
+          "name": "cpp-build",
+          "exit_code": 0,
+          "seconds": 2.1972667877562344,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "warnings": []
+        },
+        {
+          "name": "cpp-consumer",
+          "exit_code": 0,
+          "seconds": 1.7772652148269117,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "338ae8643ba3e40ec977a07d50e13b739c9deac7bb1b08b598a848d3f92bf045",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "warnings": []
+        },
+        {
+          "name": "python-consumer",
+          "exit_code": 0,
+          "seconds": 1.884289254900068,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "bcc2468e5a7a09608b8b1a2e0a056984088d66dd03917be28ef41c96c12baeb0",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "warnings": []
+        },
+        {
+          "name": "wasm-consumers",
+          "exit_code": 0,
+          "seconds": 172.39428200479597,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "70870ab9accd685edf7fc42949a7fa04f2536afa268ad1cf0bf230fbbd0a13fe",
+          "stderr_sha256": "29cae3aed2d193ca20be16b64778dac1affd1b9b21a02755dba55710fbea2b7c",
+          "warnings": []
+        }
+      ],
+      "passed": true
+    },
+    "native-v1": {
+      "commands": [
+        {
+          "name": "mesh-output-tests",
+          "exit_code": 0,
+          "seconds": 86.16028527216986,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "ebd0c6b6d7f4a6b9e8edfd31e6a4efbc27745ec931b2f60e2b55bbd6929d53c2",
+          "stderr_sha256": "4468c0f4895baf3865ae1b684d046d978eb5850ce458e4d3cb584ba4fb4cd94e",
+          "warnings": []
+        },
+        {
+          "name": "mesh-boolean-tests",
+          "exit_code": 0,
+          "seconds": 11.066478767897934,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "34f557dfd9c11b0bd312ef1cd12b89b171a94d1e212d8b5598710c1037a9a166",
+          "stderr_sha256": "cbe13233b3ad38be12435516670d1045cc7d400a6d272e13135da2201273ee08",
+          "warnings": []
+        },
+        {
+          "name": "csgrs-all-feature-tests",
+          "exit_code": 0,
+          "seconds": 360.1271167593077,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "278adf76d93f9687fffa2e91d45624117ff7be60e8c8d9a71635a41aaa6f71c5",
+          "stderr_sha256": "52d7a1b1ad0e3b31010d995a4344cac7eef59403d81e2912987fcf7f28299b91",
+          "warnings": []
+        },
+        {
+          "name": "ffi-tests",
+          "exit_code": 0,
+          "seconds": 132.18007564079016,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "313dc6d678e48ca2cc1012b565754c5ac70ceae9bf6759fece15b8f18220c95f",
+          "stderr_sha256": "d2498a8bce070cf4ef4b4ca95676136de219dad9ea5c18b1574a6a18115438a6",
+          "warnings": []
+        },
+        {
+          "name": "all-feature-clippy",
+          "exit_code": 0,
+          "seconds": 63.60929069016129,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "55cd686a344da4f72f8b6acd02748b2959527f93440df7c0c6b44adcf5863c33",
+          "warnings": []
+        },
+        {
+          "name": "strict-docs",
+          "exit_code": 0,
+          "seconds": 253.67703697504476,
+          "sources_and_preserved_binaries_unchanged": true,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "c4975ee64322d2648d6cd8318b15916aebc0947173e3aea66a4caba832ecc551",
+          "warnings": []
+        }
+      ],
+      "passed": true
+    }
+  },
+  "final_checks": [
+    {
+      "name": "workspace-fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "diff-whitespace",
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "src/solid.rs",
+        "crates/hypermesh/src/output.rs",
+        "readme.md",
+        "tests/empty_composition.rs",
+        "tests/wasm/geometry_certainty.cjs",
+        "tests/ffi/empty_composition.c",
+        "tests/ffi/empty_composition.cpp",
+        "tests/ffi/empty_composition.py"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "implementation_and_tests_sha256": {
+    "src/solid.rs": "9bf7dfa88697434ca4676baf32755bc7ad5ba7fc921042eaeebdee7de309c2a7",
+    "crates/hypermesh/src/output.rs": "6d553f8699da66fe37fc1d3ea954c21a1b780e9e8e7b28015988e9c26a378cc7",
+    "readme.md": "42533d5aecea4b96420743c562b854c93e72da8cc38f2b45c5f69fe837a50db2",
+    "tests/empty_composition.rs": "90e29bdd6a23d41a8934c8a58adc82bebe43d4e91d23a73eaef850af55bbde6e",
+    "tests/wasm/geometry_certainty.cjs": "4f8c123532a2e667623b57c358b5eff002386834a28ff7bd5ab6295a0498c089",
+    "tests/ffi/empty_composition.c": "298dedc05259d805e23f6df7e0c11e3442c5f452d14985f4a0c212bab0af6876",
+    "tests/ffi/empty_composition.cpp": "ed7166b1b0cb9a7332bde4119addcd76f2e07d4a5ccd9645570a7262768cf4a0",
+    "tests/ffi/empty_composition.py": "968d3ca2ae22da4d265a3a78b32452e56b9823bff885c6d8e0371ebd46b538ec"
+  },
+  "preserved_executables_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/baseline-v1/release/deps/empty_composition-329c8a68d57ad60d": "4c3ff457f2768596b30df2ad2670bef4203962271eb44e931e276126b0ae11bb",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/empty_composition-329c8a68d57ad60d": "0b052a1dbee4bad3fe82f3128d75ee387fbb319ad4fb8420e778f5a2a6e80977",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": "e4b9dcf93902200c0cfe70ee55094e6ef067b6b47cdab93a72763f3218965913",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/candidate-v1/release/deps/solid_cache-07b265ceb2ca1c46": "45741c0db6ac171cc24138d7b87589539df553800d94c6eb9c3cbde8a04592a1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/release/libcsgrs_ffi.so": "3b80452ae5ee6c2f0b72eb108497e3d4d4106cfee1053b36ae66f5dcccfea2bd",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/empty-c-consumer": "cc345dc9a00a53e3a65488a4d128541f21efb783555c1e889be748c3b6c93a7e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/empty-cpp-consumer": "c2c5e56c5585b6f86f22fa6496c7bc579117a9af88842a39acfa90770f8160d7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "47aeb7ab2a44950bc943552584e8d153cbd9d68a3801cea289ce8fb5f5b655d2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs_bg.wasm": "202ecd8b97b57f8f5795c81740a5fb201f6a40da38288d11549cf5ace381c798",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs.js": "bab626941aaec3b5c78453fc3106060f07a809a230d89abd23ce1740df57967a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/bindings-v1/wasm-bindings-node/csgrs.d.ts": "411a252a9bc51de012bf5be2bc7191cebba27aac8f37f41344ddad26f7f6e6fe",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/hypermesh-2b29b988ffb01c31": "a1b6859f3fad6299740f5d5b2d8df37ab654957c04d2997134969dd4f2dc9913",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/boolean-8c7aa124f327f010": "daaa1dd3e469bd16b671666cf36012fec77827867be087e60833b89e0a715549",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/csgrs-d5e0741bbc5df635": "a3749d16efbe3e027fe9c98d8b06d67465a1788b63e03179fbb13a8921572ff9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial-c03dde69c05f1cf2": "3558ab3fdf6439999b2518d15dfbfba83e4f78f2d23962dc8fb3fef40c3fb0d9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_deep-5dea7b8952749c41": "dcf3e0c907796ea910cdf6b118836029f0b3998e75804b2724c5fa7d4c7b3dc6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_extrusions-22c8c063f22c33de": "fa7241663a4f672fa5951a56f0c64b1500bba94f3ac12dbee5e3d064cceb00c2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_fixtures-061973424028aea6": "461774468787afc8e176a8e9eb2b093cab5d0ff0d1f2bf6681ba9a8fd53d3449",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/adversarial_stress-8c747993ca7dff64": "1608199a4c5739fab18d4b17031314b1bdb3195520715a48eccbc8aa6335d68a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/competitive-8d824413442e1853": "7b2693c2a35e84e8f86df0ce1e69de5f52407e07901790d6c20a617009feb1ad",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/empty_composition-1b2f2ba6943338cd": "74f20b6d0fd14ea06b009f39c23efc1e9ce249ac271863607c9c97305113cffa",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/generated_benchmark_corpus-63f8ca0d18a81caf": "294ce9c0661efe78d7608501e3429c14a99d7c1869d1eba16cff78b26dfe487a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/geometry_context-d256044952b39c9d": "d1f227b6285275b3d55596d2a73e276247c7985826e252fa1bc3673d4a8db6a3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/mesh_boolean_context-c5d23809a7ab3a39": "8924a7c7571206d511e933803e4c7023089b1fe90a1d8bd7ea9200e5fb7143ec",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/metaballs_diagnostics-bad5a9ce0802ff6d": "af03aac2dd91027c9e9f6135a32f87245d341dc87cd0a7d54b97d073c33758ae",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/native_queries-32678419862dff6b": "aee3aaaf184ca7f347b1ccf111a372f4af3d77ea5c7f5ba6ba0225dea6e30d07",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/readme-d31b115aba933918": "426328dc9b5ca7d64d189456a44017ab552d7820f97634a9ba1b19be2fbdc6f3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/readme_render_regression-cbbbca22290afe93": "77e0dd86f8662a971f8c787733d6743583d68f62a49d2fde1c15f3d6d298f983",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/sdf_tpms_diagnostics-682919254ae69ba1": "4310a05c435519987fe0fc896d63a33e36016fd2118cd758dfa5d8ea61000df0",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/solid_cache-f1483884916afc0e": "7c88e42bc8386f4150f4bf5be569427db5ef9e0ff017c38758bc0e9adc3e9cf0",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/wasm_certainty-d7100c8fa594776c": "b887d9ec4083dcea50898a540bb045377df8712c989b819bc2aa37f2b9d7df3d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/empty-composition/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "416a3e7e06e547da3921c73b4f2e5a7e0e3c5d0d1aa0c353e724438627f099ed"
+  },
+  "pending_native_sha256": {
+    "crates/hypercurve/src/bbox.rs": "c145ab30c68433690f8827b7de7cc9c30c1707a1cdb7793cb81e33b3dba0ae4c",
+    "crates/hypercurve/src/bezier.rs": "257dc8fb654fa86f7d2d47089bd5137f5a1f53d3336127e76baf4cf7d05b8840",
+    "crates/hypercurve/src/bezier_fit.rs": "cbba8129249d814c997629e7d8373a985b6bf9b77ab2774dff4afff1bed4d762",
+    "crates/hypercurve/src/bezier_region.rs": "6ea7d9bb3bd2fadc96cb8736b59fc66b5f576460eee83ee5fb306b43a227bb1e",
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs": "cacd837f6a7348962091362965065ec47b0d163d2ac18f45898f0bb8de15efda",
+    "crates/hypercurve/src/bezier_region/offset_spans.rs": "4c6ffb8e36b5dfd3d9d030c016d96af7964f9a9e56f1b9c1abbbf91553f29ee6",
+    "crates/hypercurve/src/bezier_region/point_location.rs": "2d915ac75cd5d7a61b3440fecf0f0ffae8c6c25687e5c4f382077f8de3908672",
+    "crates/hypercurve/src/bezier_region/tests.rs": "c78ab04298572d06d51eec08aa3201e392a6fb663a0b1a65d5ce81e5c06c6318",
+    "crates/hypercurve/src/classify.rs": "6997d26ebfe4c50d3abf7ed296cb9cc121ab70754421172e21693bde005e81df",
+    "crates/hypercurve/src/contour.rs": "a6ef94566c3c68d6311f7fc7bd47f55e129858cb4d381ec6a8acde157fe4141c",
+    "crates/hypercurve/src/curve.rs": "5e9e1457cd9c7f875f0c730ef8ea88ce2f78a8eab1cd93b8e59463f57327468d",
+    "crates/hypercurve/src/curve_intersection.rs": "2d5b2566186174ed2cfc53de0c276560bc647c6f9a39004ffedcdd90f91f78f4",
+    "crates/hypercurve/src/curve_region_boolean.rs": "5d0a87272791632d128731c4ed78971fdac5717b594f33bd8513389401606471",
+    "crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs": "385a1080d7972a08a5082bb6c47ad19e2cfcc1012b4f6c45bfd618796b848344",
+    "crates/hypercurve/src/curve_region_boolean/regularization.rs": "5a542169b7e0dfe99e520da867a907303485a56b03b13491af4970044e9ca866",
+    "crates/hypercurve/src/offset.rs": "b83ee4f648f9ae4b0bcfc5b52f2553eaaf87f1c57c67e340d9ab101053bcffda",
+    "crates/hypercurve/src/policy.rs": "abbadb4d1345eb2ccdf50df57337e991abb999e479067851c5bb2e75f9f34202",
+    "crates/hypercurve/src/rational_bezier_general.rs": "372d81688c5c6e061ad62cff408dd974c7f4bc771dccb19389823e6edd8886ef",
+    "crates/hypercurve/src/segment.rs": "d253abef3276d8b56a99ad9a7273227d3c823b6f01a7b01a0ce3959b32057213",
+    "crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs": "ef2d56e6e5dcec355eb776a8218fba2c797db5b14eda9c1e2dd5ec79224b4fd0",
+    "crates/hypercurve/tests/native_linear_stroke.rs": "262ce841838d2217ea7586c77c4b47176fa35de9231d58bf150dbebd1aac088b",
+    "crates/hyperdrc/README.md": "3af373486b7b51887db4cbfd17b50c7f01c2c64b018a342b3ac970484c0acd9d",
+    "crates/hyperdrc/src/checks/area_tolerance.rs": "d659ed532de0f81477afaa00df6521f4625bb7ddf4af3e08d158f8300cc00d5b",
+    "crates/hyperdrc/src/checks/differential.rs": "90e491f2578abdb07a7c922058d0b579c1cbb1f3ccea872ffcdb9deb373a6951",
+    "crates/hyperdrc/src/checks/layer.rs": "df442cd2614061fadcb0a5a8019410aa36afa9999a5ccf128d91e52cd1ef6f06",
+    "crates/hyperdrc/src/checks/mod.rs": "7f085ea070136481b6a1550f1589ddf15d4dfec657e68679059a05fc93f05ca1",
+    "crates/hyperdrc/src/geometry.rs": "18826a139f20f4fa047ecf83b864ad8311c26e0965835d8df0c42412fdd37fc2",
+    "crates/hyperdrc/src/geometry/README.md": "f8145f2c515a5b35b70815c7b68d8fc50e893f9d41072d0913d00b22133c2eb0",
+    "crates/hyperdrc/src/geometry/primitives.rs": "a753ce71223326c4b1d92467ec64ce2ad1a7528bd2c3822135a62e0990b13070",
+    "crates/hyperdrc/src/geometry/stroke.rs": "193422c60cd9a6e86efb7d8f61cfd9baae4e7ce130d136a881c1150d270e212f",
+    "crates/hyperdrc/src/kicad.rs": "598c62dfddbb7cbc8840b5a31b02ddcb408b4e35771ee33d03994084ccd16f59",
+    "crates/hyperdrc/src/kicad/README.md": "01e8aca6832bce80152306ad74cfb20fae6ef7258ed833ff1c6692e842c204a7",
+    "crates/hyperdrc/src/kicad/tracks.rs": "6ea5c63821f0f79b7f548bdaf613e9fdce273dc42be5d2597070f7195f2ba227",
+    "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+    "crates/hyperdrc/tests/native_linear_strokes.rs": "84f86db87c666e019b54bad7bff57cbbb290fe23960cc891966134cddd0a7b74"
+  },
+  "final_runtime_source_map": "native-v1/source-hashes.json.gz",
+  "ledger_after_sha256": "d9468974c734ef58037f64a95e592caf653846bdb9d3f980b29f577f2e2609a0",
+  "only_current_work_changed_in_ledger": true,
+  "full_plan_complete": false
+}
