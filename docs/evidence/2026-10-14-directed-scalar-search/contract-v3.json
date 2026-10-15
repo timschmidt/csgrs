@@ -1,0 +1,77 @@
+{
+  "status": "frozen-candidate-awaiting-qualification",
+  "owning_layer": "Hyperreal development-only adversarial tooling",
+  "input": "An explicit private Real representation name and eight bytes of generator parameters; each probe runs in a fresh process.",
+  "representations": 22,
+  "input_parameters": [
+    "nonzero signed rational scale with independently variable numerator and denominator widths",
+    "rational exponential exponents",
+    "non-square prime radicands",
+    "prime logarithm arguments",
+    "noninteger base-two/base-ten exponents",
+    "odd-prime-denominator angles strictly between zero and one half",
+    "exact decimal rational offsets near pi",
+    "powers of pi"
+  ],
+  "outputs": [
+    "exact recipe and input identity",
+    "serialized private-class assertion",
+    "per-query raw dispatch counts and timing samples",
+    "independently directed MPFR interval and sign checks",
+    "cold/warm definite-fact retention checks",
+    "lexicase case order and survivor trace for each selection",
+    "complete generated/selected input and failure records"
+  ],
+  "selection": "Independent populations for every private Real representation. Each selection shuffles query cases, keeps only the currently worst observed candidates on that case, and randomly breaks remaining ties after all cases. Every filter step is replayable.",
+  "failure_vocabulary": [
+    "invalid input",
+    "unsupported representation",
+    "unexpected representation normalization",
+    "independent oracle inconclusive",
+    "contradictory certificate",
+    "weakened cache fact",
+    "probe crash",
+    "probe timeout",
+    "campaign budget exhausted"
+  ],
+  "bounds": {
+    "genome_bytes": 8,
+    "maximum_scale_shift_bits": 255,
+    "maximum_pi_offset_decimal_places": 78,
+    "oracle_precision_bits": 1024,
+    "maximum_query_refinement_bits": 256
+  },
+  "validation_before_campaign": [
+    "selector tests contrasting lexicase with average ranking, tie handling, bucket independence, malformed inputs, and replay tampering",
+    "Rust recipe/private-tag and independent-oracle tests",
+    "workspace formatting and strict Clippy for all affected targets/features",
+    "AddressSanitizer and LeakSanitizer qualification with retained dispatch traces"
+  ],
+  "remaining_campaign_gates": [
+    "Freeze campaign size, rounds, seeds, process limits, all raw samples, and selection criteria before execution",
+    "Run a genuinely mutating campaign across all 22 independent representation populations",
+    "Replay selected cases and retain any failure as a deterministic regression",
+    "Run proportionate competitive benchmarks on the retained cases with matching input and numerical result contracts"
+  ],
+  "scope_limits": [
+    "This first implementation concerns scalar representations. Directed predicate, curve, mesh, binding, and machine populations remain part of the full plan.",
+    "Finite campaign success is not exhaustive-input proof or completion of P38.",
+    "No existing full-resolution fixture, closed experiment, or numerical report is replaced.",
+    "This adds development tooling; production arithmetic and public APIs stay outside its change set."
+  ],
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false,
+  "generator_correction": {
+    "failure": "closure-v1.json",
+    "near_pi": "Full original decimal-offset range preserved in Irrational, alongside the original sine family. The exact first failed input is a regression fixture.",
+    "const_offset": "Four constructor-admissible families: pi minus a rational in (0,3], e minus a rational in (0,2], and positive offsets from pi^n*exp(q) or exp(q)/pi. No production constructor change."
+  },
+  "replay": "Require every declared bucket, candidate, parent selection, process result, journal row and final selected input. Replay seeded independent PRNG streams as well as lexicase filter steps and mutation lineage.",
+  "wire_encoding": {
+    "name": "signed-numerator/positive-denominator-v1",
+    "example": "-7/3",
+    "first_failure": "closure-v2.json",
+    "retained": "Complete original input and response; independent numeric value comparison plus Rust-to-Python regression execution. Human Display is unchanged."
+  }
+}

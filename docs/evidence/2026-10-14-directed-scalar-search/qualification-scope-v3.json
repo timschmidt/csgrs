@@ -1,0 +1,70 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/directed-scalar-search-v3/source",
+  "source_files": 10166,
+  "expected_delta_sha256": {
+    "crates/hyperreal/Cargo.toml": "80f1d901af08c712569f7800dffc70a148bfed369e210a32ad2b3e856dfecb14",
+    "crates/hyperreal/fuzz/README.md": "ff8274caf4bc2f038d71a8f0e2f7e6e29cbf80fcef1542c3808bab9d00e79bcd",
+    "crates/hyperreal/examples/directed_scalar_probe.rs": "5d8b1f404ab823364e674913527162c178b31d8623d46a911594df9b0cded4b9",
+    "crates/hyperreal/examples/directed_scalar_probe/wire.rs": "e43b236bc34e2eb513aa4740ae33abdbeb7da9f601f89d655207bd77743efa99",
+    "crates/hyperreal/examples/directed_scalar_probe/oracle.rs": "10f2badd033169c1ccdb4783c27bb703967565882bb2941cec9d2ed1beac147e",
+    "crates/hyperreal/examples/directed_scalar_probe/recipe.rs": "240fe64ab078ac4081863199e773a2a104f78949087fe55e44bddf67579a617d",
+    "crates/hyperreal/examples/directed_scalar_probe/regressions/mixed_number_v2.input.json": "22213673b2938195e88ccbfc60ca521ecb0023ef4c1d16398d5009f66613bb76",
+    "crates/hyperreal/examples/directed_scalar_probe/regressions/near_pi_v1.json": "192527831048e5e1d32577e68ef8901e965e69aa61fbb43eed8666cecc4bb7d7",
+    "crates/hyperreal/examples/directed_scalar_probe/regressions/mixed_number_v2.response.json": "4ee85a6e1ea0b47f2cb4436efd796edc3cdd6a8b292ae69683108d167eb2cffb",
+    "crates/hyperreal/fuzz/directed/evidence.py": "8c64eb217286964bee25343d0af0c8c74789a5dc2bdda7c84107021b05f88e80",
+    "crates/hyperreal/fuzz/directed/test_campaign.py": "118246514fab6a58c7316b018d398f36aca58a0fc334a26bf5a14cd8526d113d",
+    "crates/hyperreal/fuzz/directed/campaign.py": "7535573e9abd85c74277b584fbdb6abe71c058f29a0cf19c02d6461656cba160",
+    "crates/hyperreal/fuzz/directed/test_evidence.py": "98a78be44d8a921b4a51b5ae5360bb5d49ff433dc00be0af76b76e2377719585",
+    "crates/hyperreal/fuzz/directed/test_lexicase.py": "3e7e239eb5c31a4ce6b5ddeadd6c417abcd1530a6d07ab77a58e08df994a2a35",
+    "crates/hyperreal/fuzz/directed/lexicase.py": "e55daf224219f90cad2ebf2fde0304419d0f8cd70d191bcce1069dff33cfe18e"
+  },
+  "commands": 13,
+  "validation": [
+    "Workspace formatting",
+    "Fuzz-manifest formatting",
+    "All Python selector and evidence tests",
+    "Strict Hyperreal all-target Clippy with serde and dispatch-trace",
+    "Strict Hyperreal all-target Clippy with all features",
+    "ASan/LSan example unit tests with serde and dispatch-trace and rebuilt std",
+    "ASan/LSan example unit tests with all features and rebuilt std",
+    "ASan/LSan probe build with serde and dispatch-trace and rebuilt std",
+    "Inventory of all 22 actual private classes",
+    "Replay the complete mixed-number regression input in the sanitizer probe",
+    "Validate its fresh wire response with the independent Python exact-fraction checker",
+    "Three-generation directed campaign with eight candidates and four parent selections per representation per generation",
+    "Independent replay of every selection and mutation from the retained evidence"
+  ],
+  "command_wall_limit_seconds": 1800,
+  "campaign": {
+    "seed": 20261014,
+    "rounds": 3,
+    "population": 8,
+    "parents": 4,
+    "probe_timeout_seconds": 30,
+    "expected_completed_probes": 528,
+    "expected_selection_events": 264
+  },
+  "score_contract": "Median of three instrumented query-body wall-time samples; full samples retained. Search fitness only, no speedup or cross-library timing claim.",
+  "limits": [
+    "Finite scalar campaign only; other layers and the full P38 objective remain open.",
+    "MPFR intervals independently reject contradictions but interval overlap is not proof of exact symbolic identity.",
+    "Native GMP/MPFR code is not claimed sanitizer-instrumented.",
+    "Competitive benchmarking of retained cases is a subsequent required gate; this qualification does not fulfill it.",
+    "No full workspace CI or push-readiness claim."
+  ],
+  "no_extension_retry_filter_or_pooling": true,
+  "admitted": false,
+  "P38_complete": false,
+  "plan_complete": false,
+  "regressions": [
+    "Exact original pi - 31/10 failed input preserved; corrected actual-class expectation",
+    "Both sides of all 78 near-pi decimal depths retained and independently checked",
+    "All four ConstOffset families at the original scale/parameter boundaries",
+    "Replay rejects omitted buckets/parents, changed random streams/plans, failed probes, incomplete journals and altered retained input inventories even after artifact hashes are refreshed",
+    "Full mixed-number input and raw response preserved; all numeric rational response fields use explicit numerator/denominator encoding, tested independently in both languages."
+  ],
+  "prior_closed_failures": [
+    "closure-v1.json",
+    "closure-v2.json"
+  ]
+}
