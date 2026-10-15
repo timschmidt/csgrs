@@ -34,7 +34,7 @@ fn geometry_exception(message: &str, kind: crate::errors::ValidationErrorKind) -
     exception.into()
 }
 
-fn geometry_scalar(value: f64, name: &str) -> Result<crate::Real, JsValue> {
+pub(super) fn geometry_scalar(value: f64, name: &str) -> Result<crate::Real, JsValue> {
     real_from_js(value).ok_or_else(|| {
         geometry_exception(
             &format!("{name} must be finite"),

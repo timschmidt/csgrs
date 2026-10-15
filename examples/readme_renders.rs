@@ -159,7 +159,8 @@ fn render_readme_curves() {
     let curve_balls = [(Point2::new(r(0.0), r(0.0)), r(1.0))];
     render_curve(
         "metaballs_2d",
-        &curve::metaballs(&curve_balls, (24, 24), r(1.0), r(0.0)),
+        &curve::metaballs(&curve_balls, (24, 24), r(1.0), r(0.0))
+            .expect("valid planar metaball fixture"),
     );
     render_curve("from_image", &readme_raster_shape());
     render_curve(

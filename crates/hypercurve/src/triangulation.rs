@@ -1,10 +1,9 @@
-//! Finite profile triangulation adapters for hypercurve regions.
+//! Exact linear and projected finite triangulation adapters for regions.
 //!
-//! Triangulation consumes projected boundary vertices, but the ownership of
-//! material and hole rings is decided before projection by [`CurveRegion2`](crate::CurveRegion2).
-//! Keeping the profile grouping in
-//! hypercurve and delegating exact earcut predicates to hypertri follows exact-computation discipline. The ear-removal
-//! basis is ear clipping.
+//! [`triangulate_linear_contours`] retains native exact vertices. Finite entry
+//! points consume explicitly projected vertices. In either case,
+//! [`CurveRegion2`](crate::CurveRegion2) owns material/hole grouping and Hypertri
+//! owns the ear-clipping predicates and triangulation certainty.
 
 use crate::finite_projection::normalize_finite_ring_vertices;
 use crate::{
@@ -17,6 +16,62 @@ use crate::{
 /// remains in [`crate::CurveRegion2`]; this type is intended for mesh generation,
 /// rendering, and export layers.
 pub type FiniteTriangle2 = [[f64; 2]; 3];
+
+/// Triangulate native linear material/hole contours without quantizing vertices.
+///
+/// Hole ownership is supplied by the native profile. Curved segments are an
+/// explicit unsupported representation. Hypertri owns the triangulation and
+/// its predicate certainty; triangles retain the original exact Point2 values.
+pub fn triangulate_linear_contours(
+    context: &hypertri::TriangulationContext,
+    material: &crate::Contour2,
+    holes: &[crate::Contour2],
+) -> hypertri::Result<hypertri::TriangulationOutcome<Vec<[crate::Point2; 3]>>> {
+    let mut vertices = Vec::new();
+    let mut hole_indices = Vec::new();
+    for (i, ring) in std::iter::once(material).chain(holes).enumerate() {
+        if i != 0 {
+            hole_indices.push(vertices.len());
+        }
+        for segment in ring.segments() {
+            let crate::Segment2::Line(line) = segment else {
+                return Err(hypertri::Error::UnsupportedFeature {
+                    feature: "nonlinear contour triangulation",
+                });
+            };
+            vertices.push(line.start().clone());
+        }
+    }
+    let points = vertices
+        .iter()
+        .map(|p| hypertri::Point2::new(p.x().clone(), p.y().clone()))
+        .collect::<Vec<_>>();
+    let outcome = hypertri::earcut(context, &points, &hole_indices)?;
+    if !outcome.value.len().is_multiple_of(3) {
+        return Err(hypertri::Error::InvalidInput {
+            reason: "triangulation returned incomplete triangle indices",
+        });
+    }
+    let triangles = outcome
+        .value
+        .as_chunks::<3>()
+        .0
+        .iter()
+        .map(|indices| {
+            let [a, b, c] = indices.map(|i| vertices.get(i).cloned());
+            match (a, b, c) {
+                (Some(a), Some(b), Some(c)) => Ok([a, b, c]),
+                _ => Err(hypertri::Error::InvalidInput {
+                    reason: "triangulation returned an out-of-range vertex index",
+                }),
+            }
+        })
+        .collect::<hypertri::Result<Vec<_>>>()?;
+    Ok(hypertri::TriangulationOutcome {
+        value: triangles,
+        certainty: outcome.certainty,
+    })
+}
 
 /// Triangulates a finite material ring with owned finite hole rings.
 ///

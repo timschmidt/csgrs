@@ -67,6 +67,31 @@ try {
   assert.equal(arrays.certainty, Certainty.Certified);
   assert.equal(arrays.indices.length, 6);
 
+  // Derived native coordinates retain the unit width beyond binary64 spacing.
+  // Display projection is separate; translate the solid back before inspecting it.
+  const distantSquare = keep(square.translate(2 ** 53, 0, 0));
+  for (const approximate of [false, true]) {
+    for (const height of [NaN, Infinity, -Infinity]) {
+      assert.throws(() => distantSquare.extrude(height, approximate), (error) =>
+        error instanceof Error && error.name === "GeometryError"
+        && error.code === "invalid_input" && error.message.includes("finite"));
+    }
+    assert.throws(() => distantSquare.extrude(0, approximate), (error) =>
+      error instanceof Error && error.name === "GeometryError"
+      && error.code === "invalid_input" && error.message.includes("nonzero"));
+    const extrusion = keep(distantSquare.extrude(2, approximate));
+    assert.equal(extrusion.certainty, Certainty.Certified);
+    owned.pop();
+    const distantSolid = keep(extrusion.intoMesh());
+    const restoredSolid = keep(distantSolid.translate(-(2 ** 53), 0, 0));
+    const exactBounds = restoredSolid.boundingBox();
+    assert.equal(keep(exactBounds.min).x, 0);
+    const maximum = keep(exactBounds.max);
+    assert.equal(maximum.x, 1);
+    assert.equal(maximum.z, 2);
+    assert.equal(distantSquare.toArrays(approximate).certainty, Certainty.Certified);
+  }
+
   const cube = keep(MeshJs.cube(1));
   const crossing = keep(cube.translate(-0.5, 0, 0));
   const projective = keep(new Matrix4Js(0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0));

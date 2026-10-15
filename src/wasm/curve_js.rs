@@ -233,7 +233,7 @@ impl CurveRegionJs {
     #[wasm_bindgen(js_name = toArrays)]
     pub fn to_arrays(&self, approximate_512: bool) -> Result<Object, JsValue> {
         let outcome = curve::try_triangulate(&self.inner, &geometry_context(approximate_512))
-            .map_err(js_error)?;
+            .map_err(crate::wasm::mesh_js::geometry_error)?;
         let mesh = outcome.value;
         let positions = mesh
             .positions
@@ -492,11 +492,11 @@ impl CurveRegionJs {
     ) -> Result<GeometryMeshResultJs, JsValue> {
         curve::try_extrude(
             &self.inner,
-            real_from_js_named(height, "height")?,
+            crate::wasm::mesh_js::geometry_scalar(height, "height")?,
             &geometry_context(approximate_512),
         )
         .map(Into::into)
-        .map_err(js_error)
+        .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn revolve(

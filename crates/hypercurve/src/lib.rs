@@ -59,6 +59,8 @@ pub mod hershey;
 #[cfg(feature = "hershey")]
 mod hershey_data;
 mod intersect;
+mod linear_profile;
+mod marching_squares;
 #[cfg(test)]
 mod native_region_tests;
 mod nurbs;
@@ -221,6 +223,7 @@ pub use intersect::{
     LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineCircleRelation,
     LineLineIntersection, ParamRange, SegmentIntersection,
 };
+pub use marching_squares::{MarchingSquaresError, MarchingSquaresGrid, marching_squares};
 pub use nurbs::NurbsCurve2;
 pub use offset::{OffsetCap, OffsetCornerStyle2};
 pub use point::Point2;
@@ -265,7 +268,7 @@ pub use translation_obstacle::{
     TranslationObstacleOperand2, translation_obstacle_convex,
 };
 #[cfg(feature = "triangulation")]
-pub use triangulation::{FiniteTriangle2, triangulate_finite_rings};
+pub use triangulation::{FiniteTriangle2, triangulate_finite_rings, triangulate_linear_contours};
 
 pub use hyperreal::Rational;
 pub use hyperreal::{Real, RealSign, SymbolicDependencyMask, ZeroKnowledge};
