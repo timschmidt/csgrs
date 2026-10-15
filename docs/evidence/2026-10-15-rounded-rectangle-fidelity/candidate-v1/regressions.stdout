@@ -1,0 +1,9 @@
+
+running 4 tests
+test clamped_capsules_keep_nonzero_straight_sides ... ok
+test full_radius_and_sharp_corner_controls_remain_defined ... ok
+test one_chord_per_corner_retains_all_straight_sides_and_exact_area ... ok
+test original_published_sampling_resolutions_retain_tangent_vertices ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

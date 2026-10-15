@@ -1,0 +1,29 @@
+{
+  "commands": [
+    {
+      "name": "regressions",
+      "exit_code": 0,
+      "seconds": 8.630250209011137,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/rounded-rectangle-fidelity/candidate-v1/release/deps/rounded_rectangle_fidelity-fedfafd26a0fcb2d": "3b254962b1fbb4d827da0e6371ecc83d73ed64cffeac2fcfa783d0132f6f8991"
+      },
+      "stdout_sha256": "58b0eb8f7985274c7c286ca62848c835c925aa8f28bb1c3dd3bbc6efd08b1f8b",
+      "stderr_sha256": "baf9fc72901b16bd233cac93afe6c0342035ddd67ee67203b9e8eaeda90c1c56",
+      "resources_sha256": "9c61fd2ca864e2e6ad0aca221d5af2b2f45190743f4c7f632e84eb4e0ccb1bb3"
+    },
+    {
+      "name": "strict-catalog",
+      "exit_code": 0,
+      "seconds": 11.11617056792602,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/rounded-rectangle-fidelity/candidate-v1/release/deps/csgrs-fbfb4e9daf55c3e5": "996ac6a71d3911b970c8a087a1629900ee8f0c3451ef701545c5de059191c72b"
+      },
+      "stdout_sha256": "c5dc12a3e8e5ff62098caf04a745e6f88197d4f2f5d7c57d00333f591d48cd2f",
+      "stderr_sha256": "695b53fa17a3bf63a11f46a3bbff7dd89967e37f1b25f4ac52b8b249e9776b6d",
+      "resources_sha256": "4caa6c3725cd7944773da6ceb1a4dd7b240cf418d7dd2bea76d11a024e69e977"
+    }
+  ],
+  "passed": true
+}

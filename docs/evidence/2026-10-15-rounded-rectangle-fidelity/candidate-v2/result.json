@@ -1,0 +1,17 @@
+{
+  "commands": [
+    {
+      "name": "regressions",
+      "exit_code": 101,
+      "seconds": 132.3207953600213,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/rounded-rectangle-fidelity/candidate-v2/release/deps/rounded_rectangle_fidelity-ed0362748245292d": "4563cfdca8d48e257c934af7b5e247d771f36b42da6d164d4ebeb3f7fff5e365"
+      },
+      "stdout_sha256": "c5ffe4af66a69b8a62fac1c50cc9bf467489d28449b18a1f92f24d6553a50322",
+      "stderr_sha256": "ced921bdd5c91a9c0647c1b2417e6dfc329aa346b242e5c9c335bd95df3151a2",
+      "resources_sha256": "d267aab2794c5b6a111b2de41a23be5fa2d0119aa75e5b28f8e9e58be8a6aa4f"
+    }
+  ],
+  "passed": false
+}

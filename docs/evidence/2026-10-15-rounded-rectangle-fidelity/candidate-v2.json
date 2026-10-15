@@ -1,0 +1,18 @@
+[
+  [
+    "regressions",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "--no-default-features",
+      "--features",
+      "curve,obj-io,gerber-io",
+      "--test",
+      "rounded_rectangle_fidelity",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]

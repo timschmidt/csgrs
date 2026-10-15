@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 6.60s
+     Running tests/rounded_rectangle_fidelity.rs (target/rounded-rectangle-fidelity/baseline-v1/release/deps/rounded_rectangle_fidelity-fedfafd26a0fcb2d)
+error: test failed, to rerun pass `--test rounded_rectangle_fidelity`

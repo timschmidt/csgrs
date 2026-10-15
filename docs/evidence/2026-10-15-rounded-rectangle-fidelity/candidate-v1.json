@@ -1,0 +1,33 @@
+[
+  [
+    "regressions",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "--no-default-features",
+      "--features",
+      "curve",
+      "--test",
+      "rounded_rectangle_fidelity",
+      "--",
+      "--test-threads=1"
+    ]
+  ],
+  [
+    "strict-catalog",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "--no-default-features",
+      "--features",
+      "curve",
+      "--lib",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]

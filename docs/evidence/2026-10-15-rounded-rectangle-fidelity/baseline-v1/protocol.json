@@ -1,0 +1,116 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/curve-constructor-failures/native-v1",
+  "preserved_prior_executables_sha256": {
+    "target/curve-constructor-failures/native-v1/release/deps/csgrs-7cb2efc2751cd581": "c86b962c2025cc9ecca36c33f86a097de187b2894cf63a11da053c237616fe5d",
+    "target/curve-constructor-failures/native-v1/release/deps/adversarial-aa8f7eb900ff711d": "374115a418942cee29033079dc00f16c830c1e849e48177d72e0eb39e123a4af",
+    "target/curve-constructor-failures/native-v1/release/deps/adversarial_deep-5118e0b6d7de3ea6": "7f0daaa547f1d2a2804afb449f3feb20c9d5f72adab2ed95029056a5ac16a565",
+    "target/curve-constructor-failures/native-v1/release/deps/adversarial_extrusions-aa8048fe0de3f594": "681e4a016376270956f2f0be050a5b7f1c4df783fd786b0c7fca8565de6f11aa",
+    "target/curve-constructor-failures/native-v1/release/deps/adversarial_fixtures-cf11e31630975ad0": "c400bcbea9d9b820e96cfb3968b34ec99629883b9a902ebf794273e6f628cc3e",
+    "target/curve-constructor-failures/native-v1/release/deps/adversarial_stress-d6d56cc4aa09a158": "21e5100da20305834f6c47c0d9e44468202a20fc633bbf344654f3386b80ff22",
+    "target/curve-constructor-failures/native-v1/release/deps/bounds_failures-1de96205ff2a5e07": "035ad1f905db461b34b287f287d36e3fabd7e07c7921735c45be7b87e450317e",
+    "target/curve-constructor-failures/native-v1/release/deps/competitive-0b8b38c506725d57": "0722108bf3030b89709acd300ca863580982432d3073dcd5efc19bc446d18506",
+    "target/curve-constructor-failures/native-v1/release/deps/curve_constructor_failures-e22c3b5ab72457a8": "7110ba43a4758fd2a243556943eb1c82aeae8c29a8836d5d774d192aadfb4ae1",
+    "target/curve-constructor-failures/native-v1/release/deps/curve_metaball_failures-cdc5511c980183da": "c6ee4ffa70cb50a81105bd443e8c3430e6fec9723a1f314492f5e8b5f9e263b0",
+    "target/curve-constructor-failures/native-v1/release/deps/curve_metaball_workloads-37ab722afd06f275": "692880859715be18ce0715a9defe791673fac6f7c77d7b1791da2ec73659d1ef",
+    "target/curve-constructor-failures/native-v1/release/deps/empty_composition-3a7164c2b9d5044a": "86a0babc3fca4911e46f22aa7c1e302a4ad3c9b56fa9260bc9818f6a2433cefb",
+    "target/curve-constructor-failures/native-v1/release/deps/exact_linear_modeling-26d44c8491c2f7a7": "ffa93137d0bf80e67c7f172f3ccbe63704d6c6a04896045a017860988cc70a2e",
+    "target/curve-constructor-failures/native-v1/release/deps/generated_benchmark_corpus-b45922908131dfbd": "2c3a5bf8e5ef6d2dba233562b0fd9f96239b4ced0bfdccd617036aa2b2c61932",
+    "target/curve-constructor-failures/native-v1/release/deps/geometry_context-e14123ad7d9b5126": "410961ab05ac3dde8f1273228f7b95767ec10c5d7d4ad373dd7365c259280534",
+    "target/curve-constructor-failures/native-v1/release/deps/mesh_boolean_context-9d9c68938c3691af": "7bcd14e0b89bc772a00dcd7512f07ab8454247b95a87beacca36d68d6ed5c23f",
+    "target/curve-constructor-failures/native-v1/release/deps/metaball_failures-043b72a00404a6ff": "8cccdf5d422115a98b6f37f53bff05cca0e5dddfbbacca58016048adcdbdc462",
+    "target/curve-constructor-failures/native-v1/release/deps/metaball_workloads-4d7fe7b802e9560f": "4770bb86a19a6995c78e78f0103c9734246502e0b9fbba63fdf7d47132938080",
+    "target/curve-constructor-failures/native-v1/release/deps/metaballs_diagnostics-8dfd6522763c319c": "67ec7c3c6dae66134213f8aa610362c8931409f5122049891774671bd3068aac",
+    "target/curve-constructor-failures/native-v1/release/deps/native_queries-f108d89258947ff9": "3c3045091bfd5c502222a5f097121e49a6cfb93d486090c441f929314733dfa5",
+    "target/curve-constructor-failures/native-v1/release/deps/primitive_failures-aadd0e4e093d5243": "9e060a397e0a9d18db94e47adfd30b7ce798729ceb28e9ec5b831091ac416dcb",
+    "target/curve-constructor-failures/native-v1/release/deps/readme-14ff37358f039d13": "740c42dab7da9f8b421badc596d1d5bf4602a80720c4ae1b14c4e8e6fdd57297",
+    "target/curve-constructor-failures/native-v1/release/deps/readme_render_regression-c73ca6dc64fc3820": "db16bd93c8b2d221c5bb2e52ef2d683e66aff6e9d62ebbbfec13bab3802a820a",
+    "target/curve-constructor-failures/native-v1/release/deps/sdf_failures-0e01156f99592da3": "39b94ef702903394ecfbd03fe83e2aa683aca01e6992d239791d302e71777f56",
+    "target/curve-constructor-failures/native-v1/release/deps/sdf_tpms_diagnostics-5aa3ece71b49182c": "cc9a2433f0e050775897e554a0a1e270930817d1dcb0bbd764fde49f4cabbc3b",
+    "target/curve-constructor-failures/native-v1/release/deps/solid_cache-d34731e0e95db92a": "f2380f4a23047ad8c1f84bb95f0983ff22323715ab467446062a78a11ae5a926",
+    "target/curve-constructor-failures/native-v1/release/deps/transform_failures-74f1159cb89f11ba": "5895110bacf3bd103a8e10ae65aa33c9c002781d2afd95938ceff30080e60e5e",
+    "target/curve-constructor-failures/native-v1/release/deps/wasm_certainty-d7c6e3b405f88647": "0d9ca15f6ade4141c14000af0883060efa05f611ef351e48a3c007e6eff66fe3",
+    "target/curve-constructor-failures/native-v1/release/deps/hypercircuit-b169ddc8551970da": "28a7d8d67c4aac9bccbc3c37e66e2598bbfa7e9b906db78f83951261027968ec",
+    "target/curve-constructor-failures/native-v1/release/deps/materialize-46301fe00d108f43": "4dd20b28c3f31bb342ad18a23e7fa63fb1887843ccce8bed2b133f4a2989bb83",
+    "target/curve-constructor-failures/native-v1/release/deps/curved_outline-603a16d56b3218ff": "881d7d7cd55255b5a165d116dbd65a6f37fda94ec33ce25bfdb6bbc048cd052d",
+    "target/curve-constructor-failures/native-v1/release/deps/hyperdrc-f2524bbb15bdb74d": "0fdca1ebcd3286c70224ebb22aeb0c37c61262e1d11f99a4e235cb15ef73cacf",
+    "target/curve-constructor-failures/native-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f": "94207e310c09c280144435487a8bdd7e7ded1623d95b100d5691f3a75b07f82d",
+    "target/curve-constructor-failures/native-v1/release/deps/csgrs-12b72f0ccdd38706": "d7dd08d83ef936f284d5639a438fee417e50ac2e8001cf12b258d7a501a25817",
+    "target/curve-constructor-failures/native-v1/release/deps/bounds_failures-c661a92a5b4c7962": "8d1aad3635349979573787b80c2a009854f3bd30e1969f2cc3b34a57c4f50b13",
+    "target/curve-constructor-failures/native-v1/release/deps/curve_constructor_failures-fd8f13d67d2561c4": "6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd",
+    "target/curve-constructor-failures/native-v1/release/deps/csgrs-fbfb4e9daf55c3e5": "f4672ba2cb6f9399bba9ea5542b46ece85c9141f9d0eff63f6cc23b776365918",
+    "target/curve-constructor-failures/native-v1/release/deps/bounds_failures-1388f390547a412c": "677ea081b8341751cb35b1ef9d1bdf49b794e0485b430ccf6c32c2b1f6dfa0b2",
+    "target/curve-constructor-failures/native-v1/release/deps/curve_constructor_failures-526a2455ed7f2aed": "e19e2020c9812f968c049853395d7676313b4fddf812f4b58d9ccac8d1b92d09"
+  },
+  "base_commit": "1ff12ff26af1179bfee6eadbf67bc89d61d8e88f",
+  "runner_sha256": "48363eeb1d38c2c692c07346067d0beb9cdeb495a75ca369b46163a3c363909b",
+  "phase": "baseline-v1",
+  "commands": [
+    [
+      "regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "--no-default-features",
+        "--features",
+        "curve",
+        "--test",
+        "rounded_rectangle_fidelity",
+        "--",
+        "--test-threads=1"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/rounded-rectangle-fidelity/baseline-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P1",
+    "P3",
+    "P4",
+    "P6",
+    "P8",
+    "P9",
+    "P13",
+    "P17",
+    "P18",
+    "P20",
+    "P25",
+    "P28",
+    "P30",
+    "P35",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "CSGRS uniform rounded-corner sampling and retained straight-side endpoints",
+    "Hypercurve contour/topology ownership",
+    "Exact triangulation/extrusion and Gerber/render consumers"
+  ],
+  "domain": "Nonnegative width, height and radius, clamped to half the smaller positive dimension. Zero dimensions remain canonical empty after argument validation. Zero radius or zero corner-segment count selects the sharp rectangle. For n>=1 and positive radius, the intended polygon contains n uniform chords per quarter-circle and every nonzero tangent straight side. Coincident endpoints may be omitted only with evidence. Capacity checks cover the complete point count; internal scalar/work/heap/cancellation bounds remain open.",
+  "consumers": [
+    "Public context and strict Rust constructors",
+    "Exact triangulation/extrusion and Boolean composition",
+    "Gerber obround apertures",
+    "README renderer and full-size benchmark/catalog fixtures"
+  ],
+  "missing_acceptance_test": [
+    "tests/rounded_rectangle_fidelity.rs"
+  ],
+  "semantic_oracle": "Independent rational one-chord octagon area/vertices, clamped capsule area, original full-resolution tangent vertices, retained exact downstream volumes/topology. Numerical certainty does not by itself establish sampling fidelity. Geometry/serialized artifacts intentionally change where the old sampler omitted nonzero straight sides.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: 9d1f2fb5f, fd83df307 and 1ff12ff26 commit typed planar failures, composable empties, binding validation and measured cost evidence. The full properties goal remains active."
+}

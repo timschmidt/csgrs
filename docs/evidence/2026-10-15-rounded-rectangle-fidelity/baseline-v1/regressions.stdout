@@ -1,0 +1,37 @@
+
+running 4 tests
+test clamped_capsules_keep_nonzero_straight_sides ... FAILED
+test full_radius_and_sharp_corner_controls_remain_defined ... ok
+test one_chord_per_corner_retains_all_straight_sides_and_exact_area ... FAILED
+test original_published_sampling_resolutions_retain_tangent_vertices ... FAILED
+
+failures:
+
+---- clamped_capsules_keep_nonzero_straight_sides stdout ----
+
+thread 'clamped_capsules_keep_nonzero_straight_sides' (164) panicked at tests/rounded_rectangle_fidelity.rs:50:13:
+assertion `left == right` failed
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 6, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- one_chord_per_corner_retains_all_straight_sides_and_exact_area stdout ----
+
+thread 'one_chord_per_corner_retains_all_straight_sides_and_exact_area' (166) panicked at tests/rounded_rectangle_fidelity.rs:26:5:
+assertion `left == right` failed
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 15, denominator: 2 }, class: One, computable: None, primitive_approx_cache: Empty })
+
+---- original_published_sampling_resolutions_retain_tangent_vertices stdout ----
+
+thread 'original_published_sampling_resolutions_retain_tangent_vertices' (167) panicked at tests/rounded_rectangle_fidelity.rs:83:13:
+benchmark: omitted tangent [Real { rational: Rational { sign: Plus, numerator: 10, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]
+
+
+failures:
+    clamped_capsules_keep_nonzero_straight_sides
+    one_chord_per_corner_retains_all_straight_sides_and_exact_area
+    original_published_sampling_resolutions_retain_tangent_vertices
+
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

@@ -1,0 +1,29 @@
+
+running 10 tests
+test algebraic_corners_and_symbolic_dimensions_keep_independently_known_areas ... FAILED
+test approximate_clamp_facts_remain_qualified_and_do_not_warm_strict_success ... ok
+test capacity_covers_every_corner_endpoint_even_before_empty_shortcuts ... ok
+test clamped_capsules_keep_nonzero_straight_sides ... ok
+test corrected_profiles_compose_with_transforms_holes_booleans_and_extrusion ... ok
+test dyadic_profile_pipeline_survives_the_obj_boundary_without_value_loss ... ok
+test full_radius_and_sharp_corner_controls_remain_defined ... ok
+test one_chord_per_corner_retains_all_straight_sides_and_exact_area ... ok
+test original_published_sampling_resolutions_retain_tangent_vertices ... ok
+test public_gerber_obrounds_retain_straight_sides_through_format_roundtrip ... ok
+
+failures:
+
+---- algebraic_corners_and_symbolic_dimensions_keep_independently_known_areas stdout ----
+
+thread 'algebraic_corners_and_symbolic_dimensions_keep_independently_known_areas' (668) panicked at tests/rounded_rectangle_fidelity.rs:124:5:
+assertion `left == right` failed
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: Irrational, computable: Some(Computable { internal: Node { facts: AtomicFacts(8590066455), approximation: Add(Computable { internal: Node { facts: AtomicFacts(18446744073709486903), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(823), approximation: Sqrt(Computable { internal: Node { facts: AtomicFacts(4294968119), approximation: Int(2), cache: None }, signal: None }), cache: None }, signal: None }, -1), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(8589935415), approximation: Int(7), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: Irrational, computable: Some(Computable { internal: Node { facts: AtomicFacts(131840), approximation: Add(Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(7), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(4294902528), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(768), approximation: Sqrt(Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(2), cache: None }, signal: None }), cache: None }, signal: None }, -1), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    algebraic_corners_and_symbolic_dimensions_keep_independently_known_areas
+
+test result: FAILED. 9 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+

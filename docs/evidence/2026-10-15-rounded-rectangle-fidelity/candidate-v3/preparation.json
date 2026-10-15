@@ -1,0 +1,13 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--reflink=auto",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/rounded-rectangle-fidelity/candidate-v2/release",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/rounded-rectangle-fidelity/candidate-v3/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "48363eeb1d38c2c692c07346067d0beb9cdeb495a75ca369b46163a3c363909b",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}
