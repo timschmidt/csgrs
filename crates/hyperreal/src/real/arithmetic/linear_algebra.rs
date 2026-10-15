@@ -2145,6 +2145,9 @@ impl Real {
     }
 
     /// Return `a * b - c * d`.
+    ///
+    /// Structurally identical products cancel exactly, including reversed
+    /// factor order, without refining the factors.
     #[inline]
     pub fn diff_of_products(a: &Real, b: &Real, c: &Real, d: &Real) -> Real {
         if let (Some(a), Some(b), Some(c), Some(d)) = (
@@ -2957,6 +2960,9 @@ impl Real {
 
     #[inline]
     fn signed_product_sum2(signs: [bool; 2], terms: [[&Real; 2]; 2]) -> Real {
+        if Self::opposite_products_cancel(signs, terms) {
+            return Real::zero();
+        }
         let first = Self::product_term(terms[0]).map(|term| if signs[0] { term } else { -term });
         let second = Self::product_term(terms[1]).map(|term| if signs[1] { term } else { -term });
         Self::sum_dot2_terms(first, second)

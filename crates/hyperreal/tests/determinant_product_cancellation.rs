@@ -90,3 +90,64 @@ fn equal_sign_products_are_added() {
         }
     }
 }
+
+#[test]
+fn reversed_sign_order_keeps_the_identity() {
+    let [a, b] = factors();
+    for value in [
+        Real::signed_product_sum([false, true], [[&a, &b], [&b, &a]]),
+        Real::active_signed_product_sum([false, true], [[&a, &b], [&b, &a]]),
+    ] {
+        assert_eq!(value.exact_rational(), Some(Rational::zero()));
+    }
+}
+
+#[test]
+fn refinement_and_concurrent_readers_keep_structural_cancellation() {
+    let [a, b] = factors();
+    for precision in [0, -1100, 0] {
+        let _ = a.certified_sign_until(precision);
+        let _ = b.certified_sign_until(precision);
+        std::thread::scope(|scope| {
+            for _ in 0..4 {
+                scope.spawn(|| {
+                    for value in reductions(&a, &b, &b, &a) {
+                        assert_eq!(value.exact_rational(), Some(Rational::zero()));
+                    }
+                });
+            }
+        });
+    }
+}
+
+#[test]
+fn other_arities_keep_their_mathematical_values() {
+    let a = Real::from(2) + (Real::pi() / Real::from(8)).unwrap().sin();
+    let b = Real::from(3) + Real::e().sin();
+    let one = Real::one();
+    let two = Real::from(2);
+    for value in [
+        Real::signed_product_sum([true, false, true], [[&a, &b], [&b, &a], [&one, &one]]),
+        Real::active_signed_product_sum([true, false, true], [[&a, &b], [&b, &a], [&one, &one]]),
+        Real::signed_product_sum([false, true], [[&a, &b, &one], [&b, &a, &two]]),
+        Real::active_signed_product_sum([false, true], [[&a, &b, &one], [&b, &a, &two]]),
+    ] {
+        assert!(matches!(
+            value.certified_sign_until(-512),
+            CertifiedRealSign::Known {
+                sign: RealSign::Positive,
+                ..
+            }
+        ));
+    }
+    assert_eq!(Real::signed_product_sum::<0, 2>([], []), Real::zero());
+    assert_eq!(
+        Real::active_signed_product_sum::<0, 2>([], []),
+        Real::zero()
+    );
+    assert_eq!(Real::signed_product_sum::<2, 0>([true; 2], [[], []]), two);
+    assert_eq!(
+        Real::active_signed_product_sum::<2, 0>([true; 2], [[], []]),
+        two
+    );
+}

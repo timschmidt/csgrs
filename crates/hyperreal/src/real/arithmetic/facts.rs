@@ -748,7 +748,8 @@ impl Real {
     /// Callers use this after object-level facts have already removed
     /// structurally zero terms. Exact-rational inputs still go through the
     /// whole-polynomial reducer; mixed symbolic inputs keep rational factors as
-    /// scales and avoid introducing unrelated optimization passes.
+    /// scales. Opposite identical two-factor products cancel before expansion,
+    /// including reversed factor order; structural equality is the proof.
     pub fn active_signed_product_sum<const TERMS: usize, const FACTORS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Real; FACTORS]; TERMS],
@@ -773,6 +774,9 @@ impl Real {
             );
             return sum;
         }
+        if Self::opposite_products_cancel(positive_terms, terms) {
+            return Real::zero();
+        }
 
         let mut total = None;
         for i in 0..TERMS {
@@ -786,6 +790,30 @@ impl Real {
             });
         }
         total.unwrap_or_else(Real::zero)
+    }
+
+    /// A fixed product identity, not a numerical comparison or normalization
+    /// of arbitrary expression trees. `Real` equality proves matching factors;
+    /// a failed match supplies no fact about their mathematical values.
+    #[inline]
+    fn opposite_products_cancel<const TERMS: usize, const FACTORS: usize>(
+        positive_terms: [bool; TERMS],
+        terms: [[&Real; FACTORS]; TERMS],
+    ) -> bool {
+        if TERMS != 2 || FACTORS != 2 || positive_terms[0] == positive_terms[1] {
+            return false;
+        }
+        let [a, b] = terms[0].as_slice() else {
+            return false;
+        };
+        let [c, d] = terms[1].as_slice() else {
+            return false;
+        };
+        let cancel = (a == c && b == d) || (a == d && b == c);
+        if cancel {
+            crate::trace_dispatch!("real", "product_sum", "opposite-identical-products");
+        }
+        cancel
     }
 
     fn sin_pi_pythagorean_product_sum<const TERMS: usize, const FACTORS: usize>(
