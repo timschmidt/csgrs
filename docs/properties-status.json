@@ -6249,6 +6249,170 @@
       "evidence": "docs/evidence/2026-10-15-bounds-failures/closure-v1.json",
       "implementation_commit": "6095f177ec586f1bf7091586460f9e5b5d118ae0",
       "plan_complete": false
+    },
+    "sdf_failure_visibility": {
+      "updated_on": "2026-10-15",
+      "status": "Typed SDF scalar evaluation and modeling failures implemented and locally qualified; standalone-grid extraction supplied by Hypermesh to the modeling sampler.",
+      "properties": [
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P18",
+        "P20",
+        "P25",
+        "P35",
+        "P37"
+      ],
+      "owners": [
+        "Hypersdf strict scalar/domain/branch evaluation",
+        "CSGRS shared sampled-field modeling and diagnostics",
+        "Hypermesh Surface Nets face ownership"
+      ],
+      "domain": "Real callbacks and retained SdfExpr values over rectangular sample grids, preserving valid formulas and fixture resolutions. The output is the sampled Surface Nets level-surface proposal; numerical certainty does not establish closed topology or continuous-field fidelity. Strict construction branches and selected-policy extraction have separate roles.",
+      "migration": "solid::sdf, sdf_with_diagnostics, sdf_expr and sdf_expr_with_diagnostics now return Result and delegate to the shared context sampler. Expression failures retain sample index and SdfEvaluationError including native scalar source. Added sdf_expr_with_diagnostics_and_context. Resolution below two now fails instead of clamping; diagnostics fail when requested signs/extrema cannot be decided. The modeling sampler uses the new shared Hypermesh surface_nets_standalone entry point, including final-layer faces whenever all four incident cells are present. The existing native surface_nets entry point retains its documented chunk ownership convention. This explicitly migrates modeling output rather than claiming unchanged artifacts. Hypersdf classification and preview keep their existing report contracts; the legacy primitive scalar_value Option explicitly discards the new fallible method's errors.",
+      "semantic_evidence": [
+        "Eight reproduced SDF failures distinguish invalid domains, undecided scalar branches/samples, capacity overflow and invalid resolution from successful empty geometry.",
+        "Arithmetic failure after two successful samples preserves grid index [2,0,0] and the native SqrtNegative cause through Error::source. Subsequent constant-field sampling, union from empty and subtraction to empty succeed.",
+        "Independently derived scalar values cover all eight native primitives, expression composition, boundaries, invalid parameters and unresolved domains/branches.",
+        "Exact rational plane positions, sample counts and extrema are checked independently of wrapper agreement. Native planes crossing first/last layers on all three axes have independently known unit oriented area and exact transverse coordinates.",
+        "Strict/approximate/strict sequences retain local certainty: approximate sample evidence does not authorize approximate expression branches or enter strict preview sign buckets. Selecting an approximate policy for a known constant still yields Certified.",
+        "Existing sampled spheres, extreme exact scalar magnitudes, closed-mesh validation, downstream Boolean use and all three TPMS solid fixtures retain their original resolutions and pass."
+      ],
+      "trials": "baseline-v1 preparation failed before tests; baseline-v2 failed all eight regressions at a8ca70322 plus original native changes. Candidate v1/v2 compile failures are retained. Candidate v3 exposed missing final-layer plane faces in the modeling API despite successful error tests. Native chunk ownership was subsequently identified as deliberate and retained; the modeling layer now selects standalone extraction. Candidate v4 passed focused runtime checks but strict Clippy rejected test loop style. Native v1 stopped on pre-existing nested fuzz formatting drift; formatting-only fixes were applied. Native v2 passed runtime and root lint checks but stopped on a pre-existing nested fuzz loop lint. Native v3 fixes that lint and qualifies the final source, including the explicit native chunk/standalone split.",
+      "test_totals": {
+        "fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "all-feature-tests": {
+          "passed": 213,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "sdf-only-tests": {
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypermesh-tests": {
+          "passed": 236,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-all-feature-tests": {
+          "passed": 110,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-default-tests": {
+          "passed": 109,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "sdf-only-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "resources": "Checked primary sample, coordinate and diagnostic-preview reservations report capacity/allocation failures. Scalar expression work, native extraction and secondary preview allocations still lack internal total-work, heap-byte and cancellation limits. Each validation command uses external 1800-second wall containment. No performance improvement or bounded execution is claimed.",
+      "limitations": [
+        "Eight existing ignored cases remain: one root rendering case and seven Hypermesh external-fixture/manual scale or memory tests. Counts across feature configurations overlap.",
+        "The lossy Hypersdf preview backend retains its chunk boundary convention and may omit final-layer faces or withhold unknown-sign samples accepted by approximate meshing. It remains PreviewOnly and never replaces the authoritative native mesh.",
+        "Examples and benchmark consumers are compiled with strict all-target Clippy; no benchmark timing or generated rendering claim is made. Fuzz targets are compiled and linted, not fuzzed for a duration.",
+        "SDF Rust APIs are not exposed by the current C/Go/Python/WASM bindings. FFI unit tests and all-target compilation pass, but live binding consumers were not rerun for this Rust/API and native-grid change.",
+        "The complete workflow matrix, sanitizers, clean external package/release/MSRV validation and performance comparison remain open.",
+        "Separate metaball fallbacks and approximation policy, other modeling failure migrations, end-to-end provenance, resource bounds, ordinary strict-workflow completion and prior scalar/native admission gaps remain open."
+      ],
+      "evidence": "docs/evidence/2026-10-15-sdf-failures/closure-v1.json",
+      "implementation_commit": "0a1ecb0aca4d71ee337860e239280af769e76912",
+      "plan_complete": false
     }
   },
   "status_meanings": {
