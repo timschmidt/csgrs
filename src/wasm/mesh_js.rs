@@ -7,8 +7,7 @@ use crate::wasm::{
     geometry_context,
 };
 use crate::wasm::{
-    matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js, real_from_js,
-    real_from_js_named, real_to_js,
+    matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js, real_from_js, real_to_js,
 };
 use hyperlattice::Point3;
 use hypermesh::{Triangle, TriangleMesh};
