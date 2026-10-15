@@ -44,6 +44,14 @@ required-features = ["simple"]
 [[example]]
 name = "readme_quickstart"
 
+[[example]]
+name = "directed_scalar_bench"
+required-features = ["serde"]
+
+[[example]]
+name = "directed_scalar_probe"
+required-features = ["serde", "dispatch-trace"]
+
 [[bench]]
 name = "borrowed_ops"
 harness = false

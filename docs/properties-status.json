@@ -5432,16 +5432,74 @@
       "plan_complete": false
     },
     "scalar_adversarial_selection": {
-      "status": "current-timing-promotion-described-accurately-directed-selection-open",
+      "status": "legacy-timing-promotion-described-accurately-standalone-scalar-search-admitted",
       "review": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-review-v1.json",
       "qualification": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-wording-v1/result.json",
       "admission": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-wording-admission-v1/admission.json",
       "source_mapping": "docs/evidence/2026-10-14-sampled-sphere-hull/scalar-selection-wording-admission-v1/source-hashes-after.json.gz",
       "description_correction_admitted": true,
-      "selection_algorithm_changed": false,
-      "independent_representation_populations_implemented": false,
+      "independent_representation_populations_implemented": true,
       "P38_complete": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "legacy_selection_algorithm_changed": false,
+      "standalone_directed_scalar_search": "docs/evidence/2026-10-14-directed-scalar-search/main-admission-v3/admission.json"
+    },
+    "directed_scalar_search": {
+      "status": "finite-scalar-lexicase-and-native-enclosure-tooling-admitted",
+      "admitted": true,
+      "development_tooling_only": true,
+      "contract": "docs/evidence/2026-10-14-directed-scalar-search/contract-v4.json",
+      "comparison_contract": "docs/evidence/2026-10-14-directed-scalar-search/competitive-contract-v2.json",
+      "search_qualification": "docs/evidence/2026-10-14-directed-scalar-search/qualification-v4/result.json",
+      "search_closure": "docs/evidence/2026-10-14-directed-scalar-search/closure-v4.json",
+      "comparison_qualification": "docs/evidence/2026-10-14-directed-scalar-search/competitive-qualification-v2/result.json",
+      "comparison_closure": "docs/evidence/2026-10-14-directed-scalar-search/competitive-closure-v2.json",
+      "admission": "docs/evidence/2026-10-14-directed-scalar-search/main-admission-v3/admission.json",
+      "source_mapping": "docs/evidence/2026-10-14-directed-scalar-search/main-admission-v3/source-hashes-after.json.gz",
+      "representations": 22,
+      "generations": 3,
+      "campaign_probes": 528,
+      "selection_events": 264,
+      "mutated_descendants": 247,
+      "retained_selected_inputs": 59,
+      "native_comparison_samples": 1298,
+      "samples_per_backend_per_input": 11,
+      "maximum_absolute_enclosure_width": "1/115792089237316195423570985008687907853269984665640564039457584007913129639936",
+      "python_tests": 33,
+      "search_rust_tests_each_configuration": 7,
+      "adapter_rust_tests_each_configuration": 3,
+      "sanitizers": "ASan/LSan on Rust targets and rebuilt standard library; native GMP/MPFR not claimed instrumented",
+      "prior_failed_trials": [
+        "docs/evidence/2026-10-14-directed-scalar-search/closure-v1.json",
+        "docs/evidence/2026-10-14-directed-scalar-search/closure-v2.json",
+        "docs/evidence/2026-10-14-directed-scalar-search/closure-v3.json"
+      ],
+      "numeric_and_selection_evidence_replayed": true,
+      "finite_scalar_campaign_complete": true,
+      "finite_scalar_interval_comparison_complete": true,
+      "limits": [
+        "Finite nonzero scalar recipes from 22 private representation classes; not exhaustive inputs or whole-stack directed fuzzing.",
+        "Each input runs in a fresh process. Individual query samples rebuild Real objects, but shared constants can already be warm; this is not an all-caches-cold claim.",
+        "Independent interval overlap rejects contradictions but does not prove arbitrary symbolic identities.",
+        "The Rust targets and rebuilt standard library used ASan/LSan; native GMP/MPFR code is not claimed instrumented.",
+        "This compares interval enclosure operations on selected scalar inputs; it does not compare structural certificate APIs or establish whole-library rankings.",
+        "No warm-result performance claim, cross-machine generalization or matched cross-library allocation claim.",
+        "Native GMP/MPFR code is not claimed ASan-instrumented.",
+        "Other stack layers, exhaustive coverage, formal obligations and complete P38 remain open."
+      ],
+      "remaining": [
+        "Directed representation populations in the remaining stack layers",
+        "Exhaustive coverage and additional compositions, degeneracies and policies",
+        "Remaining formal verification, production runtime and native geometry admission obligations"
+      ],
+      "P38_complete": false,
+      "plan_complete": false,
+      "formatting_followup": {
+        "file": "crates/hyperreal/fuzz/directed/lexicase.py",
+        "change": "One extra EOF blank line removed",
+        "qualified_ast_and_bytecode_identical": true,
+        "frozen_campaign_sources_preserved": true
+      }
     }
   },
   "status_meanings": {
