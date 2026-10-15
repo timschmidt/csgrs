@@ -1,0 +1,8 @@
+
+running 3 tests
+test exact_profiles_beyond_float_range_are_still_modeling_inputs ... ok
+test extrusion_adapters_retain_native_failure_categories_and_sources ... ok
+test rational_material_and_hole_keep_exact_area_and_volume ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

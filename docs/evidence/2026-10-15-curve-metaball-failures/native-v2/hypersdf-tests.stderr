@@ -1,0 +1,19 @@
+   Compiling num-bigint v0.4.6
+   Compiling num-complex v0.4.6
+   Compiling rustc-hash v2.1.3
+   Compiling ciborium v0.2.2
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling criterion v0.5.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypervoxel v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypervoxel)
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+    Finished `release` profile [optimized] target(s) in 40.51s
+     Running unittests src/lib.rs (target/curve-metaball-failures/native-v2/release/deps/hypersdf-0bad98822f7a9ce1)
+     Running tests/adversarial.rs (target/curve-metaball-failures/native-v2/release/deps/adversarial-8c2a10e795879a70)
+     Running tests/dispatch_trace.rs (target/curve-metaball-failures/native-v2/release/deps/dispatch_trace-f9027e5baa42f153)
+     Running tests/evaluation_errors.rs (target/curve-metaball-failures/native-v2/release/deps/evaluation_errors-336cc11e1d9bcc1d)
+     Running tests/metaball_field.rs (target/curve-metaball-failures/native-v2/release/deps/metaball_field-8fdb79172457092e)
+     Running tests/readme.rs (target/curve-metaball-failures/native-v2/release/deps/readme-a1a2094e1cc05232)

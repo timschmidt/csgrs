@@ -1,0 +1,6 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 1m 22s
+     Running tests/curve_metaball_failures.rs (/tmp/csgrs-curve-metaball-failures/candidate-v7/release/deps/curve_metaball_failures-15cb6c077acbd97e)
+     Running tests/curve_metaball_workloads.rs (/tmp/csgrs-curve-metaball-failures/candidate-v7/release/deps/curve_metaball_workloads-05c42854c7dcfc9c)
+     Running tests/exact_linear_modeling.rs (/tmp/csgrs-curve-metaball-failures/candidate-v7/release/deps/exact_linear_modeling-3b9b41191245e071)

@@ -1,0 +1,18 @@
+
+running 1 test
+test solid::tests::nominal_direct_solid_catalog_is_closed_and_consistently_indexed ... FAILED
+
+failures:
+
+---- solid::tests::nominal_direct_solid_catalog_is_closed_and_consistently_indexed stdout ----
+
+thread 'solid::tests::nominal_direct_solid_catalog_is_closed_and_consistently_indexed' (1281) panicked at src/solid.rs:2778:18:
+involute gear extrusion: Triangulation(PredicateUndecided { predicate: "point_in_triangle2_aabb" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    solid::tests::nominal_direct_solid_catalog_is_closed_and_consistently_indexed
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 47 filtered out; finished in 0.10s
+

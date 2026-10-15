@@ -1,0 +1,14 @@
+{
+  "commands": [
+    {
+      "name": "native-grid-tests",
+      "exit_code": 101,
+      "seconds": 121.18053823709488,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e0917a5ae54f218def3e3af94a8ebb51460e987c762a7c75c9264804d5aca396"
+    }
+  ],
+  "passed": false
+}

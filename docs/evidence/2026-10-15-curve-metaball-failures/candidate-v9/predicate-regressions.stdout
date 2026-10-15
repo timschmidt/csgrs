@@ -1,0 +1,7 @@
+
+running 2 tests
+test equality_still_needs_all_coordinates_and_ordering_keeps_its_contract ... ok
+test point_inequality_uses_any_certified_coordinate_witness ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

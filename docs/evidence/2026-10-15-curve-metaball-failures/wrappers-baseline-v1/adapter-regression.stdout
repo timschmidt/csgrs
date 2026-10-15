@@ -1,0 +1,18 @@
+
+running 1 test
+test extrusion_adapters_retain_native_failure_categories_and_sources ... FAILED
+
+failures:
+
+---- extrusion_adapters_retain_native_failure_categories_and_sources stdout ----
+
+thread 'extrusion_adapters_retain_native_failure_categories_and_sources' (104) panicked at tests/exact_linear_modeling.rs:83:13:
+lost native extrusion diagnostic: Validation("extrusion direction Z sign is undecided under PredicatePolicy(0)")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    extrusion_adapters_retain_native_failure_categories_and_sources
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+

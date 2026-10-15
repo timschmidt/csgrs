@@ -1,0 +1,23 @@
+	Command being timed: "cargo clippy --locked --release -p csgrs --all-features --all-targets -- -D warnings"
+	User time (seconds): 124.48
+	System time (seconds): 25.52
+	Percent of CPU this job got: 193%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:17.34
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1390404
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1136
+	Minor (reclaiming a frame) page faults: 8375554
+	Voluntary context switches: 50055
+	Involuntary context switches: 25510
+	Swaps: 0
+	File system inputs: 203744
+	File system outputs: 40
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

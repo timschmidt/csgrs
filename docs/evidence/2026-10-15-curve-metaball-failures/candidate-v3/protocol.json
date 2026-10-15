@@ -1,0 +1,84 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {},
+  "base_commit": "f823291248535fb7a0ce24b9e59c13e86262c5c0",
+  "runner_sha256": "a53f6c56702e7c017773bb5dee29ab23629b0633a490bc9fcdd0ffcea8b4b9e7",
+  "phase": "candidate-v3",
+  "commands": [
+    [
+      "focused-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "curve,metaballs",
+        "--test",
+        "curve_metaball_failures",
+        "--test",
+        "curve_metaball_workloads",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "native-grid-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--test",
+        "marching_squares",
+        "--",
+        "--test-threads=1"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/tmp/csgrs-curve-metaball-failures/candidate-v3"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P1",
+    "P6",
+    "P8",
+    "P9",
+    "P13",
+    "P17",
+    "P18",
+    "P20",
+    "P25",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "Hypersdf inverse-square field evaluation and conservative bounds",
+    "CSGRS planar field sampling",
+    "Hypercurve contour extraction and existing region arrangement"
+  ],
+  "domain": "Positive-radius planar inverse-square metaballs, positive iso, nonnegative padding and a declared grid. Empty succeeds after validation. Exact normalized F=(iso-I)/(iso+I), extended to -1 at centers, replaces cutoff and sentinel through an explicit geometry migration. Native marching-squares chords and its documented center-sign diagonal rule define the sampled proposal, with separate exact region topology and no continuous-field fidelity bound.",
+  "consumers": [
+    "curve::metaballs",
+    "native Hypercurve sampled-region consumers",
+    "shared Hypersdf field",
+    "24x24 README fixture and 48x48 benchmark fixture"
+  ],
+  "missing_acceptance_test": "tests/curve_metaball_failures.rs",
+  "semantic_oracle": "Independent sampled diamond area 2*(20201/20200)^2, native grid topology cases and ring of sources with an excluded center, retained typed errors and downstream region/extrusion use.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: ab91bd456 and f82329124 committed exact 3D metaball fields, typed failures and passing 19-command qualification; the full properties goal remains active."
+}

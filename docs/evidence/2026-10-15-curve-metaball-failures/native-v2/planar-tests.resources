@@ -1,0 +1,23 @@
+	Command being timed: "cargo test --locked --release -p csgrs --no-default-features --features curve,metaballs --test curve_metaball_failures --test curve_metaball_workloads --test exact_linear_modeling -- --test-threads=1"
+	User time (seconds): 70.26
+	System time (seconds): 1.37
+	Percent of CPU this job got: 111%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:04.49
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 355868
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 274
+	Minor (reclaiming a frame) page faults: 368977
+	Voluntary context switches: 8797
+	Involuntary context switches: 8871
+	Swaps: 0
+	File system inputs: 616
+	File system outputs: 145744
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -1,0 +1,11 @@
+
+running 6 tests
+test actual_evidence_controls_certainty_across_policy_sequences ... ok
+test both_diagonal_cases_obey_the_declared_center_rule ... ok
+test exact_diamond_area_and_zero_vertex_regularization ... ok
+test exact_translation_beyond_float_range_preserves_area_and_location ... ok
+test grid_domain_errors_never_publish_clipped_or_empty_geometry ... ok
+test native_arrangement_preserves_holes_and_disconnected_material ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

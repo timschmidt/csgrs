@@ -1,0 +1,17 @@
+[
+  [
+    "coordinate-witness",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperlimit",
+      "--test",
+      "point_equality",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]

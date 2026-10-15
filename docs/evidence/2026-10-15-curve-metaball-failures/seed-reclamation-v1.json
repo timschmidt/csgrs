@@ -1,0 +1,10 @@
+{
+  "runner_sha256": "dd2327da849628bba1e86f0b167a4139deca849f34e051c48cd050a2ebba5c7b",
+  "partial_candidate": "/tmp/csgrs-curve-metaball-failures/candidate-v2",
+  "partial_bytes_removed": 2076179159,
+  "duplicate_count": 8648,
+  "duplicate_bytes_removed": 3814548548,
+  "duplicate_manifest_sha256": "f7d6b83a41ca2a42878760ee8666e494ce002765c635d7fd348edb3e92dac9b4",
+  "protected_executables_verified": 388,
+  "reason": "Both candidate preparations exited before compilation. Baseline duplicate seed files retain identical originals in the preceding qualified target; its executed test binary and unique compiler output remain preserved. No executed artifact or source snapshot was removed."
+}

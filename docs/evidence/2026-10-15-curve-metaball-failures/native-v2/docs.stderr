@@ -1,0 +1,55 @@
+    Checking half v2.7.1
+    Checking serde_json v1.0.149
+    Checking ciborium-ll v0.2.2
+    Checking ciborium v0.2.2
+    Checking glam v0.30.10
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking bevy_reflect v0.18.1
+    Checking regex-automata v0.4.14
+   Compiling rustix v1.1.4
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking bevy_ecs v0.18.1
+    Checking no_std_io2 v0.9.3
+    Checking av1-grain v0.2.5
+    Checking bitstream-io v4.10.0
+    Checking matchers v0.2.0
+    Checking rav1e v0.8.1
+    Checking tracing-subscriber v0.3.23
+    Checking bevy_app v0.18.1
+    Checking polling v3.11.0
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking bevy_time v0.18.1
+    Checking ravif v0.13.0
+    Checking tiff v0.11.3
+    Checking exr v1.74.0
+    Checking bevy_diagnostic v0.18.1
+    Checking bevy_math v0.18.1
+    Checking bevy_log v0.18.1
+    Checking async-io v2.6.0
+   Compiling lazy-regex-proc_macros v3.6.0
+    Checking regex v1.12.3
+    Checking bevy_asset v0.18.1
+    Checking lazy-regex v3.6.0
+    Checking image v0.25.10
+    Checking bevy_transform v0.18.1
+    Checking gltf-json v1.4.1
+    Checking hexasphere v16.0.0
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking dxf v0.6.1
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking bevy_mesh v0.18.1
+    Checking gltf v1.4.1
+    Checking gerber_parser v0.4.0
+    Checking hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+ Documenting hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+ Documenting hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+ Documenting hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+ Documenting hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+ Documenting csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+ Documenting csgrs-ffi v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/csgrs-ffi)
+    Finished `release` profile [optimized] target(s) in 3m 36s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/curve-metaball-failures/native-v2/doc/csgrs/index.html and 5 other files

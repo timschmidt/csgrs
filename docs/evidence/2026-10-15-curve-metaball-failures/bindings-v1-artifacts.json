@@ -1,0 +1,19 @@
+[
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/curve-metaball-failures/native-v2/release/libcsgrs_ffi.so",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/empty_composition-c",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/empty_composition-cpp",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/primitive_failures-c",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/primitive_failures-cpp",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/transform_failures-c",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/transform_failures-cpp",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/bounds_failures-c",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/bounds_failures-cpp",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/exact_linear_modeling-c",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/exact_linear_modeling-cpp",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/go-bindings.test",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/wasm32-unknown-unknown/wasm/csgrs.wasm",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/wasm-bindings-node/csgrs.js",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/wasm-bindings-node/csgrs.d.ts",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/wasm-bindings-node/csgrs_bg.wasm",
+  "/tmp/csgrs-curve-metaball-failures/bindings-v1/wasm-bindings-node/geometry_certainty.ts"
+]

@@ -1,0 +1,90 @@
+
+running 9 tests
+test a_ring_of_sources_preserves_its_hole ... FAILED
+test empty_input_cannot_hide_invalid_iso ... FAILED
+test empty_input_cannot_hide_invalid_padding ... FAILED
+test grid_overflow_is_resource_exhaustion ... FAILED
+test negative_padding_is_invalid ... FAILED
+test normalized_unit_source_has_exact_diamond_area ... FAILED
+test too_small_grid_is_not_empty_geometry ... FAILED
+test unresolved_radius_preserves_uncertainty ... FAILED
+test zero_radius_is_invalid_instead_of_empty ... FAILED
+
+failures:
+
+---- a_ring_of_sources_preserves_its_hole stdout ----
+
+thread 'a_ring_of_sources_preserves_its_hole' (160) panicked at tests/curve_metaball_failures.rs:122:5:
+assertion failed: !region.is_empty()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- empty_input_cannot_hide_invalid_iso stdout ----
+
+thread 'empty_input_cannot_hide_invalid_iso' (161) panicked at tests/curve_metaball_failures.rs:71:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+---- empty_input_cannot_hide_invalid_padding stdout ----
+
+thread 'empty_input_cannot_hide_invalid_padding' (162) panicked at tests/curve_metaball_failures.rs:78:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+---- grid_overflow_is_resource_exhaustion stdout ----
+
+thread 'grid_overflow_is_resource_exhaustion' (163) panicked at tests/curve_metaball_failures.rs:92:5:
+assertion `left == right` failed
+  left: None
+ right: Some(ResourceExhausted)
+
+---- negative_padding_is_invalid stdout ----
+
+thread 'negative_padding_is_invalid' (164) panicked at tests/curve_metaball_failures.rs:64:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+---- normalized_unit_source_has_exact_diamond_area stdout ----
+
+thread 'normalized_unit_source_has_exact_diamond_area' (165) panicked at tests/curve_metaball_failures.rs:105:5:
+assertion `left == right` failed
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 11794668337652177443226835572289, denominator: 5781133387755444444500000000000 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 408080401, denominator: 204020000 }, class: One, computable: None, primitive_approx_cache: Empty })
+
+---- too_small_grid_is_not_empty_geometry stdout ----
+
+thread 'too_small_grid_is_not_empty_geometry' (166) panicked at tests/curve_metaball_failures.rs:85:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+---- unresolved_radius_preserves_uncertainty stdout ----
+
+thread 'unresolved_radius_preserves_uncertainty' (167) panicked at tests/curve_metaball_failures.rs:56:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Undecided)
+
+---- zero_radius_is_invalid_instead_of_empty stdout ----
+
+thread 'zero_radius_is_invalid_instead_of_empty' (168) panicked at tests/curve_metaball_failures.rs:49:5:
+assertion `left == right` failed
+  left: None
+ right: Some(InvalidInput)
+
+
+failures:
+    a_ring_of_sources_preserves_its_hole
+    empty_input_cannot_hide_invalid_iso
+    empty_input_cannot_hide_invalid_padding
+    grid_overflow_is_resource_exhaustion
+    negative_padding_is_invalid
+    normalized_unit_source_has_exact_diamond_area
+    too_small_grid_is_not_empty_geometry
+    unresolved_radius_preserves_uncertainty
+    zero_radius_is_invalid_instead_of_empty
+
+test result: FAILED. 0 passed; 9 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+

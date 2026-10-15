@@ -1,0 +1,6 @@
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 9.93s
+     Running tests/curve_metaball_failures.rs (target/curve-metaball-failures/native-v2/release/deps/curve_metaball_failures-15cb6c077acbd97e)
+     Running tests/curve_metaball_workloads.rs (target/curve-metaball-failures/native-v2/release/deps/curve_metaball_workloads-05c42854c7dcfc9c)
+     Running tests/exact_linear_modeling.rs (target/curve-metaball-failures/native-v2/release/deps/exact_linear_modeling-3b9b41191245e071)

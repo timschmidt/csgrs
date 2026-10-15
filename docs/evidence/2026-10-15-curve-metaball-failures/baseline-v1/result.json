@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "regressions",
+      "exit_code": 101,
+      "seconds": 16.600717223715037,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-curve-metaball-failures/baseline-v1/release/deps/curve_metaball_failures-cdc5511c980183da": "3d28edcca310b7f60b32e56a26a44cc02565d74691ebf9d1d2981d0541ee9425"
+      },
+      "stdout_sha256": "02a2bdf561d8d5ee50767d5ca60dfffbf1896c4855464f9df5c91383d8411d4a",
+      "stderr_sha256": "731433b23f1e5664ad0a9310f74bc7b66ee7e309f6450d328da014ea5e7a65e1"
+    }
+  ],
+  "passed": false
+}

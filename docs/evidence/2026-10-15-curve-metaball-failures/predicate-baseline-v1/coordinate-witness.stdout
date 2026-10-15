@@ -1,0 +1,21 @@
+
+running 2 tests
+test equality_still_needs_all_coordinates_and_ordering_keeps_its_contract ... ok
+test point_inequality_uses_any_certified_coordinate_witness ... FAILED
+
+failures:
+
+---- point_inequality_uses_any_certified_coordinate_witness stdout ----
+
+thread 'point_inequality_uses_any_certified_coordinate_witness' (1756) panicked at crates/hyperlimit/tests/point_equality.rs:20:9:
+assertion failed: matches!(hyperlimit::point2_equal(&left, &right, policy),
+    PredicateOutcome::Decided
+    { value: false, certainty: Certainty::Exact | Certainty::Filtered, .. })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    point_inequality_uses_any_certified_coordinate_witness
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

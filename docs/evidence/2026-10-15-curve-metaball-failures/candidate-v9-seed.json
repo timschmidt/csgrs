@@ -1,0 +1,5 @@
+{
+  "target": "target/curve-metaball-failures/candidate-v8",
+  "record": "docs/evidence/2026-10-15-curve-metaball-failures/candidate-v8/result.json",
+  "release_only": true
+}

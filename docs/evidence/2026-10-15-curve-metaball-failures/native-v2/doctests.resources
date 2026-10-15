@@ -1,0 +1,23 @@
+	Command being timed: "cargo test --locked --release -p hyperlimit -p hypermesh -p csgrs -p hypercurve -p hypertri --all-features --doc"
+	User time (seconds): 519.09
+	System time (seconds): 18.36
+	Percent of CPU this job got: 194%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:36.57
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2053516
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 5457
+	Minor (reclaiming a frame) page faults: 7013438
+	Voluntary context switches: 24828
+	Involuntary context switches: 72433
+	Swaps: 0
+	File system inputs: 1130352
+	File system outputs: 1941240
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

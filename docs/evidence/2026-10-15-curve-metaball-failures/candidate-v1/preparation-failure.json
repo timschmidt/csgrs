@@ -1,0 +1,14 @@
+{
+  "terminal_session": 86707,
+  "exit_code": 1,
+  "stage": "unexecuted release seed copy",
+  "observed_error": "cp reported Disk quota exceeded, then CalledProcessError before source capture or any Cargo invocation. Tool output was truncated; no full cp stderr log was retained.",
+  "source_commit": "f823291248535fb7a0ce24b9e59c13e86262c5c0",
+  "runner_sha256": "670600edb12cd550d90168fb8d25d39186ec1f766913134740606370c40d16d2",
+  "commands_sha256": "82941353195501185ac3e25f5fcd54d4538227660714e975c217607a37569b21",
+  "removed_partial_copy": "/tmp/csgrs-curve-metaball-failures/candidate-v1",
+  "copied_file_count": 8660,
+  "copied_bytes": 2076150487,
+  "preserved_artifacts_verified": 388,
+  "all_build_and_test_processes_terminal": true
+}

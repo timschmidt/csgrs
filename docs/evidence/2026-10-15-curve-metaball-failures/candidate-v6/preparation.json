@@ -1,0 +1,13 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--reflink=auto",
+    "/tmp/csgrs-curve-metaball-failures/candidate-v5/release",
+    "/tmp/csgrs-curve-metaball-failures/candidate-v6/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "a53f6c56702e7c017773bb5dee29ab23629b0633a490bc9fcdd0ffcea8b4b9e7",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

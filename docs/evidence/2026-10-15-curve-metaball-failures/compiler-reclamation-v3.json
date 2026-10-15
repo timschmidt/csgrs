@@ -1,0 +1,8 @@
+{
+  "runner_sha256": "d1ef1f3e890eaa05807b7013d16e5afbb158018c5362455e982cd25dc8fd0bce",
+  "protected_executables_verified": 531,
+  "duplicate_count": 1563,
+  "duplicate_bytes_removed": 1481510809,
+  "manifest_sha256": "bcc433719eb4efb4ad0961fbd80ad9d463c9ab649be8474faa34b69cacf77aaf",
+  "reason": "Doctest feature unification approached the disk limit. Only closed, explicitly named targets were scanned; the active native-v2 target was not touched. All executable, unique compiler, source and log artifacts remain. Only byte-identical non-executable .rlib/.rmeta/.d copies in closed trials were removed, with retained originals mapped by digest."
+}

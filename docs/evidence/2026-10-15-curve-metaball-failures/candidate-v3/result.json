@@ -1,0 +1,14 @@
+{
+  "commands": [
+    {
+      "name": "focused-tests",
+      "exit_code": 101,
+      "seconds": 84.36101765511557,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "51607f849f42241a175dab135d0b214ec7cdc48e4f77bf4f9c69804d32105d07"
+    }
+  ],
+  "passed": false
+}

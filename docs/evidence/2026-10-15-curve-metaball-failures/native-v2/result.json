@@ -1,0 +1,361 @@
+{
+  "commands": [
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.376647939905524,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "9df3025934e77020f1c209f32f35a93a8cbd3f9dc6f8bed60212a013b31ca76b"
+    },
+    {
+      "name": "fuzz-fmt",
+      "exit_code": 0,
+      "seconds": 1.8762650452554226,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "7ebba669fbed5340c4786643bacd650f0931bf8c987ee5be1c89aabd87eb7959"
+    },
+    {
+      "name": "strict-clippy",
+      "exit_code": 0,
+      "seconds": 56.79906642436981,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "073192c62fb96130466f7001e2e77591753bc7728c4e2e944f8a5bfc8452b2db",
+      "resources_sha256": "8425291753920ce0a19d2c608e3ccf9bcd198f99b07e512343fe4ee1403bc929"
+    },
+    {
+      "name": "all-feature-tests",
+      "exit_code": 0,
+      "seconds": 247.35726780397817,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/native-v2/release/deps/csgrs-7cb2efc2751cd581": "957b1395486004b1205c89d6d20b30efc33b424cb90eccea4ea0e86129e67513",
+        "target/curve-metaball-failures/native-v2/release/deps/adversarial-aa8f7eb900ff711d": "94d92ac4594d8880191b4266e8eed382820ade110ed25872a784bd5de70f15c8",
+        "target/curve-metaball-failures/native-v2/release/deps/adversarial_deep-5118e0b6d7de3ea6": "bdd223188c008161c073e252526f61b50192fc9f5587d2ce7d358482812c05f8",
+        "target/curve-metaball-failures/native-v2/release/deps/adversarial_extrusions-aa8048fe0de3f594": "411b7c5b1b997712ef37888539431d140b92389914dbdc2bac5280ede93eff1a",
+        "target/curve-metaball-failures/native-v2/release/deps/adversarial_fixtures-cf11e31630975ad0": "c400bcbea9d9b820e96cfb3968b34ec99629883b9a902ebf794273e6f628cc3e",
+        "target/curve-metaball-failures/native-v2/release/deps/adversarial_stress-d6d56cc4aa09a158": "a6b14cc1c25a6e34863d7e290da69820f5ffe120af1db03e25a2f21b204927e9",
+        "target/curve-metaball-failures/native-v2/release/deps/bounds_failures-1de96205ff2a5e07": "6a039948fccad8dfbdd48d83066a37c5b836d524503ebf4efc9395ec3a020b61",
+        "target/curve-metaball-failures/native-v2/release/deps/competitive-0b8b38c506725d57": "a60c4de01cee7a25abc93e0c3e5d09d98c7bdad9a4afedb9baff6e9c204df3b9",
+        "target/curve-metaball-failures/native-v2/release/deps/curve_metaball_failures-cdc5511c980183da": "d212fb20669575497242124439590809a6787fb4683ac4d0d4e9e69354a0785c",
+        "target/curve-metaball-failures/native-v2/release/deps/curve_metaball_workloads-37ab722afd06f275": "6b5be5bac41966c3d0a8ddb4fa023ccb0c5faf1de473693d891e5f5a292da610",
+        "target/curve-metaball-failures/native-v2/release/deps/empty_composition-3a7164c2b9d5044a": "1b732e037a322482875983a06f9bd8836f3169e86ea53ed7ed1037a62945ada3",
+        "target/curve-metaball-failures/native-v2/release/deps/exact_linear_modeling-26d44c8491c2f7a7": "0ec37b76f95b7522814c03448b247459c1e4e8ec9e1185372ddaba13e97654f4",
+        "target/curve-metaball-failures/native-v2/release/deps/generated_benchmark_corpus-b45922908131dfbd": "307fc0d8bcc3a5af4c9155fcc28367c7457ea6a2d89452fd054946b34ba9adce",
+        "target/curve-metaball-failures/native-v2/release/deps/geometry_context-e14123ad7d9b5126": "065ed7fdad05624d38e2a233b4a0d0601e64db83620ce3d67d46e1838dc60953",
+        "target/curve-metaball-failures/native-v2/release/deps/mesh_boolean_context-9d9c68938c3691af": "1d5b11fba5f64f7ed4a1bcfc61b7cf728d5aeb47d3ef94c8dcadce511118904d",
+        "target/curve-metaball-failures/native-v2/release/deps/metaball_failures-043b72a00404a6ff": "99de932fbaf3577bc8f6f083da439a735d52d297caf8f250061296a0cac23bbf",
+        "target/curve-metaball-failures/native-v2/release/deps/metaball_workloads-4d7fe7b802e9560f": "717769555b7bba2577baed01d490538197e3104baa40f327eb4247027d95844a",
+        "target/curve-metaball-failures/native-v2/release/deps/metaballs_diagnostics-8dfd6522763c319c": "e6904f48137c2ea005f6d8a25bb17cc38a2f0f99723be0d17312b60f058778dd",
+        "target/curve-metaball-failures/native-v2/release/deps/native_queries-f108d89258947ff9": "2f4d1f1e327245a9752f6ff18f2887094c269e914817cf9272d1e852953c2582",
+        "target/curve-metaball-failures/native-v2/release/deps/primitive_failures-aadd0e4e093d5243": "4fff97f9315f12645e9a87f34e2824473b2a328854248ff83fc3db26905bf128",
+        "target/curve-metaball-failures/native-v2/release/deps/readme-14ff37358f039d13": "d8c87ed9f2154ed8fe0c67543506b07105d8cd8eeadb50a7223393d3a75c8939",
+        "target/curve-metaball-failures/native-v2/release/deps/readme_render_regression-c73ca6dc64fc3820": "db16bd93c8b2d221c5bb2e52ef2d683e66aff6e9d62ebbbfec13bab3802a820a",
+        "target/curve-metaball-failures/native-v2/release/deps/sdf_failures-0e01156f99592da3": "818f995e5a29d9b40107e1ebecaed0ca1da04d3afd651cee7276f5a10bf88d5e",
+        "target/curve-metaball-failures/native-v2/release/deps/sdf_tpms_diagnostics-5aa3ece71b49182c": "702e41ff00d72fbb5a983438a798256b4390af6b68a787dd062666fac3611ca6",
+        "target/curve-metaball-failures/native-v2/release/deps/solid_cache-d34731e0e95db92a": "6038e802460d1aa32c2aa6d1aafb3e0dd0beda63f7ebdf2e9b815de7cc1b81ac",
+        "target/curve-metaball-failures/native-v2/release/deps/transform_failures-74f1159cb89f11ba": "8227a0396f7d6bdfadd333c39bbcc44a11acfa7abd9c50b87d7177eda7524fa2",
+        "target/curve-metaball-failures/native-v2/release/deps/wasm_certainty-d7c6e3b405f88647": "f6bfa173669e17444f3c46084ca8b81ee3f6cc72d310500854eb852068fef2c0"
+      },
+      "stdout_sha256": "c5a08d213912e183314dd68246bd04a5b158cc0712d879b0e2da72a7ea4396bd",
+      "stderr_sha256": "f45c9661ebe7b3a39bbbd32fb1a959111a82f8c284958a868b18c063f3de7852",
+      "resources_sha256": "66b2b027b948a91218fb34bd151c8bc6ab3935d028a598315642fdd262bf48cd"
+    },
+    {
+      "name": "hypercurve-tests",
+      "exit_code": 0,
+      "seconds": 1323.8379312758334,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve-c64b9a6905916d79": "cee9316a6fcaf3d9aaa3dd1dad28f9b950945c368e1be2808e74d8737560387f",
+        "target/curve-metaball-failures/native-v2/release/deps/bbox_initial_pair-42009948bb13c480": "0b2fb8d16a01680257954daca4c396e82bdee4025def991d4fcf1215bc4be047",
+        "target/curve-metaball-failures/native-v2/release/deps/contour_area_normal_form-4bb910b60a3a7465": "33bfe8f00a6286ba1711dad5b1b95047d051e3b6973cba95b78edf6252ed7dac",
+        "target/curve-metaball-failures/native-v2/release/deps/exact_structural_facts-76451eec1ebb234c": "e55450bbcc6103fd6506c92666b08f459573cc46429bc03cfbe3feffa5f0bd0d",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_adversarial_polygons-648061a661d2d4d2": "4caf06e9df672ce33125cf7a16545fe027f497eb7d2a623f484c320e6a81920e",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_analytic_parallel_region-726d47dc1888e58a": "d0783c9acb21830848bc03b14d4a63d6cb8058858f2f307fba392f9abf591374",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_arc_bezier-1e373a41b9ebc9c7": "bfcd07840c2d0b2e5740ca0c0729e083e43286457b034e52887b8d7fb931330d",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_bbox-fd4e6060656a9e53": "1daf7544bc9e05b740c9b87253b5e32221f5557968f66ecf381a3e87e8ce73e5",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_bezier_algebraic_parameter-b3c101ceb1f03d27": "e86dee447d9d3a6cafc561033a65e319b324a8a51d715adabf83aad4ea6695fb",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_bezier_evaluation-2b2af0cd20a58eb6": "1b9cb1cb17a375ec8065a98302f41b5540616e0924b86e97e1f63e05982a1c2f",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_bezier_fit_offset-000e6dcd62486581": "5066b455d2f9d80085146df5ec964814b24861ed6a16233d470add55ad1baec9",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_circle_predicates-6a21d60fefd977d6": "02b9523ff6a15295554316483c17bfc29657405743df3b7e43c952228de6393e",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_composed_workloads-00d318fe4aa418d9": "608c7b1f8550274452da037780743cc78f6cde80ef866b5f76b22bad985f2cfd",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_contour-4ebf43d4cac44124": "6acb47dd902ba33d00072cec4f9b169236b1ffb20c439ba2192d659b3ea12413",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_curve-9910e4ca7e304f6a": "2f8f6ef272ac97970a5c139b74e858eeb6f3f0bd712d7493af3ce96ff5504be6",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_curve_intersection-84afdd00f969615e": "2a96d8dd37d8745116f870fa3e9a21be09909481e8bd2e51b97a184b10876dbb",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_curve_point-723c0db0e305158f": "797e223149ba0f13bc3c8a6345d4afbfb77a7a9ed1865eeb5120898cb1747f85",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_curve_range-ce272b03c5af5e60": "1d5e060ec293cc4c23aac9e298ac10720cd595e85dc735b2c7f4f8e0c8efe73b",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_curve_region_boolean-73f474d9f89ada3b": "7829e958cec2ebd3eb4fa83866a987b1e84726c3316d6c84c8c32c015def6e3d",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_curve_region_boolean_fuzz-2e74957ca48860d4": "1df0242dca5faec28f664182d96d6afce509413d5d33f0a9bf47be741ffba33a",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_curve_region_promotion-e3e18c6ed854aea1": "f553be118c805b6a7c25530742914f33c848b2d594ed46370345736e32949a15",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_curve_region_stroke-e159e365a3ffcb56": "9ebe1d807305911dd31ac05713372a1eeb5768348b77d58d25ad788cc7670b6d",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_curve_string-a6f5cb6c05aed1b9": "a5dc42089bd473dc3daece232f61369daeb778fd636a2b3a08a0567466c648be",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_derivative_completeness-3b7db4764a27ca62": "64db31ebe76ceec056400bfed22518938c887c8ec33aab6ca8971f3c4b69a19c",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_dispatch_trace-19500280b30d6468": "b785b93b6a0e52d09c870141264880f22d5dd519f46afbf031a7a19ac4fb38d0",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_events-c6fa78e0298355bc": "604f10650d4e6ff1bd1955e37dd3aea3812aaaa15e6ba644ac4c4998f7353a1f",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_exact_closure-321fd937dd57609f": "bb7898367d642217e694fb3317733ea594b83a766905fb62165cd1754d69e691",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_fragments-531bd9eccf3a410b": "4f0ed3ababeb269ca261b211665a17bc6dac86d70f6b54267aac28622441a1d1",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_fuzz_regressions-76bc9ae059bb9293": "bde2259985e231b628b990ae1d7d8c7aaea531522d3377141a08046124ebf831",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_geo_regressions-1b602cdcbb4fe85c": "3409f09f5262faf864d59ce33bb819c8972e31db508c5679df6bd584b575c163",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_nurbs_interpolation-eebf1e52f536fb73": "5d1dd81fa5ea2c9deecf64f71fd93b83ef846ea2670897c688b54bec447a7282",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_offset-13a102504eed15de": "3111ffae5892f250fb58d61d3d9884ed907378bce5a21f3cd3ddf7f72eed7ba8",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_open_path_compositions-24ae05f9efc2f345": "3b1a7a775fa7553aefcf723459da9c5e4db49d2a2cc3c3a75d8ba8a4a1d25e3e",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_path_closure-13e4ed5ea986002d": "5c999ff7165598076ad9cbfe447bd399d99b4949d273ed91a5860a1739ad54e1",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_pcb_boolean_regressions-6789f90d07d16ed5": "0f119322a32b4aa46766fb831e84c570dc2ec67a8456aec6bc220402397ffe6a",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_pr59_shape_regressions-83b1fc0d5a794bdf": "1005965a2a281bb8a827817fc161696b3a453adf50df5218b3f7826b9cd7f9af",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_rational_bezier-ebc5ec163d658b4d": "96467feb1ec961fb91e05800ea7e596114f8e886851dd8e32f0a679a128e4988",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_reconstruct-a445dce1f120dd8a": "eaa37c590455e59f4c924fd6fee8582f4d6a692479f69c198ef2dfcd4374d45f",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_self_contacts-6c627d173f5b69e1": "de6e7ef4c331df233a41ec4f827eb9c3091a63ba27559cf0db8c9a413e03ded6",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_split-6e8c2606d715ddf3": "cc89c61be56d3c1148d50012bf3151402238413119b221c49fca4fceb9b5b1f0",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_stationary_fillets-bb316e3e756ce796": "8830f069f3bd2b1f346fe610752bb97d2289ab75b965ec0bbf67b2c40b44f711",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_svg-556a1ede74b5cd05": "a07c34224b2b084234f6f520724dfb123fbcf7e07d76a0d2fbe520b40b55b282",
+        "target/curve-metaball-failures/native-v2/release/deps/hypercurve_triangulation-352ff74abe37fd6e": "8d09090585de07c4ed244bf410dbbb9ce8d91b514d737fd91cea43043db2d793",
+        "target/curve-metaball-failures/native-v2/release/deps/line_constant_coordinates-d121d91fba5474b4": "6009927f5ff5d91d062706536ddfd02ce8a5dee7658c0dbcf80010fc1524de0a",
+        "target/curve-metaball-failures/native-v2/release/deps/line_fragment_orientation-f9fa75a347463c52": "5b5f1228bfff5e03cc5193b643828342452f1bac4b6e3a4cd3c464cbe882102d",
+        "target/curve-metaball-failures/native-v2/release/deps/marching_squares-038ea04afeca3641": "af9f7dc4cd2cbe4e8a153f025d102043ff11757f83a066a9146c0ef11cd2ea1e",
+        "target/curve-metaball-failures/native-v2/release/deps/native_linear_stroke-5eb5c1ee2586089c": "751dd4aed6ea354e2014ebf70fec77e2bddc9270b97d037b2a9614573831b643",
+        "target/curve-metaball-failures/native-v2/release/deps/pathological_benchmark_fixture-376aa6ef985840a8": "a452e6026cd9ea9e7d9cc7bf6010086c86631ba3130b9d4b9cc268431b15adfc",
+        "target/curve-metaball-failures/native-v2/release/deps/ray_filter_extreme_coordinates-9d17ed123cd5307c": "73c8816b7ef548340f64ec6a65b92c4b5e532ffb8265604b16e5265b7a75089f",
+        "target/curve-metaball-failures/native-v2/release/deps/readme-e31e3117e75caf45": "85ddc418cd5857a4267aab017d708d146a9a8b17ecf27f652f1e9cca10c22faa",
+        "target/curve-metaball-failures/native-v2/release/deps/work_budget-9fefc193fdafb511": "ef8212218a8be8a97473926dc47ab896fc86498d94b8535ae6a39b0fe222eeca"
+      },
+      "stdout_sha256": "3b6bd351f4988e4ff213cd910932186fadb0418f8241f4e71aadceeb3f67c5f8",
+      "stderr_sha256": "31cffe65340e4355a5d68da67fe7f3bf5ea32c7698ca18c805821b66f790d061",
+      "resources_sha256": "0741d6f3ee1a8a5177d4f6a2bf00d18824db4c24ed354e0cc7987604de7b113a"
+    },
+    {
+      "name": "hyperlimit-tests",
+      "exit_code": 0,
+      "seconds": 60.905654488131404,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/native-v2/release/deps/hyperlimit-fcecefc0120db20b": "f777bd0963ba6fd0f4f37c954c1b40cc57fd37f4f41840350d1de8ff73d6115e",
+        "target/curve-metaball-failures/native-v2/release/deps/adversarial_degeneracies-cb02917687a908ac": "10633bcee579181dca0d9671f5be6b2671af1b3cb6a316d561cfc8b6af55cafe",
+        "target/curve-metaball-failures/native-v2/release/deps/adversarial_predicates-12b6c721a1b32704": "e52079ba788800a8e7a2904b276f5866ac8fa8a7cc0e4bdb2cc626b0a256302b",
+        "target/curve-metaball-failures/native-v2/release/deps/adversarial_props-7d90dd902846ada5": "55f7c0613f23b88c08b22c7035cd9d1ecf04971d815ce833de82cc451f9a1461",
+        "target/curve-metaball-failures/native-v2/release/deps/batch-bda8014301821ff7": "b4906585e9caf6df7c2bd6e01dc55b871881736ef9552f2ed618a5e601d6a70e",
+        "target/curve-metaball-failures/native-v2/release/deps/classification_contracts-8f6485c059830515": "8ce79325b374c1d7912ac6ee2eac0a1e3f57a5bc34671dcbc3f6c5197f792efd",
+        "target/curve-metaball-failures/native-v2/release/deps/composite_policy-d7bcb554b7df8c34": "e08a53f37a9040011fe2f2ac63d29dc1e4f3d99c519404550a276006b28a947e",
+        "target/curve-metaball-failures/native-v2/release/deps/exactcore_xinwei-127928f1094fb77b": "cdaf16e3024538d5ac20624422947cdfcc0947a5e7f4a8436b69d1b7884cf251",
+        "target/curve-metaball-failures/native-v2/release/deps/halfspace_feasibility-62fb10b345cb2182": "d25feed73316b6f310d9831403f6f8125bd2f7eb19f30f8400688b33a45f3b5e",
+        "target/curve-metaball-failures/native-v2/release/deps/nd_predicates-da89ea149bfc1520": "bee3cc197606a8acfab652a1dd4ec43ab3b2cb8973a7d44c29c670a6d86ae2f4",
+        "target/curve-metaball-failures/native-v2/release/deps/point_equality-f4588ad1755ab5f2": "73352445732a660599ade69f768912a7fda00b0c9aa6b4dd262e6aad6bf79bc1",
+        "target/curve-metaball-failures/native-v2/release/deps/promoted_mesh_helpers-0711e6f1d67a9707": "16fe74af6bb002bb890b5a3b99d0de762bf7055a1e0430bee190268bb5d2aca7",
+        "target/curve-metaball-failures/native-v2/release/deps/readme-246a1533c8767ce9": "4e5facc58efef8e78aed260253f7933d16b43db3bcda091b7c167341ba42226f",
+        "target/curve-metaball-failures/native-v2/release/deps/real_representations-3897b1e6f49375cd": "a90036d952b4fbd77e894c39cb817055ffb42287504e8c94aec5a7a1cffcec33",
+        "target/curve-metaball-failures/native-v2/release/deps/retained_report_contracts-e03b17502df85d0b": "d476cfe60704c0935baaf8a4b379c67093e5847c7b75a1e08396831a2bf504bf",
+        "target/curve-metaball-failures/native-v2/release/deps/robust_parity-5962a0a72a3382e9": "281c72d4c7d632ea309da7f5b932c65a17837423e5ae20ac9df41810a105dd51",
+        "target/curve-metaball-failures/native-v2/release/deps/support_dop-1d533be51fa0af5b": "151d679ec9758b49499ae3c36f24d765206bc9b3316d3918c63054f8d6611600"
+      },
+      "stdout_sha256": "20173c833a942013d326e5dc6a6e62cb3e10ee19d092b06f3ed5a9746140e9dc",
+      "stderr_sha256": "56f3081a95c3f4e36a3e5fc5fb116d975b27a61908bb02dd9d0a388fc72381b1",
+      "resources_sha256": "33b28db7f2c639587093fc1538a27607df51d13fb62c6d5f201c211b56b0595a"
+    },
+    {
+      "name": "hypertri-tests",
+      "exit_code": 0,
+      "seconds": 27.443472150713205,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/native-v2/release/deps/hypertri-162055e602019502": "23fab7e34e73239253511c1b212f6576e6a27ee657280ce5e99a31e869305e36",
+        "target/curve-metaball-failures/native-v2/release/deps/adversarial-aac94e7a92b9bd43": "5e38a9fa49884103dd84f97cc23195b6c03090198398f121bfcb3973d7f64907",
+        "target/curve-metaball-failures/native-v2/release/deps/api_surface_coverage-b5321271715ff539": "54ae7341d091d77df1154f2cd0fad3804b1fd73ecc92f1ce0306778340e3b78e",
+        "target/curve-metaball-failures/native-v2/release/deps/earcutr_differential-ef272d5fca1aa5fd": "ade1457bef1652ac6c9c5b986b253884485054a02540a38ded1e0dad64f2387f",
+        "target/curve-metaball-failures/native-v2/release/deps/fuzz_properties-405dfed74275f373": "b999d0f3fee2cb80e6f7ae1482bf20c604c263f7c1b522621bb3208056aa902f",
+        "target/curve-metaball-failures/native-v2/release/deps/predicate_policy-e3f7d96ccd396618": "2788b507784e3ef34f2673f3aefa06ff8a23175b0f4a97d6ba622fce48fcd957",
+        "target/curve-metaball-failures/native-v2/release/deps/readme-2d762f0097cc07b1": "8371e4037fad253895e909f18931fc517c24a67d2edddb6bc301288c02e3c27c",
+        "target/curve-metaball-failures/native-v2/release/deps/real_representations-10b6540cffc66d93": "1aa2dc0b60d6571e65e86adc13afc524535ab5f3f098bf68b82d48dc8c1a9802"
+      },
+      "stdout_sha256": "81afed41a678217ec389234f93fe9db07a4e796b343798b3f2b675f0520124d7",
+      "stderr_sha256": "5eb6ad6e383903cb251dbd5f80aa41eb2c6c5b915961da8b63e611449ac8b9f9",
+      "resources_sha256": "a0d0dee52b400cea3e97a0cf7d750ad6d6a1e15cb09b5fca60bd4319e5d380e4"
+    },
+    {
+      "name": "hypermesh-tests",
+      "exit_code": 0,
+      "seconds": 76.59169396664947,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/native-v2/release/deps/hypermesh-3f582b4ca1636641": "fdc0ccc046470bfc1a3288331d7c2bae5268d78ce27da74c140d654a2ca2bf84",
+        "target/curve-metaball-failures/native-v2/release/deps/boolean-5f62d1118823ec97": "4729c245463b07bd46bd3e29bd6af0210beb23acb63974b09b483989e3e7537c",
+        "target/curve-metaball-failures/native-v2/release/deps/competitive-6172fbc55a698b35": "1037d7b95a025d333ef7a6ec98d87d00ab1a88d8bfb9dd7c7bf860d75c62cd1f",
+        "target/curve-metaball-failures/native-v2/release/deps/corpus_manifest-70e8b02b4630cdcf": "beb4494674c3f368b5990b62126db7ab71c8392eee129127557cf07675785b35",
+        "target/curve-metaball-failures/native-v2/release/deps/intersection_corpus-fd36003a26964264": "5637788d52c6377292cb655acee6530c3207f820fbdc9ae2d83d72adcced25af",
+        "target/curve-metaball-failures/native-v2/release/deps/predicate_policy-da601e01ee57d6f5": "decc7c3ff7d327cad906af03709251f2a949f7b97a6ce4c73106e2e835975ba8",
+        "target/curve-metaball-failures/native-v2/release/deps/readme-6edeb87a0e9ac66f": "95d4d8d1d3a5905bab4c825bf31042a73cac283881f5ca933a1438e008315143"
+      },
+      "stdout_sha256": "b3eda234244ad863374c7dc32d6a65e84b76b6b4f7f9bfa4a1914c00f958129b",
+      "stderr_sha256": "69ed930f27c5a8ceb9557c43160f3f4406d00dd458aa75ab4bf106f70fdad11a",
+      "resources_sha256": "6f57ed982a4701bac77ac5804c9836c543994b293f11ecf1c6bccb8e1ede3ff6"
+    },
+    {
+      "name": "hypersdf-tests",
+      "exit_code": 0,
+      "seconds": 42.46188450884074,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/native-v2/release/deps/hypersdf-0bad98822f7a9ce1": "859427891534930668b5bfa9023c4f358e1fa4b03b543952884ba2d7b115ba7f",
+        "target/curve-metaball-failures/native-v2/release/deps/adversarial-8c2a10e795879a70": "1fd4bd87af089a2a18f26e05956cff404cf7d42fb754ed00d9652fc5e8bf66a5",
+        "target/curve-metaball-failures/native-v2/release/deps/dispatch_trace-f9027e5baa42f153": "cbcf8bd896988809e2099655a868d50686a6040cd66c108d5d571d0cabd4b107",
+        "target/curve-metaball-failures/native-v2/release/deps/evaluation_errors-336cc11e1d9bcc1d": "40d143ef9da3c28094a101a86891c0ef67649911de93bb8f0fb9a06b6828b8d2",
+        "target/curve-metaball-failures/native-v2/release/deps/metaball_field-8fdb79172457092e": "88bd983634e8b3e5ebb31f4dcab65f5c80ee318101011f6fc89d0af4a67b4f8a",
+        "target/curve-metaball-failures/native-v2/release/deps/readme-a1a2094e1cc05232": "6f4997b6ac3949f388953c0f2f470af525e058be2afdf48686a37649e1849569"
+      },
+      "stdout_sha256": "850e9c6508ce6df8822c2ed4d9f0a02a3e6bdbfad10ecda24bccbd41248f5063",
+      "stderr_sha256": "aa2e3668c237d9522e209942e3da6b09ca55dcf37f6f19728e4a539151e18c6c",
+      "resources_sha256": "d7ff0f2997cad23b8da6b6d4a1b7f8a6c5ad3f9c88357181f64fe86c59ae9707"
+    },
+    {
+      "name": "ffi-tests",
+      "exit_code": 0,
+      "seconds": 131.4407226378098,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/native-v2/release/deps/csgrs_ffi-393fd1eb2bc5369f": "a00fb4056fea154df3eaa3cd9a70f006abdc424fe03aab756f4316df58b0e20d"
+      },
+      "stdout_sha256": "d9452c64fe71a58f79186bd8cfbc2c330da6d6f308542d6a975d517142e5f15d",
+      "stderr_sha256": "3595cf2fd33186d77611b7e05bd659c73a928ff7571edb4c74cda9ae4676e253",
+      "resources_sha256": "d45f4c4efc2c7d4a0c5226edb06261d7e3c9f2f5e73181d03b3116198d47767e"
+    },
+    {
+      "name": "minimal-clippy",
+      "exit_code": 0,
+      "seconds": 23.874674652237445,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "936caf551c24429b4ac7eea610e6716c828a3f45bfb3ddc44700cb7ed5821501",
+      "resources_sha256": "5fa268df0873c5f052389ab1f3367c758a89b6b8f41c90ebfe9c8322d9f9e047"
+    },
+    {
+      "name": "minimal-tests",
+      "exit_code": 0,
+      "seconds": 128.04380796803162,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/native-v2/release/deps/csgrs-12b72f0ccdd38706": "91b8145359b115eb7d3fc8b4b7491594612b9b69c1afa67c4b5ae31069c39ae5",
+        "target/curve-metaball-failures/native-v2/release/deps/bounds_failures-c661a92a5b4c7962": "1b600a5eacf4d526613ee064717455d743afafb72b63808514e45c5906b2234a"
+      },
+      "stdout_sha256": "265ce14f5d7a247b8d89f7e7b671c83182c445b4a0b445e051f72aeb8f079f0e",
+      "stderr_sha256": "256c9a2d257d69f11eb6662891d10a8b9a8e68cdc6a883307e78fe9cf4dc860f",
+      "resources_sha256": "bdbab0093c2f1302cff93f0e28f14df7554b13abfa38dc9d45da7bd357596053"
+    },
+    {
+      "name": "planar-clippy",
+      "exit_code": 0,
+      "seconds": 4.30606943834573,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "2be4def56791aa1f289792bdcb5ca083dbd28dcbc379ce5ca01b5c322089d656",
+      "resources_sha256": "8179462df2467e74a9e74b563f37e6f7027513576989c96a70321532a21bc5d8"
+    },
+    {
+      "name": "planar-tests",
+      "exit_code": 0,
+      "seconds": 66.29380611004308,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/native-v2/release/deps/curve_metaball_failures-15cb6c077acbd97e": "b7bd953dd3f65ba4cc47be949984bbf7bbd834fc4f3e42cb48f8f36d17ea8a37",
+        "target/curve-metaball-failures/native-v2/release/deps/curve_metaball_workloads-05c42854c7dcfc9c": "9e18063ac2e24c3821d1f90a2cc0af9a599433f757843de487d93a3192c8e7d0",
+        "target/curve-metaball-failures/native-v2/release/deps/exact_linear_modeling-3b9b41191245e071": "cbe2b8a534ced62779cadb72adaeabd6f847434baed367b63cd063f29229d2ae"
+      },
+      "stdout_sha256": "985fbd4cfd230758c52af74dd2e522dd7e600d9112cf167cd24ebe5c79390db7",
+      "stderr_sha256": "896f79688ef9a51d39b20f4252ec9d67d1f8abe41920ce93f4018da9f6752515",
+      "resources_sha256": "6f409bc7343f217bbfeccfcdf8cae5e8e71530418c7715307bd8710c9813cf76"
+    },
+    {
+      "name": "metaballs-only-clippy",
+      "exit_code": 0,
+      "seconds": 3.2246559360064566,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "7b940a915be079dd0432d836845505e2268c2907474149c2b66554238abfd4a2",
+      "resources_sha256": "4fc0678acf5d18047bd329d9ed5d3aae61370665fc05812f2ea01f2fc10fbd6e"
+    },
+    {
+      "name": "metaballs-only-tests",
+      "exit_code": 0,
+      "seconds": 18.429324918892235,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/native-v2/release/deps/metaball_failures-f1c016c1893f4030": "48f106c1f7387af757aa92d920f2956dd3a3245b7f363a7f07d742029a84e702",
+        "target/curve-metaball-failures/native-v2/release/deps/metaballs_diagnostics-69dbfc5276d9c9b7": "db2d826013a4a1968702c9df6b298d762fe48db7c7fc3beac585cd402aa7465f"
+      },
+      "stdout_sha256": "85fcc6ea2caa137a727bef4b57c09d7ec9f30aa6b8ad479513683813f943601a",
+      "stderr_sha256": "ebabe8abc98a50757588b9d980a5bc9877b1d8e12147f81b971aae9efcf5510a",
+      "resources_sha256": "0d76bf67b7328541d8fc52350fc29e3c7bdc7060f892cd7fb43f07149039aa9e"
+    },
+    {
+      "name": "native-default-grid",
+      "exit_code": 0,
+      "seconds": 118.72061281185597,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/native-v2/release/deps/marching_squares-6853dfa7361028f3": "b135deeb110088d9d4011c5b907c0d2610fe696ad727392d8da51b38600a5145"
+      },
+      "stdout_sha256": "21e45d53d4edd1c552114a7d749db515b13c131c16e7882991c6dd13f58a9031",
+      "stderr_sha256": "b97578409db2e38012fdd3681d4550d8e0ac3619187c1d60655942eba5927a9d",
+      "resources_sha256": "1468c13f3372b34496305f3c12ad30e1ed9ba85e455b06900f05e8ea7e8ca5fd"
+    },
+    {
+      "name": "sdf-only-clippy",
+      "exit_code": 0,
+      "seconds": 3.4472443307749927,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "7a2b88421854aad2061812a75508b5d4172937f55f555cbaca8ce72a542b1924",
+      "resources_sha256": "47470baac509bbdb3ad8d6b7a7599b8b11339d705979a9301eb076d9fcd3b3c3"
+    },
+    {
+      "name": "fuzz-clippy",
+      "exit_code": 0,
+      "seconds": 38.014009333215654,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "902d213486c59a7c98edfe1ac165a33f94b9a7e24e6cb01e56a00c71be4a3a65",
+      "resources_sha256": "4011799fe6470e3a5b80751ee00a47ca6138adcec77f2e2704d53105366b4741"
+    },
+    {
+      "name": "docs",
+      "exit_code": 0,
+      "seconds": 218.4188314601779,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "2734e193ba6f42c14c81fb3609504cbfdd1a045a04c9ccc0237b02ce3b20d1ea",
+      "resources_sha256": "92db55722fdf92698ba23f1f064c861a6b3d1e141eb95d23dcf7f4be79522a2f"
+    },
+    {
+      "name": "doctests",
+      "exit_code": 0,
+      "seconds": 284.03788670292124,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "3dd8b5fac2cffa3232372605c73252146fdf022fc6cb3074b9d5428d00166695",
+      "stderr_sha256": "be460c532a3da20cf55af385e2728d85fe45a1ebf2947fc5b679fe8ff21c882c",
+      "resources_sha256": "3bc03d665ca74937ab419ae988ceee1d91ce9a4c4133c2011c7a433360a15deb"
+    },
+    {
+      "name": "ffi-build",
+      "exit_code": 0,
+      "seconds": 11.127400066237897,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "0de409725c875f0bb7f9469192fcc700b9439edb87de65a84a0f681cde8cf7fd",
+      "resources_sha256": "caa0641d105c85d9fad035c430851fb1d09c062c855cccb7e54ad6017c68deae"
+    }
+  ],
+  "passed": true
+}

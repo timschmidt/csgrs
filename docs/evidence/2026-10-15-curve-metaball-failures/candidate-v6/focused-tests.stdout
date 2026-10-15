@@ -1,0 +1,50 @@
+
+running 11 tests
+test a_ring_of_sources_preserves_its_hole ... ok
+test empty_input_cannot_hide_invalid_iso ... ok
+test empty_input_cannot_hide_invalid_padding ... ok
+test failed_construction_does_not_contaminate_later_policies_or_composition ... ok
+test grid_overflow_is_resource_exhaustion ... ok
+test negative_padding_is_invalid ... ok
+test normalized_unit_source_has_exact_diamond_area ... ok
+test the_original_twelve_by_twelve_closed_fixture_remains_supported ... ok
+test too_small_grid_is_not_empty_geometry ... ok
+test unresolved_radius_preserves_uncertainty ... ok
+test zero_radius_is_invalid_instead_of_empty ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 34.81s
+
+
+running 2 tests
+test benchmark_planar_metaballs_complete_at_original_resolution_forty_eight ... ok
+test readme_planar_metaball_completes_at_original_resolution_twenty_four ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.63s
+
+
+running 2 tests
+test exact_profiles_beyond_float_range_are_still_modeling_inputs ... FAILED
+test rational_material_and_hole_keep_exact_area_and_volume ... FAILED
+
+failures:
+
+---- exact_profiles_beyond_float_range_are_still_modeling_inputs stdout ----
+
+thread 'exact_profiles_beyond_float_range_are_still_modeling_inputs' (339) panicked at tests/exact_linear_modeling.rs:30:61:
+called `Result::unwrap()` on an `Err` value: Geometry("invalid state during exact Evaluation: finite projection point is not finite")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- rational_material_and_hole_keep_exact_area_and_volume stdout ----
+
+thread 'rational_material_and_hole_keep_exact_area_and_volume' (340) panicked at tests/exact_linear_modeling.rs:36:9:
+assertion `left == right` failed
+  left: Real { rational: Rational { sign: Plus, numerator: 2487975578047938514891639969808391, denominator: 162259276829213363391578010288128 }, class: One, computable: None, primitive_approx_cache: Empty }
+ right: Real { rational: Rational { sign: Plus, numerator: 46, denominator: 3 }, class: One, computable: None, primitive_approx_cache: Empty }
+
+
+failures:
+    exact_profiles_beyond_float_range_are_still_modeling_inputs
+    rational_material_and_hole_keep_exact_area_and_volume
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

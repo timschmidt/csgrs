@@ -1,0 +1,82 @@
+   Compiling serde_core v1.0.228
+   Compiling num-traits v0.2.19
+   Compiling cfg-if v1.0.4
+   Compiling num-integer v0.1.46
+   Compiling zerocopy v0.8.48
+   Compiling serde v1.0.228
+   Compiling zmij v1.0.21
+   Compiling memchr v2.8.0
+   Compiling itoa v1.0.18
+   Compiling serde_json v1.0.149
+   Compiling half v2.7.1
+   Compiling num-bigint v0.4.6
+   Compiling ciborium-io v0.2.2
+   Compiling ciborium-ll v0.2.2
+   Compiling num-complex v0.4.6
+   Compiling num-iter v0.1.45
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling ciborium v0.2.2
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling unicode-ident v1.0.24
+   Compiling wasm-bindgen-shared v0.2.126
+   Compiling once_cell v1.21.4
+   Compiling arrayvec v0.7.6
+   Compiling polycool v0.4.0
+   Compiling wasm-bindgen v0.2.126
+   Compiling pin-project-lite v0.2.17
+   Compiling smallvec v1.15.1
+   Compiling slab v0.4.12
+   Compiling futures-core v0.3.32
+   Compiling static_assertions v1.1.0
+   Compiling futures-task v0.3.32
+   Compiling futures-util v0.3.32
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling ndshape v0.3.0
+   Compiling kurbo v0.13.1
+   Compiling byteorder v1.5.0
+   Compiling glam v0.29.3
+   Compiling siphasher v1.0.3
+   Compiling svgtypes v0.16.1
+   Compiling fast-surface-nets v0.2.1
+   Compiling gltf-json v1.4.1
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling js-sys v0.3.103
+   Compiling float-cmp v0.9.0
+   Compiling svg v0.18.0
+   Compiling lazy_static v1.5.0
+   Compiling allocator-api2 v0.2.21
+   Compiling equivalent v1.0.2
+   Compiling foldhash v0.1.5
+   Compiling hashbrown v0.15.5
+   Compiling serde-wasm-bindgen v0.6.5
+   Compiling gltf v1.4.1
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling stl_io v0.8.6
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling thiserror v2.0.21
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+   Compiling uuid v1.23.1
+   Compiling base64 v0.22.1
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `wasm` profile [optimized] target(s) in 2m 38s
+/tmp/csgrs-curve-metaball-failures/bindings-v1/wasm-bindings-node/csgrs.js:2033
+            throw new Error(getStringFromWasm0(arg0, arg1));
+            ^
+
+Error: null pointer passed to rust
+    at __wbg___wbindgen_throw_344f42d3211c4765 (/tmp/csgrs-curve-metaball-failures/bindings-v1/wasm-bindings-node/csgrs.js:2033:19)
+    at csgrs.wasm.wasm_bindgen[b7673b37555bf60c]::__wbindgen_throw (wasm://wasm/csgrs.wasm-02a3e0b6:wasm-function[8507]:0x92623f)
+    at csgrs.wasm.wasm_bindgen[b7673b37555bf60c]::throw_str (wasm://wasm/csgrs.wasm-02a3e0b6:wasm-function[8433]:0x925e95)
+    at csgrs.wasm.wasm_bindgen[b7673b37555bf60c]::__rt::throw_null (wasm://wasm/csgrs.wasm-02a3e0b6:wasm-function[8434]:0x925ea3)
+    at csgrs.wasm.__wbg_point3js_free (wasm://wasm/csgrs.wasm-02a3e0b6:wasm-function[5640]:0x8d9f9c)
+    at Point3Js.free (/tmp/csgrs-curve-metaball-failures/bindings-v1/wasm-bindings-node/csgrs.js:1692:14)
+    at Object.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/tests/wasm/geometry_certainty.cjs:222:46)
+    at Module._compile (node:internal/modules/cjs/loader:1705:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1838:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+
+Node.js v22.22.2

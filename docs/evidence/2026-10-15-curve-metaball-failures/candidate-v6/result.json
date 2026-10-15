@@ -1,0 +1,29 @@
+{
+  "commands": [
+    {
+      "name": "native-grid-tests",
+      "exit_code": 0,
+      "seconds": 2.676910828333348,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-curve-metaball-failures/candidate-v6/release/deps/marching_squares-80034dd237067c21": "e446643b2029dcdf060550870b67bfc4dd8dda92e33c626719ae8074173c047c"
+      },
+      "stdout_sha256": "27a6dd050a4fe2b1fbdd0b315a6d3085daa3d40549f221272f52cf463825c053",
+      "stderr_sha256": "77c2f823fbd5df308d4946d0429068bc0552a677ee163b453a97b7de0e71bde6"
+    },
+    {
+      "name": "focused-tests",
+      "exit_code": 101,
+      "seconds": 141.09126314520836,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-curve-metaball-failures/candidate-v6/release/deps/curve_metaball_failures-15cb6c077acbd97e": "348083cc17dce863229a5403101225fb1dc48b71feeb83f51b8cd29d0dde94b4",
+        "/tmp/csgrs-curve-metaball-failures/candidate-v6/release/deps/curve_metaball_workloads-05c42854c7dcfc9c": "81d6a3ab58561b92aedba53d2b15de27ff3e9ee3478c453556279c6d5df266f3",
+        "/tmp/csgrs-curve-metaball-failures/candidate-v6/release/deps/exact_linear_modeling-3b9b41191245e071": "0faa68cf85fd11452c5ea618455accfc47939bdbd38c02a61e5545a9024d6de2"
+      },
+      "stdout_sha256": "c0df4dab3e773d6beda47d1019a887bb69adc3e84b9174d18ad4fc5b46ebf202",
+      "stderr_sha256": "5d67e00e29f7b720fe00e92ddc80187e6b8acc5afb9415a7412d1da3082f3b24"
+    }
+  ],
+  "passed": false
+}

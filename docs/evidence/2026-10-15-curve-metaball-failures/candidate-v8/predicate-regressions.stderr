@@ -1,0 +1,47 @@
+   Compiling num-traits v0.2.19
+   Compiling serde_core v1.0.228
+   Compiling num-integer v0.1.46
+   Compiling num-bigint v0.4.6
+   Compiling serde v1.0.228
+   Compiling num-iter v0.1.45
+   Compiling num-complex v0.4.6
+   Compiling num-rational v0.4.2
+   Compiling once_cell v1.21.4
+   Compiling either v1.15.0
+   Compiling num v0.4.3
+   Compiling half v2.7.1
+   Compiling clap_lex v1.1.1
+   Compiling plotters-backend v0.3.7
+   Compiling ciborium-io v0.2.2
+   Compiling anstyle v1.0.14
+   Compiling memchr v2.8.0
+   Compiling tempfile v3.27.0
+   Compiling serde_json v1.0.149
+   Compiling clap_builder v4.6.7
+   Compiling plotters-svg v0.3.7
+   Compiling ciborium-ll v0.2.2
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling itertools v0.10.5
+   Compiling regex-automata v0.4.14
+   Compiling same-file v1.0.6
+   Compiling cast v0.3.0
+   Compiling rusty-fork v0.3.1
+   Compiling criterion-plot v0.5.0
+   Compiling walkdir v2.5.0
+   Compiling regex v1.12.3
+   Compiling rayon v1.12.0
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling ciborium v0.2.2
+   Compiling plotters v0.3.7
+   Compiling clap v4.6.7
+   Compiling tinytemplate v1.2.1
+   Compiling is-terminal v0.4.17
+   Compiling oorandom v11.1.5
+   Compiling anes v0.1.6
+   Compiling criterion v0.5.1
+   Compiling proptest v1.11.0
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling apfp v0.1.1
+   Compiling geometry-predicates v0.3.0
+    Finished `release` profile [optimized] target(s) in 39.18s
+     Running tests/point_equality.rs (target/curve-metaball-failures/candidate-v8/release/deps/point_equality-07fc34b28e53db51)

@@ -1,0 +1,29 @@
+{
+  "commands": [
+    {
+      "name": "predicate-regressions",
+      "exit_code": 0,
+      "seconds": 40.983300582971424,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/candidate-v8/release/deps/point_equality-07fc34b28e53db51": "51cb955337e71a6e2586f654c75d0870bb557fe952d24e438616f8f3dbfcb5ae"
+      },
+      "stdout_sha256": "6c4603e46523db878cf86b2952a2021cc16df56af3a7618f4c343b645b2d7edb",
+      "stderr_sha256": "7773707931f7e51fd16b61ca18b88c4d36b4c67f6ea72313db746cf4a53c3894",
+      "resources_sha256": "593141cb41acf9f30afbd62dd27eb8778032b4d417e3052ea936d6030c516cd4"
+    },
+    {
+      "name": "original-strict-catalog",
+      "exit_code": 101,
+      "seconds": 111.66344877518713,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/candidate-v8/release/deps/csgrs-c4f8cd6d99303459": "dafe0c56e087b0c674f8e60b4040e74547ef14f895c9662904f2e77de72e3749"
+      },
+      "stdout_sha256": "d53c55870c401952f614876655b7406331025747f1096859a7f9b261492e5f52",
+      "stderr_sha256": "87f5d95b18c523f37e48ea6f0353b9d0b79a051cadc81c1a3afff579eccbd5e6",
+      "resources_sha256": "8798663d32afef1a800ca49113bae5d4cc205b9a220ba20f691b6da01a14c603"
+    }
+  ],
+  "passed": false
+}

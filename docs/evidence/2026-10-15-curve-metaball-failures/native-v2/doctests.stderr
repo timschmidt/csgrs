@@ -1,0 +1,79 @@
+   Compiling num-bigint v0.4.6
+   Compiling getrandom v0.4.2
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.9.0
+   Compiling rand v0.9.4
+   Compiling num-rational v0.4.2
+   Compiling hashbrown v0.16.1
+   Compiling hashbrown v0.17.1
+   Compiling num v0.4.3
+   Compiling glam v0.30.10
+   Compiling indexmap v2.14.0
+   Compiling uuid v1.23.1
+   Compiling bevy_platform v0.18.1
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling bevy_utils v0.18.1
+   Compiling bevy_reflect v0.18.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling bevy_tasks v0.18.1
+   Compiling bevy_ecs v0.18.1
+   Compiling hash32 v0.3.1
+   Compiling safe_arch v1.2.0
+   Compiling wide v1.7.1
+   Compiling heapless v0.8.0
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling bevy_app v0.18.1
+   Compiling rstar v0.12.2
+   Compiling simba v0.10.2
+   Compiling spade v2.15.1
+   Compiling tempfile v3.27.0
+   Compiling av-scenechange v0.14.1
+   Compiling nalgebra v0.35.0
+   Compiling rusty-fork v0.3.1
+   Compiling av1-grain v0.2.5
+   Compiling geo-types v0.7.20
+   Compiling rand v0.10.3
+   Compiling argmin-math v0.5.1
+   Compiling rand_xoshiro v0.7.0
+   Compiling argmin v0.11.0
+   Compiling geo v0.33.1
+   Compiling rav1e v0.8.1
+   Compiling proptest v1.11.0
+   Compiling gauss-quad v0.3.2
+   Compiling bevy_time v0.18.1
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling rand_distr v0.5.1
+   Compiling bevy_diagnostic v0.18.1
+   Compiling ravif v0.13.0
+   Compiling curvo v0.1.92
+   Compiling bevy_math v0.18.1
+   Compiling bevy_log v0.18.1
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling tinytemplate v1.2.1
+   Compiling is-terminal v0.4.17
+   Compiling criterion v0.5.1
+   Compiling bevy_asset v0.18.1
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling gerber-types v0.7.0
+   Compiling image v0.25.10
+   Compiling bevy_transform v0.18.1
+   Compiling hexasphere v16.0.0
+   Compiling toml_datetime v0.6.11
+   Compiling serde_spanned v0.6.9
+   Compiling toml_edit v0.22.27
+   Compiling dxf v0.6.1
+   Compiling bevy_mesh v0.18.1
+   Compiling gerber_parser v0.4.0
+   Compiling hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling boolmesh v0.1.9
+   Compiling toml v0.8.23
+   Compiling earcutr v0.5.0
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 4m 33s
+   Doc-tests csgrs
+   Doc-tests hypercurve
+   Doc-tests hyperlimit
+   Doc-tests hypermesh
+   Doc-tests hypertri

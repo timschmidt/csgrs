@@ -1,0 +1,5 @@
+=== RUN   TestBoundsAbsenceAndPlacement
+--- PASS: TestBoundsAbsenceAndPlacement (0.00s)
+=== RUN   TestExactLinearExtrusionAndFailureRecovery
+--- PASS: TestExactLinearExtrusionAndFailureRecovery (0.00s)
+PASS

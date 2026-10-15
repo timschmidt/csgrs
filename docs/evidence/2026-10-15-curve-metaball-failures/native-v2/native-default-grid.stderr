@@ -1,0 +1,22 @@
+   Compiling either v1.15.0
+   Compiling zerocopy v0.8.48
+   Compiling rayon v1.12.0
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling smallvec v1.15.1
+   Compiling thiserror v2.0.21
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling spade v2.15.1
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling ppv-lite86 v0.2.21
+   Compiling rstar v0.12.2
+   Compiling i_key_sort v0.10.3
+   Compiling i_overlay v4.5.2
+   Compiling geo-types v0.7.20
+   Compiling rand_chacha v0.9.0
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling rand v0.10.3
+   Compiling geo v0.33.1
+   Compiling proptest v1.11.0
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 56s
+     Running tests/marching_squares.rs (target/curve-metaball-failures/native-v2/release/deps/marching_squares-6853dfa7361028f3)

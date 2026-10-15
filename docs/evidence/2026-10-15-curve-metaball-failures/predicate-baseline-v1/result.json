@@ -1,0 +1,17 @@
+{
+  "commands": [
+    {
+      "name": "coordinate-witness",
+      "exit_code": 101,
+      "seconds": 50.22868483280763,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-curve-metaball-failures/predicate-baseline-v1/release/deps/point_equality-07fc34b28e53db51": "215077c3a813a335f796e551e6b2e74e3f0f405422b392217a44112cd2e65839"
+      },
+      "stdout_sha256": "690993956991a8bb85ee88d8f6aef9f21e3d692dded23cbeaec0bf1099b4099c",
+      "stderr_sha256": "d47e0cd277870a969e8f6ccaeda72382ee3005c2ddc3ef1d7cae962b24ebbf7e",
+      "resources_sha256": "16aba5d2442f64c6737e3172e760eb1d7c3c4f6c2b4aa1de50a1e0df1f8eedc1"
+    }
+  ],
+  "passed": false
+}

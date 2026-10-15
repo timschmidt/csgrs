@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "adapter-regression",
+      "exit_code": 101,
+      "seconds": 2.5949950120411813,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-curve-metaball-failures/wrappers-baseline-v1/release/deps/exact_linear_modeling-3b9b41191245e071": "02b1b41abc389799f0beaa6b78b56c352b389dd5b2786328c1a7ef34f26471b2"
+      },
+      "stdout_sha256": "0c96d359549cc4989859009fd7d2e5ac3c3f2756422c8679ff6bf4daecdaae1e",
+      "stderr_sha256": "edce8a59b7ad46e52711c0a35f7dfdcce71220cfea40275f47c19ed15490b9f7"
+    }
+  ],
+  "passed": false
+}

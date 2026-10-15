@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 14.75s
+     Running tests/curve_metaball_failures.rs (/tmp/csgrs-curve-metaball-failures/baseline-v1/release/deps/curve_metaball_failures-cdc5511c980183da)
+error: test failed, to rerun pass `-p csgrs --test curve_metaball_failures`

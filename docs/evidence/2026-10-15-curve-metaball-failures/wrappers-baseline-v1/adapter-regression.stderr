@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 0.89s
+     Running tests/exact_linear_modeling.rs (/tmp/csgrs-curve-metaball-failures/wrappers-baseline-v1/release/deps/exact_linear_modeling-3b9b41191245e071)
+error: test failed, to rerun pass `-p csgrs --test exact_linear_modeling`

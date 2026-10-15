@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "focused-tests",
+      "exit_code": 101,
+      "seconds": 123.67598441708833,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-curve-metaball-failures/candidate-v4/release/deps/curve_metaball_failures-15cb6c077acbd97e": "5c2972d8a39adff3472ca069a9b3825f20a1f3f9c4027fb362b632f72fbd661e"
+      },
+      "stdout_sha256": "2ae959676e59ecd5682e67301a4225aac74f996f4ec327e8b9f37350a81af579",
+      "stderr_sha256": "f0d9ad3cb3c438c0227aff61cf9477e50b7b9661e97f9639d2beca0e7e1911f9"
+    }
+  ],
+  "passed": false
+}

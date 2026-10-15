@@ -1,0 +1,66 @@
+   Compiling crossbeam-utils v0.8.21
+   Compiling rayon-core v1.13.0
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling crossbeam-epoch v0.9.18
+   Compiling crossbeam-deque v0.8.6
+   Compiling byteorder v1.5.0
+   Compiling heapless v0.8.0
+   Compiling either v1.15.0
+   Compiling zerocopy v0.8.48
+   Compiling rayon v1.12.0
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hash32 v0.3.1
+   Compiling smallvec v1.15.1
+   Compiling foldhash v0.2.0
+   Compiling thiserror v2.0.21
+   Compiling stable_deref_trait v1.2.1
+   Compiling hashbrown v0.16.1
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling i_float v1.16.0
+   Compiling robust v1.2.0
+   Compiling rand_core v0.10.1
+   Compiling spade v2.15.1
+   Compiling i_shape v1.18.0
+   Compiling ppv-lite86 v0.2.21
+   Compiling rstar v0.12.2
+   Compiling i_key_sort v0.10.3
+   Compiling approx v0.5.1
+   Compiling i_tree v0.18.0
+   Compiling geo-types v0.7.20
+   Compiling i_overlay v4.5.2
+   Compiling rand_chacha v0.9.0
+   Compiling rand_pcg v0.10.2
+   Compiling rand v0.10.3
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling earcut v0.4.5
+   Compiling geographiclib-rs v0.2.7
+   Compiling log v0.4.29
+   Compiling sif-itree v0.4.1
+   Compiling float_next_after v2.0.0
+   Compiling proptest v1.11.0
+   Compiling geo v0.33.1
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0308]: mismatched types
+    --> crates/hypercurve/tests/marching_squares.rs:240:37
+     |
+ 240 |     let shift = Real::from(10).powi(400).unwrap();
+     |                                ---- ^^^ expected `BigInt`, found integer
+     |                                |
+     |                                arguments to this method are incorrect
+     |
+note: method defined here
+    --> crates/hyperreal/src/real/arithmetic/elementary_functions.rs:3937:12
+     |
+3937 |     pub fn powi(self, exp: BigInt) -> Result<Self, Problem> {
+     |            ^^^^
+
+error[E0599]: no associated function or constant named `STRICT` found for struct `TriangulationContext` in the current scope
+   --> crates/hypercurve/tests/marching_squares.rs:280:42
+    |
+280 |         &hypertri::TriangulationContext::STRICT,
+    |                                          ^^^^^^ associated function or constant not found in `TriangulationContext`
+
+Some errors have detailed explanations: E0308, E0599.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `hypercurve` (test "marching_squares") due to 2 previous errors

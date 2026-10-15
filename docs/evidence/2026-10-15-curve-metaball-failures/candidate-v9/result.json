@@ -1,0 +1,53 @@
+{
+  "commands": [
+    {
+      "name": "predicate-regressions",
+      "exit_code": 0,
+      "seconds": 1.9437188850715756,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/candidate-v9/release/deps/point_equality-07fc34b28e53db51": "51cb955337e71a6e2586f654c75d0870bb557fe952d24e438616f8f3dbfcb5ae"
+      },
+      "stdout_sha256": "6c4603e46523db878cf86b2952a2021cc16df56af3a7618f4c343b645b2d7edb",
+      "stderr_sha256": "89129b2eb52b8d4e8eedfdcda2ae30125696699d6d216a32378ede0221f50df8",
+      "resources_sha256": "4214b06ce9dbc6589be21ea5cf97b85da5677da96afa7078ac6addb4f3f1d7e3"
+    },
+    {
+      "name": "unknown-box-regression",
+      "exit_code": 0,
+      "seconds": 14.193369473796338,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/candidate-v9/release/deps/hypertri-53f985549fad45a5": "86efef07501dc67cb5b38295eb8025038e30c329c1739d045952c15dafc2ec05"
+      },
+      "stdout_sha256": "36a5c7bd6d1f7a1c8563879f4473ce5848a14b60999f95398702e19db16d4964",
+      "stderr_sha256": "3a7d11bfb4cea8f7224d6678aef4a208cae05f874f72e307e31c8a40a8c50ed2",
+      "resources_sha256": "6b919d2886fb457edbb82b346fa935d19bb03bbf91c8a67d2975afe6e598632a"
+    },
+    {
+      "name": "original-strict-catalog",
+      "exit_code": 0,
+      "seconds": 93.85759614594281,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/candidate-v9/release/deps/csgrs-c4f8cd6d99303459": "dcdc6588dc73c3f2334918193709b9e824618e632013b4c6cae0c4957ad95502"
+      },
+      "stdout_sha256": "8c006da881c9416a676d54059985ef0a0a25d442e4bd91112caf8feab0928a06",
+      "stderr_sha256": "e08e7957dded6b31fdd045a8e1d17adbdb0bfcaa324a4378207a84cd48660709",
+      "resources_sha256": "6c28f7f824b53de835cba34a582efa1667c659b4c1f009d7f49bb5c27322ee3c"
+    },
+    {
+      "name": "exact-profile-regressions",
+      "exit_code": 0,
+      "seconds": 8.379673094954342,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/curve-metaball-failures/candidate-v9/release/deps/exact_linear_modeling-3b9b41191245e071": "0e2fb88e3a0952b88326d3960b158470be25c76682918358f4cdf8cb07a20be1"
+      },
+      "stdout_sha256": "f48c999feeaf74aea5f5932bbd8a5ea44ebee37fadc99617135a3196a1fa4020",
+      "stderr_sha256": "22cb8f9e90ecbd4e5eeb034db41d96f49353923f1d2a75d46441fe4c89fbee82",
+      "resources_sha256": "dd15f0ed826041e1e375e689a3da613189cc7f44e8faa5530c7fa8227f07460d"
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,21 @@
+[
+  [
+    "adapter-regression",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "curve,metaballs",
+      "--test",
+      "exact_linear_modeling",
+      "extrusion_adapters_retain_native_failure_categories_and_sources",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]

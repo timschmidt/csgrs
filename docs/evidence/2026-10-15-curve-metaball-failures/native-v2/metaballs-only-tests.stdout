@@ -1,0 +1,25 @@
+
+running 12 tests
+test empty_input_does_not_hide_invalid_iso_value ... ok
+test empty_input_does_not_hide_invalid_padding ... ok
+test grid_overflow_is_resource_exhaustion ... ok
+test inverse_square_influence_does_not_discard_distant_contributions ... ok
+test negative_padding_is_invalid_input_instead_of_empty_geometry ... ok
+test resolution_is_validated_instead_of_silently_clamped ... ok
+test normalized_level_field_has_independently_known_exact_sampled_vertices ... ok
+test singular_inverse_square_influence_is_not_a_finite_sentinel ... ok
+test strict_field_errors_survive_approximate_meshing_and_recovery ... ok
+test unresolved_radius_is_undecided_instead_of_invalid_or_empty ... ok
+test zero_radius_is_invalid_input_instead_of_empty_geometry ... ok
+test sampled_body_has_exact_volume_topology_and_downstream_composition ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 3 tests
+test metaball_influence_preserves_its_pole_and_positive_finite_values ... ok
+test metaballs_reject_unrepresentable_grid_dimensions ... ok
+test metaballs_generate_mesh_from_hyperreal_centers ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.93s
+

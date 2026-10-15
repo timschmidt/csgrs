@@ -1,0 +1,56 @@
+   Compiling num-traits v0.2.19
+   Compiling getrandom v0.4.2
+   Compiling anstyle v1.0.14
+   Compiling plotters-backend v0.3.7
+   Compiling clap_lex v1.1.1
+   Compiling num-integer v0.1.46
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.6
+   Compiling num-iter v0.1.45
+   Compiling tempfile v3.27.0
+   Compiling clap_builder v4.6.7
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling plotters-svg v0.3.7
+   Compiling regex-automata v0.4.14
+   Compiling itertools v0.10.5
+   Compiling ppv-lite86 v0.2.21
+   Compiling cast v0.3.0
+   Compiling same-file v1.0.6
+   Compiling rusty-fork v0.3.1
+   Compiling walkdir v2.5.0
+   Compiling criterion-plot v0.5.0
+   Compiling rand_chacha v0.9.0
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling regex v1.12.3
+   Compiling plotters v0.3.7
+   Compiling clap v4.6.7
+   Compiling rand v0.9.4
+   Compiling tinytemplate v1.2.1
+   Compiling is-terminal v0.4.17
+   Compiling anes v0.1.6
+   Compiling oorandom v11.1.5
+   Compiling criterion v0.5.1
+   Compiling proptest v1.11.0
+   Compiling apfp v0.1.1
+   Compiling geometry-predicates v0.3.0
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Finished `release` profile [optimized] target(s) in 58.81s
+     Running unittests src/lib.rs (target/curve-metaball-failures/native-v2/release/deps/hyperlimit-fcecefc0120db20b)
+     Running tests/adversarial_degeneracies.rs (target/curve-metaball-failures/native-v2/release/deps/adversarial_degeneracies-cb02917687a908ac)
+     Running tests/adversarial_predicates.rs (target/curve-metaball-failures/native-v2/release/deps/adversarial_predicates-12b6c721a1b32704)
+     Running tests/adversarial_props.rs (target/curve-metaball-failures/native-v2/release/deps/adversarial_props-7d90dd902846ada5)
+     Running tests/batch.rs (target/curve-metaball-failures/native-v2/release/deps/batch-bda8014301821ff7)
+     Running tests/classification_contracts.rs (target/curve-metaball-failures/native-v2/release/deps/classification_contracts-8f6485c059830515)
+     Running tests/composite_policy.rs (target/curve-metaball-failures/native-v2/release/deps/composite_policy-d7bcb554b7df8c34)
+     Running tests/exactcore_xinwei.rs (target/curve-metaball-failures/native-v2/release/deps/exactcore_xinwei-127928f1094fb77b)
+     Running tests/halfspace_feasibility.rs (target/curve-metaball-failures/native-v2/release/deps/halfspace_feasibility-62fb10b345cb2182)
+     Running tests/nd_predicates.rs (target/curve-metaball-failures/native-v2/release/deps/nd_predicates-da89ea149bfc1520)
+     Running tests/point_equality.rs (target/curve-metaball-failures/native-v2/release/deps/point_equality-f4588ad1755ab5f2)
+     Running tests/promoted_mesh_helpers.rs (target/curve-metaball-failures/native-v2/release/deps/promoted_mesh_helpers-0711e6f1d67a9707)
+     Running tests/readme.rs (target/curve-metaball-failures/native-v2/release/deps/readme-246a1533c8767ce9)
+     Running tests/real_representations.rs (target/curve-metaball-failures/native-v2/release/deps/real_representations-3897b1e6f49375cd)
+     Running tests/retained_report_contracts.rs (target/curve-metaball-failures/native-v2/release/deps/retained_report_contracts-e03b17502df85d0b)
+     Running tests/robust_parity.rs (target/curve-metaball-failures/native-v2/release/deps/robust_parity-5962a0a72a3382e9)
+     Running tests/support_dop.rs (target/curve-metaball-failures/native-v2/release/deps/support_dop-1d533be51fa0af5b)

@@ -1,0 +1,14 @@
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling criterion v0.5.1
+   Compiling delaunator v1.1.0
+   Compiling earcutr v0.5.0
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Finished `release` profile [optimized] target(s) in 25.45s
+     Running unittests src/lib.rs (target/curve-metaball-failures/native-v2/release/deps/hypertri-162055e602019502)
+     Running tests/adversarial.rs (target/curve-metaball-failures/native-v2/release/deps/adversarial-aac94e7a92b9bd43)
+     Running tests/api_surface_coverage.rs (target/curve-metaball-failures/native-v2/release/deps/api_surface_coverage-b5321271715ff539)
+     Running tests/earcutr_differential.rs (target/curve-metaball-failures/native-v2/release/deps/earcutr_differential-ef272d5fca1aa5fd)
+     Running tests/fuzz_properties.rs (target/curve-metaball-failures/native-v2/release/deps/fuzz_properties-405dfed74275f373)
+     Running tests/predicate_policy.rs (target/curve-metaball-failures/native-v2/release/deps/predicate_policy-e3f7d96ccd396618)
+     Running tests/readme.rs (target/curve-metaball-failures/native-v2/release/deps/readme-2d762f0097cc07b1)
+     Running tests/real_representations.rs (target/curve-metaball-failures/native-v2/release/deps/real_representations-10b6540cffc66d93)

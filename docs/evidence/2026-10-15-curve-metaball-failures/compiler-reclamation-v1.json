@@ -1,0 +1,8 @@
+{
+  "runner_sha256": "b696186e0d5853456fa218f5071d9857e909dc5f44c8e0b60cd299659e605b4a",
+  "protected_executables_verified": 397,
+  "duplicate_count": 1647,
+  "duplicate_bytes_removed": 1873707334,
+  "manifest_sha256": "a9f7555db978cb17b01d6790a37785583d93f6759701b9b70798f509758fcbb8",
+  "reason": "Storage quota blocked duplicated seeds. All executable, unique compiler, source and log artifacts remain. Only byte-identical non-executable .rlib/.rmeta/.d copies in closed trials were removed, with retained originals mapped by digest."
+}
