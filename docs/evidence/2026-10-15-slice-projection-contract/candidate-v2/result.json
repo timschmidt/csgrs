@@ -1,0 +1,17 @@
+{
+  "commands": [
+    {
+      "name": "regressions",
+      "exit_code": 0,
+      "seconds": 4.298269432038069,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/slice-projection-contract/candidate-v2/release/deps/slice_projection_contract-d851c0e3c1271069": "b04fc73db8b29b3978f84102c5e973efbc98b3d6b9736a4de013e16c4d53fc72"
+      },
+      "stdout_sha256": "de6c14f6b66d081ea334a06111bbe0886e31802165d71edf94605e14cca5f3f9",
+      "stderr_sha256": "b45dfd7fab2cadaed5e6fb826e3bf256c9e72f7bebc0cb667d6cdcce910faf7e",
+      "resources_sha256": "3a8b69a43e114f96ed03fcef399f16aca6c432cf75ec749b1fa2fc7e16f8fad8"
+    }
+  ],
+  "passed": true
+}

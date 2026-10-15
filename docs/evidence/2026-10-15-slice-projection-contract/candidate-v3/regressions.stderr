@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 2.18s
+     Running tests/slice_projection_contract.rs (target/slice-projection-contract/candidate-v3/release/deps/slice_projection_contract-d851c0e3c1271069)
+error: test failed, to rerun pass `-p csgrs --test slice_projection_contract`

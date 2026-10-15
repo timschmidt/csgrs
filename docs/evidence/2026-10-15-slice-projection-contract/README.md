@@ -42,3 +42,40 @@ empty geometry for invalid indices or undecided predicates. Empty composition,
 open-wire endpoints, nested and duplicated positive shells, projection and
 strict/approximate policy separation passed. Original streams and the direct
 Rust executable are retained; no production code changed in this trial.
+
+## Implementation and initial qualification
+
+`baseline-v2` extended the reproduction to 21 cases (eight pass, thirteen
+fail), linked against the same preserved baseline library even though its
+snapshot also records the in-progress candidate source. The baseline binary
+is authoritative for that trial; the source snapshot is not a claim that the
+candidate had already passed. Original baseline-v1 remains unchanged.
+
+The native Hypermesh section routine retains directed intersections, source
+triangles, edge identities and exact parameters. It decomposes directed
+chains for the limits approached from above and below. CSGRS delegates
+nonzero winding across all contours to native Hypercurve; signed coplanar
+faces contribute separately. Opposite traversals cancel and nested equal
+orientations accumulate. Source witnesses are available in the native section
+record; the planar return value does not expose these mesh-source records.
+Primary slice/projection APIs return typed errors. Original example and
+benchmark fixtures were migrated to explicit Result handling without changing
+their inputs. Corrected topology and the public Result API are deliberate
+contract changes, not a performance-only patch.
+
+Candidate-v1 passed 21 modeling tests and 39 native tests selected by the
+section filter (the filter also selects intersection tests). Candidate-v2
+passed 23 modeling tests. Candidate-v3 added duplicated position rows and
+randomized face ordering; 24 passed and one failed because construction
+identity prevented matching distinct indices at the same coordinates. That
+trial is retained as a failure. Candidate-v4 separates identity-based proof
+reuse from geometric point interning and admits two-edge retraced contours
+through native contour construction. All 25 modeling tests, the same 39
+native tests, Hypermesh all-feature/all-target Clippy and CSGRS curve-only
+all-target Clippy with warnings denied pass. No tests or policies were weakened.
+
+Compiler consolidation v1 hard-links only byte-identical non-executable
+compiler files in closed candidate-v1 through candidate-v3 targets. All paths,
+bytes, unique files, executables and streams remain available. Fresh phases
+copy seeds with independent inodes. Broader qualification and resource-cost
+measurement remain pending; this initial success is not full-plan acceptance.

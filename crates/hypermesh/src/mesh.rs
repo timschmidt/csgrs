@@ -237,6 +237,19 @@ impl TriangleMesh {
         Ok(())
     }
 
+    /// Resolves a triangle's position rows, preserving invalid-index diagnostics.
+    pub fn triangle_points(&self, triangle: Triangle) -> HypermeshResult<[&Point3; 3]> {
+        let [a, b, c] = triangle.indices().map(|index| {
+            self.positions
+                .get(index)
+                .ok_or(HypermeshError::VertexIndexOutOfBounds {
+                    index,
+                    vertex_count: self.positions.len(),
+                })
+        });
+        Ok([a?, b?, c?])
+    }
+
     /// Checks indexed edge pairing for a closed, consistently oriented
     /// two-manifold.
     pub fn is_closed_manifold(&self) -> bool {

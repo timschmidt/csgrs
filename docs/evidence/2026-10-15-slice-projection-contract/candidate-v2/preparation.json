@@ -1,0 +1,13 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--reflink=auto",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v1/release",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v2/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "2dab9bc47c9b30f1f7181cf48816c8482f8efdde5b1afb199bbab6d4e2f36207",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

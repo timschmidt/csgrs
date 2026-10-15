@@ -46,6 +46,7 @@ pub mod output;
 mod point_interner;
 pub mod polygon;
 mod predicate;
+pub mod section;
 pub mod surface_nets;
 pub mod winding;
 
@@ -76,6 +77,9 @@ pub use output::{
     boolean_mesh_closure_evidence, boolean_mesh_is_closed,
 };
 pub use polygon::{ApproxBounds, ConvexPolygon, convex_quad, convex_triangle};
+pub use section::{
+    MeshSectionZ, SectionChain3, SectionPoint3, SectionPointSource, SectionSegment3, SectionSide,
+};
 pub use surface_nets::{
     SurfaceNetsError, SurfaceNetsGrid, SurfaceNetsOutput, surface_nets, surface_nets_standalone,
 };

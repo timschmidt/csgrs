@@ -1,0 +1,5 @@
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 17.72s
+     Running tests/slice_projection_contract.rs (target/slice-projection-contract/candidate-v4/release/deps/slice_projection_contract-d851c0e3c1271069)

@@ -1,0 +1,124 @@
+
+running 21 tests
+test approximate_slice_never_certifies_a_later_strict_request ... ok
+test cache_states_and_mutation_preserve_section_meaning ... FAILED
+test canonical_empty_and_outside_slices_remain_consumable ... ok
+test contextual_invalid_indices_preserve_the_native_diagnostic ... FAILED
+test coplanar_bottom_slice_keeps_hole_and_composes ... FAILED
+test coplanar_top_slice_keeps_hole_and_composes ... FAILED
+test disconnected_hollow_components_preserve_both_voids ... FAILED
+test duplicate_material_shells_do_not_cancel ... ok
+test face_permutation_and_global_reversal_preserve_hollow_set ... FAILED
+test hollow_interior_slice_keeps_hole_and_composes ... FAILED
+test malformed_projection_is_an_error_not_empty_geometry ... FAILED
+test malformed_slice_is_an_error_not_empty_geometry ... FAILED
+test nested_material_shells_do_not_become_parity_holes ... ok
+test open_triangle_intersection_remains_an_open_wire ... ok
+test opposite_shells_cancel_interior_and_coplanar_sections ... FAILED
+test projection_of_hollow_prism_keeps_void ... ok
+test shared_on_plane_edges_do_not_change_hole_winding ... FAILED
+test signed_multiplicity_is_preserved_interior_and_coplanar ... ok
+test undecided_projection_is_an_error_not_empty_geometry ... FAILED
+test undecided_slice_is_an_error_not_empty_geometry ... FAILED
+test vertex_touching_components_retain_both_material_regions ... ok
+
+failures:
+
+---- cache_states_and_mutation_preserve_section_meaning stdout ----
+
+thread 'cache_states_and_mutation_preserve_section_meaning' (121) panicked at tests/slice_projection_contract.rs:69:5:
+assertion `left == right` failed: a section filled the hole
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 16, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 12, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- contextual_invalid_indices_preserve_the_native_diagnostic stdout ----
+
+thread 'contextual_invalid_indices_preserve_the_native_diagnostic' (123) panicked at tests/slice_projection_contract.rs:371:13:
+assertion failed: matches!(error, ValidationError::Mesh(_))
+
+---- coplanar_bottom_slice_keeps_hole_and_composes stdout ----
+
+thread 'coplanar_bottom_slice_keeps_hole_and_composes' (124) panicked at tests/slice_projection_contract.rs:69:5:
+assertion `left == right` failed: a section filled the hole
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 16, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 12, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+
+---- coplanar_top_slice_keeps_hole_and_composes stdout ----
+
+thread 'coplanar_top_slice_keeps_hole_and_composes' (125) panicked at tests/slice_projection_contract.rs:69:5:
+assertion `left == right` failed: a section filled the hole
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 16, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 12, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+
+---- disconnected_hollow_components_preserve_both_voids stdout ----
+
+thread 'disconnected_hollow_components_preserve_both_voids' (126) panicked at tests/slice_projection_contract.rs:192:5:
+assertion `left == right` failed
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 32, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 24, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+
+---- face_permutation_and_global_reversal_preserve_hollow_set stdout ----
+
+thread 'face_permutation_and_global_reversal_preserve_hollow_set' (128) panicked at tests/slice_projection_contract.rs:69:5:
+assertion `left == right` failed: a section filled the hole
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 16, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 12, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+
+---- hollow_interior_slice_keeps_hole_and_composes stdout ----
+
+thread 'hollow_interior_slice_keeps_hole_and_composes' (129) panicked at tests/slice_projection_contract.rs:69:5:
+assertion `left == right` failed: a section filled the hole
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 16, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 12, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+
+---- malformed_projection_is_an_error_not_empty_geometry stdout ----
+
+thread 'malformed_projection_is_an_error_not_empty_geometry' (130) panicked at tests/slice_projection_contract.rs:102:65:
+called `Result::unwrap_err()` on an `Ok` value: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- malformed_slice_is_an_error_not_empty_geometry stdout ----
+
+thread 'malformed_slice_is_an_error_not_empty_geometry' (131) panicked at tests/slice_projection_contract.rs:97:10:
+called `Result::unwrap_err()` on an `Ok` value: (CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }, [], [])
+
+---- opposite_shells_cancel_interior_and_coplanar_sections stdout ----
+
+thread 'opposite_shells_cancel_interior_and_coplanar_sections' (134) panicked at tests/slice_projection_contract.rs:313:9:
+opposite winding at Z=0
+
+---- shared_on_plane_edges_do_not_change_hole_winding stdout ----
+
+thread 'shared_on_plane_edges_do_not_change_hole_winding' (136) panicked at tests/slice_projection_contract.rs:69:5:
+assertion `left == right` failed: a section filled the hole
+  left: Some(Real { rational: Rational { sign: Plus, numerator: 16, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+ right: Some(Real { rational: Rational { sign: Plus, numerator: 12, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty })
+
+---- undecided_projection_is_an_error_not_empty_geometry stdout ----
+
+thread 'undecided_projection_is_an_error_not_empty_geometry' (138) panicked at tests/slice_projection_contract.rs:118:49:
+called `Result::unwrap_err()` on an `Ok` value: CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }
+
+---- undecided_slice_is_an_error_not_empty_geometry stdout ----
+
+thread 'undecided_slice_is_an_error_not_empty_geometry' (139) panicked at tests/slice_projection_contract.rs:108:65:
+called `Result::unwrap_err()` on an `Ok` value: (CurveRegion2 { boundary_loops: [], certified_loop_roles: Some([]), state: Normalized(CurveContext(0)) }, [], [])
+
+
+failures:
+    cache_states_and_mutation_preserve_section_meaning
+    contextual_invalid_indices_preserve_the_native_diagnostic
+    coplanar_bottom_slice_keeps_hole_and_composes
+    coplanar_top_slice_keeps_hole_and_composes
+    disconnected_hollow_components_preserve_both_voids
+    face_permutation_and_global_reversal_preserve_hollow_set
+    hollow_interior_slice_keeps_hole_and_composes
+    malformed_projection_is_an_error_not_empty_geometry
+    malformed_slice_is_an_error_not_empty_geometry
+    opposite_shells_cancel_interior_and_coplanar_sections
+    shared_on_plane_edges_do_not_change_hole_winding
+    undecided_projection_is_an_error_not_empty_geometry
+    undecided_slice_is_an_error_not_empty_geometry
+
+test result: FAILED. 8 passed; 13 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+

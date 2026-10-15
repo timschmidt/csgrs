@@ -1,0 +1,27 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking once_cell v1.21.4
+    Checking tempfile v3.27.0
+    Checking allocator-api2 v0.2.21
+    Checking foldhash v0.1.5
+    Checking peg-runtime v0.6.3
+    Checking memchr v2.8.0
+    Checking hashbrown v0.15.5
+    Checking rusty-fork v0.3.1
+    Checking peg v0.6.3
+    Checking thiserror v2.0.21
+    Checking serde_core v1.0.228
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking byteorder v1.5.0
+    Checking linked-hash-map v0.5.6
+    Checking ply-rs v0.1.3
+    Checking proptest v1.11.0
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking serde_json v1.0.149
+    Checking quick-xml v0.39.4
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 21.05s

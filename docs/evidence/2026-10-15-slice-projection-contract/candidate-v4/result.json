@@ -1,0 +1,49 @@
+{
+  "commands": [
+    {
+      "name": "regressions",
+      "exit_code": 0,
+      "seconds": 19.8367669461295,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/slice-projection-contract/candidate-v4/release/deps/slice_projection_contract-d851c0e3c1271069": "468733a0cc08eeb44c14fab4ab5f7919a7b09dc0fd6b5d4a3e3dc2066beb4176"
+      },
+      "stdout_sha256": "b352cefc703a6a4b48798e97ee14f7191ec07d6e2ce5e064386824d00df6e45e",
+      "stderr_sha256": "a9be6bfdf89cedcc7ee098c1d503a3118cb4129640399708dfea2868e39be103",
+      "resources_sha256": "de68186dc7c5721ea0424a27d34747c8c00022441c5eb9f602b20fd0324a6c53"
+    },
+    {
+      "name": "native-section-tests",
+      "exit_code": 0,
+      "seconds": 15.52842148533091,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/slice-projection-contract/candidate-v4/release/deps/hypermesh-3f582b4ca1636641": "21ca67b08ce277117c8297a8ee624062448b3dc3f698413b4169828a2ba1149d"
+      },
+      "stdout_sha256": "42a0bb5d3072e8b748a46e67c5b4542f253e45c7e6271dc21f59ce338080f109",
+      "stderr_sha256": "32a30dd2ab9ec684f020d140badc59b1aa3767bcf6ecfb2ea3894a0b727274c1",
+      "resources_sha256": "d22941876edaad04675a6fa3054ca1735ba36c096d38df6150235feb8ebc2847"
+    },
+    {
+      "name": "native-clippy",
+      "exit_code": 0,
+      "seconds": 19.265726902056485,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "7618a17711bcacaafc05274b54463c620b91bb2467630e68e8e2e36ec4a4f03a",
+      "resources_sha256": "b4a5ddc04b9e8eb99e30ccefb1475c43a208fd18dc13dbcc000e32daf98e4594"
+    },
+    {
+      "name": "curve-clippy",
+      "exit_code": 0,
+      "seconds": 23.07092048600316,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "4e30650c27c07b1fa1122628628877262d88e7e25e2e601cb266c437a6012743",
+      "resources_sha256": "0704dc5e026130a997cbfef601c32cb3c875866481793e3c6bcc1710e7a05571"
+    }
+  ],
+  "passed": true
+}

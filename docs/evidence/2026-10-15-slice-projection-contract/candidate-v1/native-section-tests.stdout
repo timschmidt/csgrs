@@ -1,0 +1,44 @@
+
+running 39 tests
+test intersection::tests::approximate_cached_exclusion_does_not_override_retained_vertex_identity ... ok
+test intersection::tests::certified_deferred_ratio_order_matches_materialized_exact_rationals ... ok
+test intersection::tests::compact_event_tag_reserves_are_checked_and_round_trip ... ok
+test intersection::tests::compact_graph_preserves_stream_order_without_per_face_vectors ... ok
+test intersection::tests::compact_graph_retains_every_pairwise_intersection_dimension ... ok
+test intersection::tests::conservative_binary32_bvh_candidate_is_rejected_by_exact_narrow_phase ... ok
+test intersection::tests::deferred_coplanar_point_deduplication_retains_capacity_and_canonical_recipe ... ok
+test intersection::tests::deferred_support_line_carrier_stays_stack_compact ... ok
+test intersection::tests::empty_face_index_uses_one_u32_offset_per_face_and_a_terminal ... ok
+test intersection::tests::equal_slice_endpoints_choose_the_canonical_construction_identity ... ok
+test intersection::tests::exact_aliases_choose_order_independent_canonical_recipe ... ok
+test intersection::tests::exact_closed_slice_intervals_cover_every_overlap_dimension_and_order ... ok
+test intersection::tests::exact_segment_endpoints_share_one_compact_point_arena ... ok
+test intersection::tests::intrinsic_source_features_are_not_duplicated_as_intersection_events ... ok
+test intersection::tests::invalid_face_append_fails_without_mutating_the_arena ... ok
+test intersection::tests::later_certified_support_component_avoids_terminal_approximation ... ok
+test intersection::tests::manifold_edge_skip_requires_shared_construction_identity ... ok
+test intersection::tests::pair_append_failures_leave_no_half_edge_or_orphan_segment ... ok
+test intersection::tests::pairwise_scratch_resets_coplanar_facts_and_schedules ... ok
+test intersection::tests::polygon_vertex_arena_flattens_known_empty_and_constructed_rows ... ok
+test intersection::tests::retained_graph_points_carry_canonical_crossing_recipes ... ok
+test intersection::tests::retained_shared_vertex_schedule_obeys_terminal_policy ... ok
+test intersection::tests::retained_shared_vertex_side_proof_precedes_pairwise_construction ... ok
+test intersection::tests::retained_vertex_slice_proof_covers_every_triangle_classification ... ok
+test intersection::tests::self_pair_is_rejected_without_mutation ... ok
+test intersection::tests::sign_only_two_product_difference_matches_materialized_value ... ok
+test intersection::tests::structural_recipe_interning_disambiguates_fingerprint_collisions ... ok
+test intersection::tests::structural_recipe_interning_rejects_exact_materialization_contradictions ... ok
+test intersection::tests::structural_recipe_interning_shares_symbolic_points_without_equality ... ok
+test intersection::tests::surviving_deferred_crossing_materializes_from_its_retained_ratio ... ok
+test intersection::tests::surviving_lazy_crossing_constructs_the_exact_ratio_on_demand ... ok
+test intersection::tests::symbolic_segment_endpoints_do_not_add_an_equality_decision ... ok
+test intersection::tests::symbolic_slice_endpoint_equality_obeys_terminal_policy ... ok
+test intersection::tests::symbolic_support_parallelism_obeys_terminal_policy ... ok
+test intersection::tests::symmetric_segment_events_share_one_segment_and_endpoint_record ... ok
+test intersection::tests::triangle_plane_prepass_rejects_only_one_open_halfspace ... ok
+test intersection::tests::triangle_support_values_are_shared_only_across_two_proper_crossings ... ok
+test section::tests::on_plane_edge_has_one_sided_incidence ... ok
+test section::tests::transverse_section_retains_exact_source_parameters_and_direction ... ok
+
+test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 145 filtered out; finished in 0.00s
+

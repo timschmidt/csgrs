@@ -1,0 +1,5 @@
+{
+  "target": "target/slice-projection-contract/candidate-v1",
+  "record": "docs/evidence/2026-10-15-slice-projection-contract/candidate-v1/result.json",
+  "release_only": true
+}

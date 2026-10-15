@@ -1,0 +1,36 @@
+[
+  [
+    "regressions",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "curve",
+      "--test",
+      "slice_projection_contract",
+      "--",
+      "--test-threads=1"
+    ]
+  ],
+  [
+    "native-section-tests",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "--all-features",
+      "--lib",
+      "section::tests",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]

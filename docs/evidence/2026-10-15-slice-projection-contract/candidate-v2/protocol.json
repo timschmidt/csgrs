@@ -1,0 +1,86 @@
+{
+  "seeded_build_artifacts": "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v1",
+  "preserved_prior_executables_sha256": {
+    "target/slice-projection-contract/candidate-v1/release/deps/slice_projection_contract-d851c0e3c1271069": "ff7613eb119f944a693431d2f85829b685ebb29982d1db513307054d95ee2fda",
+    "target/slice-projection-contract/candidate-v1/release/deps/hypermesh-3f582b4ca1636641": "08f6c9ccfe799eb33c6889ab50612d902f18909df814a6336aa74c9a4fad27c7",
+    "target/planar-operation-failures/cost-build-v1/release/deps/libcsgrs.rlib": "2beb76b39e1325ee51fa5a4c2c45e328c8569fa9485775644a053d1c0b4f51cb",
+    "target/planar-operation-failures/cost-build-v1/release/deps/libhyperlattice-64c0cb923a8aa061.rlib": "800b437402fdf7cca3571b7b3e358d6aaedee242bce3728ccc1ff65c807f6374",
+    "target/planar-operation-failures/cost-build-v1/release/deps/libhypercurve-65c0df1f5cff6824.rlib": "4acd11c9511fd28299a477276199fb114cb7dff661a62707a7fc59d993644d0e",
+    "target/slice-projection-contract/baseline-v1/regressions": "79549d9663d6d3d55e5bbc57f2d7118fe285a289588f2872e1c8c86258d57e8f"
+  },
+  "base_commit": "490d46ce797fe925c41489df2ff65c1298ea93a5",
+  "runner_sha256": "2dab9bc47c9b30f1f7181cf48816c8482f8efdde5b1afb199bbab6d4e2f36207",
+  "phase": "candidate-v2",
+  "commands": [
+    [
+      "regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "curve",
+        "--test",
+        "slice_projection_contract",
+        "--",
+        "--test-threads=1"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/slice-projection-contract/candidate-v2"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P1",
+    "P3",
+    "P4",
+    "P6",
+    "P8",
+    "P9",
+    "P13",
+    "P17",
+    "P18",
+    "P20",
+    "P25",
+    "P28",
+    "P30",
+    "P35",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "Hypermesh oriented triangle-plane intersections and mesh topology",
+    "Hypercurve signed boundary winding and regularization",
+    "CSGRS modeling composition, retained outcomes and public typed failures"
+  ],
+  "domain": "Exact XY projection of finite indexed triangle faces and horizontal sections. Filled regions use signed nonzero winding across oriented closed sections, including holes, reversed, duplicated, nested and disconnected shells. Open sheets retain open section wires. Coplanar faces contribute their projected area. Isolated point contacts and zero-area projected faces are omitted by the existing regularized area/wire carrier. Invalid indices and undecided decisions must be typed failures, not empty success. External containment is not an internal resource bound.",
+  "consumers": [
+    "Primary Rust slice_z and flatten",
+    "Explicit context operations and retained outcomes",
+    "README rendering example",
+    "Original feature pipeline projection benchmarks",
+    "Native mesh and curve consumers where changed"
+  ],
+  "missing_acceptance_test": [
+    "tests/slice_projection_contract.rs"
+  ],
+  "semantic_oracle": "Independently derived rational area, point membership, section endpoints and determinant volume; downstream extrusion and a separate manifold check. Nested and duplicate positive shells distinguish signed winding from parity. No fixture or policy weakening.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "limitations": "External wall and per-process address-space containment; no internal total-work or heap-byte bound claimed. Focused qualification, not full CI, release validation, or performance comparison.",
+  "previous_goal_turn": "Progress: f88f84694 preserves planar transform meaning and typed failures; 99849fe84 records qualification and seven reproduced baseline downstream fixture failures. Thirty-five pending native files remain unchanged and unadmitted. Full properties goal active."
+}

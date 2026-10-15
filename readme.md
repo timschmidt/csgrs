@@ -546,12 +546,26 @@ The inverse dimensional conversions preserve native Hypercurve topology:
 
 | Preview | Function |
 |---|---|
-| <img src="docs/flatten.png" width="144" alt="Filled planar projection of a three-dimensional solid with visible exact edges and vertices"/> | `solid::flatten(mesh: &TriangleMesh) -> CurveRegion2` |
-| <img src="docs/slice_z.png" width="144" alt="Filled planar slice of a three-dimensional solid with visible exact edges and vertices"/> | `solid::slice_z(mesh: &TriangleMesh, z: Real) -> (CurveRegion2, Vec<CurveString2>, Vec<CurvePath2>)` |
+| <img src="docs/flatten.png" width="144" alt="Filled planar projection of a three-dimensional solid with visible exact edges and vertices"/> | `solid::flatten(mesh: &TriangleMesh) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/slice_z.png" width="144" alt="Filled planar slice of a three-dimensional solid with visible exact edges and vertices"/> | `solid::slice_z(mesh: &TriangleMesh, z: Real) -> Result<SliceResult, ValidationError>` |
 
-`flatten` unions the XY projections of all triangle faces. `slice_z` returns
-filled closed sections, open curve strings, and higher-order paths separately
-instead of discarding their topology roles.
+`flatten` unions the XY projections of all triangle faces, omitting projected
+faces of zero area. `slice_z` returns filled closed sections, open curve strings,
+and higher-order paths separately. Closed sections and coplanar faces use
+signed nonzero winding: holes stay empty, equally oriented shells accumulate,
+and opposite traversals cancel. The sections approached from above and below
+are united, preserving cuts through shared edges and coplanar caps. Isolated
+point contacts are omitted by this regularized area/wire carrier.
+
+Migration: both primary functions now return `Result`; propagate errors with
+`?` or handle them explicitly. Invalid indices and undecided predicates no
+longer become empty geometry. This is a correctness and API change, including
+corrected slice topology; prior slice serialization is not preserved. The
+context variants retain aggregate operation-local certainty. They do not
+certify inherited construction intent or input manifoldness, nor impose an
+internal total-work, memory-byte or cancellation bound. Native Hypermesh
+section records retain source triangles, edges and exact interpolation
+parameters; the planar return value does not expose those mesh-source records.
 
 ### Metadata
 

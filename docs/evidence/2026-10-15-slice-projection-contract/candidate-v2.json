@@ -1,0 +1,20 @@
+[
+  [
+    "regressions",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "curve",
+      "--test",
+      "slice_projection_contract",
+      "--",
+      "--test-threads=1"
+    ]
+  ]
+]
