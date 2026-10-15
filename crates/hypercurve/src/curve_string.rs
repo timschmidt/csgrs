@@ -82,6 +82,12 @@ impl CurveString2 {
         }
 
         for segment in &segments {
+            // Equal arc endpoints denote a full circle, not a zero-length
+            // chord. CircularArc2 owns radius/incidence validation; only line
+            // segments need this extra check for public unchecked construction.
+            let Segment2::Line(segment) = segment else {
+                continue;
+            };
             if segment.start() == segment.end() {
                 return Err(CurveError::ZeroLengthLine);
             }

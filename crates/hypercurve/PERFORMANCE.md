@@ -10,6 +10,36 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Native full-circle contour composition — 2026-10-15
+
+`CurveString2` now restricts its zero-chord guard to lines. Equal endpoints of a
+`CircularArc2` denote a full circle; arc validity and exact-query certification
+remain owned by the existing carrier. The
+[closed-edge evidence](../hyperbrep/docs/evidence/2026-10-15-closed-edges/README.md)
+retains the original runtime failure and unchanged zero-line rejection, and
+checks full-circle winding, area, first moment, Booleans, annular difference
+and offset reversal through `CurveRegion2`.
+
+Three alternating CPU-0 process pairs against `d60bd1cf4` preserve all 12
+default arc benchmark rows, original iterations and result tails. The four
+large-input cases retain 256 arcs and ten iterations. The median of case
+median timing ratios is **1.003615**, with range **0.910870–1.118080**.
+The largest is structural-fact replay, 6.462 to 7.225 ns; cached top-level
+evaluation changes from 232.643 to 243.940 ns (1.048560). These unfavorable
+observations remain in the record. The 11.81% row exceeds a 10% cohort budget;
+no universal budget pass or speedup is claimed. The completeness extension is
+retained as a new feature baseline, with the predecessor and unresolved
+controlled-host timing qualification preserved.
+
+The unchanged arc harness has eleven result tails and one timing-only row;
+its receipt equality is not an independent geometry oracle. The executable
+shrinks 128 bytes to 16,714,312. Process peak RSS is 29,652–30,080 KiB before
+and 29,692–30,020 after. No significant size/memory benefit is inferred.
+Five absolute BREP composition/allocation cases are reported in
+[BREP performance](../hyperbrep/PERFORMANCE.md); they do not isolate this method
+or establish general operation work/memory bounds. The original full corpus
+and superseded-candidate samples remain in the evidence bundle.
+
 ## Complete-image injectivity for connected native spans
 
 `Curve2::has_certified_injective_image` reuses prepared rational evaluators and

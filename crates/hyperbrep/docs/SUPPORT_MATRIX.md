@@ -75,6 +75,15 @@ recertification and bounded decoding remain open. See the
 [parameter contract](ARCHITECTURE.md#retained-inverse-parameters) and
 [spatial point contract](ARCHITECTURE.md#retained-spatial-points).
 
+Circle and ellipse edges may retain one vertex at both endpoints when their
+exact interval spans one full period. The vertex lists that edge once; incident
+edge uses and parameter endpoints remain distinct. Single-edge circular caps
+and a cylinder with one periodic side face validate, subdivide and replay.
+Standalone closed ellipse edges subdivide and replay; this does not add
+ellipse/plane pcurve-image admission. Other closed curve families return
+`UnsupportedClosedEdge`. See the [closed-edge contract](ARCHITECTURE.md#closed-edges-and-periodic-seam-uses)
+and [evidence](evidence/2026-10-15-closed-edges/README.md).
+
 ## Surface carriers
 
 | Family | Domain / evaluation / partials | Bounds | Supported topology image proof | Transform | Persistence |

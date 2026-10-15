@@ -72,6 +72,15 @@ Edges store two `Scalar(Real)` or `Selected(index)` parameter records. Scalar
 coefficients remain Hyperreal values; decimal/floating approximations are not
 introduced.
 
+A closed circular or elliptic edge stores the same vertex index at both ends
+and two distinct parameter endpoints spanning exactly one period. It uses the
+existing version-9 records. Validation reconstructs the carrier's regularity,
+period and actual endpoint agreement; it does not trust an archive flag.
+Circular cap and periodic cylinder edge uses also replay their complete
+pcurve-image, direction and shell certificates. Distinct adjacency, parameter
+maps, split/reflection and forged-record rejection are covered in the
+[closed-edge evidence](evidence/2026-10-15-closed-edges/README.md).
+
 `selection.parameters` contains two node forms:
 
 - `Root { polynomial, interval }` supplies ascending power-basis coefficients

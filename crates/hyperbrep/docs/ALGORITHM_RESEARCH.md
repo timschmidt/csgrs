@@ -960,3 +960,98 @@ its frozen predecessor, preserving all geometry receipts. No complexity bound
 for complete import follows from expected constant-time ID lookup. General
 curved analytic/spline curves, closed-circle edges, periodic trims, assemblies,
 global resource admission and explicit healing remain open work packages.
+
+## Native closed edges before analytic STEP mapping (2026-10-15)
+
+The [`edge_curve` schema](https://www.steptools.com/stds/stp_aim/html/t_edge_curve.html)
+stores the two vertex references separately from curve geometry and sense;
+the [`circle` schema](https://www.steptools.com/stds/stp_aim/html/t_circle.html)
+requires positive radius. These entity declarations do not supply a native
+regularity or solid-validity proof. The retained original OCCT cylinder cited
+above uses equal start/end vertex references for its circular edges. Preserving
+that topology requires native closed-edge admission rather than adding synthetic
+vertices during import.
+
+Our admitted domain is a circle or ellipse over exactly one `tau` interval.
+Its already-checked independent axes and positive radii give a nonzero tangent
+and injectivity modulo the period. Native endpoint checks establish the actual
+seam position; parameter correspondence keeps the two interval endpoints
+distinct even though they share one topological vertex. The only adjacency
+change is to record that edge once at the vertex. Cap winding, complete spatial
+and pcurve images, shell incidence and the indexed periodic rectangle cover are
+still checked. This is a constructive certificate for these analytic carriers,
+not a claim about arbitrary periodic splines or singular charts.
+
+A shared lower-layer obstruction was also found: Hypercurve's `CurveString2`
+treated a zero endpoint chord as a zero-length segment for arcs as well as
+lines. `CircularArc2` already represents full circles and owns arc validity
+checks; unknown structural facts still require exact-query certification. Restricting
+the chord test to lines restores composition with native contours, winding,
+moments, `CurveRegion2` Booleans and offsets without introducing a second region
+carrier. The [closed-edge evidence](evidence/2026-10-15-closed-edges/README.md)
+retains the original failures, runtime fault controls, archive mutations,
+native/WASM checks and matched default-feature kernel/arc cost samples.
+
+This adds a constant number of exact comparisons for a closed edge and avoids
+synthetic subdivisions. It is not an asymptotic claim about full validation or
+a measured speedup over a previous closed-edge implementation; that capability
+previously failed. Existing harnesses retain their original inputs. The two
+optional tessellation rows are absent from both default-feature kernel binaries
+and are explicitly excluded from that cost comparison, not silently dropped.
+
+Curved STEP mapping must next verify every spatial/pcurve representation and
+its source parameters, assign same-face seam uses without welding, and diagnose
+the exact radial residual in the independent decimal cylinder file. Native
+closed-edge admission does not reconcile that discrepancy. Explicit healing,
+general trimmed analytic/spline exchange and full chart gluing remain open.
+
+The [geometry schema, sections 4.2.3, 4.5.26 and 4.5.60](https://www.steptools.com/stds/smrl/data/resource_docs/geometric_and_topological_representation/sys/4_schema.htm)
+also makes angular curve/surface parameters depend on the context's angle unit;
+cylinder axial parameters use the length unit. Our next mapping must therefore
+retain separate exact angular and length scales for UV coordinates. Native
+`tau` is not an unconditional source-parameter period. Preserve declared decimal
+conversion factors exactly; recognizing a familiar unit name must not silently
+replace its factor with a symbolic value. Test non-radian contexts, periodic
+seam maps and inconsistent supplied representations explicitly.
+
+The complete analytic-mapping experiment is **unimplemented**. For a closed circle,
+first prove exact vertex incidence, then consider anchoring the native radial
+frame at that vertex. With positive radius `r`, center `c`, seam point `p` and
+oriented unit normal `n`, use `x = (p-c)/r` and `y = n cross x`. The admitted
+incidence and frame identities must prove these axes orthonormal. Native
+parameters can then span `[0,tau]` with exact endpoint evaluation, without
+adding a vertex or guessing an inverse angle.
+
+This is a change of parameterization, so its source map is mandatory. Retain
+the source-frame phase and unit scale, prove the complete oriented image, and
+distinguish both seam endpoints. A phase represented by sine/cosine witnesses
+may avoid redundant inverse-trig refinement; an exposed angular value or map
+must still have a checked relation to those witnesses. Do not treat an
+unresolved angle comparison as equality. For a cylinder, a corresponding
+support-frame change requires separate UV phase/angle-scale and axial
+offset/length-scale maps, plus agreement of both seam pcurves. Prototype the
+actual existing scalar and correspondence APIs before choosing a new carrier.
+Gate this experiment on non-cardinal rational seam points, different source
+frames, every master/sense choice, reversed and non-radian charts, altered
+alternate curves, exact source-map replay and measured proof reuse. The native
+closed-edge tests in this increment do not establish those import properties.
+
+A subsequent [native seam probe](evidence/2026-10-15-closed-edges/seam_frame_probe.rs)
+checks the current APIs without implementing exchange. For `(±3,±4)` on a
+radius-5 circle, all four quadrants and period shifts `-2, 0, 3` construct and
+replay both a fixed frame with `Real::try_atan2` and a frame anchored at the seam:
+24 successful edge/replay cases. Existing scalar sine/cosine rewrites retain
+the arctangent relation; these cases do not need a new angle carrier. Moving
+the y coordinate by `1/10^12` fails endpoint agreement in the fixed frame and
+frame normalization in the anchored frame. The
+[raw outcomes](evidence/2026-10-15-closed-edges/seam-frame-probe.log) and
+[source/library identity](evidence/2026-10-15-closed-edges/seam-frame-probe.json)
+are retained. The initial probe's Vector3 constructor arity error is a setup
+failure, not a runtime kernel result.
+
+This only establishes native edge feasibility on those rational seam inputs.
+It does not test STEP units, source-frame phase maps, pcurves or complete solids.
+In particular, the anchored probe does not serialize a source-parameter map;
+its smaller archive sizes cannot be credited as an optimization of the same
+interchange contract. Complete those missing proofs before selecting a mapping
+or claiming an import workflow.

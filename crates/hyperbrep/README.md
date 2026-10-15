@@ -68,6 +68,11 @@ or geometric validation; see the [archive contract](docs/SELECTED_ARCHIVE.md).
   allocating the angular–axial grid. Caps, orientation, incidence and complete
   edge images still require independent exact checks. See the
   [periodic-cylinder evidence](docs/evidence/2026-10-15-periodic-cylinder/README.md).
+- Full-period circular and elliptic edges may share one endpoint vertex.
+  Circular caps can use one edge, with distinct cap/side uses and seam parameter
+  endpoints retained through subdivision and archive replay. Other closed
+  families require additional regularity proofs. See the
+  [closed-edge contract](docs/ARCHITECTURE.md#closed-edges-and-periodic-seam-uses).
 - Geometric equality and ordering use Hyperlimit predicates, not structural
   `PartialEq` or an epsilon.
 - An unresolved predicate is a typed error, never `false`.

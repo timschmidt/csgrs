@@ -376,8 +376,10 @@ pub enum BuildError {
     },
     /// Exact geometry construction or evaluation failed.
     Geometry(GeometryError),
-    /// An edge references the same topological vertex twice.
-    DegenerateEdge,
+    /// This curve family lacks a certificate for a regular closed edge.
+    UnsupportedClosedEdge(Curve3Kind),
+    /// A closed circular/elliptic edge does not span exactly one period.
+    ClosedEdgePeriodMismatch,
     /// A curve/domain endpoint does not agree with the edge's vertex point.
     EdgeEndpointMismatch {
         /// Mismatched endpoint.

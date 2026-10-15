@@ -1194,6 +1194,15 @@ uncertainty metadata describes the source, not permission to merge points.
 Convert inch/millimeter and other supported rational unit relations exactly.
 Represent unknown units as a blocking document issue, not an implicit guess.
 
+For analytic curves and surfaces, convert angular parameters using the actual
+representation angle unit. Keep independent angular and length scales for
+mixed cylinder/cone UV charts; native `tau` need not be the source parameter's
+numeric period. Retain declared conversion factors and source parameter maps,
+including non-radian contexts and reversed seam uses. A familiar unit name does
+not authorize replacing an approximate decimal factor with an exact symbolic
+one. Add explicit disagreement fixtures before admitting these mappings; see
+the [closed-edge and angle-unit research](ALGORITHM_RESEARCH.md#native-closed-edges-before-analytic-step-mapping-2026-10-15).
+
 ```rust,ignore
 pub fn read_step(bytes: &[u8], options: &StepReadOptions)
     -> Result<RawCadDocument, ExchangeError>;

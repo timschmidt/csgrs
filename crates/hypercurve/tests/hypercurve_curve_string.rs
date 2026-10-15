@@ -81,6 +81,86 @@ fn curve_string_and_contour_reject_forged_zero_length_segments() {
 }
 
 #[test]
+fn full_circle_segments_retain_area_moment_and_winding_in_native_contours() {
+    for clockwise in [false, true] {
+        let arc = CircularArc2::try_from_center(p(5, -2), p(5, -2), p(3, -2), clockwise).unwrap();
+        let segment = Segment2::Arc(arc);
+        let path =
+            CurveString2::try_new(vec![segment.clone(), line_segment(5, -2, 7, -2)]).unwrap();
+        assert_eq!(path.len(), 2);
+        let contour = Contour2::try_new(vec![segment]).unwrap();
+        assert_eq!(contour.len(), 1);
+        let sign = if clockwise { -1 } else { 1 };
+        assert_eq!(
+            contour.signed_area().unwrap(),
+            Some(Real::from(sign * 4) * Real::pi())
+        );
+        assert_eq!(
+            contour.signed_x_first_moment().unwrap(),
+            Some(Real::from(sign * 12) * Real::pi())
+        );
+        assert_eq!(
+            crate::support::under_classified_result(&policy(), || contour
+                .winding_number(&p(3, -2)))
+            .unwrap(),
+            Classification::Decided(sign)
+        );
+        assert_eq!(
+            crate::support::under_classified_result(&policy(), || contour
+                .winding_number(&p(6, -2)))
+            .unwrap(),
+            Classification::Decided(0)
+        );
+    }
+}
+
+#[test]
+fn full_circle_native_regions_boolean_offset_and_repeat_exactly() {
+    let contour = Contour2::try_new(vec![Segment2::Arc(
+        CircularArc2::try_from_center(p(2, 0), p(2, 0), p(0, 0), false).unwrap(),
+    )])
+    .unwrap();
+    let region = crate::support::under(&policy(), || {
+        CurveRegion2::try_from_native_material_contours(vec![contour])
+    })
+    .unwrap()
+    .into_value();
+    let area = |region: &CurveRegion2| {
+        crate::support::under(&policy(), || region.signed_area())
+            .unwrap()
+            .into_value()
+    };
+    assert_eq!(area(&region), Some(Real::from(4) * Real::pi()));
+    for op in [
+        hypercurve::BooleanOp::Union,
+        hypercurve::BooleanOp::Intersection,
+    ] {
+        let same = crate::support::under(&policy(), || region.boolean_region(&region, op))
+            .unwrap()
+            .into_value();
+        assert_eq!(area(&same), Some(Real::from(4) * Real::pi()));
+    }
+    let offset = crate::support::under(&policy(), || {
+        region.offset(Real::one(), &hypercurve::OffsetCornerStyle2::Round)
+    })
+    .unwrap()
+    .into_value();
+    assert_eq!(area(&offset), Some(Real::from(9) * Real::pi()));
+    let ring = crate::support::under(&policy(), || {
+        offset.boolean_region(&region, hypercurve::BooleanOp::Difference)
+    })
+    .unwrap()
+    .into_value();
+    assert_eq!(area(&ring), Some(Real::from(5) * Real::pi()));
+    let back = crate::support::under(&policy(), || {
+        offset.offset(-Real::one(), &hypercurve::OffsetCornerStyle2::Round)
+    })
+    .unwrap()
+    .into_value();
+    assert_eq!(area(&back), Some(Real::from(4) * Real::pi()));
+}
+
+#[test]
 fn curve_string_endpoint_connection_classifies_exactly() {
     let first = CurveString2::try_new(vec![line_segment(0, 0, 1, 0)]).unwrap();
     let second = CurveString2::try_new(vec![line_segment(1, 0, 2, 0)]).unwrap();

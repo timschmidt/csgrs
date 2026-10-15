@@ -67,3 +67,7 @@ harness = false
 [[bench]]
 name = "periodic_cylinder"
 harness = false
+
+[[bench]]
+name = "closed_edges"
+harness = false

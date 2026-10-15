@@ -70,12 +70,27 @@ impl ArenaModelBuilder {
         domain: ParameterRange,
         endpoint_certificate: bool,
     ) -> Result<EdgeId, BuildError> {
-        if start == end {
-            return Err(BuildError::DegenerateEdge);
-        }
         let start_point = self.vertex_ref(start)?.point();
         let end_point = self.vertex_ref(end)?.point();
         let curve_ref = self.curve_ref(curve)?;
+        if start == end {
+            // A shared endpoint is valid topology for one complete, regular
+            // periodic curve. Restrict admission to carriers whose positive
+            // radii and independent axes already prove regularity and whose
+            // exact parameter period is known. Endpoint agreement alone would
+            // also admit constant or self-intersecting spline carriers.
+            if !matches!(
+                curve_ref.kind(),
+                Curve3Kind::CircleArc | Curve3Kind::EllipseArc
+            ) {
+                return Err(BuildError::UnsupportedClosedEdge(curve_ref.kind()));
+            }
+            require_real_equal(
+                &(domain.represented_end()? - domain.represented_start()?),
+                &Real::tau(),
+                BuildError::ClosedEdgePeriodMismatch,
+            )?;
+        }
         if !endpoint_certificate {
             require_curve_point_at_parameter(
                 curve_ref,
@@ -105,7 +120,9 @@ impl ArenaModelBuilder {
             endpoint_certificate,
         });
         self.vertex_edges[start.index()].push(id);
-        self.vertex_edges[end.index()].push(id);
+        if end != start {
+            self.vertex_edges[end.index()].push(id);
+        }
         self.edge_uses_by_edge.push(Vec::new());
         Ok(id)
     }

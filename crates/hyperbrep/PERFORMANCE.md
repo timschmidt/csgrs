@@ -1,5 +1,59 @@
 # HyperBREP Performance Contract
 
+## 2026-10-15: native closed circles and ellipses
+
+Kept for exact closed-edge and full-circle contour completeness. The
+[evidence](docs/evidence/2026-10-15-closed-edges/README.md) starts from
+`d60bd1cf4`, after the upstream acceptance integration and BodySet migration.
+All 64 existing default-feature BREP receipts match in three alternating CPU-0
+pairs. The median of case median time ratios is **1.020399**, with range
+**0.993175–1.041137**. The largest row is linear tensor/plane iso-curve
+intersection, 10.633 to 11.070 microseconds. These are observed costs, not a
+speedup claim. Both binaries omit the same two optional tessellation rows.
+
+The complete 12-row default arc harness also retains its existing observations,
+including 256-arc inputs and ten large-case iterations. Its median ratio is
+1.003615; the largest is **1.118080** for structural-fact replay, 6.462 to
+7.225 nanoseconds. This exceeds the default 10% cohort budget and is retained
+explicitly, not discarded as a timer outlier. The semantic retention reason is
+native full-circle composition through the existing exact region carrier;
+this is not an optimization or an all-cohort timing-gate pass. The final
+candidate is the new feature baseline; its predecessor and all samples remain
+available. Controlled-host performance qualification remains open, including
+the earlier independent archive-admission issue. No statistical significance
+or cause for the subnanosecond replay difference is inferred.
+
+The new `closed_edges` benchmark measures 100 completed operations per row in
+each of three fresh processes. Input/expected-result preparation is outside
+timing; exact measures, classification, output counts, JSON materialization
+and complete archive equality are inside. Split operations reuse their input
+models. These are absolute costs because the old closed-edge constructor failed.
+
+| Completed operation | Median | Rust allocation calls | Requested bytes | Archive bytes |
+| --- | ---: | ---: | ---: | ---: |
+| Construct | 287.738 µs | 757.01 | 133,250.76 | 12,287 |
+| Replay | 452.817 µs | 1,064 | 166,429 | 12,287 |
+| Split circular edge | 175.748 µs | 397 | 106,426 | 14,328 |
+| Split seam edge | 174.660 µs | 401 | 108,074 | 14,211 |
+| Replay reversed/shifted chart | 503.273 µs | 1,718 | 218,925 | 12,453 |
+
+Calls and bytes are per-completion averages of allocation/reallocation requests,
+not retained heap; fractional values include one-time work within the loop.
+Archive sizes, fingerprints and allocation totals match all three processes.
+The BREP executable grows 1,136 bytes to 24,890,392; the arc executable shrinks
+128 bytes to 16,714,312. The new benchmark executable is 22,534,448 bytes.
+BREP process peak RSS ranges from 21,756–21,980 KiB before and 21,672–22,040
+after; the new benchmark uses 9,564–9,920 KiB. These do not establish memory
+bounds or significant savings. Existing cost rows do not isolate the added
+finite-cylinder face bound. Cold/warm correctness is tested, but no separate
+cold allocation/timing study or new general resource contract is claimed.
+
+A provisional whole-model bound fallback passed the same receipts and focused
+tests. It was replaced by the more local finite-cylinder face-bound proof;
+its source, controls and all measurements are preserved separately and excluded
+from final-source statistics. New source geometry, policies, harness resolutions
+and iteration counts were not weakened to obtain completion.
+
 ## 2026-10-15: shared archive structure admission
 
 Kept as partial WP13 resource-contract work. The

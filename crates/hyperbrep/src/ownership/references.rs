@@ -97,7 +97,8 @@ impl<'a> VertexRef<'a> {
             .point()
     }
 
-    /// Iterates over incident edges in insertion order.
+    /// Iterates over distinct incident edges in insertion order. A closed edge
+    /// appears once even though this vertex is both of its endpoints.
     pub fn edges(self) -> impl ExactSizeIterator<Item = EdgeRef<'a>> {
         self.model
             .inner

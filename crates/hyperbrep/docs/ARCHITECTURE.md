@@ -31,11 +31,46 @@ HyperTRI is an optional derived consumer behind the `tessellation` feature. It
 is not a core dependency and cannot mutate or replace a source BREP.
 
 The downstream [HyperBRep IO crate](../../hyperbrep-io/README.md) owns bounded
-Part 21 syntax and source-entity accounting. Its initial syntax layer depends
-only on Hyperreal for exact numeric conversion. Future document/geometry mapping
-will consume the model interface; the core does not depend on the exchange layer.
+Part 21 syntax, supported STEP geometry mapping and source-entity accounting.
+It consumes the native model interface and Hyperreal's exact numeric conversion;
+the core does not depend on the exchange layer.
 Parsed records confer no geometry authority. Source-scoped views and flat
 parameter storage preserve references and avoid recursive parameter-tree drop.
+
+## Closed edges and periodic seam uses
+
+`ModelBuilder::edge` may reference the same vertex twice for a circle or ellipse
+whose exact parameter interval spans one `tau` period. Positive radii and
+independent axes, already required by the spatial carrier, prove that this
+closed curve is regular and simple. Both endpoint images must still agree with
+the vertex. A shorter interval returns `ClosedEdgePeriodMismatch`; other closed
+curve families return `UnsupportedClosedEdge` until they have an appropriate
+regularity certificate. Equality of endpoint coordinates alone is insufficient.
+
+Vertex adjacency lists each incident edge once. Edge uses remain distinct:
+a cylinder seam can have two uses on opposite boundaries of one UV rectangle.
+A circular edge can bound an entire cap and one full-period side interval.
+The seam's spatial endpoint identity never identifies the two parameter
+endpoints. Directed angular-sweep and affine correspondences retain those
+endpoints and interior parameters through reversal, subdivision and replay.
+Existing whole-image, cap, shell-incidence and periodic-coverage checks remain
+mandatory. This admission does not add general ellipse/plane image proofs,
+closed spline certificates, general chart gluing or curved STEP mapping.
+
+Hypercurve owns the corresponding planar rule. A `CircularArc2` with equal
+endpoints denotes a full circle; the arc carrier owns radius and incidence
+checks. Its constructor rejects known zero radius or unequal endpoint radii;
+unknown structural facts still require certification by exact consumers.
+`CurveString2` rechecks zero-length chords only for lines, which can
+be constructed unchecked. Full-circle contours use the existing single
+`CurveRegion2` carrier, winding, Boolean and offset algorithms. See the
+[closed-edge qualification](evidence/2026-10-15-closed-edges/README.md).
+
+Disconnected selected solids retain these records through the shared topology
+transfer. A finite cylinder trim has a conservative face bound from its boundary
+curves: each Cartesian coordinate is affine along axial lines that reach the
+trim boundary. This supplies the existing disjoint Boolean path with a per-face
+proof, preserving selected closed edges without transferring unselected bodies.
 
 ## Retained inverse parameters
 
@@ -429,8 +464,8 @@ polynomial B-splines and rational Bézier controls and weights are retained
 without flattening. A single periodic polynomial B-spline or NURBS profile is
 partitioned at its exact native knot intervals into finite clamped
 piecewise-Bézier spline carriers before topology publication. This retains the
-source parameter intervals and rational images while avoiding a degenerate
-one-vertex closed edge. Hypercurve classifies the radial/axial boundary
+source parameter intervals and rational images while avoiding an unsupported
+one-vertex closed spline edge. Hypercurve classifies the radial/axial boundary
 directly and supplies exact Green-theorem area moments for polynomial and
 polynomial-equivalent Bézier fragments. Finite rational quadratics use exact
 homogeneous Green integrals with denominator `W^4`, reduced symbolically to

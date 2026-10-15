@@ -5242,7 +5242,7 @@ fn certified_face_bounds(model: &ArenaModel, face: FaceId) -> Result<Option<Aabb
         SurfaceBounds::Unbounded
             if !matches!(
                 surface.kind(),
-                crate::SurfaceKind::Plane | crate::SurfaceKind::Cone
+                crate::SurfaceKind::Plane | crate::SurfaceKind::Cylinder | crate::SurfaceKind::Cone
             ) =>
         {
             Ok(None)
@@ -5252,6 +5252,9 @@ fn certified_face_bounds(model: &ArenaModel, face: FaceId) -> Result<Option<Aabb
             // supported positive cone nappe, every Cartesian coordinate has
             // no strict two-parameter interior extremum, so its exact trimmed
             // boundary bounds certify the complete face as well.
+            // A cylinder coordinate is affine along each axial line: it is
+            // either monotone or constant there. Every such line in a finite
+            // trim reaches its boundary, so the same boundary enclosure holds.
             let mut bounds: Option<Aabb> = None;
             for wire_id in face.outer().into_iter().chain(face.inner().iter().copied()) {
                 let wire = model.wire(wire_id).expect("validated face wire");

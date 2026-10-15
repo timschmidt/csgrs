@@ -766,6 +766,47 @@
       "validation": "383 combined native BREP/IO results pass in debug and release; minimal-feature release has 375 passes (configuration counts overlap). Nine public semantic groups and one private invalid-selection test are new. Six restored implementation faults fail runtime assertions. Core/IO all-target/all-feature and minimal-feature Clippy, warning-denied docs, fuzz-bin compilation, formatting and nine actual zero-import Wasmtime groups pass. Initial fuzz-caller compilation failures and three curved-sweep self-identity failures are retained with their fixes.",
       "cost_evidence": "Six matched single-pair rows preserve certified completion, archive sizes and fingerprints over 15 warm samples per binary (20 completions each). Same-selection complete subtraction uses 5.30% of baseline median time and 1.41% of allocation calls. Other median time ratios are 0.992\u20131.017; disjoint-sphere union allocation calls increase 6.49%, with requested bytes increasing 0.150%. No general speedup or cold/peak-memory comparison is claimed. A separate construction\u2192difference/intersection\u2192reconstruction\u2192classification\u2192archive-replay probe completes at 1/4/16/64 bodies per input; the 64-body row takes 2.34 seconds, requests 1.265 GB cumulatively and peaks at 36.9 MB live requested bytes (not process RSS). Shared arrangements and resource bounds remain open. Raw samples, initial attempts and binary/source hashes are retained.",
       "limits": "All 28 work packages remain open. Finite composition is not a shared expression arrangement. Unsupported intermediate topology remains typed. Full operation provenance/receipts, total pair work, retained-byte bounds, cancellation, release/MSRV/bindings, formal/coverage/new fuzz campaigns and the complete pre-push matrix remain open. The two root upstream drill-composition failures and closed-edge stash are unchanged."
+    },
+    {
+      "id": "closed-analytic-edges",
+      "work_packages": [
+        "WP00",
+        "WP03",
+        "WP08",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P6",
+        "P12",
+        "P13",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "decision": "kept for exact native composition completeness; scoped qualification, with the over-budget arc replay observation and broader gates remaining open",
+      "change": "Admit a single-vertex circle/ellipse edge over exactly one period, checking the actual endpoint images and retaining distinct incident edges, directed uses and parameter endpoints. Restore native full-circle CurveString2/Contour2 composition by restricting the zero-chord guard to lines. Extend the shared finite-face boundary bound to cylinders so disjoint selected closed-edge bodies transfer without reconstruction. Migrate the saved candidate to BodySet directly and preserve all historical evidence.",
+      "source": "../src/topology/builder.rs",
+      "source_files": [
+        "../src/topology/error.rs",
+        "../src/ownership/references.rs",
+        "../src/ownership/staging.rs",
+        "../../hypercurve/src/curve_string.rs",
+        "../src/boolean_kernel.rs"
+      ],
+      "evidence": "evidence/2026-10-15-closed-edges/manifest.json",
+      "validation": "391 combined BREP/IO passes in debug and release; 383 in minimal-feature release. Hypercurve release has 2441 passes and 28 existing ignored tests; the focused debug contour target has 40 passes. Eight public closed-edge groups, six runtime implementation faults and eight actual zero-import Wasmtime groups qualify the added domain. Scoped Clippy, warning-denied docs, fuzz-target compilation, formatting and diff checks pass. Root acceptance retains 141 passes and the same two 16/32-segment strict drill PredicateUndecided failures. Counts overlap. Source hashes, all raw attempts and the unadmitted pre-integration/superseded work are retained.",
+      "cost_evidence": "Three alternating CPU-0 pairs preserve all 64 default-feature BREP and 12 default arc receipts, including 256-arc workloads. Median case ratios are 1.020399/1.003615; maxima are 1.041137/1.118080. The largest arc row increases from 6.462 to 7.225 ns, exceeding the default 10% budget; retain the native completeness extension as a new feature baseline without claiming an optimization or universal timing pass. Five new 100-completion rows have 174.660\u2013503.273 microsecond medians, with exact semantic checks, counts, full JSON equality and allocation requests inside timing. Binary and child peak-RSS data, adverse rows and the superseded whole-model fallback remain available. General resource bounds and controlled-host performance qualification remain open.",
+      "limits": "All 28 work-package gates remain open. Closed splines, general ellipse/plane pcurve admission, singular charts, analytic STEP mapping, complete operation provenance/receipts, internal total-work/retained-byte/cancellation bounds and release/binding/MSRV gates remain open. Native closed edges do not heal the independent OCCT cylinder radial residual. A complete pre-push matrix and new runtime fuzz/ASan/lexicase/coverage/formal campaigns are not claimed.",
+      "future_feasibility": "A separate native edge probe completes 24 non-cardinal rational seam/frame/period construction and replay cases using existing Real::try_atan2 and frame APIs; two exact off-carrier cases fail typed. This does not implement STEP unit/source-parameter/pcurve mapping, and its archive sizes are not a same-contract optimization comparison."
     }
   ],
   "work_packages": [
@@ -942,13 +983,13 @@
     "Preserve and broaden the BodySet empty/multi-body/overlapping-selection composition corpus. Add shared arrangements across expression roots, durable boundary provenance and certainty receipts, complete work/memory/cancellation bounds, and mixed analytic/spline closure without losing the newly certified finite composition path (WP01/WP08, P6/P17-P20).",
     "Preserve and exercise named ordinary strict workflows with independent set, topology and source-fidelity checks. Retain upstream 16/32-segment drilled composition failures and all certified controls; inherited scalar candidate status is not admission. Record all seven outcome categories and the failing stage (WP00/WP21, P39).",
     "Complete the documented-package pipeline in clean external consumers and actual affected bindings; verify features, dependency versions, MSRV, certainty and format-specific round trips. Local paths, source builds and WASM probes do not close delivery gates (WP17/WP18/WP23, P37).",
-    "Restore the unfinished native closed-edge candidate from the verified stash, migrate its callers to the BodySet Boolean API, preserve the new guidance/ledgers, and requalify its tests and completed-contract costs on the integrated source; interrupted and pre-integration evidence remains historical.",
+    "Continue WP03 beyond native single-vertex circle/ellipse edges: add regular closed-spline and singular-chart certificates, complete periodic chart gluing, and general ellipse/plane pcurve-image proofs. Keep the new closed-edge/BodySet/empty composition corpus. The verified stash remains a historical backup; its selectively recovered candidate is requalified on integrated dependencies.",
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
     "Complete WP02/G1 beyond planar spline replay, subdivided cuboid and axial-cylinder archive replay. Extend independent solid/void/corner proofs, retained surface/contact images and selected Boolean transfer while preserving every existing exact behavior. Native-to-selected spline composition and five repeated selected cuboid cuts now have regression evidence.",
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
     "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
-    "Continue WP14a from selected exact faceted exchange and planar advanced import: implement curved analytic mapping, exact closed-circle edge refinement, periodic trims and complete source accounting for all 3D/UV curve representations. Preserve independently checked source parameterizations and master semantics, diagnose off-carrier decimal vertices, and broaden representation traversal and schema/resource admission. Then WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. The independent planar import/edit/faceted-export/reimport fixtures do not establish whole-document or curved STEP exchange.",
+    "Continue WP14a from selected exact faceted exchange and planar advanced import: use the native closed-circle edge prerequisite for curved analytic mapping; prove exact source vertex incidence, complete source parameter maps, distinct seam endpoints and all 3D/UV curve representations. Keep angular and length unit scales separate; preserve declared decimal conversion factors, source master semantics and every alternate representation. Prototype the recorded seam-frame/source-phase experiment before choosing new carriers, and diagnose the unchanged off-carrier decimal cylinder. Then WP14b adds general spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. Native tests do not establish whole-document or curved STEP exchange.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
   ],
   "acceptance_contract": {
