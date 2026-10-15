@@ -154,6 +154,10 @@ impl ArenaModel {
                 continue;
             };
             for parameter in parameters {
+                let parameter = parameter
+                    .try_real()
+                    .cloned()
+                    .ok_or(GeometryError::UnrepresentableParameter)?;
                 if edge.domain.contains(&parameter)?
                     && decided_model_order(compare_reals(
                         &parameter,
@@ -254,6 +258,10 @@ impl ArenaModel {
                 Err(error) => return Err(error.into()),
             };
             for parameter in parameters {
+                let parameter = parameter
+                    .try_real()
+                    .cloned()
+                    .ok_or(GeometryError::UnrepresentableParameter)?;
                 let after_start =
                     compare_reals(&parameter, edge.domain.start(), crate::STRICT_PREDICATES);
                 let before_end =

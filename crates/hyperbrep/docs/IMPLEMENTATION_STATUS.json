@@ -253,6 +253,38 @@
       "evidence": "evidence/2026-10-15-retained-parameter-feasibility/manifest.json",
       "validation": "Locked standalone release build and strict Clippy pass; three CPU 0 executions retain the same exact assertions and receipt (7 instrumented refinements, 0 promotions). Dependency identities match the workspace lockfile.",
       "limits": "G1 and WP02 remain open: no BREP selected point/domain, whole-model split, dual-pcurve certification or selected graph persistence/replay. Smoke measurements do not prove performance or retained-memory growth."
+    },
+    {
+      "id": "retained-inverse-parameters",
+      "work_packages": [
+        "WP01",
+        "WP02",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P1",
+        "P4",
+        "P6",
+        "P8",
+        "P11",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P35",
+        "P36",
+        "P37",
+        "P39",
+        "T13"
+      ],
+      "decision": "kept for inverse-query completeness; not an optimization",
+      "change": "Return opaque Parameter values from spatial inverse queries, retaining selected algebraic roots. Verify the remaining coordinate at the same selected root; reuse Hypercurve affine chart transport for NURBS authored domains. Migrate callers directly, preserving explicit materialization blockers at current topology consumers. Move inverse helpers into geometry/location.rs and amend the scalar/selected-solution contract.",
+      "source": "../src/parameter.rs",
+      "evidence": "evidence/2026-10-15-retained-inverse-parameters/manifest.json",
+      "validation": "239 core tests, 23 integration tests and 3 doctests pass; the 8 new BREP regressions also pass in release. Three Hypercurve chart integration tests and 58 existing parameter-module tests pass. Three deliberate mutants fail focused assertions. Both crates pass strict all-target/all-feature Clippy and warning-denied rustdoc; BREP WASM library build, fuzz-bin Clippy, formatting and all three benchmark builds pass.",
+      "cost_evidence": "The unchanged 66-row harness preserves every receipt in three paired trials. Median of case median ratios 0.97391; largest ratio 1.05369 for spline_kernel/nurbs_planar_face_build_exact_area; executable +18,096 bytes; median peak RSS 21,712 to 21,784 KiB. Four new feature-cost rows and four migrated scope-cost rows retain exact assertions and receipts in three runs each. Descriptive samples only.",
+      "limits": "WP02/G1 remains incomplete: retained spatial point evaluation, selected edge domains, complete edge split/dual-pcurve correspondence, transformations and selected graph archive/reload composition are not implemented. Partly constant NURBS preimages remain a typed blocker. Full solver/resource accounting, independent oracle, new fuzz/ASan/lexicase, WASM execution and full-workspace/pre-push checks remain open."
     }
   ],
   "work_packages": [
@@ -270,7 +302,7 @@
     },
     {
       "id": "WP02",
-      "status": "open",
+      "status": "in-progress",
       "deliverable": "Retained parameters and geometric points; common-source comparison; budget/error propagation",
       "gate": "A non-materializable contact can split a 3D edge, agree with both pcurves, reverse, transform and compare without float conversion"
     },
@@ -427,7 +459,7 @@
   ],
   "next_actions": [
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
-    "Implement the WP02/G1 retained-parameter contact-to-split/persist/reload/composition vertical slice without requiring Real materialization.",
+    "Complete WP02/G1 beyond retained inverse queries: selected spatial point evaluation, edge-domain split with dual-pcurve agreement, persistence/reload and composition without requiring Real materialization.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
   ]

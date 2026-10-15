@@ -79,7 +79,7 @@ pub enum GeometryError {
     SplitAtBoundary,
     /// Exact inverse parameter location is not implemented for this family.
     UnsupportedParameterLocation,
-    /// A certified location exists but is not representable by `Real`.
+    /// A certified parameter cannot enter an operation requiring a stored `Real`.
     UnrepresentableParameter,
     /// The requested intersection family combination is unsupported.
     UnsupportedIntersection,

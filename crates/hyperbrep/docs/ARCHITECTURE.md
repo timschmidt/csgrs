@@ -1,7 +1,7 @@
 # HyperBREP Architecture
 
 HyperBREP is an exact, immutable boundary-representation kernel.
-`hyperreal::Real` is the sole authoritative scalar. Approximate numbers may
+`hyperreal::Real` is the sole authored coefficient scalar. Approximate numbers may
 eventually propose work at explicit adapter boundaries, but they never decide
 incidence, ordering, containment, topology, or regularization.
 
@@ -29,6 +29,36 @@ certificates, persistence, and modeling operations.
 
 HyperTRI is an optional derived consumer behind the `tessellation` feature. It
 is not a core dependency and cannot mutate or replace a source BREP.
+
+## Retained inverse parameters
+
+[`Parameter`](../src/parameter.rs) holds an authored `Real` or a certified
+selected algebraic root. `try_real` borrows an available scalar view without
+reconstruction. `compare` uses strict Hyperlimit order for two represented
+values and Hypercurve's retained comparison otherwise. It exposes no infallible
+mathematical `Eq` or `Ord`, and an unresolved comparison remains an error.
+Use `OperationContext::evaluate` to share instrumented solver work across a
+batch. The current implementation retains Hypercurve's admitted Bézier root
+authority; it adds no independent root-isolation or coefficient-field engine.
+
+[`geometry/location.rs`](../src/geometry/location.rs) owns spatial inverse
+queries. For a rational Bézier, a varying planar projection proposes certified
+parameters. Represented parameters retain the existing full-3D evaluation
+check. Selected roots use a certified constant remaining coordinate, or replay
+a second projected point at the **same** root and compare its exact image.
+Independent roots of different projections cannot establish spatial incidence.
+Positive weights are already an admission invariant. NURBS queries reuse
+Bezier-span decomposition and Hypercurve's affine root transport to retain
+authored knot parameters; exact comparison deduplicates shared seams.
+Partly constant preimages remain an explicit unsupported result.
+
+The retained query result does not yet supply retained spatial evaluation,
+edge-domain endpoints, vertices, pcurve correspondence or archive graph nodes.
+Those consumers still require stored `Real` values and must report
+`UnrepresentableParameter` rather than drop a selected contact. This is partial
+WP02 progress, not the G1 split/persistence gate. The
+[qualification record](evidence/2026-10-15-retained-inverse-parameters/manifest.json)
+records the covered cases and remaining limits.
 
 ## Source organization
 

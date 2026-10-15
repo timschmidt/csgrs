@@ -472,11 +472,18 @@ results and cannot be counted as a passing exact solution.
 | G7 — derived output, WP12/WP15 | Regular trimmed mixed-carrier body, near-contact bodies and chart singularities | Separate integration bounds, geometric approximation bounds, joint-contact limits and mesh conformity; source topology unaffected by display resolution |
 
 The [2026-10-15 G1 prerequisite probe](evidence/2026-10-15-retained-parameter-feasibility/README.md)
-now exercises the retained quintic parameter in Hypercurve and records BREP's
-current `UnrepresentableParameter` boundary. Planar split/reverse/transform
+exercises the retained quintic parameter in Hypercurve and records BREP's
+`UnrepresentableParameter` boundary at revision `678c8072e`. Planar split/reverse/transform
 composition passes without a stored scalar view. Spatial topology, dual
 pcurves and graph persistence/replay remain unimplemented by that probe;
 G1 remains open.
+
+The subsequent [retained inverse-query increment](evidence/2026-10-15-retained-inverse-parameters/README.md)
+removes that query boundary: spatial Bézier/NURBS queries retain selected
+roots, certify the remaining coordinate at the same root, and preserve authored
+knot charts. It reuses the existing Hypercurve affine chart implementation.
+Topology transfer still reports unavailable materialization explicitly; this
+does not complete the G1 edge/pcurve/archive composition gate.
 
 Small mathematical fixtures should precede large imported examples. The
 following are proposed exact counterexamples and proof obligations, not

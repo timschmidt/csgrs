@@ -83,7 +83,10 @@ fn main() {
         else {
             panic!("expected five exact roots");
         };
-        assert_eq!(black_box(&parameters), &expected);
+        assert_eq!(parameters.len(), expected.len());
+        for (parameter, expected) in black_box(&parameters).iter().zip(&expected) {
+            assert_eq!(parameter.try_real(), Some(expected));
+        }
         parameters.len()
     };
     let bounded = OperationContext::strict(WorkBudget {

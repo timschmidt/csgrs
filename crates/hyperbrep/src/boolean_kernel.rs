@@ -2177,6 +2177,14 @@ fn atomize_selected_edges(
                     continue;
                 };
                 parameters
+                    .into_iter()
+                    .map(|parameter| {
+                        parameter
+                            .try_real()
+                            .cloned()
+                            .ok_or(GeometryError::UnrepresentableParameter)
+                    })
+                    .collect::<Result<Vec<_>, _>>()?
             } else {
                 parameters
             };
@@ -4382,12 +4390,16 @@ fn surface_parameter_lines(
         parameters
             .into_iter()
             .map(|parameter| {
-                (
+                let parameter = parameter
+                    .try_real()
+                    .cloned()
+                    .ok_or(GeometryError::UnrepresentableParameter)?;
+                Ok((
                     hypercurve::Point2::new(parameter, Real::zero()),
                     hypercurve::Point2::new(Real::zero(), factor.clone()),
-                )
+                ))
             })
-            .collect(),
+            .collect::<Result<_, GeometryError>>()?,
     ))
 }
 

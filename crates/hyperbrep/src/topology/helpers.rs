@@ -1922,24 +1922,19 @@ pub(super) fn require_curve_point_at_parameter(
         CurveParameterLocation::EntireDomain => Ok(()),
         CurveParameterLocation::None => Err(mismatch),
         CurveParameterLocation::Parameters(parameters) => {
+            let parameter = crate::Parameter::from_real(parameter.clone());
             let mut unresolved = None;
             for candidate in parameters {
-                match compare_reals(&candidate, parameter, crate::STRICT_PREDICATES) {
-                    PredicateOutcome::Decided {
-                        value: std::cmp::Ordering::Equal,
-                        ..
-                    } => return Ok(()),
-                    PredicateOutcome::Decided { .. } => {}
-                    PredicateOutcome::Unknown { needed, stage } => {
-                        unresolved.get_or_insert((needed, stage));
+                match candidate.compare(&parameter) {
+                    Ok(std::cmp::Ordering::Equal) => return Ok(()),
+                    Ok(_) => {}
+                    Err(error) => {
+                        unresolved.get_or_insert(error);
                     }
                 }
             }
-            if let Some((needed, stage)) = unresolved {
-                Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
-                    needed,
-                    stage,
-                }))
+            if let Some(error) = unresolved {
+                Err(BuildError::Geometry(error))
             } else {
                 Err(mismatch)
             }

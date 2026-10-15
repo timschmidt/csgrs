@@ -49,7 +49,35 @@ The default regression budget is 10% for an established cohort. A deliberate
 regression requires a recorded semantic or architectural reason and a new
 baseline.
 
-## Current baseline
+## Retained inverse parameters — 2026-10-15
+
+Kept for exact inverse-query completeness. `Parameter` retains admitted roots
+without requiring a stored scalar; NURBS chart transport reuses Hypercurve's
+existing implementation. Represented Bézier queries keep the previous 3D
+evaluation check. A second projection is built only when a selected candidate
+needs a nonconstant third-coordinate proof, and is shared across that query's
+candidates. This is a capability extension, not a claimed optimization.
+
+The [qualification record](docs/evidence/2026-10-15-retained-inverse-parameters/manifest.json)
+binds sources, commands, three rejected mutants, executable hashes and logs.
+All 66 unchanged kernel receipts agree across three alternating process pairs.
+The median of case median ratios is **0.97391**; the largest is **1.05369** for
+`spline_kernel/nurbs_planar_face_build_exact_area`, within the 10% cohort budget.
+Binary size increases by **18,096 bytes**. Whole-process median peak RSS is
+**21,712 → 21,784 KiB**. These are descriptive samples, without statistical or
+allocation-count claims. Every row and sample remains in
+[comparison.json](docs/evidence/2026-10-15-retained-inverse-parameters/comparison.json).
+
+The new `retained_parameters` release harness includes exact assertions and
+runs 250 iterations per row. Three-run median costs are **44.280 µs** for a
+quintic root query, **126.885 µs** for a weighted spatial quintic,
+**139.514 µs** for rejection of a planar-only candidate, and **137.711 µs** for
+two authored NURBS spans. These capabilities were unavailable in the baseline;
+the measurements are feature costs. The migrated work-budget harness preserves
+its four receipts as well. See
+[feature-cost.json](docs/evidence/2026-10-15-retained-inverse-parameters/feature-cost.json).
+
+## Initial kernel baseline
 
 `benches/kernel.rs` measures the first stable final-API cohorts: exact cuboid,
 native-cylinder, boundaryless-face sphere, truncated-cone, periodic-patch

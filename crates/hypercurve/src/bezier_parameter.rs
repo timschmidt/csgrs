@@ -1900,6 +1900,27 @@ impl BezierParameter2 {
         }
     }
 
+    /// Maps this parameter through the affine chart `scale * parameter + offset`.
+    ///
+    /// The image may lie outside the unit interval. A selected root retains
+    /// its defining relation, isolator and source identity without requiring
+    /// a stored scalar. Negative scales reverse the isolator endpoints.
+    /// The scale must be certified nonzero under strict predicates, even in
+    /// a provisional evaluation scope; zero or unresolved scales return an
+    /// error. This is chart transport, not a constant-map evaluator.
+    pub fn affine_image(&self, scale: &Real, offset: &Real) -> crate::ExactCurveResult<Self> {
+        self.affine_image_unbounded(scale, offset, &crate::policy::principal_context())
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid_unattributed(
+                    crate::CurveOperation2::Evaluation,
+                    cause,
+                )
+            })
+            .and_then(|value| {
+                crate::ExactCurveError::decided(crate::CurveOperation2::Evaluation, value)
+            })
+    }
+
     /// Applies `scale * parameter + offset` while retaining an exact algebraic
     /// root carrier on any finite affine interval.
     pub(crate) fn affine_image_unbounded(

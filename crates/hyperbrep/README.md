@@ -31,7 +31,9 @@ or futures. See [operation scopes](docs/ARCHITECTURE.md#operation-scopes).
 
 ## Exactness contract
 
-- Coordinates, parameters, domains, weights, knots, and transforms use `Real`.
+- Authored coordinates, coefficients, domains, weights, knots, and transforms
+  use `Real`. Inverse curve queries return opaque `Parameter` values that can
+  retain selected algebraic roots without a stored `Real` view.
 - Geometric equality and ordering use Hyperlimit predicates, not structural
   `PartialEq` or an epsilon.
 - An unresolved predicate is a typed error, never `false`.
@@ -52,7 +54,7 @@ The clean-break implementation currently provides:
 
 - exact line, circular/elliptic arc, rational Bézier, and finite non-periodic
   NURBS `Curve3` carriers;
-- arbitrary positive-order exact derivatives, certified represented parameter
+- arbitrary positive-order exact derivatives, certified retained parameter
   location, NURBS knot-insertion subdivision, supported reversal, and
   conservative exact curve bounds;
 - parameterized planes plus sphere, cylinder, cone, and torus carriers with

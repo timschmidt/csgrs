@@ -40,7 +40,13 @@ fn brep_parameter_location_retries_after_resource_exhaustion() {
     let CurveParameterLocation::Parameters(parameters) = retry.result.unwrap().unwrap() else {
         panic!("the complete curve has five exact preimages of the origin");
     };
-    assert_eq!(parameters, [1, 2, 4, 6, 7].map(|n| rational(n, 8)));
+    assert_eq!(parameters.len(), 5);
+    for (parameter, expected) in parameters
+        .iter()
+        .zip([1, 2, 4, 6, 7].map(|n| rational(n, 8)))
+    {
+        assert_eq!(parameter.try_real(), Some(&expected));
+    }
 }
 
 #[test]

@@ -35,3 +35,7 @@ harness = false
 [[bench]]
 name = "work_budget"
 harness = false
+
+[[bench]]
+name = "retained_parameters"
+harness = false

@@ -4,13 +4,20 @@ use std::cmp::Ordering;
 use std::sync::{Arc, OnceLock};
 
 use hypercurve::{
-    CircularArc2, Classification, Contour2, Curve2, CurveFamily2, CurveGeometry2,
-    CurvePointLocations2, CurveRegion2, LineSeg2, Point2 as CurvePoint2, RationalBezier2, Segment2,
+    CircularArc2, Classification, Contour2, Curve2, CurveFamily2, CurveGeometry2, CurveRegion2,
+    LineSeg2, Point2 as CurvePoint2, RationalBezier2, Segment2,
 };
 use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
+use crate::Parameter;
 use crate::error::{GeometryError, GeometryResult};
+
+mod location;
+use location::{
+    locate_ellipse_arc_parameters, locate_line_parameter, locate_nurbs_parameters,
+    locate_rational_bezier_parameters,
+};
 
 pub(crate) fn resolve_planar_classification<T>(
     classification: Classification<T>,
@@ -108,13 +115,14 @@ pub struct CurveDerivative3 {
     vector: Vector3,
 }
 
-/// Complete represented parameter-location result for one spatial curve.
+/// Complete exact parameter-location result for one spatial curve.
 #[derive(Clone, Debug)]
 pub enum CurveParameterLocation {
     /// The point is not on the finite curve.
     None,
-    /// All represented exact parameters whose images equal the point.
-    Parameters(Vec<Real>),
+    /// All certified exact parameters whose images equal the point.
+    /// Selected algebraic roots need not have a stored `Real` view.
+    Parameters(Vec<Parameter>),
     /// Every parameter in the curve domain maps to the point.
     EntireDomain,
 }
@@ -1209,10 +1217,13 @@ impl Curve3 {
         })
     }
 
-    /// Locates every represented exact parameter whose image is `point`.
+    /// Locates every certified exact parameter whose image is `point`.
     ///
-    /// Algebraic roots not representable by `Real` are an explicit error;
-    /// self-intersections may return more than one parameter.
+    /// Rational Bézier and NURBS queries retain selected algebraic roots even
+    /// without a stored `Real` view. All three coordinates must be certified;
+    /// a planar projection alone is not spatial incidence. Self-intersections
+    /// may return more than one parameter. Partly constant NURBS preimages
+    /// remain an explicit unsupported result, never an incomplete finite set.
     pub fn parameters_of(&self, point: &Point3) -> GeometryResult<CurveParameterLocation> {
         crate::context::strict(|| match &self.data.geometry {
             CurveGeometry3::Line(line) => locate_line_parameter(self, line, point),
@@ -9269,164 +9280,6 @@ fn validate_control_net(control_points: &[Point3], weights: &[Real]) -> Geometry
     Ok(())
 }
 
-fn locate_line_parameter(
-    curve: &Curve3,
-    line: &Line3,
-    point: &Point3,
-) -> GeometryResult<CurveParameterLocation> {
-    let direction = &line.end - &line.start;
-    let offset = point - &line.start;
-    let mut parameter = None;
-    let mut parameter_axis = None;
-    for axis in 0..3 {
-        match decided_order(compare_reals(
-            &direction.0[axis],
-            &Real::zero(),
-            crate::STRICT_PREDICATES,
-        ))? {
-            Ordering::Equal => {}
-            Ordering::Less | Ordering::Greater => {
-                parameter =
-                    Some((&offset.0[axis] / &direction.0[axis]).map_err(GeometryError::Numeric)?);
-                parameter_axis = Some(axis);
-                break;
-            }
-        }
-    }
-    let parameter = parameter.ok_or(GeometryError::DegenerateLine)?;
-    if !curve.domain().contains(&parameter)? {
-        return Ok(CurveParameterLocation::None);
-    }
-    let parameter_axis = parameter_axis.expect("a line parameter has a source axis");
-    for axis in 0..3 {
-        if axis == parameter_axis {
-            continue;
-        }
-        let left = &offset.0[axis] * &direction.0[parameter_axis];
-        let right = &offset.0[parameter_axis] * &direction.0[axis];
-        if decided_order(compare_reals(&left, &right, crate::STRICT_PREDICATES))? != Ordering::Equal
-        {
-            return Ok(CurveParameterLocation::None);
-        }
-    }
-    Ok(CurveParameterLocation::Parameters(vec![parameter]))
-}
-
-fn locate_rational_bezier_parameters(
-    curve: &Curve3,
-    rational: &RationalBezier3,
-    point: &Point3,
-) -> GeometryResult<CurveParameterLocation> {
-    let mut projection = None;
-    for axes in [(0, 1), (0, 2), (1, 2)] {
-        if surface_projection_varies(&rational.control_points, axes)? {
-            projection = Some(axes);
-            break;
-        }
-    }
-    let Some((first_axis, second_axis)) = projection else {
-        return if points_equal(&rational.control_points[0], point)? {
-            Ok(CurveParameterLocation::EntireDomain)
-        } else {
-            Ok(CurveParameterLocation::None)
-        };
-    };
-    let controls = rational
-        .control_points
-        .iter()
-        .map(|control| {
-            CurvePoint2::new(
-                control_coordinate(control, first_axis).clone(),
-                control_coordinate(control, second_axis).clone(),
-            )
-        })
-        .collect();
-    let projected = Curve2::from(RationalBezier2::try_new(
-        controls,
-        rational.weights.clone(),
-    )?);
-    let query = CurvePoint2::new(
-        control_coordinate(point, first_axis).clone(),
-        control_coordinate(point, second_axis).clone(),
-    );
-    match projected.point_locations(&query.into())? {
-        CurvePointLocations2::EntireCurve => Err(GeometryError::UnsupportedParameterLocation),
-        CurvePointLocations2::Locations(locations) => {
-            let mut represented = Vec::new();
-            for location in locations {
-                // One unit-chart span: local and authored parameters agree.
-                let Some(parameter) = location.local_parameter().scalar().cloned() else {
-                    return Err(GeometryError::UnrepresentableParameter);
-                };
-                if points_equal(&curve.point_at(&parameter)?, point)? {
-                    represented.push(parameter);
-                }
-            }
-            if represented.is_empty() {
-                Ok(CurveParameterLocation::None)
-            } else {
-                Ok(CurveParameterLocation::Parameters(represented))
-            }
-        }
-    }
-}
-
-fn locate_nurbs_parameters(
-    nurbs: &NurbsCurve3,
-    point: &Point3,
-) -> GeometryResult<CurveParameterLocation> {
-    let mut all_controls_equal = true;
-    for control in &nurbs.control_points[1..] {
-        if !points_equal(control, &nurbs.control_points[0])? {
-            all_controls_equal = false;
-            break;
-        }
-    }
-    if all_controls_equal {
-        return if points_equal(&nurbs.control_points[0], point)? {
-            Ok(CurveParameterLocation::EntireDomain)
-        } else {
-            Ok(CurveParameterLocation::None)
-        };
-    }
-    let segments = decompose_nurbs_into_bezier_segments(nurbs)?;
-    let mut parameters = Vec::new();
-    for (segment, domain) in segments {
-        match segment.parameters_of(point)? {
-            CurveParameterLocation::None => {}
-            CurveParameterLocation::Parameters(local_parameters) => {
-                let span = domain.end() - domain.start();
-                for local in local_parameters {
-                    let global = domain.start() + &span * local;
-                    let mut duplicate = false;
-                    for existing in &parameters {
-                        if decided_order(compare_reals(
-                            existing,
-                            &global,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Equal
-                        {
-                            duplicate = true;
-                            break;
-                        }
-                    }
-                    if !duplicate {
-                        parameters.push(global);
-                    }
-                }
-            }
-            CurveParameterLocation::EntireDomain => {
-                return Err(GeometryError::UnsupportedParameterLocation);
-            }
-        }
-    }
-    if parameters.is_empty() {
-        Ok(CurveParameterLocation::None)
-    } else {
-        Ok(CurveParameterLocation::Parameters(parameters))
-    }
-}
-
 fn decompose_nurbs_into_bezier_segments(
     nurbs: &NurbsCurve3,
 ) -> GeometryResult<Vec<(Curve3, ParameterDomain)>> {
@@ -9536,143 +9389,6 @@ fn restore_constant_coordinates(point: &mut Point3, coordinates: &[Option<Real>;
             _ => unreachable!("three constant coordinate slots"),
         }
     }
-}
-
-fn locate_ellipse_arc_parameters(
-    curve: &Curve3,
-    arc: &EllipseArc3,
-    point: &Point3,
-) -> GeometryResult<CurveParameterLocation> {
-    let mut endpoints = Vec::new();
-    if point3_equal(&curve.start()?, point, crate::STRICT_PREDICATES).value() == Some(true) {
-        endpoints.push(curve.domain().start().clone());
-    }
-    if point3_equal(&curve.end()?, point, crate::STRICT_PREDICATES).value() == Some(true)
-        && (endpoints.is_empty()
-            || decided_order(compare_reals(
-                &endpoints[0],
-                curve.domain().end(),
-                crate::STRICT_PREDICATES,
-            ))? != Ordering::Equal)
-    {
-        endpoints.push(curve.domain().end().clone());
-    }
-    if !endpoints.is_empty() {
-        return Ok(CurveParameterLocation::Parameters(endpoints));
-    }
-
-    let relative = point - &arc.center;
-    let x_coordinate = arc.x.dot(&relative);
-    let y_coordinate = arc.y.dot(&relative);
-    let represented = arc.x.clone() * &x_coordinate + arc.y.clone() * &y_coordinate;
-    match compare_reals(
-        &(&relative - &represented).norm_squared(),
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ) {
-        PredicateOutcome::Decided {
-            value: Ordering::Equal,
-            ..
-        } => {}
-        PredicateOutcome::Decided { .. } => return Ok(CurveParameterLocation::None),
-        PredicateOutcome::Unknown { needed, stage } => {
-            return Err(GeometryError::PredicateUnresolved { needed, stage });
-        }
-    }
-    let normalized_x = (x_coordinate / &arc.x_radius).map_err(GeometryError::Numeric)?;
-    let normalized_y = (y_coordinate / &arc.y_radius).map_err(GeometryError::Numeric)?;
-    let normalized_radius_squared = &normalized_x * &normalized_x + &normalized_y * &normalized_y;
-    match compare_reals(
-        &normalized_radius_squared,
-        &Real::one(),
-        crate::STRICT_PREDICATES,
-    ) {
-        PredicateOutcome::Decided {
-            value: Ordering::Equal,
-            ..
-        } => {}
-        PredicateOutcome::Decided { .. } => return Ok(CurveParameterLocation::None),
-        PredicateOutcome::Unknown { needed, stage } => {
-            return Err(GeometryError::PredicateUnresolved { needed, stage });
-        }
-    }
-    let angle = match certified_atan2(normalized_y.clone(), normalized_x.clone()) {
-        Ok(angle) => angle,
-        Err(GeometryError::PredicateUnresolved { .. }) => {
-            atan2_replay_candidate(&normalized_y, &normalized_x)?
-        }
-        Err(error) => return Err(error),
-    };
-    let mut delta = if arc.direction < 0 {
-        &arc.angle_at_start - angle
-    } else {
-        angle - &arc.angle_at_start
-    };
-    if decided_order(compare_reals(
-        &delta,
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Less
-    {
-        delta += Real::from(2) * Real::pi();
-    }
-    let parameter = curve.domain().start() + delta;
-    if !curve.domain().contains(&parameter)? {
-        return Ok(CurveParameterLocation::None);
-    }
-    let mut parameters = vec![parameter];
-    if decided_order(compare_reals(
-        &parameters[0],
-        curve.domain().start(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Equal
-        && decided_order(compare_reals(
-            &(curve.domain().end() - curve.domain().start()),
-            &Real::tau(),
-            crate::STRICT_PREDICATES,
-        ))? == Ordering::Equal
-    {
-        parameters.push(curve.domain().end().clone());
-    }
-    Ok(CurveParameterLocation::Parameters(parameters))
-}
-
-fn atan2_replay_candidate(y: &Real, x: &Real) -> GeometryResult<Real> {
-    let (Some(y_approx), Some(x_approx)) = (y.to_f64_lossy(), x.to_f64_lossy()) else {
-        return Err(GeometryError::PredicateUnresolved {
-            needed: hyperlimit::RefinementNeed::RealRefinement,
-            stage: hyperlimit::Escalation::Undecided,
-        });
-    };
-    if !y_approx.is_finite() || !x_approx.is_finite() {
-        return Err(GeometryError::PredicateUnresolved {
-            needed: hyperlimit::RefinementNeed::RealRefinement,
-            stage: hyperlimit::Escalation::Undecided,
-        });
-    }
-    if x_approx == 0.0 {
-        return if y_approx > 0.0 {
-            (Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)
-        } else if y_approx < 0.0 {
-            (-Real::pi() / Real::from(2)).map_err(GeometryError::Numeric)
-        } else {
-            Err(GeometryError::PredicateUnresolved {
-                needed: hyperlimit::RefinementNeed::RealRefinement,
-                stage: hyperlimit::Escalation::Undecided,
-            })
-        };
-    }
-    let principal = (y / x)
-        .map_err(GeometryError::Numeric)?
-        .atan()
-        .map_err(GeometryError::Numeric)?;
-    Ok(if x_approx > 0.0 {
-        principal
-    } else if y_approx >= 0.0 {
-        principal + Real::pi()
-    } else {
-        principal - Real::pi()
-    })
 }
 
 fn points_equal(left: &Point3, right: &Point3) -> GeometryResult<bool> {
@@ -11148,8 +10864,10 @@ mod tests {
         };
         assert_eq!(parameters.len(), 1);
         assert_eq!(
-            compare_reals(&parameters[0], &parameter, crate::STRICT_PREDICATES).value(),
-            Some(Ordering::Equal)
+            parameters[0]
+                .compare(&Parameter::from_real(parameter.clone()))
+                .unwrap(),
+            Ordering::Equal
         );
         assert!(matches!(
             line.parameters_of(&p(2, 5, 6)).unwrap(),
@@ -11227,8 +10945,10 @@ mod tests {
         };
         assert_eq!(parameters.len(), 1);
         assert_eq!(
-            compare_reals(&parameters[0], &q(1, 2), crate::STRICT_PREDICATES).value(),
-            Some(Ordering::Equal)
+            parameters[0]
+                .compare(&Parameter::from_real(q(1, 2)))
+                .unwrap(),
+            Ordering::Equal
         );
         assert!(matches!(
             rational.parameters_of(&p(8, 8, 8)).unwrap(),
@@ -11246,11 +10966,23 @@ mod tests {
             vec![r(1), r(1), r(1)],
         )
         .unwrap();
+        let CurveParameterLocation::Parameters(parameters) = algebraic
+            .parameters_of(&Point3::new(q(1, 2), r(0), r(0)))
+            .unwrap()
+        else {
+            panic!("the selected positive square root must survive the query");
+        };
+        assert_eq!(parameters.len(), 1);
+        assert!(parameters[0].try_real().is_none());
         assert_eq!(
-            algebraic
-                .parameters_of(&Point3::new(q(1, 2), r(0), r(0)))
-                .unwrap_err(),
-            GeometryError::UnrepresentableParameter
+            parameters[0]
+                .compare(&Parameter::from_real(q(1, 2)))
+                .unwrap(),
+            Ordering::Greater
+        );
+        assert_eq!(
+            parameters[0].compare(&Parameter::from_real(r(1))).unwrap(),
+            Ordering::Less
         );
 
         let full_circle = Curve3::circle_arc(
@@ -11276,8 +11008,10 @@ mod tests {
             panic!("arc point must retain its exact angular parameter");
         };
         assert_eq!(
-            compare_reals(&parameters[0], &parameter, crate::STRICT_PREDICATES).value(),
-            Some(Ordering::Equal)
+            parameters[0]
+                .compare(&Parameter::from_real(parameter.clone()))
+                .unwrap(),
+            Ordering::Equal
         );
 
         let nurbs = Curve3::nurbs(
@@ -11295,8 +11029,10 @@ mod tests {
         };
         assert_eq!(parameters.len(), 1);
         assert_eq!(
-            compare_reals(&parameters[0], &parameter, crate::STRICT_PREDICATES).value(),
-            Some(Ordering::Equal)
+            parameters[0]
+                .compare(&Parameter::from_real(parameter.clone()))
+                .unwrap(),
+            Ordering::Equal
         );
     }
 

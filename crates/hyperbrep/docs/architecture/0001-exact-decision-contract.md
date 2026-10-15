@@ -23,8 +23,23 @@ contract before it introduces final geometry and topology types.
 
 ### Authoritative scalar
 
-`hyperreal::Real` is the only scalar accepted or stored by core geometry.
-There is no generic scalar parameter.
+`hyperreal::Real` is the only authored coefficient scalar accepted or stored
+by core geometry. There is no generic coefficient scalar parameter.
+
+A selected solution need not have an independently stored `Real` value.
+Opaque `Parameter` retains an exact authored value or an admitted selected
+algebraic root, including its source relation and isolator. `try_real` is an
+optional view; its absence is not invalidity or approximation. Mathematical
+comparison is fallible and strictly certified. Generic polynomial arithmetic
+remains in Hypersolve; Hypercurve owns the reused root/chart evidence. HyperBREP
+composes this authority into spatial incidence without a second solver.
+
+The current retained-parameter API covers spatial inverse queries and
+comparison. Spatial point carriers, edge domains, pcurve correspondence and
+archive replay must be extended before selected roots can pass through a
+complete topology edit. Existing materialization requirements remain explicit
+typed blockers at those consumers. See the
+[current contract](../ARCHITECTURE.md#retained-inverse-parameters).
 
 Primitive floats may be accepted only by explicitly named boundary adapters.
 An adapter classifies conversion as exact lifting, certified approximation,
@@ -35,7 +50,8 @@ or topology policy.
 
 The kernel keeps these concepts separate:
 
-1. Identity: typed IDs refer to the same model record. Use ordinary `Eq`.
+1. Identity: bound references refer to the same model revision and record.
+   Use ordinary `Eq`.
 2. Representation equality: two values have the same authored/canonical
    representation. Use a specifically named method if an operation needs it.
 3. Mathematical equality: two values or geometric images denote the same

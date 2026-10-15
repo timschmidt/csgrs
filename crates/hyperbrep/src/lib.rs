@@ -15,6 +15,7 @@ mod cache;
 mod context;
 mod error;
 mod geometry;
+mod parameter;
 mod persistence;
 mod topology;
 
@@ -57,6 +58,7 @@ pub use geometry::{
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};
+pub use parameter::Parameter;
 pub(crate) use persistence::ImportedModel;
 pub use persistence::PersistenceError;
 pub use topology::{

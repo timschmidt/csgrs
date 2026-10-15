@@ -23,8 +23,19 @@ covered. See the [operation-scope contract](ARCHITECTURE.md#operation-scopes).
 | Rational Bézier | Homogeneous exact | Positive-weight control hull | Certified algebraic decomposition | Exact | Exact |
 | Finite nonperiodic NURBS | Homogeneous de Boor / arbitrary derivatives | Positive-weight control hull | Certified Bézier-span decomposition | Exact knot insertion | Exact |
 
-General isolated algebraic parameters that cannot be represented as
-`hyperreal::Real` return `UnrepresentableParameter`.
+`Curve3::parameters_of` returns `Parameter` values, including selected algebraic
+roots without a stored `Real` view. Rational Bézier queries certify all three
+coordinates at the same selected root. NURBS queries preserve authored knot
+charts and deduplicate seam parameters. Partly constant NURBS preimages remain
+`UnsupportedParameterLocation`; the API does not return a finite subset of an
+interval preimage.
+
+This retention currently covers inverse queries and exact comparison.
+Evaluation, derivatives, subdivision, edge domains, vertices, pcurve transfers
+and archives still use represented parameters/coordinates. Topology transfer
+requiring an unavailable `Real` returns `UnrepresentableParameter`; retained
+3D split and archive replay remain open. See the
+[parameter contract](ARCHITECTURE.md#retained-inverse-parameters).
 
 ## Surface carriers
 
