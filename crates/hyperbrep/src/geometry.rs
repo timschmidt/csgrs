@@ -835,6 +835,12 @@ impl Curve3 {
     }
 
     /// Evaluates one positive-order exact derivative.
+    ///
+    /// For spline families, an order whose derivative storage cannot be
+    /// addressed returns [`hyperreal::Problem::OutOfRange`] inside
+    /// [`GeometryError::Numeric`]. A rejected jet-buffer allocation returns
+    /// [`hyperreal::Problem::Exhausted`]. Closed-form line and conic derivatives
+    /// do not allocate storage proportional to the order.
     pub fn derivative_at(
         &self,
         parameter: &Real,
@@ -10173,9 +10179,9 @@ fn evaluate_rational_bezier_derivative(
     parameter: &Real,
     order: usize,
 ) -> GeometryResult<Vector3> {
+    let mut jets = derivative_jet_buffer(order)?;
     let mut derivative_controls = curve.homogeneous_controls().to_vec();
     let degree = derivative_controls.len() - 1;
-    let mut jets = Vec::with_capacity(order + 1);
     jets.push(
         evaluate_homogeneous_bezier_value(&derivative_controls, parameter)
             .ok_or(GeometryError::TooFewControlPoints)?,
@@ -10279,11 +10285,12 @@ fn evaluate_homogeneous_de_boor_jets(
         .iter()
         .cloned()
         .map(|value| {
-            let mut jets = vec![zero.clone(); order + 1];
-            jets[0] = value;
-            jets
+            let mut jets = derivative_jet_buffer(order)?;
+            jets.push(value);
+            jets.extend(std::iter::repeat_n(zero.clone(), order));
+            Ok(jets)
         })
-        .collect::<Vec<_>>();
+        .collect::<GeometryResult<Vec<_>>>()?;
     for stage in 1..=degree {
         for local in (stage..=degree).rev() {
             let knot_index = span - degree + local;
@@ -10291,9 +10298,9 @@ fn evaluate_homogeneous_de_boor_jets(
             let alpha = ((parameter - &knots[knot_index]) / &denominator)
                 .map_err(GeometryError::Numeric)?;
             let alpha_derivative = (Real::one() / &denominator).map_err(GeometryError::Numeric)?;
-            let left = level[local - 1].clone();
-            let right = level[local].clone();
-            let mut jets = Vec::with_capacity(order + 1);
+            let left = &level[local - 1];
+            let right = &level[local];
+            let mut jets = derivative_jet_buffer(order)?;
             jets.push(left[0].lerp(&right[0], &alpha));
             for derivative_order in 1..=order {
                 let base = left[derivative_order].lerp(&right[derivative_order], &alpha);
@@ -10310,7 +10317,23 @@ fn evaluate_homogeneous_de_boor_jets(
             level[local] = jets;
         }
     }
-    Ok(level[degree].clone())
+    Ok(level.pop().expect("a degree-d span has d+1 jet buffers"))
+}
+
+/// Reserves one complete derivative buffer before evaluating its entries.
+/// Address-space overflow and allocator refusal are distinct typed failures.
+/// This does not bound scalar allocations or total work across all buffers.
+fn derivative_jet_buffer<T>(order: usize) -> GeometryResult<Vec<T>> {
+    let count = order
+        .checked_add(1)
+        .ok_or(GeometryError::Numeric(hyperreal::Problem::OutOfRange))?;
+    std::alloc::Layout::array::<T>(count)
+        .map_err(|_| GeometryError::Numeric(hyperreal::Problem::OutOfRange))?;
+    let mut values = Vec::new();
+    values
+        .try_reserve_exact(count)
+        .map_err(|_| GeometryError::Numeric(hyperreal::Problem::Exhausted))?;
+    Ok(values)
 }
 
 fn homogeneous_zero() -> HomogeneousPoint3 {
@@ -10348,7 +10371,7 @@ fn project_homogeneous_derivative_order(
     jets: &[HomogeneousPoint3],
     order: usize,
 ) -> GeometryResult<Vector3> {
-    let mut derivatives = Vec::with_capacity(order + 1);
+    let mut derivatives = derivative_jet_buffer(order)?;
     derivatives.push(divide_vector_by_real(
         Vector3::from_xyz(jets[0].x.clone(), jets[0].y.clone(), jets[0].z.clone()),
         &jets[0].w,
@@ -10833,6 +10856,29 @@ mod tests {
         let bounds = curve.bounds().unwrap();
         assert_points_equal(&bounds.mins, &p(0, 0, 0));
         assert_points_equal(&bounds.maxs, &p(2, 4, 6));
+    }
+
+    #[test]
+    fn derivative_order_capacity_overflow_is_typed() {
+        let controls = vec![p(0, 0, 0), p(2, 4, 6)];
+        let weights = vec![r(1), r(2)];
+        let bezier = Curve3::rational_bezier(controls.clone(), weights.clone()).unwrap();
+        let nurbs = Curve3::nurbs(1, controls, weights, vec![r(0), r(0), r(1), r(1)]).unwrap();
+        for curve in [bezier, nurbs] {
+            for order in [usize::MAX, usize::MAX - 1] {
+                assert_eq!(
+                    curve.derivative_at(&q(1, 2), order).unwrap_err(),
+                    GeometryError::Numeric(hyperreal::Problem::OutOfRange)
+                );
+            }
+        }
+        // Closed-form families need no jet buffer. A large order remains
+        // valid when its answer can be obtained directly.
+        let line = Curve3::line(p(0, 0, 0), p(2, 4, 6)).unwrap();
+        assert_eq!(
+            line.derivative_at(&q(1, 2), usize::MAX).unwrap().vector().0,
+            [r(0), r(0), r(0)]
+        );
     }
 
     #[test]

@@ -116,6 +116,15 @@ geometric equality.
 The default policy must preserve exact semantics by returning an unresolved
 error when its resource bound is reached.
 
+Derivative jet storage checks both the entry count and its byte layout before
+allocation. An unaddressable buffer returns `Numeric(OutOfRange)`; allocator
+refusal returns `Numeric(Exhausted)`. The implementation uses Rust's
+[checked array layout](https://doc.rust-lang.org/std/alloc/struct.Layout.html#method.array)
+and [fallible vector reservation](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.try_reserve_exact).
+This guards the requested derivative buffers, not all scalar allocations,
+total operation memory, or elapsed time. The full shared work-budget contract
+remains a separate requirement.
+
 ### Proposal and certification
 
 Approximate arithmetic, spatial indexes, and numerical solvers may propose:
