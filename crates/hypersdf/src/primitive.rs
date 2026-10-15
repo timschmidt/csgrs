@@ -13,6 +13,7 @@ use hyperlimit::{
 use hyperreal::Real;
 use std::cmp::Ordering;
 
+use crate::evaluation::{SdfEvaluationError, decide, require_domain};
 use crate::expr::SdfCoordinate;
 use crate::policy::{
     CONSTRUCTION_PREDICATE_POLICY, FINAL_PREDICATE_POLICY,
@@ -206,20 +207,27 @@ impl SdfPrimitive {
     /// Sphere values are squared-distance-minus-radius-squared, so they are
     /// sign-equivalent rather than metric distances. This deliberately avoids
     /// square-root construction in topology paths.
+    ///
+    /// This compatibility convenience discards failure diagnostics. Use
+    /// [`Self::try_scalar_value`] when the cause must survive downstream use.
     pub fn scalar_value(&self, point: &Point3) -> Option<Real> {
+        self.try_scalar_value(point).ok()
+    }
+
+    /// Construct a scalar value, preserving invalid domains and undecided branches.
+    /// All construction predicates use the strict policy.
+    pub fn try_scalar_value(&self, point: &Point3) -> Result<Real, SdfEvaluationError> {
         match self {
-            Self::Plane { plane } => Some(plane_value(plane, point)),
+            Self::Plane { plane } => Ok(plane_value(plane, point)),
             Self::Sphere {
                 center,
                 radius_squared,
             } => {
-                if !radius_squared_domain(radius_squared)
-                    .value()
-                    .unwrap_or(false)
-                {
-                    return None;
-                }
-                Some(&squared_distance3(center, point) - radius_squared)
+                require_domain(
+                    radius_squared_domain(radius_squared),
+                    "sphere radius squared",
+                )?;
+                Ok(&squared_distance3(center, point) - radius_squared)
             }
             Self::Aabb { min, max } => aabb_value(min, max, point),
             Self::RoundedAabb {
@@ -458,7 +466,7 @@ fn plane_value(plane: &Plane3, point: &Point3) -> Real {
     &(&(&nx + &ny) + &nz) + &plane.offset
 }
 
-fn aabb_value(min: &Point3, max: &Point3, point: &Point3) -> Option<Real> {
+fn aabb_value(min: &Point3, max: &Point3, point: &Point3) -> Result<Real, SdfEvaluationError> {
     let candidates = [
         &min.x - &point.x,
         &point.x - &max.x,
@@ -469,16 +477,11 @@ fn aabb_value(min: &Point3, max: &Point3, point: &Point3) -> Option<Real> {
     ];
     let mut value = candidates[0].clone();
     for candidate in candidates.iter().skip(1) {
-        match compare_reals(&value, candidate) {
-            PredicateOutcome::Decided {
-                value: Ordering::Less,
-                ..
-            } => value = candidate.clone(),
-            PredicateOutcome::Decided { .. } => {}
-            PredicateOutcome::Unknown { .. } => return None,
+        if decide(compare_reals(&value, candidate), "AABB maximum")? == Ordering::Less {
+            value = candidate.clone();
         }
     }
-    Some(value)
+    Ok(value)
 }
 
 fn rounded_aabb_value(
@@ -486,36 +489,34 @@ fn rounded_aabb_value(
     max: &Point3,
     radius_squared: &Real,
     point: &Point3,
-) -> Option<Real> {
-    if !rounded_aabb_domain(radius_squared).value().unwrap_or(false) {
-        return None;
-    }
-
-    match classify_point_aabb3(min, max, point, CONSTRUCTION_PREDICATE_POLICY) {
-        PredicateOutcome::Decided {
-            value: Aabb3PointLocation::Inside | Aabb3PointLocation::Boundary,
-            ..
-        } => aabb_value(min, max, point).map(|value| &value - radius_squared),
-        PredicateOutcome::Decided {
-            value: Aabb3PointLocation::Outside,
-            ..
-        } => Some(&squared_distance_to_aabb(point, min, max)? - radius_squared),
-        PredicateOutcome::Unknown { .. } => None,
+) -> Result<Real, SdfEvaluationError> {
+    require_domain(
+        rounded_aabb_domain(radius_squared),
+        "rounded AABB radius squared",
+    )?;
+    match decide(
+        classify_point_aabb3(min, max, point, CONSTRUCTION_PREDICATE_POLICY),
+        "rounded AABB point location",
+    )? {
+        Aabb3PointLocation::Inside | Aabb3PointLocation::Boundary => {
+            aabb_value(min, max, point).map(|value| &value - radius_squared)
+        }
+        Aabb3PointLocation::Outside => {
+            Ok(&squared_distance_to_aabb(point, min, max)? - radius_squared)
+        }
     }
 }
 
-fn slab_value(plane: &Plane3, half_width: &Real, point: &Point3) -> Option<Real> {
-    if !half_width_domain(half_width).value().unwrap_or(false) {
-        return None;
-    }
+fn slab_value(
+    plane: &Plane3,
+    half_width: &Real,
+    point: &Point3,
+) -> Result<Real, SdfEvaluationError> {
+    require_domain(half_width_domain(half_width), "slab half width")?;
     let value = plane_value(plane, point);
-    match compare_reals(&value, &Real::zero()) {
-        PredicateOutcome::Decided {
-            value: Ordering::Less,
-            ..
-        } => Some(-&value - half_width),
-        PredicateOutcome::Decided { .. } => Some(&value - half_width),
-        PredicateOutcome::Unknown { .. } => None,
+    match decide(compare_reals(&value, &Real::zero()), "slab absolute value")? {
+        Ordering::Less => Ok(-&value - half_width),
+        _ => Ok(&value - half_width),
     }
 }
 
@@ -525,30 +526,23 @@ fn cylinder_value(
     radius_squared: &Real,
     half_height: &Real,
     point: &Point3,
-) -> Option<Real> {
-    if !cylinder_domain(radius_squared, half_height)
-        .value()
-        .unwrap_or(false)
-    {
-        return None;
-    }
+) -> Result<Real, SdfEvaluationError> {
+    require_domain(
+        cylinder_domain(radius_squared, half_height),
+        "cylinder parameters",
+    )?;
     let radial = &radial_squared(axis, center, point) - radius_squared;
     let axis_delta = axis_value(axis, point) - axis_value(axis, center);
-    let axial = match compare_reals(&axis_delta, &Real::zero()) {
-        PredicateOutcome::Decided {
-            value: Ordering::Less,
-            ..
-        } => -&axis_delta - half_height,
-        PredicateOutcome::Decided { .. } => &axis_delta - half_height,
-        PredicateOutcome::Unknown { .. } => return None,
+    let axial = match decide(
+        compare_reals(&axis_delta, &Real::zero()),
+        "cylinder absolute value",
+    )? {
+        Ordering::Less => -&axis_delta - half_height,
+        _ => &axis_delta - half_height,
     };
-    match compare_reals(&radial, &axial) {
-        PredicateOutcome::Decided {
-            value: Ordering::Less,
-            ..
-        } => Some(axial),
-        PredicateOutcome::Decided { .. } => Some(radial),
-        PredicateOutcome::Unknown { .. } => None,
+    match decide(compare_reals(&radial, &axial), "cylinder maximum")? {
+        Ordering::Less => Ok(axial),
+        _ => Ok(radial),
     }
 }
 
@@ -558,42 +552,34 @@ fn capsule_value(
     radius_squared: &Real,
     half_length: &Real,
     point: &Point3,
-) -> Option<Real> {
-    if !capsule_domain(radius_squared, half_length)
-        .value()
-        .unwrap_or(false)
-    {
-        return None;
-    }
+) -> Result<Real, SdfEvaluationError> {
+    require_domain(
+        capsule_domain(radius_squared, half_length),
+        "capsule parameters",
+    )?;
     let radial = radial_squared(axis, center, point);
     let axis_delta = axis_value(axis, point) - axis_value(axis, center);
     let zero = Real::zero();
-    let outside_axis = match compare_reals(&axis_delta, &zero) {
-        PredicateOutcome::Decided {
-            value: Ordering::Less,
-            ..
-        } => {
+    let outside_axis = match decide(compare_reals(&axis_delta, &zero), "capsule absolute value")? {
+        Ordering::Less => {
             let positive_delta = -&axis_delta;
-            match compare_reals(&positive_delta, half_length) {
-                PredicateOutcome::Decided {
-                    value: Ordering::Greater,
-                    ..
-                } => &positive_delta - half_length,
-                PredicateOutcome::Decided { .. } => zero,
-                PredicateOutcome::Unknown { .. } => return None,
+            match decide(
+                compare_reals(&positive_delta, half_length),
+                "capsule axial extent",
+            )? {
+                Ordering::Greater => &positive_delta - half_length,
+                _ => zero,
             }
         }
-        PredicateOutcome::Decided { .. } => match compare_reals(&axis_delta, half_length) {
-            PredicateOutcome::Decided {
-                value: Ordering::Greater,
-                ..
-            } => &axis_delta - half_length,
-            PredicateOutcome::Decided { .. } => zero,
-            PredicateOutcome::Unknown { .. } => return None,
+        _ => match decide(
+            compare_reals(&axis_delta, half_length),
+            "capsule axial extent",
+        )? {
+            Ordering::Greater => &axis_delta - half_length,
+            _ => zero,
         },
-        PredicateOutcome::Unknown { .. } => return None,
     };
-    Some(&(&radial + &(&outside_axis * &outside_axis)) - radius_squared)
+    Ok(&(&radial + &(&outside_axis * &outside_axis)) - radius_squared)
 }
 
 fn torus_value(
@@ -602,13 +588,11 @@ fn torus_value(
     major_radius_squared: &Real,
     minor_radius_squared: &Real,
     point: &Point3,
-) -> Option<Real> {
-    if !torus_domain(major_radius_squared, minor_radius_squared)
-        .value()
-        .unwrap_or(false)
-    {
-        return None;
-    }
+) -> Result<Real, SdfEvaluationError> {
+    require_domain(
+        torus_domain(major_radius_squared, minor_radius_squared),
+        "torus squared radii",
+    )?;
     let radial = radial_squared(axis, center, point);
     let axis_delta = axis_value(axis, point) - axis_value(axis, center);
     let axial_squared = &axis_delta * &axis_delta;
@@ -616,7 +600,7 @@ fn torus_value(
     let q_squared = &q * &q;
     let four = Real::from(4_i32);
     let radial_term = &(&four * major_radius_squared) * &radial;
-    Some(&q_squared - &radial_term)
+    Ok(&q_squared - &radial_term)
 }
 
 pub(crate) fn radial_squared(axis: SdfCoordinate, center: &Point3, point: &Point3) -> Real {
@@ -685,29 +669,25 @@ pub(crate) fn farthest_squared_distance3_to_aabb(
     PredicateOutcome::decided(distance_squared, Certainty::Exact, Escalation::Exact)
 }
 
-fn squared_distance_to_aabb(point: &Point3, min: &Point3, max: &Point3) -> Option<Real> {
+fn squared_distance_to_aabb(
+    point: &Point3,
+    min: &Point3,
+    max: &Point3,
+) -> Result<Real, SdfEvaluationError> {
     let closest = Point3::new(
         clamp_to_interval(&point.x, &min.x, &max.x)?,
         clamp_to_interval(&point.y, &min.y, &max.y)?,
         clamp_to_interval(&point.z, &min.z, &max.z)?,
     );
-    Some(squared_distance3(point, &closest))
+    Ok(squared_distance3(point, &closest))
 }
 
-fn clamp_to_interval(value: &Real, min: &Real, max: &Real) -> Option<Real> {
-    match compare_reals(value, min) {
-        PredicateOutcome::Decided {
-            value: Ordering::Less,
-            ..
-        } => Some(min.clone()),
-        PredicateOutcome::Decided { .. } => match compare_reals(value, max) {
-            PredicateOutcome::Decided {
-                value: Ordering::Greater,
-                ..
-            } => Some(max.clone()),
-            PredicateOutcome::Decided { .. } => Some(value.clone()),
-            PredicateOutcome::Unknown { .. } => None,
+fn clamp_to_interval(value: &Real, min: &Real, max: &Real) -> Result<Real, SdfEvaluationError> {
+    match decide(compare_reals(value, min), "AABB lower clamp")? {
+        Ordering::Less => Ok(min.clone()),
+        _ => match decide(compare_reals(value, max), "AABB upper clamp")? {
+            Ordering::Greater => Ok(max.clone()),
+            _ => Ok(value.clone()),
         },
-        PredicateOutcome::Unknown { .. } => None,
     }
 }

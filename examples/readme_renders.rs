@@ -435,7 +435,8 @@ fn render_sdf_mesh() {
             p3(-1.0, -1.0, -1.0),
             p3(1.0, 1.0, 1.0),
             r(0.0),
-        ),
+        )
+        .expect("valid SDF fixture"),
     );
 }
 

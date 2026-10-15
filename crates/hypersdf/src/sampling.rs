@@ -12,10 +12,8 @@ use core::cmp::Ordering;
 use hyperlimit::{Point3, PredicateOutcome};
 use hyperreal::Real;
 
-use crate::expr::{SdfCoordinate, SdfExpr};
-use crate::policy::{
-    compare_reals_for_construction as compare_reals, compare_reals_for_final_decision,
-};
+use crate::expr::SdfExpr;
+use crate::policy::compare_reals_for_final_decision;
 use crate::status::SdfMetricStatus;
 
 /// Primitive scalar precision requested from a preview sampler.
@@ -264,85 +262,13 @@ pub(crate) fn sample_expr_grid_preview(
 }
 
 pub(crate) fn scalar_expr_point(expr: &SdfExpr, point: &Point3) -> Option<Real> {
-    match expr {
-        SdfExpr::Constant(value) => Some(value.clone()),
-        SdfExpr::Coordinate(axis) => Some(match axis {
-            SdfCoordinate::X => point.x.clone(),
-            SdfCoordinate::Y => point.y.clone(),
-            SdfCoordinate::Z => point.z.clone(),
-        }),
-        SdfExpr::Linear {
-            coefficients,
-            offset,
-        } => {
-            let x = &coefficients.0[0] * &point.x;
-            let y = &coefficients.0[1] * &point.y;
-            let z = &coefficients.0[2] * &point.z;
-            Some(&(&(&x + &y) + &z) + offset)
-        }
-        SdfExpr::Primitive(primitive) => primitive.scalar_value(point),
-        SdfExpr::Union(left, right) => {
-            let left = scalar_expr_point(left, point)?;
-            let right = scalar_expr_point(right, point)?;
-            choose_min(left, right)
-        }
-        SdfExpr::Intersection(left, right) => {
-            let left = scalar_expr_point(left, point)?;
-            let right = scalar_expr_point(right, point)?;
-            choose_max(left, right)
-        }
-        SdfExpr::Add(left, right) => {
-            Some(&scalar_expr_point(left, point)? + &scalar_expr_point(right, point)?)
-        }
-        SdfExpr::Sub(left, right) => {
-            Some(&scalar_expr_point(left, point)? - &scalar_expr_point(right, point)?)
-        }
-        SdfExpr::Mul(left, right) => {
-            Some(&scalar_expr_point(left, point)? * &scalar_expr_point(right, point)?)
-        }
-        SdfExpr::Abs(inner) => {
-            let value = scalar_expr_point(inner, point)?;
-            match compare_reals(&value, &Real::zero()) {
-                PredicateOutcome::Decided {
-                    value: Ordering::Less,
-                    ..
-                } => Some(-&value),
-                PredicateOutcome::Decided { .. } => Some(value),
-                PredicateOutcome::Unknown { .. } => None,
-            }
-        }
-        SdfExpr::Sqrt(inner) => scalar_expr_point(inner, point)?.sqrt().ok(),
-        SdfExpr::Sin(inner) => Some(scalar_expr_point(inner, point)?.sin()),
-        SdfExpr::Cos(inner) => Some(scalar_expr_point(inner, point)?.cos()),
-        SdfExpr::Tan(inner) => scalar_expr_point(inner, point)?.tan().ok(),
-        SdfExpr::Complement(inner) => scalar_expr_point(inner, point).map(|value| -&value),
-        SdfExpr::Offset { child, amount } => {
-            scalar_expr_point(child, point).map(|value| &value - amount)
-        }
-        SdfExpr::Transform { child, transform } => {
-            scalar_expr_point(child, &transform.inverse_point(point))
-        }
-    }
+    crate::evaluation::evaluate_expr(expr, point).ok()
 }
 
 pub(crate) fn choose_min(left: Real, right: Real) -> Option<Real> {
-    match compare_reals(&left, &right) {
-        PredicateOutcome::Decided {
-            value: Ordering::Greater,
-            ..
-        } => Some(right),
-        PredicateOutcome::Decided { .. } => Some(left),
-        PredicateOutcome::Unknown { .. } => None,
-    }
+    crate::evaluation::choose_min(left, right).ok()
 }
 
 pub(crate) fn choose_max(left: Real, right: Real) -> Option<Real> {
-    match compare_reals(&left, &right) {
-        PredicateOutcome::Decided {
-            value: Ordering::Less,
-            ..
-        } => Some(right),
-        PredicateOutcome::Decided { .. } => Some(left),
-        PredicateOutcome::Unknown { .. } => None,
-    }
+    crate::evaluation::choose_max(left, right).ok()
 }

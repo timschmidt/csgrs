@@ -619,7 +619,8 @@ fn main() {
                 sdf_min.clone(),
                 sdf_max.clone(),
                 Real::zero(),
-            ),
+            )
+            .expect("valid SDF fixture"),
             20 * 20 * 20,
         )
     });

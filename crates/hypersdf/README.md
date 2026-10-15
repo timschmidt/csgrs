@@ -129,6 +129,15 @@ guarantee.
 
 ### Exact and conservative queries
 
+`Sdf::evaluate_point` returns `Result<Real, SdfEvaluationError>` with strict
+construction decisions. Invalid primitive domains, undecided branch choices,
+and scalar arithmetic failures remain distinct, with native causes available
+through `Error::source`. `SdfPrimitive::try_scalar_value` uses the same native
+primitive implementation. Its older `scalar_value` convenience intentionally
+discards errors into `None`; use the fallible method in modeling pipelines.
+Constructing a retained scalar proves neither its sign nor continuous-field
+topology. Classification and preview APIs retain their separate report contracts.
+
 - `Sdf::classify_point` returns scalar, location, domain, metric, and evidence
   status for one exact point; `classify_points` batches the same semantics.
 - `classify_cell` conservatively classifies an exact axis-aligned cell;

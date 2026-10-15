@@ -3,8 +3,8 @@
 use hyperlimit::Point3;
 use hyperreal::Real;
 use hypersdf::{
-    SdfDualContouringBlocker, SdfDualContouringReport, SdfExpr, SdfPreviewGrid,
-    SdfSamplingPrecision, Sdf,
+    Sdf, SdfDualContouringBlocker, SdfDualContouringReport, SdfExpr, SdfPreviewGrid,
+    SdfSamplingPrecision,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -44,18 +44,22 @@ fuzz_target!(|data: &[u8]| {
     if report.is_validation_ready() {
         assert_eq!(report.unknown_sample_count(), 0);
         assert_eq!(report.sampled_edge_root_count(), 0);
-        assert!(report
-            .crossings
-            .iter()
-            .all(|crossing| crossing.exact_hermite_ready()));
+        assert!(
+            report
+                .crossings
+                .iter()
+                .all(|crossing| crossing.exact_hermite_ready())
+        );
     }
 
     let sampled = SdfDualContouringReport::from_signed_grid_samples(report.grid_samples.clone());
     assert!(sampled.is_self_consistent());
     assert!(!sampled.is_validation_ready());
-    assert!(sampled
-        .blockers
-        .contains(&SdfDualContouringBlocker::LossyPrimitiveSamples));
+    assert!(
+        sampled
+            .blockers
+            .contains(&SdfDualContouringBlocker::LossyPrimitiveSamples)
+    );
 });
 
 fn r(value: i32) -> Real {

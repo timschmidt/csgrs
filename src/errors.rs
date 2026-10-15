@@ -60,6 +60,14 @@ pub enum ValidationError {
     /// Native sampled-field extraction failed, retaining its typed diagnostic.
     #[error("{0}")]
     SurfaceNets(#[from] hypermesh::SurfaceNetsError),
+    /// A retained expression could not be evaluated at this grid sample.
+    #[cfg(feature = "sdf")]
+    #[error("SDF sample {sample:?}: {source}")]
+    SdfSample {
+        sample: [usize; 3],
+        #[source]
+        source: hypersdf::SdfEvaluationError,
+    },
     /// Operation requires corresponding loops with the same number of vertices.
     #[error("operation requires loops with the same number of vertices, {left} != {right}")]
     MismatchedVertexCount { left: usize, right: usize },
@@ -106,6 +114,29 @@ impl ValidationErrorKind {
 impl ValidationError {
     pub const fn kind(&self) -> ValidationErrorKind {
         match self {
+            #[cfg(feature = "sdf")]
+            Self::SdfSample { source, .. } => match source {
+                hypersdf::SdfEvaluationError::InvalidDomain { .. } => {
+                    ValidationErrorKind::InvalidInput
+                },
+                hypersdf::SdfEvaluationError::Undecided { .. }
+                | hypersdf::SdfEvaluationError::Scalar {
+                    source: hyperreal::Problem::UnknownZero,
+                    ..
+                } => ValidationErrorKind::Undecided,
+                hypersdf::SdfEvaluationError::Scalar {
+                    source: hyperreal::Problem::Exhausted,
+                    ..
+                } => ValidationErrorKind::ResourceExhausted,
+                hypersdf::SdfEvaluationError::Scalar {
+                    source:
+                        hyperreal::Problem::SqrtNegative
+                        | hyperreal::Problem::DivideByZero
+                        | hyperreal::Problem::NotANumber,
+                    ..
+                } => ValidationErrorKind::InvalidInput,
+                _ => ValidationErrorKind::Geometry,
+            },
             Self::ExactCurve(ExactCurveError::Blocked(blocker)) => match blocker.reason() {
                 hypercurve::UncertaintyReason::Unsupported => ValidationErrorKind::Unsupported,
                 hypercurve::UncertaintyReason::BudgetExhausted => {

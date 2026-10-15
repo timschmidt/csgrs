@@ -76,7 +76,9 @@ pub use output::{
     boolean_mesh_closure_evidence, boolean_mesh_is_closed,
 };
 pub use polygon::{ApproxBounds, ConvexPolygon, convex_quad, convex_triangle};
-pub use surface_nets::{SurfaceNetsError, SurfaceNetsGrid, SurfaceNetsOutput, surface_nets};
+pub use surface_nets::{
+    SurfaceNetsError, SurfaceNetsGrid, SurfaceNetsOutput, surface_nets, surface_nets_standalone,
+};
 pub use winding::{
     BooleanExpression, BooleanOp, BooleanProgram, WindingNumberTransitionVector,
     WindingNumberVector, WindingPair, classify_polygon_output, propagate_wnv,
