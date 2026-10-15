@@ -6595,6 +6595,222 @@
       "evidence": "docs/evidence/2026-10-15-metaball-failures/closure-v1.json",
       "implementation_commit": "ab91bd45621310998c07288ee497d5dab9f4be4f",
       "plan_complete": false
+    },
+    "curve_metaball_composition": {
+      "updated_on": "2026-10-15",
+      "status": "Planar exact-field sampling, native contour extraction and exact linear-profile composition implemented and locally qualified, with explicit API/geometry migrations.",
+      "properties": [
+        "P1",
+        "P3",
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P13",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P28",
+        "P29",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "owners": [
+        "Hypersdf exact fields and conservative bounds",
+        "Hypercurve marching-squares proposals, arrangement and retained line-image authority",
+        "Hyperlimit independent coordinate witnesses",
+        "Hypertri triangulation and conservative filter composition",
+        "CSGRS sampling/modeling and typed adapter/binding failures"
+      ],
+      "domain": "Positive-radius planar inverse-square sources, positive iso, nonnegative padding and grid dimensions at least two. Parameters are validated before empty success. Native sampled chords require exterior boundary samples and a supported arrangement. Exact certified line profiles retain material/hole ownership and native coordinates through triangulation and extrusion, including authored line-image Beziers, rational holes and large exact translations.",
+      "migration": "curve::metaballs returns Result and adds metaballs_with_context. Sampling shares native F=(iso-I)/(iso+I), with -1 at centers, replacing cutoff/sentinel/empty-on-error behavior. The original 2D core grid and center-sum diagonal rule remain; normalized interpolation intentionally changes vertices and serialization. Exact line-profile modeling replaces its former f64 projection, also changing formerly quantized artifacts. Numerical certainty concerns the sampled proposal or native profile, with topology and source fidelity separate. This is not a performance-only change.",
+      "semantic_evidence": [
+        "Nine planar baseline failures reproduced invalid/undecided arguments, hidden invalid empty cases, grid limits, incorrect sampled diamond area and a lost ring hole.",
+        "Independent normalized diamond area 2*(20201/20200)^2; grid diamond/zero-vertex/ring/disconnected/diagonal cases; closed extrusion with exact signed volume; reusable empty and subtraction-to-empty compositions.",
+        "Independent rational material/hole area 23/3 and height-two volume 46/3, including translation by 10^400, native coordinate membership and closed manifold validation.",
+        "Original 24x24 README and 48x48 benchmark inputs remain full-size strict successes; the unchanged involute/cycloidal gear catalog passes after native predicate and filter fixes.",
+        "Point equality can use one certified unequal coordinate despite uncertainty elsewhere; true equality still needs every coordinate. Lexicographic ordering is unchanged. Unknown AABB rejection filters defer to final triangle predicates without an approximate filter decision.",
+        "Typed native adapter errors, strict/approximate/strict evidence isolation, C/C++/Python/Go integer width 2^53+1 and failure recovery, plus WASM large-translation/extrusion recovery and typed zero/non-finite input failures."
+      ],
+      "test_totals": {
+        "fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-fmt": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "strict-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "all-feature-tests": {
+          "passed": 238,
+          "failed": 0,
+          "ignored": 1,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypercurve-tests": {
+          "passed": 2493,
+          "failed": 0,
+          "ignored": 33,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hyperlimit-tests": {
+          "passed": 365,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypertri-tests": {
+          "passed": 188,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypermesh-tests": {
+          "passed": 236,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered": 0
+        },
+        "hypersdf-tests": {
+          "passed": 115,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "minimal-tests": {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "planar-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "planar-tests": {
+          "passed": 16,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "metaballs-only-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "metaballs-only-tests": {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "native-default-grid": {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "sdf-only-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "fuzz-clippy": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "docs": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "doctests": {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        },
+        "ffi-build": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered": 0
+        }
+      },
+      "validation": "All 22 native commands passed. The final WASM ingress edit passed host all-target/all-feature Clippy and WASM Clippy. Binding v1 passed 36/37 commands; every WASM semantic assertion passed but duplicate test ownership caused a cleanup failure before TypeScript. Binding v2 changed only that JS bookkeeping, reused identical generated module bytes, and passed all five commands including Node cleanup and TypeScript. Existing ignored cases total 41 across the principal native suites; alternate-feature counts overlap.",
+      "resources": "Serial commands, two Cargo jobs, offline resolution, external 1800-second wall and 8-GiB per-process address-space containment. Node/WASM and final TypeScript omit RLIMIT_AS for V8 virtual reservations while retaining wall containment. GNU time records command timing/maximum resident memory, including compilation. Primary buffers are checked; total work, scalar depth/coefficient growth, secondary allocations, heap-byte bounds and cancellation remain unbounded or unmeasured. No matched benchmark, allocation-efficiency or speedup claim.",
+      "limitations": [
+        "Other profile representations retain the existing finite sampled path; complete fidelity and end-to-end provenance remain open. Finite display receipts do not certify topology after quantization.",
+        "The full workflow/pre-push matrix, sanitizers, directed campaigns, external package/release/MSRV validation, image/export regeneration and continuous-field fidelity bounds were not completed here. No push occurred.",
+        "Validation includes the original 35 pending native files, unchanged and still awaiting separate admission. It is not clean-checkout or published-package evidence for this partial commit set.",
+        "The original scalar/native integration gaps and the full properties plan remain open. The earlier 3D record's open 2D migration item is superseded only by this local qualification.",
+        "The first seed-copy failure has only the preserved truncated-tool-output summary, not full stderr. The second failure has a complete captured preparation log. All later unfavorable trials and generated artifacts remain."
+      ],
+      "implementation_commits": [
+        "77053db06",
+        "4af09da67"
+      ],
+      "implementation_head": "4af09da67d1c1e2aaa34e351b8cbe3d2b168ad83",
+      "evidence": "docs/evidence/2026-10-15-curve-metaball-failures/closure-v1.json",
+      "plan_complete": false
     }
   },
   "status_meanings": {
