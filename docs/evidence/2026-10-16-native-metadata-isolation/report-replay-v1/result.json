@@ -1,0 +1,29 @@
+{
+  "complete": true,
+  "comparisons": [
+    {
+      "fixture": "cparti-fpga",
+      "both_complete": true,
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 147297,
+      "candidate_bytes": 147297,
+      "baseline_sha256": "164102f85d103de8930e871318107fe17e51f3f478aa29a34e6eb9a43ea1d2c2",
+      "candidate_sha256": "164102f85d103de8930e871318107fe17e51f3f478aa29a34e6eb9a43ea1d2c2"
+    },
+    {
+      "fixture": "hvp109a",
+      "both_complete": true,
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 128420,
+      "candidate_bytes": 128420,
+      "baseline_sha256": "d73ffb1c463a28abf1ab32740213ca3feb5c991f7b34ac506dab5c4af424875b",
+      "candidate_sha256": "d73ffb1c463a28abf1ab32740213ca3feb5c991f7b34ac506dab5c4af424875b"
+    }
+  ],
+  "all_reports_identical": true,
+  "source_and_input_identity_verified": true,
+  "runtime_admitted": false,
+  "application_speedup_claimed": false
+}

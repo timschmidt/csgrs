@@ -1,0 +1,24 @@
+
+running 1 test
+test bezier_region::metadata_order_tests::cost::probe ... REGION_COST unequal_sources first_validation 1024 54335254 0 0 0 0
+REGION_COST unequal_sources warm_validation 1024 54906995 0 0 0 0
+REGION_COST unequal_sources cloned_validation 1024 35108432 0 0 0 0
+REGION_COST absent_sources first_validation 1024 32450605 0 0 0 0
+REGION_COST absent_sources warm_validation 1024 39536029 0 0 0 0
+REGION_COST absent_sources cloned_validation 1024 32685868 0 0 0 0
+REGION_COST mixed_sources first_validation 1024 46631632 0 0 0 0
+REGION_COST mixed_sources warm_validation 1024 40746735 0 0 0 0
+REGION_COST mixed_sources cloned_validation 1024 30495488 0 0 0 0
+REGION_COST equal_sources first_validation 1024 36400143 0 0 0 0
+REGION_COST equal_sources warm_validation 1024 34462506 0 0 0 0
+REGION_COST equal_sources cloned_validation 1024 34521852 0 0 0 0
+REGION_COST duplicate first_validation 1024 715861 0 0 0 0
+REGION_COST duplicate warm_validation 1024 700642 0 0 0 0
+REGION_COST duplicate cloned_validation 1024 708801 0 0 0 0
+REGION_COST singleton first_validation 1024 191437 0 0 0 0
+REGION_COST singleton warm_validation 1024 191867 0 0 0 0
+REGION_COST singleton cloned_validation 1024 196696 0 0 0 0
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1770 filtered out; finished in 1.08s
+

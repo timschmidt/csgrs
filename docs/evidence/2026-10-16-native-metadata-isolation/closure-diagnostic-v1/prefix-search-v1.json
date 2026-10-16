@@ -1,0 +1,626 @@
+[
+  {
+    "path": "/dev/shm/csgrs-distribution-contracts/candidate-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 10000252,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "6846ce9ff0a293bc8ee5d4b9371fe2d200a888303aeb5123db5135b20de26cf1",
+    "expected_full_sha256": "99c7235134a02103eab4edcef4625ab5ce6fe60a57e0ce26f87ceb79eab21675"
+  },
+  {
+    "path": "/dev/shm/csgrs-distribution-contracts/candidate-v2/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 10000252,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "10afd8ac4b623dbc5c7a449db1f99b46a2fadcdf7b36e56b23d9c9469f9e7d9d",
+    "expected_full_sha256": "5b6536e37a2135174e20c1a981098e044cefa701c1e195fdaa6164253315ea88"
+  },
+  {
+    "path": "/dev/shm/csgrs-distribution-contracts/cost-build-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9998738,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "expected_full_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53"
+  },
+  {
+    "path": "/dev/shm/csgrs-distribution-contracts/cost-build-v1/upper/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9998738,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "expected_full_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53"
+  },
+  {
+    "path": "/dev/shm/csgrs-distribution-contracts/cost-build-v2/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 10000252,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "10afd8ac4b623dbc5c7a449db1f99b46a2fadcdf7b36e56b23d9c9469f9e7d9d",
+    "expected_full_sha256": "5b6536e37a2135174e20c1a981098e044cefa701c1e195fdaa6164253315ea88"
+  },
+  {
+    "path": "/dev/shm/csgrs-distribution-contracts/cost-build-v2/upper/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9998738,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "expected_full_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53"
+  },
+  {
+    "path": "/dev/shm/csgrs-distribution-contracts/qualification-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4364260,
+    "prefix_bytes": 4364260,
+    "prefix_sha256": "0145d364384ea38b14f497a5b0bad3ea23121b0056655dc4ecd8769ae37058b5",
+    "expected_full_sha256": "0145d364384ea38b14f497a5b0bad3ea23121b0056655dc4ecd8769ae37058b5"
+  },
+  {
+    "path": "/dev/shm/csgrs-distribution-contracts/qualification-v1/upper/wasm32-unknown-unknown/wasm/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9637044,
+    "prefix_bytes": 9637044,
+    "prefix_sha256": "b78982649e978e28ca2066723a588c27f987e300535e7d74a7641124f82e8134",
+    "expected_full_sha256": "b78982649e978e28ca2066723a588c27f987e300535e7d74a7641124f82e8134"
+  },
+  {
+    "path": "/dev/shm/csgrs-distribution-contracts/qualification-v1/upper/wasm32-unknown-unknown/wasm/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9637044,
+    "prefix_bytes": 9637044,
+    "prefix_sha256": "b78982649e978e28ca2066723a588c27f987e300535e7d74a7641124f82e8134",
+    "expected_full_sha256": "b78982649e978e28ca2066723a588c27f987e300535e7d74a7641124f82e8134"
+  },
+  {
+    "path": "/dev/shm/csgrs-gear-airfoil-failures/candidate-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4426952,
+    "prefix_bytes": 4426952,
+    "prefix_sha256": "86e3363192579779ff2ba800b579a539bf56ff72550d2437eda790d35ff1eba1",
+    "expected_full_sha256": "86e3363192579779ff2ba800b579a539bf56ff72550d2437eda790d35ff1eba1"
+  },
+  {
+    "path": "/dev/shm/csgrs-gear-airfoil-failures/qualification-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9910970,
+    "prefix_bytes": 9910970,
+    "prefix_sha256": "89aa96ccc0746ecb2f6684553be44718c31cb65ed4f165b9592e420fc867ad5e",
+    "expected_full_sha256": "89aa96ccc0746ecb2f6684553be44718c31cb65ed4f165b9592e420fc867ad5e"
+  },
+  {
+    "path": "/dev/shm/csgrs-hilbert-trimming/candidate-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4410764,
+    "prefix_bytes": 4410764,
+    "prefix_sha256": "fa55fa461bdadc86bc4df0ccdf245c7f505658f2e00f0bfceac91a57e2e75826",
+    "expected_full_sha256": "fa55fa461bdadc86bc4df0ccdf245c7f505658f2e00f0bfceac91a57e2e75826"
+  },
+  {
+    "path": "/dev/shm/csgrs-hilbert-trimming/candidate-v2/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9863140,
+    "prefix_bytes": 9863140,
+    "prefix_sha256": "ddcb5e7621b9a701c117cc625e544d11634893f92b51be1f1653bb77c6195ea9",
+    "expected_full_sha256": "ddcb5e7621b9a701c117cc625e544d11634893f92b51be1f1653bb77c6195ea9"
+  },
+  {
+    "path": "/dev/shm/csgrs-text-contracts/candidate-v2/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 10041936,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "a021900a39179de4c909685cfc7bc7bc4043d320570b361746c1b5e883da3f10",
+    "expected_full_sha256": "1256d09eed088a8694383a1d740bbcd03668ff62b55901645f5ee1b1a395d087"
+  },
+  {
+    "path": "/dev/shm/csgrs-text-contracts/qualification-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 10041936,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "a021900a39179de4c909685cfc7bc7bc4043d320570b361746c1b5e883da3f10",
+    "expected_full_sha256": "1256d09eed088a8694383a1d740bbcd03668ff62b55901645f5ee1b1a395d087"
+  },
+  {
+    "path": "/dev/shm/csgrs-text-contracts/qualification-v2/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 10042088,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "c7138a213c87a9c8aaea2ae05f11b04e32b658d937aa7516735462f8cc08594a",
+    "expected_full_sha256": "f5bb4b4fe51a5b1deda51035d7e8c70201641df70ef7930656cc3ae54cdca08f"
+  },
+  {
+    "path": "/dev/shm/csgrs-text-contracts/qualification-v3/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 10042160,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "2ff2202d938b8c93667ee00043ddf6ec7d11bf2cebe21110fd758ca77b9de665",
+    "expected_full_sha256": "2d50d3d94a22368a40adf322167ed15a82721700dc55d71b5a9ebd3420a66095"
+  },
+  {
+    "path": "/tmp/csgrs-adapter-failure-kinds/baseline-bindings-v1/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404408,
+    "prefix_bytes": 4404408,
+    "prefix_sha256": "f8afa8ed59f6e35bf3c852ceaa852e4b67e618024cbe652635cee5ce08a4f7c6",
+    "expected_full_sha256": "f8afa8ed59f6e35bf3c852ceaa852e4b67e618024cbe652635cee5ce08a4f7c6"
+  },
+  {
+    "path": "/tmp/csgrs-adapter-failure-kinds/baseline-bindings-v1/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-adapter-failure-kinds/candidate-v1/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4401500,
+    "prefix_bytes": 4401500,
+    "prefix_sha256": "320649cf1dfe27867b0fd81f803c43bf595097e73f3b14c551dcda8ecd8b848a",
+    "expected_full_sha256": "320649cf1dfe27867b0fd81f803c43bf595097e73f3b14c551dcda8ecd8b848a"
+  },
+  {
+    "path": "/tmp/csgrs-adapter-failure-kinds/candidate-v1/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-adapter-failure-kinds/candidate-v2/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 0,
+    "prefix_bytes": 0,
+    "prefix_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "expected_full_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/tmp/csgrs-adapter-failure-kinds/candidate-v2/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-adapter-failure-kinds/candidate-v3/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9841224,
+    "prefix_bytes": 9841224,
+    "prefix_sha256": "cf152c6b8e95cb7c2fe096556b4bcc58a7b1225df6f4da3a17a3f691294ee4ee",
+    "expected_full_sha256": "cf152c6b8e95cb7c2fe096556b4bcc58a7b1225df6f4da3a17a3f691294ee4ee"
+  },
+  {
+    "path": "/tmp/csgrs-adapter-failure-kinds/candidate-v3/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-affine-scalar-proofs/diagnostic-v1/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-curve-constructor-failures/baseline-v1/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-curve-constructor-failures/candidate-v2/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-curve-constructor-failures/candidate-v3/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-curve-metaball-failures/baseline-v1/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-curve-metaball-failures/bindings-v1/wasm32-unknown-unknown/wasm/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-curve-metaball-failures/bindings-v1/wasm32-unknown-unknown/wasm/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-curve-metaball-failures/candidate-v5/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-curve-metaball-failures/candidate-v6/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-curve-metaball-failures/candidate-v7/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-curve-metaball-failures/native-v1/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-curve-metaball-failures/wrappers-baseline-v1/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/boundary-certainty-v1/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9844086,
+    "prefix_bytes": 9844086,
+    "prefix_sha256": "1beef02bc977bb0f4f412bb36588f3609f826a04b03570c2aa04a6f6fab04c36",
+    "expected_full_sha256": "1beef02bc977bb0f4f412bb36588f3609f826a04b03570c2aa04a6f6fab04c36"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/boundary-certainty-v1/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/candidate-v1/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 21983156,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "8797f86a2c749c2221cfa04d1a3d6560eb4891e23e5fa6c8a16a242b7f8d1ad9",
+    "expected_full_sha256": "d28eb4305a4148db022a327985797d3eb1b984c5ee18ef3445a254920e6eb9a3"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/candidate-v2/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 21983162,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "4a110e3d16427e4971b2cdf099c87a2bf0b9bd6f6b85a0f42becd124f93d0022",
+    "expected_full_sha256": "1d2aff9ce8668eebf3bac5d276b6cf6493eaf0f839a072c8ab8f6991e5fb85f4"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/diagnostic-v1/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 21994318,
+    "prefix_bytes": 9998738,
+    "prefix_sha256": "91325deb101c83f0b600f33bfbfced5d3319f9965921c6ab35b5912036ca6900",
+    "expected_full_sha256": "24f8b24f99acffff997f9ec6c676ce4941757b9666350398cbaabb5ab48287fe"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/downstream-frontier-v1/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9844086,
+    "prefix_bytes": 9844086,
+    "prefix_sha256": "1beef02bc977bb0f4f412bb36588f3609f826a04b03570c2aa04a6f6fab04c36",
+    "expected_full_sha256": "1beef02bc977bb0f4f412bb36588f3609f826a04b03570c2aa04a6f6fab04c36"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/downstream-frontier-v1/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/qualification-v1/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/qualification-v1/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/qualification-v2/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/qualification-v2/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/qualification-v3/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404150,
+    "prefix_bytes": 4404150,
+    "prefix_sha256": "0f003852368900a71f5011b78ce103c2d8dd9c6b3e02edd84d99309aa61abab6",
+    "expected_full_sha256": "0f003852368900a71f5011b78ce103c2d8dd9c6b3e02edd84d99309aa61abab6"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/qualification-v3/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/qualification-v4/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404182,
+    "prefix_bytes": 4404182,
+    "prefix_sha256": "30b16cd82291418112562bd39b3109df5d2595cd8ae0f56ec3e217d3bd70dd43",
+    "expected_full_sha256": "30b16cd82291418112562bd39b3109df5d2595cd8ae0f56ec3e217d3bd70dd43"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/qualification-v4/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/qualification-v5/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9844086,
+    "prefix_bytes": 9844086,
+    "prefix_sha256": "1beef02bc977bb0f4f412bb36588f3609f826a04b03570c2aa04a6f6fab04c36",
+    "expected_full_sha256": "1beef02bc977bb0f4f412bb36588f3609f826a04b03570c2aa04a6f6fab04c36"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/qualification-v5/release/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4404332,
+    "prefix_bytes": 4404332,
+    "prefix_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042",
+    "expected_full_sha256": "4e204b88367730cddb947c481921f3fc877e2bc1b2603ca36cb3e735bd5a2042"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/wasm-bindings-v1/wasm32-unknown-unknown/wasm/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9710426,
+    "prefix_bytes": 9710426,
+    "prefix_sha256": "33014cdb6c2b022896e60a68e49cbf27c5392a184387779352725b2554efac93",
+    "expected_full_sha256": "33014cdb6c2b022896e60a68e49cbf27c5392a184387779352725b2554efac93"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/wasm-bindings-v1/wasm32-unknown-unknown/wasm/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9710426,
+    "prefix_bytes": 9710426,
+    "prefix_sha256": "33014cdb6c2b022896e60a68e49cbf27c5392a184387779352725b2554efac93",
+    "expected_full_sha256": "33014cdb6c2b022896e60a68e49cbf27c5392a184387779352725b2554efac93"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/wasm-bindings-v2/wasm32-unknown-unknown/wasm/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9710426,
+    "prefix_bytes": 9710426,
+    "prefix_sha256": "33014cdb6c2b022896e60a68e49cbf27c5392a184387779352725b2554efac93",
+    "expected_full_sha256": "33014cdb6c2b022896e60a68e49cbf27c5392a184387779352725b2554efac93"
+  },
+  {
+    "path": "/tmp/csgrs-factored-product-proofs/wasm-bindings-v2/wasm32-unknown-unknown/wasm/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9710426,
+    "prefix_bytes": 9710426,
+    "prefix_sha256": "33014cdb6c2b022896e60a68e49cbf27c5392a184387779352725b2554efac93",
+    "expected_full_sha256": "33014cdb6c2b022896e60a68e49cbf27c5392a184387779352725b2554efac93"
+  },
+  {
+    "path": "/tmp/csgrs-quotient-scalar-proofs/diagnostic-v1/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-shared-scalar-proofs/diagnostic-v1/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-strict-drilled-workflows/candidate-v1/release/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/tmp/csgrs-strict-drilled-workflows/qualification-v1/release/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/dev/shm/csgrs-polyhedral-construction/candidate-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 2699418,
+    "prefix_bytes": 2699418,
+    "prefix_sha256": "a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb",
+    "expected_full_sha256": "a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb"
+  },
+  {
+    "path": "/dev/shm/csgrs-polyhedral-construction/cost-build-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9987376,
+    "prefix_bytes": 9987376,
+    "prefix_sha256": "5ea400419ba6d47b75782436994bcc22f861b0d9e1e726a71ad7fe68ff5e29a6",
+    "expected_full_sha256": "5ea400419ba6d47b75782436994bcc22f861b0d9e1e726a71ad7fe68ff5e29a6"
+  },
+  {
+    "path": "/dev/shm/csgrs-polyhedral-construction/qualification-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 4347716,
+    "prefix_bytes": 4347716,
+    "prefix_sha256": "40e4348f453c1f5f8caa1f84c90bf014271dd9a9c15d78574477cadadc8a2d81",
+    "expected_full_sha256": "40e4348f453c1f5f8caa1f84c90bf014271dd9a9c15d78574477cadadc8a2d81"
+  },
+  {
+    "path": "/dev/shm/csgrs-polyhedral-construction/qualification-v1/upper/wasm32-unknown-unknown/wasm/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9604080,
+    "prefix_bytes": 9604080,
+    "prefix_sha256": "988296fa5ce6c69f2303e358de765efb7647e336757fc78a3f439f6408f1eecc",
+    "expected_full_sha256": "988296fa5ce6c69f2303e358de765efb7647e336757fc78a3f439f6408f1eecc"
+  },
+  {
+    "path": "/dev/shm/csgrs-polyhedral-construction/qualification-v1/upper/wasm32-unknown-unknown/wasm/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9604080,
+    "prefix_bytes": 9604080,
+    "prefix_sha256": "988296fa5ce6c69f2303e358de765efb7647e336757fc78a3f439f6408f1eecc",
+    "expected_full_sha256": "988296fa5ce6c69f2303e358de765efb7647e336757fc78a3f439f6408f1eecc"
+  },
+  {
+    "path": "/dev/shm/csgrs-minkowski-contracts/benchmark-repair-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9940156,
+    "prefix_bytes": 9940156,
+    "prefix_sha256": "0e41e70bfdea04ebbe63d014de0ea7c928019cf114d012c5b209ed9f18c2562c",
+    "expected_full_sha256": "0e41e70bfdea04ebbe63d014de0ea7c928019cf114d012c5b209ed9f18c2562c"
+  },
+  {
+    "path": "/dev/shm/csgrs-minkowski-contracts/benchmark-repair-v1/upper/wasm32-unknown-unknown/wasm/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9645948,
+    "prefix_bytes": 9645948,
+    "prefix_sha256": "4fc9362740f24df7325e6f029c26d4cb132b43d2cdb006ff99912cb443cd9974",
+    "expected_full_sha256": "4fc9362740f24df7325e6f029c26d4cb132b43d2cdb006ff99912cb443cd9974"
+  },
+  {
+    "path": "/dev/shm/csgrs-minkowski-contracts/benchmark-repair-v1/upper/wasm32-unknown-unknown/wasm/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9645948,
+    "prefix_bytes": 9645948,
+    "prefix_sha256": "4fc9362740f24df7325e6f029c26d4cb132b43d2cdb006ff99912cb443cd9974",
+    "expected_full_sha256": "4fc9362740f24df7325e6f029c26d4cb132b43d2cdb006ff99912cb443cd9974"
+  },
+  {
+    "path": "/dev/shm/csgrs-minkowski-contracts/candidate-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9986168,
+    "prefix_bytes": 9986168,
+    "prefix_sha256": "0bf38a3997b5a9df662a23922a9a06bfd29d6b803b71c46f195a8a33e38ad5fe",
+    "expected_full_sha256": "0bf38a3997b5a9df662a23922a9a06bfd29d6b803b71c46f195a8a33e38ad5fe"
+  },
+  {
+    "path": "/dev/shm/csgrs-minkowski-contracts/candidate-v2/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9974608,
+    "prefix_bytes": 9974608,
+    "prefix_sha256": "c0d2b663ead155f3b59718b949c1a15420916786211f2f22a7ac877de93f61c3",
+    "expected_full_sha256": "c0d2b663ead155f3b59718b949c1a15420916786211f2f22a7ac877de93f61c3"
+  },
+  {
+    "path": "/dev/shm/csgrs-minkowski-contracts/candidate-v3/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9974566,
+    "prefix_bytes": 9974566,
+    "prefix_sha256": "d06b1379314e90b9c64b3e2117f86673f952abcca6fa1773a53acd31be54635c",
+    "expected_full_sha256": "d06b1379314e90b9c64b3e2117f86673f952abcca6fa1773a53acd31be54635c"
+  },
+  {
+    "path": "/dev/shm/csgrs-minkowski-contracts/candidate-v5/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9974566,
+    "prefix_bytes": 9974566,
+    "prefix_sha256": "d6c8c53dcddcbc8270a8745daf089d82a7d41669a2cb3483ad9db73495f0c9e9",
+    "expected_full_sha256": "d6c8c53dcddcbc8270a8745daf089d82a7d41669a2cb3483ad9db73495f0c9e9"
+  },
+  {
+    "path": "/dev/shm/csgrs-minkowski-contracts/hull-proof-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9974566,
+    "prefix_bytes": 9974566,
+    "prefix_sha256": "98f9b2be71281c84876feba54966ad8aca353e4bf5d5aa2c07440e83d12fd3c3",
+    "expected_full_sha256": "98f9b2be71281c84876feba54966ad8aca353e4bf5d5aa2c07440e83d12fd3c3"
+  },
+  {
+    "path": "/dev/shm/csgrs-minkowski-contracts/qualification-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9974566,
+    "prefix_bytes": 9974566,
+    "prefix_sha256": "97c1f35f9ee899a44a0786b4df99c943ee404f9ec1999e6e9a8827adc4f68e7a",
+    "expected_full_sha256": "97c1f35f9ee899a44a0786b4df99c943ee404f9ec1999e6e9a8827adc4f68e7a"
+  },
+  {
+    "path": "/dev/shm/csgrs-minkowski-contracts/qualification-v1/upper/wasm32-unknown-unknown/wasm/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9642282,
+    "prefix_bytes": 9642282,
+    "prefix_sha256": "e35a7dd771ede4e0fe92869e8501173a0d30a42674185f3ab0af192233401e9d",
+    "expected_full_sha256": "e35a7dd771ede4e0fe92869e8501173a0d30a42674185f3ab0af192233401e9d"
+  },
+  {
+    "path": "/dev/shm/csgrs-minkowski-contracts/qualification-v1/upper/wasm32-unknown-unknown/wasm/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9642282,
+    "prefix_bytes": 9642282,
+    "prefix_sha256": "e35a7dd771ede4e0fe92869e8501173a0d30a42674185f3ab0af192233401e9d",
+    "expected_full_sha256": "e35a7dd771ede4e0fe92869e8501173a0d30a42674185f3ab0af192233401e9d"
+  },
+  {
+    "path": "/dev/shm/csgrs-batch-winding-contracts/candidate-focused-v2/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 2695764,
+    "prefix_bytes": 2695764,
+    "prefix_sha256": "4ba2bf2cbf4334e7519ed2a32af10ca2a44855a80a6914eff5672d077944b5c4",
+    "expected_full_sha256": "4ba2bf2cbf4334e7519ed2a32af10ca2a44855a80a6914eff5672d077944b5c4"
+  },
+  {
+    "path": "/dev/shm/csgrs-batch-winding-contracts/diagnostic-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9940156,
+    "prefix_bytes": 9940156,
+    "prefix_sha256": "eb9edb0647440f34b48e81360c1b8f46cf7d3f719fc3a1894f485b1987152614",
+    "expected_full_sha256": "eb9edb0647440f34b48e81360c1b8f46cf7d3f719fc3a1894f485b1987152614"
+  },
+  {
+    "path": "/dev/shm/csgrs-batch-winding-contracts/diagnostic-v2/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9940156,
+    "prefix_bytes": 9940156,
+    "prefix_sha256": "caf8f79624a809bc52ea3f530be092a2160569ecd13a2ab262041e5dc52cbfeb",
+    "expected_full_sha256": "caf8f79624a809bc52ea3f530be092a2160569ecd13a2ab262041e5dc52cbfeb"
+  },
+  {
+    "path": "/dev/shm/csgrs-batch-winding-contracts/qualification-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9940156,
+    "prefix_bytes": 9940156,
+    "prefix_sha256": "9d183d341ecc0944e8b3c16ba3043a4e5d64318f378ee36a7e5949597b704ea2",
+    "expected_full_sha256": "9d183d341ecc0944e8b3c16ba3043a4e5d64318f378ee36a7e5949597b704ea2"
+  },
+  {
+    "path": "/dev/shm/csgrs-batch-winding-contracts/qualification-v1/upper/wasm32-unknown-unknown/wasm/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9645948,
+    "prefix_bytes": 9645948,
+    "prefix_sha256": "b65e9f76912dc9b47bd01e8a615196bd7fa9401b52de7f5eb65feb141aa90fc3",
+    "expected_full_sha256": "b65e9f76912dc9b47bd01e8a615196bd7fa9401b52de7f5eb65feb141aa90fc3"
+  },
+  {
+    "path": "/dev/shm/csgrs-batch-winding-contracts/qualification-v1/upper/wasm32-unknown-unknown/wasm/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 9645948,
+    "prefix_bytes": 9645948,
+    "prefix_sha256": "b65e9f76912dc9b47bd01e8a615196bd7fa9401b52de7f5eb65feb141aa90fc3",
+    "expected_full_sha256": "b65e9f76912dc9b47bd01e8a615196bd7fa9401b52de7f5eb65feb141aa90fc3"
+  },
+  {
+    "path": "/dev/shm/csgrs-native-admission-recheck/original-gates-v1/upper/release/deps/libcsgrs.rlib",
+    "exists": true,
+    "file_bytes": 5399294,
+    "prefix_bytes": 5399294,
+    "prefix_sha256": "b71d69a3f03938ed99d088f28c43ae9c7b1d522676f22ad725ac1a95d8d14e2c",
+    "expected_full_sha256": "b71d69a3f03938ed99d088f28c43ae9c7b1d522676f22ad725ac1a95d8d14e2c"
+  }
+]

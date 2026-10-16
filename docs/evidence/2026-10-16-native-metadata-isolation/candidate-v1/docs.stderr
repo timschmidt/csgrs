@@ -1,0 +1,17 @@
+    Checking hyperreal v0.13.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperreal)
+   Compiling rustix v1.1.4
+    Checking xattr v1.6.1
+    Checking tar v0.4.46
+    Checking hyperlattice v0.6.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperlimit)
+    Checking hypersolve v0.3.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hypersolve)
+    Checking hypertri v0.4.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hypertri)
+    Checking hypermesh v0.1.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hypermesh)
+    Checking hyperphysics v0.3.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperphysics)
+    Checking hypercurve v0.3.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hypercurve)
+    Checking hyperpath v0.3.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperpath)
+ Documenting hypercurve v0.3.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hypercurve)
+    Checking csgrs v0.23.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source)
+ Documenting hyperdrc v0.3.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 47.32s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/candidate-v1/doc/hypercurve/index.html and 1 other file

@@ -1,0 +1,23 @@
+	Command being timed: "cargo clippy --manifest-path /dev/shm/csgrs-native-metadata-isolation/candidate/source/Cargo.toml --locked --release -p hypercurve -p hyperdrc --all-features --all-targets -- -D warnings"
+	User time (seconds): 90.72
+	System time (seconds): 13.17
+	Percent of CPU this job got: 33%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 5:12.44
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2203772
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1164
+	Minor (reclaiming a frame) page faults: 4633136
+	Voluntary context switches: 45134
+	Involuntary context switches: 6042
+	Swaps: 0
+	File system inputs: 187600
+	File system outputs: 460399
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

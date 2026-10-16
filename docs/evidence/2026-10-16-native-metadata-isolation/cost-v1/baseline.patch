@@ -1,0 +1,170 @@
+--- a/crates/hypercurve/src/bezier_region.rs
++++ b/crates/hypercurve/src/bezier_region.rs
+@@ -1526,8 +1526,8 @@
+ fn validate_retained_region_loops(boundary_loops: &[CurveRegionBoundaryLoop2]) -> CurveResult<()> {
+     for (index, boundary_loop) in boundary_loops.iter().enumerate() {
+         if boundary_loops[index + 1..].iter().any(|candidate| {
+-            boundary_loop.arrangement_sources == candidate.arrangement_sources
+-                && boundary_loop.fragments == candidate.fragments
++            boundary_loop.fragments == candidate.fragments
++                && boundary_loop.arrangement_sources == candidate.arrangement_sources
+         }) {
+             return Err(CurveError::Topology(
+                 "Bezier region must not duplicate boundary loop evidence".to_owned(),
+--- a/crates/hypercurve/src/bezier_region/metadata_order_tests.rs
++++ b/crates/hypercurve/src/bezier_region/metadata_order_tests.rs
+@@ -143,3 +143,154 @@
+         assert!(retained.cached_rational_interval(-64).is_some());
+     }
+ }
++
++// Appended only to both dedicated measurement copies of metadata_order_tests.rs.
++mod cost {
++    use super::*;
++    use std::alloc::{GlobalAlloc, Layout, System};
++    use std::cell::Cell;
++    use std::hint::black_box;
++    use std::time::Instant;
++
++    #[derive(Clone, Copy, Default)]
++    struct Counts {
++        calls: u64,
++        bytes: u64,
++        live: i64,
++        peak: i64,
++    }
++
++    thread_local! {
++        static ACTIVE: Cell<bool> = const { Cell::new(false) };
++        static COUNTS: Cell<Counts> = const { Cell::new(Counts { calls: 0, bytes: 0, live: 0, peak: 0 }) };
++    }
++
++    fn change(allocated: usize, freed: usize, call: bool) {
++        if ACTIVE.try_with(Cell::get).unwrap_or(false) {
++            COUNTS.with(|counts| {
++                let mut value = counts.get();
++                value.calls += u64::from(call);
++                value.bytes += allocated as u64;
++                value.live += allocated as i64 - freed as i64;
++                value.peak = value.peak.max(value.live);
++                counts.set(value);
++            });
++        }
++    }
++
++    struct Allocator;
++
++    unsafe impl GlobalAlloc for Allocator {
++        unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
++            let result = unsafe { System.alloc(layout) };
++            if !result.is_null() {
++                change(layout.size(), 0, true);
++            }
++            result
++        }
++
++        unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
++            let result = unsafe { System.alloc_zeroed(layout) };
++            if !result.is_null() {
++                change(layout.size(), 0, true);
++            }
++            result
++        }
++
++        unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
++            change(0, layout.size(), false);
++            unsafe { System.dealloc(ptr, layout) };
++        }
++
++        unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
++            let result = unsafe { System.realloc(ptr, layout, new_size) };
++            if !result.is_null() {
++                change(new_size, layout.size(), true);
++            }
++            result
++        }
++    }
++
++    #[global_allocator]
++    static ALLOCATOR: Allocator = Allocator;
++
++    fn fixture(kind: &str) -> Vec<CurveRegionBoundaryLoop2> {
++        let count = match kind {
++            "duplicate" => 2,
++            "singleton" => 1,
++            _ => 24,
++        };
++        (0..count)
++            .map(|index| {
++                let source = match kind {
++                    "absent_sources" => None,
++                    "mixed_sources" if index % 2 == 0 => None,
++                    "equal_sources" | "duplicate" => Some(0),
++                    _ => Some(2 * index),
++                };
++                let factor = if kind == "duplicate" { 1 } else { index + 1 };
++                let offset =
++                    (Real::pi() + Real::from(53).sqrt().unwrap()) * Real::from(factor as i32);
++                boundary(offset, source, &CurveContext::STRICT)
++            })
++            .collect()
++    }
++
++    fn expected(kind: &str) -> Option<&'static str> {
++        match kind {
++            "equal_sources" => Some(REUSED),
++            "duplicate" => Some(DUPLICATE),
++            _ => None,
++        }
++    }
++
++    #[test]
++    #[ignore = "explicit isolated evidence probe"]
++    fn probe() {
++        let mode = std::env::var("REGION_PROBE_MODE").unwrap();
++        assert!(mode == "time" || mode == "memory");
++        let count: usize = std::env::var("REGION_PROBE_ITERATIONS")
++            .unwrap()
++            .parse()
++            .unwrap();
++        for kind in [
++            "unequal_sources",
++            "absent_sources",
++            "mixed_sources",
++            "equal_sources",
++            "duplicate",
++            "singleton",
++        ] {
++            assert_eq!(error(fixture(kind)).as_deref(), expected(kind));
++            let mut inputs: Vec<_> = (0..count).map(|_| fixture(kind)).collect();
++            for phase in ["first_validation", "warm_validation", "cloned_validation"] {
++                if phase == "cloned_validation" {
++                    inputs = inputs.clone();
++                }
++                let mut outputs = Vec::with_capacity(count);
++                COUNTS.with(|value| value.set(Counts::default()));
++                ACTIVE.with(|value| value.set(mode == "memory"));
++                let started = Instant::now();
++                for input in &inputs {
++                    outputs.push(black_box(CurveRegion2::new(black_box(input.clone()))));
++                }
++                let nanos = started.elapsed().as_nanos();
++                ACTIVE.with(|value| value.set(false));
++                let counts = COUNTS.with(Cell::get);
++                for output in &outputs {
++                    let actual = match output {
++                        Ok(_) => None,
++                        Err(CurveError::Topology(message)) => Some(message.as_str()),
++                        Err(other) => panic!("unexpected probe error: {other:?}"),
++                    };
++                    assert_eq!(actual, expected(kind));
++                }
++                println!(
++                    "REGION_COST {kind} {phase} {count} {nanos} {} {} {} {}",
++                    counts.calls, counts.bytes, counts.live, counts.peak
++                );
++                drop(outputs);
++            }
++        }
++    }
++}

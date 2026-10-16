@@ -1,0 +1,439 @@
+{
+  "status": "isolated-metadata-order-trial-closed-with-runtime-gates-failing",
+  "decision": "Do not admit this runtime candidate or the 35 pending native files on this evidence.",
+  "decision_reason": "All non-runtime qualification commands pass, but the isolated candidate fails both original native runtime assertions. Local constructor measurements and complete report comparison do not satisfy those workload limits. Local controls slower in all five pairs: duplicate/warm_validation.",
+  "baseline_commit": "73472622dd4034b8b8777cb2a116c4020f6bb328",
+  "owning_layer": "Hypercurve retained region validation",
+  "production_difference": "Compare immutable arrangement-source records before geometric equality in the existing duplicate-evidence conjunction.",
+  "production_or_test_edits": 0,
+  "isolated_production_files_changed": 1,
+  "identical_focused_tests_per_variant": 3,
+  "pending_main_native_files_unchanged": 35,
+  "phases": {
+    "baseline-v1": {
+      "passed": true,
+      "commands": [
+        {
+          "name": "overlay",
+          "exit_code": 0,
+          "whole_command_seconds": 82.99340920476243,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "fixtures",
+          "exit_code": 0,
+          "whole_command_seconds": 2.468918737024069,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "format",
+          "exit_code": 0,
+          "whole_command_seconds": 12.734923433046788,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "metadata-regressions",
+          "exit_code": 0,
+          "whole_command_seconds": 159.23037384124473,
+          "test_summary_count": 1,
+          "tests_passed": 3,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "native-cli",
+          "exit_code": 0,
+          "whole_command_seconds": 218.2773150089197,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "verify-lower",
+          "exit_code": 0,
+          "whole_command_seconds": 59.47659433120862,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        }
+      ],
+      "result_sha256": "05f3630a649753d7c506240042e63ec1443ef06b42947a3f968e678045dca041"
+    },
+    "candidate-v1": {
+      "passed": false,
+      "commands": [
+        {
+          "name": "overlay",
+          "exit_code": 0,
+          "whole_command_seconds": 97.24054553406313,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "fixtures",
+          "exit_code": 0,
+          "whole_command_seconds": 2.476625788025558,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "format",
+          "exit_code": 0,
+          "whole_command_seconds": 12.773777877911925,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "metadata-regressions",
+          "exit_code": 0,
+          "whole_command_seconds": 153.30393215315416,
+          "test_summary_count": 1,
+          "tests_passed": 3,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "curve-default",
+          "exit_code": 0,
+          "whole_command_seconds": 1285.1692856047302,
+          "test_summary_count": 52,
+          "tests_passed": 2463,
+          "tests_failed": 0,
+          "tests_ignored": 28
+        },
+        {
+          "name": "curve-all",
+          "exit_code": 0,
+          "whole_command_seconds": 1199.7555934311822,
+          "test_summary_count": 52,
+          "tests_passed": 2500,
+          "tests_failed": 0,
+          "tests_ignored": 33
+        },
+        {
+          "name": "strict-clippy",
+          "exit_code": 0,
+          "whole_command_seconds": 314.75081583997235,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "native-other-tests",
+          "exit_code": 0,
+          "whole_command_seconds": 410.4784547542222,
+          "test_summary_count": 10,
+          "tests_passed": 1643,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "root-all",
+          "exit_code": 0,
+          "whole_command_seconds": 422.29804886272177,
+          "test_summary_count": 43,
+          "tests_passed": 405,
+          "tests_failed": 0,
+          "tests_ignored": 1
+        },
+        {
+          "name": "root-minimal",
+          "exit_code": 0,
+          "whole_command_seconds": 166.23909480310977,
+          "test_summary_count": 35,
+          "tests_passed": 132,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "docs",
+          "exit_code": 0,
+          "whole_command_seconds": 49.60362329427153,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "full-board",
+          "exit_code": 101,
+          "whole_command_seconds": 258.9683615360409,
+          "test_summary_count": 1,
+          "tests_passed": 0,
+          "tests_failed": 1,
+          "tests_ignored": 0
+        },
+        {
+          "name": "copper-neck",
+          "exit_code": 101,
+          "whole_command_seconds": 185.5126411402598,
+          "test_summary_count": 1,
+          "tests_passed": 0,
+          "tests_failed": 1,
+          "tests_ignored": 0
+        },
+        {
+          "name": "gerber",
+          "exit_code": 0,
+          "whole_command_seconds": 2.7312585469335318,
+          "test_summary_count": 1,
+          "tests_passed": 1,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "native-cli",
+          "exit_code": 0,
+          "whole_command_seconds": 120.45035916101187,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "verify-lower",
+          "exit_code": 0,
+          "whole_command_seconds": 146.6943097440526,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        }
+      ],
+      "result_sha256": "23e868dba173ddd3522c87ffea2cfecb56641ef72667294674f26e3aa5aff11e"
+    }
+  },
+  "original_native_gates": {
+    "full-board": {
+      "passed": false,
+      "exit_code": 101,
+      "metric": "worker CPU seconds",
+      "original_limit": 120,
+      "reported_assertion_seconds": 176.419625977,
+      "whole_command_seconds": 258.9683615360409,
+      "reported_findings": [
+        12,
+        197
+      ]
+    },
+    "copper-neck": {
+      "passed": false,
+      "exit_code": 101,
+      "metric": "check-body wall seconds",
+      "original_limit": 60,
+      "reported_assertion_seconds": 86.132483507,
+      "whole_command_seconds": 185.5126411402598
+    },
+    "gerber": {
+      "passed": true,
+      "exit_code": 0,
+      "metric": "original smoke assertions",
+      "original_limit": null,
+      "reported_assertion_seconds": null,
+      "whole_command_seconds": 2.7312585469335318
+    }
+  },
+  "report_replay": {
+    "complete": true,
+    "comparisons": [
+      {
+        "fixture": "cparti-fpga",
+        "both_complete": true,
+        "complete_bytes_identical": true,
+        "complete_json_values_identical": true,
+        "baseline_bytes": 147297,
+        "candidate_bytes": 147297,
+        "baseline_sha256": "164102f85d103de8930e871318107fe17e51f3f478aa29a34e6eb9a43ea1d2c2",
+        "candidate_sha256": "164102f85d103de8930e871318107fe17e51f3f478aa29a34e6eb9a43ea1d2c2"
+      },
+      {
+        "fixture": "hvp109a",
+        "both_complete": true,
+        "complete_bytes_identical": true,
+        "complete_json_values_identical": true,
+        "baseline_bytes": 128420,
+        "candidate_bytes": 128420,
+        "baseline_sha256": "d73ffb1c463a28abf1ab32740213ca3feb5c991f7b34ac506dab5c4af424875b",
+        "candidate_sha256": "d73ffb1c463a28abf1ab32740213ca3feb5c991f7b34ac506dab5c4af424875b"
+      }
+    ],
+    "all_reports_identical": true,
+    "source_and_input_identity_verified": true,
+    "runtime_admitted": false,
+    "application_speedup_claimed": false
+  },
+  "local_cost": {
+    "fresh_processes": 20,
+    "raw_rows": 360,
+    "timing_cases_and_phases": 18,
+    "time_inputs_per_case": 1024,
+    "memory_inputs_per_case": 128,
+    "all_timing_rows": [
+      {
+        "case": "unequal_sources",
+        "phase": "first_validation",
+        "median_paired_ratio": 0.5171670495917807,
+        "candidate_faster_pairs": 5
+      },
+      {
+        "case": "unequal_sources",
+        "phase": "warm_validation",
+        "median_paired_ratio": 0.4930413464834191,
+        "candidate_faster_pairs": 5
+      },
+      {
+        "case": "unequal_sources",
+        "phase": "cloned_validation",
+        "median_paired_ratio": 0.1893012578266408,
+        "candidate_faster_pairs": 5
+      },
+      {
+        "case": "absent_sources",
+        "phase": "first_validation",
+        "median_paired_ratio": 0.9761252500227451,
+        "candidate_faster_pairs": 4
+      },
+      {
+        "case": "absent_sources",
+        "phase": "warm_validation",
+        "median_paired_ratio": 0.9671173366102586,
+        "candidate_faster_pairs": 3
+      },
+      {
+        "case": "absent_sources",
+        "phase": "cloned_validation",
+        "median_paired_ratio": 0.979779544829699,
+        "candidate_faster_pairs": 3
+      },
+      {
+        "case": "mixed_sources",
+        "phase": "first_validation",
+        "median_paired_ratio": 0.4694865956845214,
+        "candidate_faster_pairs": 5
+      },
+      {
+        "case": "mixed_sources",
+        "phase": "warm_validation",
+        "median_paired_ratio": 0.542543814895211,
+        "candidate_faster_pairs": 5
+      },
+      {
+        "case": "mixed_sources",
+        "phase": "cloned_validation",
+        "median_paired_ratio": 0.4012820051821556,
+        "candidate_faster_pairs": 5
+      },
+      {
+        "case": "equal_sources",
+        "phase": "first_validation",
+        "median_paired_ratio": 0.9823271298686931,
+        "candidate_faster_pairs": 3
+      },
+      {
+        "case": "equal_sources",
+        "phase": "warm_validation",
+        "median_paired_ratio": 0.9830747021103604,
+        "candidate_faster_pairs": 3
+      },
+      {
+        "case": "equal_sources",
+        "phase": "cloned_validation",
+        "median_paired_ratio": 0.9750566809139497,
+        "candidate_faster_pairs": 3
+      },
+      {
+        "case": "duplicate",
+        "phase": "first_validation",
+        "median_paired_ratio": 0.9923350107638936,
+        "candidate_faster_pairs": 3
+      },
+      {
+        "case": "duplicate",
+        "phase": "warm_validation",
+        "median_paired_ratio": 1.0690215015415765,
+        "candidate_faster_pairs": 0
+      },
+      {
+        "case": "duplicate",
+        "phase": "cloned_validation",
+        "median_paired_ratio": 1.0224449457605167,
+        "candidate_faster_pairs": 1
+      },
+      {
+        "case": "singleton",
+        "phase": "first_validation",
+        "median_paired_ratio": 0.9931570177133991,
+        "candidate_faster_pairs": 3
+      },
+      {
+        "case": "singleton",
+        "phase": "warm_validation",
+        "median_paired_ratio": 1.0083831135621906,
+        "candidate_faster_pairs": 2
+      },
+      {
+        "case": "singleton",
+        "phase": "cloned_validation",
+        "median_paired_ratio": 0.9867006901712956,
+        "candidate_faster_pairs": 4
+      }
+    ],
+    "all_five_time_pairs_slower": [
+      "duplicate/warm_validation"
+    ],
+    "all_five_time_pairs_faster": [
+      "unequal_sources/first_validation",
+      "unequal_sources/warm_validation",
+      "unequal_sources/cloned_validation",
+      "mixed_sources/first_validation",
+      "mixed_sources/warm_validation",
+      "mixed_sources/cloned_validation"
+    ],
+    "memory_median_increases": [],
+    "full_assessment": "cost-assessment-v1.json"
+  },
+  "production_cli_binary_bytes": {
+    "baseline": 42996752,
+    "candidate": 42996752
+  },
+  "production_cli_binary_delta_bytes": 0,
+  "limitations": [
+    "The baseline and candidate use the same 35 separately unadmitted native changes; this trial does not qualify that whole bundle.",
+    "Feature and focused-test counts overlap. Existing ignored tests remain ignored and their obligations remain open.",
+    "Exact authored regression facts and retained-proof checks supplement full report equality; report agreement alone is not an independent geometry oracle or a universal cache proof.",
+    "Point2 equality still treats unresolved symbolic equality as false; this trial does not establish complete geometric equality for arbitrary expressions.",
+    "The original timing assertions measure worker CPU or check-body wall time. Whole-command durations also include setup and compilation. These standalone application runs do not establish a matched application speedup.",
+    "The fixed paired costs are local instrumented constructor controls, including expected duplicate rejection rather than successful modeling. All unfavorable rows are retained; TLS allocation deltas are not a global heap bound.",
+    "External 1800-second command and 8-GiB per-process address-space containment do not supply internal total-work, cancellation or retained-heap contracts.",
+    "Clean external distribution, MSRV and release checks, full workflow validation, formal verification, directed campaigns and instrumented coverage remain open.",
+    "Historical missing artifacts remain inherited; no historical-completeness claim."
+  ],
+  "next": "Reproduce the format-boundary composition hypotheses in followup-inspection-v1.md under a fresh acceptance contract before further performance work. Native runtime admission remains open; preserve the original limits, full fixtures and rejected scalar experiments.",
+  "evidence_sha256": {
+    "contract-v1.md": "571655e4497b450eb5a1b231f7190fc9b7aa2e2ba92725f61c838cf7a6dd1309",
+    "qualification-assessment-v1.json": "240366b58dcc0b3a853245454b08bbdab5206e78803383b66d0c1c278ba7a297",
+    "cost-assessment-v1.json": "b8bdbae10cffc7fe9c4c8036b3bad217ba706e5a0a267bba8f710e86d57110d3",
+    "report-replay-v1/result.json": "e857964b85223e5f223581b335224598a9530ddba9518e7a49551951b01288db"
+  },
+  "runtime_admitted": false,
+  "application_speedup_claimed": false,
+  "full_plan_complete": false
+}

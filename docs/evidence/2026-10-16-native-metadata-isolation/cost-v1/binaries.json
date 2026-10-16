@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+    "sha256": "ed778b7a5097e70ec1ed3bc74930d20f7234b833b6059215eb80cb7a943df19e",
+    "bytes": 41500920,
+    "features": [
+      "comparative-benchmarks",
+      "default",
+      "dispatch-trace",
+      "hershey",
+      "svg",
+      "triangulation"
+    ],
+    "manifest_path": "/dev/shm/csgrs-native-metadata-isolation/cost-v1/baseline/source/crates/hypercurve/Cargo.toml"
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+    "sha256": "0a99188e3b013079a9308ce73c2a980734e8488fd12770b2caa42b593cf0ff04",
+    "bytes": 41500920,
+    "features": [
+      "comparative-benchmarks",
+      "default",
+      "dispatch-trace",
+      "hershey",
+      "svg",
+      "triangulation"
+    ],
+    "manifest_path": "/dev/shm/csgrs-native-metadata-isolation/cost-v1/candidate/source/crates/hypercurve/Cargo.toml"
+  }
+}

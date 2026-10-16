@@ -1,0 +1,160 @@
+--- a/crates/hypercurve/src/bezier_region.rs
++++ b/crates/hypercurve/src/bezier_region.rs
+@@ -7039,6 +7039,9 @@
+ 
+ #[cfg(test)]
+ mod tests;
++
++#[cfg(test)]
++mod metadata_order_tests;
+ 
+ #[cfg(test)]
+ mod single_loop_corner_publication_tests {
+--- a/crates/hypercurve/src/bezier_region/metadata_order_tests.rs
++++ b/crates/hypercurve/src/bezier_region/metadata_order_tests.rs
+@@ -0,0 +1,145 @@
++use super::*;
++use crate::QuadraticBezier2;
++use hyperreal::{RealSign, ZeroKnowledge};
++
++const DUPLICATE: &str = "Bezier region must not duplicate boundary loop evidence";
++const REUSED: &str =
++    "retained Bezier region boundary loops must not reuse arrangement source fragments";
++
++fn boundary(
++    offset: Real,
++    source_start: Option<usize>,
++    policy: &CurveContext,
++) -> CurveRegionBoundaryLoop2 {
++    let points = [
++        Point2::new(offset.clone(), Real::zero()),
++        Point2::new(&offset + Real::from(2), Real::zero()),
++    ];
++    let fragments = (0..2)
++        .map(|index| {
++            let start = &points[index];
++            let end = &points[1 - index];
++            BezierSplitFragment2::Materialized {
++                start: BezierParameter2::Exact(Real::zero()),
++                end: BezierParameter2::Exact(Real::one()),
++                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
++                    start.clone(),
++                    start.lerp(end, (Real::one() / Real::from(2)).unwrap()),
++                    end.clone(),
++                )),
++            }
++        })
++        .collect();
++    let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
++    match source_start {
++        None => boundary,
++        Some(first) => CurveRegionBoundaryLoop2::try_new_from_certified_arrangement_chain(
++            boundary.fragments,
++            vec![
++                CurveRegionFragmentSource2::new(first, first, 0),
++                CurveRegionFragmentSource2::new(first + 1, first, 1),
++            ],
++            policy,
++        )
++        .unwrap(),
++    }
++}
++
++fn error(loops: Vec<CurveRegionBoundaryLoop2>) -> Option<String> {
++    match CurveRegion2::new(loops) {
++        Ok(_) => None,
++        Err(CurveError::Topology(message)) => Some(message),
++        Err(other) => panic!("unexpected region error: {other:?}"),
++    }
++}
++
++#[test]
++fn duplicate_validation_covers_metadata_and_independent_exact_geometry() {
++    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
++        for (left_source, right_source, equal_error, unequal_error) in [
++            (None, None, Some(DUPLICATE), None),
++            (None, Some(0), None, None),
++            (Some(0), None, None, None),
++            (Some(0), Some(0), Some(DUPLICATE), Some(REUSED)),
++            (Some(0), Some(10), None, None),
++        ] {
++            // These coordinates are built independently, not cloned points.
++            // The second expression is an affine expansion of sqrt(2).
++            for unequal in [false, true] {
++                let left = boundary(Real::from(2).sqrt().unwrap(), left_source, &policy);
++                let radical = Real::from(2).sqrt().unwrap();
++                let right_offset = (&radical + Real::from(3)) - Real::from(3)
++                    + Real::from(if unequal { 4 } else { 0 });
++                let right = boundary(right_offset, right_source, &policy);
++                let expected = if unequal { unequal_error } else { equal_error };
++                assert_eq!(error(vec![left, right]).as_deref(), expected);
++            }
++        }
++        for source in [None, Some(0)] {
++            let shared = boundary(Real::from(2).sqrt().unwrap(), source, &policy);
++            assert_eq!(
++                error(vec![shared.clone(), shared]).as_deref(),
++                Some(DUPLICATE)
++            );
++        }
++    }
++}
++
++#[test]
++fn duplicate_errors_still_precede_cross_loop_source_errors() {
++    let policy = CurveContext::STRICT;
++    let reused_first = boundary(Real::zero(), Some(0), &policy);
++    let reused_second = boundary(Real::from(4), Some(0), &policy);
++    let duplicate_first = boundary(Real::from(8), Some(10), &policy);
++    let duplicate_second = boundary(Real::from(8), Some(10), &policy);
++    assert_eq!(
++        error(vec![
++            reused_first,
++            reused_second,
++            duplicate_first,
++            duplicate_second
++        ])
++        .as_deref(),
++        Some(DUPLICATE),
++    );
++    // Unequal source records can still reuse an arrangement fragment index.
++    let first = boundary(Real::zero(), Some(0), &policy);
++    let second = boundary(Real::from(4), Some(1), &policy);
++    assert_eq!(error(vec![first, second]).as_deref(), Some(REUSED));
++    assert!(CurveRegion2::new(Vec::new()).is_ok());
++}
++
++#[test]
++fn validation_retains_available_facts_and_allows_later_refinement() {
++    for warmed in [false, true] {
++        let value = Real::from(7).sin() + Real::from(53).sqrt().unwrap();
++        let first = boundary(value.clone(), Some(0), &CurveContext::STRICT);
++        let second = boundary(value.clone(), Some(10), &CurveContext::STRICT);
++        assert!(value.cached_rational_interval(-4096).is_none());
++        let prior = warmed.then(|| {
++            value.certified_rational_interval(-96).unwrap();
++            assert_eq!(value.refine_sign_until(-96), Some(RealSign::Positive));
++            assert_eq!(value.zero_status(), ZeroKnowledge::NonZero);
++            value.cached_rational_interval(-64).unwrap()
++        });
++        let retained = value.clone();
++        let region = CurveRegion2::new(vec![first, second]).unwrap();
++        let cloned = region.clone();
++        drop(region);
++        for query in [&value, &retained] {
++            if let Some(before) = &prior {
++                let after = query.cached_rational_interval(-64).unwrap();
++                assert!(before[0] <= after[0] && after[1] <= before[1]);
++                assert_eq!(query.refine_sign_until(0), Some(RealSign::Positive));
++                assert_eq!(query.zero_status(), ZeroKnowledge::NonZero);
++            }
++            let [lower, upper] = query.certified_rational_interval(-128).unwrap();
++            assert!(lower > hyperreal::Rational::new(7));
++            assert!(upper < hyperreal::Rational::new(9));
++            assert_eq!(query.refine_sign_until(0), Some(RealSign::Positive));
++        }
++        drop(cloned);
++        assert_eq!(retained.zero_status(), ZeroKnowledge::NonZero);
++        assert!(retained.cached_rational_interval(-64).is_some());
++    }
++}

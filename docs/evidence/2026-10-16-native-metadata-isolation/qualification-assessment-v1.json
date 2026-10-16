@@ -1,0 +1,251 @@
+{
+  "status": "current isolated qualification recorded; cost and full report gates separate",
+  "phases": {
+    "baseline-v1": {
+      "passed": true,
+      "commands": [
+        {
+          "name": "overlay",
+          "exit_code": 0,
+          "whole_command_seconds": 82.99340920476243,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "fixtures",
+          "exit_code": 0,
+          "whole_command_seconds": 2.468918737024069,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "format",
+          "exit_code": 0,
+          "whole_command_seconds": 12.734923433046788,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "metadata-regressions",
+          "exit_code": 0,
+          "whole_command_seconds": 159.23037384124473,
+          "test_summary_count": 1,
+          "tests_passed": 3,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "native-cli",
+          "exit_code": 0,
+          "whole_command_seconds": 218.2773150089197,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "verify-lower",
+          "exit_code": 0,
+          "whole_command_seconds": 59.47659433120862,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        }
+      ],
+      "result_sha256": "05f3630a649753d7c506240042e63ec1443ef06b42947a3f968e678045dca041"
+    },
+    "candidate-v1": {
+      "passed": false,
+      "commands": [
+        {
+          "name": "overlay",
+          "exit_code": 0,
+          "whole_command_seconds": 97.24054553406313,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "fixtures",
+          "exit_code": 0,
+          "whole_command_seconds": 2.476625788025558,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "format",
+          "exit_code": 0,
+          "whole_command_seconds": 12.773777877911925,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "metadata-regressions",
+          "exit_code": 0,
+          "whole_command_seconds": 153.30393215315416,
+          "test_summary_count": 1,
+          "tests_passed": 3,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "curve-default",
+          "exit_code": 0,
+          "whole_command_seconds": 1285.1692856047302,
+          "test_summary_count": 52,
+          "tests_passed": 2463,
+          "tests_failed": 0,
+          "tests_ignored": 28
+        },
+        {
+          "name": "curve-all",
+          "exit_code": 0,
+          "whole_command_seconds": 1199.7555934311822,
+          "test_summary_count": 52,
+          "tests_passed": 2500,
+          "tests_failed": 0,
+          "tests_ignored": 33
+        },
+        {
+          "name": "strict-clippy",
+          "exit_code": 0,
+          "whole_command_seconds": 314.75081583997235,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "native-other-tests",
+          "exit_code": 0,
+          "whole_command_seconds": 410.4784547542222,
+          "test_summary_count": 10,
+          "tests_passed": 1643,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "root-all",
+          "exit_code": 0,
+          "whole_command_seconds": 422.29804886272177,
+          "test_summary_count": 43,
+          "tests_passed": 405,
+          "tests_failed": 0,
+          "tests_ignored": 1
+        },
+        {
+          "name": "root-minimal",
+          "exit_code": 0,
+          "whole_command_seconds": 166.23909480310977,
+          "test_summary_count": 35,
+          "tests_passed": 132,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "docs",
+          "exit_code": 0,
+          "whole_command_seconds": 49.60362329427153,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "full-board",
+          "exit_code": 101,
+          "whole_command_seconds": 258.9683615360409,
+          "test_summary_count": 1,
+          "tests_passed": 0,
+          "tests_failed": 1,
+          "tests_ignored": 0
+        },
+        {
+          "name": "copper-neck",
+          "exit_code": 101,
+          "whole_command_seconds": 185.5126411402598,
+          "test_summary_count": 1,
+          "tests_passed": 0,
+          "tests_failed": 1,
+          "tests_ignored": 0
+        },
+        {
+          "name": "gerber",
+          "exit_code": 0,
+          "whole_command_seconds": 2.7312585469335318,
+          "test_summary_count": 1,
+          "tests_passed": 1,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "native-cli",
+          "exit_code": 0,
+          "whole_command_seconds": 120.45035916101187,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        },
+        {
+          "name": "verify-lower",
+          "exit_code": 0,
+          "whole_command_seconds": 146.6943097440526,
+          "test_summary_count": 0,
+          "tests_passed": 0,
+          "tests_failed": 0,
+          "tests_ignored": 0
+        }
+      ],
+      "result_sha256": "23e868dba173ddd3522c87ffea2cfecb56641ef72667294674f26e3aa5aff11e"
+    }
+  },
+  "original_native_gates": {
+    "full-board": {
+      "passed": false,
+      "exit_code": 101,
+      "metric": "worker CPU seconds",
+      "original_limit": 120,
+      "reported_assertion_seconds": 176.419625977,
+      "whole_command_seconds": 258.9683615360409,
+      "reported_findings": [
+        12,
+        197
+      ]
+    },
+    "copper-neck": {
+      "passed": false,
+      "exit_code": 101,
+      "metric": "check-body wall seconds",
+      "original_limit": 60,
+      "reported_assertion_seconds": 86.132483507,
+      "whole_command_seconds": 185.5126411402598
+    },
+    "gerber": {
+      "passed": true,
+      "exit_code": 0,
+      "metric": "original smoke assertions",
+      "original_limit": null,
+      "reported_assertion_seconds": null,
+      "whole_command_seconds": 2.7312585469335318
+    }
+  },
+  "pending_main_native_files_unchanged": 35,
+  "count_scope": "Counts describe each command. Feature configurations and focused subsets overlap; do not add them as distinct tests.",
+  "timing_scope": "Compilation and setup are included in whole-command durations, which are not the original internal assertion metrics. Standalone runs do not establish a matched application speedup.",
+  "semantic_scope": "Findings and test counts alone are not independent geometry oracles. The retained tests and complete report comparison have separate claims.",
+  "runtime_admitted": false,
+  "full_plan_complete": false
+}

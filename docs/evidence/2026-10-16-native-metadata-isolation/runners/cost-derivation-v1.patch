@@ -1,0 +1,165 @@
+--- historical/measure_v1.py
++++ current/runners/cost_v1.py
+@@ -10,8 +10,11 @@
+ import difflib
+ import gzip
+ import hashlib
++import importlib.util
+ import json
+ import os
++import resource
++import signal
+ from pathlib import Path
+ import shutil
+ import subprocess
+@@ -19,23 +22,34 @@
+ import tarfile
+ import time
+ 
+-E = Path(__file__).resolve().parent
++sys.dont_write_bytecode = True
++E = Path(__file__).resolve().parents[1]
+ ROOT = E.parents[2]
+-WORK = ROOT / 'target/region-metadata-first/cost-v1'
+-CANDIDATE = ROOT / 'target/region-metadata-first/source'
++WORK = Path('/dev/shm/csgrs-native-metadata-isolation/cost-v1')
++CANDIDATE = Path(json.loads((E / 'preparation-v1.json').read_text())['sources']['candidate'])
+ sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+-sys.path.insert(0, str(ROOT / 'docs/evidence/2026-10-12-existing-worktree'))
+-from validate import sources
++BASE_RUNNER = E.parent / '2026-10-15-factored-product-proofs/validate_v8.py'
++assert sha(BASE_RUNNER) == 'f3ee76657ed7c1e8792452ded7c2380c1ad03a41abb312d80f9adf68b4dc6f05'
++spec = importlib.util.spec_from_file_location('guard', BASE_RUNNER)
++guard = importlib.util.module_from_spec(spec)
++spec.loader.exec_module(guard)
++sources = guard.sources
+ 
+ 
+ def main():
+     out = E / 'cost-v1'
+     out.mkdir(exist_ok=False)
+     WORK.mkdir(exist_ok=False)
+-    preparation = json.loads((E / 'preparation.json').read_text())
+-    original = json.loads(gzip.decompress((E / 'baseline-source-hashes.json.gz').read_bytes()))
+-    candidate = original | preparation['source_changes_sha256']
+-    assert json.loads((E / 'validation-v1/result.json').read_text())['complete']
++    preparation = json.loads((E / 'preparation-v1.json').read_text())
++    assert sha(E / 'source-hashes-v1.json.gz') == preparation['source_hashes_sha256']
++    source_maps = json.loads(gzip.decompress((E / 'source-hashes-v1.json.gz').read_bytes()))
++    candidate = source_maps['candidate']
++    qualification = json.loads((E / 'candidate-v1/result.json').read_text())
++    specification = json.loads((E / 'candidate-v1.json').read_text())
++    assert [r['name'] for r in qualification['commands']] == [r[0] for r in specification]
++    assert all(r['sources_unchanged'] for r in qualification['commands'])
++    assert all(r['exit_code'] == 0 for r in qualification['commands']
++               if r['name'] not in {'full-board', 'copper-neck'})
+     assert all(sha(CANDIDATE / name) == digest for name, digest in candidate.items())
+     region = 'crates/hypercurve/src/bezier_region.rs'
+     tests = 'crates/hypercurve/src/bezier_region/metadata_order_tests.rs'
+@@ -43,7 +57,8 @@
+     for variant in ['baseline', 'candidate']:
+         location = WORK / variant
+         location.mkdir()
+-        dirs[variant], targets[variant] = location / 'source', location / 'target'
++        dirs[variant] = location / 'source'
++        targets[variant] = ROOT / 'target/properties/native-metadata-isolation' / ('cost-' + variant + '-v1')
+         with (out / ('copy-' + variant + '.log')).open('w') as log:
+             subprocess.run(['cp', '-a', '--reflink=auto', str(CANDIDATE), str(dirs[variant])],
+                            stdout=log, stderr=subprocess.STDOUT, check=True)
+@@ -75,41 +90,65 @@
+     with (out / 'source-hashes.json.gz').open('xb') as raw:
+         with gzip.GzipFile(fileobj=raw, mode='wb', mtime=0, filename='') as stream:
+             stream.write((json.dumps(maps, indent=2) + '\n').encode())
+-    env = {'CARGO_HOME': '/tmp/csgrs-properties-cargo', 'CCACHE_DIR': '/tmp/csgrs-properties-ccache',
+-           'CARGO_NET_OFFLINE': 'true', 'CARGO_TERM_COLOR': 'never'}
++    env = {'CARGO_HOME': '/home/tim/.cargo', 'CCACHE_DIR': '/tmp/csgrs-properties-ccache',
++           'CARGO_NET_OFFLINE': 'true', 'CARGO_TERM_COLOR': 'never', 'CARGO_BUILD_JOBS': '2'}
+     schedule = [{'mode': mode, 'iterations': count, 'pair': pair,
+                  'order': ['baseline', 'candidate'] if pair % 2 == 0 else ['candidate', 'baseline']}
+                 for mode, count in [('time', 1024), ('memory', 128)] for pair in range(5)]
+     protocol = {'scope': __doc__, 'runner_sha256': sha(Path(__file__)),
+-                'probe_sha256': sha(E / 'cost_probe.rs'), 'preparation_sha256': sha(E / 'preparation.json'),
++                'probe_sha256': sha(E / 'cost_probe.rs'), 'preparation_sha256': sha(E / 'preparation-v1.json'),
+                 'source_hashes_sha256': sha(out / 'source-hashes.json.gz'),
+                 'schedule': schedule, 'environment': env,
+                 'sources': {name: str(path) for name, path in dirs.items()},
+                 'targets': {name: str(path) for name, path in targets.items()},
+                 'compiler': subprocess.check_output(['rustc', '-vV'], text=True),
+-                'inherited_rustflags': os.environ.get('RUSTFLAGS'), 'runtime_admitted': False}
++                'inherited_rustflags': os.environ.get('RUSTFLAGS'), 'runtime_admitted': False,
++                'guard_sha256': sha(BASE_RUNNER),
++                'overlay_helper_sha256': sha(E / 'setup_overlay_v1.py'),
++                'lower_verifier_sha256': sha(E / 'verify_overlay_v1.py'),
++                'hardware': subprocess.check_output(['lscpu'], text=True),
++                'wall_limit_seconds': 1800, 'address_space_limit_bytes': 8 * 1024**3,
++                'resource_limit_scope': 'External containment only; no internal heap or work bound.'}
+     (out / 'protocol.json').write_text(json.dumps(protocol, indent=2) + '\n')
+     commands = []
+ 
+     def verify():
+-        assert sources() == preparation['main_source_sha256']
++        assert sources() == source_maps['main_guard']
+         assert sha(Path(__file__)) == protocol['runner_sha256']
+         assert sha(E / 'cost_probe.rs') == protocol['probe_sha256']
++        assert sha(E / 'setup_overlay_v1.py') == protocol['overlay_helper_sha256']
++        assert sha(E / 'verify_overlay_v1.py') == protocol['lower_verifier_sha256']
++        assert all(sha(CANDIDATE / name) == digest for name, digest in candidate.items())
+         for variant in dirs:
+-            for name in [region, tests]:
+-                assert sha(dirs[variant] / name) == maps[variant][name]
++            actual = {str(path.relative_to(dirs[variant])): sha(path)
++                      for path in dirs[variant].rglob('*') if path.is_file()}
++            assert actual == maps[variant]
+ 
+     def run(name, command, variant, extra=None):
+         verify()
+         started = time.monotonic()
+         with (out / (name + '.stdout')).open('w') as stdout, (out / (name + '.stderr')).open('w') as stderr:
+-            code = subprocess.run(command, cwd=dirs[variant],
+-                                  env=os.environ | env | {'CARGO_TARGET_DIR': str(targets[variant])} | (extra or {}),
+-                                  stdout=stdout, stderr=stderr).returncode
++            child = subprocess.Popen(['/usr/bin/time', '-v', '-o', str(out / (name + '.resources')), *command],
++                                     cwd=dirs[variant],
++                                     env=os.environ | env | {'CARGO_TARGET_DIR': str(targets[variant]),
++                                                            'TMPDIR': str(targets[variant])} | (extra or {}),
++                                     stdout=stdout, stderr=stderr, start_new_session=True,
++                                     preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_AS, (8 * 1024**3, 8 * 1024**3)))
++            try:
++                code = child.wait(timeout=1800)
++            except subprocess.TimeoutExpired:
++                os.killpg(child.pid, signal.SIGTERM)
++                try:
++                    child.wait(timeout=10)
++                except subprocess.TimeoutExpired:
++                    os.killpg(child.pid, signal.SIGKILL)
++                    child.wait()
++                code = 124
+         verify()
+         row = {'name': name, 'command': command, 'variant': variant, 'extra_environment': extra or {},
+                'exit_code': code, 'seconds': time.monotonic() - started,
+-               'stdout_sha256': sha(out / (name + '.stdout')), 'stderr_sha256': sha(out / (name + '.stderr'))}
++               'stdout_sha256': sha(out / (name + '.stdout')), 'stderr_sha256': sha(out / (name + '.stderr')),
++               'resources_sha256': sha(out / (name + '.resources'))}
+         commands.append(row)
+         (out / 'commands.json').write_text(json.dumps(commands, indent=2) + '\n')
+         print(json.dumps(row), flush=True)
+@@ -118,6 +157,9 @@
+ 
+     binaries = {}
+     for variant in ['baseline', 'candidate']:
++        overlay_phase = 'cost-' + variant + '-v1'
++        (E / overlay_phase).mkdir(exist_ok=False)
++        run('overlay-' + variant, ['python3', str(E / 'setup_overlay_v1.py'), overlay_phase], variant)
+         run('clippy-' + variant, ['cargo', 'clippy', '--locked', '--release', '-p', 'hypercurve', '--all-features', '--lib', '--tests', '--', '-D', 'warnings'], variant)
+         log = run('build-' + variant, ['cargo', 'test', '--locked', '--release', '-p', 'hypercurve', '--all-features', '--lib', '--no-run', '--message-format=json'], variant)
+         events = [json.loads(line) for line in log.splitlines() if line.startswith('{')]
+@@ -152,6 +194,9 @@
+             assert len(rows) == 18 and all(row['iterations'] == sample['iterations'] for row in rows)
+             observations.append({'mode': sample['mode'], 'pair': sample['pair'], 'variant': variant, 'rows': rows})
+             (out / 'observations.json').write_text(json.dumps(observations, indent=2) + '\n')
++    for variant in dirs:
++        run('verify-lower-' + variant, ['python3', str(E / 'verify_overlay_v1.py'),
++                                      'cost-' + variant + '-v1'], variant)
+     verify()
+     for variant in dirs:
+         assert all(sha(dirs[variant] / name) == digest for name, digest in maps[variant].items())

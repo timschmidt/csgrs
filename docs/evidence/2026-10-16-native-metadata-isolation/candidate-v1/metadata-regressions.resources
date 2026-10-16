@@ -1,0 +1,23 @@
+	Command being timed: "cargo test --manifest-path /dev/shm/csgrs-native-metadata-isolation/candidate/source/Cargo.toml --locked --release -p hypercurve --all-features --lib metadata_order_tests -- --test-threads=1"
+	User time (seconds): 247.70
+	System time (seconds): 4.58
+	Percent of CPU this job got: 167%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:30.95
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 3364576
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 930
+	Minor (reclaiming a frame) page faults: 2126427
+	Voluntary context switches: 9550
+	Involuntary context switches: 18328
+	Swaps: 0
+	File system inputs: 54096
+	File system outputs: 377122
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

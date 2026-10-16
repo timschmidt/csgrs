@@ -1,0 +1,115 @@
+    Checking num-bigint v0.4.6
+    Checking num-complex v0.4.6
+    Checking half v2.7.1
+    Checking num-rational v0.4.2
+    Checking ciborium-ll v0.2.2
+    Checking serde_json v1.0.149
+    Checking ciborium v0.2.2
+    Checking num v0.4.3
+    Checking thiserror v2.0.21
+    Checking smallvec v1.15.1
+    Checking hyperreal v0.13.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperreal)
+    Checking getrandom v0.4.2
+    Checking ppv-lite86 v0.2.21
+    Checking rand_chacha v0.9.0
+    Checking hashbrown v0.17.1
+    Checking hyperlattice v0.6.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperlattice)
+    Checking rand v0.9.4
+    Checking hyperlimit v0.4.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperlimit)
+    Checking wide v1.7.1
+    Checking spade v2.15.1
+    Checking rstar v0.12.2
+    Checking arrayvec v0.7.6
+    Checking polycool v0.4.0
+    Checking simba v0.10.2
+    Checking geo-types v0.7.20
+    Checking rand v0.10.3
+    Checking nalgebra v0.35.0
+    Checking hypersolve v0.3.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hypersolve)
+    Checking hypertri v0.4.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hypertri)
+    Checking argmin-math v0.5.1
+    Checking rand_xoshiro v0.7.0
+    Checking geo v0.33.1
+    Checking argmin v0.11.0
+    Checking gauss-quad v0.3.2
+    Checking kurbo v0.13.1
+    Checking curvo v0.1.92
+    Checking svgtypes v0.16.1
+    Checking tempfile v3.27.0
+    Checking hypercurve v0.3.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hypercurve)
+    Checking rusty-fork v0.3.1
+    Checking proptest v1.11.0
+    Checking chrono v0.4.44
+    Checking arrow-buffer v57.3.1
+    Checking arrow-schema v57.3.1
+    Checking lexical-util v1.0.7
+    Checking arrow-data v57.3.1
+    Checking ahash v0.8.12
+    Checking simd-adler32 v0.3.9
+    Checking arrow-array v57.3.1
+    Checking miniz_oxide v0.8.9
+    Checking regex-automata v0.4.14
+    Checking arrow-select v57.3.1
+    Checking generic-array v0.14.7
+    Checking lexical-write-integer v1.0.6
+    Checking lexical-parse-integer v1.0.6
+    Checking zlib-rs v0.6.8
+    Checking utf8parse v0.2.2
+    Checking anstyle-parse v1.0.0
+    Checking flate2 v1.1.9
+    Checking lexical-parse-float v1.0.6
+    Checking zopfli v0.8.3
+    Checking lexical-write-float v1.0.6
+    Checking regex v1.12.3
+    Checking indexmap v2.14.0
+    Checking uuid v1.23.1
+    Checking colorchoice v1.0.5
+    Checking is_terminal_polyfill v1.70.2
+    Checking anstyle-query v1.1.5
+    Checking gerber-types v0.7.0
+    Checking anstream v1.0.0
+    Checking lazy-regex v3.6.0
+    Checking flatbuffers v25.12.19
+    Checking lexical-core v1.0.6
+    Checking block-buffer v0.10.4
+    Checking crypto-common v0.1.7
+    Checking arrow-ord v57.3.1
+    Checking hypermesh v0.1.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hypermesh)
+    Checking ordered-float v2.10.1
+    Checking atoi v2.0.0
+    Checking debug_unsafe v0.1.4
+    Checking ryu v1.0.23
+    Checking strsim v0.11.1
+    Checking typed-path v0.12.3
+    Checking integer-encoding v3.0.4
+    Checking thrift v0.17.0
+    Checking zip v7.2.0
+    Checking clap_builder v4.6.7
+    Checking arrow-cast v57.3.1
+    Checking atoi_simd v0.17.0
+    Checking hyperphysics v0.3.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperphysics)
+    Checking digest v0.10.7
+    Checking arrow-ipc v57.3.1
+    Checking libsqlite3-sys v0.37.0
+    Checking gerber_parser v0.4.0
+    Checking quick-xml v0.39.4
+    Checking codepage v0.1.3
+    Checking xattr v1.6.1
+    Checking hashlink v0.11.1
+    Checking filetime v0.2.29
+    Checking fallible-iterator v0.3.0
+    Checking twox-hash v2.1.5
+    Checking fast-float2 v0.2.4
+    Checking cpufeatures v0.2.17
+    Checking fallible-streaming-iterator v0.1.9
+    Checking calamine v0.35.0
+    Checking rusqlite v0.39.0
+    Checking parquet v57.3.1
+    Checking sha2 v0.10.9
+    Checking tar v0.4.46
+    Checking zip v2.4.2
+    Checking clap v4.6.7
+    Checking csgrs v0.23.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source)
+    Checking hyperpath v0.3.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperpath)
+    Checking hyperdrc v0.3.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 5m 12s

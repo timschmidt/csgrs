@@ -1,0 +1,62 @@
+{
+  "application_speedup_claimed": false,
+  "base_commit": "73472622dd4034b8b8777cb2a116c4020f6bb328",
+  "compiler_input_identity_qualified": false,
+  "complete_artifact_audit_passed": false,
+  "decision": "Do not admit the metadata-order candidate or the 35 pending native files.",
+  "failed_full_artifact_audit_exit_code": 1,
+  "flat_control_observations": 8,
+  "flat_control_passed": true,
+  "full_plan_complete": false,
+  "nested_identity_probe_observations": 8,
+  "nested_identity_probe_passed": false,
+  "next": "Validate a fresh physical target and rebuild affected checks without nested overlay inputs. Preserve original runtime assertions and all prior diagnostic evidence.",
+  "original_native_gates_observed": {
+    "copper-neck": {
+      "exit_code": 101,
+      "metric": "check-body wall seconds",
+      "original_limit": 60,
+      "passed": false,
+      "reported_assertion_seconds": 86.132483507,
+      "whole_command_seconds": 185.5126411402598
+    },
+    "full-board": {
+      "exit_code": 101,
+      "metric": "worker CPU seconds",
+      "original_limit": 120,
+      "passed": false,
+      "reported_assertion_seconds": 176.419625977,
+      "reported_findings": [
+        12,
+        197
+      ],
+      "whole_command_seconds": 258.9683615360409
+    },
+    "gerber": {
+      "exit_code": 0,
+      "metric": "original smoke assertions",
+      "original_limit": null,
+      "passed": true,
+      "reported_assertion_seconds": null,
+      "whole_command_seconds": 2.7312585469335318
+    }
+  },
+  "owning_layer": "validation infrastructure",
+  "pending_native_files_unchanged": 35,
+  "properties": [
+    "P19",
+    "P27",
+    "P36",
+    "P37"
+  ],
+  "referenced_executable_byte_sequences_retained": 191,
+  "runtime_admitted": false,
+  "source_or_runtime_edits": 0,
+  "status": "observations retained; qualification withheld after reproduced storage identity failure",
+  "supersedes_admission_interpretation": [
+    "progress-v1.md",
+    "decision-v1.json",
+    "qualification-assessment-v1.json",
+    "cost-assessment-v1.json"
+  ]
+}

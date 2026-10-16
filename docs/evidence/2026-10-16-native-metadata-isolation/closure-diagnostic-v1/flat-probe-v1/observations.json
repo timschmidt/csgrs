@@ -1,0 +1,146 @@
+[
+  {
+    "mount": "root-first",
+    "repeat": 0,
+    "relative_path": "release/libcsgrs.rlib",
+    "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "matches_expected": true,
+    "bytes_read": 9998738,
+    "stat": {
+      "st_dev": 211,
+      "st_ino": 185674,
+      "st_size": 9998738,
+      "st_mtime_ns": 1792179341215160065,
+      "st_ctime_ns": 1792179341215160065
+    },
+    "identity_stable": true,
+    "retained_bytes_path": "/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53.rlib"
+  },
+  {
+    "mount": "root-first",
+    "repeat": 0,
+    "relative_path": "release/deps/libcsgrs.rlib",
+    "expected_sha256": "a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb",
+    "sha256": "a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb",
+    "matches_expected": true,
+    "bytes_read": 2699418,
+    "stat": {
+      "st_dev": 211,
+      "st_ino": 185676,
+      "st_size": 2699418,
+      "st_mtime_ns": 1792179341222160165,
+      "st_ctime_ns": 1792179341222160165
+    },
+    "identity_stable": true,
+    "retained_bytes_path": "/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb.rlib"
+  },
+  {
+    "mount": "root-first",
+    "repeat": 1,
+    "relative_path": "release/libcsgrs.rlib",
+    "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "matches_expected": true,
+    "bytes_read": 9998738,
+    "stat": {
+      "st_dev": 211,
+      "st_ino": 185674,
+      "st_size": 9998738,
+      "st_mtime_ns": 1792179341215160065,
+      "st_ctime_ns": 1792179341215160065
+    },
+    "identity_stable": true,
+    "retained_bytes_path": "/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53.rlib"
+  },
+  {
+    "mount": "root-first",
+    "repeat": 1,
+    "relative_path": "release/deps/libcsgrs.rlib",
+    "expected_sha256": "a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb",
+    "sha256": "a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb",
+    "matches_expected": true,
+    "bytes_read": 2699418,
+    "stat": {
+      "st_dev": 211,
+      "st_ino": 185676,
+      "st_size": 2699418,
+      "st_mtime_ns": 1792179341222160165,
+      "st_ctime_ns": 1792179341222160165
+    },
+    "identity_stable": true,
+    "retained_bytes_path": "/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb.rlib"
+  },
+  {
+    "mount": "deps-first",
+    "repeat": 0,
+    "relative_path": "release/deps/libcsgrs.rlib",
+    "expected_sha256": "a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb",
+    "sha256": "a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb",
+    "matches_expected": true,
+    "bytes_read": 2699418,
+    "stat": {
+      "st_dev": 212,
+      "st_ino": 185676,
+      "st_size": 2699418,
+      "st_mtime_ns": 1792179341222160165,
+      "st_ctime_ns": 1792179341222160165
+    },
+    "identity_stable": true,
+    "retained_bytes_path": "/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb.rlib"
+  },
+  {
+    "mount": "deps-first",
+    "repeat": 0,
+    "relative_path": "release/libcsgrs.rlib",
+    "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "matches_expected": true,
+    "bytes_read": 9998738,
+    "stat": {
+      "st_dev": 212,
+      "st_ino": 185674,
+      "st_size": 9998738,
+      "st_mtime_ns": 1792179341215160065,
+      "st_ctime_ns": 1792179341215160065
+    },
+    "identity_stable": true,
+    "retained_bytes_path": "/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53.rlib"
+  },
+  {
+    "mount": "deps-first",
+    "repeat": 1,
+    "relative_path": "release/deps/libcsgrs.rlib",
+    "expected_sha256": "a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb",
+    "sha256": "a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb",
+    "matches_expected": true,
+    "bytes_read": 2699418,
+    "stat": {
+      "st_dev": 212,
+      "st_ino": 185676,
+      "st_size": 2699418,
+      "st_mtime_ns": 1792179341222160165,
+      "st_ctime_ns": 1792179341222160165
+    },
+    "identity_stable": true,
+    "retained_bytes_path": "/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb.rlib"
+  },
+  {
+    "mount": "deps-first",
+    "repeat": 1,
+    "relative_path": "release/libcsgrs.rlib",
+    "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "matches_expected": true,
+    "bytes_read": 9998738,
+    "stat": {
+      "st_dev": 212,
+      "st_ino": 185674,
+      "st_size": 9998738,
+      "st_mtime_ns": 1792179341215160065,
+      "st_ctime_ns": 1792179341215160065
+    },
+    "identity_stable": true,
+    "retained_bytes_path": "/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53.rlib"
+  }
+]

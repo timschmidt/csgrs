@@ -1,0 +1,604 @@
+[
+  {
+    "name": "overlay-baseline",
+    "command": [
+      "python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-metadata-isolation/setup_overlay_v1.py",
+      "cost-baseline-v1"
+    ],
+    "variant": "baseline",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 180.16862702788785,
+    "stdout_sha256": "b41a1dfe2e195be6e53157d90f0f8f96e2b047e02dbcfa6e6c07f910f34e1c50",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "23b041c063451ef64bdce62c40233e3feb9d4948deb0e4f2283253ef8426466c"
+  },
+  {
+    "name": "clippy-baseline",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "--tests",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "variant": "baseline",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 187.6956728529185,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "af53f6bd07f892f08a1e2b669f85d955addd3430298e49bf2c8695fa52630f3e",
+    "resources_sha256": "763906980a7ef67f7387e168b3aff1e170f355c47e3e432d705b303af9616466"
+  },
+  {
+    "name": "build-baseline",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "variant": "baseline",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 187.34634446911514,
+    "stdout_sha256": "8a4e8db427f92f66e5cb5a0ae6f77fb09112d5acbc75b0527062f1d3e38a4afa",
+    "stderr_sha256": "4ab40208fcfb669ca8589ca5711ddc27c6bcc1ccec72ef7c893bcfb523d477b5",
+    "resources_sha256": "b85308fb11c9873f137d0f9038f4cde4f510d88105335a1f1197eb08737c6c0d"
+  },
+  {
+    "name": "regressions-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "metadata_order_tests",
+      "--test-threads=1"
+    ],
+    "variant": "baseline",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.5211843429133296,
+    "stdout_sha256": "5df065de5582ecaed44dd27c9596ee61f06a334f4a6356a15a3622c583087ed8",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6ba0f1b4f8521dc56d48385d56c42b59b53780b375527fd404d001a01426b9b8"
+  },
+  {
+    "name": "overlay-candidate",
+    "command": [
+      "python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-metadata-isolation/setup_overlay_v1.py",
+      "cost-candidate-v1"
+    ],
+    "variant": "candidate",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 150.58571378234774,
+    "stdout_sha256": "37052e774640f2b39f7a5a1942954239a5d62bc224f507799f2006352a30fdca",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f159e9350e1783ed2904e8853067d1265750c06dd574e0d3f46eddb2e51bb1f0"
+  },
+  {
+    "name": "clippy-candidate",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "--tests",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "variant": "candidate",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 212.47144003212452,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "5e792864312d59045eccb9c010dcc6d524a622d018c1fdc380582711a7c32e03",
+    "resources_sha256": "a1eb3edc545a53c5b326e6db890a39814f923a17e1e1fee1a2d10f8b84ccba9b"
+  },
+  {
+    "name": "build-candidate",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "variant": "candidate",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 181.19745624391362,
+    "stdout_sha256": "8494c4bdc7a48295f1be8d28078476b88064346969a2ecfecd8a9b375d45711f",
+    "stderr_sha256": "3f9b1b9c95a3f9e31453886778e1f511d7b541eeb2abda8db907342d4f7f01e7",
+    "resources_sha256": "c517977ff87ea1f0a0a97486a267fed6e9832c14a264b805686ced3bd019cd1d"
+  },
+  {
+    "name": "regressions-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "metadata_order_tests",
+      "--test-threads=1"
+    ],
+    "variant": "candidate",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.5486440011300147,
+    "stdout_sha256": "5df065de5582ecaed44dd27c9596ee61f06a334f4a6356a15a3622c583087ed8",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5bc71ca3b85ade7e0d7194ca45266b30a6dfb18d1eafd953b83f02f2f8ea5d3b"
+  },
+  {
+    "name": "time-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "baseline",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "time",
+      "REGION_PROBE_ITERATIONS": "1024"
+    },
+    "exit_code": 0,
+    "seconds": 3.634645614773035,
+    "stdout_sha256": "8c965f71621f5decbae1fbf71acf7708be5d6f1f84cdc4c666813c1934135ba0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "418d75f2c258e484805352e375ecdfb2fa020db7b9c817dffc00bd3859a1cab1"
+  },
+  {
+    "name": "time-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "candidate",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "time",
+      "REGION_PROBE_ITERATIONS": "1024"
+    },
+    "exit_code": 0,
+    "seconds": 3.476745894178748,
+    "stdout_sha256": "e4d390823db58ffd06ef8f88efc2b63c4a6f70e7d760d1f35c394e91bda98b2b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "770522169c1824fd1093376107b8476ad385881c67dc6edeb975c6fb52c5d9a0"
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "candidate",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "time",
+      "REGION_PROBE_ITERATIONS": "1024"
+    },
+    "exit_code": 0,
+    "seconds": 3.472919266205281,
+    "stdout_sha256": "bed7d7638947ad7b23ec623bea92a5f9ea97c28d7ef21c21cb0f2e9c637233d9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "35fe1643212f7ea4d9fa72387c324bc11b9cab4df7b7545564f6fbaa3c1e20a5"
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "baseline",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "time",
+      "REGION_PROBE_ITERATIONS": "1024"
+    },
+    "exit_code": 0,
+    "seconds": 3.7284642411395907,
+    "stdout_sha256": "627ed0a6e58978951168aff6d6b113b9f2728b5067d33f8a033199263ddec6e0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c613ac39adeb01c095936c6233ba1a3aa92f54905b9b041024485b838f2b8e6c"
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "baseline",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "time",
+      "REGION_PROBE_ITERATIONS": "1024"
+    },
+    "exit_code": 0,
+    "seconds": 3.676122361328453,
+    "stdout_sha256": "056a35c26acecd487f552e99448e700ab230273b65951ceede85b398cea8aba5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a2680fbc6fa084eefe16d5b222f2012a2ca7572a3aecb761a26acac61d2f619c"
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "candidate",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "time",
+      "REGION_PROBE_ITERATIONS": "1024"
+    },
+    "exit_code": 0,
+    "seconds": 3.5018996386788785,
+    "stdout_sha256": "d6f1f148eb5f5c356a9321b1af4a646962d7db3dcb3d6701cc28f14a65a34623",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fa945b5131bbcdd5661de9bf7b4b9a9feda735982a75e70308e30b4266474123"
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "candidate",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "time",
+      "REGION_PROBE_ITERATIONS": "1024"
+    },
+    "exit_code": 0,
+    "seconds": 3.4882032279856503,
+    "stdout_sha256": "4b88c58e7852063cdc34dc4a2998e9f381ec7ff1488f339d1462bbe523b7f3ca",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "085baee78f09d599a7fa51396b340ee4e55cda582bfdd7ef40b768178b0bd229"
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "baseline",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "time",
+      "REGION_PROBE_ITERATIONS": "1024"
+    },
+    "exit_code": 0,
+    "seconds": 3.795080943033099,
+    "stdout_sha256": "2cac7e2d4499393e51b80df38d70a1b18ab251d09d425c65e34e4db06aac2a18",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ac03c35ebe02228e8b116e024e7a1c19462e6939df75dc2d5fd4f5458ca9b020"
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "baseline",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "time",
+      "REGION_PROBE_ITERATIONS": "1024"
+    },
+    "exit_code": 0,
+    "seconds": 3.7548922682181,
+    "stdout_sha256": "7bd546897d0bbd0050aa1d08fca5991e2c9f632514a97e1da8b739092aa414dd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "cf30491b653e2eb9c5dfea29ae66e430a72e80435f7a211813fdf914be4e21d6"
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "candidate",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "time",
+      "REGION_PROBE_ITERATIONS": "1024"
+    },
+    "exit_code": 0,
+    "seconds": 3.643264244310558,
+    "stdout_sha256": "e6409c5ba95d4a67958b486bc0f79b1e97d87b59ce4c5564b0697d8f16e06ec6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "dd4eca8d0b5996446e26559e24bf1bb5a794e683fe58ad8f1373240e5b47f3f7"
+  },
+  {
+    "name": "memory-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "baseline",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "memory",
+      "REGION_PROBE_ITERATIONS": "128"
+    },
+    "exit_code": 0,
+    "seconds": 2.7438556631095707,
+    "stdout_sha256": "4d0a069a38628d1d6020355395e6b42698a5763b595c404432d55a979406d501",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4e72896f9d4ec73b8645e35207b4c08f3c88d582b84eb1a7b2b0616c438fa170"
+  },
+  {
+    "name": "memory-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "candidate",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "memory",
+      "REGION_PROBE_ITERATIONS": "128"
+    },
+    "exit_code": 0,
+    "seconds": 2.6774923051707447,
+    "stdout_sha256": "b68c5a3fe2f3499abae2e13703ea16fe50f59e087757d583a2d9f965a16c9cc1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "cff6f0cd4695bb4cc9fb371b4b0a97dd3c0086e82314381762a8579943879fc4"
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "candidate",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "memory",
+      "REGION_PROBE_ITERATIONS": "128"
+    },
+    "exit_code": 0,
+    "seconds": 2.619552817195654,
+    "stdout_sha256": "8b81b1d40d725462e3a079077142f9e762646cb704912a5c51f80b614600d11b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "beee973830316c8f06a074136a5f0c4817ca7bfe6583422bcad2feb404f1dc0a"
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "baseline",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "memory",
+      "REGION_PROBE_ITERATIONS": "128"
+    },
+    "exit_code": 0,
+    "seconds": 2.66338999196887,
+    "stdout_sha256": "242323a6d254ea0936064c39f51edfddddca1493ec38187cda90ed409e911edb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7642bead724e5661ac0a86b1acaddef6324283277e35d90c3c45161dc0561603"
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "baseline",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "memory",
+      "REGION_PROBE_ITERATIONS": "128"
+    },
+    "exit_code": 0,
+    "seconds": 2.651646135840565,
+    "stdout_sha256": "2686ff689032f7712b16b0b5b76cdbc6f815d0be8719853a84fc6be2dec2ee27",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0a1f00f2afc8236031fcdd0b7bbd4a52ff9ba10facd81c57d2629eee3ea7b785"
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "candidate",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "memory",
+      "REGION_PROBE_ITERATIONS": "128"
+    },
+    "exit_code": 0,
+    "seconds": 2.6182281682267785,
+    "stdout_sha256": "bd29011fd74f49e5705f01a1483355b678c88e3f535f082dc6e30000b24bca95",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "cdce60afc835197ddc219399603da4f95a90122215a5f7861f963e8d1d25fa11"
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "candidate",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "memory",
+      "REGION_PROBE_ITERATIONS": "128"
+    },
+    "exit_code": 0,
+    "seconds": 2.6243118811398745,
+    "stdout_sha256": "59b5c91ed5fe0fbe3f09f89804ad6544cbefe15abb8965109e45fa2f5dc67517",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4213cfe0d92b367daaedeeb7768f6f903386904807249c9b8488e02e6f3444f2"
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "baseline",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "memory",
+      "REGION_PROBE_ITERATIONS": "128"
+    },
+    "exit_code": 0,
+    "seconds": 2.6577517478726804,
+    "stdout_sha256": "7c33f22210fceee558b150265bf29afa979b5f24811849af1312f1ded88ae6ca",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "33efecf1c04761b7c861da785b26afca4f1692ce872f11a1f176b3dec2e662db"
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-baseline-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "baseline",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "memory",
+      "REGION_PROBE_ITERATIONS": "128"
+    },
+    "exit_code": 0,
+    "seconds": 2.6433965326286852,
+    "stdout_sha256": "942cb3c5799c188facd5d29294468eb207b6f0c004eeeb55d82aa2289def2534",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "923fbe5bc2b8f07fa26940d6885cf299edbb07f2d17c69f55766a3c34bb3d917"
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/cost-candidate-v1/release/deps/hypercurve-c64b9a6905916d79",
+      "bezier_region::metadata_order_tests::cost::probe",
+      "--exact",
+      "--ignored",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "variant": "candidate",
+    "extra_environment": {
+      "REGION_PROBE_MODE": "memory",
+      "REGION_PROBE_ITERATIONS": "128"
+    },
+    "exit_code": 0,
+    "seconds": 2.623761269263923,
+    "stdout_sha256": "8f5782cdf329aa53f90c0f233043059ee4bcd74d812e4d36cfc9581dca35dcc9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8d106008965f4e60547374289765867fbe21125ca1b4ca1b3708711d4c8247ca"
+  },
+  {
+    "name": "verify-lower-baseline",
+    "command": [
+      "python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-metadata-isolation/verify_overlay_v1.py",
+      "cost-baseline-v1"
+    ],
+    "variant": "baseline",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 159.88764083199203,
+    "stdout_sha256": "8d445524d32961afd67e8bc5dd07bb5aa96b24406f2a5eb417ba63a9fe8e6804",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "aa3b9e568f4e9b7c51eaa6f3b185b5c635e04c4926fadc6d64241b72a76c4d53"
+  },
+  {
+    "name": "verify-lower-candidate",
+    "command": [
+      "python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-metadata-isolation/verify_overlay_v1.py",
+      "cost-candidate-v1"
+    ],
+    "variant": "candidate",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 201.5493574407883,
+    "stdout_sha256": "8d445524d32961afd67e8bc5dd07bb5aa96b24406f2a5eb417ba63a9fe8e6804",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "718f5eac9219ac6c03c6aa0f5de16054cea6ac3650bd0bf34708bf1d1edfb0bc"
+  }
+]

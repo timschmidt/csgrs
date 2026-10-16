@@ -1,0 +1,476 @@
+{
+  "status": "artifact audit failed; no ledger update or staging",
+  "failing_audit_runner": "runners/checkpoint_v1.py",
+  "failing_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/qualification-v1/release/libcsgrs.rlib",
+  "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+  "verified_expectations_progress_before_failure": 500000,
+  "audit_exit_code": 1,
+  "audit_resources": "/dev/shm/csgrs-native-metadata-git-v1/artifact-audit.resources",
+  "uncached_reads": [
+    {
+      "path": "/dev/shm/csgrs-distribution-contracts/cost-build-v1/upper/release/deps/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "stat": {
+        "st_dev": 27,
+        "st_ino": 64359,
+        "st_nlink": 2,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132247484022153
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:30:47.484022+00:00"
+    },
+    {
+      "path": "/dev/shm/csgrs-distribution-contracts/cost-build-v1/upper/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "stat": {
+        "st_dev": 27,
+        "st_ino": 64359,
+        "st_nlink": 2,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132247484022153
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:30:47.484022+00:00"
+    },
+    {
+      "path": "/dev/shm/csgrs-distribution-contracts/cost-build-v2/upper/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "stat": {
+        "st_dev": 27,
+        "st_ino": 64434,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v1/release/deps/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "stat": {
+        "st_dev": 179,
+        "st_ino": 64359,
+        "st_nlink": 2,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132247484022153
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:30:47.484022+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "stat": {
+        "st_dev": 179,
+        "st_ino": 64359,
+        "st_nlink": 2,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132247484022153
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:30:47.484022+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v2/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "stat": {
+        "st_dev": 182,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/candidate-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "stat": {
+        "st_dev": 150,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/candidate-v2/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 183,
+        "st_ino": 64359,
+        "st_nlink": 2,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/cost-build-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 185,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/qualification-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 154,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/benchmark-repair-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 194,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/candidate-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 187,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/candidate-v2/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 189,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/candidate-v3/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 184,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/candidate-v5/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 192,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/hull-proof-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 91,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/qualification-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 193,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/batch-winding-contracts/candidate-focused-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 195,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/batch-winding-contracts/candidate-focused-v2/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 199,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/batch-winding-contracts/diagnostic-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 191,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/batch-winding-contracts/diagnostic-v2/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 196,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/batch-winding-contracts/fuzz-lint-repair-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 201,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/batch-winding-contracts/qualification-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 197,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/batch-winding-contracts/triangulation-baseline-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 198,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/libcsgrs.rlib",
+      "expected_sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+      "exists": true,
+      "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+      "stat": {
+        "st_dev": 200,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 9998738,
+        "st_mtime_ns": 1792132247403208746,
+        "st_ctime_ns": 1792132350513720381
+      },
+      "stable_during_read": true,
+      "mtime_utc": "2026-10-16T06:30:47.403209+00:00",
+      "ctime_utc": "2026-10-16T06:32:30.513720+00:00"
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/qualification-v1/release/deps/libcsgrs.rlib",
+      "expected_sha256": "40e4348f453c1f5f8caa1f84c90bf014271dd9a9c15d78574477cadadc8a2d81",
+      "exists": true,
+      "sha256": "40e4348f453c1f5f8caa1f84c90bf014271dd9a9c15d78574477cadadc8a2d81",
+      "stat": {
+        "st_dev": 154,
+        "st_ino": 64359,
+        "st_nlink": 1,
+        "st_size": 4347716,
+        "st_mtime_ns": 1792136777277625098,
+        "st_ctime_ns": 1792136777282232370
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T07:46:17.277625+00:00",
+      "ctime_utc": "2026-10-16T07:46:17.282232+00:00"
+    },
+    {
+      "path": "/dev/shm/csgrs-polyhedral-construction/qualification-v1/upper/release/libcsgrs.rlib",
+      "expected_sha256": null,
+      "exists": false
+    },
+    {
+      "path": "/dev/shm/csgrs-polyhedral-construction/qualification-v1/upper/release/deps/libcsgrs.rlib",
+      "expected_sha256": "40e4348f453c1f5f8caa1f84c90bf014271dd9a9c15d78574477cadadc8a2d81",
+      "exists": true,
+      "sha256": "40e4348f453c1f5f8caa1f84c90bf014271dd9a9c15d78574477cadadc8a2d81",
+      "stat": {
+        "st_dev": 27,
+        "st_ino": 78255,
+        "st_nlink": 1,
+        "st_size": 4347716,
+        "st_mtime_ns": 1792136777277625098,
+        "st_ctime_ns": 1792136777282232370
+      },
+      "stable_during_read": false,
+      "mtime_utc": "2026-10-16T07:46:17.277625+00:00",
+      "ctime_utc": "2026-10-16T07:46:17.282232+00:00"
+    }
+  ],
+  "ledger_unchanged": true
+}

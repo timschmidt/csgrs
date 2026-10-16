@@ -1,0 +1,127 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {},
+  "base_commit": "73472622dd4034b8b8777cb2a116c4020f6bb328",
+  "runner_sha256": "f3ee76657ed7c1e8792452ded7c2380c1ad03a41abb312d80f9adf68b4dc6f05",
+  "phase": "baseline-v1",
+  "commands": [
+    [
+      "overlay",
+      [
+        "python3",
+        "docs/evidence/2026-10-16-native-metadata-isolation/setup_overlay_v1.py",
+        "baseline-v1"
+      ]
+    ],
+    [
+      "fixtures",
+      [
+        "python3",
+        "docs/evidence/2026-10-16-native-metadata-isolation/fixtures_v1.py"
+      ]
+    ],
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "/dev/shm/csgrs-native-metadata-isolation/baseline/source/Cargo.toml",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "metadata-regressions",
+      [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "/dev/shm/csgrs-native-metadata-isolation/baseline/source/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "metadata_order_tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "native-cli",
+      [
+        "cargo",
+        "build",
+        "--manifest-path",
+        "/dev/shm/csgrs-native-metadata-isolation/baseline/source/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--message-format=json"
+      ]
+    ],
+    [
+      "verify-lower",
+      [
+        "python3",
+        "docs/evidence/2026-10-16-native-metadata-isolation/verify_overlay_v1.py",
+        "baseline-v1"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/baseline-v1",
+    "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/baseline-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P4",
+    "P6",
+    "P10",
+    "P15",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P27",
+    "P35",
+    "P36",
+    "P37",
+    "P38",
+    "P39"
+  ],
+  "owning_layers": [
+    "Hypercurve retained region validation"
+  ],
+  "domain": "Existing supported boundary loops and complete native board fixtures; see contract-v1.md.",
+  "consumers": [
+    "CurveRegion2 constructors and native arrangement consumers",
+    "Hyperdrc full original board checks",
+    "CSGRS modeling composition"
+  ],
+  "missing_acceptance_test": [
+    "Requalify the isolated conjunction-order candidate on current sources, preserving original tests, policies, fixtures, limits and complete outcomes."
+  ],
+  "semantic_oracle": "Independent exact offsets, duplicate/source-reuse error priorities, retained proof and later refinement assertions. Full test and report equality requirements remain separate from runtime measurements.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "diagnostic_collection": "All commands are attempted on frozen source; Cargo test --no-fail-fast retains every failed test target. Every nonzero result remains a failure; source or artifact mutation still aborts immediately.",
+  "limitations": "External containment only. Fixed local costs and full report replay are separate gates. No release, full CI, internal heap/work bound or full-plan completion claim.",
+  "previous_goal_turn": "Progress: 73472622 reproduced both current native runtime failures and retained full profiling and caller diagnostics; no runtime candidate was admitted.",
+  "wrapper_sha256": "b749822972f1e3caa2185a58ccf9eeae3ef1059f21d2d6a2445ef89761388132",
+  "preparation_sha256": "7e54d0246feacada316fc32c11439d6df444189cc5f79a118319914bbb45b260"
+}

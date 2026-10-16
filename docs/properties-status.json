@@ -12092,6 +12092,64 @@
     "historical_preservation": "27093 inherited missing paths retain their expected hashes; no new missing artifact or mismatch.",
     "runtime_admitted": false,
     "full_plan_complete": false
+  },
+  "native_metadata_isolation": {
+    "status": "observations retained; qualification withheld after reproduced storage identity failure",
+    "baseline_commit": "73472622dd4034b8b8777cb2a116c4020f6bb328",
+    "contract": "docs/evidence/2026-10-16-native-metadata-isolation/contract-v1.md",
+    "progress": "docs/evidence/2026-10-16-native-metadata-isolation/progress-v2.md",
+    "decision": "docs/evidence/2026-10-16-native-metadata-isolation/decision-v2.json",
+    "checkpoint": "docs/evidence/2026-10-16-native-metadata-isolation/checkpoint-v2.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-native-metadata-isolation/artifact-expectations-v2.json.gz",
+    "observed_qualification": "docs/evidence/2026-10-16-native-metadata-isolation/qualification-assessment-v1.json",
+    "observed_cost": "docs/evidence/2026-10-16-native-metadata-isolation/cost-assessment-v1.json",
+    "reports": "docs/evidence/2026-10-16-native-metadata-isolation/report-replay-v1/result.json",
+    "original_native_gates_observed": {
+      "full-board": {
+        "passed": false,
+        "exit_code": 101,
+        "metric": "worker CPU seconds",
+        "original_limit": 120,
+        "reported_assertion_seconds": 176.419625977,
+        "whole_command_seconds": 258.9683615360409,
+        "reported_findings": [
+          12,
+          197
+        ]
+      },
+      "copper-neck": {
+        "passed": false,
+        "exit_code": 101,
+        "metric": "check-body wall seconds",
+        "original_limit": 60,
+        "reported_assertion_seconds": 86.132483507,
+        "whole_command_seconds": 185.5126411402598
+      },
+      "gerber": {
+        "passed": true,
+        "exit_code": 0,
+        "metric": "original smoke assertions",
+        "original_limit": null,
+        "reported_assertion_seconds": null,
+        "whole_command_seconds": 2.7312585469335318
+      }
+    },
+    "source_or_runtime_edits": 0,
+    "pending_native_files_unchanged": 35,
+    "compiler_input_identity_qualified": false,
+    "runtime_admitted": false,
+    "full_plan_complete": false,
+    "historical_preservation": "Parent expectations and 27093 inherited missing paths remain pinned. Full audit failed; nested view aliasing reproduced. No new whole-history completeness or zero-loss claim.",
+    "next": "Validate a fresh physical target and rebuild affected checks without nested overlay inputs. Preserve original runtime assertions and all prior diagnostic evidence."
+  },
+  "validation_storage_integrity": {
+    "status": "nested overlay compiler-input identity unqualified; clean rebuild required",
+    "report": "docs/evidence/2026-10-16-native-metadata-isolation/progress-v2.md",
+    "nested_reproduction": "docs/evidence/2026-10-16-native-metadata-isolation/closure-diagnostic-v1/overlay-probe-v1/result.json",
+    "flat_control": "docs/evidence/2026-10-16-native-metadata-isolation/closure-diagnostic-v1/flat-probe-v1/result.json",
+    "scope": "Prior checks using affected nested views require requalification before supporting a current acceptance claim. Historical results remain observations; this does not prove production code wrong.",
+    "complete_artifact_audit_passed": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {

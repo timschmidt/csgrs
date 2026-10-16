@@ -1,0 +1,13 @@
+{
+  "label": "root-first",
+  "command": [
+    "/usr/bin/fuse-overlayfs",
+    "-o",
+    "ro,lowerdir=/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/flat-source,upperdir=/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/root-first/upper,workdir=/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/root-first/work",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/closure-flat-read-root-first-v1"
+  ],
+  "exit_code": 0,
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/closure-flat-read-root-first-v1",
+  "is_mount": true,
+  "read_only": true
+}

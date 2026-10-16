@@ -1,0 +1,18 @@
+{
+  "runner_sha256": "8ef6e9cf88595ddadb1fe448d858b4c1342ac425f307b88623fda3bb6bad2e90",
+  "tool": "/usr/bin/fuse-overlayfs",
+  "tool_sha256": "8fcd5a85ef3fcaf99c2c8f820ae6200427021b66f1988f6d3b49a224d55fdfe9",
+  "lower": "/dev/shm/csgrs-native-metadata-isolation/closure-flat-probe-v1/flat-source",
+  "expected_sha256": {
+    "release/libcsgrs.rlib": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+    "release/deps/libcsgrs.rlib": "a47fb08cd44b228677076ccc2434af55caff700c6beb3f219775e565aa7183bb"
+  },
+  "physical_sources": {
+    "release/libcsgrs.rlib": "/dev/shm/csgrs-distribution-contracts/cost-build-v2/upper/release/libcsgrs.rlib",
+    "release/deps/libcsgrs.rlib": "/dev/shm/csgrs-polyhedral-construction/candidate-v1/upper/release/deps/libcsgrs.rlib"
+  },
+  "contract": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-metadata-isolation/closure-diagnostic-v1/probe-contract-v1.md",
+  "existing_targets_modified": false,
+  "lower_strategy": "Independent byte-verified physical copies; no nested lower mount.",
+  "runtime_admitted": false
+}

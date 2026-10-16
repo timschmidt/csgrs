@@ -1,0 +1,67 @@
+{
+  "scope": "Compare complete native reports from the already frozen CLI executables.",
+  "runner_sha256": "1aec0781c00affaebd0bb13d3ab8b47559588c65f5fbc1af47cee4b6f217e8a5",
+  "guard_sha256": "f3ee76657ed7c1e8792452ded7c2380c1ad03a41abb312d80f9adf68b4dc6f05",
+  "preparation_sha256": "7e54d0246feacada316fc32c11439d6df444189cc5f79a118319914bbb45b260",
+  "source_hashes_sha256": "6dd0e43e693b950dea8789299e298cbe7e3083e40e7ee1a859cee312eb70c270",
+  "binaries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/baseline-v1/release/hyperdrc",
+      "sha256": "ff59a4e57fc5975763d54f946503028037ff20c1725d3a49cebfa96f8e637401",
+      "bytes": 42996752,
+      "features": [],
+      "manifest_path": "/dev/shm/csgrs-native-metadata-isolation/baseline/source/crates/hyperdrc/Cargo.toml",
+      "validation_sha256": "05f3630a649753d7c506240042e63ec1443ef06b42947a3f968e678045dca041",
+      "build_stdout_sha256": "118cef744c395265d8fc1dbd43d3b48a2e06342771b6fbc25cd5f0c80a196124"
+    },
+    "candidate": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/candidate-v1/release/hyperdrc",
+      "sha256": "fe91909424818ffab17a3faabea97ea426765e55abe3c855b40c58a497f0498a",
+      "bytes": 42996752,
+      "features": [],
+      "manifest_path": "/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperdrc/Cargo.toml",
+      "validation_sha256": "23e868dba173ddd3522c87ffea2cfecb56641ef72667294674f26e3aa5aff11e",
+      "build_stdout_sha256": "285715db8af533d2788a4ab56e4790a28fd3cf6046377bce144eaaa58ffc02cd"
+    }
+  },
+  "fixtures": [
+    {
+      "label": "cparti-fpga",
+      "archive": "CPArti FPGA dev board.zip",
+      "entry": "CPArti FPGA dev board.kicad_pcb",
+      "expected_findings": 12,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "board": "/dev/shm/csgrs-native-metadata-isolation/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb",
+      "board_sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a",
+      "archive_sha256": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35"
+    },
+    {
+      "label": "hvp109a",
+      "archive": "HVP109A.zip",
+      "entry": "HVP109A.kicad_pcb",
+      "expected_findings": 197,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "board": "/dev/shm/csgrs-native-metadata-isolation/report-replay-v1/inputs/hvp109a/HVP109A.kicad_pcb",
+      "board_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6",
+      "archive_sha256": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a"
+    }
+  ],
+  "environment": {
+    "TMPDIR": "/dev/shm/csgrs-native-metadata-isolation/report-replay-v1/tmp",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "input_hashes_sha256": "547560dbf151c609e5f808992165b1138f21dd0fe181aa6a2e9bb37b6241124f",
+  "expected_cli_exit": 1,
+  "exit_contract": "A complete report with active findings exits 1; validate its JSON separately.",
+  "normalization": null,
+  "wall_limit_seconds": 1800,
+  "address_space_limit_bytes": 8589934592,
+  "limitations": "Four fresh CLI replays establish complete report comparison only. No application speedup, independent geometry proof, internal resource bound or release claim.",
+  "runtime_admitted": false
+}

@@ -1,0 +1,13 @@
+   Compiling hypercurve v0.3.1 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hypercurve)
+   Compiling csgrs v0.23.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source)
+   Compiling hyperdrc v0.3.0 (/dev/shm/csgrs-native-metadata-isolation/candidate/source/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 3m 03s
+     Running unittests src/lib.rs (target/properties/native-metadata-isolation/candidate-v1/release/deps/hyperdrc-f2524bbb15bdb74d)
+     Running unittests src/main.rs (target/properties/native-metadata-isolation/candidate-v1/release/deps/hyperdrc-5da1690b41025398)
+     Running tests/artifact_numeric_keys.rs (target/properties/native-metadata-isolation/candidate-v1/release/deps/artifact_numeric_keys-03d9b7a570505404)
+     Running tests/diagnostic_formatting.rs (target/properties/native-metadata-isolation/candidate-v1/release/deps/diagnostic_formatting-e5ef4baeabfbc955)
+     Running tests/kicad_pad_sources.rs (target/properties/native-metadata-isolation/candidate-v1/release/deps/kicad_pad_sources-e4732b4399bed56a)
+     Running tests/kicad_rule_export.rs (target/properties/native-metadata-isolation/candidate-v1/release/deps/kicad_rule_export-c09b25b29b958a07)
+     Running tests/native_linear_strokes.rs (target/properties/native-metadata-isolation/candidate-v1/release/deps/native_linear_strokes-28ed5b0b1f09e479)
+     Running tests/readme.rs (target/properties/native-metadata-isolation/candidate-v1/release/deps/readme-990ac56b4fb5e9a5)
+   Doc-tests hyperdrc

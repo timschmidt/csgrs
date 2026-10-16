@@ -1,0 +1,67 @@
+{
+  "commands": [
+    {
+      "name": "overlay",
+      "exit_code": 0,
+      "seconds": 82.99340920476243,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "fa27fe856328166cc41893f6a767ad86c5793ac12a21d1bed340ea86ddaa2360",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "0a232d6efefaa09880e7fbf7861fac6b3847ba88f3e9792961dcadf135c92400"
+    },
+    {
+      "name": "fixtures",
+      "exit_code": 0,
+      "seconds": 2.468918737024069,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "499e1bd97503e72962aa8a2f54252a70787e7670b3f3785f1ff552b630c0cb74",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "f274c65bdaf76759a1802d7a0f6b6603e20b82326cb6e87b1a0a4b7b0073975f"
+    },
+    {
+      "name": "format",
+      "exit_code": 0,
+      "seconds": 12.734923433046788,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "93eb6ac98f23bb6dd2114180c0aff92ca8847328ad21eac692d4f480dc9e3a36"
+    },
+    {
+      "name": "metadata-regressions",
+      "exit_code": 0,
+      "seconds": 159.23037384124473,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/native-metadata-isolation/baseline-v1/release/deps/hypercurve-c64b9a6905916d79": "72ae36bf1f887fa274b46803e869635d6ce48a0d417af1962ef68baff6e5bcfe"
+      },
+      "stdout_sha256": "c2579a770a2071ac5226ec8019804812d277a0062cec4e367fa1c19033fb9341",
+      "stderr_sha256": "f544c56e3af6a3c6e8c39bf9b6021dfc6480226089834e1d888938766b3f529c",
+      "resources_sha256": "abae3daf96d816c4e0027565da7155a24f3ac0557fa48d4122064e6561d33398"
+    },
+    {
+      "name": "native-cli",
+      "exit_code": 0,
+      "seconds": 218.2773150089197,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "118cef744c395265d8fc1dbd43d3b48a2e06342771b6fbc25cd5f0c80a196124",
+      "stderr_sha256": "4ec32bffede278f46ffa690b84865eed142e09922e2de851b59e58d7ae51c428",
+      "resources_sha256": "77290bf00289a835b02af462708ee25cdc6fd1eab3ce040c23878fdcaaeb41d5"
+    },
+    {
+      "name": "verify-lower",
+      "exit_code": 0,
+      "seconds": 59.47659433120862,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "8d445524d32961afd67e8bc5dd07bb5aa96b24406f2a5eb417ba63a9fe8e6804",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "9c2c5b25321a9cc668685ba7d72e213969aa820859ac87857477e23ee6356ba5"
+    }
+  ],
+  "passed": true
+}

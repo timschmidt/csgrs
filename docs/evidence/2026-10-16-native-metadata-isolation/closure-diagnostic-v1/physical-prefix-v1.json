@@ -1,0 +1,43 @@
+[
+  {
+    "path": "/dev/shm/csgrs-polyhedral-construction/candidate-v2/upper/release/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "path": "/dev/shm/csgrs-polyhedral-construction/candidate-v2/upper/release/deps/libcsgrs.rlib",
+    "exists": false
+  },
+  {
+    "phase": "baseline-v1",
+    "lower_pins": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/deps/libcsgrs.rlib": "b71d69a3f03938ed99d088f28c43ae9c7b1d522676f22ad725ac1a95d8d14e2c",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/libcsgrs.rlib": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53"
+    }
+  },
+  {
+    "phase": "candidate-v1",
+    "lower_pins": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/deps/libcsgrs.rlib": "b71d69a3f03938ed99d088f28c43ae9c7b1d522676f22ad725ac1a95d8d14e2c",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/libcsgrs.rlib": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53"
+    }
+  },
+  {
+    "phase": "cost-baseline-v1",
+    "lower_pins": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/deps/libcsgrs.rlib": "b71d69a3f03938ed99d088f28c43ae9c7b1d522676f22ad725ac1a95d8d14e2c",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/libcsgrs.rlib": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53"
+    }
+  },
+  {
+    "phase": "cost-candidate-v1",
+    "lower_pins": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/deps/libcsgrs.rlib": "b71d69a3f03938ed99d088f28c43ae9c7b1d522676f22ad725ac1a95d8d14e2c",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/libcsgrs.rlib": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53"
+    }
+  },
+  {
+    "preserved_unexpected_view": "/dev/shm/csgrs-native-metadata-isolation/closure-diagnostic-v1/unexpected-view-v1.rlib",
+    "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+    "bytes": 9998738
+  }
+]

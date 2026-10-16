@@ -1,0 +1,89 @@
+[
+  {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/candidate-v2/release/libcsgrs.rlib",
+    "reads": [
+      {
+        "direct": false,
+        "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+        "bytes_read": 9998738,
+        "stat_size": 9998738,
+        "stable_identity": true,
+        "seconds": 0.007065103854984045
+      },
+      {
+        "direct": true,
+        "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+        "bytes_read": 9998738,
+        "stat_size": 9998738,
+        "stable_identity": true,
+        "seconds": 0.008850360289216042
+      },
+      {
+        "direct": false,
+        "sha256": "0b334878584bb5f993bf74ccdf85135eb2133f4726bac4c6b5e18a41f3255c74",
+        "bytes_read": 9998738,
+        "stat_size": 9998738,
+        "stable_identity": true,
+        "seconds": 0.00574252475053072
+      }
+    ]
+  },
+  {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/candidate-v1/release/libcsgrs.rlib",
+    "reads": [
+      {
+        "direct": false,
+        "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+        "bytes_read": 9998738,
+        "stat_size": 9998738,
+        "stable_identity": true,
+        "seconds": 0.008628405630588531
+      },
+      {
+        "direct": true,
+        "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+        "bytes_read": 9998738,
+        "stat_size": 9998738,
+        "stable_identity": true,
+        "seconds": 0.012011573184281588
+      },
+      {
+        "direct": false,
+        "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+        "bytes_read": 9998738,
+        "stat_size": 9998738,
+        "stable_identity": true,
+        "seconds": 0.005639791022986174
+      }
+    ]
+  },
+  {
+    "path": "/dev/shm/csgrs-distribution-contracts/cost-build-v2/upper/release/libcsgrs.rlib",
+    "reads": [
+      {
+        "direct": false,
+        "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+        "bytes_read": 9998738,
+        "stat_size": 9998738,
+        "stable_identity": true,
+        "seconds": 0.006183014251291752
+      },
+      {
+        "direct": true,
+        "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+        "bytes_read": 9998738,
+        "stat_size": 9998738,
+        "stable_identity": true,
+        "seconds": 0.005792681127786636
+      },
+      {
+        "direct": false,
+        "sha256": "8131217ef1e1b510d615d0963966bfe849f3fc99f3f53fdfd096a4a7f5756e53",
+        "bytes_read": 9998738,
+        "stat_size": 9998738,
+        "stable_identity": true,
+        "seconds": 0.005630363244563341
+      }
+    ]
+  }
+]

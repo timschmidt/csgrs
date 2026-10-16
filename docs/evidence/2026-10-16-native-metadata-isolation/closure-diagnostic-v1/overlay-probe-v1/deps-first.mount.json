@@ -1,0 +1,13 @@
+{
+  "label": "deps-first",
+  "command": [
+    "/usr/bin/fuse-overlayfs",
+    "-o",
+    "ro,lowerdir=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/candidate-v1,upperdir=/dev/shm/csgrs-native-metadata-isolation/closure-overlay-probe-v1/deps-first/upper,workdir=/dev/shm/csgrs-native-metadata-isolation/closure-overlay-probe-v1/deps-first/work",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/closure-read-deps-first-v1"
+  ],
+  "exit_code": 0,
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-metadata-isolation/closure-read-deps-first-v1",
+  "is_mount": true,
+  "read_only": true
+}

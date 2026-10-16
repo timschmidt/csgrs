@@ -1,0 +1,8 @@
+{
+  "parent": "docs/evidence/2026-10-12-region-metadata-first/measure_v1.py",
+  "parent_sha256": "756a25e2eadeef518ae072f1d8903d15d52ff0ee63fc55efc4d2e17cd3897eca",
+  "new_sha256": "7f31cd0b5a90a20d1ee8e97886b9c624cc5e99152d46488322536a1d3c1b3fc0",
+  "probe_unchanged": true,
+  "sample_schedule_unchanged": true,
+  "runtime_admitted": false
+}

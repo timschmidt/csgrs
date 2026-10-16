@@ -1,0 +1,37 @@
+    Checking num-complex v0.4.6
+    Checking num-bigint v0.4.6
+    Checking smallvec v1.15.1
+    Checking getrandom v0.4.2
+    Checking num-rational v0.4.2
+    Checking ppv-lite86 v0.2.21
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/dev/shm/csgrs-native-metadata-isolation/cost-v1/candidate/source/crates/hyperreal)
+    Checking rand_chacha v0.9.0
+    Checking rand v0.9.4
+    Checking wide v1.7.1
+    Checking spade v2.15.1
+    Checking hyperlattice v0.6.1 (/dev/shm/csgrs-native-metadata-isolation/cost-v1/candidate/source/crates/hyperlattice)
+    Checking simba v0.10.2
+    Checking rstar v0.12.2
+    Checking arrayvec v0.7.6
+    Checking nalgebra v0.35.0
+    Checking polycool v0.4.0
+    Checking geo-types v0.7.20
+    Checking argmin-math v0.5.1
+    Checking hyperlimit v0.4.1 (/dev/shm/csgrs-native-metadata-isolation/cost-v1/candidate/source/crates/hyperlimit)
+    Checking rand v0.10.3
+    Checking rand_xoshiro v0.7.0
+    Checking argmin v0.11.0
+    Checking gauss-quad v0.3.2
+    Checking geo v0.33.1
+    Checking tempfile v3.27.0
+    Checking kurbo v0.13.1
+    Checking hashbrown v0.17.1
+    Checking rusty-fork v0.3.1
+    Checking curvo v0.1.92
+    Checking svgtypes v0.16.1
+    Checking hypersolve v0.3.1 (/dev/shm/csgrs-native-metadata-isolation/cost-v1/candidate/source/crates/hypersolve)
+    Checking hypertri v0.4.1 (/dev/shm/csgrs-native-metadata-isolation/cost-v1/candidate/source/crates/hypertri)
+    Checking proptest v1.11.0
+    Checking hypercurve v0.3.1 (/dev/shm/csgrs-native-metadata-isolation/cost-v1/candidate/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 3m 29s
