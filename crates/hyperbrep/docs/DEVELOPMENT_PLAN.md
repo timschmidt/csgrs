@@ -1248,6 +1248,14 @@ increment; it must not be ignored to accept the spatial representation. WP14a
 and WP14b remain open, including independent exporter corpora, other analytic
 families, exact curved export and the resource/delivery gates.
 
+The native `ModelBuilder::validate_edge_image` query now supplies the shared
+whole-curve check needed before selecting supplied pcurves. Its circle
+certificate compares complete angular frames, including radial phase and plane;
+the [repair and API evidence](evidence/2026-10-15-edge-image-proof/README.md)
+records the prior false proofs. The IO extension must use this native boundary,
+retain every source parameter map and independently validate the final face.
+This prerequisite does not itself implement supplied curved STEP mapping.
+
 ```rust,ignore
 pub fn read_step(bytes: &[u8], options: &StepReadOptions)
     -> Result<RawCadDocument, ExchangeError>;

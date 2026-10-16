@@ -168,45 +168,24 @@ impl ArenaModelBuilder {
         let Curve3ExactData::EllipseArc(curve_data) = curve.exact_data() else {
             unreachable!("circle kind carries ellipse-arc exact data");
         };
-        let SurfaceExactData::Cylinder { origin, axis, .. } = surface.exact_data() else {
+        let SurfaceExactData::Cylinder {
+            origin,
+            x,
+            y,
+            axis,
+            radius,
+        } = surface.exact_data()
+        else {
             unreachable!("cylinder kind carries cylinder exact data");
         };
-        let expected_center = origin + axis * line.start().y();
-        require_point_equal(
-            &curve_data.center,
-            &expected_center,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-
-        let pcurve_span = pcurve.represented_end()? - pcurve.represented_start()?;
-        let du = line.end().x() - line.start().x();
-        let du_dt = (du / pcurve_span).map_err(GeometryError::Numeric)?;
-        let surface_parameter = Point2::new(line.start().x().clone(), line.start().y().clone());
-        let surface_tangent = surface.partials_at(&surface_parameter)?.u().clone() * du_dt;
-        let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
-            pcurve,
-            &edge.domain,
+        validate_circle_iso_image(
+            &curve_data,
+            edge,
             edge_use.direction,
-            &crate::Parameter::from_real((pcurve.represented_start()?).clone()),
-        )?;
-        let edge_rate = match &edge_use.parameter_correspondence {
-            ParameterCorrespondence::Affine { scale, .. } => scale,
-            ParameterCorrespondence::AngularSweep => unreachable!("matched affine relation"),
-        };
-        let edge_tangent = curve
-            .derivative_at(
-                edge_parameter
-                    .try_real()
-                    .ok_or(crate::GeometryError::UnrepresentableParameter)?,
-                1,
-            )?
-            .vector()
-            .clone()
-            * edge_rate;
-        require_vector_equal(
-            &surface_tangent,
-            &edge_tangent,
-            BuildError::EdgeUseSupportMismatch,
+            origin + axis * line.start().y(),
+            [x, y],
+            radius,
+            [line.start().x().clone(), line.end().x().clone()],
         )
     }
 
@@ -242,91 +221,33 @@ impl ArenaModelBuilder {
         else {
             unreachable!("sphere kind carries sphere exact data");
         };
-        let (expected_radius, surface_parameter, varying_u) = if v_constant {
+        let (circle_center, axes, circle_radius, angles) = if v_constant {
             let latitude = line.start().y().clone();
-            let center_offset = &curve_data.center - &center;
-            require_real_equal(
-                &center_offset.dot(&x),
-                &Real::zero(),
-                BuildError::EdgeUseSupportMismatch,
-            )?;
-            require_real_equal(
-                &center_offset.dot(&y),
-                &Real::zero(),
-                BuildError::EdgeUseSupportMismatch,
-            )?;
-            require_real_equal(
-                &center_offset.dot(&axis),
-                &(&radius * latitude.clone().sin()),
-                BuildError::EdgeUseSupportMismatch,
-            )?;
             (
-                &radius * latitude.clone().cos(),
-                Point2::new(line.start().x().clone(), latitude),
-                true,
+                center + axis * (&radius * latitude.clone().sin()),
+                [x, y],
+                radius * latitude.cos(),
+                [line.start().x().clone(), line.end().x().clone()],
             )
         } else {
-            require_point_equal(
-                &curve_data.center,
-                &center,
-                BuildError::EdgeUseSupportMismatch,
-            )?;
+            let longitude = line.start().x().clone();
+            let radial = x * longitude.clone().cos() + y * longitude.sin();
             (
+                center,
+                [radial, axis],
                 radius,
-                Point2::new(line.start().x().clone(), line.start().y().clone()),
-                false,
+                [line.start().y().clone(), line.end().y().clone()],
             )
         };
-        require_real_equal(
-            &curve_data.x_radius,
-            &expected_radius,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-        require_real_equal(
-            &curve_data.y_radius,
-            &expected_radius,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-
-        let pcurve_span = pcurve.represented_end()? - pcurve.represented_start()?;
-        let parameter_delta = if varying_u {
-            line.end().x() - line.start().x()
-        } else {
-            line.end().y() - line.start().y()
-        };
-        let parameter_rate = (parameter_delta / pcurve_span).map_err(GeometryError::Numeric)?;
-        let partials = surface.partials_at(&surface_parameter)?;
-        let surface_tangent = if varying_u {
-            partials.u().clone()
-        } else {
-            partials.v().clone()
-        } * parameter_rate;
-        let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
-            pcurve,
-            &edge.domain,
+        validate_circle_iso_image(
+            &curve_data,
+            edge,
             edge_use.direction,
-            &crate::Parameter::from_real((pcurve.represented_start()?).clone()),
-        )?;
-        let edge_rate = match &edge_use.parameter_correspondence {
-            ParameterCorrespondence::Affine { scale, .. } => scale,
-            ParameterCorrespondence::AngularSweep => unreachable!("matched affine relation"),
-        };
-        let edge_tangent = curve
-            .derivative_at(
-                edge_parameter
-                    .try_real()
-                    .ok_or(crate::GeometryError::UnrepresentableParameter)?,
-                1,
-            )?
-            .vector()
-            .clone()
-            * edge_rate;
-        require_vector_equal(
-            &surface_tangent,
-            &edge_tangent,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-        Ok(())
+            circle_center,
+            axes,
+            circle_radius,
+            angles,
+        )
     }
 
     pub(in crate::topology) fn validate_torus_circle_image(
@@ -420,54 +341,15 @@ impl ArenaModelBuilder {
                     line.end().y().clone(),
                 )
             };
-        require_real_equal(
-            &curve_data.x_radius,
-            &expected_radius,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-
-        let edge_offset = edge.domain.represented_start()? - &curve_data.domain_start;
-        let edge_angle_at_start = if curve_data.direction > 0 {
-            &curve_data.angle_at_start + edge_offset
-        } else {
-            &curve_data.angle_at_start - edge_offset
-        };
-        let actual = EllipseArcExactData {
-            domain_start: edge.domain.represented_start()?.clone(),
-            domain_end: edge.domain.represented_end()?.clone(),
-            angle_at_start: edge_angle_at_start,
-            ..*curve_data
-        };
-        let actual_span = &actual.domain_end - &actual.domain_start;
-        let (angle_at_start, angle_at_end) = match edge_use.direction {
-            Direction::Forward => (first_angle, second_angle),
-            Direction::Reversed => (second_angle, first_angle),
-        };
-        let angle_delta = &angle_at_end - &angle_at_start;
-        let expected_direction = if real_values_equal(&angle_delta, &actual_span)? {
-            1
-        } else if real_values_equal(&angle_delta, &(-actual_span.clone()))? {
-            -1
-        } else {
-            return Err(BuildError::EdgeUseSupportMismatch);
-        };
-        let expected = EllipseArcExactData {
-            circle: true,
-            center: expected_center,
-            x: expected_x,
-            y: expected_y,
-            x_radius: expected_radius.clone(),
-            y_radius: expected_radius,
-            domain_start: actual.domain_start.clone(),
-            domain_end: actual.domain_end.clone(),
-            angle_at_start,
-            direction: expected_direction,
-        };
-        if circle_data_parameterizations_equal(&actual, &expected)? {
-            Ok(())
-        } else {
-            Err(BuildError::EdgeUseSupportMismatch)
-        }
+        validate_circle_iso_image(
+            &curve_data,
+            edge,
+            edge_use.direction,
+            expected_center,
+            [expected_x, expected_y],
+            expected_radius,
+            [first_angle, second_angle],
+        )
     }
 
     pub(in crate::topology) fn validate_cone_generator_image(
@@ -508,61 +390,23 @@ impl ArenaModelBuilder {
         }
         let SurfaceExactData::Cone {
             apex,
+            x,
+            y,
             axis,
             semi_angle,
-            ..
         } = surface.exact_data()
         else {
             unreachable!("cone kind carries cone exact data");
         };
         let v = line.start().y().clone();
-        let expected_center = apex + axis * (&v * semi_angle.clone().cos());
-        let expected_radius = v * semi_angle.sin();
-        require_point_equal(
-            &curve_data.center,
-            &expected_center,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-        require_real_equal(
-            &curve_data.x_radius,
-            &expected_radius,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-        require_real_equal(
-            &curve_data.y_radius,
-            &expected_radius,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
-
-        let pcurve_span = pcurve.represented_end()? - pcurve.represented_start()?;
-        let du_dt =
-            ((line.end().x() - line.start().x()) / &pcurve_span).map_err(GeometryError::Numeric)?;
-        let surface_parameter = Point2::new(line.start().x().clone(), line.start().y().clone());
-        let surface_tangent = surface.partials_at(&surface_parameter)?.u().clone() * du_dt;
-        let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
-            pcurve,
-            &edge.domain,
+        validate_circle_iso_image(
+            &curve_data,
+            edge,
             edge_use.direction,
-            &crate::Parameter::from_real((pcurve.represented_start()?).clone()),
-        )?;
-        let edge_rate = match &edge_use.parameter_correspondence {
-            ParameterCorrespondence::Affine { scale, .. } => scale,
-            ParameterCorrespondence::AngularSweep => unreachable!("matched affine relation"),
-        };
-        let edge_tangent = curve
-            .derivative_at(
-                edge_parameter
-                    .try_real()
-                    .ok_or(crate::GeometryError::UnrepresentableParameter)?,
-                1,
-            )?
-            .vector()
-            .clone()
-            * edge_rate;
-        require_vector_equal(
-            &surface_tangent,
-            &edge_tangent,
-            BuildError::EdgeUseSupportMismatch,
+            apex + axis * (&v * semi_angle.clone().cos()),
+            [x, y],
+            v * semi_angle.sin(),
+            [line.start().x().clone(), line.end().x().clone()],
         )
     }
 
@@ -830,5 +674,63 @@ impl ArenaModelBuilder {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
         Ok(())
+    }
+}
+
+/// Two orthonormal radial/tangent frames and the angular rate determine the
+/// complete circle parameterization. A center and one tangent do not: a wrong
+/// phase or a tilted plane can retain both while changing the radial vector.
+fn validate_circle_iso_image(
+    curve_data: &EllipseArcExactData,
+    edge: &Edge,
+    direction: Direction,
+    center: Point3,
+    axes: [Vector3; 2],
+    radius: Real,
+    angles: [Real; 2],
+) -> Result<(), BuildError> {
+    let edge_offset = edge.domain.represented_start()? - &curve_data.domain_start;
+    let edge_angle_at_start = if curve_data.direction > 0 {
+        &curve_data.angle_at_start + edge_offset
+    } else {
+        &curve_data.angle_at_start - edge_offset
+    };
+    let actual = EllipseArcExactData {
+        domain_start: edge.domain.represented_start()?.clone(),
+        domain_end: edge.domain.represented_end()?.clone(),
+        angle_at_start: edge_angle_at_start,
+        ..curve_data.clone()
+    };
+    let actual_span = &actual.domain_end - &actual.domain_start;
+    let [first_angle, second_angle] = angles;
+    let (angle_at_start, angle_at_end) = match direction {
+        Direction::Forward => (first_angle, second_angle),
+        Direction::Reversed => (second_angle, first_angle),
+    };
+    let angle_delta = &angle_at_end - &angle_at_start;
+    let expected_direction = if real_values_equal(&angle_delta, &actual_span)? {
+        1
+    } else if real_values_equal(&angle_delta, &(-actual_span.clone()))? {
+        -1
+    } else {
+        return Err(BuildError::EdgeUseSupportMismatch);
+    };
+    let [x, y] = axes;
+    let expected = EllipseArcExactData {
+        circle: true,
+        center,
+        x,
+        y,
+        x_radius: radius.clone(),
+        y_radius: radius,
+        domain_start: actual.domain_start.clone(),
+        domain_end: actual.domain_end.clone(),
+        angle_at_start,
+        direction: expected_direction,
+    };
+    if circle_data_parameterizations_equal(&actual, &expected)? {
+        Ok(())
+    } else {
+        Err(BuildError::EdgeUseSupportMismatch)
     }
 }

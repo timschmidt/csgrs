@@ -347,6 +347,7 @@ curve/pcurve/surface tuple has a complete-interval structural proof:
 - affine line images on planes;
 - circular pcurves on planes through directed angular sweep;
 - axial lines and constant-height circles on cylinders;
+- latitude and meridian circles on spheres;
 - generators and constant-height circles on cones;
 - both circle directions on ring tori;
 - line and circular profile images on extrusion surfaces.
@@ -365,6 +366,30 @@ curve/pcurve/surface tuple has a complete-interval structural proof:
   weighted rational-quartic spatial control net. Sign-changing graph
   denominators are partitioned at exact poles and tensor-boundary contacts;
   factorized relations retain their native iso-lines.
+
+`ModelBuilder::validate_edge_image` exposes this same check for a staged edge,
+direction, pcurve, parameter correspondence and surface. It checks all three
+key owners before geometry work, runs strict predicates even in an ambient
+approximate scope, and does not stage topology or install an inherited proof
+flag. A caller can retain alternate source pcurves in the builder and check
+each before constructing face-local uses. Face construction still validates
+the selected geometry independently. `Ok(())` proves only the complete trim
+image and directed correspondence; it does not establish shell validity or
+fidelity to a different source. Unsupported, unresolved and invalid outcomes
+remain distinct typed errors.
+
+Circular iso-curves on cylinders, spheres, cones and tori share one complete
+angular comparison. After restricting the spatial circle to the edge domain,
+the validator checks centers, radii, signed angular span and both vectors of
+the radial/tangent frame at the common domain start. Reversal and phase changes
+are included in that frame. The older direct-domain cosine/sine form remains
+an alternate exact proof when the anchored comparison is unresolved. This
+preserves its certified cases while avoiding doubled inverse-angle phases for
+reversed imported circles. Matching only the center and one tangent is
+insufficient: a wrong phase or tilted circle can pass that test. Six such false proofs were
+reproduced and repaired; the
+[image validation evidence](evidence/2026-10-15-edge-image-proof/README.md)
+retains the failures, parameterization matrix and downstream qualification.
 
 `builder::tensor_patch_shell` applies the same whole-curve certificate before
 sharing topology. Matching endpoint vertices alone never sew patches: degrees,

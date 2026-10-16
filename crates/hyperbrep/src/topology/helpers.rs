@@ -1547,12 +1547,15 @@ pub(super) fn circle_data_parameterizations_equal(
         return Ok(false);
     }
 
-    // Put both arcs in the unique direct-domain form
-    // `center + radius * (x*cos(t) + y*sin(t))`. This compares the complete
-    // analytic parameterizations while allowing reflection to reverse the
-    // surface's angular chart without rewriting the spatial edge domain.
-    let direct_frame = |arc: &EllipseArcExactData| {
-        let phase = if arc.direction > 0 {
+    // The common domain start is an exact anchor. Its radial vector and signed
+    // unit angular tangent determine the complete parameterization. Anchoring
+    // avoids constructing doubled inverse-angle phases for reversed STEP arcs.
+    // Keep the earlier direct-domain form as an alternate exact proof: changing
+    // the comparison frame must not discard a previously available certificate.
+    let frame = |arc: &EllipseArcExactData, anchored: bool| {
+        let phase = if anchored {
+            arc.angle_at_start.clone()
+        } else if arc.direction > 0 {
             &arc.angle_at_start - &arc.domain_start
         } else {
             &arc.angle_at_start + &arc.domain_start
@@ -1567,9 +1570,15 @@ pub(super) fn circle_data_parameterizations_equal(
         };
         (x, y)
     };
-    let (actual_x, actual_y) = direct_frame(actual);
-    let (expected_x, expected_y) = direct_frame(expected);
-    Ok(vectors_equal(&actual_x, &expected_x)? && vectors_equal(&actual_y, &expected_y)?)
+    let compare = |anchored| {
+        let (actual_x, actual_y) = frame(actual, anchored);
+        let (expected_x, expected_y) = frame(expected, anchored);
+        Ok(vectors_equal(&actual_x, &expected_x)? && vectors_equal(&actual_y, &expected_y)?)
+    };
+    match compare(true) {
+        Err(BuildError::Geometry(GeometryError::PredicateUnresolved { .. })) => compare(false),
+        result => result,
+    }
 }
 
 pub(super) fn real_values_equal(left: &Real, right: &Real) -> Result<bool, BuildError> {

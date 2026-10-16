@@ -71,3 +71,7 @@ harness = false
 [[bench]]
 name = "closed_edges"
 harness = false
+
+[[bench]]
+name = "edge_images"
+harness = false

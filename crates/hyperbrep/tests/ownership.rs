@@ -112,6 +112,60 @@ fn foreign<T: std::fmt::Debug>(result: Result<T, BuildError>, kind: EntityKind) 
 fn all_builder_reference_inputs_reject_foreign_keys_before_mutation() {
     let mut own = staged();
     let other = staged();
+    for (edge, pcurve, surface, kind) in [
+        (
+            &other.edges[0],
+            &own.pcurves[0],
+            &own.plane,
+            EntityKind::Edge,
+        ),
+        (
+            &own.edges[0],
+            &other.pcurves[0],
+            &own.plane,
+            EntityKind::Pcurve,
+        ),
+        (
+            &own.edges[0],
+            &own.pcurves[0],
+            &other.plane,
+            EntityKind::Surface,
+        ),
+    ] {
+        foreign(
+            own.builder.validate_edge_image(
+                edge,
+                Direction::Forward,
+                pcurve,
+                ParameterCorrespondence::identity(),
+                surface,
+            ),
+            kind,
+        );
+    }
+    assert!(matches!(
+        own.builder.validate_edge_image(
+            &own.edges[0],
+            Direction::Forward,
+            &own.pcurves[1],
+            ParameterCorrespondence::identity(),
+            &own.plane,
+        ),
+        Err(BuildError::EdgeUseImageMismatch {
+            endpoint: Endpoint::Start
+        })
+    ));
+    for _ in 0..3 {
+        own.builder
+            .validate_edge_image(
+                &own.edges[0],
+                Direction::Forward,
+                &own.pcurves[0],
+                ParameterCorrespondence::identity(),
+                &own.plane,
+            )
+            .unwrap();
+    }
     foreign(
         own.builder.edge(
             &other.vertices[0],

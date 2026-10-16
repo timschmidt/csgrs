@@ -896,6 +896,49 @@
       "validation": "All 16 scoped qualification commands pass. BREP/IO debug and release all-feature suites each pass 399 tests; minimal release passes 391. Hyperreal all-feature release passes 1066, solver residuals 14 and representation matrices four. Selected root workflows pass 13, including all five original strict drill tests at unchanged 8/16/24/32 resolutions; the previously failing 16/32 compositions now pass. Strict BREP/IO Clippy, warning-denied docs, circular example, fuzz-target compilation, formatting and an eight-group zero-import Wasmtime execution pass. Counts overlap; only the generated probe lockfile was added between source snapshots. No new BREP production behavior is claimed.",
       "cost_evidence": "All 100 cases across six complete preserved corpora retain receipts and fixture facts in 36 alternating baseline/candidate processes. Median/max ratios: native 1.001774/1.026703, advanced STEP 0.997291/1.006123, faceted STEP 0.995317/1.013709, closed edges 0.795725/0.934629, circular STEP 0.990671/0.997090, and default 256-arc 1.001702/3.044496. The adverse cached 256-arc query measures 42.7 to 130 ns with ten calls per short sample; the 10% timing gate is not met and controlled qualification remains open. All 19 STEP allocation-call/requested-byte observations match. Benchmark executable sizes grow approximately 30 KiB (0.12-0.18%). All raw samples, hashes, process resources and prior timing qualifications remain; no speedup or internal resource bound is claimed.",
       "limits": "All 28 work packages remain open. General geometry/composition/provenance, total-work/retained-byte/cancellation bounds, clean published-package/MSRV and actual C/C++/Python/JavaScript consumers remain unqualified. No new runtime fuzz/ASan/lexicase/coverage/formal campaign or full pre-push matrix is claimed. Inherited raw upstream evidence retains its byte-identical whitespace findings. No push is performed."
+    },
+    {
+      "id": "native-edge-image-proof",
+      "work_packages": [
+        "WP00",
+        "WP01",
+        "WP03",
+        "WP14a",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P6",
+        "P8",
+        "P9",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "Keep the complete native circle-image proof and read-only staged query. Reject the first global-phase-only candidate for losing two existing strict STEP successes. Preserve adverse timing/allocation observations and all broader gates.",
+      "change": "Reproduce six false-positive image-dispatch checks on the merged baseline: wrong radial phase and tilted circle plane on each of cylinder, sphere and cone. Replace incomplete center/tangent checks with one shared exact circle-frame proof, also used by torus iso-circles. Anchor the radial and signed tangent frame at the common edge-domain start; retain the prior direct-domain proof when the anchored comparison is unresolved. Expose ModelBuilder::validate_edge_image with model-scoped keys, strict predicates and no topology mutation or inherited certificate. This native boundary is a prerequisite for supplied curved STEP pcurves; it does not implement that import. No surrounding-crate implementation changes.",
+      "source": "../src/topology/validation/analytic_image.rs",
+      "source_files": [
+        "../src/topology/helpers.rs",
+        "../src/topology/validation/image.rs",
+        "../src/ownership/staging.rs"
+      ],
+      "evidence": "evidence/2026-10-15-edge-image-proof/manifest.json",
+      "validation": "Final BREP/IO all-feature debug and release each pass 407 tests; minimal release passes 399. All 12 scoped qualification commands pass, including strict all-feature/minimal Clippy, warning-denied docs, circular STEP example, fuzz-target compilation, formatting and 13 zero-import WASM groups. Counts overlap. Seven iso families cover 112 trim/frame/direction cases, each repeated with independent exact point checks, plus wrong phase/plane/radius/rate/sense, foreign-key, unsupported and strict/approximate/strict unresolved controls. All previous STEP source-map, split, reflection, archive and BodySet/empty successes remain. Six baseline false proofs and the first candidate's two native STEP failures/WASM trap remain recorded with source snapshots. Local image-dispatch failures do not establish publication of invalid complete solids.",
+      "cost_evidence": "All 100 preserved cases retain required receipts and fixture facts across 36 alternating processes. Median/max timing ratios: native 0.965312/1.047286, advanced STEP 0.996656/1.022109, faceted STEP 1.006795/1.059451, closed edges 0.980285/0.996184, circular STEP 0.998881/1.002757, arc 1.007697/1.111463. The adverse arc structural replay measures 6.68385 to 7.42885 ns with byte-identical executables; retain this shared-host control rather than claiming all timing gates pass. Reversed shifted replay increases 23 allocation calls/664 requested bytes, fresh circular import about 21 calls/2294 bytes; full circular composition decreases about 920 calls/61166 bytes. Changed executable sizes shrink about 35-49 KiB. New staged-query absolute medians are 37.50 us fresh and 18.22 us reused, with separately labeled rejection cost 15.18 us. Different construction boundaries, no general speedup or internal work/heap bound.",
+      "limits": "All 28 work packages remain open. Supplied curved SURFACE_CURVE/SEAM_CURVE source mapping, full operation provenance/receipts, general topology/composition, complete work/retained-byte/cancellation contracts, published-package/MSRV and actual C/C++/Python/JavaScript delivery remain unqualified. Earlier archive and short cached-arc timing exceptions retain their original scope. No new runtime fuzz/ASan/lexicase, coverage, formal-verification or complete pre-push campaign is claimed. No push."
     }
   ],
   "work_packages": [
@@ -1078,7 +1121,7 @@
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
     "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
-    "Continue WP14a from selected exact faceted exchange, planar advanced import and direct circular edges on planes/cylinders. Preserve the new strict split/replay/reflection/BodySet/empty workflow and exact source angle/frame/sense maps. Add all supplied curved SURFACE_CURVE/SEAM_CURVE representations with basis-aware units and complete 3D/UV correspondence proofs, then other analytic families and exact curved export. WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. Keep the unchanged off-carrier decimal cylinder as a typed rejection; no implicit repair or whole-document exchange claim.",
+    "Continue WP14a from selected exact faceted exchange, planar advanced import and direct circular edges on planes/cylinders. Preserve the new strict split/replay/reflection/BodySet/empty workflow and exact source angle/frame/sense maps. Use the new read-only native ModelBuilder::validate_edge_image boundary to add supplied curved SURFACE_CURVE/SEAM_CURVE representations with basis-aware units and complete 3D/UV correspondence proofs; retain every source parameter map and independently validate the final face, then other analytic families and exact curved export. WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. Keep the unchanged off-carrier decimal cylinder as a typed rejection; no implicit repair or whole-document exchange claim.",
     "Continue every BREP work package and its cross-stack integration requirements in the plan. Surrounding-crate implementation is concurrent upstream work unless a reproduced dependency failure would make BREP worse; foundational progress does not close broader project gates."
   ],
   "acceptance_contract": {

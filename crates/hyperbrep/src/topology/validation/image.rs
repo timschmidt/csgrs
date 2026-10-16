@@ -2,7 +2,37 @@
 
 use crate::topology::*;
 
+#[cfg(test)]
+mod tests;
+
 impl ArenaModelBuilder {
+    pub(crate) fn validate_edge_image(
+        &self,
+        edge: EdgeId,
+        direction: Direction,
+        pcurve: PcurveId,
+        parameter_correspondence: ParameterCorrespondence,
+        surface: SurfaceId,
+    ) -> Result<(), BuildError> {
+        crate::context::strict(|| {
+            let candidate = EdgeUse {
+                edge,
+                direction,
+                pcurve,
+                parameter_correspondence,
+                image_certificate: false,
+            };
+            let edge = self.edge_ref(edge)?;
+            self.validate_edge_use_image(
+                self.curve_ref(edge.curve)?,
+                edge,
+                &candidate,
+                self.pcurve_ref(pcurve)?,
+                self.surface_ref(surface)?,
+            )
+        })
+    }
+
     pub(in crate::topology) fn validate_wire_image(
         &self,
         wire: WireId,

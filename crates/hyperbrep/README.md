@@ -20,6 +20,13 @@ Constructors and Booleans return owned `BodySet` or `SheetSet` selections.
 Typed arena positions in errors are diagnostic labels and cannot resolve a
 record through the public API.
 
+`ModelBuilder::validate_edge_image` checks a staged edge, candidate pcurve,
+explicit correspondence and surface without adding an edge use. It invokes
+the same strict whole-curve proof as face construction. This lets exchange
+code check alternate source representations before assigning face-local
+geometry; success certifies image agreement, not a complete model or source
+fidelity. See [exact image agreement](docs/ARCHITECTURE.md#exact-image-agreement).
+
 `boolean::{union, intersection, difference, symmetric_difference}` consume
 `&BodySet` and return `BodySet`, so empty and multi-body outputs feed directly
 into further operations. `BodySet::empty()` starts an accumulation;

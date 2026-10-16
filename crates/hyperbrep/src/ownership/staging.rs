@@ -147,6 +147,36 @@ impl ModelBuilder {
                 id,
             })
     }
+    /// Proves a candidate pcurve's complete image on a support surface.
+    ///
+    /// This uses the same strict validator as face construction, including the
+    /// directed endpoint correspondence and the supported whole-curve proof.
+    /// `Ok(())` certifies image agreement on this edge's trim interval; it does
+    /// not certify a wire, face, shell, source fidelity or imported topology.
+    /// Unsupported combinations and undecided predicates remain typed errors.
+    ///
+    /// Every key must belong to this builder. The check does not stage an edge
+    /// use, change incidence, or install an inherited certificate. Consumers
+    /// may check alternate source representations before choosing face-local
+    /// geometry; subsequent face construction still validates its own uses.
+    /// Existing solver limits apply where instrumented; this is not a total
+    /// work or retained-memory bound.
+    pub fn validate_edge_image(
+        &self,
+        edge: &EdgeKey,
+        direction: Direction,
+        pcurve: &PcurveKey,
+        correspondence: ParameterCorrespondence,
+        surface: &SurfaceKey,
+    ) -> Result<(), BuildError> {
+        let (edge, pcurve, surface) = (
+            self.resolve(edge)?,
+            self.resolve(pcurve)?,
+            self.resolve(surface)?,
+        );
+        self.inner
+            .validate_edge_image(edge, direction, pcurve, correspondence, surface)
+    }
     /// Adds an ordered, connected, closed wire.
     pub fn wire(&mut self, edge_uses: &[EdgeUseKey]) -> Result<WireKey, BuildError> {
         let edge_uses = edge_uses
