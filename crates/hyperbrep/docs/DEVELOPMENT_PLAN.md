@@ -130,9 +130,20 @@ record affected artifact migrations with independent set/topology checks.
 Upstream's separately pending 35-file native workload remains unadmitted: its
 original full-board and copper-neck runtime gates still fail. Its source review
 and profiling are diagnostic evidence, not performance acceptance. The previous
-parked scalar investigation remains preserved and unapplied. Scope the next BREP
-comparison-reuse experiment to one helper call; any new persistent proof cache
+parked scalar investigation remains preserved and unapplied. The
+[conic comparison reuse](evidence/2026-10-16-conic-comparison-reuse/README.md)
+keeps certified interval orderings within one helper call and preserves the
+existing exact domain. Its current evidence becomes the next BREP baseline;
+all prior adverse observations remain visible. Any new persistent proof cache
 needs separate identity, lifetime, resource and state-matrix admission.
+
+For the next prism-subtraction extension, reproduce both direct z-prism calls
+and the parallel-cylinder caller after its common-coordinate transform. Capture
+current planar results and STEP export before changing dispatch: region extrusion
+creates extrusion surfaces, while the current advanced writer admits planes and
+cylinders. Preserve every previously supported downstream export, with any
+necessary exact representation or exchange support owned by BREP/IO. A native
+Boolean followed by a typed export blocker is not a completed STEP workflow.
 This ownership direction changes who performs dependency work; it does not
 weaken the shared properties or close any work-package gate.
 

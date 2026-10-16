@@ -1216,7 +1216,18 @@ Stored endpoints are reused on certified equality. Enumeration does not grow
 with the chart's turn count; scalar quotient and coefficient costs retain their
 existing resource limitations.
 
-This repairs a lost subdivision when a retained parameter pi/2 belongs to a
+The helper computes strict orderings against the interval start and end once
+for each candidate parameter. That same pair decides membership and endpoint
+identity. A periodic lift changes the value, so it receives a fresh pair of
+comparisons. An undecided comparison still fails explicitly; the two endpoint
+identities of a complete period remain distinct. This reuse lasts only for one
+helper call and adds no persistent cache. The ordering cascade already proves
+the structural endpoint equality previously checked by `ParameterDomain::contains`.
+The [comparison evidence](evidence/2026-10-16-conic-comparison-reuse/README.md)
+retains the complete output contracts and observed costs; no general resource
+bound follows from fewer comparisons or allocations.
+
+The periodic lift repairs a lost subdivision when a retained parameter pi/2 belongs to a
 coalesced target arc spanning [7pi/4, 11pi/4]: the target preimage is 5pi/2.
 Previously the parameter was discarded as outside the interval, leaving the
 torus band cap unpaired. Direct inverse queries also previously lost valid

@@ -749,3 +749,35 @@ Rows above 10% in this campaign:
 - `oblique/oblique/millimetre_reflection`: 1.102298.
 
 Prior pcurve, provenance, archive, spline and cached-arc observations remain visible. Any conic comparison-reuse experiment needs its own source-bound qualification and complete preserved receipts; it introduces no performance claim by being planned.
+
+## Per-call conic comparison reuse (2026-10-16)
+
+The [comparison record](docs/evidence/2026-10-16-conic-comparison-reuse/README.md) isolates one BREP helper against the qualified upstream integration.
+
+Retained after the complete preserved correctness and cost campaign. The helper reuses strict decided orderings for the same immutable value/domain and changes no accepted geometry, endpoint identity or deterministic output contract. Both partial pcurve cases remove 656 allocation calls and 45,904 requested bytes per operation; their observed full-campaign time ratios are 0.971130 and 0.977347. All 159 cases preserve their receipts and no case-median time ratio exceeds 1.035024. The two similarity matrices with increased allocation observations remain visible; each increase is less than 0.075% of its corresponding baseline. Native harness growth of up to 1,208 bytes and WASM growth of 275 bytes are retained as adverse size observations. These shared-host samples justify this limited local reuse; they do not establish a general speedup, universal allocation reduction or closure of earlier performance, resource, correctness or release gates.
+
+The full 90-process campaign preserves all receipts across 159 cases and fifteen corpora. Maximum case-median candidate/baseline latency is 1.035024; 0 rows exceed 10%, and 33 rows change allocation observations, including 2 with increased calls or requested bytes. All raw samples, allocation requests, process resources, executable sizes and adverse rows are retained. The six-case focused probe is preserved separately. Shared-host observations do not establish a controlled-host speedup, total-resource bound or closure of prior cost gates. Native harness size changes range from 0 to 1208 bytes; the WASM probe grows 275 bytes. These are harness sizes, not shipped-package measurements.
+
+Full-campaign pcurve observations per iteration; requested allocation bytes are not a retained-heap bound:
+
+| Case | Median time ratio | Calls before → after | Requested bytes before → after |
+| --- | ---: | ---: | ---: |
+| `pcurves/full_fresh` | 0.981064 | 3,542.0 → 3,354.0 | 444,493.0 → 430,933.0 |
+| `pcurves/full_reused` | 0.982889 | 3,485.0 → 3,297.0 | 323,089.0 → 309,529.0 |
+| `pcurves/partial_fresh` | 0.971130 | 11,634.0 → 10,978.0 | 1,080,321.0 → 1,034,417.0 |
+| `pcurves/partial_reused` | 0.977347 | 11,577.0 → 10,921.0 | 958,917.0 → 913,013.0 |
+| `pcurves/edit_replay_composition` | 0.991581 | 14,611.0 → 14,423.0 | 1,964,675.0 → 1,951,115.0 |
+| `pcurves/reject_nonmaster_height` | 0.948991 | 742.0 → 660.0 | 171,900.0 → 165,948.0 |
+
+No case has a median time more than 10% above baseline in this campaign. Prior cost gates remain open.
+
+Observed allocation increases are retained separately from the pcurve reductions:
+
+| Case | Calls before → after | Requested bytes before → after |
+| --- | ---: | ---: |
+| `analytic_similarity/similarity/primitive_matrix` | 2,647,253.0 → 2,648,868.0 | 209,903,801.0 → 210,003,137.0 |
+| `analytic_similarity/similarity/clipped_void_matrix` | 7,356,861.0 → 7,362,304.0 | 519,115,139.0 → 519,496,547.0 |
+
+These are process observations, not a universal allocation reduction claim.
+
+The original focused probe and all unfavorable rows remain in the evidence. No prior archive, spline, cached-arc, pcurve or provenance cost gate is closed by this experiment.

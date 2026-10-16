@@ -5120,28 +5120,37 @@ pub(crate) fn angular_parameter_lifts(
     domain: &ParameterDomain,
 ) -> GeometryResult<Vec<Real>> {
     let tau = Real::tau();
-    let first = if domain.contains(parameter)? {
-        parameter.clone()
+    // Reuse these certified orders for both membership and endpoint identity.
+    let endpoint_orderings = |value: &Real| {
+        crate::context::strict(|| {
+            let from_start = decided_order(compare_reals(
+                value,
+                domain.start(),
+                crate::STRICT_PREDICATES,
+            ))?;
+            let to_end =
+                decided_order(compare_reals(value, domain.end(), crate::STRICT_PREDICATES))?;
+            Ok::<_, GeometryError>((from_start, to_end))
+        })
+    };
+    let (from_start, to_end) = endpoint_orderings(parameter)?;
+    let (first, from_start, to_end) = if from_start != Ordering::Less && to_end != Ordering::Greater
+    {
+        (parameter.clone(), from_start, to_end)
     } else {
         let turns = ((domain.start() - parameter) / &tau)
             .map_err(GeometryError::Numeric)?
             .ceil_certified()
             .map_err(GeometryError::Numeric)?;
-        parameter + Real::new(hyperreal::Rational::from_bigint(turns)) * &tau
+        let first = parameter + Real::new(hyperreal::Rational::from_bigint(turns)) * &tau;
+        let (from_start, to_end) = endpoint_orderings(&first)?;
+        (first, from_start, to_end)
     };
-    if !domain.contains(&first)? {
+    if from_start == Ordering::Less || to_end == Ordering::Greater {
         return Ok(Vec::new());
     }
-    let at_start = decided_order(compare_reals(
-        &first,
-        domain.start(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Equal;
-    let at_end = decided_order(compare_reals(
-        &first,
-        domain.end(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Equal;
+    let at_start = from_start == Ordering::Equal;
+    let at_end = to_end == Ordering::Equal;
     if (at_start || at_end)
         && decided_order(compare_reals(
             &(domain.end() - domain.start()),
