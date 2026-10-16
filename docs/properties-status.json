@@ -12046,6 +12046,52 @@
     "historical_preservation": "27093 inherited missing paths retain their expected hashes through the parent audit; no new missing artifact or mismatch.",
     "remaining": "Inherited provenance, complete internal resource contracts, clean external release, full CI/formal/fuzz/coverage and 35 separately unadmitted native files remain open.",
     "full_plan_complete": false
+  },
+  "native_admission_recheck": {
+    "status": "current-native-runtime-admission-still-fails",
+    "baseline_commit": "5918d85aa0064614ba11dc3c8bcc6a0a7d4b7191",
+    "progress": "docs/evidence/2026-10-16-native-admission-recheck/progress-v1.md",
+    "review": "docs/evidence/2026-10-16-native-admission-recheck/review-v1/source-review.md",
+    "validation": "docs/evidence/2026-10-16-native-admission-recheck/qualification-summary-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-native-admission-recheck/checkpoint-v1.json",
+    "artifact_audit": "docs/evidence/2026-10-16-native-admission-recheck/artifact-audit-v1.json.gz",
+    "original_gates": {
+      "full_board": {
+        "worker_cpu_seconds": 191.564613212,
+        "limit_seconds": 120,
+        "passed": false
+      },
+      "copper_neck": {
+        "check_body_wall_seconds": 88.03321514,
+        "limit_seconds": 60,
+        "passed": false
+      },
+      "gerber": {
+        "passed": true
+      }
+    },
+    "reported_findings": [
+      12,
+      197
+    ],
+    "production_or_test_edits": 0,
+    "pending_native_files_unchanged": 35,
+    "profile_raw_bytes": 357002708,
+    "debugger_snapshots": 13,
+    "pi_laurent_on_stack": 8,
+    "limitations": [
+      "Runtime reproduction and diagnostic sampling only; no native implementation admission or speedup claim.",
+      "Finding counts are not an independent geometry oracle or a full report byte comparison.",
+      "Native full suites, affected lint/docs, clean package release and broad library costs remain unresolved.",
+      "External wall/address-space limits do not establish internal work or retained-heap bounds.",
+      "The perf caller unwinder failed. GDB snapshots are sparse diagnostics, not time proportions.",
+      "The new verbose unwinder diagnostic exhausted repository space; its available 25407488-byte stderr and all other outputs were retained under /dev/shm, with an explicit relocation record.",
+      "Historical missing artifacts remain inherited; no historical-completeness claim."
+    ],
+    "next": "Isolate transient exact-proof costs, metadata-first validation and endpoint proof reuse on the current revision; preserve the rejected combined trials and original workload contracts.",
+    "historical_preservation": "27093 inherited missing paths retain their expected hashes; no new missing artifact or mismatch.",
+    "runtime_admitted": false,
+    "full_plan_complete": false
   }
 },
   "status_meanings": {
