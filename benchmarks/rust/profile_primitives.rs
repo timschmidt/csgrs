@@ -210,15 +210,19 @@ fn main() {
             Real::zero(),
             4,
         )
+        .expect("valid sampled mechanical fixture")
     });
     run_profile(&config, "cycloidal_gear", 1, || {
         curve::cycloidal_gear(Real::from(2), 12, Real::from(2), Real::zero(), 4)
+            .expect("valid sampled mechanical fixture")
     });
     run_profile(&config, "involute_rack", 2, || {
         curve::involute_rack(Real::from(2), 4, Real::from(20), Real::zero(), Real::zero())
+            .expect("valid sampled mechanical fixture")
     });
     run_profile(&config, "cycloidal_rack", 2, || {
         curve::cycloidal_rack(Real::from(2), 4, Real::zero(), 8)
+            .expect("valid sampled mechanical fixture")
     });
     run_profile(&config, "airfoil_naca4", 4, || {
         curve::airfoil_naca4(
@@ -228,6 +232,7 @@ fn main() {
             Real::from(20_u8),
             80,
         )
+        .expect("valid sampled mechanical fixture")
     });
     config.run(
         "profile_primitives",
@@ -239,7 +244,8 @@ fn main() {
                 &curve::square(Real::from(8)).expect("valid planar fixture"),
                 3,
                 Real::from(1),
-            );
+            )
+            .expect("exact Hilbert strings in a square");
             Measurement::new(1, strings.len() as u64, strings.len() as u64)
         },
     );

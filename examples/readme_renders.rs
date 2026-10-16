@@ -168,23 +168,28 @@ fn render_readme_curves() {
     );
     render_curve(
         "involute_gear",
-        &curve::involute_gear(r(0.22), 14, r(20.0), r(0.02), r(0.01), 5),
+        &curve::involute_gear(r(0.22), 14, r(20.0), r(0.02), r(0.01), 5)
+            .expect("valid sampled mechanical fixture"),
     );
     render_curve(
         "cycloidal_gear",
-        &curve::cycloidal_gear(r(0.22), 14, r(0.275), r(0.02), 8),
+        &curve::cycloidal_gear(r(0.22), 14, r(0.275), r(0.02), 8)
+            .expect("valid sampled mechanical fixture"),
     );
     render_curve(
         "involute_rack",
-        &curve::involute_rack(r(0.32), 7, r(20.0), r(0.02), r(0.01)),
+        &curve::involute_rack(r(0.32), 7, r(20.0), r(0.02), r(0.01))
+            .expect("valid sampled mechanical fixture"),
     );
     render_curve(
         "cycloidal_rack",
-        &curve::cycloidal_rack(r(0.32), 7, r(0.02), 12),
+        &curve::cycloidal_rack(r(0.32), 7, r(0.02), 12)
+            .expect("valid sampled mechanical fixture"),
     );
     render_curve(
         "airfoil_naca4",
-        &curve::airfoil_naca4(r(2.0), r(4.0), r(12.0), r(3.0), 96),
+        &curve::airfoil_naca4(r(2.0), r(4.0), r(12.0), r(3.0), 96)
+            .expect("valid sampled mechanical fixture"),
     );
     render_curve(
         "bezier",
@@ -248,7 +253,8 @@ fn render_readme_curves() {
             &curve::square(r(2.0)).expect("valid planar fixture"),
             4,
             r(0.12),
-        ),
+        )
+        .expect("exact Hilbert strings in a square"),
     );
     render_open_curves(
         "hershey_strings",

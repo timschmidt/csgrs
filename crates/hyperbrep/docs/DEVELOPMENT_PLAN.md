@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
-Status: implementation blueprint. Updated 2026-10-15 for upstream
-`362e157c1dfb39701749ed2c154b0edff717fec0` and concurrent development ownership.
+Status: implementation blueprint. Updated 2026-10-16 for upstream
+`72cd216cc758d364c9e40b8969fef2df155bec8b` and concurrent development ownership.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,
@@ -82,8 +82,22 @@ native, feature, WASM and composition paths after integration. Keep a fixed
 revision throughout checks and matched measurements; refresh source-specific
 evidence before making claims on the merged code.
 
-The [latest integration record](evidence/2026-10-15-upstream-corrections/README.md)
-records the parked scalar investigation, conflict resolution and BREP checks.
+Future sketch/infill consumers must retain the upstream gear, rack and airfoil
+constructors' typed failures and contextual `GeometryOutcome` receipts. Their
+sampled profiles retain sampled intent; successful strict construction does
+not establish fidelity to an analytic gear or airfoil. Consume the authoritative
+`hilbert_paths_with_context` trim records when source parameters, contacts and
+selected intervals are required. Do not reconstruct this evidence from the
+geometry-only strings. Padding insets the Hilbert grid bounds; it is not a
+boundary-clearance guarantee. These APIs remain CSGRS/Hypercurve responsibilities;
+BREP consumers compose them without duplicating the curve kernel.
+
+The [latest integration record](evidence/2026-10-16-upstream-corrections/README.md)
+records the two grammar corrections, unchanged BREP/dependency implementations,
+retained executable identities and merged-source qualification. Separately
+pending native work mentioned in upstream evidence is not admitted by a merge
+that does not contain it. The previous parked scalar investigation remains
+preserved and unapplied.
 This ownership direction changes who performs dependency work; it does not
 weaken the shared properties or close any work-package gate.
 

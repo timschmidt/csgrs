@@ -8,10 +8,10 @@
       "status": "in-progress",
       "plan": "crates/hyperbrep/docs/DEVELOPMENT_PLAN.md",
       "work_packages": "crates/hyperbrep/docs/IMPLEMENTATION_STATUS.json",
-      "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-16-step-analytic-export/manifest.json",
+      "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-16-upstream-corrections/manifest.json",
       "contract": "Pure Rust native/WASM exact CAD implementation; greenfield API/archive changes with direct caller updates and no compatibility shims.",
-      "qualification": "On upstream 362e157c1 plus BREP development, admit selected exact analytic STEP export and native borrowed geometry views. All authored code changes stay in BREP/IO; surrounding implementation remains concurrent upstream work. A checkpoint fetch found 72cd216cc (Hilbert trim and gear/airfoil failures); merge and requalification follow in a separate record. Twenty final scoped commands pass on identical source snapshots: BREP/IO all-feature debug/release 424 tests each, minimal release 416; strict all-target Clippy in both configurations, warning-denied docs, five examples, fuzz-target compilation, formatting and 30 zero-import WASM groups. Counts overlap and include the explicitly failing native scaling frontier. Independent graph/formula assertions cover every encoded entity/map; seven complete exports pass independent OCCT topology and floating-point volume/area checks. Native replay, split/reflection, Boolean/empty continuation, units, near-coincidence and typed failure/recovery pass. Original failed attempts and the independently corrected hole-area expectation remain retained. Two complete 54-process campaigns preserve required receipts and fixture facts for all 115 prior BREP/STEP/arc cases. The first intermediate header design adds allocation costs; a static-prefix repair restores every measured baseline allocation request and requested-byte total. The final largest case-median timing ratio is 1.0797176950544332. Three final new-domain processes separately measure eight checked/materialized export or edit-roundtrip/rejection workflows. All adverse observations, first-version data, executable sizes and process resources remain. These are descriptive shared-host measurements, not a general speedup or complete timing/memory admission. All 28 work packages remain open. Native uniform analytic scaling is a reproduced unfulfilled workflow and misreports InvalidSurfaceFrame; it requires native frame/radius/chart/pcurve/certificate transport. Other analytic/spline/trim/void/assembly exchange, exact general seam success, full provenance/resource/cancellation bounds and published-package/MSRV/binding delivery stay open. Earlier independent timing exceptions remain. No runtime fuzz/ASan/lexicase, coverage, formal proof, whole-workspace/pre-push campaign or push is claimed.",
-      "upstream_revision": "362e157c1dfb39701749ed2c154b0edff717fec0",
+      "qualification": "Merged upstream 72cd216cc onto BREP analytic export 5027ba731 with both histories preserved and no BREP/dependency implementation changes. All 24 merged-source commands pass with unchanged source snapshots: BREP/IO all-feature debug/release 424 tests each and minimal release 416; strict all-target Clippy in both configurations, warning-denied docs, five examples, fuzz-target compilation and 30 zero-import WASM groups. Seven exports pass independent OCCT topology and floating-point mass checks. Both curve-only and all-feature configurations pass all 15 new root acceptance tests. Root all-feature release Clippy/docs, one doctest and the changed benchmark/example callers pass. Counts overlap; no whole-workspace or published-package claim. The preceding exact build command produces ten benchmark executables identical in features, bytes and SHA-256 to the qualified analytic-export increment. Seven complete STEP artifacts are also byte-identical. No timing campaign was rerun; the retained 115-case corpus and eight new workflow costs keep their original conditions, adverse observations and limitations. All 28 work packages remain open. Analytic uniform scaling still fails at native frame transport and remains a BREP task. Surrounding crates remain concurrent upstream work unless a reproduced BREP blocker requires repair. Pending work mentioned in upstream evidence but absent from these commits is not admitted. No runtime fuzz/ASan/lexicase, coverage, formal, complete pre-push or push claim.",
+      "upstream_revision": "72cd216cc758d364c9e40b8969fef2df155bec8b",
       "acceptance_protocol": "docs/admission.md",
       "integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-upstream-integration/README.md",
       "acceptance_order": [
@@ -19,7 +19,7 @@
         "Ordinary strict-mode completion",
         "Complete user-path and release validation"
       ],
-      "latest_integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-upstream-corrections/README.md",
+      "latest_integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-16-upstream-corrections/README.md",
       "implementation_ownership": {
         "primary": [
           "hyperbrep",
@@ -9646,6 +9646,423 @@
       "resources": "Private copy-on-write target over the unchanged E13 lower build; all lower hashes rechecked. External 1800-second/8-GiB per-process containment only. Original workload fixtures run once as completion checks, without performance claims. The /tmp quota remains full; historical targets and failed copies are retained.",
       "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
       "remaining": "Hilbert midpoint-only clipping and lossy wrapper; legacy sampled gear/airfoil and text construction failures; remaining adapters; wider resources/provenance, external package/release, formal/fuzz/coverage and full properties obligations. The 35 pending native files remain separately unadmitted.",
+      "full_plan_complete": false
+    },
+    "hilbert_trim_work": {
+      "status": "exact native Hilbert clipping and visible failures; affected semantic and downstream checks passed",
+      "baseline_commit": "362e157c1",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P29",
+        "P35",
+        "P37",
+        "P39"
+      ],
+      "contract": "docs/evidence/2026-10-15-hilbert-trimming/contract-v1.md",
+      "baseline": "docs/evidence/2026-10-15-hilbert-trimming/baseline-findings-v1.md",
+      "progress": "docs/evidence/2026-10-15-hilbert-trimming/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-hilbert-trimming/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-hilbert-trimming/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-hilbert-trimming/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "benchmarks/rust/profile_primitives.rs": "2281703ac55dc66996aafa6065626ebbb5e48432e19e607a04bd47830c32150b",
+        "examples/readme_renders.rs": "037e64bfc20dd6a670fa32e2b2c250de740e7b70ff1244c66ec47c83d93abbe0",
+        "readme.md": "1d64afb9ef73f44e53e24c26f6d7f3bbb5f6116a4ba5493cdd8b8de95fe53a6f",
+        "src/curve/native.rs": "3195c2e2f8644d186afa3b6ac1862e08aab5e6cb2b4fd479f3f743e5b4987721",
+        "tests/hilbert_trimming.rs": "96b6dab4f8be5539796206160bf91e504a40fdb8953a90d0b1b5f22bef888485"
+      },
+      "test_totals": {
+        "hilbert-semantics": {
+          "passed": 8,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 253,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 360,
+          "ignored": 1
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        }
+      },
+      "migration": "hilbert_paths and its context form expose native CurvePathRegionTrim2 evidence. hilbert_strings now returns Result and provides an exact geometry-only view when endpoints have Real coordinates; selected endpoints remain supported by the authoritative path API. Actual contacts replace midpoint-only retention, so segmentation changes intentionally.",
+      "semantics": "Independent directed intervals cover holes, disconnected material, positive-length boundary overlaps and isolated tangency under strict/approximate/strict. Exact symbolic affine coordinates, original order-3/order-4 grid coverage, source-parameter/contact replay, downstream native path use, empty composition, invalid/undecided/unsupported outcomes and qualified approximate-empty receipts pass.",
+      "cost": {
+        "cold": {
+          "paired_candidate_over_baseline_ratios": [
+            2.8720375569303105,
+            2.6879071287200604,
+            3.386337438101079,
+            2.5605019267644606,
+            3.011448124262236
+          ],
+          "median_ratio": 2.8720375569303105,
+          "latency_ns_per_iteration": {
+            "baseline": [
+              834573.0,
+              908957.0,
+              771217.0,
+              919417.0,
+              811574.0
+            ],
+            "candidate": [
+              2396925.0,
+              2443192.0,
+              2611601.0,
+              2354169.0,
+              2444013.0
+            ]
+          },
+          "peak_process_rss_kib": {
+            "baseline": [
+              14968,
+              14780,
+              14772,
+              14788,
+              14860
+            ],
+            "candidate": [
+              15184,
+              14836,
+              15108,
+              15272,
+              15108
+            ]
+          }
+        },
+        "warm": {
+          "paired_candidate_over_baseline_ratios": [
+            5.823368102633511,
+            5.363711759643221,
+            4.2041284557486085,
+            5.379679711241231,
+            4.404760884503733
+          ],
+          "median_ratio": 5.363711759643221,
+          "latency_ns_per_iteration": {
+            "baseline": [
+              261737.125,
+              263608.125,
+              335500.75,
+              277117.125,
+              320880.5
+            ],
+            "candidate": [
+              1524191.625,
+              1413918.0,
+              1410488.25,
+              1490801.375,
+              1413401.875
+            ]
+          },
+          "peak_process_rss_kib": {
+            "baseline": [
+              15156,
+              14748,
+              14824,
+              14952,
+              14748
+            ],
+            "candidate": [
+              15292,
+              15244,
+              15520,
+              15216,
+              14908
+            ]
+          }
+        }
+      },
+      "resources": "All samples retained as a correctness-migration cost disclosure; no speedup claim. The order cap and checked reservations do not bound all native work, coefficients, heap bytes or cancellation. External 1800-second/8-GiB containment only. Private /dev/shm overlay uppers preserve the E14 lower build and all failed trials.",
+      "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
+      "remaining": "Legacy sampled gear/airfoil and text construction failures; remaining adapters; broader resources/provenance, external package/release, formal/fuzz/coverage and full properties obligations. The 35 pending native files remain separately unadmitted.",
+      "full_plan_complete": false
+    },
+    "gear_airfoil_failure_work": {
+      "status": "typed sampled gear/rack/airfoil failures and composed certainty; affected semantic and downstream checks passed",
+      "baseline_commit": "f1dab2248",
+      "properties": [
+        "P1",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P27",
+        "P35",
+        "P37",
+        "P39"
+      ],
+      "contract": "docs/evidence/2026-10-15-gear-airfoil-failures/contract-v1.md",
+      "baseline": "docs/evidence/2026-10-15-gear-airfoil-failures/baseline-findings-v1.md",
+      "progress": "docs/evidence/2026-10-15-gear-airfoil-failures/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-gear-airfoil-failures/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-gear-airfoil-failures/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-gear-airfoil-failures/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "benchmarks/rust/feature_pipeline.rs": "cd0a4dd737901838ce1bbde3e4d881b7e94fc5935780ffbbcd646cfe212106d2",
+        "benchmarks/rust/profile_primitives.rs": "cb3f023bb03a6b399641c60012e669e934efbd5b2db3162966d78a43de0fbef4",
+        "examples/readme_renders.rs": "ffaf74a62b2d7f9ad8762e1e73324962f88e35ad7eff5b8b2cacde3a2cbd3248",
+        "readme.md": "59375b904a42e7f5f1ec2468c3acbe940b4a25569b23118027039b147a787e5a",
+        "src/curve/native.rs": "1ae798af6e932d62634fdbad47bd2a1ba46f1e6c1d8fef2e3857aa1ab5448a4d",
+        "src/solid.rs": "07426020dace0152fdaafc128149d243388999d1b5d9d249095c19c69335e004",
+        "tests/gear_airfoil_failures.rs": "4aa5778b01e620dc31185ee3a239932353d264673fc28f7d3fa988d8c55f8e43"
+      },
+      "test_totals": {
+        "gear-airfoil-semantics": {
+          "passed": 7,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 260,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 367,
+          "ignored": 1
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        }
+      },
+      "migration": "The five gear/rack/airfoil constructors now return Result, with policy-explicit GeometryOutcome forms. All three solid gear wrappers propagate validation failures and consumed certainty. Existing sampled sets, full original resolutions and represented NACA constants/closure are preserved; analytic fidelity is not certified.",
+      "semantics": "Independent rack area and membership, translation/empty Boolean/extrusion composition, closed-manifold topology and independent volume, represented NACA ordinate and membership, gear radial witnesses. Source-coordinate and harness checksum agreement are separate preservation checks.",
+      "certainty": "Ten full original README/benchmark profiles certify under both policies. Actual approximate validation remains Approximate512Consumed through cached rings and all three solid wrappers; strict/approximate/strict diagnostics remain distinct.",
+      "baseline_failures": {
+        "empty_profiles": 22,
+        "capacity_panics": 5,
+        "certified_empty_solids": 6
+      },
+      "candidate_diagnostics": {
+        "invalid_input": 18,
+        "undecided": 5,
+        "resource_exhausted": 10
+      },
+      "exact_original_coordinate_fixtures": 10,
+      "cost": {
+        "involute_gear": {
+          "cold": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.0338385208345116,
+              0.9481370627652979,
+              1.0299915521382512,
+              0.9970961647548812,
+              1.0204520659118124
+            ],
+            "median_latency_ratio": 1.0204520659118124,
+            "allocation_candidate_minus_baseline": {
+              "allocations": -4,
+              "reallocations": -2,
+              "allocated_bytes": -448,
+              "reallocated_bytes": -1024,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 2208,
+              "retained_delta_bytes": 0
+            }
+          },
+          "warm": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.0419060672675233,
+              0.8760184515498863,
+              0.8188367445009798,
+              0.8080469859372161,
+              0.9717860446160679
+            ],
+            "median_latency_ratio": 0.8760184515498863,
+            "allocation_candidate_minus_baseline": {
+              "allocations": -4,
+              "reallocations": -2,
+              "allocated_bytes": -448,
+              "reallocated_bytes": -1024,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 1792,
+              "retained_delta_bytes": 0
+            }
+          }
+        },
+        "cycloidal_gear": {
+          "cold": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.014148422373886,
+              1.1215006255373214,
+              1.0864618114760634,
+              0.9801126746773748,
+              0.9821773918208646
+            ],
+            "median_latency_ratio": 1.014148422373886,
+            "allocation_candidate_minus_baseline": {
+              "allocations": -4,
+              "reallocations": 0,
+              "allocated_bytes": -224,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 5616,
+              "retained_delta_bytes": 0
+            }
+          },
+          "warm": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              0.9954054927346518,
+              0.9455686951594544,
+              0.9947352165293221,
+              0.9938003358280681,
+              1.0269088674190598
+            ],
+            "median_latency_ratio": 0.9947352165293221,
+            "allocation_candidate_minus_baseline": {
+              "allocations": -4,
+              "reallocations": 0,
+              "allocated_bytes": -224,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 1920,
+              "retained_delta_bytes": 0
+            }
+          }
+        },
+        "involute_rack": {
+          "cold": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.0205151965934751,
+              0.9815774532163523,
+              1.0677911118001353,
+              0.9146929915787605,
+              1.0119301656093456
+            ],
+            "median_latency_ratio": 1.0119301656093456,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": 0,
+              "allocated_bytes": 0,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 0,
+              "retained_delta_bytes": 0
+            }
+          },
+          "warm": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              0.9041750296790386,
+              0.9141220564316527,
+              1.022852767853,
+              1.166101160222931,
+              0.7824247779041902
+            ],
+            "median_latency_ratio": 0.9141220564316527,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": 0,
+              "allocated_bytes": 0,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 0,
+              "retained_delta_bytes": 0
+            }
+          }
+        },
+        "cycloidal_rack": {
+          "cold": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.064652091222192,
+              1.0882726537890604,
+              1.0669145622007847,
+              1.016827674877289,
+              0.9392162776061449
+            ],
+            "median_latency_ratio": 1.064652091222192,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": 0,
+              "allocated_bytes": 0,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 0,
+              "retained_delta_bytes": 0
+            }
+          },
+          "warm": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.5359748651039915,
+              0.9103566510583836,
+              0.9652343626908381,
+              0.9729524198728993,
+              0.8037035916341861
+            ],
+            "median_latency_ratio": 0.9652343626908381,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": 0,
+              "allocated_bytes": 0,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 0,
+              "retained_delta_bytes": 0
+            }
+          }
+        },
+        "airfoil_naca4": {
+          "cold": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.0198190914780254,
+              0.9961811069826243,
+              1.0348597352085838,
+              1.0230840554164051,
+              0.9750858745523041
+            ],
+            "median_latency_ratio": 1.0198190914780254,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": -1,
+              "allocated_bytes": 7584,
+              "reallocated_bytes": -15552,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": -192,
+              "retained_delta_bytes": 0
+            }
+          },
+          "warm": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.0032861118040761,
+              0.974689849406096,
+              0.978690071363367,
+              1.0080077904146227,
+              1.0123595088222581
+            ],
+            "median_latency_ratio": 1.0032861118040761,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": -1,
+              "allocated_bytes": 7584,
+              "reallocated_bytes": -15552,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 1296,
+              "retained_delta_bytes": 0
+            }
+          }
+        }
+      },
+      "resources": "All 100 timing, 20 allocation and 4 catalog completion rows retained. No optimization claim. Checked reservations/capacities do not bound all native work, coefficients, heap bytes or cancellation. Requested allocation bytes exclude allocator overhead. External 1800-second/8-GiB containment only; private /dev/shm uppers preserve the E15 baseline.",
+      "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
+      "remaining": "Legacy text construction failures and remaining adapters; broader resources/provenance, external package/release, formal/fuzz/coverage and full properties obligations. The 35 pending native files remain separately unadmitted and their failed cost gates are not discharged by these root suites.",
       "full_plan_complete": false
     }
   },
