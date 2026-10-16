@@ -1,0 +1,7 @@
+    Finished `release` profile [optimized] target(s) in 0.13s
+     Running unittests src/lib.rs (/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+thread 'zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers' (3947667) panicked at crates/hyperdrc/src/checks/layer.rs:6028:9:
+complex project copper neck regression fixture took 86.843039677s
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+error: test failed, to rerun pass `-p hyperdrc --lib`

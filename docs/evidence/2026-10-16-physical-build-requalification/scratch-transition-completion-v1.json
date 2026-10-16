@@ -1,0 +1,9 @@
+{
+  "supervisor_pid": 3884104,
+  "terminated_after_current_command_exit": true,
+  "command": "curve-all",
+  "command_exit_code": 0,
+  "child_wait_status": 0,
+  "target_reset": false,
+  "used_runner_edited": false
+}

@@ -1,0 +1,29 @@
+
+running 12 tests
+test ascii_stl_small_coordinate_projection_survives_text ... FAILED
+test ascii_stl_small_representable_cube_composes ... FAILED
+test ascii_stl_unit_control_composes ... ok
+test binary_stl_rejects_faces_collapsed_by_quantization ... FAILED
+test binary_stl_small_representable_cube_composes ... FAILED
+test binary_stl_unit_control_composes ... ok
+test canonical_empty_interchange_control ... ok
+test obj_rejects_missing_vertex_index ... FAILED
+test obj_rejects_overflowing_vertex_index ... FAILED
+test obj_small_coordinate_projection_survives_text ... FAILED
+test obj_unit_control_composes ... ok
+test obj_writer_rejects_invalid_input_without_writing ... FAILED
+
+failures:
+
+failures:
+    ascii_stl_small_coordinate_projection_survives_text
+    ascii_stl_small_representable_cube_composes
+    binary_stl_rejects_faces_collapsed_by_quantization
+    binary_stl_small_representable_cube_composes
+    obj_rejects_missing_vertex_index
+    obj_rejects_overflowing_vertex_index
+    obj_small_coordinate_projection_survives_text
+    obj_writer_rejects_invalid_input_without_writing
+
+test result: FAILED. 4 passed; 8 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

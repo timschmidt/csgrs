@@ -1,0 +1,55 @@
+{
+  "source": "/dev/shm/csgrs-stl-import-contracts",
+  "files": {
+    "test-preparation.json": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/test-preparation.json",
+      "sha256": "230224c430a3eb556d5bb27c94d8c37bd40b87bba38a25ce120745d79e029a27"
+    },
+    "check_baseline_v1.py": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/check_baseline_v1.py",
+      "sha256": "f0cc2935a63393dc4ee7f1f619b310b23d5620486e3a44d542607fc7cd22882b"
+    },
+    "probe_v1.rs": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/probe_v1.rs",
+      "sha256": "4cadb0431794b153971e7e771c658db394d35dde5ccfb1be7d5fa643f205e77c"
+    },
+    "contract-v1.md": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/contract-v1.md",
+      "sha256": "7629cb03658a6e4cc998b90e74a8d8f95f7e84539260daed6d01b8db1836759e"
+    },
+    "baseline-tests-v1/result.json": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/baseline-tests-v1/result.json",
+      "sha256": "a9bb455431dcdec5c388d7872436edefd114f999b972670e7d8246d766e001b7"
+    },
+    "baseline-tests-v1/test.resources": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/baseline-tests-v1/test.resources",
+      "sha256": "7efe8e02c8f8910d9a62d9b33cce3a1b4cabcac72ab7573eecdc9c4eb6e59782"
+    },
+    "baseline-tests-v1/test.stderr": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/baseline-tests-v1/test.stderr",
+      "sha256": "da020edac4bf96b1902bd251200f680f3333bc15a249bfe944dc565b78243812"
+    },
+    "baseline-tests-v1/test.stdout": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/baseline-tests-v1/test.stdout",
+      "sha256": "83c81eb7b1fb0faa1e0d1b9c68b036a5934a89ecb157aa5085db9bcac7a4ed9b"
+    },
+    "baseline-tests-v1/compile.resources": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/baseline-tests-v1/compile.resources",
+      "sha256": "ffecb40c56f2718f3085b48c18b6a4109eb3623f2305db188beffcdf48fe48f8"
+    },
+    "baseline-tests-v1/compile.stderr": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/baseline-tests-v1/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-tests-v1/compile.stdout": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/baseline-tests-v1/compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-tests-v1/protocol.json": {
+      "original": "/dev/shm/csgrs-stl-import-contracts/baseline-tests-v1/protocol.json",
+      "sha256": "30caab54a2a5c06c6831f8fd4d3abe6aa1eaeca3941e44b9abda8fc4830f88c8"
+    }
+  },
+  "original_artifacts_unchanged": true,
+  "main_source_changes": 0
+}

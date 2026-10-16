@@ -1,0 +1,731 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 10.985997773241252,
+    "sources_unchanged": true,
+    "binaries": {},
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fba546a98001e2394ef6177a521fa4d1bd02db61d35ccf7811755f3d17d1d4ae"
+  },
+  {
+    "name": "root-all",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 507.5767282960005,
+    "sources_unchanged": true,
+    "binaries": {
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hilbert_trimming-a298c6dfff13a0d9": {
+        "sha256": "7bb50628dbe5638d1f4514341f0127cbe4ae853293a4738ef17b5c3fb4239e26",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/7bb50628dbe5638d1f4514341f0127cbe4ae853293a4738ef17b5c3fb4239e26/hilbert_trimming-a298c6dfff13a0d9",
+        "bytes": 32856144
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/curve_metaball_workloads-66d29e6564cd95ad": {
+        "sha256": "e9e224e452700422b2ff4d4a08f2b2b1204a65784ae2ebb30106eccd809853a1",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/e9e224e452700422b2ff4d4a08f2b2b1204a65784ae2ebb30106eccd809853a1/curve_metaball_workloads-66d29e6564cd95ad",
+        "bytes": 31785360
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/generated_benchmark_corpus-3c1f1fde5d37996c": {
+        "sha256": "cb169819d2e7a3ebf15578d6abb9ef8747e5f060716679906edbb76f9528f76e",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/cb169819d2e7a3ebf15578d6abb9ef8747e5f060716679906edbb76f9528f76e/generated_benchmark_corpus-3c1f1fde5d37996c",
+        "bytes": 19055808
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/metaballs_diagnostics-0ceadacbf3d3f4d1": {
+        "sha256": "fa7cc9527352745bc85b26047895e1c4e371e7390f00123265d10b8778c50547",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/fa7cc9527352745bc85b26047895e1c4e371e7390f00123265d10b8778c50547/metaballs_diagnostics-0ceadacbf3d3f4d1",
+        "bytes": 18969320
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/empty_composition-916811c3b9113a9e": {
+        "sha256": "8459ccb4dbea979e682fa8fa2cd57ff533072b7a1a0e373af342273663e6f389",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/8459ccb4dbea979e682fa8fa2cd57ff533072b7a1a0e373af342273663e6f389/empty_composition-916811c3b9113a9e",
+        "bytes": 20824656
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/metaball_workloads-fdfd90c45629d15d": {
+        "sha256": "bcc1365b21e3aa3bed47e82a0df616b03883ae473b96a8ba3df590279f1b5151",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/bcc1365b21e3aa3bed47e82a0df616b03883ae473b96a8ba3df590279f1b5151/metaball_workloads-fdfd90c45629d15d",
+        "bytes": 19038704
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/metaball_failures-d85a244280836e13": {
+        "sha256": "7cb075e2fc5f0bbaf3e291f749d6919dd25e8856f9309db18ea62f479ba7b232",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/7cb075e2fc5f0bbaf3e291f749d6919dd25e8856f9309db18ea62f479ba7b232/metaball_failures-d85a244280836e13",
+        "bytes": 20626320
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/competitive-185cd4c877423fbe": {
+        "sha256": "1d134ba02a0a026cc2614493df054d94ff25147bb018af7245bc18adf3283f9f",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/1d134ba02a0a026cc2614493df054d94ff25147bb018af7245bc18adf3283f9f/competitive-185cd4c877423fbe",
+        "bytes": 21063600
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/curve_metaball_failures-d27370f0b0e5f990": {
+        "sha256": "4467c011366b504d470177ed0c1ff98d0e53186393a82b81a3a00334ee68a314",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/4467c011366b504d470177ed0c1ff98d0e53186393a82b81a3a00334ee68a314/curve_metaball_failures-d27370f0b0e5f990",
+        "bytes": 32970312
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/adapter_boolean_failures-8867e9a3af41b5b5": {
+        "sha256": "1b0710b01f220a9265394399c82e41419a0820f0357af6931f03dd9c06fe8316",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/1b0710b01f220a9265394399c82e41419a0820f0357af6931f03dd9c06fe8316/adapter_boolean_failures-8867e9a3af41b5b5",
+        "bytes": 20633064
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/native_queries-b33ec052b7501c8a": {
+        "sha256": "d341ef9428fa08f24cb92b666ab9e5a2f10af91651cfb50f3c1b0ebf1dc51a1e",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/d341ef9428fa08f24cb92b666ab9e5a2f10af91651cfb50f3c1b0ebf1dc51a1e/native_queries-b33ec052b7501c8a",
+        "bytes": 20885808
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/transform_failures-21eb23e9828f9466": {
+        "sha256": "4f354d68322d8e175542e8b44c647259a50375795f8dd21d38b6baa1c6935aa0",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/4f354d68322d8e175542e8b44c647259a50375795f8dd21d38b6baa1c6935aa0/transform_failures-21eb23e9828f9466",
+        "bytes": 20766640
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/exact_linear_modeling-5d0a48a07e0f162b": {
+        "sha256": "ea36dc1adb461a5fc1f4d9a1fc47006f409cdbd548fb5ef89e7fdbb03407726a",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/ea36dc1adb461a5fc1f4d9a1fc47006f409cdbd548fb5ef89e7fdbb03407726a/exact_linear_modeling-5d0a48a07e0f162b",
+        "bytes": 32315976
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/gear_airfoil_failures-edc7ec750765891a": {
+        "sha256": "3d3866bec0bf261a04f390f30ed34a617543a2d3e6099d9e055e7a5a62eb3515",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/3d3866bec0bf261a04f390f30ed34a617543a2d3e6099d9e055e7a5a62eb3515/gear_airfoil_failures-edc7ec750765891a",
+        "bytes": 33076144
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/bounds_failures-65b1d35d217e46d4": {
+        "sha256": "80bd1826eca5750ceee503ce5d0e950d9bdcb47d67df7223d7b93fbeb4c43403",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/80bd1826eca5750ceee503ce5d0e950d9bdcb47d67df7223d7b93fbeb4c43403/bounds_failures-65b1d35d217e46d4",
+        "bytes": 34136432
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/sdf_tpms_diagnostics-24970cc75f8a8512": {
+        "sha256": "f487a65334b12b85c9c555d8d67020c6655d02cb9dfa5af97c9d7c489a4a747b",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/f487a65334b12b85c9c555d8d67020c6655d02cb9dfa5af97c9d7c489a4a747b/sdf_tpms_diagnostics-24970cc75f8a8512",
+        "bytes": 21212608
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/exact_path_failures-d29490301ca0c150": {
+        "sha256": "f6e553f9179d49f0870cfb0b0047849062677b83fe3dbe4c790c52631867dd8d",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/f6e553f9179d49f0870cfb0b0047849062677b83fe3dbe4c790c52631867dd8d/exact_path_failures-d29490301ca0c150",
+        "bytes": 32862680
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/slice_projection_contract-b55baaad948b2b8d": {
+        "sha256": "563158e3ab591a13bc553d565c894c88779deafc1df0162e837879aec1cc8850",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/563158e3ab591a13bc553d565c894c88779deafc1df0162e837879aec1cc8850/slice_projection_contract-b55baaad948b2b8d",
+        "bytes": 33989072
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/rounded_rectangle_fidelity-8f7195511dbb1c27": {
+        "sha256": "5aeccff959596e24b1a66c17270236f069a298027c09971aedd19106576917b8",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/5aeccff959596e24b1a66c17270236f069a298027c09971aedd19106576917b8/rounded_rectangle_fidelity-8f7195511dbb1c27",
+        "bytes": 36014080
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/batch_common_cells-a927672f36173761": {
+        "sha256": "ba8b3a811216cca736091e2427c4fc3f6ec1dac4fed6998748982300c3192f9e",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/ba8b3a811216cca736091e2427c4fc3f6ec1dac4fed6998748982300c3192f9e/batch_common_cells-a927672f36173761",
+        "bytes": 20544040
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/adversarial_extrusions-03eb6390b46717d7": {
+        "sha256": "c81e60f8b7d8cc3f7eec0e27928594c99205bd657b19d205a55063e695a5e8b0",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/c81e60f8b7d8cc3f7eec0e27928594c99205bd657b19d205a55063e695a5e8b0/adversarial_extrusions-03eb6390b46717d7",
+        "bytes": 32566584
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/readme_render_regression-241ede70811c95bb": {
+        "sha256": "f4bda55772685aad2c9b86b6bd7820aa51d8fdc18ae1af52899536484227e6b3",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/f4bda55772685aad2c9b86b6bd7820aa51d8fdc18ae1af52899536484227e6b3/readme_render_regression-241ede70811c95bb",
+        "bytes": 1151000
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/planar_operation_failures-21febc1e6bde631d": {
+        "sha256": "57a89d607b3b306ac7a4b696aa58fc6787005a39b5a1f254b11997c9ad551af8",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/57a89d607b3b306ac7a4b696aa58fc6787005a39b5a1f254b11997c9ad551af8/planar_operation_failures-21febc1e6bde631d",
+        "bytes": 33126336
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/adversarial_stress-7115bbec9298381e": {
+        "sha256": "f904638e0573901cbfd0a521092324a05858671447785cf12fd28d96b182834d",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/f904638e0573901cbfd0a521092324a05858671447785cf12fd28d96b182834d/adversarial_stress-7115bbec9298381e",
+        "bytes": 33710160
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/curve_constructor_failures-f7cc43e145ac9696": {
+        "sha256": "674dee2c7038d2191f3b80481a3c7a721a0310f92e3f25baa0e4a35a1e1e289c",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/674dee2c7038d2191f3b80481a3c7a721a0310f92e3f25baa0e4a35a1e1e289c/curve_constructor_failures-f7cc43e145ac9696",
+        "bytes": 33000000
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/primitive_failures-62bfc794561dcdc3": {
+        "sha256": "b9549a4af8370ef6444e237da76ea6a8e39b7a4ed3668dc98d8185eb01038ad5",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/b9549a4af8370ef6444e237da76ea6a8e39b7a4ed3668dc98d8185eb01038ad5/primitive_failures-62bfc794561dcdc3",
+        "bytes": 20834912
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/strict_drilled_workflows-84fb41c10d127f23": {
+        "sha256": "803553effe9c2c7693b67b6153f5da3b36db34d2e5fb429f4664441032ab73f0",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/803553effe9c2c7693b67b6153f5da3b36db34d2e5fb429f4664441032ab73f0/strict_drilled_workflows-84fb41c10d127f23",
+        "bytes": 20828008
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/solid_cache-4b39500f97650a56": {
+        "sha256": "7bc1c934879aed8204707a7b495afe0302f421e00b49f84e0aa5a29156cf51a5",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/7bc1c934879aed8204707a7b495afe0302f421e00b49f84e0aa5a29156cf51a5/solid_cache-4b39500f97650a56",
+        "bytes": 34378824
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/csgrs-3c5a74bdc7539294": {
+        "sha256": "cb089a73e3ac7b2db017e3b14388d0a9d7980385445084c1bd44a8dd1abbd27c",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/cb089a73e3ac7b2db017e3b14388d0a9d7980385445084c1bd44a8dd1abbd27c/csgrs-3c5a74bdc7539294",
+        "bytes": 39765272
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/wasm_certainty-4c94a4a83c71928e": {
+        "sha256": "910bd92e398078bad51d1a3c2e02bb4f9239a00a3ddddde095868ece58e6558a",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/910bd92e398078bad51d1a3c2e02bb4f9239a00a3ddddde095868ece58e6558a/wasm_certainty-4c94a4a83c71928e",
+        "bytes": 32057128
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/text_contracts-84d126534db53fda": {
+        "sha256": "7aea74364fa3f5b7c722564be23e217c80bd4efc9de5b11ba7f44cb6408c1b06",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/7aea74364fa3f5b7c722564be23e217c80bd4efc9de5b11ba7f44cb6408c1b06/text_contracts-84d126534db53fda",
+        "bytes": 34038096
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/readme-1992b521cbd1aa62": {
+        "sha256": "5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145/readme-1992b521cbd1aa62",
+        "bytes": 1153328
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/geometry_context-f3d29f7d6dc94528": {
+        "sha256": "93f280fab7c31dbe937f508465fe4e3301fe34ff34696920cb6455f7a5f854c9",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/93f280fab7c31dbe937f508465fe4e3301fe34ff34696920cb6455f7a5f854c9/geometry_context-f3d29f7d6dc94528",
+        "bytes": 41706824
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/minkowski_contracts-0128f2ac1f93f880": {
+        "sha256": "6b2c3a8820fac6465116b23f22159990835726071528ab1aa4ad8ef706d77867",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/6b2c3a8820fac6465116b23f22159990835726071528ab1aa4ad8ef706d77867/minkowski_contracts-0128f2ac1f93f880",
+        "bytes": 21386192
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/adversarial-61fa74ccbd896935": {
+        "sha256": "2935b1c4e48f96a5ec496b732ddfb86dcfca9c5a4434b4397867cd8b0ff356e4",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/2935b1c4e48f96a5ec496b732ddfb86dcfca9c5a4434b4397867cd8b0ff356e4/adversarial-61fa74ccbd896935",
+        "bytes": 34236056
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/sdf_failures-70ac7c65f6b4d210": {
+        "sha256": "ead909fec1f33fde54af6f7c45f79713d4e2b2618362f7a2ef59eb9668eeef03",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/ead909fec1f33fde54af6f7c45f79713d4e2b2618362f7a2ef59eb9668eeef03/sdf_failures-70ac7c65f6b4d210",
+        "bytes": 21015552
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/sampled_profile_failures-1e978d3da16ca610": {
+        "sha256": "87c11d845b9c269f3cb0da9225aa17f2f5a639c456d256b0997e2b51c3947868",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/87c11d845b9c269f3cb0da9225aa17f2f5a639c456d256b0997e2b51c3947868/sampled_profile_failures-1e978d3da16ca610",
+        "bytes": 33350000
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/mesh_boolean_context-914bbfe568471b47": {
+        "sha256": "0d99821b669269f0bc0707ffcc93597fa0207641f32db668e3366012214995c7",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/0d99821b669269f0bc0707ffcc93597fa0207641f32db668e3366012214995c7/mesh_boolean_context-914bbfe568471b47",
+        "bytes": 20738272
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/distribution_contracts-555e8fcfefd73180": {
+        "sha256": "59bb7ad7ae7b5f2d713e666b6b32d8c501e6e1bee6c8806cde0f124492837c35",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/59bb7ad7ae7b5f2d713e666b6b32d8c501e6e1bee6c8806cde0f124492837c35/distribution_contracts-555e8fcfefd73180",
+        "bytes": 21054920
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/polyhedral_construction-5ca791f19bc691fe": {
+        "sha256": "b82ee7620fc50b593b3ce4d5a1a0c79266456635ed996f58e4b59acb061f8c00",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/b82ee7620fc50b593b3ce4d5a1a0c79266456635ed996f58e4b59acb061f8c00/polyhedral_construction-5ca791f19bc691fe",
+        "bytes": 20755968
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/adversarial_deep-521173baf42fc07b": {
+        "sha256": "9c38ce952b77c0227c3876cdf43564bb16998ae371d56a5c7409c245c4e4e6be",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/9c38ce952b77c0227c3876cdf43564bb16998ae371d56a5c7409c245c4e4e6be/adversarial_deep-521173baf42fc07b",
+        "bytes": 33913584
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/adversarial_fixtures-eb5cce8eab7e81ab": {
+        "sha256": "9f1c9fa0844e528a707f6dc9c7bff07ad114e4c44b3796a375cd680fb8c90fd6",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/9f1c9fa0844e528a707f6dc9c7bff07ad114e4c44b3796a375cd680fb8c90fd6/adversarial_fixtures-eb5cce8eab7e81ab",
+        "bytes": 1112664
+      }
+    },
+    "stdout_sha256": "284b32bc315f75088abc3e75b4a7c0e18d3404826c7b7a5bb076e889ef4b317a",
+    "stderr_sha256": "fb97ce2df64b2f3218fce75b2a5ecbfd220e684160813e43e1ace565fe5fb062",
+    "resources_sha256": "fed921cc2713e748f1e3b01e303efdd35ce070da02cc100a471a383e7e687a25"
+  },
+  {
+    "name": "root-minimal",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 159.36712127970532,
+    "sources_unchanged": true,
+    "binaries": {
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/curve_constructor_failures-fd8f13d67d2561c4": {
+        "sha256": "6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/6a3b386c0d2636744d0c521b5160457dd2bbf0e1ce164b509918787d26fdeafd/curve_constructor_failures-fd8f13d67d2561c4",
+        "bytes": 1079496
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/minkowski_contracts-95fc559a68f6aff4": {
+        "sha256": "b9f7204111d8b6611d14a921a0195d2e5a19894da31675b739b1c7abf641cc80",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/b9f7204111d8b6611d14a921a0195d2e5a19894da31675b739b1c7abf641cc80/minkowski_contracts-95fc559a68f6aff4",
+        "bytes": 7160968
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/primitive_failures-812823cb4c624c0c": {
+        "sha256": "c160ebb51a5cc4413b661c9887f9e5ed5b55a73bd1b5ea101a29d094d7372827",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/c160ebb51a5cc4413b661c9887f9e5ed5b55a73bd1b5ea101a29d094d7372827/primitive_failures-812823cb4c624c0c",
+        "bytes": 6649544
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/bounds_failures-c661a92a5b4c7962": {
+        "sha256": "184ac55b89af0bb3f993f257b14651bf1e40bb90ace2320cee4a7cb9a8292a20",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/184ac55b89af0bb3f993f257b14651bf1e40bb90ace2320cee4a7cb9a8292a20/bounds_failures-c661a92a5b4c7962",
+        "bytes": 6553880
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/adversarial_fixtures-f3fb997ef2084a11": {
+        "sha256": "28535d7b1d9e5f1fb4e31ec87b16fd343523ed40f2e75744458c76946728b230",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/28535d7b1d9e5f1fb4e31ec87b16fd343523ed40f2e75744458c76946728b230/adversarial_fixtures-f3fb997ef2084a11",
+        "bytes": 1112664
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/geometry_context-673fb3a0a6f0689a": {
+        "sha256": "4752cbbd26e5bf5ef858b72f358529c47dc6fe51c4054afdc7cee186950df349",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/4752cbbd26e5bf5ef858b72f358529c47dc6fe51c4054afdc7cee186950df349/geometry_context-673fb3a0a6f0689a",
+        "bytes": 7171552
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/readme-114567bf52c105c8": {
+        "sha256": "d758991ee9cea61e9e596e31d01c946b6c9a40b646ba745836012f6d716e0dcf",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/d758991ee9cea61e9e596e31d01c946b6c9a40b646ba745836012f6d716e0dcf/readme-114567bf52c105c8",
+        "bytes": 1153328
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/adapter_boolean_failures-4f1ca3000d3fc581": {
+        "sha256": "410ecf8c54e3bfb23f135d8fd95a7f025f29b7bc8cd05f569c3f63270215073d",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/410ecf8c54e3bfb23f135d8fd95a7f025f29b7bc8cd05f569c3f63270215073d/adapter_boolean_failures-4f1ca3000d3fc581",
+        "bytes": 6481336
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/metaball_failures-02f33d21474432af": {
+        "sha256": "35b3571cdafac22ce4013b03c66903595a9a8198c394d67ae85e16b6efa5e62c",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/35b3571cdafac22ce4013b03c66903595a9a8198c394d67ae85e16b6efa5e62c/metaball_failures-02f33d21474432af",
+        "bytes": 1079448
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hilbert_trimming-72122bfafb7d9216": {
+        "sha256": "b7f48c39dcc16e4d1dc028ff905509227856050561a1764f39e3b476434cf4f2",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/b7f48c39dcc16e4d1dc028ff905509227856050561a1764f39e3b476434cf4f2/hilbert_trimming-72122bfafb7d9216",
+        "bytes": 1079448
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/polyhedral_construction-37f9e8a14557f156": {
+        "sha256": "0db3b13c320eade120d096c24ab6a8eb4b19fc81733434ac8b5aa1f9a4234433",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/0db3b13c320eade120d096c24ab6a8eb4b19fc81733434ac8b5aa1f9a4234433/polyhedral_construction-37f9e8a14557f156",
+        "bytes": 6788040
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/exact_linear_modeling-f01de976de318a36": {
+        "sha256": "c6e97dcb258e46009c992b103a4ae871228e5fbdc5a0e0f6d49cf64c911345ec",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/c6e97dcb258e46009c992b103a4ae871228e5fbdc5a0e0f6d49cf64c911345ec/exact_linear_modeling-f01de976de318a36",
+        "bytes": 1079472
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/solid_cache-07b265ceb2ca1c46": {
+        "sha256": "26fdef3857c405c0c6fdd9edf498486cdabd510a6e948cff41c51022d8a81e3d",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/26fdef3857c405c0c6fdd9edf498486cdabd510a6e948cff41c51022d8a81e3d/solid_cache-07b265ceb2ca1c46",
+        "bytes": 6715328
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/curve_metaball_workloads-93eb9e05f68c5c8b": {
+        "sha256": "f81d63774abaa7f5d90152904922972dae56f2f0428e267daef0158a8c506339",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/f81d63774abaa7f5d90152904922972dae56f2f0428e267daef0158a8c506339/curve_metaball_workloads-93eb9e05f68c5c8b",
+        "bytes": 1079488
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/mesh_boolean_context-a8ee65205fbdc3d4": {
+        "sha256": "650e28142bad1993f712ce04e905832270dbb499dfddebe1aa001fcd7a15ec25",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/650e28142bad1993f712ce04e905832270dbb499dfddebe1aa001fcd7a15ec25/mesh_boolean_context-a8ee65205fbdc3d4",
+        "bytes": 6584680
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/batch_common_cells-95a76a9364b0dff9": {
+        "sha256": "81750e9a36e7d41c3c387e2463f96bf124786868984f61607afa287aaad61fa2",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/81750e9a36e7d41c3c387e2463f96bf124786868984f61607afa287aaad61fa2/batch_common_cells-95a76a9364b0dff9",
+        "bytes": 6409640
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/readme_render_regression-13a0224cc2b1eb67": {
+        "sha256": "7f887519cc6719a558a14fb039d9b170cfedb89f15b81e13b6e4b1f2de1dd2d7",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/7f887519cc6719a558a14fb039d9b170cfedb89f15b81e13b6e4b1f2de1dd2d7/readme_render_regression-13a0224cc2b1eb67",
+        "bytes": 1079488
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/strict_drilled_workflows-638875a84f3cf049": {
+        "sha256": "4b2cac688d699a3cacd7034545d75adcbe4b7526dc8b1f4b65f4e475668f0d64",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/4b2cac688d699a3cacd7034545d75adcbe4b7526dc8b1f4b65f4e475668f0d64/strict_drilled_workflows-638875a84f3cf049",
+        "bytes": 6643584
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/planar_operation_failures-cb132bda92ed78c2": {
+        "sha256": "7630f6bd592c778afa35d6fa067bb3e084e5deecf62533746374d604d4e0615a",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/7630f6bd592c778afa35d6fa067bb3e084e5deecf62533746374d604d4e0615a/planar_operation_failures-cb132bda92ed78c2",
+        "bytes": 1079488
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/transform_failures-5b7fe4d21c3ce0bd": {
+        "sha256": "0fadfa6dc60bca956ced69cab9d324e37cedc8e98c10fc64826a7960cb8de479",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/0fadfa6dc60bca956ced69cab9d324e37cedc8e98c10fc64826a7960cb8de479/transform_failures-5b7fe4d21c3ce0bd",
+        "bytes": 6617000
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/distribution_contracts-7364b209d04c9660": {
+        "sha256": "7ec6849a559b33744e85a6659ce872a0ed0e345bf671cb943767e87107dff58b",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/7ec6849a559b33744e85a6659ce872a0ed0e345bf671cb943767e87107dff58b/distribution_contracts-7364b209d04c9660",
+        "bytes": 6837016
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/sdf_failures-0fb37e01688c21a0": {
+        "sha256": "7a21e36eb9f175a7dcd1d299d5d6e405ba05bdb2d8dc15e2d4e43d4cb9ffe2a9",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/7a21e36eb9f175a7dcd1d299d5d6e405ba05bdb2d8dc15e2d4e43d4cb9ffe2a9/sdf_failures-0fb37e01688c21a0",
+        "bytes": 1079424
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/empty_composition-329c8a68d57ad60d": {
+        "sha256": "b5ef3debbe9a8df262eb7d1283722aa77c7646b46e60d01a4e6cec6de43b2542",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/b5ef3debbe9a8df262eb7d1283722aa77c7646b46e60d01a4e6cec6de43b2542/empty_composition-329c8a68d57ad60d",
+        "bytes": 6660632
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/metaball_workloads-51226a10ba4c7506": {
+        "sha256": "8860a20077e9b2340069df7f32a175ec3a576eab1134f8e4f672e8b8bea20d47",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/8860a20077e9b2340069df7f32a175ec3a576eab1134f8e4f672e8b8bea20d47/metaball_workloads-51226a10ba4c7506",
+        "bytes": 1079456
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/gear_airfoil_failures-cab79b6a24c79f3a": {
+        "sha256": "c1e961bfadf37b3c53950a620a7768fd800d47dd30f31bd30b2b4714025a8a78",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/c1e961bfadf37b3c53950a620a7768fd800d47dd30f31bd30b2b4714025a8a78/gear_airfoil_failures-cab79b6a24c79f3a",
+        "bytes": 1079472
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/wasm_certainty-65de70dfe11e3e06": {
+        "sha256": "d8e8d09df2a9eea388be56b3ed93d6e562d7f37630a19f07a014d19430c30fb6",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/d8e8d09df2a9eea388be56b3ed93d6e562d7f37630a19f07a014d19430c30fb6/wasm_certainty-65de70dfe11e3e06",
+        "bytes": 1079432
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/sampled_profile_failures-59ed42fadf98b620": {
+        "sha256": "40dce8f51aed77737a19b16a5aedcb200ac4d619a9285c55f73bf25c7eb41ae4",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/40dce8f51aed77737a19b16a5aedcb200ac4d619a9285c55f73bf25c7eb41ae4/sampled_profile_failures-59ed42fadf98b620",
+        "bytes": 1079488
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/slice_projection_contract-9b033a35ae634fdd": {
+        "sha256": "da642a310125099793b4cc5d297f01f3993ce1d8ab366467f1db7bf2c6b48c2a",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/da642a310125099793b4cc5d297f01f3993ce1d8ab366467f1db7bf2c6b48c2a/slice_projection_contract-9b033a35ae634fdd",
+        "bytes": 1079488
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/csgrs-12b72f0ccdd38706": {
+        "sha256": "3314f67e24d277199a2f075445619ac0d09ba5dcf536ef251f157490c5fae03c",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/3314f67e24d277199a2f075445619ac0d09ba5dcf536ef251f157490c5fae03c/csgrs-12b72f0ccdd38706",
+        "bytes": 7356952
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/rounded_rectangle_fidelity-1435e79a4c8f8808": {
+        "sha256": "0326a0c9f5da56b219cf3c0db28ed85672d53d140696d7927b40ea9590d6844a",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/0326a0c9f5da56b219cf3c0db28ed85672d53d140696d7927b40ea9590d6844a/rounded_rectangle_fidelity-1435e79a4c8f8808",
+        "bytes": 1079496
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/exact_path_failures-c65ee91721cdc862": {
+        "sha256": "e649513289a10819baaeab30f0130cb0843b5095fb2c1d9d7ac9ccdcb4ce6db5",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/e649513289a10819baaeab30f0130cb0843b5095fb2c1d9d7ac9ccdcb4ce6db5/exact_path_failures-c65ee91721cdc862",
+        "bytes": 1079456
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/curve_metaball_failures-100955c99151bd1c": {
+        "sha256": "138b61bc832cd460e4d4dba5de0b6638df032af3c1b14961e425e6e96aca9ce0",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/138b61bc832cd460e4d4dba5de0b6638df032af3c1b14961e425e6e96aca9ce0/curve_metaball_failures-100955c99151bd1c",
+        "bytes": 1079480
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/text_contracts-89d7bc1159e5c677": {
+        "sha256": "c691a2ec94817d8e279e25a6120b267f83f00e58251b9a1c1548706ebad4370e",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/c691a2ec94817d8e279e25a6120b267f83f00e58251b9a1c1548706ebad4370e/text_contracts-89d7bc1159e5c677",
+        "bytes": 1079432
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/native_queries-c72418af2e8884f8": {
+        "sha256": "24f2535b78decf9a9dc7477d4449965d2e723523522f995430778686fab2a266",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/24f2535b78decf9a9dc7477d4449965d2e723523522f995430778686fab2a266/native_queries-c72418af2e8884f8",
+        "bytes": 6716392
+      }
+    },
+    "stdout_sha256": "e25709b8fb4bb6ee7822769f07403be7ce4b257ac2fbef3acbe32b5cc7bd3b7a",
+    "stderr_sha256": "bb4a2e2cdadc36b837e43546c666cf1a5f60b03c7855505129023843a9d33925",
+    "resources_sha256": "75ec237c36971bd35ed3401e72eb67b7ea99adfb13c647683f1a4ab1c4a1907b"
+  },
+  {
+    "name": "curve-default",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--no-default-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1229.9982456979342,
+    "sources_unchanged": true,
+    "binaries": {
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_curve_point-f8b9c8cfa80ccb34": {
+        "sha256": "ead225b85cc944e870e2afc83ffd1be9fd1a675f7c608b3fc21c93f949ec0e74",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/ead225b85cc944e870e2afc83ffd1be9fd1a675f7c608b3fc21c93f949ec0e74/hypercurve_curve_point-f8b9c8cfa80ccb34",
+        "bytes": 12452496
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_arc_bezier-3f8f6fd99d0e20cd": {
+        "sha256": "2a60ac943ec84ba8eb3b4b84e121be454f1c3d7d41d9c7933ff58ca46a8a2ef2",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/2a60ac943ec84ba8eb3b4b84e121be454f1c3d7d41d9c7933ff58ca46a8a2ef2/hypercurve_arc_bezier-3f8f6fd99d0e20cd",
+        "bytes": 12955144
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_stationary_fillets-ce5a3cf3973361a2": {
+        "sha256": "b74319af64781b923782c794bf764fc94ee64278622924a354bdeb09870e10bf",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/b74319af64781b923782c794bf764fc94ee64278622924a354bdeb09870e10bf/hypercurve_stationary_fillets-ce5a3cf3973361a2",
+        "bytes": 18847288
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_contour-ec307c03c2b2dc58": {
+        "sha256": "cccaec63480c0a5beed06eb2b4e26241465dc0dd59bc422de938b1022859c7a5",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/cccaec63480c0a5beed06eb2b4e26241465dc0dd59bc422de938b1022859c7a5/hypercurve_contour-ec307c03c2b2dc58",
+        "bytes": 5312376
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/line_constant_coordinates-051ef3625301ce3a": {
+        "sha256": "a1d650c3196982bd638e17bcdb27200cac5e850ee2d2b81072b58f7f9940b0b5",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/a1d650c3196982bd638e17bcdb27200cac5e850ee2d2b81072b58f7f9940b0b5/line_constant_coordinates-051ef3625301ce3a",
+        "bytes": 4273720
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/native_linear_stroke-fc4350f58a1e6c5b": {
+        "sha256": "cfc9f6dfc6aad2222456a4d1523084282500c54abae067e3272b9486aae40746",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/cfc9f6dfc6aad2222456a4d1523084282500c54abae067e3272b9486aae40746/native_linear_stroke-fc4350f58a1e6c5b",
+        "bytes": 18033840
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_events-3e802f68ba0049fa": {
+        "sha256": "bb5fcb190249655340dafd359ca1601dadc3d256b37282aa70956e8689b72353",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/bb5fcb190249655340dafd359ca1601dadc3d256b37282aa70956e8689b72353/hypercurve_events-3e802f68ba0049fa",
+        "bytes": 5335096
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve-a6e9089b857b4c48": {
+        "sha256": "14643d3e344bfa2feafc3f0808b706ee7416b676472d45416cdedff043dd3933",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/14643d3e344bfa2feafc3f0808b706ee7416b676472d45416cdedff043dd3933/hypercurve-a6e9089b857b4c48",
+        "bytes": 40864312
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_exact_closure-9461d24f0d83ac4b": {
+        "sha256": "9d220272f526530689947f4f93bce76997271722a987452db92fc291646372a4",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/9d220272f526530689947f4f93bce76997271722a987452db92fc291646372a4/hypercurve_exact_closure-9461d24f0d83ac4b",
+        "bytes": 17784312
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_geo_regressions-d93051e83f86a429": {
+        "sha256": "d59ad12e7059dda5903e87785c392222b4ef425f6516524f2321b92f515b217e",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/d59ad12e7059dda5903e87785c392222b4ef425f6516524f2321b92f515b217e/hypercurve_geo_regressions-d93051e83f86a429",
+        "bytes": 18369600
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_dispatch_trace-8d38b0b3d8d7bd3c": {
+        "sha256": "f7837f336a382c0d4445b6db032420ed93233db6c7d0fa98e6c8e0a26dcd3332",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/f7837f336a382c0d4445b6db032420ed93233db6c7d0fa98e6c8e0a26dcd3332/hypercurve_dispatch_trace-8d38b0b3d8d7bd3c",
+        "bytes": 1079488
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_offset-92dd6b4fd94b5bb2": {
+        "sha256": "b367467c6814b303a93f54cd92400b0fc63e20ac6980c7015752ba780a688b32",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/b367467c6814b303a93f54cd92400b0fc63e20ac6980c7015752ba780a688b32/hypercurve_offset-92dd6b4fd94b5bb2",
+        "bytes": 4769960
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/line_fragment_orientation-c752c7ffe5ee4577": {
+        "sha256": "39751bd94f68069d5c8be6f6d699c77d0570f5b5098db21916611d6f8f75b61b",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/39751bd94f68069d5c8be6f6d699c77d0570f5b5098db21916611d6f8f75b61b/line_fragment_orientation-c752c7ffe5ee4577",
+        "bytes": 4877176
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/readme-b1e126790c7889cc": {
+        "sha256": "52f6b41e2c138b2baf3add0cd884248810f8a542b6d1fafd2d56076e41af48cb",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/52f6b41e2c138b2baf3add0cd884248810f8a542b6d1fafd2d56076e41af48cb/readme-b1e126790c7889cc",
+        "bytes": 1121880
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_bezier_algebraic_parameter-f22baa740855fec5": {
+        "sha256": "ff70defa555028029e228ff5c26691ff6262517fdeb5a217464d3e5a458550b0",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/ff70defa555028029e228ff5c26691ff6262517fdeb5a217464d3e5a458550b0/hypercurve_bezier_algebraic_parameter-f22baa740855fec5",
+        "bytes": 6287320
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_curve_region_boolean-ea6a7425ca1db37d": {
+        "sha256": "ec1c0e8a2983d98ed160fc5c9ee2c891b847708df05d1a2e0d516027ca489838",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/ec1c0e8a2983d98ed160fc5c9ee2c891b847708df05d1a2e0d516027ca489838/hypercurve_curve_region_boolean-ea6a7425ca1db37d",
+        "bytes": 19811168
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_composed_workloads-af13a912881be6ef": {
+        "sha256": "f99437180d1392659571da4992294eb74c5c1855cf50cf5d1caca2bc3e3c81f7",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/f99437180d1392659571da4992294eb74c5c1855cf50cf5d1caca2bc3e3c81f7/hypercurve_composed_workloads-af13a912881be6ef",
+        "bytes": 19737744
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/marching_squares-03631cafb58f4268": {
+        "sha256": "169c451337df82fdc33a61895198a869a8f98e4aefb9cc44d3811e3306a3786d",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/169c451337df82fdc33a61895198a869a8f98e4aefb9cc44d3811e3306a3786d/marching_squares-03631cafb58f4268",
+        "bytes": 17457392
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_bezier_evaluation-2d921b3e6f2be106": {
+        "sha256": "dcefe7bb473ceee1f4de54bbbe005258d334b76354b01989d2260b4cc9f6dc2e",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/dcefe7bb473ceee1f4de54bbbe005258d334b76354b01989d2260b4cc9f6dc2e/hypercurve_bezier_evaluation-2d921b3e6f2be106",
+        "bytes": 11975776
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_curve_region_promotion-fb84dae9f991bc27": {
+        "sha256": "8dc9d02835c426933c2607993a7b887c791be72ccc6de3276a23bf26a5a1c94b",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/8dc9d02835c426933c2607993a7b887c791be72ccc6de3276a23bf26a5a1c94b/hypercurve_curve_region_promotion-fb84dae9f991bc27",
+        "bytes": 21587848
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_curve_region_stroke-85b56b628260e2cf": {
+        "sha256": "cb07733d5c082556a69f56217a53265696c90c90b1a72b23c954724bb88da2eb",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/cb07733d5c082556a69f56217a53265696c90c90b1a72b23c954724bb88da2eb/hypercurve_curve_region_stroke-85b56b628260e2cf",
+        "bytes": 18136960
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_self_contacts-c53ddf5a253b4b52": {
+        "sha256": "48d8ed7f251000c866d97761521c424fb410691f670df82a9d1953f64660b5b8",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/48d8ed7f251000c866d97761521c424fb410691f670df82a9d1953f64660b5b8/hypercurve_self_contacts-c53ddf5a253b4b52",
+        "bytes": 5049568
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_curve_region_boolean_fuzz-3afdd646fdbe0fc5": {
+        "sha256": "ba39855d8fd1233efb876c1b6f2a70bd3c43b6890e5536816b474a51c9b10661",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/ba39855d8fd1233efb876c1b6f2a70bd3c43b6890e5536816b474a51c9b10661/hypercurve_curve_region_boolean_fuzz-3afdd646fdbe0fc5",
+        "bytes": 18154648
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_open_path_compositions-05f5095f6fd655fe": {
+        "sha256": "b656874941dcb67d5ffcbe48021dd0839d63c1aeae3108e2f2331c640b7b99f5",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/b656874941dcb67d5ffcbe48021dd0839d63c1aeae3108e2f2331c640b7b99f5/hypercurve_open_path_compositions-05f5095f6fd655fe",
+        "bytes": 19547096
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_bbox-23d55edadafb6a69": {
+        "sha256": "c8039363a2da7362ca38da37b645d66c1c7300d0dec471de8340cd8c41546d43",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/c8039363a2da7362ca38da37b645d66c1c7300d0dec471de8340cd8c41546d43/hypercurve_bbox-23d55edadafb6a69",
+        "bytes": 17406400
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_curve-9e5208d8b7b18711": {
+        "sha256": "ae19efc5c0cb6882a1ef373bb9e1f795fbc089a9f2c98f46d5bf430619899784",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/ae19efc5c0cb6882a1ef373bb9e1f795fbc089a9f2c98f46d5bf430619899784/hypercurve_curve-9e5208d8b7b18711",
+        "bytes": 20691480
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_pcb_boolean_regressions-c354824ae99a76df": {
+        "sha256": "b706ff7b6b97152b418fac3efccebbe4f4f9afcf67db7d9da2f1a7a4c93b0134",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/b706ff7b6b97152b418fac3efccebbe4f4f9afcf67db7d9da2f1a7a4c93b0134/hypercurve_pcb_boolean_regressions-c354824ae99a76df",
+        "bytes": 17407640
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_curve_string-2e7e9339c7a7cbb4": {
+        "sha256": "be2be7d6a5ec547ae83bf4ad1ae93e937423db40acf578e1cb4c4c79594665a7",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/be2be7d6a5ec547ae83bf4ad1ae93e937423db40acf578e1cb4c4c79594665a7/hypercurve_curve_string-2e7e9339c7a7cbb4",
+        "bytes": 18333584
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/exact_structural_facts-971e4c18d8ca878c": {
+        "sha256": "245727550e23bb8448982f5aecd89f50f00c539d9daa24e49e72f2911fb93768",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/245727550e23bb8448982f5aecd89f50f00c539d9daa24e49e72f2911fb93768/exact_structural_facts-971e4c18d8ca878c",
+        "bytes": 17442032
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/bbox_initial_pair-9557d205dded03ae": {
+        "sha256": "dcba34a007fd883267c8515848670a63b86b40289388323bc9864d788249ce6c",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/dcba34a007fd883267c8515848670a63b86b40289388323bc9864d788249ce6c/bbox_initial_pair-9557d205dded03ae",
+        "bytes": 4445152
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_reconstruct-dfe95821ff6b649b": {
+        "sha256": "4caa6e1506a2122f3016d81bd53408ef0ab63aa85a9a60a6f310881fbaed7fa1",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/4caa6e1506a2122f3016d81bd53408ef0ab63aa85a9a60a6f310881fbaed7fa1/hypercurve_reconstruct-dfe95821ff6b649b",
+        "bytes": 17930120
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_rational_bezier-79ceb8d79ad1ddcd": {
+        "sha256": "06c2d77dc01ab702f0cb2e5aadfddabc66276e5c01fe196bdb713e87d585a12d",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/06c2d77dc01ab702f0cb2e5aadfddabc66276e5c01fe196bdb713e87d585a12d/hypercurve_rational_bezier-79ceb8d79ad1ddcd",
+        "bytes": 12352568
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/work_budget-11269e80bbee218e": {
+        "sha256": "9ceb20e742b1c8ecb60fae716e7271c98074ae7bac80a6b6a71bd8030ad74b0c",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/9ceb20e742b1c8ecb60fae716e7271c98074ae7bac80a6b6a71bd8030ad74b0c/work_budget-11269e80bbee218e",
+        "bytes": 15642040
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_bezier_fit_offset-17c7abadd32016da": {
+        "sha256": "207b1ce7dca801c88716b57de4133f2778948d90c8b3ed893d821f58aea3ffe0",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/207b1ce7dca801c88716b57de4133f2778948d90c8b3ed893d821f58aea3ffe0/hypercurve_bezier_fit_offset-17c7abadd32016da",
+        "bytes": 19156672
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_adversarial_polygons-18858c3ea9c80298": {
+        "sha256": "7e620e2e7da8b5f58872aef9e843fb026eaeaa3aa7f20c0106bf48f5bd2f87b7",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/7e620e2e7da8b5f58872aef9e843fb026eaeaa3aa7f20c0106bf48f5bd2f87b7/hypercurve_adversarial_polygons-18858c3ea9c80298",
+        "bytes": 18120944
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_curve_range-8e551fb90715b437": {
+        "sha256": "3f597c11956261b46b799b67ff9488e4ec6e3af1e134a31a62758e194205bca9",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/3f597c11956261b46b799b67ff9488e4ec6e3af1e134a31a62758e194205bca9/hypercurve_curve_range-8e551fb90715b437",
+        "bytes": 16453752
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_nurbs_interpolation-2b6ab0e944d91a78": {
+        "sha256": "25ee230e330817c526ad10b4b79a8afb647640ed7834dc18728b37ee7b78fc06",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/25ee230e330817c526ad10b4b79a8afb647640ed7834dc18728b37ee7b78fc06/hypercurve_nurbs_interpolation-2b6ab0e944d91a78",
+        "bytes": 5491384
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_split-d7d471c3a7bcf0bb": {
+        "sha256": "c0ecb9ed6bae9e6b2942788f4302103dcf331127728683a11e04d7451275c86b",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/c0ecb9ed6bae9e6b2942788f4302103dcf331127728683a11e04d7451275c86b/hypercurve_split-d7d471c3a7bcf0bb",
+        "bytes": 5302576
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/pathological_benchmark_fixture-00fc9cac32866d74": {
+        "sha256": "a5572ceb1fc854461875605cfa1f5e158a3337e527fe4bb61974a13bee5917b9",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/a5572ceb1fc854461875605cfa1f5e158a3337e527fe4bb61974a13bee5917b9/pathological_benchmark_fixture-00fc9cac32866d74",
+        "bytes": 18100264
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_pr59_shape_regressions-b50f73b92cf1b333": {
+        "sha256": "7735b7e39c73724a627594d8a7c63b8e3d5f4e4e699ec7e017cae05dcb80ea6e",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/7735b7e39c73724a627594d8a7c63b8e3d5f4e4e699ec7e017cae05dcb80ea6e/hypercurve_pr59_shape_regressions-b50f73b92cf1b333",
+        "bytes": 17391280
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_circle_predicates-a2a265f3bcb4b59f": {
+        "sha256": "3ac04f0dd294582753f01e57ca2018245f6a8a956ae45b57f3f15640f727d910",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/3ac04f0dd294582753f01e57ca2018245f6a8a956ae45b57f3f15640f727d910/hypercurve_circle_predicates-a2a265f3bcb4b59f",
+        "bytes": 5214344
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/ray_filter_extreme_coordinates-c685cd90fd6f2f96": {
+        "sha256": "251056f230535776b3d726c99d0fa77c138fa73f4e98978e2b69e1d2c311d56d",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/251056f230535776b3d726c99d0fa77c138fa73f4e98978e2b69e1d2c311d56d/ray_filter_extreme_coordinates-c685cd90fd6f2f96",
+        "bytes": 17413728
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_analytic_parallel_region-93096e7f96d7688a": {
+        "sha256": "01b69d6c3061f5bce2be58a3c24a82494ff9aed0d97a6fc8478d91b130fb57b1",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/01b69d6c3061f5bce2be58a3c24a82494ff9aed0d97a6fc8478d91b130fb57b1/hypercurve_analytic_parallel_region-93096e7f96d7688a",
+        "bytes": 19958832
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_curve_intersection-86a6001866a8d948": {
+        "sha256": "81f59ce3d7c1a147bcb3cc9b7c14e6e75c525a4683f593251750bc870bd60203",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/81f59ce3d7c1a147bcb3cc9b7c14e6e75c525a4683f593251750bc870bd60203/hypercurve_curve_intersection-86a6001866a8d948",
+        "bytes": 20857488
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_fragments-9694d176c5b39900": {
+        "sha256": "8f94c6f7052d8543f2617761aca067cc6e212b65d1c7a139550f0103ca259cdd",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/8f94c6f7052d8543f2617761aca067cc6e212b65d1c7a139550f0103ca259cdd/hypercurve_fragments-9694d176c5b39900",
+        "bytes": 6190952
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_fuzz_regressions-7668830f65c2ea75": {
+        "sha256": "736f0b46af95baf41dc2dac6681d165913619ff9852ce1a2b6a5e864855d41b1",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/736f0b46af95baf41dc2dac6681d165913619ff9852ce1a2b6a5e864855d41b1/hypercurve_fuzz_regressions-7668830f65c2ea75",
+        "bytes": 4986264
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/contour_area_normal_form-4acc2d1144c7ff40": {
+        "sha256": "bf811220794d996df93fc0e3e5fd2d19dae374bf6d31c3cb27e45940667f1d25",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/bf811220794d996df93fc0e3e5fd2d19dae374bf6d31c3cb27e45940667f1d25/contour_area_normal_form-4acc2d1144c7ff40",
+        "bytes": 17362456
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_path_closure-e92b65201d4f5534": {
+        "sha256": "c3f6c1f1d53a7ccb30d88c7f7b663a40a31d86f0c8ade853288535b3a844a706",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/c3f6c1f1d53a7ccb30d88c7f7b663a40a31d86f0c8ade853288535b3a844a706/hypercurve_path_closure-e92b65201d4f5534",
+        "bytes": 20188304
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_derivative_completeness-98745be011ae758f": {
+        "sha256": "889dae0b76c1c6b4ffbae59be3bfe243f69df7dd05e50ad3df5d9c50785c5a69",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/889dae0b76c1c6b4ffbae59be3bfe243f69df7dd05e50ad3df5d9c50785c5a69/hypercurve_derivative_completeness-98745be011ae758f",
+        "bytes": 12285648
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_triangulation-76089d390fb7df7a": {
+        "sha256": "7bca9eb99cd4ec877cc2ed2ef9ee5b2736c8bf4570c5f3188cb9526a7afcd7d9",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/7bca9eb99cd4ec877cc2ed2ef9ee5b2736c8bf4570c5f3188cb9526a7afcd7d9/hypercurve_triangulation-76089d390fb7df7a",
+        "bytes": 1079488
+      },
+      "/dev/shm/csgrs-physical-build-requalification/target-v1/release/deps/hypercurve_svg-c8777c5eb0b2f0dd": {
+        "sha256": "ff1e688e38c94be94c574bf433b8549d98bd1a56abffb5a426cb0113ba192fee",
+        "retained": "/dev/shm/csgrs-physical-build-requalification/executables-v1/ff1e688e38c94be94c574bf433b8549d98bd1a56abffb5a426cb0113ba192fee/hypercurve_svg-c8777c5eb0b2f0dd",
+        "bytes": 1079432
+      }
+    },
+    "stdout_sha256": "152bd5b180e6a2b6eff21a3985f032b993f5f58cd985011fc6cb12e59c3249ae",
+    "stderr_sha256": "91fef976ba4634fbc9a80577e74bf33371e3776d7a39d66c0de99749d39b2b6c",
+    "resources_sha256": "c6709b8c4c29c8ce6899de90f499fd39f49177365d4ec46381697f55da2c076d"
+  }
+]

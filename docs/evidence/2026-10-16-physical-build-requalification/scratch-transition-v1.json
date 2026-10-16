@@ -1,0 +1,16 @@
+{
+  "supervisor_pid": 3884104,
+  "supervisor_signal": "SIGSTOP",
+  "current_command_keeps_running": true,
+  "completed_commands": [
+    "format",
+    "root-all",
+    "root-minimal",
+    "curve-default"
+  ],
+  "current_direct_child": "3909889 3884104 Ss   /usr/bin/time -v -o /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/validation-v1/curve-all.resources timeout --signal=TERM --kill-after=20s 1800s cargo test --manifest-path /dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml --locked --release -p hypercurve --all-features --no-fail-fast -- --test-threads=2",
+  "reason": "Full original board archives expand to 51260924 bytes, exceeding the roughly 45 MiB remaining /tmp user quota. Resume later commands with dedicated scratch space; keep sources, targets, fixtures, policies and assertions unchanged.",
+  "existing_target_reset": false,
+  "used_runner_edited": false,
+  "current_command_interrupted": false
+}

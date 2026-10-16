@@ -12143,13 +12143,54 @@
     "next": "Validate a fresh physical target and rebuild affected checks without nested overlay inputs. Preserve original runtime assertions and all prior diagnostic evidence."
   },
   "validation_storage_integrity": {
-    "status": "nested overlay compiler-input identity unqualified; clean rebuild required",
-    "report": "docs/evidence/2026-10-16-native-metadata-isolation/progress-v2.md",
-    "nested_reproduction": "docs/evidence/2026-10-16-native-metadata-isolation/closure-diagnostic-v1/overlay-probe-v1/result.json",
-    "flat_control": "docs/evidence/2026-10-16-native-metadata-isolation/closure-diagnostic-v1/flat-probe-v1/result.json",
-    "scope": "Prior checks using affected nested views require requalification before supporting a current acceptance claim. Historical results remain observations; this does not prove production code wrong.",
+    "status": "fresh physical scope checked; nested-overlay history remains unqualified",
+    "fresh_report": "docs/evidence/2026-10-16-physical-build-requalification/progress-v1.md",
+    "historical_diagnostic": "docs/evidence/2026-10-16-native-metadata-isolation/progress-v2.md",
+    "scope": "New targets began empty on direct physical tmpfs. This requalification does not retroactively validate prior compiler inputs or repair historical missing artifacts.",
     "complete_artifact_audit_passed": false,
     "full_plan_complete": false
+  },
+  "physical_build_requalification": {
+    "status": "fresh physical validation recorded; native admission and format corrections remain open",
+    "baseline_commit": "3b69af324a9642d1f71b9cc38de58b59a236f740",
+    "contract": "docs/evidence/2026-10-16-physical-build-requalification/contract-v1.md",
+    "progress": "docs/evidence/2026-10-16-physical-build-requalification/progress-v1.md",
+    "decision": "docs/evidence/2026-10-16-physical-build-requalification/decision-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-physical-build-requalification/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-physical-build-requalification/artifact-expectations-v1.json.gz",
+    "passed_commands": 10,
+    "failed_commands": [
+      "full-board",
+      "copper-neck"
+    ],
+    "format_reproduction": {
+      "passed": 4,
+      "failed": 8,
+      "failures": [
+        "ascii_stl_small_coordinate_projection_survives_text",
+        "ascii_stl_small_representable_cube_composes",
+        "binary_stl_rejects_faces_collapsed_by_quantization",
+        "binary_stl_small_representable_cube_composes",
+        "obj_rejects_missing_vertex_index",
+        "obj_rejects_overflowing_vertex_index",
+        "obj_small_coordinate_projection_survives_text",
+        "obj_writer_rejects_invalid_input_without_writing"
+      ]
+    },
+    "stl_topology_reproduction": {
+      "passed": 2,
+      "failed": 2,
+      "failures": [
+        "ascii_unmatched_duplicate_face_is_rejected",
+        "binary_unmatched_duplicate_face_is_rejected"
+      ]
+    },
+    "complete_report_replay_passed": true,
+    "source_or_runtime_edits": 0,
+    "pending_native_files_unchanged": 35,
+    "runtime_admitted": false,
+    "full_plan_complete": false,
+    "next": "Validate the minimal OBJ index correction against reproduced failures, positive composition controls and unchanged valid output. Keep native timing gates and all other format failures open."
   }
 },
   "status_meanings": {

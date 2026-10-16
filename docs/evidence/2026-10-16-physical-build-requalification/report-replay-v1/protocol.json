@@ -1,0 +1,20 @@
+{
+  "runner_sha256": "c9f6ca8dfa1407ada014041f212f49dc3be4c9431ef4500351347d34fd7b14f2",
+  "binary": "/dev/shm/csgrs-physical-build-requalification/target-v1/release/hyperdrc",
+  "binary_sha256": "ff59a4e57fc5975763d54f946503028037ff20c1725d3a49cebfa96f8e637401",
+  "validation_sha256": "f1410f80c27c5c76f87a4e31205ad6a39f8ac05b74ee7e65862c1fab781c57f8",
+  "prior_protocol_sha256": "fc143969d4270914040db17851d8e6d334e6dfef2b98f3843acbd04615960fd8",
+  "input_hashes_path": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-metadata-isolation/report-replay-v1/input-hashes.json.gz",
+  "input_hashes_sha256": "547560dbf151c609e5f808992165b1138f21dd0fe181aa6a2e9bb37b6241124f",
+  "environment": {
+    "TMPDIR": "/dev/shm/csgrs-physical-build-requalification/report-replay-v1/tmp",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "expected_cli_exit": 1,
+  "normalization": "None: complete bytes and parsed JSON must match.",
+  "scope": "Fresh current-source executable, same pinned physical input paths. Prior outputs remain observations; byte equality is not an independent geometry oracle or a performance comparison.",
+  "wall_limit_seconds": 1800,
+  "address_space_limit_bytes": 8589934592,
+  "runtime_admitted": false,
+  "full_plan_complete": false
+}

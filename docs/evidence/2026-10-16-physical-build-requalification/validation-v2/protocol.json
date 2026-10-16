@@ -1,0 +1,185 @@
+{
+  "runner_sha256": "01be9f2038525ff5e9fd1f2635b0f83dd8395593ce0367653a3688bbd95b41e4",
+  "parent_protocol_sha256": "eb6be72bce58519549e8a7b3c2a6ce98c8d45479b45fd29c0ef91a7b4feeda07",
+  "source_hashes_path": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/validation-v1/source-hashes.json.gz",
+  "source_hashes_sha256": "6ef1d576837ae26039acc34d56c702a69db952071220e67dd6ec07b3da6214ac",
+  "source": "/dev/shm/csgrs-physical-build-requalification/source-v1",
+  "target": "/dev/shm/csgrs-physical-build-requalification/target-v1",
+  "target_strategy": "Physical tmpfs, no overlay and no build artifact seed.",
+  "active_target_continued": true,
+  "completed_target_reset_or_reopened": false,
+  "used_runner_edited": false,
+  "transition": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/scratch-transition-v1.json",
+  "scratch": "/dev/shm/csgrs-physical-build-requalification/scratch-v2",
+  "completed_command_names": [
+    "format",
+    "root-all",
+    "root-minimal",
+    "curve-default"
+  ],
+  "adopted_running_command": [
+    "curve-all",
+    [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ]
+  ],
+  "remaining_commands": [
+    [
+      "strict-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--manifest-path",
+        "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "native-other-tests",
+      [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--no-fail-fast",
+        "--",
+        "--test-threads=1",
+        "--skip",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--skip",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "--skip",
+        "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite"
+      ]
+    ],
+    [
+      "docs",
+      [
+        "env",
+        "RUSTDOCFLAGS=-D warnings",
+        "cargo",
+        "doc",
+        "--manifest-path",
+        "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--no-deps"
+      ]
+    ],
+    [
+      "full-board",
+      [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ]
+    ],
+    [
+      "copper-neck",
+      [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ]
+    ],
+    [
+      "gerber",
+      [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite",
+        "--",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ]
+    ],
+    [
+      "native-cli",
+      [
+        "cargo",
+        "build",
+        "--manifest-path",
+        "/dev/shm/csgrs-physical-build-requalification/source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--message-format=json"
+      ]
+    ]
+  ],
+  "elapsed_limit_seconds_per_command": 1800,
+  "address_space_limit_bytes_per_process": 8589934592,
+  "runtime_gates_wait_for_format_reproduction": true,
+  "runtime_admitted": false,
+  "full_plan_complete": false
+}

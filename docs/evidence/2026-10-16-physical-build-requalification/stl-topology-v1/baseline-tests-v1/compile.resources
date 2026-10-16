@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=10s 120s rustc --edition=2024 --crate-name stl_import_contract_baseline_v1 --test /dev/shm/csgrs-stl-import-contracts/probe_v1.rs -C opt-level=3 -C debug-assertions=off --cfg feature="stl-io" -L dependency=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps -o /dev/shm/csgrs-stl-import-contracts/baseline-tests-v1/stl_import_contracts --extern csgrs=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libcsgrs.rlib --extern hypermesh=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib --extern hyperlattice=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib"
+	User time (seconds): 0.48
+	System time (seconds): 0.14
+	Percent of CPU this job got: 177%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.35
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 169412
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 32
+	Minor (reclaiming a frame) page faults: 35994
+	Voluntary context switches: 1636
+	Involuntary context switches: 81
+	Swaps: 0
+	File system inputs: 16624
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

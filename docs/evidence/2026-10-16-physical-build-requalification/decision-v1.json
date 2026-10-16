@@ -1,0 +1,266 @@
+{
+  "application_speedup_claimed": false,
+  "base_commit": "3b69af324a9642d1f71b9cc38de58b59a236f740",
+  "commands": [
+    {
+      "elapsed_seconds": 10.985997773241252,
+      "exit_code": 0,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v1/format",
+      "name": "format",
+      "reported_test_counts": {
+        "failed": 0,
+        "ignored": 0,
+        "passed": 0
+      }
+    },
+    {
+      "elapsed_seconds": 507.5767282960005,
+      "exit_code": 0,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v1/root-all",
+      "name": "root-all",
+      "reported_test_counts": {
+        "failed": 0,
+        "ignored": 1,
+        "passed": 405
+      }
+    },
+    {
+      "elapsed_seconds": 159.36712127970532,
+      "exit_code": 0,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v1/root-minimal",
+      "name": "root-minimal",
+      "reported_test_counts": {
+        "failed": 0,
+        "ignored": 0,
+        "passed": 132
+      }
+    },
+    {
+      "elapsed_seconds": 1229.9982456979342,
+      "exit_code": 0,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v1/curve-default",
+      "name": "curve-default",
+      "reported_test_counts": {
+        "failed": 0,
+        "ignored": 28,
+        "passed": 2460
+      }
+    },
+    {
+      "elapsed_seconds": 1309.05,
+      "exit_code": 0,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v1/curve-all",
+      "name": "curve-all",
+      "reported_test_counts": {
+        "failed": 0,
+        "ignored": 33,
+        "passed": 2497
+      }
+    },
+    {
+      "elapsed_seconds": 144.5837909183465,
+      "exit_code": 0,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v2/strict-clippy",
+      "name": "strict-clippy",
+      "reported_test_counts": {
+        "failed": 0,
+        "ignored": 0,
+        "passed": 0
+      }
+    },
+    {
+      "elapsed_seconds": 549.6360231987201,
+      "exit_code": 0,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v2/native-other-tests",
+      "name": "native-other-tests",
+      "reported_test_counts": {
+        "failed": 0,
+        "ignored": 0,
+        "passed": 1643
+      }
+    },
+    {
+      "elapsed_seconds": 37.460810573305935,
+      "exit_code": 0,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v2/docs",
+      "name": "docs",
+      "reported_test_counts": {
+        "failed": 0,
+        "ignored": 0,
+        "passed": 0
+      }
+    },
+    {
+      "elapsed_seconds": 192.75726698106155,
+      "exit_code": 101,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v2/full-board",
+      "name": "full-board",
+      "reported_test_counts": {
+        "failed": 1,
+        "ignored": 0,
+        "passed": 0
+      }
+    },
+    {
+      "elapsed_seconds": 199.58877502102405,
+      "exit_code": 101,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v2/copper-neck",
+      "name": "copper-neck",
+      "reported_test_counts": {
+        "failed": 1,
+        "ignored": 0,
+        "passed": 0
+      }
+    },
+    {
+      "elapsed_seconds": 0.31874366104602814,
+      "exit_code": 0,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v2/gerber",
+      "name": "gerber",
+      "reported_test_counts": {
+        "failed": 0,
+        "ignored": 0,
+        "passed": 1
+      }
+    },
+    {
+      "elapsed_seconds": 106.94699403038248,
+      "exit_code": 0,
+      "logs": "docs/evidence/2026-10-16-physical-build-requalification/validation-v2/native-cli",
+      "name": "native-cli",
+      "reported_test_counts": {
+        "failed": 0,
+        "ignored": 0,
+        "passed": 0
+      }
+    }
+  ],
+  "complete_artifact_audit_passed": false,
+  "format_reproduction": {
+    "failed": 8,
+    "failures": [
+      "ascii_stl_small_coordinate_projection_survives_text",
+      "ascii_stl_small_representable_cube_composes",
+      "binary_stl_rejects_faces_collapsed_by_quantization",
+      "binary_stl_small_representable_cube_composes",
+      "obj_rejects_missing_vertex_index",
+      "obj_rejects_overflowing_vertex_index",
+      "obj_small_coordinate_projection_survives_text",
+      "obj_writer_rejects_invalid_input_without_writing"
+    ],
+    "passed": 4
+  },
+  "full_plan_complete": false,
+  "full_workflow_matrix_executed": false,
+  "next": "Validate the minimal OBJ index correction against reproduced failures, positive composition controls and unchanged valid output. Keep native timing gates and all other format failures open.",
+  "owning_layer": "validation infrastructure and public format boundaries",
+  "pending_native_files_unchanged": 35,
+  "properties": [
+    "P6",
+    "P18",
+    "P19",
+    "P26",
+    "P27",
+    "P35",
+    "P36",
+    "P37"
+  ],
+  "published_package_pipeline_executed": false,
+  "report_replay": {
+    "complete": true,
+    "fresh_cli_processes": 2,
+    "full_plan_complete": false,
+    "input_and_binary_bytes_unchanged": true,
+    "passed": true,
+    "runtime_admitted": false
+  },
+  "report_rows": [
+    {
+      "bytes": 147297,
+      "command": [
+        "/dev/shm/csgrs-physical-build-requalification/target-v1/release/hyperdrc",
+        "--kicad-pcb",
+        "/dev/shm/csgrs-native-metadata-isolation/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb",
+        "--check",
+        "layer-sanity",
+        "--check",
+        "board-outline-sanity",
+        "--check",
+        "min-copper-neck",
+        "--check",
+        "drill-spacing",
+        "--min-width",
+        "0.0762",
+        "--format",
+        "json"
+      ],
+      "complete_bytes_equal": true,
+      "elapsed_seconds": 158.02034080494195,
+      "exit_code": 1,
+      "finding_rows_match_count": true,
+      "fixture": "cparti-fpga",
+      "parsed_json_equal": true,
+      "resources_sha256": "be4e064aab3b3334e19072c540e4640460ecf6f589a9cb054f1233b4a048d648",
+      "stderr_sha256": "8727dc4f3493a5407ac52d608cc8e3fa4cfffb51cadcd7722868dccd42a698e2",
+      "stdout_path": "/dev/shm/csgrs-physical-build-requalification/report-replay-v1/cparti-fpga.json",
+      "stdout_sha256": "164102f85d103de8930e871318107fe17e51f3f478aa29a34e6eb9a43ea1d2c2",
+      "violation_count": 12
+    },
+    {
+      "bytes": 128420,
+      "command": [
+        "/dev/shm/csgrs-physical-build-requalification/target-v1/release/hyperdrc",
+        "--kicad-pcb",
+        "/dev/shm/csgrs-native-metadata-isolation/report-replay-v1/inputs/hvp109a/HVP109A.kicad_pcb",
+        "--check",
+        "layer-sanity",
+        "--check",
+        "board-outline-sanity",
+        "--check",
+        "min-copper-neck",
+        "--check",
+        "drill-spacing",
+        "--min-width",
+        "0.0762",
+        "--format",
+        "json"
+      ],
+      "complete_bytes_equal": true,
+      "elapsed_seconds": 34.49399697734043,
+      "exit_code": 1,
+      "finding_rows_match_count": true,
+      "fixture": "hvp109a",
+      "parsed_json_equal": true,
+      "resources_sha256": "9c0ea594a7e70735ec6ff7a636cf8fb1b5c49c811e5fbce57eb8162a432c2717",
+      "stderr_sha256": "b54c6270150b32cea20409031d04ac2054e6515866c789283ff25410064f9a27",
+      "stdout_path": "/dev/shm/csgrs-physical-build-requalification/report-replay-v1/hvp109a.json",
+      "stdout_sha256": "d73ffb1c463a28abf1ab32740213ca3feb5c991f7b34ac506dab5c4af424875b",
+      "violation_count": 197
+    }
+  ],
+  "runtime_admitted": false,
+  "source_or_runtime_edits": 0,
+  "status": "fresh physical validation recorded; native admission and format corrections remain open",
+  "stl_topology_reproduction": {
+    "failed": 2,
+    "failures": [
+      "ascii_unmatched_duplicate_face_is_rejected",
+      "binary_unmatched_duplicate_face_is_rejected"
+    ],
+    "passed": 2
+  },
+  "validation": {
+    "active_target_continued": true,
+    "commands": 12,
+    "complete": true,
+    "failed": [
+      "full-board",
+      "copper-neck"
+    ],
+    "full_plan_complete": false,
+    "passed": 10,
+    "runtime_admitted": false,
+    "sources_unchanged": true,
+    "target_strategy": "Physical tmpfs, no overlay and no build artifact seed."
+  }
+}

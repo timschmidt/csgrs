@@ -1,0 +1,11 @@
+
+running 1 test
+test zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers ... FAILED
+
+failures:
+
+failures:
+    zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1561 filtered out; finished in 199.28s
+

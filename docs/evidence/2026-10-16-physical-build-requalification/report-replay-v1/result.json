@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "passed": true,
+  "fresh_cli_processes": 2,
+  "input_and_binary_bytes_unchanged": true,
+  "runtime_admitted": false,
+  "full_plan_complete": false
+}

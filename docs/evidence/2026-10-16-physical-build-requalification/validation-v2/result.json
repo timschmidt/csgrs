@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "commands": 12,
+  "passed": 10,
+  "failed": [
+    "full-board",
+    "copper-neck"
+  ],
+  "sources_unchanged": true,
+  "target_strategy": "Physical tmpfs, no overlay and no build artifact seed.",
+  "active_target_continued": true,
+  "runtime_admitted": false,
+  "full_plan_complete": false
+}

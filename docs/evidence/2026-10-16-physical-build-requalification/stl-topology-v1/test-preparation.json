@@ -1,0 +1,15 @@
+{
+  "sha256": "4cadb0431794b153971e7e771c658db394d35dde5ccfb1be7d5fa643f205e77c",
+  "contract_sha256": "7629cb03658a6e4cc998b90e74a8d8f95f7e84539260daed6d01b8db1836759e",
+  "owning_layer": "CSGRS STL parsing boundary and Hypermesh topology",
+  "properties": [
+    "P6",
+    "P18",
+    "P21",
+    "P26",
+    "P35",
+    "P37"
+  ],
+  "tests": 4,
+  "main_sources_modified": false
+}

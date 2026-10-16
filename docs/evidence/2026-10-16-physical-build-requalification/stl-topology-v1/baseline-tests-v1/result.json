@@ -1,0 +1,51 @@
+{
+  "complete": true,
+  "commands": [
+    {
+      "name": "compile",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "--crate-name",
+        "stl_import_contract_baseline_v1",
+        "--test",
+        "/dev/shm/csgrs-stl-import-contracts/probe_v1.rs",
+        "-C",
+        "opt-level=3",
+        "-C",
+        "debug-assertions=off",
+        "--cfg",
+        "feature=\"stl-io\"",
+        "-L",
+        "dependency=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps",
+        "-o",
+        "/dev/shm/csgrs-stl-import-contracts/baseline-tests-v1/stl_import_contracts",
+        "--extern",
+        "csgrs=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libcsgrs.rlib",
+        "--extern",
+        "hypermesh=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+        "--extern",
+        "hyperlattice=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "ffecb40c56f2718f3085b48c18b6a4109eb3623f2305db188beffcdf48fe48f8"
+    },
+    {
+      "name": "test",
+      "command": [
+        "/dev/shm/csgrs-stl-import-contracts/baseline-tests-v1/stl_import_contracts",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "83c81eb7b1fb0faa1e0d1b9c68b036a5934a89ecb157aa5085db9bcac7a4ed9b",
+      "stderr_sha256": "da020edac4bf96b1902bd251200f680f3333bc15a249bfe944dc565b78243812",
+      "resources_sha256": "7efe8e02c8f8910d9a62d9b33cce3a1b4cabcac72ab7573eecdc9c4eb6e59782"
+    }
+  ],
+  "inputs_unchanged": true,
+  "binary_sha256": "a4486461f8a6b8500aa689b5b52981bc3024c40805dea0efe90183d05824378a",
+  "runtime_admitted": false
+}

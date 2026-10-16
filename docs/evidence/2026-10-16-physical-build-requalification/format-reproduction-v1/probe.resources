@@ -1,0 +1,24 @@
+Command exited with non-zero status 101
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s cargo test --manifest-path /dev/shm/csgrs-physical-build-requalification/format-source-v1/Cargo.toml --locked --release -p csgrs --no-default-features --features obj-io,stl-io --test format_boundary_probe -- --test-threads=1 --nocapture"
+	User time (seconds): 293.90
+	System time (seconds): 13.55
+	Percent of CPU this job got: 196%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:36.62
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2003292
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1185
+	Minor (reclaiming a frame) page faults: 5062719
+	Voluntary context switches: 29222
+	Involuntary context switches: 23080
+	Swaps: 0
+	File system inputs: 342464
+	File system outputs: 768
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 101

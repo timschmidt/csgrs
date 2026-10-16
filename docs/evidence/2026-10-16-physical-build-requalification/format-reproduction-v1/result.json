@@ -1,0 +1,39 @@
+{
+  "complete": true,
+  "exit_code": 101,
+  "elapsed_seconds": 157.91207374585792,
+  "source_inputs_unchanged": true,
+  "binaries_sha256": {
+    "/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/format_boundary_probe-34de9fded40e041a": "0c0e77cd51dedb66070751c621d2326013e9469ea22371237273060801965bb1"
+  },
+  "stdout_sha256": "6ac5d4d2ac36089c983aa915f5664901fc10458a8820653223888ec59ea72e21",
+  "stderr_sha256": "df3d498df3e08ef0bd7d87dba953c6577423dcf58f079eba11e3aaf848bc39a8",
+  "resources_sha256": "8c86fb564b158fac4c8c217eccf936ed0fe81a201a6a048e134dae5d1acfaef3",
+  "production_source_changes": 0,
+  "runtime_admitted": false,
+  "full_plan_complete": false,
+  "cost_build_command": [
+    "cargo",
+    "build",
+    "--manifest-path",
+    "/dev/shm/csgrs-physical-build-requalification/format-source-v1/Cargo.toml",
+    "--locked",
+    "--release",
+    "-p",
+    "csgrs",
+    "--no-default-features",
+    "--features",
+    "obj-io,stl-io",
+    "--example",
+    "obj_export_cost"
+  ],
+  "cost_build_exit_code": 0,
+  "cost_binary": "/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/examples/obj_export_cost",
+  "cost_binary_sha256": "fad86dd471a91e2f399a0c8815e1edd8411af00820d9723f8b94f13ea4645689",
+  "cost_measurements_performed": false,
+  "cost_build_logs_sha256": {
+    "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr": "560134b1937cddbcc02fa8ad740bc687624ae0a8740df154b969f3bff7cde978",
+    "resources": "b184c0e3d6b949c20d12b126b0ef78188511b0187f82638cab320189f18afacc"
+  }
+}
