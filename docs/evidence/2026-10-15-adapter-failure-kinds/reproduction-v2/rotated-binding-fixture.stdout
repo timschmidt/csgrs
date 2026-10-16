@@ -1,0 +1,4 @@
+union: native=Undecided structured=false diagnostic=predicate could not be decided: Real ordering
+difference: native=Undecided structured=false diagnostic=predicate could not be decided: Real ordering
+intersection: native=Undecided structured=false diagnostic=predicate could not be decided: Real ordering
+xor: native=Undecided structured=false diagnostic=predicate could not be decided: Real ordering

@@ -1,0 +1,85 @@
+{
+  "commands": [
+    {
+      "name": "ffi-build",
+      "exit_code": 0,
+      "seconds": 123.43983569415286,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3f7535a2144150cd2274d1862c4d1385d45345a3e7274a512c03fa4a5e97f5b",
+      "resources_sha256": "6be44f10f239596d8797d41af4138bee8907850d92e7d8e93bc6cc3980842673"
+    },
+    {
+      "name": "c-build",
+      "exit_code": 0,
+      "seconds": 1.8960987399332225,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "5e12911d256c49eb973415d08dfa3a3bd0cb9a215770ec2a4040fbed15e20b10"
+    },
+    {
+      "name": "c",
+      "exit_code": 134,
+      "seconds": 1.9948329175822437,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "3c2772fd8a95fd5b667ac3957fb48984d8b8f373119d102d1f5fdaf3f5e384a0",
+      "stderr_sha256": "95fba0f6163f57e50bc2f3b3ddfbf8d63e9bddbb9b926afec2ac2b413e9b93cd",
+      "resources_sha256": "06253e67ee0ede1127d22c69131cf2f1b95cdb82b31561af0e04f6e440a4767e"
+    },
+    {
+      "name": "cpp-build",
+      "exit_code": 0,
+      "seconds": 2.283029871992767,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "5ed2bb247de53fcbf68b8f0be354860c5195ab14753f19a63fdbb96d221632bb"
+    },
+    {
+      "name": "cpp",
+      "exit_code": 134,
+      "seconds": 1.9499521469697356,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "1a3bad32d96e02d51e106f3cba54d74a0abe332fe71d0d35e7b884a5e5041e2c",
+      "stderr_sha256": "9f12ffded6b87f97e303a11f20e84c9bbc3553b05bce2ee63456eebafa1526a8",
+      "resources_sha256": "32490de39c4c1c741ea6af4015521d912f4cd011f4378897077188b2a7dadfe6"
+    },
+    {
+      "name": "python",
+      "exit_code": 1,
+      "seconds": 2.0527469171211123,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "2bc3f3cf91b0294ea8c6bbad344e76731ad26c3b19a2159b03464fa23feb1021",
+      "stderr_sha256": "c9b98036276f119cb979158f7f19b7de9ee2a20e7706622abc6ee9b8ba580850",
+      "resources_sha256": "d61ebe2f75ff3e3688d79f6d4f1903b1c2680b71560b513f907d92b53b1658c2"
+    },
+    {
+      "name": "go-build",
+      "exit_code": 0,
+      "seconds": 6.307772574946284,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "96dcd1e4c9384bb8b58f7361e71d63dbd3739cadd4ffd20a2d197a7e01e362d5"
+    },
+    {
+      "name": "go",
+      "exit_code": 1,
+      "seconds": 1.85129514336586,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "01341202446152317845fc6b3ea547cb1486e82e45edb9fa72eac108cfb3775d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "4dce84b1be751e9394bf0ccf82bb1b2a15249823b3514173bf821cc670e7ff47"
+    }
+  ],
+  "passed": false
+}

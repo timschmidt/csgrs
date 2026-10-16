@@ -1,0 +1,203 @@
+{
+  "passed": true,
+  "qualification_phase": "candidate-v1",
+  "final_phase": "candidate-v3",
+  "qualification_commands": 53,
+  "final_commands": 6,
+  "test_totals": {
+    "typed-errors": {
+      "passed": 2,
+      "ignored": 0
+    },
+    "root-curve": {
+      "passed": 239,
+      "ignored": 0
+    },
+    "root-minimal": {
+      "passed": 104,
+      "ignored": 0
+    },
+    "root-all-features": {
+      "passed": 346,
+      "ignored": 1
+    },
+    "ffi-tests": {
+      "passed": 10,
+      "ignored": 0
+    },
+    "root-doctests": {
+      "passed": 1,
+      "ignored": 0
+    }
+  },
+  "qualification_result_sha256": "1f0d655c339d1523bd1dabc3bb3b3b882ac2600e86feebc15753c8fbde0ac85d",
+  "final_result_sha256": "9f16473ff101b07981c37f25f5c095675337cbe797f479782014c45f6e4d8a09",
+  "reused_passed_commands": [
+    "workspace-fmt",
+    "typed-errors",
+    "root-curve",
+    "root-minimal",
+    "root-all-features",
+    "ffi-tests",
+    "ffi-clippy",
+    "public-docs",
+    "root-doctests",
+    "ffi-build",
+    "c-build",
+    "c",
+    "cpp-build",
+    "cpp",
+    "python",
+    "go-build",
+    "go",
+    "empty_composition-c-build",
+    "empty_composition-c",
+    "empty_composition-cpp-build",
+    "empty_composition-cpp",
+    "empty_composition-python",
+    "primitive_failures-c-build",
+    "primitive_failures-c",
+    "primitive_failures-cpp-build",
+    "primitive_failures-cpp",
+    "primitive_failures-python",
+    "transform_failures-c-build",
+    "transform_failures-c",
+    "transform_failures-cpp-build",
+    "transform_failures-cpp",
+    "transform_failures-python",
+    "bounds_failures-c-build",
+    "bounds_failures-c",
+    "bounds_failures-cpp-build",
+    "bounds_failures-cpp",
+    "bounds_failures-python",
+    "curve_constructor_failures-c-build",
+    "curve_constructor_failures-c",
+    "curve_constructor_failures-cpp-build",
+    "curve_constructor_failures-cpp",
+    "curve_constructor_failures-python",
+    "planar_operation_failures-c-build",
+    "planar_operation_failures-c",
+    "planar_operation_failures-cpp-build",
+    "planar_operation_failures-cpp",
+    "planar_operation_failures-python",
+    "exact_linear_modeling-c-build",
+    "exact_linear_modeling-c",
+    "exact_linear_modeling-cpp-build",
+    "exact_linear_modeling-cpp",
+    "exact_linear_modeling-python"
+  ],
+  "final_edit": "Only the new regression helper changes .err().expect() to expect_err() to satisfy Clippy. All production, other test, binding, documentation and dependency sources are identical. The final phase reruns the affected test under minimal/curve/all-feature configurations, workspace formatting and all-feature/all-target Clippy. The original phase remains failed; its unaffected passing checks are reused.",
+  "final_storage": "candidate-v2 stopped at the /tmp user quota before any check ran; its partial copy and diagnostics remain. candidate-v3 uses a copy-on-write overlay with the prior build read-only and private upper storage in /run/user/1000. All lower file hashes remain unchanged; mount specification, upper and view artifacts are retained.",
+  "typed_adapter_cases": {
+    "invalid_input": 192,
+    "undecided": 32
+  },
+  "bindings": {
+    "C": "4/4 typed undecided Booleans",
+    "C++": "4/4 typed undecided Booleans",
+    "Python": "4/4 typed undecided Booleans",
+    "Go": "all five binding tests pass"
+  },
+  "existing_binding_regressions": "All C/C++/Python empty composition, primitive, transform, bounds, curve constructor, planar operation and exact linear modeling consumers pass against the rebuilt shared library.",
+  "source_delta_from_E12": [
+    "bindings/README.md",
+    "bindings/go/boolean_failures_test.go",
+    "crates/csgrs-ffi/README.md",
+    "readme.md",
+    "src/adapter/mesh.rs",
+    "src/adapter/scalar.rs",
+    "tests/adapter_boolean_failures.rs",
+    "tests/ffi/boolean_failures.c",
+    "tests/ffi/boolean_failures.cpp",
+    "tests/ffi/boolean_failures.py"
+  ],
+  "unchanged_lower_layer_sources": true,
+  "prior_lower_layer_qualification": "docs/evidence/2026-10-15-factored-product-proofs/qualification-summary-v1.json",
+  "scope": "Typed Boolean error forwarding only. Native geometry, policy and certainty implementations are unchanged. Native layer and WASM consumer implementations match E12; their earlier qualification is inherited, not claimed as rerun. No performance, external-package, full-CI, release or full-plan admission.",
+  "retained_failures": {
+    "baseline-bindings-v1": {
+      "passed": false,
+      "commands": 8,
+      "failures": [
+        [
+          "c",
+          134
+        ],
+        [
+          "cpp",
+          134
+        ],
+        [
+          "python",
+          1
+        ],
+        [
+          "go",
+          1
+        ]
+      ]
+    },
+    "candidate-v1": {
+      "passed": false,
+      "commands": 53,
+      "failures": [
+        [
+          "root-all-feature-clippy",
+          101
+        ]
+      ]
+    },
+    "candidate-v3": {
+      "passed": true,
+      "commands": 6,
+      "failures": []
+    },
+    "go-tools-v1": {
+      "passed": true,
+      "commands": 3,
+      "failures": []
+    },
+    "reproduction-v1": {
+      "passed": false,
+      "commands": 5,
+      "failures": [
+        [
+          "typed-errors-build",
+          1
+        ],
+        [
+          "typed-errors",
+          127
+        ],
+        [
+          "rotated-binding-fixture-build",
+          1
+        ],
+        [
+          "rotated-binding-fixture",
+          127
+        ]
+      ]
+    },
+    "reproduction-v2": {
+      "passed": false,
+      "commands": 5,
+      "failures": [
+        [
+          "typed-errors",
+          101
+        ]
+      ]
+    },
+    "candidate-v2": {
+      "passed": false,
+      "commands": 0,
+      "failures": [
+        [
+          "seed preparation: user quota",
+          1
+        ]
+      ]
+    }
+  }
+}

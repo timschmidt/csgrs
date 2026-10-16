@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling csgrs-ffi v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/csgrs-ffi)
+    Finished `release` profile [optimized] target(s) in 8.58s
+     Running unittests src/lib.rs (/tmp/csgrs-adapter-failure-kinds/candidate-v1/release/deps/csgrs_ffi-393fd1eb2bc5369f)

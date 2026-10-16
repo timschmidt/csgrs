@@ -1,0 +1,1 @@
+boolean-failures-c: tests/ffi/boolean_failures.c:28: main: Assertion `structured == 4' failed.

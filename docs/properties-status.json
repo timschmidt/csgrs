@@ -9505,6 +9505,68 @@
       "remaining": "Scalar Boolean adapter typed-error propagation, wider supported workloads and release/external-consumer validation; full-query resources/provenance/formal/coverage obligations remain. The 35 pending native files retain their prior hashes and are not admitted by these checks.",
       "runtime_admitted": false,
       "full_plan_complete": false
+    },
+    "adapter_boolean_failure_work": {
+      "status": "typed native Boolean causes preserved; focused Rust and real C/C++/Python/Go qualification passed",
+      "baseline_commit": "5080ba4b4",
+      "properties": [
+        "P6",
+        "P18",
+        "P25",
+        "P30",
+        "P35",
+        "P37"
+      ],
+      "progress": "docs/evidence/2026-10-15-adapter-failure-kinds/progress-v1.md",
+      "contract": "docs/evidence/2026-10-15-adapter-failure-kinds/contract-v2.md",
+      "baseline": "docs/evidence/2026-10-15-adapter-failure-kinds/baseline-summary-v1.json",
+      "validation": "docs/evidence/2026-10-15-adapter-failure-kinds/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-adapter-failure-kinds/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-adapter-failure-kinds/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "bindings/README.md": "7cd5b4e7f03a068558c101cf019016864bd61aa18c50dcffe384c2ff7bbdcfd0",
+        "bindings/go/boolean_failures_test.go": "628388535ad5da9f786efe5cb6cabf0b38264e04e9b7c03c58645f7dcb5f56cc",
+        "crates/csgrs-ffi/README.md": "72b7a397ab49ab8dc1e373c0aec8bbb77fd8fd2494e49d26cea31b19f000d27d",
+        "readme.md": "a08625e88f4be66172fa7748ef7c3050f4b0882b27c8c4d1e109ddd55e65bd3e",
+        "src/adapter/mesh.rs": "fd513c27ee59b134725a408733a9340b30cd72ee7cc888c736c608bbce81b1fd",
+        "src/adapter/scalar.rs": "19cd8f11c0100629000ee8209d1efdda5c5ee8d9bd0395ecf8e532a957012bd9",
+        "tests/adapter_boolean_failures.rs": "2f73531a5ca9cbca1d29f69e5115b276403b702845c40f786cbbf3247f7a0623",
+        "tests/ffi/boolean_failures.c": "7cdf173d57ed4744e3077634faf7139be7507c98e313bc9e1731f0c27c1bf6ea",
+        "tests/ffi/boolean_failures.cpp": "ec0d10c3e96941300187ed097779a91ada1c29202cb45883c9611ee6a04321a4",
+        "tests/ffi/boolean_failures.py": "ccfdef2d8986d7cd472ef38070b5ea7f22967e31f4765e1472c962219ed24f7a"
+      },
+      "test_totals": {
+        "typed-errors": {
+          "passed": 2,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 239,
+          "ignored": 0
+        },
+        "root-minimal": {
+          "passed": 104,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 346,
+          "ignored": 1
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "ignored": 0
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        }
+      },
+      "migration": "All eight ScalarMesh Boolean methods use the shared HypermeshError conversion through ValidationError::Mesh and AdapterError::Construction. Both source links and Display survive. C-family undecided status changes from generic 4 to existing 5; invalid input remains 4, including empty/malformed pairs. No successful model is published on failure.",
+      "scope": "192 invalid-input and 32 undecided Rust cases across four scalar families. All four operations exercised in actual C/C++/Python/Go consumers, followed by successful empty composition and recovery. Lower-layer and real WASM sources match E12; their qualification is inherited, not rerun.",
+      "resource_contract": "External 1800-second command and 8-GiB per-process address-space containment. No new internal full-query work, heap-byte or cancellation bound; no performance claim.",
+      "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
+      "remaining": "Other text-only adapter paths, wider workload/provenance/resource contracts, clean external package and release validation. The 35 pending native files remain unchanged and separately unadmitted.",
+      "full_plan_complete": false
     }
   },
   "status_meanings": {

@@ -10,7 +10,7 @@ pub enum AdapterError {
     NotFiniteApproximation,
     NotExactInteger,
     Validation(String),
-    /// Structured failure from native modeling construction.
+    /// Structured failure from a native modeling operation.
     Construction(crate::errors::ValidationError),
 }
 
@@ -43,6 +43,12 @@ impl std::error::Error for AdapterError {
 impl From<crate::errors::ValidationError> for AdapterError {
     fn from(value: crate::errors::ValidationError) -> Self {
         Self::Construction(value)
+    }
+}
+
+impl From<hypermesh::HypermeshError> for AdapterError {
+    fn from(value: hypermesh::HypermeshError) -> Self {
+        Self::from(crate::errors::ValidationError::from(value))
     }
 }
 

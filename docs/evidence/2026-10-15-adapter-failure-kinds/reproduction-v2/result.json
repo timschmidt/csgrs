@@ -1,0 +1,55 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.8358270940370858,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "505391b9f39ddc660601919f6b92f23658f2bb8ce1de7da2779621e5659d2e92"
+    },
+    {
+      "name": "typed-errors-build",
+      "exit_code": 0,
+      "seconds": 2.3811614331789315,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "84e619ddd58becf7709f6e2fcfbb170d794d67ce4059879aa3f7d8300d47e9c9"
+    },
+    {
+      "name": "typed-errors",
+      "exit_code": 101,
+      "seconds": 1.841340855229646,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "f9604680a8905ead6b7f13fc7fad4a4bb26ce50293d1079995037b6951fbdfa5",
+      "stderr_sha256": "2bd038a80f83208970d06824611c8d6516d440690dd02691f0af02e30ff34232",
+      "resources_sha256": "3d216f97377d3a8d87e9f5c3bf25a6a615ae46df2abc17243dc27c2ad74c1fa6"
+    },
+    {
+      "name": "rotated-binding-fixture-build",
+      "exit_code": 0,
+      "seconds": 2.1490245843306184,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "6b500ef2a21a8823d5aceb1e7b0f232d69496a15ab035316b4eaf281dccc7b85"
+    },
+    {
+      "name": "rotated-binding-fixture",
+      "exit_code": 0,
+      "seconds": 1.8185682776384056,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "54427574aa658b02bf2cdba67302735b4b649715f226145700ef8cab0f7725df",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "879743faba9cb31c2a7f05981809de8d633c0bcd2a7f6b22fc93ec01961a9d20"
+    }
+  ],
+  "passed": false
+}

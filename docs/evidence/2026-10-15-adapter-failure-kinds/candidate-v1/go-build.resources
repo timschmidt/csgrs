@@ -1,0 +1,23 @@
+	Command being timed: "env GO111MODULE=off GOTOOLCHAIN=local GOCACHE=/tmp/csgrs-adapter-failure-kinds/candidate-v1/go-cache GOPATH=/tmp/csgrs-adapter-failure-kinds/candidate-v1/go-path CGO_LDFLAGS=-L/tmp/csgrs-adapter-failure-kinds/candidate-v1/release -Wl,-rpath,/tmp/csgrs-adapter-failure-kinds/candidate-v1/release -lcsgrs_ffi /tmp/csgrs-adapter-failure-kinds/go-tools-v1/go/bin/go test -c -o /tmp/csgrs-adapter-failure-kinds/candidate-v1/go-bindings.test ./bindings/go"
+	User time (seconds): 19.52
+	System time (seconds): 4.40
+	Percent of CPU this job got: 561%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.25
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 286400
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 1349240
+	Voluntary context switches: 43770
+	Involuntary context switches: 13539
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

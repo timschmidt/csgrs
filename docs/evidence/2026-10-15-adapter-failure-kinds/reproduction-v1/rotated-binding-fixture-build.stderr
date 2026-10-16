@@ -1,0 +1,9 @@
+error[E0599]: no method named `kind` found for enum `hypermesh::error::HypermeshError` in the current scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/rotated_binding_fixture_v1.rs:22:27
+   |
+22 |         assert_eq!(native.kind(), ValidationErrorKind::Undecided);
+   |                           ^^^^ method not found in `hypermesh::error::HypermeshError`
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0599`.

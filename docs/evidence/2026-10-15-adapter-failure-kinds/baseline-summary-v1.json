@@ -1,0 +1,29 @@
+{
+  "revision": "5080ba4b4",
+  "rust_phase": "reproduction-v2",
+  "rust_invalid_input": {
+    "retained_typed_causes": 0,
+    "cases": 192
+  },
+  "rust_undecided": {
+    "retained_typed_causes": 0,
+    "cases": 32
+  },
+  "binding_phase": "baseline-bindings-v1",
+  "binding_builds_passed": true,
+  "binding_typed_undecided_statuses": {
+    "C": "0/4",
+    "C++": "0/4",
+    "Python": "0/4",
+    "Go": "0/4"
+  },
+  "other_go_tests_passed": 4,
+  "binaries_sha256": {
+    "/tmp/csgrs-adapter-failure-kinds/baseline-bindings-v1/release/libcsgrs_ffi.so": "b1edb925f444699a7e309483f5c5affea4faa9d10ba5fa2dfd71f3e6cd45839f",
+    "/tmp/csgrs-adapter-failure-kinds/baseline-bindings-v1/boolean-failures-c": "0dd111cdb9fdf77ce18395c35aa3caacaf943e35385030843629f63a77db7d01",
+    "/tmp/csgrs-adapter-failure-kinds/baseline-bindings-v1/boolean-failures-cpp": "d933dbe841d3027483cf1e30c6a17b5f9b6f525af6a94e85333b68b7bcf7d495",
+    "/tmp/csgrs-adapter-failure-kinds/baseline-bindings-v1/go-bindings.test": "14b61d5b14f90afca03eb2f4c0260748ac762d91a6700553d0532548153c12de"
+  },
+  "go_source_snapshotted": true,
+  "scope": "Native errors and diagnostic text were present, but the adapter converted them to strings. These are expected failing regressions; the baseline is not a passing qualification."
+}

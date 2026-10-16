@@ -1,0 +1,35 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.8238026779145002,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "bd5e7a5b86b28033650daf46e307fe521c7428c23a35566a9a8b882d46f640dd"
+    },
+    {
+      "name": "download-go",
+      "exit_code": 0,
+      "seconds": 23.551443075295538,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "a61c02963d11f532f6b8fc5a30e4fbf9e46aefba1d8e6c90f42d256ab3cff1cb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "b8da0433671d6a14abf4e66efb2d050d848d136fbabfa07fadd7229a1f9d3177"
+    },
+    {
+      "name": "go-version",
+      "exit_code": 0,
+      "seconds": 1.8270794237032533,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "ed4307d760c597256afdc696a61d47d13e832615d7741ead11c64966a440b376",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "6b9b55ac94f0087ae59572ccb7f8d9df9abfb73d020bf2f5a66f572979d133b4"
+    }
+  ],
+  "passed": true
+}

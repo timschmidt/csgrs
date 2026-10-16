@@ -1,0 +1,9 @@
+
+running 2 tests
+invalid_input structured=192 total=192
+test invalid_operands_keep_typed_failures_even_when_paired_with_empty ... ok
+undecided structured=32 total=32
+test undecided_booleans_keep_typed_failures_across_scalar_families ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

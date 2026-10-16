@@ -1,0 +1,71 @@
+{
+  "commands": [
+    {
+      "name": "overlay-setup",
+      "exit_code": 0,
+      "seconds": 5.730988767929375,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "aaf15dc1e62333a668226cdea12a4f8b921b0e20124e4e7d39dd97f3faecd9ef",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "afe2269c4c05ac94c77122ee07bef83c08fce582ed725b90a542df1620827dc0"
+    },
+    {
+      "name": "workspace-fmt",
+      "exit_code": 0,
+      "seconds": 12.350480720866472,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "cf7622767b0d11a719b4f9d2c6685f8fc61df4974c3c586e4112d171cac8e188"
+    },
+    {
+      "name": "typed-errors-minimal",
+      "exit_code": 0,
+      "seconds": 6.078514980152249,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-adapter-failure-kinds/candidate-v3/release/deps/adapter_boolean_failures-4f1ca3000d3fc581": "30c4aa9db40035301f37cddbb18c51b03bc937771de2e957065707de2d323b4d"
+      },
+      "stdout_sha256": "6831e534d33cc0c580272fd15131641a1c1a337f7dec105cef9ee3ca841954a7",
+      "stderr_sha256": "8624e4f8226a6c8c1a94b769d9cd9dd863a3d9c62a6da3bf4a66e104388c767c",
+      "resources_sha256": "95a87ce1079ec105cf98abb52a2585afbf459df1025e0568ff5a2dadfe34173c"
+    },
+    {
+      "name": "typed-errors-curve",
+      "exit_code": 0,
+      "seconds": 7.970279668923467,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-adapter-failure-kinds/candidate-v3/release/deps/adapter_boolean_failures-a8545cad602e1611": "b5b996a5c473e64ca9f2846ba42c7a47dc7890133de6071f11905b5fe2ee0922"
+      },
+      "stdout_sha256": "6831e534d33cc0c580272fd15131641a1c1a337f7dec105cef9ee3ca841954a7",
+      "stderr_sha256": "b415a98c27cc2fcea22024e95b43bd036f1523d24551ac5aa4c6b4f3f893c6ad",
+      "resources_sha256": "767676f2a85e45b975e398b2c1e1937478189512e147096309a96bcb616049a1"
+    },
+    {
+      "name": "typed-errors-all-features",
+      "exit_code": 0,
+      "seconds": 16.075043184217066,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-adapter-failure-kinds/candidate-v3/release/deps/adapter_boolean_failures-d8de606e91edc39c": "1672d5b8cac823a6c437b6fa17befd50bff7634208c6b90dc42cec3c61d33129"
+      },
+      "stdout_sha256": "6831e534d33cc0c580272fd15131641a1c1a337f7dec105cef9ee3ca841954a7",
+      "stderr_sha256": "9605e5f144d20caf6d88d95aa4e2f7666177a9e3cb31bc6a4fbb869df1ffa968",
+      "resources_sha256": "ea99c40b0a92acaf4da056c8956c369ded4e9bd87ba4eedbc90c7efc458d92c4"
+    },
+    {
+      "name": "root-all-feature-clippy",
+      "exit_code": 0,
+      "seconds": 2.467496288008988,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "caf7423b9a061eb6e098c0b14089af5249a913c3e72157ff6df5fc7ec6d3bb2b",
+      "resources_sha256": "43a8666e7b43b607deff5143b9b780645d149c2d2d1f2f405fa163f160d375d9"
+    }
+  ],
+  "passed": true
+}

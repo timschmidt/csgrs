@@ -1,0 +1,23 @@
+[
+  [
+    "prepare-target",
+    [
+      "mkdir",
+      "/tmp/csgrs-adapter-failure-kinds/go-tools-v1"
+    ]
+  ],
+  [
+    "download-go",
+    [
+      "python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/download_go_v1.py"
+    ]
+  ],
+  [
+    "go-version",
+    [
+      "/tmp/csgrs-adapter-failure-kinds/go-tools-v1/go/bin/go",
+      "version"
+    ]
+  ]
+]

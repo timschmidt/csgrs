@@ -1,0 +1,159 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/validate_v2.py": "88d4ac05aaa6731c471c60b510448a48db1f07d60a7950083431aa90efca050a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/contract-v1.md": "b00c59e6154394b3e0c97f9fac5f4a8a1dd85bae7b786d7e714e0dc910c81a5a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/contract-v2.md": "6c2f39fd8a721f9e75f71182cbdac3676c73e2ba585fbdedcce508e064248b4a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/binding-scope-v1.md": "6ab51aff0527e1c594850a22f7babf7de6c71d13b814585adadaf2ccf755cfe0",
+    "/tmp/csgrs-adapter-failure-kinds/go-tools-v1/go/bin/go": "548d3c32f83fa81152f543eb1526be7884cfe0526eb5e9ce29d3eca14786e7e0",
+    "/tmp/csgrs-adapter-failure-kinds/baseline-bindings-v1/release/libcsgrs_ffi.so": "b1edb925f444699a7e309483f5c5affea4faa9d10ba5fa2dfd71f3e6cd45839f",
+    "/tmp/csgrs-adapter-failure-kinds/baseline-bindings-v1/boolean-failures-c": "0dd111cdb9fdf77ce18395c35aa3caacaf943e35385030843629f63a77db7d01",
+    "/tmp/csgrs-adapter-failure-kinds/baseline-bindings-v1/boolean-failures-cpp": "d933dbe841d3027483cf1e30c6a17b5f9b6f525af6a94e85333b68b7bcf7d495",
+    "/tmp/csgrs-adapter-failure-kinds/baseline-bindings-v1/go-bindings.test": "14b61d5b14f90afca03eb2f4c0260748ac762d91a6700553d0532548153c12de",
+    "/tmp/csgrs-adapter-failure-kinds/candidate-v1/release/libcsgrs_ffi.so": "1a7345d5284d069b7df46667e6a58d90cd21fb64fa93823c619dff2d08da8e63",
+    "/tmp/csgrs-adapter-failure-kinds/candidate-v1/boolean-failures-c": "af8a08bee40dbbab7f924e8bf1fb62e9f4d7926da836c29b4f592390611e54f0",
+    "/tmp/csgrs-adapter-failure-kinds/candidate-v1/boolean-failures-cpp": "2e60ed9a3e3fa11b1bf465a61c35c451ac2d585c51231e1cd5f85e8e92cfcd7d",
+    "/tmp/csgrs-adapter-failure-kinds/candidate-v1/go-bindings.test": "1ee57e5c242040270d121c169b61b055abbe235f2846a0ece9423d6e439b20dc",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/validate_v3.py": "f8e832537f29bf741957820669e352edf2de74b95adc1aab4b686b434bd4e02b",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/setup_overlay_v1.py": "df372f1447fb3047f1ecfdcd349f1d3ea054e9737256aad7eb1cbba24b40d4b7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/storage-contract-v1.md": "1dac143c9bdef349d57ad6c1d0ddee6f9de77e85533e37b0f1732903002795b8"
+  },
+  "base_commit": "5080ba4b4d0d856632f9f6242e92d12859e2e8ee",
+  "runner_sha256": "f3ee76657ed7c1e8792452ded7c2380c1ad03a41abb312d80f9adf68b4dc6f05",
+  "phase": "candidate-v3",
+  "commands": [
+    [
+      "overlay-setup",
+      [
+        "python3",
+        "docs/evidence/2026-10-15-adapter-failure-kinds/setup_overlay_v1.py"
+      ]
+    ],
+    [
+      "workspace-fmt",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "typed-errors-minimal",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--test",
+        "adapter_boolean_failures",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "typed-errors-curve",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "curve",
+        "--test",
+        "adapter_boolean_failures",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "typed-errors-all-features",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--test",
+        "adapter_boolean_failures",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "root-all-feature-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/tmp/csgrs-adapter-failure-kinds/candidate-v3",
+    "TMPDIR": "/tmp/csgrs-adapter-failure-kinds/candidate-v3"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P18",
+    "P25",
+    "P30",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "CSGRS scalar adapter typed-error forwarding",
+    "C ABI category mapping and language consumers"
+  ],
+  "domain": "The four mesh Boolean operations and their context variants, across RawReal/F32/F64/I128. Native input validation, policies, geometry, completion and uncertainty are unchanged. Preserve the native HypermeshError through the existing ValidationError::Mesh category classifier and AdapterError::Construction, retaining display and both Error::source links.",
+  "consumers": [
+    "ScalarMesh public API",
+    "csgrs-ffi status_for_error",
+    "C/C++/Python/Go consumers"
+  ],
+  "missing_acceptance_test": [
+    "Reproduce text-only InvalidInput and Undecided adapter failures on the target revision before production edits.",
+    "Keep invalid operands visible when composed with empty, all scalar families and all eight entry points.",
+    "Run actual affected binding consumers, preserve ownership and typed failures, and verify subsequent recovery."
+  ],
+  "semantic_oracle": "Independent regularized-set identities and rotation/translation identities define the fixtures. Native errors supply categories and text at the adapter boundary; equality to a native wrapper is a propagation test, not an independent geometry oracle.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "diagnostic_collection": "All commands are attempted on frozen source; Cargo test --no-fail-fast retains every failed test target. Every nonzero result remains a failure; source or artifact mutation still aborts immediately.",
+  "limitations": "External wall/per-process address-space containment only; no internal full-query work or heap-byte bound. This repair is not a release or performance claim. E12 records the inherited 27093 missing artifact paths; no recovery is claimed.",
+  "previous_goal_turn": "5080ba4b4 completes all original 8/16/24/32 strict drill chains and final focused qualification. The remaining adapter methods erase native Boolean error types. Pending native files remain separately unadmitted.",
+  "wrapper_sha256": "f8e832537f29bf741957820669e352edf2de74b95adc1aab4b686b434bd4e02b",
+  "artifact_preparation": "Explicit first-command copy-on-write overlay; see candidate-v3/overlay.json and storage-contract-v1.md. Ordinary copy seed is null. All lower artifacts are pinned before mounting and verified at closure; private upper storage receives writes."
+}

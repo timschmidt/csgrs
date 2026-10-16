@@ -1,0 +1,3 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 6.08s
+     Running tests/adapter_boolean_failures.rs (/tmp/csgrs-adapter-failure-kinds/candidate-v3/release/deps/adapter_boolean_failures-a8545cad602e1611)

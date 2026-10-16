@@ -1,0 +1,15 @@
+=== RUN   TestBooleanFailureCategoryAndRecovery
+    boolean_failures_test.go:32: undecided Boolean returned model=<nil> error=predicate could not be decided: Real ordering
+    boolean_failures_test.go:32: undecided Boolean returned model=<nil> error=predicate could not be decided: Real ordering
+    boolean_failures_test.go:32: undecided Boolean returned model=<nil> error=predicate could not be decided: Real ordering
+    boolean_failures_test.go:32: undecided Boolean returned model=<nil> error=predicate could not be decided: Real ordering
+--- FAIL: TestBooleanFailureCategoryAndRecovery (0.00s)
+=== RUN   TestBoundsAbsenceAndPlacement
+--- PASS: TestBoundsAbsenceAndPlacement (0.00s)
+=== RUN   TestCurveConstructorFailuresAndRecovery
+--- PASS: TestCurveConstructorFailuresAndRecovery (0.00s)
+=== RUN   TestExactLinearExtrusionAndFailureRecovery
+--- PASS: TestExactLinearExtrusionAndFailureRecovery (0.00s)
+=== RUN   TestPlanarTranslationAdmissionAndRecovery
+--- PASS: TestPlanarTranslationAdmissionAndRecovery (0.00s)
+FAIL

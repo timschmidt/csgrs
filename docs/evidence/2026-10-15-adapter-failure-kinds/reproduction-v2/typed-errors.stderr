@@ -1,0 +1,11 @@
+
+thread 'invalid_operands_keep_typed_failures_even_when_paired_with_empty' (1987881) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/adapter_failures_probe_v2.rs:161:5:
+assertion `left == right` failed: native invalid-input categories must survive adapters
+  left: 0
+ right: 192
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'undecided_booleans_keep_typed_failures_across_scalar_families' (1987882) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/adapter_failures_probe_v2.rs:178:5:
+assertion `left == right` failed: native undecided categories must survive adapters
+  left: 0
+ right: 32

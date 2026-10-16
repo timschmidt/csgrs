@@ -102,6 +102,13 @@ pointer before dereferencing it. Native JavaScript loaders must map `NO_BOUNDS`
 to absence and preserve all other status categories; the loader implementation
 is supplied by the consumer and is not included here.
 
+Mesh union, difference, intersection and xor preserve native failure categories
+through C status codes, C++/Python exceptions and Go errors. An undecided
+Boolean now returns `PREDICATE_UNDECIDED` (5), replacing generic
+`VALIDATION_FAILED` (4). Invalid input still reports (4), including malformed
+operands paired with empty geometry. The diagnostic message is retained and
+failed operations publish no model handle; signatures are unchanged.
+
 Opaque handles may cross only the ABI version that created them. Callers must
 use the matching free function, must not mix scalar families, and must copy any
 borrowed last-error text before another ABI call. The wrappers are currently
