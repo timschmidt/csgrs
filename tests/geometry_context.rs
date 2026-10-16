@@ -207,10 +207,51 @@ fn scalar_mesh_booleans_expose_context_without_losing_certainty() {
         .unwrap()
         .translate(6.0, 6.0, -1.0)
         .unwrap();
-    assert!(body.difference(&drill).is_err());
-    let result = body.difference_with_context(&drill, &APPROXIMATE).unwrap();
-    assert_eq!(result.certainty, GeometryCertainty::Approximate512Consumed);
-    assert!(result.value.native().is_closed_manifold());
+    assert!(body.difference(&drill).unwrap().native().is_closed_manifold());
+    for context in [STRICT, APPROXIMATE] {
+        let result = body.difference_with_context(&drill, &context).unwrap();
+        assert_eq!(result.certainty, GeometryCertainty::Certified);
+        let topology = result
+            .value
+            .native()
+            .is_closed_manifold_geometry(&STRICT.mesh_context())
+            .unwrap();
+        assert_eq!(topology.certainty, hypermesh::MeshCertainty::Certified);
+        assert!(topology.value);
+        for (coordinates, expected) in
+            [([1, 1, 2], true), ([6, 6, 2], false), ([-1, 6, 2], false)]
+        {
+            let [x, y, z] = coordinates.map(Real::from);
+            let membership = solid::contains_point_with_context(
+                result.value.native(),
+                &Point3::new(x, y, z),
+                &STRICT,
+            )
+            .unwrap();
+            assert_eq!(membership.certainty, GeometryCertainty::Certified);
+            assert_eq!(membership.value, expected);
+        }
+    }
+}
+
+#[test]
+fn scalar_mesh_terminal_evidence_does_not_satisfy_a_later_strict_boolean() {
+    use csgrs::{adapter::TriangleMeshF64, solid::SolidExt};
+    let cube = solid::cube(Real::one()).unwrap();
+    let translated = cube
+        .translated(unresolved_zero(), Real::zero(), Real::zero())
+        .unwrap();
+    let a = TriangleMeshF64::from_native(cube);
+    let b = TriangleMeshF64::from_native(translated);
+    assert!(a.difference_with_context(&b, &STRICT).is_err());
+    let approximate = a.difference_with_context(&b, &APPROXIMATE).unwrap();
+    assert_eq!(
+        approximate.certainty,
+        GeometryCertainty::Approximate512Consumed
+    );
+    assert!(approximate.value.native().positions.is_empty());
+    assert!(approximate.value.native().triangles.is_empty());
+    assert!(a.difference_with_context(&b, &STRICT).is_err());
 }
 
 #[cfg(feature = "curve")]
@@ -430,7 +471,11 @@ fn composite_curve_constructors_preserve_nested_predicate_certainty() {
 #[test]
 fn javascript_mesh_results_expose_the_consumed_certainty() {
     use csgrs::solid::SolidExt;
-    use csgrs::wasm::mesh_js::MeshJs;
+    use csgrs::wasm::{
+        context_js::{GeometryCertaintyJs, GeometryQueryStatusJs},
+        mesh_js::MeshJs,
+        point_js::Point3Js,
+    };
     let body = MeshJs::from(
         solid::cuboid(Real::from(12), Real::from(12), Real::from(4))
             .expect("valid primitive fixture"),
@@ -441,12 +486,32 @@ fn javascript_mesh_results_expose_the_consumed_certainty() {
             .translated(Real::from(6), Real::from(6), Real::from(-1))
             .expect("valid transform fixture"),
     );
-    let result = body.difference_with_context(&drill, true).unwrap();
-    assert!(result.approximate_512_consumed());
-    assert_eq!(result.into_mesh().triangle_count(), 144);
+    for approximate in [false, true] {
+        let result = body.difference_with_context(&drill, approximate).unwrap();
+        assert_eq!(result.certainty(), GeometryCertaintyJs::Certified);
+        assert!(!result.approximate_512_consumed());
+        let mesh = result.into_mesh();
+        assert_eq!(mesh.triangle_count(), 144);
+        for (coordinates, expected) in [
+            ([1.0, 1.0, 2.0], true),
+            ([6.0, 6.0, 2.0], false),
+            ([-1.0, 6.0, 2.0], false),
+        ] {
+            let [x, y, z] = coordinates;
+            let point = Point3Js::new(x, y, z).unwrap();
+            let membership = mesh.contains_point_with_context(&point, false).unwrap();
+            assert_eq!(membership.status(), GeometryQueryStatusJs::Decided);
+            assert_eq!(membership.certainty(), Some(GeometryCertaintyJs::Certified));
+            assert_eq!(membership.value(), Some(expected));
+        }
+    }
     let bounds = MeshJs::from(uncertain_bounds())
         .bounding_box_with_context(true)
         .unwrap();
+    assert_eq!(
+        bounds.certainty(),
+        GeometryCertaintyJs::Approximate512Consumed
+    );
     assert!(bounds.approximate_512_consumed());
 }
 
@@ -496,12 +561,36 @@ Transform {
     coordIndex [ 0 1 2 3 4 -1 ]
   } } ]
 }";
-    let imported = csgrs::io::vrml::from_vrml_with_context(source, &APPROXIMATE).unwrap();
-    assert!(csgrs::io::vrml::from_vrml(source).is_err());
-    assert_eq!(imported.certainty, GeometryCertainty::Approximate512Consumed);
-    assert_eq!(imported.value.mesh.triangles.len(), 3);
-    assert_eq!(imported.value.ignored_degenerate_polygon_count, 0);
-    assert_eq!(imported.value.ignored_degenerate_triangle_count, 0);
+    assert_eq!(
+        csgrs::io::vrml::from_vrml(source)
+            .unwrap()
+            .mesh
+            .triangles
+            .len(),
+        3
+    );
+    for context in [STRICT, APPROXIMATE] {
+        let imported = csgrs::io::vrml::from_vrml_with_context(source, &context).unwrap();
+        assert_eq!(imported.certainty, GeometryCertainty::Certified);
+        assert_eq!(imported.value.mesh.triangles.len(), 3);
+        assert_eq!(imported.value.ignored_degenerate_polygon_count, 0);
+        assert_eq!(imported.value.ignored_degenerate_triangle_count, 0);
+        let mesh = &imported.value.mesh;
+        let twice_area = mesh.triangles.iter().fold(Real::zero(), |sum, triangle| {
+            let [a, b, c] = triangle.indices().map(|i| &mesh.positions[i]);
+            sum + (b - a).cross(&(c - a)).norm()
+        });
+        // Shoelace gives area 3 before the rigid rotation. Certify a narrow
+        // enclosure independently of the triangulation and its receipt.
+        let error = (twice_area / Real::from(2)).unwrap() - Real::from(3);
+        let radius = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+        for positive in [&radius + &error, &radius - &error] {
+            assert_eq!(
+                positive.certified_sign_until(-512).sign(),
+                Some(hyperreal::RealSign::Positive),
+            );
+        }
+    }
 }
 
 #[cfg(feature = "gerber-io")]

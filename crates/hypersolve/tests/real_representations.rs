@@ -409,14 +409,19 @@ fn every_real_certificate_crosses_solver_analysis_and_proof_surfaces() {
                     sparse.dense_solve.residual_replay.accepted,
                     "{context_label}"
                 );
+                assert_eq!(
+                    sparse.dense_solve.residual_replay.certainty,
+                    hyperlimit::Certainty::Exact,
+                    "{context_label}"
+                );
                 assert!(sparse.sparse_residual_replay.accepted, "{context_label}");
                 assert_same_real(&sparse.dense_solve.solution[0], &Real::one(), context_label);
                 sparse_solved += 1;
             }
             Err(SparseBareissError::DenseSolve(BareissError::UnknownResidual))
             | Err(SparseBareissError::SparseReplay(SparseResidualReplayError::UnknownResidual)) => {
-                // The strict API must surface non-canonical computable
-                // cancellation as uncertainty, never silently use f64.
+                // Retain a distinct count if a previously certified case
+                // regresses to uncertainty; the final assertions reject it.
                 sparse_explicitly_unknown += 1;
             }
             Err(error) => panic!("{context_label}: unexpected sparse solve failure: {error:?}"),
@@ -466,10 +471,10 @@ fn every_real_certificate_crosses_solver_analysis_and_proof_surfaces() {
         );
     }
 
-    assert_eq!(sparse_solved + sparse_explicitly_unknown, 22);
-    assert_eq!(pattern_solved + pattern_explicitly_unknown, 22);
-    assert!(sparse_solved > 0 && pattern_solved > 0);
-    assert!(sparse_explicitly_unknown > 0);
+    // All original v*x=v cases now have a strict scalar proof. Require that
+    // expanded capability rather than permanently requiring an Unknown.
+    assert_eq!((sparse_solved, sparse_explicitly_unknown), (22, 0));
+    assert_eq!((pattern_solved, pattern_explicitly_unknown), (22, 0));
 }
 
 #[test]

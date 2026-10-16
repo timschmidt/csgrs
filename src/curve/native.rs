@@ -3752,11 +3752,47 @@ mod tests {
                 })
                 .count()
         };
-        assert_eq!(
-            vertices_at(&pitch_line),
-            teeth * 2,
-            "both sides of every tooth must cross the pitch line"
-        );
+        // The neighboring root/face samples are scalar multiples of the
+        // same (run, rise), so native admission may remove their collinear
+        // pitch vertex. Count geometric crossings, independent of that split.
+        let pitch = hypercurve::CurvePoint2::from(Point2::new(Real::zero(), pitch_line));
+        let crossings = curves
+            .iter()
+            .filter(|curve| {
+                let start = curve
+                    .start()
+                    .compare_coordinate(&pitch, hypercurve::Axis2::Y)
+                    .expect("rack start height");
+                let end = curve
+                    .end()
+                    .compare_coordinate(&pitch, hypercurve::Axis2::Y)
+                    .expect("rack end height");
+                (start == Ordering::Less) != (end == Ordering::Less)
+            })
+            .count();
+        assert_eq!(crossings, teeth * 2, "both sides must cross the pitch line");
+        let epsilon = (Real::one() / Real::from(1_000_000_000_000_u64)).unwrap();
+        for tooth in 0..teeth {
+            for side in [-1, 1] {
+                let x = Real::pi()
+                    * (Real::from(tooth as u64) + (Real::from(side) / Real::from(4)).unwrap());
+                for (y, expected) in [
+                    (Real::zero(), None),
+                    (-&epsilon, Some(true)),
+                    (epsilon.clone(), Some(false)),
+                ] {
+                    let location = contains_xy_with_context(
+                        &rack,
+                        x.clone(),
+                        y,
+                        &GeometryContext::STRICT,
+                    )
+                    .expect("exact rack pitch contact and displaced membership");
+                    assert_eq!(location.certainty, crate::GeometryCertainty::Certified);
+                    assert_eq!(location.value, expected);
+                }
+            }
+        }
         assert_eq!(
             vertices_at(&tip),
             teeth * 2,
@@ -3902,39 +3938,29 @@ mod tests {
         let compound = |result: Result<GeometryOutcome<CurveRegion2>, ValidationError>| {
             result.expect("nominal compound region").into_value()
         };
-        assert!(
-            crescent(
-                two.clone(),
-                one.clone(),
-                one.clone(),
-                16,
-                &GeometryContext::STRICT,
-            )
-            .is_err(),
-            "strict compound construction must retain its symbolic boundary blocker"
-        );
-        let approximate_crescent = crescent(
-            two.clone(),
-            one.clone(),
-            one.clone(),
-            16,
-            &GeometryContext::APPROXIMATE_512,
-        )
-        .expect("the authorized terminal should complete the sampled crescent");
-        assert_eq!(
-            approximate_crescent.certainty,
-            crate::GeometryCertainty::Approximate512Consumed
-        );
-        assert!(!approximate_crescent.value.is_empty());
-        assert!(
-            !try_finite_profiles(
-                &approximate_crescent.value,
-                &GeometryContext::APPROXIMATE_512,
-            )
-            .expect("the completed crescent should retain projectable boundary topology")
-            .into_value()
-            .is_empty()
-        );
+        for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
+            let crescent = crescent(two.clone(), one.clone(), one.clone(), 16, &context)
+                .expect("the symbolic crescent now has a strict scalar proof");
+            assert_eq!(crescent.certainty, crate::GeometryCertainty::Certified);
+            assert!(!crescent.value.is_empty());
+            let profiles = try_finite_profiles(&crescent.value, &GeometryContext::STRICT)
+                .expect("the certified crescent retains projectable boundary topology");
+            assert_eq!(profiles.certainty, crate::GeometryCertainty::Certified);
+            assert!(!profiles.value.is_empty());
+            // (-1,0) is material, (1,0) lies in the removed unit polygon,
+            // and (3,0) lies outside the outer radius-two polygon.
+            for (x, expected) in [(-1, true), (1, false), (3, false)] {
+                let location = contains_xy_with_context(
+                    &crescent.value,
+                    Real::from(x),
+                    Real::zero(),
+                    &GeometryContext::STRICT,
+                )
+                .expect("certified crescent membership");
+                assert_eq!(location.certainty, crate::GeometryCertainty::Certified);
+                assert_eq!(location.value, Some(expected));
+            }
+        }
         let shapes = [
             rectangle(two.clone(), one.clone()).expect("valid planar fixture"),
             square(two.clone()).expect("valid planar fixture"),

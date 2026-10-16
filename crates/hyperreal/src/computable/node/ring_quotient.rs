@@ -152,7 +152,7 @@ impl<'a> RingRecognition<'a> {
             // children must already have completed domain-checked projections.
             // Reuse the remaining budget, including the parent's node debit;
             // neither cached children nor reduction bypass child depth zero.
-            None if node_available && depth > 1 => self.recover_quotient(value)?,
+            None if node_available && depth > 1 => self.recover_quotient(value, depth)?,
             None => return None,
         };
         // At most MAX_NODES entries: each miss consumes a node before it can
