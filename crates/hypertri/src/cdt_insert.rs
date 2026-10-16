@@ -1060,13 +1060,12 @@ fn legalize_unconstrained_edges(
 
 /// Choose one structural triangulation without evaluating empty circles.
 ///
-/// Every retained flip replaces an unconstrained diagonal by a strictly
-/// smaller endpoint pair. The finite edge set therefore gives a direct
-/// termination measure. Exact convexity keeps the replacement diagonal inside
-/// the two adjacent triangles, so it cannot cross a protected triangulation
-/// edge or pass through another represented vertex. The descending rule also
-/// stabilizes common equivalent-cell cases that constraint recovery can reach
-/// through different initial diagonals.
+/// Decreasing single-edge flips cheaply establish the usual canonical cells,
+/// but they can stop at different local minima beside collinear vertices.
+/// Complete the selection with exact constraint recovery in endpoint-pair
+/// order. An admissible edge is protected before considering any later pair,
+/// so its choice depends only on the ordered points and authored constraints,
+/// not the initial triangulation or the surrounding protected cells.
 fn canonicalize_unconstrained_edges(
     evaluator: &PredicateEvaluator,
     points: &[Point2],
@@ -1090,7 +1089,119 @@ fn canonicalize_unconstrained_edges(
             constrained_edges,
             EdgeSchedule::Lexicographic,
         ),
+    }?;
+    complete_lexicographic_edges(evaluator, points, triangles, constrained_edges)
+}
+
+fn complete_lexicographic_edges(
+    evaluator: &PredicateEvaluator,
+    points: &[Point2],
+    triangles: &mut Vec<Triangle>,
+    constrained_edges: &[EdgeKey],
+) -> Result<()> {
+    let mut protected = constrained_edges.to_vec();
+    let mut edge_count = 0;
+    for entry in TopologyEdges::new(triangles)?.iter() {
+        let (edge, owners) = entry?;
+        edge_count += 1;
+        // Every triangulation contains the same subdivided convex-hull edges.
+        if owners.is_none() {
+            push_unique_edge(&mut protected, edge);
+        }
     }
+    if protected.len() == edge_count {
+        return Ok(());
+    }
+
+    let approximate_points = crate::cdt::exact_points_f64(points);
+    let mut topology = None;
+    let mut cavity = Vec::new();
+    let mut incident_triangles = Vec::new();
+    let mut left_chain = Vec::new();
+    let mut right_chain = Vec::new();
+    for from in 0..points.len() {
+        for to in from + 1..points.len() {
+            let edge = EdgeKey::new(from, to);
+            if protected.binary_search(&edge).is_ok() {
+                continue;
+            }
+            let constraint = Constraint::new(from, to);
+            if !triangulation_has_edge(triangles, edge) {
+                if !canonical_edge_is_admissible(
+                    evaluator,
+                    points,
+                    constraint,
+                    &protected,
+                    approximate_points.as_deref(),
+                )? {
+                    continue;
+                }
+                let topology = match &mut topology {
+                    Some(topology) => topology,
+                    None => topology.insert(TriangleTopology::new(triangles, points.len())?),
+                };
+                recover_constraint(
+                    ConstraintRecovery {
+                        evaluator,
+                        points,
+                        triangles,
+                        topology,
+                        constrained_edges: &protected,
+                        approximate_points: approximate_points.as_deref(),
+                        cavity: &mut cavity,
+                        incident_triangles: &mut incident_triangles,
+                        left_chain: &mut left_chain,
+                        right_chain: &mut right_chain,
+                    },
+                    constraint,
+                )?;
+            }
+            // An existing edge already has the required incidence proof.
+            // Keeping it avoids changing an already canonical triangle stream.
+            push_unique_edge(&mut protected, edge);
+            if protected.len() == edge_count {
+                return Ok(());
+            }
+        }
+    }
+    Err(Error::InvalidInput {
+        reason: "canonical edge selection did not triangulate the convex hull",
+    })
+}
+
+fn canonical_edge_is_admissible(
+    evaluator: &PredicateEvaluator,
+    points: &[Point2],
+    constraint: Constraint,
+    protected: &[EdgeKey],
+    approximate_points: Option<&[[f64; 2]]>,
+) -> Result<bool> {
+    for &edge in protected {
+        if edge_proper_crossing_sides(evaluator, points, edge, constraint, approximate_points)?
+            .is_some()
+        {
+            return Ok(false);
+        }
+    }
+    for (index, point) in points.iter().enumerate() {
+        if index == constraint.from || index == constraint.to {
+            continue;
+        }
+        if approximate_points.is_some_and(|points| {
+            !crate::cdt::approximate_point_within_constraint_bounds(points, constraint, index)
+        }) {
+            continue;
+        }
+        if predicates::point_on_segment(
+            evaluator,
+            &points[constraint.from],
+            &points[constraint.to],
+            point,
+        )? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 #[derive(Clone, Copy)]
@@ -1960,6 +2071,63 @@ mod tests {
 
     fn p(x: i64, y: i64) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn canonical_cell_triangulation_escapes_collinear_local_minima() {
+        let points = [p(120, 60), p(120, 30), p(90, 30), p(120, 40), p(102, 48)];
+        let constraints = [[0, 3], [0, 4], [1, 2], [1, 3], [2, 4]];
+        let protected = constraints.map(|[from, to]| EdgeKey::new(from, to));
+        let public_constraints = constraints.map(|[from, to]| Constraint::new(from, to));
+        let expected = vec![[0, 2, 3], [0, 2, 4], [1, 2, 3]];
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let context = TriangulationContext::new(policy);
+            let evaluator = PredicateEvaluator::new(&context);
+            for retained_topology in [false, true] {
+                for initial in [
+                    vec![[0, 4, 2], [0, 2, 3], [2, 1, 3]],
+                    vec![[2, 1, 4], [1, 3, 4], [0, 4, 3]],
+                ] {
+                    crate::cdt_validate::validate_constrained_convex_hull_topology(
+                        &evaluator,
+                        &points,
+                        &public_constraints,
+                        &initial,
+                    )
+                    .unwrap();
+                    let mut triangles = initial;
+                    let topology = retained_topology
+                        .then(|| TriangleTopology::new(&triangles, points.len()).unwrap());
+                    canonicalize_unconstrained_edges(
+                        &evaluator,
+                        &points,
+                        &mut triangles,
+                        &protected,
+                        topology,
+                    )
+                    .unwrap();
+                    crate::cdt_validate::validate_constrained_convex_hull_topology(
+                        &evaluator,
+                        &points,
+                        &public_constraints,
+                        &triangles,
+                    )
+                    .unwrap();
+                    for triangle in &mut triangles {
+                        triangle.sort_unstable();
+                    }
+                    triangles.sort_unstable();
+                    assert_eq!(triangles, expected);
+                    assert_eq!(
+                        evaluator.finish(()).certainty,
+                        crate::TriangulationCertainty::Certified
+                    );
+                }
+            }
+        }
     }
 
     fn exact_normal_positive() -> Real {

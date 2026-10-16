@@ -169,7 +169,7 @@ fn rational(numerator: i64, denominator: u64) -> Real {
 
 fn assert_triangle_indices(indices: &[usize], vertex_count: usize, expected_triangles: usize) {
     assert_eq!(indices.len(), expected_triangles * 3);
-    for triangle in indices.chunks_exact(3) {
+    for triangle in indices.as_chunks::<3>().0 {
         assert!(triangle.iter().all(|&index| index < vertex_count));
         assert_ne!(triangle[0], triangle[1]);
         assert_ne!(triangle[1], triangle[2]);
