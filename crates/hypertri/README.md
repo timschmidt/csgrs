@@ -125,10 +125,21 @@ admissible evidence under the selected policy.
 | --- | --- |
 | Return flat indices and certainty | `earcut` |
 | Include diagnostics and certainty | `earcut_report` |
+| Validate one simple ring and retain its winding | `triangulate_simple_ring` |
 
 The result contains three indices per triangle. Diagnostics measure candidate,
 containment, bounding-box, cure, and split-fallback work; they are not topology
 certificates.
+
+`triangulate_simple_ring` returns `SimpleRingTriangulation`: indices oriented
+with the input boundary and its nonzero signed-area winding. It accepts a
+repeated closing point and forward collinear boundary vertices. Crossings,
+self-touching, backtracking and other repeated coordinates return typed
+`InvalidInput`; unresolved validation remains `PredicateUndecided`. It shares
+the earcut implementation and aggregates validation and triangulation certainty.
+Its edge-pair validation takes quadratic work; total work, heap bytes and
+cancellation are not internally bounded. General `earcut` retains its existing
+normalization and hole behavior.
 
 Every predicate-bearing operation takes a [`TriangulationContext`] selecting
 either `PredicatePolicy::STRICT` or `PredicatePolicy::APPROXIMATE_512`.
