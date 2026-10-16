@@ -9,6 +9,80 @@ fn circle(x: Vector3, y: Vector3, start: Real, end: Real) -> Curve3 {
 }
 
 #[test]
+fn circular_clip_preimages_preserve_chart_scope_and_both_seam_ends() {
+    let plane = Surface::plane(p(0, 0, 0), Vector3::x(), Vector3::y()).unwrap();
+    let curve = circle(Vector3::x(), Vector3::y(), Real::zero(), Real::tau());
+    let retained = SurfaceIntersectionCurve::on_plane(curve.clone(), &plane).unwrap();
+    let carrier = retained.first_pcurve().materialize().unwrap();
+    let start = Real::zero();
+    let end = Real::one();
+    let middle = (Real::one() / Real::from(2)).unwrap();
+    let contact = |source: Curve3, parameter: Real| {
+        SurfaceIntersectionBoundaryContact::new(
+            source,
+            parameter,
+            hypercurve::Point2::new((-2).into(), 0.into()),
+            p(-2, 0, 0),
+        )
+    };
+    let hint = contact(curve.clone(), Real::pi());
+    let actual = retained_spatial_parameter(&carrier, &middle, &[hint], &curve).unwrap();
+    assert_eq!(exact_order(&actual, &Real::pi()).unwrap(), Ordering::Equal);
+    // These source curves pass through the same point at pi/2. Neither that
+    // shared point nor a shared circle support proves equal parameterization.
+    for source in [
+        circle(Vector3::y(), -Vector3::x(), Real::zero(), Real::tau()),
+        Curve3::circle_arc(
+            p(-1, 0, 0),
+            Vector3::y(),
+            -Vector3::x(),
+            Real::one(),
+            Real::zero(),
+            Real::tau(),
+        )
+        .unwrap(),
+    ] {
+        let parameter = (Real::pi() / Real::from(2)).unwrap();
+        assert!(
+            points_exactly_equal(&source.evaluate_real(&parameter).unwrap(), &p(-2, 0, 0)).unwrap()
+        );
+        let actual =
+            retained_spatial_parameter(&carrier, &middle, &[contact(source, parameter)], &curve)
+                .unwrap();
+        assert_eq!(exact_order(&actual, &Real::pi()).unwrap(), Ordering::Equal);
+    }
+    let shift = Real::from(100) * Real::tau();
+    let shifted = circle(
+        Vector3::x(),
+        Vector3::y(),
+        shift.clone(),
+        &shift + Real::tau(),
+    );
+    let actual = retained_spatial_parameter(
+        &carrier,
+        &middle,
+        &[contact(shifted, shift + Real::pi())],
+        &curve,
+    )
+    .unwrap();
+    assert_eq!(exact_order(&actual, &Real::pi()).unwrap(), Ordering::Equal);
+    // A seam contact has two exact lifts; the selected pcurve endpoint owns
+    // which parameter identity is used.
+    let seam = SurfaceIntersectionBoundaryContact::new(
+        curve.clone(),
+        Real::tau(),
+        hypercurve::Point2::new(2.into(), 0.into()),
+        p(2, 0, 0),
+    );
+    for (parameter, expected) in [(&start, Real::zero()), (&end, Real::tau())] {
+        let actual =
+            retained_spatial_parameter(&carrier, parameter, std::slice::from_ref(&seam), &curve)
+                .unwrap();
+        assert_eq!(exact_order(&actual, &expected).unwrap(), Ordering::Equal);
+    }
+}
+
+#[test]
 fn complete_circular_cone_cap_trim_replays_native_parameters() {
     let (source, solid) = crate::construction::cone_frustum(5.into(), 2.into(), 6.into()).unwrap();
     let (cutter, cutter_solid) =

@@ -5102,42 +5102,62 @@ fn ellipse_arc_parameters_at_angle(
     arc: &EllipseArc3,
     angle: Real,
 ) -> GeometryResult<Vec<Real>> {
-    let mut delta = if arc.direction < 0 {
+    let delta = if arc.direction < 0 {
         &arc.angle_at_start - angle
     } else {
         angle - &arc.angle_at_start
     };
-    if decided_order(compare_reals(
-        &delta,
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Less
-    {
-        delta += Real::tau();
+    angular_parameter_lifts(&(curve.domain().start() + delta), curve.domain())
+}
+
+/// All equivalent unit-speed conic parameters in a validated at-most-one-turn
+/// domain. The integer quotient selects the first possible lift directly, so
+/// enumeration does not grow with the chart's turn number. Scalar quotient and
+/// coefficient costs retain their existing resource contract.
+/// The two ends of a complete period retain distinct parameter identities.
+pub(crate) fn angular_parameter_lifts(
+    parameter: &Real,
+    domain: &ParameterDomain,
+) -> GeometryResult<Vec<Real>> {
+    let tau = Real::tau();
+    let first = if domain.contains(parameter)? {
+        parameter.clone()
+    } else {
+        let turns = ((domain.start() - parameter) / &tau)
+            .map_err(GeometryError::Numeric)?
+            .ceil_certified()
+            .map_err(GeometryError::Numeric)?;
+        parameter + Real::new(hyperreal::Rational::from_bigint(turns)) * &tau
+    };
+    if !domain.contains(&first)? {
+        return Ok(Vec::new());
     }
-    let sweep = curve.domain().end() - curve.domain().start();
-    if decided_order(compare_reals(
-        &delta,
-        &Real::zero(),
+    let at_start = decided_order(compare_reals(
+        &first,
+        domain.start(),
         crate::STRICT_PREDICATES,
-    ))? == Ordering::Equal
-    {
-        let mut parameters = vec![curve.domain().start().clone()];
-        if decided_order(compare_reals(
-            &sweep,
-            &Real::tau(),
+    ))? == Ordering::Equal;
+    let at_end = decided_order(compare_reals(
+        &first,
+        domain.end(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal;
+    if (at_start || at_end)
+        && decided_order(compare_reals(
+            &(domain.end() - domain.start()),
+            &tau,
             crate::STRICT_PREDICATES,
         ))? == Ordering::Equal
-        {
-            parameters.push(curve.domain().end().clone());
-        }
-        return Ok(parameters);
+    {
+        return Ok(vec![domain.start().clone(), domain.end().clone()]);
     }
-    match decided_order(compare_reals(&delta, &sweep, crate::STRICT_PREDICATES))? {
-        Ordering::Less => Ok(vec![curve.domain().start() + delta]),
-        Ordering::Equal => Ok(vec![curve.domain().end().clone()]),
-        Ordering::Greater => Ok(Vec::new()),
-    }
+    Ok(vec![if at_start {
+        domain.start().clone()
+    } else if at_end {
+        domain.end().clone()
+    } else {
+        first
+    }])
 }
 
 fn angle_domain() -> SurfaceParameterDomain {

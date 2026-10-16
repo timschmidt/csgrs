@@ -2077,11 +2077,23 @@ when inherited; merging it does not prove whole-stack acceptance.
 Preserve the admitted closed-edge, pcurve, analytic-transform, repeated-cut
 and [sector/band corpora](evidence/2026-10-16-sector-cuts/README.md), including
 their original failures, exact expectations and adverse cost observations.
-The original fifteen-case continuation diagnostic now has native results for
-every case; independently checked coverage is stated separately in the evidence.
-Extend the ordinary workflow matrix through non-seam and arbitrary-angle cuts,
-disconnected/nested combinations and reusable selected contacts, with explicit
-unsupported and resource outcomes. Cone/torus STEP exchange and a clean packaged
+The original fifteen-case continuation diagnostic continues to return native
+results for every case. The [oblique increment](evidence/2026-10-16-oblique-cuts/README.md)
+adds distant conic chart queries and a 45-degree torus half/band workflow with
+reconstruction, exact transforms and replay. Preserve its complete nine-fixture
+diagnostic, including oversized cylinder subtraction/clear blockers, cone
+continuation uncertainty and rationally rotated torus witness uncertainty;
+successful body counts are separate from independent semantic acceptance.
+Extend these full-size cases through reusable selected contacts and complete
+native arrangement/embedding proofs (WP03/WP06/WP07/WP08), then disconnected and
+nested combinations. Keep unsupported, undecided and resource outcomes explicit;
+do not replace original fixtures with easier seam-aligned cuts. For oversized
+prism subtraction, first test the exact Cartesian-product containment case in
+`z_prism_boolean`: the source's axial interval lies inside the cutter's interval.
+Keep the union precondition and partial-overlap cases explicit; retain the
+original 40-unit cutters and both rational/radical rotations in acceptance.
+
+Cone/torus STEP exchange and a clean packaged
 consumer must accompany their own supported-domain proofs. Do not credit
 source-path WASM or an optional floating-point oracle as shipped release coverage.
 

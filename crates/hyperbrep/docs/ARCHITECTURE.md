@@ -1203,3 +1203,50 @@ exactly.
 See [`../PERFORMANCE.md`](../PERFORMANCE.md) for benchmark cohorts and current
 baselines, and [`SUPPORT_MATRIX.md`](SUPPORT_MATRIX.md) for the exact operation
 matrix.
+
+## Periodic conic parameters in Boolean continuation
+
+The native conic parameter is an identity in an authored chart, not just an
+angle modulo one revolution. Inverse queries, plane contacts and Boolean edge
+atomization now share `geometry::angular_parameter_lifts`. For a validated
+unit-speed conic interval of length at most tau, a certified integer ceiling
+selects the first equivalent parameter in that interval. A full-period seam
+retains both endpoint identities; a shorter interval can return no preimage.
+Stored endpoints are reused on certified equality. Enumeration does not grow
+with the chart's turn count; scalar quotient and coefficient costs retain their
+existing resource limitations.
+
+This repairs a lost subdivision when a retained parameter pi/2 belongs to a
+coalesced target arc spanning [7pi/4, 11pi/4]: the target preimage is 5pi/2.
+Previously the parameter was discarded as outside the interval, leaving the
+torus band cap unpaired. Direct inverse queries also previously lost valid
+preimages in distant authored charts because normalization added only one turn.
+
+`retained_curve_face_intervals` receives the actual spatial curve and obtains
+native boundary contacts before recovering its clipped endpoints. For an
+interior angular pcurve parameter, `retained_spatial_parameter` reuses a native
+contact only after certifying equal full spatial parameterization and finding
+one lift in the target domain. The native trim contact supplies the proof that
+the point is on this fragment; matching endpoints or circle supports alone
+does not justify reuse. Original pcurve endpoints use the retained correspondence
+so the two ends of a periodic seam remain distinct. Other correspondences and
+ambiguous lifts continue through the existing exact mapping.
+
+The [acceptance corpus](../tests/support/oblique.rs) retains the original
+40-unit cutter rotated 45 degrees relative to a radius-5/minor-radius-2 torus,
+then clips the half by z >= 1. Independent volume, area and point expectations
+exercise intersection in both orders, subtraction, reconstruction in both
+orders, subdivision, exact similarities and archive replay. Chart controls use
+both conic families, reversed/restricted curves, turns through +/-10^12 and
+1e-12 seam gaps. Wrong phase and different-support contacts are negative controls.
+For minor radius 2 and major radius 5, the disk segment above z = 1 has area
+S = 4pi/3 - sqrt(3). Rotation through pi gives volume 5pi*S. The curved area is
+20pi^2/3, the axial annular cap has area 10pi*sqrt(3), and the two longitudinal
+caps contribute 2S. The complement uses the remaining disk area and adds the
+same shared axial cap. These expectations are derived independently of BREP
+measurement; the exact similarity cases apply the corresponding square/cube
+scaling laws and transformed point tables.
+The [evidence](evidence/2026-10-16-oblique-cuts/README.md) also retains all nine
+wider oblique fixtures and their failures. This extends parameter evidence
+reuse; it does not supply a general curved-shell embedding proof or general
+oblique Boolean closure.

@@ -799,3 +799,26 @@ This finite corpus does not establish arbitrary-angle or general Boolean
 closure. STEP attempts for these cone/torus outputs still return typed
 `UnsupportedSurface` with body/entity identity; same-context supported-cylinder
 recovery is tested. Broader release and resource gates remain open.
+
+## Oblique torus bands and distant conic charts
+
+The [periodic-parameter increment](evidence/2026-10-16-oblique-cuts/README.md)
+checks circle/ellipse inverse queries and plane contacts on seven charts through
++/-10^12 turns, including reversal, restriction, both complete-period seam
+identities and an exact 1e-12 seam gap. Boolean atomization lifts retained native
+preimages into the target angular interval; clipping reuses contacts only on a
+certified equal complete parameterization.
+
+A 45-degree relative half cut of the original torus continues into an axial
+band, subtraction and complementary reconstruction in both orders. Identity,
+reflected 1/1000 scale and reflected sqrt(2) scale exercise 18 nonempty outputs
+and three canonical empty results, with exact independent measures/classification,
+paired incidence, subdivision, transformed replay and full archive checks.
+Four torus STEP attempts retain typed body/entity diagnostics and supported
+same-context cylinder export recovers.
+
+The complete nine-fixture diagnostic still has oversized cylinder subtraction/
+clear blockers, cone continuation uncertainty and rationally rotated torus
+witness uncertainty. Its successful body counts are not independent set proofs.
+General oblique closure, cone/torus STEP, complete provenance/resource admission
+and release gates remain open.

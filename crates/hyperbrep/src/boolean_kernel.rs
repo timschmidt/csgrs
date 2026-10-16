@@ -901,7 +901,7 @@ fn retain_planar_surface_trace_boundary_contacts(
         model,
         face,
         trace.pcurve(operand),
-        trace.curve().domain(),
+        trace.curve(),
         None,
     )? {
         Classification::Decided(Some(intervals)) => intervals,
@@ -2283,6 +2283,29 @@ fn atomize_selected_edges(
                             .ok_or(GeometryError::UnrepresentableParameter)
                     })
                     .collect::<Result<Vec<_>, _>>()?
+            } else {
+                parameters
+            };
+            let parameters = if matches!(
+                curve.kind(),
+                crate::Curve3Kind::CircleArc | crate::Curve3Kind::EllipseArc
+            ) {
+                // A retained source preimage may use another turn of the same
+                // exact angular chart. Keep every equivalent target preimage
+                // before testing the edge interval; otherwise a coalesced arc
+                // crossing the seam can miss a required atomic subdivision.
+                parameters
+                    .into_iter()
+                    .map(|parameter| {
+                        crate::geometry::angular_parameter_lifts(
+                            &parameter,
+                            &edge.domain().represented_domain()?,
+                        )
+                    })
+                    .collect::<Result<Vec<_>, GeometryError>>()?
+                    .into_iter()
+                    .flatten()
+                    .collect()
             } else {
                 parameters
             };
@@ -3793,7 +3816,7 @@ fn push_contained_face_curve_fragments(
         contained_model,
         contained_face,
         candidate.first_pcurve(),
-        candidate.curve().domain(),
+        candidate.curve(),
         None,
     )? {
         Classification::Decided(Some(intervals)) => intervals,
@@ -4013,7 +4036,7 @@ fn trim_surface_curve_in_authored_charts(
         first_model,
         first_face,
         intersection.first_pcurve(),
-        intersection.curve().domain(),
+        intersection.curve(),
         Some(face_surface(second_model, second_face)),
     )? {
         Classification::Decided(intervals) => intervals,
@@ -4023,7 +4046,7 @@ fn trim_surface_curve_in_authored_charts(
         second_model,
         second_face,
         intersection.second_pcurve(),
-        intersection.curve().domain(),
+        intersection.curve(),
         Some(face_surface(first_model, first_face)),
     )? {
         Classification::Decided(intervals) => intervals,
@@ -4099,9 +4122,10 @@ fn retained_curve_face_intervals(
     model: &ArenaModel,
     face: FaceId,
     pcurve: &crate::SurfaceIntersectionPcurve,
-    spatial_domain: &crate::ParameterDomain,
+    spatial_curve: &Curve3,
     canonical_surface: Option<&Surface>,
 ) -> Result<Classification<Option<ExactParameterIntervals>>, GeometryError> {
+    let spatial_domain = spatial_curve.domain();
     if face_is_boundaryless(model, face) {
         return Ok(Classification::Decided(Some(vec![
             FaceRetainedParameterInterval {
@@ -4133,8 +4157,6 @@ fn retained_curve_face_intervals(
             // interval, including positive-length boundary overlaps. A trace
             // already on this face's boundary can still partition the other
             // operand; discarding it here would remove the closing cap.
-            let mut start = carrier.spatial_parameter_at(&pcurve_start)?;
-            let mut end = carrier.spatial_parameter_at(&pcurve_end)?;
             let Some(mut start_contacts) = model_boundary_contacts(
                 model,
                 face,
@@ -4153,6 +4175,14 @@ fn retained_curve_face_intervals(
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
+            let mut start = retained_spatial_parameter(
+                &carrier,
+                &pcurve_start,
+                &start_contacts,
+                spatial_curve,
+            )?;
+            let mut end =
+                retained_spatial_parameter(&carrier, &pcurve_end, &end_contacts, spatial_curve)?;
             if exact_order(&start, &end)? == Ordering::Greater {
                 std::mem::swap(&mut start, &mut end);
                 std::mem::swap(&mut start_contacts, &mut end_contacts);
@@ -4170,6 +4200,49 @@ fn retained_curve_face_intervals(
     Ok(Classification::Decided(Some(
         coalesce_face_parameter_intervals(intervals)?,
     )))
+}
+
+fn retained_spatial_parameter(
+    carrier: &crate::MaterializedSurfacePcurve,
+    parameter: &Real,
+    contacts: &[SurfaceIntersectionBoundaryContact],
+    spatial_curve: &Curve3,
+) -> Result<Real, GeometryError> {
+    if matches!(
+        carrier.correspondence(),
+        crate::SurfacePcurveCorrespondence::AngularSweep { .. }
+    ) && matches!(
+        spatial_curve.kind(),
+        crate::Curve3Kind::CircleArc | crate::Curve3Kind::EllipseArc
+    ) {
+        let domain = carrier.curve().parameter_domain();
+        let (start, end) = domain
+            .scalar_endpoints()
+            .ok_or(GeometryError::UnsupportedPcurveContour)?;
+        // Keep the two parameter identities at the seam. Interior contacts on
+        // the same complete native parameterization already carry their exact
+        // spatial preimage; recovering it from independently expanded curve
+        // coordinates discards that evidence and can needlessly fail.
+        if exact_order(parameter, start)? != Ordering::Equal
+            && exact_order(parameter, end)? != Ordering::Equal
+        {
+            for contact in contacts {
+                if contact
+                    .curve()
+                    .has_certified_same_parameterization(spatial_curve)
+                {
+                    let lifts = crate::geometry::angular_parameter_lifts(
+                        contact.parameter(),
+                        spatial_curve.domain(),
+                    )?;
+                    if let [lift] = lifts.as_slice() {
+                        return Ok(lift.clone());
+                    }
+                }
+            }
+        }
+    }
+    carrier.spatial_parameter_at(parameter)
 }
 
 fn model_boundary_contacts(
@@ -4898,7 +4971,7 @@ fn coplanar_boundary_split_traces(
                     target_model,
                     target_face,
                     retained.pcurve(target_operand),
-                    retained.curve().domain(),
+                    retained.curve(),
                     None,
                 )? {
                     Classification::Decided(Some(intervals)) => {

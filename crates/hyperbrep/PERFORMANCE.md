@@ -719,3 +719,19 @@ an unjustified simplicity flag would invalidate the repair. The other rows above
 `arc_large_cached_native_promotion_256_arcs` (1.137500), and `step/units_2000`
 (1.135400). Scalar case medians remain within 10% in this shared-host campaign;
 that observation is not a controlled-host performance gate.
+
+## Periodic conic continuation (2026-10-16)
+
+The [source-bound record](docs/evidence/2026-10-16-oblique-cuts/README.md) retains complete before/after outputs and the original failed fixtures.
+
+The full 84-process campaign compares 156 preserved cases in fourteen corpora; every receipt agrees. The largest case-median candidate/baseline ratio is 1.248962; 3 rows exceed 10%, and 37 rows change allocator observations. Every adverse row, raw sample, allocation request, process resource and executable size is retained. Three newly successful torus continuation workloads have separate absolute costs across three processes, with exact checks and full output materialization inside timing. No failed operation serves as a speedup baseline. Shared-host measurements do not close controlled-host/statistical gates or earlier timing exceptions.
+
+Rows above 10% in this campaign:
+
+- `coplanar/coplanar/circular_boundary_provenance`: 1.248962.
+- `pcurves/pcurves/partial_fresh`: 1.112107.
+- `pcurves/pcurves/partial_reused`: 1.121601.
+
+Retain this increment for its exact inverse-query repair and completed Boolean continuation. It makes no aggregate speedup claim. Earlier archive/spline/cached-arc observations remain visible; a favorable later sample does not discharge their gates. No operation-wide resource bound is established.
+
+The new periodic lifting helper repeats certified membership/end-point comparisons. Reusing those comparisons is the next BREP performance experiment. Its contribution to the partial-pcurve allocation/latency changes has not yet been isolated; preserve the full admitted corpus and exact receipts when evaluating it.

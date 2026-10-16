@@ -600,3 +600,9 @@ requirements shared by the Hyper crates.
 
 Selected geometry archive coverage and remaining replay limits are documented
 in [Archive version 9](docs/SELECTED_ARCHIVE.md).
+
+Conic inverse and curve/surface contact queries preserve distant authored
+angular charts and distinct full-period seam parameters. Retained Boolean
+contacts reuse proven native preimages across periodic charts. Oblique torus
+band workflows exercise subdivision, reflection, exact rescaling, replay and
+complementary reconstruction; broader arbitrary-angle completion remains open.

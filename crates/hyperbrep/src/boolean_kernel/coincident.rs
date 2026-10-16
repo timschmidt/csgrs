@@ -60,7 +60,7 @@ pub(super) fn common_parameter_boundary_traces(
                     target_model,
                     target_face,
                     trace.pcurve(target_operand),
-                    trace.curve().domain(),
+                    trace.curve(),
                     None,
                 )? {
                     Classification::Decided(Some(intervals)) => {

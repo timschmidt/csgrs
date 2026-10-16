@@ -3,7 +3,7 @@
 use super::{
     Curve3, CurveParameterLocation, EllipseArc3, Line3, NurbsCurve3, RationalBezier3,
     certified_atan2, control_coordinate, decided_order, decompose_nurbs_into_bezier_segments,
-    points_equal, surface_projection_varies,
+    ellipse_arc_parameters_at_angle, points_equal, surface_projection_varies,
 };
 use crate::{GeometryError, GeometryResult, Parameter, Point3, Real};
 use hypercurve::{Curve2, CurvePointLocations2, Point2 as CurvePoint2, RationalBezier2};
@@ -264,36 +264,9 @@ pub(super) fn locate_ellipse_arc_parameters(
         }
         Err(error) => return Err(error),
     };
-    let mut delta = if arc.direction < 0 {
-        &arc.angle_at_start - angle
-    } else {
-        angle - &arc.angle_at_start
-    };
-    if decided_order(compare_reals(
-        &delta,
-        &Real::zero(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Less
-    {
-        delta += Real::from(2) * Real::pi();
-    }
-    let parameter = curve.domain().start() + delta;
-    if !curve.domain().contains(&parameter)? {
+    let parameters = ellipse_arc_parameters_at_angle(curve, arc, angle)?;
+    if parameters.is_empty() {
         return Ok(CurveParameterLocation::None);
-    }
-    let mut parameters = vec![parameter];
-    if decided_order(compare_reals(
-        &parameters[0],
-        curve.domain().start(),
-        crate::STRICT_PREDICATES,
-    ))? == Ordering::Equal
-        && decided_order(compare_reals(
-            &(curve.domain().end() - curve.domain().start()),
-            &Real::tau(),
-            crate::STRICT_PREDICATES,
-        ))? == Ordering::Equal
-    {
-        parameters.push(curve.domain().end().clone());
     }
     Ok(CurveParameterLocation::Parameters(
         parameters.into_iter().map(Parameter::from_real).collect(),
