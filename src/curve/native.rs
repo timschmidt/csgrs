@@ -9,9 +9,10 @@ use crate::errors::ValidationError;
 use crate::solid;
 use crate::{GeometryContext, GeometryOutcome};
 use hypercurve::{
-    BooleanOp, Contour2, CubicBezier2, Curve2, CurvePath2, CurveRegion2, CurveString2,
-    FinitePolyline2, FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, Point2,
-    PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RegionPointLocation,
+    BooleanOp, Contour2, CubicBezier2, Curve2, CurveGeometry2, CurvePath2,
+    CurvePathRegionTrim2, CurveRegion2, CurveString2, FinitePolyline2,
+    FiniteProjectionOptions, FiniteRegionProfile2, LineSeg2, Point2, PolynomialSplineCurve2,
+    QuadraticBezier2, RationalBezier2, RegionPointLocation, Segment2,
 };
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::TriangleMesh;
@@ -1975,24 +1976,91 @@ pub fn bspline_path_with_context(
     Ok(decisions.finish(path))
 }
 
-/// Hilbert infill returned as native open curve strings.
+/// Returns the exact native line-string view of [`hilbert_paths`].
+///
+/// This geometry-only convenience omits trim contact/parameter records. Use
+/// [`hilbert_paths`] when those records or selected algebraic endpoints are
+/// needed. A fragment without represented `Real` endpoints returns a typed
+/// unsupported error; it is never replaced by a display chord or omitted.
 pub fn hilbert_strings(
     boundary: &CurveRegion2,
     order: usize,
     padding: Real,
-) -> Vec<CurveString2> {
+) -> Result<Vec<CurveString2>, ValidationError> {
     hilbert_strings_with_context(boundary, order, padding, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
-        .unwrap_or_default()
 }
 
-/// Clips Hilbert strings with the selected policy and aggregate certainty.
+/// [`hilbert_strings`] with the selected policy and aggregate local certainty.
 pub fn hilbert_strings_with_context(
     boundary: &CurveRegion2,
     order: usize,
     padding: Real,
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<Vec<CurveString2>>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let paths = decisions
+        .consume_geometry(hilbert_paths_with_context(boundary, order, padding, context)?);
+    let mut strings = solid::reserved(paths.len())?;
+    for path in paths {
+        let mut segments = solid::reserved(path.fragments().len())?;
+        for fragment in path.fragments() {
+            let curve = fragment.trim_fragment().curve();
+            let line = if let Some(CurveGeometry2::Line(line)) = curve.geometry() {
+                line.clone()
+            } else {
+                // Every source curve constructed by hilbert_paths is a line.
+                // A native range wrapper may retain represented endpoints;
+                // copy those exact values without reconstructing selected roots.
+                let start = curve.start();
+                let end = curve.end();
+                let (Some(start), Some(end)) = (start.coordinates(), end.coordinates()) else {
+                    return Err(ValidationError::UnsupportedPrimitive {
+                        reason: "Hilbert trim requires retained exact endpoints; use hilbert_paths",
+                    });
+                };
+                decisions.exact_curve(|| LineSeg2::try_new(start.clone(), end.clone()))?
+            };
+            segments.push(Segment2::Line(line));
+        }
+        strings.push(decisions.exact_curve(|| CurveString2::try_new(segments))?);
+    }
+    Ok(decisions.finish(strings))
+}
+
+/// Clips a finite Hilbert cell-center polyline to a region's closed filled set.
+///
+/// Native trim records retain maximal connected runs in traversal order,
+/// source segment indices and parameters, and boundary contact evidence.
+/// Positive-length boundary overlaps are included; isolated contacts add no
+/// piece. Holes and disconnected components use the native exact trim kernel.
+/// Undecided or unsupported operations return typed errors without partial output.
+///
+/// `order` must be in `1..=10`, and `padding` must be nonnegative. Padding
+/// insets the grid's bounding rectangle, not every boundary of the region.
+/// Valid empty regions return an empty collection. Nonempty padded bounds must
+/// have positive width and height. The order cap limits generated points to
+/// 1,048,576; it is not a total-work, coefficient-growth, heap-byte or
+/// cancellation budget for native trimming.
+pub fn hilbert_paths(
+    boundary: &CurveRegion2,
+    order: usize,
+    padding: Real,
+) -> Result<Vec<CurvePathRegionTrim2>, ValidationError> {
+    hilbert_paths_with_context(boundary, order, padding, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// [`hilbert_paths`] with policy-explicit trimming and local certainty.
+///
+/// The receipt covers consumed bounds, construction and trim decisions; it
+/// does not certify the intent of an earlier approximate region construction.
+pub fn hilbert_paths_with_context(
+    boundary: &CurveRegion2,
+    order: usize,
+    padding: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<Vec<CurvePathRegionTrim2>>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     if order == 0
         || order > 10
@@ -2049,52 +2117,29 @@ pub fn hilbert_strings_with_context(
     let half = (Real::one() / Real::from(2_u8)).expect("two is nonzero");
     let origin_x = bounds.mins.x.clone() + padding.clone();
     let origin_y = bounds.mins.y.clone() + padding;
-    let points = (0..size * size)
-        .filter_map(|distance| {
-            let (x, y) = point(size, distance);
-            // Hilbert visits cell centers, not lower-left cell corners. This
-            // keeps the path symmetrically inset from all four usable bounds.
-            let u = ((Real::from(x) + half.clone()) / &denominator).ok()?;
-            let v = ((Real::from(y) + half.clone()) / &denominator).ok()?;
-            Some((
-                origin_x.clone() + width.clone() * u,
-                origin_y.clone() + height.clone() * v,
-            ))
-        })
-        .collect::<Vec<_>>();
-    if points.len() != (size * size) as usize {
-        return Err(ValidationError::InvalidArguments);
-    }
-    let mut runs = Vec::<Vec<(Real, Real)>>::new();
-    let mut run = Vec::new();
-    for pair in points.windows(2) {
-        let midpoint_x = ((&pair[0].0 + &pair[1].0) / Real::from(2_u8)).ok();
-        let midpoint_y = ((&pair[0].1 + &pair[1].1) / Real::from(2_u8)).ok();
-        let (x, y) = midpoint_x
-            .zip(midpoint_y)
-            .ok_or(ValidationError::InvalidArguments)?;
-        let keep = decisions
-            .consume_geometry(contains_xy_with_context(boundary, x, y, context)?)
-            .ok_or(ValidationError::InvalidArguments)?;
-        if keep {
-            if run.is_empty() {
-                run.push(pair[0].clone());
-            }
-            run.push(pair[1].clone());
-        } else if run.len() >= 2 {
-            runs.push(std::mem::take(&mut run));
+    let count =
+        usize::try_from(size * size - 1).map_err(|_| ValidationError::CapacityOverflow)?;
+    let mut curves = solid::reserved(count)?;
+    let mut previous = None;
+    for distance in 0..size * size {
+        let (x, y) = point(size, distance);
+        // Cell centers keep the grid symmetrically inset from its usable bounds.
+        let u = ((Real::from(x) + half.clone()) / &denominator)?;
+        let v = ((Real::from(y) + half.clone()) / &denominator)?;
+        let current = Point2::new(
+            origin_x.clone() + width.clone() * u,
+            origin_y.clone() + height.clone() * v,
+        );
+        if let Some(start) = previous {
+            curves.push(Curve2::from(
+                decisions.exact_curve(|| LineSeg2::try_new(start, current.clone()))?,
+            ));
         }
+        previous = Some(current);
     }
-    if run.len() >= 2 {
-        runs.push(run);
-    }
-    let strings = runs
-        .into_iter()
-        .map(|run| {
-            CurveString2::from_real_point_iter(run.into_iter().map(|(x, y)| [x, y])).ok()
-        })
-        .collect::<Option<Vec<_>>>();
-    Ok(decisions.finish(strings.ok_or(ValidationError::InvalidArguments)?))
+    let path = decisions.exact_curve(|| CurvePath2::try_new(curves))?;
+    let paths = decisions.exact_curve(|| path.trim_inside_region(boundary))?;
+    Ok(decisions.finish(paths))
 }
 
 /// Triangulates a filled region as a flat native triangle surface.
@@ -4083,7 +4128,8 @@ mod tests {
             &square(Real::from(8_u8)).expect("valid planar fixture"),
             3,
             Real::one(),
-        );
+        )
+        .expect("the square has an exact Hilbert line string");
         let points = strings
             .iter()
             .flat_map(|string| string.segments())

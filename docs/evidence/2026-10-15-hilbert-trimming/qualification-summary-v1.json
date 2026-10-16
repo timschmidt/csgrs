@@ -1,0 +1,513 @@
+{
+  "passed": true,
+  "qualification": "docs/evidence/2026-10-15-hilbert-trimming/candidate-v2/result.json",
+  "caller_measurements": "docs/evidence/2026-10-15-hilbert-trimming/workloads-v1/result.json",
+  "test_totals": {
+    "hilbert-semantics": {
+      "passed": 8,
+      "ignored": 0
+    },
+    "root-curve": {
+      "passed": 253,
+      "ignored": 0
+    },
+    "root-all-features": {
+      "passed": 360,
+      "ignored": 1
+    },
+    "root-doctests": {
+      "passed": 1,
+      "ignored": 0
+    }
+  },
+  "changed_sources_from_E14": [
+    "benchmarks/rust/profile_primitives.rs",
+    "examples/readme_renders.rs",
+    "readme.md",
+    "src/curve/native.rs",
+    "tests/hilbert_trimming.rs"
+  ],
+  "extra_unchanged_inputs_sha256": {
+    "benchmarks/support/harness.rs": "9b10a16b524ca47c6ae79ee45e10ebe894f396e86ce47025610b8aa25e531b5b",
+    "asar.ttf": "40c2e988901bbfaec3fc7d0372421aede9ff94573a992d5c4cb1d1f3f2c1252f"
+  },
+  "extra_input_scope": "The shared harness, embedded font and baseline Rust probe are included in every source guard in this phase.",
+  "workload_rows": [
+    {
+      "engine": "csgrs",
+      "temperature": "cold",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "834573",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1",
+      "pair": 0,
+      "variant": "baseline",
+      "command": "cold-0-baseline",
+      "peak_process_rss_kib": 14968,
+      "nanoseconds_per_iteration": 834573.0
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "cold",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "2396925",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1",
+      "pair": 0,
+      "variant": "candidate",
+      "command": "cold-0-candidate",
+      "peak_process_rss_kib": 15184,
+      "nanoseconds_per_iteration": 2396925.0
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "cold",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "1",
+      "iterations": "1",
+      "elapsed_ns": "2443192",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1",
+      "pair": 1,
+      "variant": "candidate",
+      "command": "cold-1-candidate",
+      "peak_process_rss_kib": 14836,
+      "nanoseconds_per_iteration": 2443192.0
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "cold",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "1",
+      "iterations": "1",
+      "elapsed_ns": "908957",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1",
+      "pair": 1,
+      "variant": "baseline",
+      "command": "cold-1-baseline",
+      "peak_process_rss_kib": 14780,
+      "nanoseconds_per_iteration": 908957.0
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "cold",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "2",
+      "iterations": "1",
+      "elapsed_ns": "771217",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1",
+      "pair": 2,
+      "variant": "baseline",
+      "command": "cold-2-baseline",
+      "peak_process_rss_kib": 14772,
+      "nanoseconds_per_iteration": 771217.0
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "cold",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "2",
+      "iterations": "1",
+      "elapsed_ns": "2611601",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1",
+      "pair": 2,
+      "variant": "candidate",
+      "command": "cold-2-candidate",
+      "peak_process_rss_kib": 15108,
+      "nanoseconds_per_iteration": 2611601.0
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "cold",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "3",
+      "iterations": "1",
+      "elapsed_ns": "2354169",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1",
+      "pair": 3,
+      "variant": "candidate",
+      "command": "cold-3-candidate",
+      "peak_process_rss_kib": 15272,
+      "nanoseconds_per_iteration": 2354169.0
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "cold",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "3",
+      "iterations": "1",
+      "elapsed_ns": "919417",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1",
+      "pair": 3,
+      "variant": "baseline",
+      "command": "cold-3-baseline",
+      "peak_process_rss_kib": 14788,
+      "nanoseconds_per_iteration": 919417.0
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "cold",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "4",
+      "iterations": "1",
+      "elapsed_ns": "811574",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1",
+      "pair": 4,
+      "variant": "baseline",
+      "command": "cold-4-baseline",
+      "peak_process_rss_kib": 14860,
+      "nanoseconds_per_iteration": 811574.0
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "cold",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "4",
+      "iterations": "1",
+      "elapsed_ns": "2444013",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1",
+      "pair": 4,
+      "variant": "candidate",
+      "command": "cold-4-candidate",
+      "peak_process_rss_kib": 15108,
+      "nanoseconds_per_iteration": 2444013.0
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "0",
+      "iterations": "8",
+      "elapsed_ns": "2093897",
+      "work_units": "8",
+      "output_size": "8",
+      "checksum": "8",
+      "pair": 0,
+      "variant": "baseline",
+      "command": "warm-0-baseline",
+      "peak_process_rss_kib": 15156,
+      "nanoseconds_per_iteration": 261737.125
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "0",
+      "iterations": "8",
+      "elapsed_ns": "12193533",
+      "work_units": "8",
+      "output_size": "8",
+      "checksum": "8",
+      "pair": 0,
+      "variant": "candidate",
+      "command": "warm-0-candidate",
+      "peak_process_rss_kib": 15292,
+      "nanoseconds_per_iteration": 1524191.625
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "1",
+      "iterations": "8",
+      "elapsed_ns": "11311344",
+      "work_units": "8",
+      "output_size": "8",
+      "checksum": "8",
+      "pair": 1,
+      "variant": "candidate",
+      "command": "warm-1-candidate",
+      "peak_process_rss_kib": 15244,
+      "nanoseconds_per_iteration": 1413918.0
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "1",
+      "iterations": "8",
+      "elapsed_ns": "2108865",
+      "work_units": "8",
+      "output_size": "8",
+      "checksum": "8",
+      "pair": 1,
+      "variant": "baseline",
+      "command": "warm-1-baseline",
+      "peak_process_rss_kib": 14748,
+      "nanoseconds_per_iteration": 263608.125
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "2",
+      "iterations": "8",
+      "elapsed_ns": "2684006",
+      "work_units": "8",
+      "output_size": "8",
+      "checksum": "8",
+      "pair": 2,
+      "variant": "baseline",
+      "command": "warm-2-baseline",
+      "peak_process_rss_kib": 14824,
+      "nanoseconds_per_iteration": 335500.75
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "2",
+      "iterations": "8",
+      "elapsed_ns": "11283906",
+      "work_units": "8",
+      "output_size": "8",
+      "checksum": "8",
+      "pair": 2,
+      "variant": "candidate",
+      "command": "warm-2-candidate",
+      "peak_process_rss_kib": 15520,
+      "nanoseconds_per_iteration": 1410488.25
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "3",
+      "iterations": "8",
+      "elapsed_ns": "11926411",
+      "work_units": "8",
+      "output_size": "8",
+      "checksum": "8",
+      "pair": 3,
+      "variant": "candidate",
+      "command": "warm-3-candidate",
+      "peak_process_rss_kib": 15216,
+      "nanoseconds_per_iteration": 1490801.375
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "3",
+      "iterations": "8",
+      "elapsed_ns": "2216937",
+      "work_units": "8",
+      "output_size": "8",
+      "checksum": "8",
+      "pair": 3,
+      "variant": "baseline",
+      "command": "warm-3-baseline",
+      "peak_process_rss_kib": 14952,
+      "nanoseconds_per_iteration": 277117.125
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "4",
+      "iterations": "8",
+      "elapsed_ns": "2567044",
+      "work_units": "8",
+      "output_size": "8",
+      "checksum": "8",
+      "pair": 4,
+      "variant": "baseline",
+      "command": "warm-4-baseline",
+      "peak_process_rss_kib": 14748,
+      "nanoseconds_per_iteration": 320880.5
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "hilbert_curve",
+      "sample": "4",
+      "iterations": "8",
+      "elapsed_ns": "11307215",
+      "work_units": "8",
+      "output_size": "8",
+      "checksum": "8",
+      "pair": 4,
+      "variant": "candidate",
+      "command": "warm-4-candidate",
+      "peak_process_rss_kib": 14908,
+      "nanoseconds_per_iteration": 1413401.875
+    }
+  ],
+  "cost": {
+    "cold": {
+      "paired_candidate_over_baseline_ratios": [
+        2.8720375569303105,
+        2.6879071287200604,
+        3.386337438101079,
+        2.5605019267644606,
+        3.011448124262236
+      ],
+      "median_ratio": 2.8720375569303105,
+      "latency_ns_per_iteration": {
+        "baseline": [
+          834573.0,
+          908957.0,
+          771217.0,
+          919417.0,
+          811574.0
+        ],
+        "candidate": [
+          2396925.0,
+          2443192.0,
+          2611601.0,
+          2354169.0,
+          2444013.0
+        ]
+      },
+      "peak_process_rss_kib": {
+        "baseline": [
+          14968,
+          14780,
+          14772,
+          14788,
+          14860
+        ],
+        "candidate": [
+          15184,
+          14836,
+          15108,
+          15272,
+          15108
+        ]
+      }
+    },
+    "warm": {
+      "paired_candidate_over_baseline_ratios": [
+        5.823368102633511,
+        5.363711759643221,
+        4.2041284557486085,
+        5.379679711241231,
+        4.404760884503733
+      ],
+      "median_ratio": 5.363711759643221,
+      "latency_ns_per_iteration": {
+        "baseline": [
+          261737.125,
+          263608.125,
+          335500.75,
+          277117.125,
+          320880.5
+        ],
+        "candidate": [
+          1524191.625,
+          1413918.0,
+          1410488.25,
+          1490801.375,
+          1413401.875
+        ]
+      },
+      "peak_process_rss_kib": {
+        "baseline": [
+          15156,
+          14748,
+          14824,
+          14952,
+          14748
+        ],
+        "candidate": [
+          15292,
+          15244,
+          15520,
+          15216,
+          14908
+        ]
+      }
+    }
+  },
+  "workload_scope": "Fixed five alternating pairs per cold/warm condition; unchanged square-8/order-3/padding-1 caller, all-feature dispatch tracing. Exact interval/grid tests establish semantics independently of count/checksum agreement. Cost disclosure for a correctness migration, not an optimization claim. Peak RSS is whole-process, not allocation or kernel-only memory.",
+  "retained_phases": {
+    "candidate-v1": {
+      "passed": false,
+      "commands": 3,
+      "failures": [
+        [
+          "hilbert-semantics",
+          101
+        ]
+      ]
+    },
+    "candidate-v2": {
+      "passed": true,
+      "commands": 10,
+      "failures": []
+    },
+    "reproduction-v1": {
+      "passed": true,
+      "commands": 3,
+      "failures": []
+    },
+    "workloads-v1": {
+      "passed": true,
+      "commands": 21,
+      "failures": []
+    }
+  },
+  "runner_metadata_note": "The frozen v1 wrapper left the base runner historical missing_acceptance_test list in its protocol; those E12 observations are not Hilbert evidence. contract-v1.md and this summary define this admission. The v2 workload wrapper explicitly replaces that legacy metadata.",
+  "scope": "Exact Hilbert path clipping, retained native trim evidence, fallible geometry-only strings and affected workspace consumers. Render example built; its original Hilbert input executed by semantic tests, not a full rendering campaign. No new binding entry point, external package, release, full-CI or full-plan claim."
+}

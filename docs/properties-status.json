@@ -9620,6 +9620,150 @@
       "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
       "remaining": "Hilbert midpoint-only clipping and lossy wrapper; legacy sampled gear/airfoil and text construction failures; remaining adapters; wider resources/provenance, external package/release, formal/fuzz/coverage and full properties obligations. The 35 pending native files remain separately unadmitted.",
       "full_plan_complete": false
+    },
+    "hilbert_trim_work": {
+      "status": "exact native Hilbert clipping and visible failures; affected semantic and downstream checks passed",
+      "baseline_commit": "362e157c1",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P29",
+        "P35",
+        "P37",
+        "P39"
+      ],
+      "contract": "docs/evidence/2026-10-15-hilbert-trimming/contract-v1.md",
+      "baseline": "docs/evidence/2026-10-15-hilbert-trimming/baseline-findings-v1.md",
+      "progress": "docs/evidence/2026-10-15-hilbert-trimming/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-hilbert-trimming/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-hilbert-trimming/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-hilbert-trimming/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "benchmarks/rust/profile_primitives.rs": "2281703ac55dc66996aafa6065626ebbb5e48432e19e607a04bd47830c32150b",
+        "examples/readme_renders.rs": "037e64bfc20dd6a670fa32e2b2c250de740e7b70ff1244c66ec47c83d93abbe0",
+        "readme.md": "1d64afb9ef73f44e53e24c26f6d7f3bbb5f6116a4ba5493cdd8b8de95fe53a6f",
+        "src/curve/native.rs": "3195c2e2f8644d186afa3b6ac1862e08aab5e6cb2b4fd479f3f743e5b4987721",
+        "tests/hilbert_trimming.rs": "96b6dab4f8be5539796206160bf91e504a40fdb8953a90d0b1b5f22bef888485"
+      },
+      "test_totals": {
+        "hilbert-semantics": {
+          "passed": 8,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 253,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 360,
+          "ignored": 1
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        }
+      },
+      "migration": "hilbert_paths and its context form expose native CurvePathRegionTrim2 evidence. hilbert_strings now returns Result and provides an exact geometry-only view when endpoints have Real coordinates; selected endpoints remain supported by the authoritative path API. Actual contacts replace midpoint-only retention, so segmentation changes intentionally.",
+      "semantics": "Independent directed intervals cover holes, disconnected material, positive-length boundary overlaps and isolated tangency under strict/approximate/strict. Exact symbolic affine coordinates, original order-3/order-4 grid coverage, source-parameter/contact replay, downstream native path use, empty composition, invalid/undecided/unsupported outcomes and qualified approximate-empty receipts pass.",
+      "cost": {
+        "cold": {
+          "paired_candidate_over_baseline_ratios": [
+            2.8720375569303105,
+            2.6879071287200604,
+            3.386337438101079,
+            2.5605019267644606,
+            3.011448124262236
+          ],
+          "median_ratio": 2.8720375569303105,
+          "latency_ns_per_iteration": {
+            "baseline": [
+              834573.0,
+              908957.0,
+              771217.0,
+              919417.0,
+              811574.0
+            ],
+            "candidate": [
+              2396925.0,
+              2443192.0,
+              2611601.0,
+              2354169.0,
+              2444013.0
+            ]
+          },
+          "peak_process_rss_kib": {
+            "baseline": [
+              14968,
+              14780,
+              14772,
+              14788,
+              14860
+            ],
+            "candidate": [
+              15184,
+              14836,
+              15108,
+              15272,
+              15108
+            ]
+          }
+        },
+        "warm": {
+          "paired_candidate_over_baseline_ratios": [
+            5.823368102633511,
+            5.363711759643221,
+            4.2041284557486085,
+            5.379679711241231,
+            4.404760884503733
+          ],
+          "median_ratio": 5.363711759643221,
+          "latency_ns_per_iteration": {
+            "baseline": [
+              261737.125,
+              263608.125,
+              335500.75,
+              277117.125,
+              320880.5
+            ],
+            "candidate": [
+              1524191.625,
+              1413918.0,
+              1410488.25,
+              1490801.375,
+              1413401.875
+            ]
+          },
+          "peak_process_rss_kib": {
+            "baseline": [
+              15156,
+              14748,
+              14824,
+              14952,
+              14748
+            ],
+            "candidate": [
+              15292,
+              15244,
+              15520,
+              15216,
+              14908
+            ]
+          }
+        }
+      },
+      "resources": "All samples retained as a correctness-migration cost disclosure; no speedup claim. The order cap and checked reservations do not bound all native work, coefficients, heap bytes or cancellation. External 1800-second/8-GiB containment only. Private /dev/shm overlay uppers preserve the E14 lower build and all failed trials.",
+      "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
+      "remaining": "Legacy sampled gear/airfoil and text construction failures; remaining adapters; broader resources/provenance, external package/release, formal/fuzz/coverage and full properties obligations. The 35 pending native files remain separately unadmitted.",
+      "full_plan_complete": false
     }
   },
   "status_meanings": {

@@ -1,0 +1,333 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e": "2e3f6a9d9cadda5da27e03e9468e2f72a1d430f13da7ba3f60d8c06cd3161b94",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e": "b0ad3b666ce8feb4cd4cb2aba19e2ed88adac063f70be5133781b393f7501333"
+  },
+  "base_commit": "362e157c1dfb39701749ed2c154b0edff717fec0",
+  "runner_sha256": "f3ee76657ed7c1e8792452ded7c2380c1ad03a41abb312d80f9adf68b4dc6f05",
+  "phase": "workloads-v1",
+  "commands": [
+    [
+      "mkdir",
+      [
+        "mkdir",
+        "-p",
+        "/dev/shm/csgrs-hilbert-trimming/workloads-v1"
+      ]
+    ],
+    [
+      "cold-0-baseline",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_TEMPERATURE=cold",
+        "CSGRS_BENCH_SAMPLE_OFFSET=0",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "cold-0-candidate",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_TEMPERATURE=cold",
+        "CSGRS_BENCH_SAMPLE_OFFSET=0",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "cold-1-candidate",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_TEMPERATURE=cold",
+        "CSGRS_BENCH_SAMPLE_OFFSET=1",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "cold-1-baseline",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_TEMPERATURE=cold",
+        "CSGRS_BENCH_SAMPLE_OFFSET=1",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "cold-2-baseline",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_TEMPERATURE=cold",
+        "CSGRS_BENCH_SAMPLE_OFFSET=2",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "cold-2-candidate",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_TEMPERATURE=cold",
+        "CSGRS_BENCH_SAMPLE_OFFSET=2",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "cold-3-candidate",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_TEMPERATURE=cold",
+        "CSGRS_BENCH_SAMPLE_OFFSET=3",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "cold-3-baseline",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_TEMPERATURE=cold",
+        "CSGRS_BENCH_SAMPLE_OFFSET=3",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "cold-4-baseline",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_TEMPERATURE=cold",
+        "CSGRS_BENCH_SAMPLE_OFFSET=4",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "cold-4-candidate",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_TEMPERATURE=cold",
+        "CSGRS_BENCH_SAMPLE_OFFSET=4",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "warm-0-baseline",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=1",
+        "CSGRS_BENCH_ITERATIONS=8",
+        "CSGRS_BENCH_TEMPERATURE=warm",
+        "CSGRS_BENCH_SAMPLE_OFFSET=0",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "warm-0-candidate",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=1",
+        "CSGRS_BENCH_ITERATIONS=8",
+        "CSGRS_BENCH_TEMPERATURE=warm",
+        "CSGRS_BENCH_SAMPLE_OFFSET=0",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "warm-1-candidate",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=1",
+        "CSGRS_BENCH_ITERATIONS=8",
+        "CSGRS_BENCH_TEMPERATURE=warm",
+        "CSGRS_BENCH_SAMPLE_OFFSET=1",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "warm-1-baseline",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=1",
+        "CSGRS_BENCH_ITERATIONS=8",
+        "CSGRS_BENCH_TEMPERATURE=warm",
+        "CSGRS_BENCH_SAMPLE_OFFSET=1",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "warm-2-baseline",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=1",
+        "CSGRS_BENCH_ITERATIONS=8",
+        "CSGRS_BENCH_TEMPERATURE=warm",
+        "CSGRS_BENCH_SAMPLE_OFFSET=2",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "warm-2-candidate",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=1",
+        "CSGRS_BENCH_ITERATIONS=8",
+        "CSGRS_BENCH_TEMPERATURE=warm",
+        "CSGRS_BENCH_SAMPLE_OFFSET=2",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "warm-3-candidate",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=1",
+        "CSGRS_BENCH_ITERATIONS=8",
+        "CSGRS_BENCH_TEMPERATURE=warm",
+        "CSGRS_BENCH_SAMPLE_OFFSET=3",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "warm-3-baseline",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=1",
+        "CSGRS_BENCH_ITERATIONS=8",
+        "CSGRS_BENCH_TEMPERATURE=warm",
+        "CSGRS_BENCH_SAMPLE_OFFSET=3",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "warm-4-baseline",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=1",
+        "CSGRS_BENCH_ITERATIONS=8",
+        "CSGRS_BENCH_TEMPERATURE=warm",
+        "CSGRS_BENCH_SAMPLE_OFFSET=4",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "warm-4-candidate",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=1",
+        "CSGRS_BENCH_ITERATIONS=8",
+        "CSGRS_BENCH_TEMPERATURE=warm",
+        "CSGRS_BENCH_SAMPLE_OFFSET=4",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/hilbert_curve",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/dev/shm/csgrs-hilbert-trimming/workloads-v1",
+    "TMPDIR": "/dev/shm/csgrs-hilbert-trimming/workloads-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P1",
+    "P6",
+    "P8",
+    "P9",
+    "P15",
+    "P16",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P25",
+    "P29",
+    "P35",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "CSGRS Hilbert grid construction and native trimming composition"
+  ],
+  "domain": "Exact finite Hilbert polyline intersection with closed regions; retain native trim evidence and typed failures. See contract-v1.md.",
+  "consumers": [
+    "Public Rust Hilbert APIs",
+    "Readme render example",
+    "Profile benchmark caller"
+  ],
+  "missing_acceptance_test": [
+    "Baseline midpoint selection crosses a hole, drops valid disconnected intervals, and rejects boundary overlap.",
+    "Native trimming must retain exact source parameters and contacts; string projection must reject only unrepresented endpoints.",
+    "Preserve original full grids, typed invalid/undecided failures, and policy receipts."
+  ],
+  "semantic_oracle": "Independent exact directed segment intervals and contact/parameter replay. Counts and wrapper agreement are supplementary only.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "diagnostic_collection": "All commands are attempted on frozen source; Cargo test --no-fail-fast retains every failed test target. Every nonzero result remains a failure; source or artifact mutation still aborts immediately.",
+  "limitations": "External containment only; no internal full-query work/heap-byte/cancellation bound or end-to-end provenance claim. Inherited 27093 missing artifact paths remain recorded. No full-plan or release admission.",
+  "previous_goal_turn": "Progress: 362e157c1 preserves exact-path construction failures. Hilbert midpoint-only clipping and empty-on-error remain; reproduce before editing.",
+  "wrapper_sha256": "509909d852a5676cd0b60cf911a6819587eba7bcbfb426aa1af4fb9e5fdaba51",
+  "artifact_preparation": "Candidate setup commands create private copy-on-write targets; overlay.json records the immutable E14 lower build and private /dev/shm upper directories. Standalone phases create a fresh directory and pin their external executables. All retained lower files are audited again at closure."
+}

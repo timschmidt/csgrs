@@ -1,0 +1,23 @@
+	Command being timed: "cargo test --no-fail-fast --locked --release -p csgrs --all-features --lib --tests -- --test-threads=2"
+	User time (seconds): 207.16
+	System time (seconds): 13.62
+	Percent of CPU this job got: 139%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:37.71
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 665672
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 5163
+	Minor (reclaiming a frame) page faults: 3293878
+	Voluntary context switches: 208168
+	Involuntary context switches: 16659
+	Swaps: 0
+	File system inputs: 32
+	File system outputs: 2067599
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

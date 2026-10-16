@@ -1,0 +1,37 @@
+{
+  "commands": [
+    {
+      "name": "overlay-setup",
+      "exit_code": 0,
+      "seconds": 6.445354827214032,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "1fc1cdf8d32c61ea9b618e50aba55bc3e40d65c85022b9631c768f83e8b10cf5",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "fafd77294f9565f5d0b7cbb5ea8375d773000a36516b792c23e6e862fa20c5f0"
+    },
+    {
+      "name": "workspace-fmt",
+      "exit_code": 0,
+      "seconds": 12.36377049377188,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "dccd4a25d6c09672568e9904c92b3f2ec5aba1961a598b082ad70d5f98879f27"
+    },
+    {
+      "name": "hilbert-semantics",
+      "exit_code": 101,
+      "seconds": 10.309541400056332,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/hilbert-trimming/candidate-v1/release/deps/hilbert_trimming-08a70def6d5e0a39": "b5b6012e014b88ac5510a048cd620acaf11620f6300cb0b4d518e908ed9036c2"
+      },
+      "stdout_sha256": "0b3f1c521842f32f6ba253a5a0bcf7a829f01b5da4701580b60dc72cbd46ca36",
+      "stderr_sha256": "b4ea8c593065ba7758de626d62b7a6fe4cee570539c3bc373bdff9fd61d2d090",
+      "resources_sha256": "ad9473acf97d6feea649f42ca52ffdf85f575f4bbdb867cfffe193cf5b4189c8"
+    }
+  ],
+  "passed": false
+}

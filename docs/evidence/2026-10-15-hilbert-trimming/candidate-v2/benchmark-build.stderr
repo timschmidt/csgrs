@@ -1,0 +1,3 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `bench` profile [optimized] target(s) in 1.47s
+  Executable benchmarks/rust/profile_primitives.rs (target/properties/hilbert-trimming/candidate-v2/release/deps/profile_primitives-a860b8425128ee3e)

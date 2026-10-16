@@ -1,0 +1,36 @@
+hole GeometryContext { predicates: PredicatePolicy(0) }: certainty=Certified runs=1 segments=3
+  (1, 1) -> (1, 3)
+  (1, 3) -> (3, 3)
+  (3, 3) -> (3, 1)
+  defect: whole first leg crosses the open hole interval y=(5/4,7/4)
+hole GeometryContext { predicates: PredicatePolicy(1) }: certainty=Certified runs=1 segments=3
+  (1, 1) -> (1, 3)
+  (1, 3) -> (3, 3)
+  (3, 3) -> (3, 1)
+  defect: whole first leg crosses the open hole interval y=(5/4,7/4)
+hole GeometryContext { predicates: PredicatePolicy(0) }: certainty=Certified runs=1 segments=3
+  (1, 1) -> (1, 3)
+  (1, 3) -> (3, 3)
+  (3, 3) -> (3, 1)
+  defect: whole first leg crosses the open hole interval y=(5/4,7/4)
+disconnected GeometryContext { predicates: PredicatePolicy(0) }: certainty=Certified runs=2 segments=2
+  (1, 1) -> (1, 3)
+  (3, 3) -> (3, 1)
+  defect: missing top-row intervals x=[1,5/4] and [11/4,3]
+disconnected GeometryContext { predicates: PredicatePolicy(1) }: certainty=Certified runs=2 segments=2
+  (1, 1) -> (1, 3)
+  (3, 3) -> (3, 1)
+  defect: missing top-row intervals x=[1,5/4] and [11/4,3]
+disconnected GeometryContext { predicates: PredicatePolicy(0) }: certainty=Certified runs=2 segments=2
+  (1, 1) -> (1, 3)
+  (3, 3) -> (3, 1)
+  defect: missing top-row intervals x=[1,5/4] and [11/4,3]
+boundary overlap GeometryContext { predicates: PredicatePolicy(0) }: kind=InvalidInput error=invalid arguments
+boundary overlap GeometryContext { predicates: PredicatePolicy(1) }: kind=InvalidInput error=invalid arguments
+boundary overlap GeometryContext { predicates: PredicatePolicy(0) }: kind=InvalidInput error=invalid arguments
+invalid order=0: primary_empty=true checked_kind=InvalidInput
+invalid order=11: primary_empty=true checked_kind=InvalidInput
+invalid order=1: primary_empty=true checked_kind=InvalidInput
+invalid order=1: primary_empty=true checked_kind=InvalidInput
+original fixture order=3: certainty=Certified segments=63
+original fixture order=4: certainty=Certified segments=255

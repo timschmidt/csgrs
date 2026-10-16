@@ -1,0 +1,2 @@
+engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum
+csgrs,warm,profile_primitives,constructor,hilbert_curve,1,8,11311344,8,8,8

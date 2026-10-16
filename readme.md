@@ -211,7 +211,7 @@ Open constructors retain their native path/string topology:
 |---|---|
 | <img src="docs/bezier_path.png" width="144" alt="Exact open Bezier path with visible edge and authored vertices"/> | `curve::bezier_path(control: &[[Real; 2]], display_segments: usize) -> Result<CurvePath2, ValidationError>` |
 | <img src="docs/bspline_path.png" width="144" alt="Exact open B-spline path with visible edge and authored vertices"/> | `curve::bspline_path(control: &[[Real; 2]], degree: usize, display_segments_per_span: usize) -> Result<CurvePath2, ValidationError>` |
-| <img src="docs/hilbert_strings.png" width="144" alt="Open Hilbert curve strings with visible edges and vertices"/> | `curve::hilbert_strings(boundary: &CurveRegion2, order: usize, padding: Real) -> Vec<CurveString2>` |
+| <img src="docs/hilbert_strings.png" width="144" alt="Open Hilbert curve strings with visible edges and vertices"/> | `curve::hilbert_strings(boundary: &CurveRegion2, order: usize, padding: Real) -> Result<Vec<CurveString2>, ValidationError>` |
 | <img src="docs/hershey_strings.png" width="144" alt="Open Hershey text curve strings with visible edges and vertices"/> | `curve::hershey_strings(text: &str, font: &hypercurve::hershey::Font<'_>, size: Real) -> Vec<CurveString2>` |
 
 `bezier_path`, `bspline_path`, and `bezier_region` now return `Result`.
@@ -227,6 +227,25 @@ constructors select `STRICT`. Positive display counts preserve the exact
 control net and do not sample these constructors. Local predicate certainty
 does not establish end-to-end provenance, mesh topology, or fidelity of a later
 finite projection to the source curve.
+
+`curve::hilbert_paths(boundary, order, padding)` returns
+`Result<Vec<hypercurve::CurvePathRegionTrim2>, ValidationError>`. It intersects
+the exact finite Hilbert polyline with the closed filled region, retaining
+partial segments, holes, disconnected runs, boundary overlaps, source segment
+indices, parameter ranges, and boundary contacts. The retained curves can feed
+`CurvePath2::try_new` and further native operations without reconstructing
+selected endpoints. `hilbert_paths_with_context` also returns local certainty.
+
+`hilbert_strings` now returns `Result`; propagate `?` or handle the error.
+Its geometry-only view omits trim records and requires represented `Real`
+endpoints. Selected endpoints without that view return `Unsupported`;
+use `hilbert_paths` to retain them exactly. This replaces midpoint-only clipping
+and empty-on-error behavior. Output segmentation may change at actual contacts.
+Valid empty regions still yield empty collections after parameter validation.
+Orders are 1–10; nonnegative padding insets the grid bounds and does not promise
+clearance from holes or other boundaries. The point-count cap is not a total
+work, memory, or cancellation budget. Neither API certifies inherited intent
+of an earlier approximate boundary construction.
 
 The Hershey catalog is compiled into Hypercurve and exposed as
 `hypercurve::hershey::fonts`; no font files or runtime parser are required.
@@ -538,7 +557,7 @@ report. The existing convenience entry points retain their strict default.
 | Native Real metaball meshing | `solid::metaballs_with_context`, `metaballs_with_diagnostics_and_context` |
 | Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context`, `sdf_expr_with_diagnostics_and_context` |
 | Curve construction | `curve::polygon_with_context`, `rectangle_with_context`, `square_with_context`, `circle_with_context`, `ellipse_with_context`, `regular_ngon_with_context`, `rounded_rectangle_with_context`, `bezier_path_with_context`, `bezier_region_with_context`, `bspline_path_with_context` |
-| Curve transforms and queries | `curve::try_transformed_with_context`, `try_translated_with_context`, `try_rotated_with_context`, `try_scaled_with_context`, `try_bounding_box_with_context`, `contains_xy_with_context`, `hilbert_strings_with_context` |
+| Curve transforms and queries | `curve::try_transformed_with_context`, `try_translated_with_context`, `try_rotated_with_context`, `try_scaled_with_context`, `try_bounding_box_with_context`, `contains_xy_with_context`, `hilbert_paths_with_context`, `hilbert_strings_with_context` |
 | Mesh imports | `io::obj::from_obj_with_context`, `from_obj_attributed_with_context`, `io::dxf::from_dxf_with_context`, `io::vrml::from_vrml_with_context` |
 | Gerber conversion | `io::gerber::import_gerber_with_context`, `export_gerber_with_options_and_context` |
 

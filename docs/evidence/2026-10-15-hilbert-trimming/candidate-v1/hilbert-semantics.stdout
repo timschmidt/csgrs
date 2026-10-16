@@ -1,0 +1,22 @@
+
+running 8 tests
+test closed_set_boundary_overlap_and_isolated_tangency_preserve_runs ... FAILED
+test disconnected_material_retains_partial_crossing_segments ... FAILED
+test empty_results_invalid_parameters_and_subsequent_recovery_are_distinct ... FAILED
+test holes_split_segments_and_retain_source_parameters_and_contacts ... FAILED
+test original_benchmark_and_render_grids_remain_complete ... ok
+test symbolic_translation_and_nonuniform_scaling_preserve_exact_intervals ... FAILED
+test unresolved_padding_keeps_its_policy_and_certainty_even_on_empty_regions ... ok
+test algebraic_trim_endpoints_remain_authoritative_and_reusable ... ok
+
+failures:
+
+failures:
+    closed_set_boundary_overlap_and_isolated_tangency_preserve_runs
+    disconnected_material_retains_partial_crossing_segments
+    empty_results_invalid_parameters_and_subsequent_recovery_are_distinct
+    holes_split_segments_and_retain_source_parameters_and_contacts
+    symbolic_translation_and_nonuniform_scaling_preserve_exact_intervals
+
+test result: FAILED. 3 passed; 5 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+

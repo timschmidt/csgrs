@@ -1,0 +1,3 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 8.04s
+     Running tests/hilbert_trimming.rs (target/properties/hilbert-trimming/candidate-v2/release/deps/hilbert_trimming-08a70def6d5e0a39)
