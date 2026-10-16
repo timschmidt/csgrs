@@ -1,6 +1,9 @@
 //! Winding number vectors and boolean output classification.
 
+use crate::context::DecisionContext;
 use crate::error::{HypermeshError, HypermeshResult};
+use crate::predicate::classify_real;
+use crate::{Classification, Point3, Vector3};
 
 /// Winding number vector: one integer per input mesh.
 pub type WindingNumberVector = Vec<i32>;
@@ -144,6 +147,59 @@ pub(crate) fn apply_transition_in_place(
             .expect("transition arithmetic was validated above");
     }
     Ok(())
+}
+
+pub(crate) enum RayFacetRelation {
+    Miss,
+    Degenerate,
+    Ahead { frontward: bool },
+    Origin { frontward: bool },
+}
+
+pub(crate) fn ray_triangle_relation(
+    decisions: &DecisionContext,
+    [a, b, c]: [&Point3; 3],
+    origin: &Point3,
+    direction: &Vector3,
+) -> HypermeshResult<RayFacetRelation> {
+    let edge_ab = b - a;
+    let edge_ac = c - a;
+    let cross = direction.cross(&edge_ac);
+    let determinant = edge_ab.dot(&cross);
+    let determinant_sign = classify_real(decisions, &determinant)?;
+    if determinant_sign == Classification::On {
+        return Ok(RayFacetRelation::Degenerate);
+    }
+    let from_a = origin - a;
+    let u = from_a.dot(&cross);
+    let u_sign = classify_real(decisions, &u)?;
+    let cross_from_a = from_a.cross(&edge_ab);
+    let v = direction.dot(&cross_from_a);
+    let v_sign = classify_real(decisions, &v)?;
+    let remainder = determinant.clone() - u - v;
+    let remainder_sign = classify_real(decisions, &remainder)?;
+    if [u_sign, v_sign, remainder_sign]
+        .into_iter()
+        .any(|sign| sign != Classification::On && sign != determinant_sign)
+    {
+        return Ok(RayFacetRelation::Miss);
+    }
+    if [u_sign, v_sign, remainder_sign]
+        .into_iter()
+        .any(|sign| sign == Classification::On)
+    {
+        return Ok(RayFacetRelation::Degenerate);
+    }
+    let ray_parameter = edge_ac.dot(&cross_from_a);
+    let parameter_sign = classify_real(decisions, &ray_parameter)?;
+    let frontward = determinant_sign == Classification::Negative;
+    if parameter_sign == Classification::On {
+        Ok(RayFacetRelation::Origin { frontward })
+    } else if parameter_sign == determinant_sign {
+        Ok(RayFacetRelation::Ahead { frontward })
+    } else {
+        Ok(RayFacetRelation::Miss)
+    }
 }
 
 #[cfg(test)]

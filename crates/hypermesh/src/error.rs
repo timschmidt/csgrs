@@ -50,6 +50,20 @@ pub enum HypermeshError {
         /// Operation whose output size overflowed.
         operation: &'static str,
     },
+    /// A caller-selected collection limit was reached before completion.
+    ResourceLimitExceeded {
+        /// Counted resource; this does not imply a heap-byte or time bound.
+        resource: &'static str,
+        /// Caller-selected maximum count.
+        limit: usize,
+        /// Count required for the next construction step.
+        required: usize,
+    },
+    /// Cooperative cancellation was observed before complete output publication.
+    OperationCancelled {
+        /// Operation that observed the cancellation request.
+        operation: &'static str,
+    },
     /// Winding vectors with different dimensions were combined.
     WindingDimensionMismatch {
         /// Required component count.
@@ -165,6 +179,17 @@ impl fmt::Display for HypermeshError {
             Self::CapacityOverflow { operation } => {
                 write!(f, "{operation} output size exceeds addressable capacity")
             }
+            Self::ResourceLimitExceeded {
+                resource,
+                limit,
+                required,
+            } => {
+                write!(
+                    f,
+                    "{resource} requires {required} entries; limit is {limit}"
+                )
+            }
+            Self::OperationCancelled { operation } => write!(f, "{operation} was cancelled"),
             Self::WindingDimensionMismatch { expected, actual } => write!(
                 f,
                 "winding vector has {actual} components; expected {expected}"

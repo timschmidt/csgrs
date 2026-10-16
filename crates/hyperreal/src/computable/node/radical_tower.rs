@@ -229,8 +229,8 @@ impl RadicalTower {
                 // 1 / (a + b s) = (a - b s) / (a^2 - b^2 r).
                 let low_square = self.mul((*low).clone(), (*low).clone())?;
                 let high_square = self.mul((*high).clone(), (*high).clone())?;
-                let norm = low_square
-                    .add(self.mul(high_square, self.radicands[level].clone())?.neg());
+                let norm =
+                    low_square.add(self.mul(high_square, self.radicands[level].clone())?.neg());
                 // A zero norm means sqrt(r) is already a lower-field value
                 // dependent on this element; the conjugate cannot invert it.
                 if self.sign(&norm)? == RealSign::Zero {
@@ -300,6 +300,10 @@ fn radical_tower_sign_of(value: &Computable) -> Option<RealSign> {
             pending.push((current, true));
             match &current.internal.approximation {
                 Approximation::Constant(SharedConstant::Sqrt2 | SharedConstant::Sqrt3) => {}
+                // These retained trigonometric leaves have a selected exact
+                // radical value. Their pi-scaled arguments are recognized
+                // separately with the existing bounded scalar recognizer.
+                Approximation::PrescaledSin(_) => {}
                 Approximation::Negate(child)
                 | Approximation::Offset(child, _)
                 | Approximation::Inverse(child)
@@ -330,6 +334,24 @@ fn radical_tower_sign_of(value: &Computable) -> Option<RealSign> {
             }
             Approximation::Constant(SharedConstant::Sqrt3) => {
                 tower.square_root(RadicalElement::Rational(Rational::new(3)))?
+            }
+            Approximation::PrescaledSin(argument) => {
+                let angle = argument.pi_rational_multiple()?;
+                let root_sign = if angle == Rational::fraction(1, 8).expect("eight is nonzero") {
+                    -1
+                } else if angle == Rational::fraction(3, 8).expect("eight is nonzero") {
+                    1
+                } else {
+                    return None;
+                };
+                // Both angles lie in (0, pi/2), so the half-angle identity
+                // selects the principal root of (2 +/- sqrt(2))/4. This is a
+                // proof projection only: the retained SinPi value is intact.
+                let root = tower.square_root(RadicalElement::Rational(Rational::new(2)))?;
+                let radicand = RadicalElement::Rational(Rational::new(2))
+                    .add(root.scale(&Rational::from(root_sign)))
+                    .scale(&Rational::fraction(1, 4).expect("four is nonzero"));
+                tower.square_root(radicand)?
             }
             Approximation::Negate(value) => child(value)?.neg(),
             Approximation::Offset(value, shift) => {

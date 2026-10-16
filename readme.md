@@ -627,7 +627,7 @@ report. The existing convenience entry points retain their strict default.
 |---|---|
 | Mesh transforms and positioning | `solid::try_transform_with_context`, `try_rotate_with_context`, `try_scale_with_context`, `try_mirror_with_context`, `try_center_with_context`, `try_float_with_context` |
 | Mesh bounds and queries | `solid::try_bounding_box_with_context`, `contains_point_with_context`, `polyline_intersections_with_context`, `dihedral_angle_with_context` |
-| Hulls, copies, and polygon caps | `solid::convex_hull_with_context`, `minkowski_sum_with_context`, `distribute_linear_with_context`, `distribute_grid_with_context`, `distribute_arc_with_context`, `polyhedron_with_context`, `loft_with_context` |
+| Hulls, sums, copies, and polygon caps | `solid::convex_hull_with_context`, `minkowski_sum_with_context`, `minkowski_hull_with_context`, `distribute_linear_with_context`, `distribute_grid_with_context`, `distribute_arc_with_context`, `polyhedron_with_context`, `loft_with_context` |
 | Projection and slicing | `solid::flatten_with_context`, `slice_z_with_context` |
 | Native Real metaball meshing | `solid::metaballs_with_context`, `metaballs_with_diagnostics_and_context` |
 | Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context`, `sdf_expr_with_diagnostics_and_context` |
@@ -635,6 +635,24 @@ report. The existing convenience entry points retain their strict default.
 | Curve transforms and queries | `curve::try_transformed_with_context`, `try_translated_with_context`, `try_rotated_with_context`, `try_scaled_with_context`, `try_bounding_box_with_context`, `contains_xy_with_context`, `hilbert_paths_with_context`, `hilbert_strings_with_context` |
 | Mesh imports | `io::obj::from_obj_with_context`, `from_obj_attributed_with_context`, `io::dxf::from_dxf_with_context`, `io::vrml::from_vrml_with_context` |
 | Gerber conversion | `io::gerber::import_gerber_with_context`, `export_gerber_with_options_and_context` |
+
+`solid::minkowski_sum` now adds the represented bounded closed-PWN solids,
+including disconnected components and cavities. Unused positions do not change
+that set. Both operands are validated before empty identities. The former
+convexification of all stored vertex sums is explicitly available as
+`solid::minkowski_hull`; migrate point-cloud or intentional convex-hull callers
+to that name. Context variants preserve operation-local certainty and typed
+native failures. Bare meshes do not retain an earlier operation's provenance.
+
+`solid::minkowski_sum_with_options` accepts native `hypermesh::MinkowskiOptions`
+with cell, convex-pair and per-pair vertex-sum limits and cooperative cancellation.
+Defaults add no count limit; these controls are not total-work or heap-byte
+bounds. JavaScript exposes `minkowskiSumWithLimits` with the same three counts,
+and `minkowskiHull` / `minkowskiHullWithContext` for explicit convexification.
+Each JavaScript count must be a finite integer from 0 through 4,294,967,295;
+invalid counts raise `invalid_input`, including on empty operands.
+Minkowski failures are `GeometryError` objects with a machine-readable `code`.
+
 
 Curve composites such as `ring`, `crescent`, and `circle_with_keyway` pass their
 existing context through component construction, transforms, and Booleans.

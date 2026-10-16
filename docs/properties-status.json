@@ -10829,6 +10829,752 @@
     "historical_preservation": "27093 inherited missing paths retain their expected hashes through a hash-pinned parent audit. No new missing path or mismatch.",
     "remaining": "General represented-set Minkowski sum, inherited provenance, complete internal resource contracts, clean external release, full CI/formal/fuzz/coverage and 35 separately unadmitted native files remain open.",
     "full_plan_complete": false
+  },
+  "minkowski_contracts_work": {
+    "status": "represented-set Minkowski sums and supporting exact scalar proofs qualified locally",
+    "baseline_commit": "adef9a64a",
+    "contract": "docs/evidence/2026-10-16-minkowski-contracts/implementation-contract-v2.md",
+    "baseline": "docs/evidence/2026-10-16-minkowski-contracts/baseline-findings-v1.md",
+    "progress": "docs/evidence/2026-10-16-minkowski-contracts/progress-v1.md",
+    "validation": "docs/evidence/2026-10-16-minkowski-contracts/qualification-summary-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-minkowski-contracts/checkpoint-v1.json",
+    "artifact_audit": "docs/evidence/2026-10-16-minkowski-contracts/artifact-audit-v1.json.gz",
+    "artifact_audit_schema": 2,
+    "implementation_sha256": {
+      "crates/hypermesh/README.md": "4f7f43e3345ead317d919273696a25cdc2764a38708751b6fa0020375c707e6d",
+      "crates/hypermesh/src/convex_hull.rs": "22d2a6dfeaf2fe4abf113787c62b7108b1b365fbb24671caf68196d84665262f",
+      "crates/hypermesh/src/error.rs": "cde53c8d4c041fe812a74b78a3dd71af9a0334c6acf8da4c03f13ecafd39a63a",
+      "crates/hypermesh/src/lib.rs": "98e2e85a5ba628ac8c96f97f9fdc9de6a3bca9c2f044badd36c2bf2f6314a85b",
+      "crates/hypermesh/src/minkowski.rs": "357d0a6716c2bcc85b71dd5a6bb3457ac0ebda185af48878beaee680cf335bae",
+      "crates/hypermesh/src/surface_arrangement.rs": "da9f1382c9d7e80c0396eb27cf081b5069df016b5234c8aed1a0c17ed354af2b",
+      "crates/hypermesh/src/winding.rs": "b11400b9c34cd10ab34a1226f979df9ac9189acc36ce801480c83e1ab13b60e2",
+      "crates/hypermesh/tests/minkowski.rs": "d6b8554dfb798f74886057073ae570a9b59933144df67c4f73cc4ef5c346cd36",
+      "crates/hyperreal/src/computable/node.rs": "d874c92ede049e2bf7020ad525d22b273abb2c8512a86578cf38da18484b5d05",
+      "crates/hyperreal/src/computable/node/radical_eighth_angle_tests.rs": "0d3e1cc3ebbeb5abbb46821041e558ccc09a7ffdffad297c87a2d623d3769531",
+      "crates/hyperreal/src/computable/node/radical_tower.rs": "9ee990ae770b337cc4a17f6d9f71f65cc3050f6362663b3278c539d4500e9d9b",
+      "crates/hyperreal/src/computable/node/ring_polynomial.rs": "6a515ceb66f8b74eaf8c7e10b605b5c3ed198039471e2b2740901bd672b0414b",
+      "crates/hyperreal/src/computable/node/ring_quotient.rs": "499fdc7ec97a264f6c039c328da47592f81c61988df6b62e3fc5deac1cfd919f",
+      "crates/hyperreal/src/computable/node/ring_root_square_tests.rs": "a24e498d3cf54cff4f9a31808172fbd6a29090706b3169a47c332cfaf5dbf733",
+      "crates/hyperreal/src/real/arithmetic/facts.rs": "9aa85b1c0eb7f55ba314444480812b00464c1d66c15b2b19c8fe552d3dbead43",
+      "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "6ddebd3ffc19c22ccbb758537c07b3fbe44650adc81ba2734694af9ee756811c",
+      "readme.md": "5acd87fb624693e85567f75ff2eb6da7f2845a5084b27d960702263448a1291a",
+      "src/errors.rs": "808f11cb58207434de414f5958ff6a8bc2269601bff6885eef1afd038c4b45f7",
+      "src/solid.rs": "c8c396b4c2c76213f5e45974d264ae10317fe898e3456f77b352df75c87955e7",
+      "src/wasm/mesh_js.rs": "0d9bb76a15963b75004c8e9cc18709ce320532042922595071c4301b8510cdc8",
+      "tests/geometry_context.rs": "042db3c6809f34105a93238e6fa5c9d95ee3837f8f932442dccb32ed8ab476f1",
+      "tests/minkowski_contracts.rs": "7f37fd15a7f00060cd7f686c0b95489927734bbd1a48258658fdc8df41f2c500",
+      "tests/wasm/geometry_certainty.cjs": "20b92c13ae1bca3a708c2442d8fe38edb66ba3651429e117d6333fb833266507",
+      "tests/wasm/geometry_certainty.ts": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7"
+    },
+    "test_totals": {
+      "scalar-all-features": {
+        "passed": 1037,
+        "ignored": 0,
+        "phase": "qualification-v1"
+      },
+      "native-triangulation": {
+        "passed": 193,
+        "ignored": 0,
+        "phase": "qualification-v1"
+      },
+      "native-mesh": {
+        "passed": 247,
+        "ignored": 7,
+        "phase": "qualification-v1"
+      },
+      "root-minimal": {
+        "passed": 130,
+        "ignored": 0,
+        "phase": "qualification-v1"
+      },
+      "root-curve": {
+        "passed": 286,
+        "ignored": 0,
+        "phase": "qualification-v1"
+      },
+      "root-all-features": {
+        "passed": 403,
+        "ignored": 1,
+        "phase": "benchmark-repair-v1"
+      },
+      "ffi-tests": {
+        "passed": 10,
+        "ignored": 0,
+        "phase": "qualification-v1"
+      },
+      "root-doctests": {
+        "passed": 1,
+        "ignored": 0,
+        "phase": "benchmark-repair-v1"
+      },
+      "native-doctests": {
+        "passed": 0,
+        "ignored": 0,
+        "phase": "qualification-v1"
+      },
+      "triangulation-doctests": {
+        "passed": 4,
+        "ignored": 0,
+        "phase": "qualification-v1"
+      },
+      "scalar-default": {
+        "passed": 930,
+        "ignored": 0,
+        "phase": "qualification-v1"
+      },
+      "foundations": {
+        "passed": 1545,
+        "ignored": 0,
+        "phase": "qualification-v1"
+      },
+      "curve-native": {
+        "passed": 2496,
+        "ignored": 33,
+        "phase": "qualification-v1"
+      },
+      "scalar-docs": {
+        "passed": 28,
+        "ignored": 0,
+        "phase": "qualification-v1"
+      }
+    },
+    "cost": {
+      "rows": 104,
+      "timing_rows": 78,
+      "allocation_rows": 26,
+      "costs": [
+        {
+          "group": "cube",
+          "case": "cube-minkowski",
+          "temperature": "cold",
+          "samples_nanos": {
+            "baseline": [
+              298529,
+              365335,
+              318828
+            ],
+            "candidate": [
+              637506,
+              439579,
+              439260
+            ]
+          },
+          "median_nanos": {
+            "baseline": 318828,
+            "candidate": 439579
+          },
+          "completion": {
+            "baseline": [
+              "certified_local"
+            ],
+            "candidate": [
+              "certified_local"
+            ]
+          },
+          "candidate_over_baseline": 1.3787339882318994,
+          "same_completion": true
+        },
+        {
+          "group": "cube",
+          "case": "cube-minkowski",
+          "temperature": "warm",
+          "samples_nanos": {
+            "baseline": [
+              160109,
+              167308,
+              161929
+            ],
+            "candidate": [
+              193287,
+              186037,
+              193437
+            ]
+          },
+          "median_nanos": {
+            "baseline": 161929,
+            "candidate": 193287
+          },
+          "completion": {
+            "baseline": [
+              "certified_local"
+            ],
+            "candidate": [
+              "certified_local"
+            ]
+          },
+          "candidate_over_baseline": 1.1936527737465186,
+          "same_completion": true
+        },
+        {
+          "group": "expanded",
+          "case": "concave",
+          "temperature": "cold",
+          "samples_nanos": {
+            "candidate": [
+              5551349,
+              5893626,
+              5468625
+            ]
+          },
+          "median_nanos": {
+            "candidate": 5551349
+          },
+          "completion": {
+            "candidate": [
+              "certified_local"
+            ]
+          },
+          "same_completion": false
+        },
+        {
+          "group": "expanded",
+          "case": "concave",
+          "temperature": "warm",
+          "samples_nanos": {
+            "candidate": [
+              4714917,
+              4795491,
+              4760463
+            ]
+          },
+          "median_nanos": {
+            "candidate": 4760463
+          },
+          "completion": {
+            "candidate": [
+              "certified_local"
+            ]
+          },
+          "same_completion": false
+        },
+        {
+          "group": "expanded",
+          "case": "disconnected",
+          "temperature": "cold",
+          "samples_nanos": {
+            "candidate": [
+              1296141,
+              1371336,
+              1587241
+            ]
+          },
+          "median_nanos": {
+            "candidate": 1371336
+          },
+          "completion": {
+            "candidate": [
+              "certified_local"
+            ]
+          },
+          "same_completion": false
+        },
+        {
+          "group": "expanded",
+          "case": "disconnected",
+          "temperature": "warm",
+          "samples_nanos": {
+            "candidate": [
+              996671,
+              938775,
+              1006701
+            ]
+          },
+          "median_nanos": {
+            "candidate": 996671
+          },
+          "completion": {
+            "candidate": [
+              "certified_local"
+            ]
+          },
+          "same_completion": false
+        },
+        {
+          "group": "expanded",
+          "case": "hollow",
+          "temperature": "cold",
+          "samples_nanos": {
+            "candidate": [
+              301264082,
+              301866621,
+              299287197
+            ]
+          },
+          "median_nanos": {
+            "candidate": 301264082
+          },
+          "completion": {
+            "candidate": [
+              "certified_local"
+            ]
+          },
+          "same_completion": false
+        },
+        {
+          "group": "expanded",
+          "case": "hollow",
+          "temperature": "warm",
+          "samples_nanos": {
+            "candidate": [
+              296228218,
+              294066146,
+              298930053
+            ]
+          },
+          "median_nanos": {
+            "candidate": 296228218
+          },
+          "completion": {
+            "candidate": [
+              "certified_local"
+            ]
+          },
+          "same_completion": false
+        },
+        {
+          "group": "scalar",
+          "case": "eighth-angle",
+          "temperature": "cold",
+          "samples_nanos": {
+            "baseline": [
+              466288,
+              454109,
+              460208
+            ],
+            "candidate": [
+              521934,
+              546362,
+              617618
+            ]
+          },
+          "median_nanos": {
+            "baseline": 460208,
+            "candidate": 546362
+          },
+          "completion": {
+            "baseline": [
+              "undecided"
+            ],
+            "candidate": [
+              "certified"
+            ]
+          },
+          "same_completion": false
+        },
+        {
+          "group": "scalar",
+          "case": "eighth-angle",
+          "temperature": "warm",
+          "samples_nanos": {
+            "baseline": [
+              21589,
+              21659,
+              26709
+            ],
+            "candidate": [
+              2000,
+              2320,
+              2260
+            ]
+          },
+          "median_nanos": {
+            "baseline": 21659,
+            "candidate": 2260
+          },
+          "completion": {
+            "baseline": [
+              "undecided"
+            ],
+            "candidate": [
+              "certified"
+            ]
+          },
+          "same_completion": false
+        },
+        {
+          "group": "scalar",
+          "case": "rational",
+          "temperature": "cold",
+          "samples_nanos": {
+            "baseline": [
+              22268,
+              21488,
+              20499
+            ],
+            "candidate": [
+              21789,
+              18198,
+              17219
+            ]
+          },
+          "median_nanos": {
+            "baseline": 21488,
+            "candidate": 18198
+          },
+          "completion": {
+            "baseline": [
+              "certified"
+            ],
+            "candidate": [
+              "certified"
+            ]
+          },
+          "candidate_over_baseline": 0.8468912881608339,
+          "same_completion": true
+        },
+        {
+          "group": "scalar",
+          "case": "rational",
+          "temperature": "warm",
+          "samples_nanos": {
+            "baseline": [
+              1160,
+              990,
+              1089
+            ],
+            "candidate": [
+              1120,
+              1150,
+              1130
+            ]
+          },
+          "median_nanos": {
+            "baseline": 1089,
+            "candidate": 1130
+          },
+          "completion": {
+            "baseline": [
+              "certified"
+            ],
+            "candidate": [
+              "certified"
+            ]
+          },
+          "candidate_over_baseline": 1.0376492194674012,
+          "same_completion": true
+        },
+        {
+          "group": "scalar",
+          "case": "root-square",
+          "temperature": "cold",
+          "samples_nanos": {
+            "baseline": [
+              2114505,
+              2142133,
+              2097176
+            ],
+            "candidate": [
+              2229298,
+              2271774,
+              2360058
+            ]
+          },
+          "median_nanos": {
+            "baseline": 2114505,
+            "candidate": 2271774
+          },
+          "completion": {
+            "baseline": [
+              "undecided"
+            ],
+            "candidate": [
+              "certified"
+            ]
+          },
+          "same_completion": false
+        },
+        {
+          "group": "scalar",
+          "case": "root-square",
+          "temperature": "warm",
+          "samples_nanos": {
+            "baseline": [
+              120062,
+              117432,
+              117272
+            ],
+            "candidate": [
+              2690,
+              2740,
+              2620
+            ]
+          },
+          "median_nanos": {
+            "baseline": 117432,
+            "candidate": 2690
+          },
+          "completion": {
+            "baseline": [
+              "undecided"
+            ],
+            "candidate": [
+              "certified"
+            ]
+          },
+          "same_completion": false
+        },
+        {
+          "group": "scalar",
+          "case": "unresolved",
+          "temperature": "cold",
+          "samples_nanos": {
+            "baseline": [
+              359916,
+              266631,
+              365675
+            ],
+            "candidate": [
+              265282,
+              267702,
+              348066
+            ]
+          },
+          "median_nanos": {
+            "baseline": 359916,
+            "candidate": 267702
+          },
+          "completion": {
+            "baseline": [
+              "undecided"
+            ],
+            "candidate": [
+              "undecided"
+            ]
+          },
+          "candidate_over_baseline": 0.7437902177174675,
+          "same_completion": true
+        },
+        {
+          "group": "scalar",
+          "case": "unresolved",
+          "temperature": "warm",
+          "samples_nanos": {
+            "baseline": [
+              9199,
+              9080,
+              9429
+            ],
+            "candidate": [
+              7610,
+              8090,
+              8869
+            ]
+          },
+          "median_nanos": {
+            "baseline": 9199,
+            "candidate": 8090
+          },
+          "completion": {
+            "baseline": [
+              "undecided"
+            ],
+            "candidate": [
+              "undecided"
+            ]
+          },
+          "candidate_over_baseline": 0.8794434177628003,
+          "same_completion": true
+        }
+      ],
+      "library_bytes": {
+        "baseline": {
+          "csgrs": 9987376,
+          "hypermesh": 5038386,
+          "hyperreal": 11616304,
+          "hyperlimit": 4013954
+        },
+        "candidate": {
+          "csgrs": 9940156,
+          "hypermesh": 5183942,
+          "hyperreal": 11625310,
+          "hyperlimit": 4013784
+        }
+      },
+      "source_sizes": {
+        "crates/hypermesh/README.md": {
+          "baseline_exists": true,
+          "baseline_bytes": 11161,
+          "candidate_bytes": 12944,
+          "baseline_lines": 268,
+          "candidate_lines": 297
+        },
+        "crates/hypermesh/src/convex_hull.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 26276,
+          "candidate_bytes": 26231,
+          "baseline_lines": 785,
+          "candidate_lines": 783
+        },
+        "crates/hypermesh/src/error.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 9302,
+          "candidate_bytes": 10266,
+          "baseline_lines": 227,
+          "candidate_lines": 252
+        },
+        "crates/hypermesh/src/lib.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 3470,
+          "candidate_bytes": 3587,
+          "baseline_lines": 89,
+          "candidate_lines": 91
+        },
+        "crates/hypermesh/src/minkowski.rs": {
+          "baseline_exists": false,
+          "baseline_bytes": 0,
+          "candidate_bytes": 20473,
+          "baseline_lines": 0,
+          "candidate_lines": 531
+        },
+        "crates/hypermesh/src/surface_arrangement.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 262673,
+          "candidate_bytes": 260977,
+          "baseline_lines": 6934,
+          "candidate_lines": 6883
+        },
+        "crates/hypermesh/src/winding.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 5765,
+          "candidate_bytes": 7667,
+          "baseline_lines": 190,
+          "candidate_lines": 246
+        },
+        "crates/hypermesh/tests/minkowski.rs": {
+          "baseline_exists": false,
+          "baseline_bytes": 0,
+          "candidate_bytes": 3451,
+          "baseline_lines": 0,
+          "candidate_lines": 93
+        },
+        "crates/hyperreal/src/computable/node.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 1952,
+          "candidate_bytes": 2044,
+          "baseline_lines": 53,
+          "candidate_lines": 55
+        },
+        "crates/hyperreal/src/computable/node/radical_eighth_angle_tests.rs": {
+          "baseline_exists": false,
+          "baseline_bytes": 0,
+          "candidate_bytes": 4094,
+          "baseline_lines": 0,
+          "candidate_lines": 114
+        },
+        "crates/hyperreal/src/computable/node/radical_tower.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 15685,
+          "candidate_bytes": 16992,
+          "baseline_lines": 391,
+          "candidate_lines": 413
+        },
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 9199,
+          "candidate_bytes": 10828,
+          "baseline_lines": 246,
+          "candidate_lines": 291
+        },
+        "crates/hyperreal/src/computable/node/ring_quotient.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 10770,
+          "candidate_bytes": 11285,
+          "baseline_lines": 264,
+          "candidate_lines": 277
+        },
+        "crates/hyperreal/src/computable/node/ring_root_square_tests.rs": {
+          "baseline_exists": false,
+          "baseline_bytes": 0,
+          "candidate_bytes": 4468,
+          "baseline_lines": 0,
+          "candidate_lines": 118
+        },
+        "crates/hyperreal/src/real/arithmetic/facts.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 72959,
+          "candidate_bytes": 73340,
+          "baseline_lines": 1710,
+          "candidate_lines": 1715
+        },
+        "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 17548,
+          "candidate_bytes": 17696,
+          "baseline_lines": 420,
+          "candidate_lines": 422
+        },
+        "readme.md": {
+          "baseline_exists": true,
+          "baseline_bytes": 64175,
+          "candidate_bytes": 65369,
+          "baseline_lines": 922,
+          "candidate_lines": 940
+        },
+        "src/errors.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 15649,
+          "candidate_bytes": 15794,
+          "baseline_lines": 328,
+          "candidate_lines": 330
+        },
+        "src/solid.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 105572,
+          "candidate_bytes": 106883,
+          "baseline_lines": 2981,
+          "candidate_lines": 3012
+        },
+        "src/wasm/mesh_js.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 20653,
+          "candidate_bytes": 22897,
+          "baseline_lines": 658,
+          "candidate_lines": 716
+        },
+        "tests/geometry_context.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 24033,
+          "candidate_bytes": 24575,
+          "baseline_lines": 650,
+          "candidate_lines": 663
+        },
+        "tests/minkowski_contracts.rs": {
+          "baseline_exists": false,
+          "baseline_bytes": 0,
+          "candidate_bytes": 14192,
+          "baseline_lines": 0,
+          "candidate_lines": 354
+        },
+        "tests/wasm/geometry_certainty.cjs": {
+          "baseline_exists": true,
+          "baseline_bytes": 18401,
+          "candidate_bytes": 21338,
+          "baseline_lines": 353,
+          "candidate_lines": 401
+        },
+        "tests/wasm/geometry_certainty.ts": {
+          "baseline_exists": true,
+          "baseline_bytes": 2705,
+          "candidate_bytes": 3098,
+          "baseline_lines": 78,
+          "candidate_lines": 86
+        }
+      },
+      "scope": "Correct represented-set sums and bounded exact proof extensions; no optimization claim. Fixed pre-edit cube workload, retrospective scalar controls/proofs, and new-only completed general sums.",
+      "limits": "Bare meshes lack inherited provenance. Count limits/cooperative checks do not bound primitive/scalar total work or heap bytes. External 1800-second/8-GiB containment, except the WASM/Node command has wall containment only; cost children have 120-second walls. Requested Rust allocator bytes exclude native allocator internals. Native 26-input batch union, full CI, clean external release, and the full properties plan remain open."
+    },
+    "semantics": [
+      "Native supporting-plane cells and signed winding preserve disconnected gaps, concavity, cavities, reversal, multiplicity and cancellation; native binary unions accumulate convex pair sums.",
+      "Both operands validate before empty success; unused positions do not change the solid. Full dimension has a separate proof and hull failure never becomes empty.",
+      "Independent exact volumes, witness membership, affine/repeated composition, topology, tiny gaps, typed failures, limits and recovery pass under the declared policies.",
+      "Bounded constant-square and selected eighth-angle scalar proofs certify the original unchanged 16x8 sphere example; symbolic serialization remains intact.",
+      "Explicit minkowski_hull preserves the old point-set intent; Rust and JavaScript expose the migration, local certainty and typed errors.",
+      "The original cube-sum ordered output remains byte-identical. Scalar proof expansion changes completion and carries no same-completion speedup claim."
+    ],
+    "diagnostics": "docs/evidence/2026-10-16-minkowski-contracts/diagnostic-findings-v1.md",
+    "historical_preservation": "27093 inherited missing paths retain their expected hashes through the pinned parent audit; no new missing artifact or mismatch.",
+    "remaining": "Native 26-input batch union, inherited provenance, complete internal resource contracts, clean external release, full CI/formal/fuzz/coverage and 35 separately unadmitted native files remain open.",
+    "full_plan_complete": false
   }
 },
   "status_meanings": {

@@ -294,6 +294,8 @@ impl ValidationError {
                     ValidationErrorKind::Undecided
                 },
                 hypermesh::HypermeshError::CapacityOverflow { .. }
+                | hypermesh::HypermeshError::ResourceLimitExceeded { .. }
+                | hypermesh::HypermeshError::OperationCancelled { .. }
                 | hypermesh::HypermeshError::WindingOverflow => {
                     ValidationErrorKind::ResourceExhausted
                 },

@@ -42,6 +42,7 @@ pub mod geometry;
 pub mod gpu;
 pub mod intersection;
 pub mod mesh;
+pub mod minkowski;
 pub mod output;
 mod point_interner;
 pub mod polygon;
@@ -72,6 +73,7 @@ pub use intersection::{
 pub use mesh::{
     PolygonSoup, Triangle, TriangleMesh, TriangleMeshRef, certify_convex_mesh, polygon_soup,
 };
+pub use minkowski::{MinkowskiOptions, minkowski_hull, minkowski_sum, minkowski_sum_with_options};
 pub use output::{
     BooleanMeshBatch, BooleanMeshClosureEvidence, BooleanMeshResult, TriangleSource,
     boolean_mesh_closure_evidence, boolean_mesh_is_closed,

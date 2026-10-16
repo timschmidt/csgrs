@@ -71,7 +71,7 @@ pub fn convex_hull_with_retained_facts(
     Ok(decisions.finish(hull))
 }
 
-fn convex_hull_impl(
+pub(crate) fn convex_hull_impl(
     decisions: &DecisionContext,
     input: &[Point3],
     coplanar_groups: &[Vec<usize>],
@@ -472,17 +472,15 @@ fn orientation(
     face: [usize; 3],
     point: &Point3,
 ) -> HypermeshResult<Classification> {
+    let outcome = hyperlimit::orient3(
+        &points[face[0]],
+        &points[face[1]],
+        &points[face[2]],
+        point,
+        decisions.policy(),
+    );
     decisions
-        .decide(
-            hyperlimit::orient3(
-                &points[face[0]],
-                &points[face[1]],
-                &points[face[2]],
-                point,
-                decisions.policy(),
-            ),
-            "convex hull orientation",
-        )
+        .decide(outcome, "convex hull orientation")
         .map(|sign| match sign {
             hyperlimit::Sign::Negative => Classification::Negative,
             hyperlimit::Sign::Zero => Classification::On,

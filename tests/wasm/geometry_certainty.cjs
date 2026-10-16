@@ -275,6 +275,54 @@ try {
     new Float64Array([0, 0, 0, 1, 0, 0, 0, 1, 0]),
     new Uint32Array([0, 1, 2]),
   ));
+  const separated = keep(cube.union(keep(cube.translate(4, 0, 0))));
+  const gap = keep(new Point3Js(3, 1, 1));
+  for (const approximate of [false, true]) {
+    const result = separated.minkowskiSumWithContext(cube, approximate);
+    assert.equal(result.certainty, Certainty.Certified);
+    const sum = keep(result.intoMesh());
+    assert.equal(sum.containsPoint(gap), false);
+    assert.equal(keep(sum.union(emptyMesh)).containsPoint(gap), false);
+    const hullResult = separated.minkowskiHullWithContext(cube, approximate);
+    assert.equal(hullResult.certainty, Certainty.Certified);
+    assert.equal(keep(hullResult.intoMesh()).containsPoint(gap), true);
+    for (const invoke of [
+      () => openMesh.minkowskiSumWithContext(emptyMesh, approximate),
+      () => emptyMesh.minkowskiSumWithContext(openMesh, approximate),
+      () => origin.minkowskiSumWithContext(cube, approximate),
+    ]) {
+      assert.throws(invoke, error => error instanceof Error && error.name === "GeometryError"
+        && error.code === "invalid_input" && error.message.length > 0);
+    }
+    assert.throws(() => separated.minkowskiSumWithLimits(cube, approximate, 1, 100, 1000),
+      error => error instanceof Error && error.code === "resource_exhausted");
+    for (const source of [cube, emptyMesh]) {
+      for (const invalidCount of [-1, -0.5, 1.5, NaN, Infinity, -Infinity, 4294967296, Number.MAX_VALUE]) {
+        for (let slot = 0; slot < 3; slot++) {
+          const limits = [1, 1, 64];
+          limits[slot] = invalidCount;
+          assert.throws(() => source.minkowskiSumWithLimits(source, approximate, ...limits),
+            error => error instanceof Error && error.name === "GeometryError"
+              && error.code === "invalid_input" && error.message.length > 0);
+        }
+      }
+    }
+    const zeroBudgetEmpty = emptyMesh.minkowskiSumWithLimits(emptyMesh, approximate, 0, 0, 0);
+    assert.equal(zeroBudgetEmpty.certainty, Certainty.Certified);
+    assert.equal(keep(zeroBudgetEmpty.intoMesh()).isEmpty(), true);
+    assert.throws(() => cube.minkowskiSumWithLimits(cube, approximate, 0, 1, 64),
+      error => error instanceof Error && error.code === "resource_exhausted");
+    const upperBudget = cube.minkowskiSumWithLimits(cube, approximate, 4294967295, 4294967295, 4294967295);
+    assert.equal(upperBudget.certainty, Certainty.Certified);
+    assert.equal(keep(upperBudget.intoMesh()).containsPoint(inside), true);
+    const recovered = separated.minkowskiSumWithLimits(cube, approximate, 64, 100, 1000);
+    assert.equal(recovered.certainty, Certainty.Certified);
+    assert.equal(keep(recovered.intoMesh()).containsPoint(gap), false);
+  }
+  assert.equal(keep(separated.minkowskiSum(cube)).containsPoint(gap), false);
+  assert.equal(keep(separated.minkowskiHull(cube)).containsPoint(gap), true);
+  assert.throws(() => openMesh.minkowskiSum(emptyMesh), error => error instanceof Error
+    && error.code === "invalid_input");
   for (const approximate of [false, true]) {
     for (const operation of [
       "unionWithContext", "intersectionWithContext",
