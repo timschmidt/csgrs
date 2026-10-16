@@ -1,0 +1,3 @@
+indices=[12, 17, 20, 21, 24] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[12, 17, 20, 21, 24] merged=true error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+FINAL indices=[12, 17, 20, 21, 24] batch_failure=true merged_failure=true

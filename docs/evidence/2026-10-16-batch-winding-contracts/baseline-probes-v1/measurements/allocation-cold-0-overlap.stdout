@@ -1,0 +1,2 @@
+case,temperature,nanos,positions,triangles,serialized_bytes,certainty,allocations,reallocations,allocated_bytes,reallocated_bytes,live_delta_bytes,peak_additional_requested_bytes,retained_delta_bytes
+overlap,cold,1007831,24,44,6953,certified_local,2333,192,289063,59776,16760,66702,11136

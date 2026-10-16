@@ -1,0 +1,32 @@
+{
+  "overlap": {
+    "sha256": "fd3ff4d9283c0b56992e5fd4fe56f7a44573e4145172f6180f2152ab9dff3bd4",
+    "bytes": 6953,
+    "rows": 24,
+    "original_baseline_rows": 8
+  },
+  "coincident": {
+    "sha256": "a92c225f2f02830e78df6c24e8efe5130eb86648c4b4e849529fc2d976cb1b6b",
+    "bytes": 2290,
+    "rows": 24,
+    "original_baseline_rows": 8
+  },
+  "touching": {
+    "sha256": "40e48979e65772916baec8d9241c2beb8b6142ae1402c86938f7f118cff77014",
+    "bytes": 3448,
+    "rows": 24,
+    "original_baseline_rows": 8
+  },
+  "full26": {
+    "sha256": "adea68dcc620e6b487d40dfdd2989c9e4ea86b0ff446350094479ce5661088ae",
+    "bytes": 72267,
+    "rows": 8,
+    "original_baseline_rows": 0
+  },
+  "merged26": {
+    "sha256": "adea68dcc620e6b487d40dfdd2989c9e4ea86b0ff446350094479ce5661088ae",
+    "bytes": 72267,
+    "rows": 8,
+    "original_baseline_rows": 0
+  }
+}

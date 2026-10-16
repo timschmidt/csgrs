@@ -1,0 +1,1 @@
+{"indices":[12, 17, 20, 21, 24],"boxes":[{"index":12,"min":[1, 1, 0],"max":[4, 4, 2]},{"index":17,"min":[3, 0, 0],"max":[5, 2, 2]},{"index":20,"min":[3, 1, 0],"max":[5, 4, 2]},{"index":21,"min":[3, 1, 1],"max":[5, 4, 4]},{"index":24,"min":[3, 3, 1],"max":[5, 5, 4]}],"batch_failure":true,"merged_failure":true}

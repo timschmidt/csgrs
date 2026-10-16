@@ -1,0 +1,23 @@
+	Command being timed: "cargo test --locked --release --no-fail-fast -p hypermesh --all-features --lib --tests -- --test-threads=2"
+	User time (seconds): 70.15
+	System time (seconds): 1.73
+	Percent of CPU this job got: 59%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:59.86
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 488952
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 984
+	Minor (reclaiming a frame) page faults: 546232
+	Voluntary context switches: 17977
+	Involuntary context switches: 2290
+	Swaps: 0
+	File system inputs: 13784
+	File system outputs: 112501
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

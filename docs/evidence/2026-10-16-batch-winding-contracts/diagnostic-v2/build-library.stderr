@@ -1,0 +1,5 @@
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `bench` profile [optimized] target(s) in 1m 38s
+  Executable benchmarks/rust/feature_pipeline.rs (target/properties/batch-winding-contracts/diagnostic-v2/release/deps/feature_pipeline-63ce02836b73af16)

@@ -1,0 +1,51 @@
+indices=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 468, denominator: 1 })
+indices=[12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 420, denominator: 1 })
+indices=[12, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 396, denominator: 1 })
+indices=[12, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[16, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 348, denominator: 1 })
+indices=[12, 17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[17, 18, 19, 20, 21, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 300, denominator: 1 })
+indices=[12, 18, 19, 20, 21, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 360, denominator: 1 })
+indices=[12, 17, 19, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[17, 19, 20, 21, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 288, denominator: 1 })
+indices=[12, 19, 20, 21, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 336, denominator: 1 })
+indices=[12, 17, 20, 21, 22, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[17, 20, 21, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 264, denominator: 1 })
+indices=[12, 20, 21, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 312, denominator: 1 })
+indices=[12, 17, 21, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 330, denominator: 1 })
+indices=[12, 17, 20, 22, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 312, denominator: 1 })
+indices=[12, 17, 20, 21, 23, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[17, 20, 21, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 240, denominator: 1 })
+indices=[12, 20, 21, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 288, denominator: 1 })
+indices=[12, 17, 21, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 306, denominator: 1 })
+indices=[12, 17, 20, 23, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 264, denominator: 1 })
+indices=[12, 17, 20, 21, 24, 25] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[17, 20, 21, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 228, denominator: 1 })
+indices=[12, 20, 21, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 276, denominator: 1 })
+indices=[12, 17, 21, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 288, denominator: 1 })
+indices=[12, 17, 20, 24, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 252, denominator: 1 })
+indices=[12, 17, 20, 21, 25] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 276, denominator: 1 })
+indices=[12, 17, 20, 21, 24] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[17, 20, 21, 24] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 204, denominator: 1 })
+indices=[12, 20, 21, 24] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 252, denominator: 1 })
+indices=[12, 17, 21, 24] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 264, denominator: 1 })
+indices=[12, 17, 20, 24] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 228, denominator: 1 })
+indices=[12, 17, 20, 21] merged=false Certified six_volume=Some(Rational { sign: Plus, numerator: 240, denominator: 1 })
+indices=[12, 17, 20, 21, 24] merged=false error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+indices=[12, 17, 20, 21, 24] merged=true error=SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+FINAL indices=[12, 17, 20, 21, 24] batch_failure=true merged_failure=true

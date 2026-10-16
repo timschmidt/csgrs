@@ -1,0 +1,360 @@
+{
+  "results": [
+    {
+      "operand_count": 5,
+      "sheet_count": 400,
+      "merge_count": 1321,
+      "first_conflict": {
+        "merge_index": 640,
+        "left": 690,
+        "right": 492,
+        "edge": [
+          23,
+          54
+        ],
+        "existing_difference": [
+          0,
+          0,
+          0,
+          1,
+          0
+        ],
+        "cycle_path": [
+          {
+            "from": 690,
+            "to": 691,
+            "delta": [
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "witness": {
+              "sheet": 345,
+              "face": 45,
+              "delta": [
+                0,
+                0,
+                0,
+                1,
+                0
+              ]
+            }
+          },
+          {
+            "from": 691,
+            "to": 495,
+            "delta": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "witness": {
+              "merge": 639,
+              "left": 495,
+              "right": 691,
+              "edge": [
+                23,
+                54
+              ]
+            }
+          },
+          {
+            "from": 495,
+            "to": 492,
+            "delta": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "witness": {
+              "merge": 613,
+              "left": 492,
+              "right": 495,
+              "edge": [
+                23,
+                32
+              ]
+            }
+          }
+        ],
+        "left_sheet": {
+          "face": 45,
+          "delta": [
+            0,
+            0,
+            0,
+            1,
+            0
+          ]
+        },
+        "right_sheet": {
+          "face": 33,
+          "delta": [
+            0,
+            0,
+            -1,
+            0,
+            0
+          ]
+        },
+        "edge_points": [
+          [
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  3
+                ],
+                "denominator": [
+                  1
+                ]
+              },
+              "class": "One",
+              "computable": null
+            },
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  4
+                ],
+                "denominator": [
+                  1
+                ]
+              },
+              "class": "One",
+              "computable": null
+            },
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  2
+                ],
+                "denominator": [
+                  1
+                ]
+              },
+              "class": "One",
+              "computable": null
+            }
+          ],
+          [
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  3
+                ],
+                "denominator": [
+                  1
+                ]
+              },
+              "class": "One",
+              "computable": null
+            },
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  4
+                ],
+                "denominator": [
+                  1
+                ]
+              },
+              "class": "One",
+              "computable": null
+            },
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  4
+                ],
+                "denominator": [
+                  3
+                ]
+              },
+              "class": "One",
+              "computable": null
+            }
+          ]
+        ]
+      },
+      "native_failures": [
+        "TRACE inconsistent sheet=292 current=3 neighbor=31 component=3 delta=1 expected=1 retained=0"
+      ]
+    },
+    {
+      "operand_count": 1,
+      "sheet_count": 400,
+      "merge_count": 1321,
+      "first_conflict": {
+        "merge_index": 640,
+        "left": 690,
+        "right": 492,
+        "edge": [
+          23,
+          54
+        ],
+        "existing_difference": [
+          1
+        ],
+        "cycle_path": [
+          {
+            "from": 690,
+            "to": 691,
+            "delta": [
+              1
+            ],
+            "witness": {
+              "sheet": 345,
+              "face": 45,
+              "delta": [
+                1
+              ]
+            }
+          },
+          {
+            "from": 691,
+            "to": 495,
+            "delta": [
+              0
+            ],
+            "witness": {
+              "merge": 639,
+              "left": 495,
+              "right": 691,
+              "edge": [
+                23,
+                54
+              ]
+            }
+          },
+          {
+            "from": 495,
+            "to": 492,
+            "delta": [
+              0
+            ],
+            "witness": {
+              "merge": 613,
+              "left": 492,
+              "right": 495,
+              "edge": [
+                23,
+                32
+              ]
+            }
+          }
+        ],
+        "left_sheet": {
+          "face": 45,
+          "delta": [
+            1
+          ]
+        },
+        "right_sheet": {
+          "face": 33,
+          "delta": [
+            -1
+          ]
+        },
+        "edge_points": [
+          [
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  3
+                ],
+                "denominator": [
+                  1
+                ]
+              },
+              "class": "One",
+              "computable": null
+            },
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  4
+                ],
+                "denominator": [
+                  1
+                ]
+              },
+              "class": "One",
+              "computable": null
+            },
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  2
+                ],
+                "denominator": [
+                  1
+                ]
+              },
+              "class": "One",
+              "computable": null
+            }
+          ],
+          [
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  3
+                ],
+                "denominator": [
+                  1
+                ]
+              },
+              "class": "One",
+              "computable": null
+            },
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  4
+                ],
+                "denominator": [
+                  1
+                ]
+              },
+              "class": "One",
+              "computable": null
+            },
+            {
+              "rational": {
+                "sign": 1,
+                "numerator": [
+                  4
+                ],
+                "denominator": [
+                  3
+                ]
+              },
+              "class": "One",
+              "computable": null
+            }
+          ]
+        ]
+      },
+      "native_failures": [
+        "TRACE inconsistent sheet=292 current=3 neighbor=31 component=0 delta=1 expected=3 retained=2"
+      ]
+    }
+  ]
+}

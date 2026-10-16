@@ -1,0 +1,7 @@
+{
+  "before_bytes": 41065899,
+  "entries_sha256": "28e6b14a188661b53c0c7957165d643eb69b1d7e35503b087226e4e0d27fdb0a",
+  "after_bytes": 1503943,
+  "shared_index": ".git/sharedindex.feff26382dd5d96067659be5f8c02c4b0a29fb0e",
+  "purpose": "Keep future index writes small on the nearly full repository filesystem; staged entries and object IDs are unchanged."
+}

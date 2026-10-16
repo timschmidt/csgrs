@@ -11575,6 +11575,477 @@
     "historical_preservation": "27093 inherited missing paths retain their expected hashes through the pinned parent audit; no new missing artifact or mismatch.",
     "remaining": "Native 26-input batch union, inherited provenance, complete internal resource contracts, clean external release, full CI/formal/fuzz/coverage and 35 separately unadmitted native files remain open.",
     "full_plan_complete": false
+  },
+  "batch_winding_contracts_work": {
+    "status": "canonical common-cell triangulation and original strict batch unions qualified locally",
+    "baseline_commit": "f74a7848805398eb62dddb167b3997662e6f90d5",
+    "contract": "docs/evidence/2026-10-16-batch-winding-contracts/triangulation-contract-v1.md",
+    "baseline": "docs/evidence/2026-10-16-batch-winding-contracts/baseline-findings-v1.md",
+    "diagnostics": "docs/evidence/2026-10-16-batch-winding-contracts/diagnostic-findings-v1.md",
+    "reasoning": "docs/evidence/2026-10-16-batch-winding-contracts/canonicalization-reasoning-v1.md",
+    "progress": "docs/evidence/2026-10-16-batch-winding-contracts/progress-v1.md",
+    "validation": "docs/evidence/2026-10-16-batch-winding-contracts/qualification-summary-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-batch-winding-contracts/checkpoint-v1.json",
+    "artifact_audit": "docs/evidence/2026-10-16-batch-winding-contracts/artifact-audit-v1.json.gz",
+    "artifact_audit_schema": 2,
+    "implementation_sha256": {
+      "crates/hypermesh/tests/boolean.rs": "29bf52f9d942ebdc1b66609581f12c8cd66cece4bbb7424b5afcbc065d70c8ba",
+      "crates/hypertri/README.md": "cb4d561e450c1075c257297a9533915b5dbb73aa09b094493675f47e41d68261",
+      "crates/hypertri/fuzz/fuzz_targets/hyperreal_representations.rs": "8a3eb84e97e4b3e0aba96d87192e432f88c2b8c395a4aa914b6fc6a3374a20f8",
+      "crates/hypertri/fuzz/fuzz_targets/topology_invariants.rs": "eaf9cdf017ee6bcea0fa6e02cb186a4072754110fe24707a98fa854d55a79561",
+      "crates/hypertri/src/cdt.rs": "be82beff0a959bf12116a07005c34da5cc4e461fd2eed45e5d01d9dc7fbd5023",
+      "crates/hypertri/src/cdt_insert.rs": "247e32748ef7f3fa2bd0a16dd82cafae847c3bc54f030634033ba995bc0e089d",
+      "crates/hypertri/tests/corefinement_cells.rs": "abcbf405c6c4a9ddb4809e1952dae77a2d45c467156a17b045d089f5f345effd",
+      "tests/batch_common_cells.rs": "dc4e0a8043ee69fac1438722d0e4c25f620eff19f828581bd9b165c377081f37"
+    },
+    "test_totals": {
+      "candidate-focused-v1/local-minimum": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 1
+      },
+      "candidate-focused-v1/public-cell": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 1
+      },
+      "candidate-focused-v2/batch-boxes": {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 1
+      },
+      "candidate-focused-v2/public-cells": {
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 1
+      },
+      "candidate-focused-v2/modeling": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 1
+      },
+      "qualification-v1/native-triangulation": {
+        "passed": 196,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 10
+      },
+      "qualification-v1/native-minimal": {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 10
+      },
+      "qualification-v1/native-mesh": {
+        "passed": 249,
+        "failed": 0,
+        "ignored": 7,
+        "test_binaries_or_doctest_groups": 9
+      },
+      "qualification-v1/root-minimal": {
+        "passed": 131,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 34
+      },
+      "qualification-v1/root-curve": {
+        "passed": 287,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 38
+      },
+      "qualification-v1/root-all-features": {
+        "passed": 404,
+        "failed": 0,
+        "ignored": 1,
+        "test_binaries_or_doctest_groups": 42
+      },
+      "qualification-v1/ffi-tests": {
+        "passed": 10,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 1
+      },
+      "qualification-v1/root-doctests": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 1
+      },
+      "qualification-v1/native-doctests": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 1
+      },
+      "qualification-v1/triangulation-doctests": {
+        "passed": 4,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 1
+      },
+      "qualification-v1/triangulation-cdt-only": {
+        "passed": 88,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 10
+      },
+      "triangulation-baseline-v1/local-minimum": {
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 1
+      },
+      "triangulation-baseline-v1/public-cell": {
+        "passed": 0,
+        "failed": 1,
+        "ignored": 0,
+        "test_binaries_or_doctest_groups": 1
+      }
+    },
+    "cost": {
+      "rows": 88,
+      "timing_rows": 66,
+      "allocation_rows": 22,
+      "original_baseline_rows": 24,
+      "costs": [
+        {
+          "case": "overlap",
+          "temperature": "cold",
+          "samples_nanos": {
+            "original-baseline": [
+              931166,
+              1020940,
+              921197
+            ],
+            "replay-baseline": [
+              948275,
+              1125843,
+              1079406
+            ],
+            "replay-candidate": [
+              1184668,
+              1044618,
+              979533
+            ]
+          },
+          "median_nanos": {
+            "original-baseline": 931166,
+            "replay-baseline": 1079406,
+            "replay-candidate": 1044618
+          },
+          "completion": "certified_local",
+          "same_completion_baseline_available": true,
+          "candidate_over_original_baseline": 1.1218386410156729,
+          "candidate_over_replayed_baseline": 0.9677711630285546
+        },
+        {
+          "case": "overlap",
+          "temperature": "warm",
+          "samples_nanos": {
+            "original-baseline": [
+              709322,
+              694982,
+              692322
+            ],
+            "replay-baseline": [
+              913267,
+              960765,
+              693943
+            ],
+            "replay-candidate": [
+              726090,
+              718771,
+              720941
+            ]
+          },
+          "median_nanos": {
+            "original-baseline": 694982,
+            "replay-baseline": 913267,
+            "replay-candidate": 720941
+          },
+          "completion": "certified_local",
+          "same_completion_baseline_available": true,
+          "candidate_over_original_baseline": 1.0373520465278236,
+          "candidate_over_replayed_baseline": 0.7894087928283843
+        },
+        {
+          "case": "coincident",
+          "temperature": "cold",
+          "samples_nanos": {
+            "original-baseline": [
+              1013060,
+              969183,
+              1101244
+            ],
+            "replay-baseline": [
+              1009811,
+              995852,
+              904118
+            ],
+            "replay-candidate": [
+              995841,
+              1144682,
+              1026579
+            ]
+          },
+          "median_nanos": {
+            "original-baseline": 1013060,
+            "replay-baseline": 995852,
+            "replay-candidate": 1026579
+          },
+          "completion": "certified_local",
+          "same_completion_baseline_available": true,
+          "candidate_over_original_baseline": 1.0133447179831403,
+          "candidate_over_replayed_baseline": 1.0308549864839354
+        },
+        {
+          "case": "coincident",
+          "temperature": "warm",
+          "samples_nanos": {
+            "original-baseline": [
+              819134,
+              1252204,
+              746169
+            ],
+            "replay-baseline": [
+              925607,
+              802655,
+              785556
+            ],
+            "replay-candidate": [
+              867460,
+              820114,
+              919037
+            ]
+          },
+          "median_nanos": {
+            "original-baseline": 819134,
+            "replay-baseline": 802655,
+            "replay-candidate": 867460
+          },
+          "completion": "certified_local",
+          "same_completion_baseline_available": true,
+          "candidate_over_original_baseline": 1.0589964523508975,
+          "candidate_over_replayed_baseline": 1.080738299767646
+        },
+        {
+          "case": "touching",
+          "temperature": "cold",
+          "samples_nanos": {
+            "original-baseline": [
+              466848,
+              628477,
+              545353
+            ],
+            "replay-baseline": [
+              517684,
+              475678,
+              474788
+            ],
+            "replay-candidate": [
+              479697,
+              613508,
+              520174
+            ]
+          },
+          "median_nanos": {
+            "original-baseline": 545353,
+            "replay-baseline": 475678,
+            "replay-candidate": 520174
+          },
+          "completion": "certified_local",
+          "same_completion_baseline_available": true,
+          "candidate_over_original_baseline": 0.9538299046672523,
+          "candidate_over_replayed_baseline": 1.0935422701911797
+        },
+        {
+          "case": "touching",
+          "temperature": "warm",
+          "samples_nanos": {
+            "original-baseline": [
+              367325,
+              262862,
+              278001
+            ],
+            "replay-baseline": [
+              331627,
+              279341,
+              286700
+            ],
+            "replay-candidate": [
+              278291,
+              333537,
+              406672
+            ]
+          },
+          "median_nanos": {
+            "original-baseline": 278001,
+            "replay-baseline": 286700,
+            "replay-candidate": 333537
+          },
+          "completion": "certified_local",
+          "same_completion_baseline_available": true,
+          "candidate_over_original_baseline": 1.1997690655789008,
+          "candidate_over_replayed_baseline": 1.1633658876874782
+        },
+        {
+          "case": "full26",
+          "temperature": "cold",
+          "samples_nanos": {
+            "replay-candidate": [
+              64559153,
+              62220443,
+              62185936
+            ]
+          },
+          "median_nanos": {
+            "replay-candidate": 62220443
+          },
+          "completion": "certified_local",
+          "same_completion_baseline_available": false
+        },
+        {
+          "case": "full26",
+          "temperature": "warm",
+          "samples_nanos": {
+            "replay-candidate": [
+              66033942,
+              61320735,
+              59976637
+            ]
+          },
+          "median_nanos": {
+            "replay-candidate": 61320735
+          },
+          "completion": "certified_local",
+          "same_completion_baseline_available": false
+        },
+        {
+          "case": "merged26",
+          "temperature": "cold",
+          "samples_nanos": {
+            "replay-candidate": [
+              66118975,
+              64407053,
+              66194871
+            ]
+          },
+          "median_nanos": {
+            "replay-candidate": 66118975
+          },
+          "completion": "certified_local",
+          "same_completion_baseline_available": false
+        },
+        {
+          "case": "merged26",
+          "temperature": "warm",
+          "samples_nanos": {
+            "replay-candidate": [
+              59982497,
+              60820589,
+              60520540
+            ]
+          },
+          "median_nanos": {
+            "replay-candidate": 60520540
+          },
+          "completion": "certified_local",
+          "same_completion_baseline_available": false
+        }
+      ],
+      "library_bytes": {
+        "baseline": {
+          "csgrs": 9940156,
+          "hypermesh": 5183942,
+          "hypertri": 1498720,
+          "hyperreal": 11625310,
+          "hyperlimit": 4013784
+        },
+        "candidate": {
+          "csgrs": 9940156,
+          "hypermesh": 5183848,
+          "hypertri": 1508116,
+          "hyperreal": 11625310,
+          "hyperlimit": 4013784
+        }
+      },
+      "source_sizes": {
+        "crates/hypermesh/tests/boolean.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 23226,
+          "candidate_bytes": 30053,
+          "baseline_lines": 650,
+          "candidate_lines": 833
+        },
+        "crates/hypertri/README.md": {
+          "baseline_exists": true,
+          "baseline_bytes": 16914,
+          "candidate_bytes": 17563,
+          "baseline_lines": 379,
+          "candidate_lines": 388
+        },
+        "crates/hypertri/fuzz/fuzz_targets/hyperreal_representations.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 10033,
+          "candidate_bytes": 10036,
+          "baseline_lines": 279,
+          "candidate_lines": 279
+        },
+        "crates/hypertri/fuzz/fuzz_targets/topology_invariants.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 7657,
+          "candidate_bytes": 7660,
+          "baseline_lines": 233,
+          "candidate_lines": 233
+        },
+        "crates/hypertri/src/cdt.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 76986,
+          "candidate_bytes": 77305,
+          "baseline_lines": 2256,
+          "candidate_lines": 2260
+        },
+        "crates/hypertri/src/cdt_insert.rs": {
+          "baseline_exists": true,
+          "baseline_bytes": 92480,
+          "candidate_bytes": 98770,
+          "baseline_lines": 2678,
+          "candidate_lines": 2846
+        },
+        "crates/hypertri/tests/corefinement_cells.rs": {
+          "baseline_exists": false,
+          "baseline_bytes": 0,
+          "candidate_bytes": 9721,
+          "baseline_lines": 0,
+          "candidate_lines": 291
+        },
+        "tests/batch_common_cells.rs": {
+          "baseline_exists": false,
+          "baseline_bytes": 0,
+          "candidate_bytes": 3778,
+          "baseline_lines": 0,
+          "candidate_lines": 104
+        }
+      },
+      "scope": "Canonical topology repair and strict completion of the original 26-box cavity and deletion-minimal five-box union. Fixed pre-edit probe, both baseline epochs retained, exact control artifacts compared. Small unpinned-host samples; no optimization claim.",
+      "limits": "Bare meshes still lack inherited end-to-end provenance. The canonical pair scan has finite combinatorial bounds but no internal scalar-work, heap-byte or cancellation guarantee. Qualification commands use external 1800-second/8-GiB containment except WASM/Node retains only wall containment; cost children have 120-second walls. Requested Rust allocator bytes exclude native allocator internals. Full workflow verification, clean external package/MSRV/release, formal proof, instrumented coverage and directed adversarial campaigns remain open. The 35 inherited native files remain separately unadmitted."
+    },
+    "semantics": [
+      "Identical protected planar cells use one ordered noncrossing edge selection through native exact constraint recovery; no incircle requirement or mesh-winding relaxation.",
+      "Independent exhaustive five-point triangulations under all 120 vertex orders, three affine maps and both policies supplement three complete captured face inputs.",
+      "Original 26-box volume-124 cavity and minimized five-box volume-46 union complete strictly in batch and merged-shell forms, with reversed/order variants and multiple expression roots.",
+      "Exact coordinate planes, closed PWN, exact bounds and every open integer-cell witness establish the represented box sets; downstream intersection, self-difference, empty reuse, accumulation and translation remain certified.",
+      "The three completed control artifacts remain byte-identical across both old-build epochs and the candidate. Affected formerly noncanonical outputs have an explicit triangulation/artifact migration."
+    ],
+    "historical_preservation": "27093 inherited missing paths retain their expected hashes through the parent audit; no new missing artifact or mismatch.",
+    "remaining": "Inherited provenance, complete internal resource contracts, clean external release, full CI/formal/fuzz/coverage and 35 separately unadmitted native files remain open.",
+    "full_plan_complete": false
   }
 },
   "status_meanings": {

@@ -1,0 +1,10 @@
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+ Documenting hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+ Documenting csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+ Documenting csgrs-ffi v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/csgrs-ffi)
+    Finished `release` profile [optimized] target(s) in 4m 31s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/properties/batch-winding-contracts/qualification-v1/doc/csgrs/index.html and 2 other files

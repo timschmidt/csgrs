@@ -1,0 +1,24 @@
+    Checking hypertri-fuzz v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri/fuzz)
+error: using `chunks_exact` with a constant chunk size
+   --> fuzz_targets/hyperreal_representations.rs:172:29
+    |
+172 |     for triangle in indices.chunks_exact(3) {
+    |                             ^^^^^^^^^^^^^^^ help: consider using `as_chunks` instead: `as_chunks::<3>().0`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#chunks_exact_to_as_chunks
+    = note: `-D clippy::chunks-exact-to-as-chunks` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::chunks_exact_to_as_chunks)]`
+
+error: using `chunks_exact` with a constant chunk size
+   --> fuzz_targets/topology_invariants.rs:199:29
+    |
+199 |     for triangle in indices.chunks_exact(3) {
+    |                             ^^^^^^^^^^^^^^^ help: consider using `as_chunks` instead: `as_chunks::<3>().0`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#chunks_exact_to_as_chunks
+    = note: `-D clippy::chunks-exact-to-as-chunks` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::chunks_exact_to_as_chunks)]`
+
+error: could not compile `hypertri-fuzz` (bin "topology_invariants") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `hypertri-fuzz` (bin "hyperreal_representations") due to 1 previous error

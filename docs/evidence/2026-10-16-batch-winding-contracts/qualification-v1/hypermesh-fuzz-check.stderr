@@ -1,0 +1,20 @@
+   Compiling autocfg v1.5.1
+   Compiling jobserver v0.1.35
+   Compiling shlex v2.0.1
+   Compiling num-traits v0.2.19
+   Compiling cc v1.2.67
+    Checking num-integer v0.1.46
+    Checking num-bigint v0.4.8
+    Checking num-iter v0.1.46
+    Checking num-complex v0.4.6
+    Checking num-rational v0.4.2
+   Compiling libfuzzer-sys v0.4.13
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking arbitrary v1.4.2
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking hypermesh-fuzz v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh/fuzz)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 12.89s

@@ -1,0 +1,7 @@
+
+running 2 tests
+test common_cells_retain_one_triangulation_despite_surrounding_constraints ... ok
+test greedy_cell_matches_the_exhaustive_oracle_under_vertex_orders_and_affine_maps ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

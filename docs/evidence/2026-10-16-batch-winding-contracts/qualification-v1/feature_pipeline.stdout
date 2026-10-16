@@ -1,0 +1,5 @@
+engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum
+csgrs,warm,feature,mesh_primitives,catalog,0,1,1135254242,13,3848,3848
+csgrs,warm,feature,profile_to_mesh,extrude_revolve_twist_sweep_loft,0,1,31515759,5,792,792
+csgrs,warm,feature,hypermesh,buffers_hull_minkowski,0,1,6521770723,528,2130,2130
+csgrs,warm,feature,hypermesh,cube_minkowski,0,1,306409,16,18,2359307

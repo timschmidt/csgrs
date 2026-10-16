@@ -1,0 +1,13 @@
+{
+  "sources": {
+    "crates/hypertri/fuzz/fuzz_targets/hyperreal_representations.rs": {
+      "before_sha256": "261527d95e36253d62069678a7752347f6bee3934c30451c5bb784c82b25b972",
+      "after_sha256": "8a3eb84e97e4b3e0aba96d87192e432f88c2b8c395a4aa914b6fc6a3374a20f8"
+    },
+    "crates/hypertri/fuzz/fuzz_targets/topology_invariants.rs": {
+      "before_sha256": "b8e1ab1725b64d57e73817693b40ed9777277f16510c0b15fbc5443747cee67a",
+      "after_sha256": "eaf9cdf017ee6bcea0fa6e02cb186a4072754110fe24707a98fa854d55a79561"
+    }
+  },
+  "scope": "Only fixed-size triangle iteration; all assertions retained."
+}

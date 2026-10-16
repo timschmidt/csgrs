@@ -1,0 +1,18 @@
+{
+  "baseline-timing": {
+    "bytes": 24159760,
+    "sha256": "57eb2248576796f8c6f6d1b313e6c2c9910c47da71c36b7b4c2d03fb4de74f5c"
+  },
+  "baseline-allocation": {
+    "bytes": 24165520,
+    "sha256": "277295cd09c9ef55f38a53a2f200e9d8c07569ac0a2f0a50033df85af3fb1bd2"
+  },
+  "candidate-timing": {
+    "bytes": 24164720,
+    "sha256": "b6217048fd85ae8e46677f79afce97d4d9333d27f6c873f46360a6f894ebaa7d"
+  },
+  "candidate-allocation": {
+    "bytes": 24170496,
+    "sha256": "be996ab36f5b0e500ab6111047afe662857ad9a377a1af5b1826906d03476116"
+  }
+}

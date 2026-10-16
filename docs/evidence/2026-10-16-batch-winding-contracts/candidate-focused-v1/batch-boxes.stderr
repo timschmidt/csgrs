@@ -1,0 +1,26 @@
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+error[E0609]: no field `min` on type `hyperlattice::aabb::Aabb`
+   --> crates/hypermesh/tests/boolean.rs:579:39
+    |
+579 |         assert_eq!(point_axis(&bounds.min, axis), &r(min));
+    |                                       ^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+579 |         assert_eq!(point_axis(&bounds.mins, axis), &r(min));
+    |                                          +
+
+error[E0609]: no field `max` on type `hyperlattice::aabb::Aabb`
+   --> crates/hypermesh/tests/boolean.rs:580:39
+    |
+580 |         assert_eq!(point_axis(&bounds.max, axis), &r(max));
+    |                                       ^^^ unknown field
+    |
+help: a field with a similar name exists
+    |
+580 |         assert_eq!(point_axis(&bounds.maxs, axis), &r(max));
+    |                                          +
+
+For more information about this error, try `rustc --explain E0609`.
+error: could not compile `hypermesh` (test "boolean") due to 2 previous errors

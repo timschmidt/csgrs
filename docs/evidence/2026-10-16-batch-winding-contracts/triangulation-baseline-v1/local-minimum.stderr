@@ -1,0 +1,4 @@
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Finished `release` profile [optimized] target(s) in 1m 04s
+     Running unittests src/lib.rs (target/properties/batch-winding-contracts/triangulation-baseline-v1/release/deps/hypertri-162055e602019502)
+error: test failed, to rerun pass `-p hypertri --lib`

@@ -164,6 +164,15 @@ Constraint planarization may append exact Steiner vertices. `constraints()`
 retains caller input; `constraint_edges()` returns the protected subsegments
 actually present in the triangulation.
 
+`constrained_triangulation_convex_hull` chooses admissible diagonals in endpoint-pair
+order using exact orientation and incidence predicates. Identical protected cells
+with the same points and relative vertex order receive identical triangle sets,
+including cells with collinear boundary vertices. This corrects an earlier
+single-flip local-minimum rule: affected outputs can have different diagonals and
+triangle ordering while retaining their exact points, protected edges and represented
+regions. Consumers that store deterministic artifacts should regenerate those
+artifacts for this triangulation change. No Delaunay quality claim is implied.
+
 `delaunay_spatial` retains caller indices but can select another valid diagonal
 on cocircular input because the Delaunay triangulation is not unique.
 

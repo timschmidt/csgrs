@@ -1,0 +1,20 @@
+
+running 1 test
+test common_cells_retain_one_triangulation_despite_surrounding_constraints ... FAILED
+
+failures:
+
+---- common_cells_retain_one_triangulation_despite_surrounding_constraints stdout ----
+
+thread 'common_cells_retain_one_triangulation_despite_surrounding_constraints' (3733119) panicked at crates/hypertri/tests/corefinement_cells.rs:185:17:
+assertion `left == right` failed: point IDs [15, 23, 24, 25, 31, 32, 46, 49, 54, 65, 72, 73, 74, 81, 83], constraint order 0
+  left: {[23, 54, 74], [25, 32, 74], [25, 54, 74]}
+ right: {[23, 32, 54], [23, 32, 74], [25, 32, 54]}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    common_cells_retain_one_triangulation_despite_surrounding_constraints
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

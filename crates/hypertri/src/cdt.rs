@@ -354,7 +354,11 @@ pub fn constrained_delaunay_convex_hull(
 /// Constraints must already be planarized: they may not cross, overlap, or
 /// contain an input point other than an endpoint. Every returned triangle is
 /// strictly positively oriented in the caller's coordinate axes, and every
-/// input constraint is present as a triangulation edge. Because this checked
+/// input constraint is present as a triangulation edge. Unprotected edges follow
+/// greedy endpoint-pair order: each admitted diagonal avoids protected edges
+/// and interior input vertices. Identical protected cells with the same point
+/// set and relative vertex order therefore receive the same triangle sets,
+/// independently of surrounding cells and constraint order. Because this checked
 /// entry point never inserts Steiner points, the returned triangles index the
 /// caller's point slice directly. The active policy and aggregate certainty
 /// govern every predicate used to establish those postconditions.

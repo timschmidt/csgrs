@@ -1,0 +1,39 @@
+{
+  "commands": [
+    {
+      "name": "overlay",
+      "exit_code": 0,
+      "seconds": 141.63574462290853,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "667906234fd8a48acc99c158d46a5baabf5acd911349630225fc8c466c769a4c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "dbfd94f6141c5a64a91e42c40feb2b09ba377abd15fdf80e62fd630b7d65c01e"
+    },
+    {
+      "name": "local-minimum",
+      "exit_code": 101,
+      "seconds": 66.7870875261724,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/batch-winding-contracts/triangulation-baseline-v1/release/deps/hypertri-162055e602019502": "8a69109e37c719161930aca06d2f553142cea2328be64252d06ea0c00d51d518"
+      },
+      "stdout_sha256": "695a6a0cd6cfaea439e05cf8a2a1d333f95726c60d498583eef039f149a2a591",
+      "stderr_sha256": "98e4689aaba9f4e19672a6b5f3653d316a0c2b13e77f9b7d7c7cdde934640b10",
+      "resources_sha256": "21047271f7bfe522c732d367c699c3b8bc75c3e666945940252beb2a38546c7f"
+    },
+    {
+      "name": "public-cell",
+      "exit_code": 101,
+      "seconds": 67.8547393977642,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/batch-winding-contracts/triangulation-baseline-v1/release/deps/corefinement_cells-e3df2d72067e3a9b": "57f51c00c94c81d7bb80b3c2ffca199c867744f8e345cbcb30fbd4f4ef2faff4"
+      },
+      "stdout_sha256": "ce99deb424df544a0672aed459979295291ea42828fb8035ff1318a577c8b895",
+      "stderr_sha256": "58ca48d16e3851c33d42629e4bc2ccaef7d2774009189872aafa00c23329b388",
+      "resources_sha256": "2b3094e98485cf58bd2a45753e31c5651d28e927756af150b71dc3f323b89f1e"
+    }
+  ],
+  "passed": false
+}

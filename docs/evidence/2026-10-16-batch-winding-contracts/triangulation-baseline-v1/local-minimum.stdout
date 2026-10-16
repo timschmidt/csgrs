@@ -1,0 +1,20 @@
+
+running 1 test
+test cdt_insert::tests::canonical_cell_triangulation_escapes_collinear_local_minima ... FAILED
+
+failures:
+
+---- cdt_insert::tests::canonical_cell_triangulation_escapes_collinear_local_minima stdout ----
+
+thread 'cdt_insert::tests::canonical_cell_triangulation_escapes_collinear_local_minima' (3732636) panicked at crates/hypertri/src/cdt_insert.rs:2012:21:
+assertion `left == right` failed
+  left: [[0, 3, 4], [1, 2, 4], [1, 3, 4]]
+ right: [[0, 2, 3], [0, 2, 4], [1, 2, 3]]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    cdt_insert::tests::canonical_cell_triangulation_escapes_collinear_local_minima
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 120 filtered out; finished in 0.00s
+

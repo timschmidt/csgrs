@@ -1,0 +1,12 @@
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Finished `release` profile [optimized] target(s) in 1m 29s
+     Running unittests src/lib.rs (target/properties/batch-winding-contracts/qualification-v1/release/deps/hypertri-162055e602019502)
+     Running tests/adversarial.rs (target/properties/batch-winding-contracts/qualification-v1/release/deps/adversarial-aac94e7a92b9bd43)
+     Running tests/api_surface_coverage.rs (target/properties/batch-winding-contracts/qualification-v1/release/deps/api_surface_coverage-b5321271715ff539)
+     Running tests/corefinement_cells.rs (target/properties/batch-winding-contracts/qualification-v1/release/deps/corefinement_cells-e3df2d72067e3a9b)
+     Running tests/earcutr_differential.rs (target/properties/batch-winding-contracts/qualification-v1/release/deps/earcutr_differential-ef272d5fca1aa5fd)
+     Running tests/fuzz_properties.rs (target/properties/batch-winding-contracts/qualification-v1/release/deps/fuzz_properties-405dfed74275f373)
+     Running tests/predicate_policy.rs (target/properties/batch-winding-contracts/qualification-v1/release/deps/predicate_policy-e3f7d96ccd396618)
+     Running tests/readme.rs (target/properties/batch-winding-contracts/qualification-v1/release/deps/readme-2d762f0097cc07b1)
+     Running tests/real_representations.rs (target/properties/batch-winding-contracts/qualification-v1/release/deps/real_representations-10b6540cffc66d93)
+     Running tests/simple_ring.rs (target/properties/batch-winding-contracts/qualification-v1/release/deps/simple_ring-6bbb69e3dae7f452)

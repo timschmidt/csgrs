@@ -1,0 +1,23 @@
+	Command being timed: "rustc --edition=2024 -Copt-level=2 -D warnings --check-cfg cfg(allocation) docs/evidence/2026-10-16-batch-winding-contracts/resource_probe_v1.rs --extern csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/batch-winding-contracts/qualification-v1/release/deps/libcsgrs.rlib --extern hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/batch-winding-contracts/qualification-v1/release/deps/libhypermesh-98c5db38df7e7da0.rlib -L dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/batch-winding-contracts/qualification-v1/release/deps -o /dev/shm/csgrs-batch-winding-contracts/resources-v1/candidate-timing"
+	User time (seconds): 1.08
+	System time (seconds): 0.45
+	Percent of CPU this job got: 2%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:02.79
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 341536
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 2131
+	Minor (reclaiming a frame) page faults: 77382
+	Voluntary context switches: 7746
+	Involuntary context switches: 233
+	Swaps: 0
+	File system inputs: 176
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

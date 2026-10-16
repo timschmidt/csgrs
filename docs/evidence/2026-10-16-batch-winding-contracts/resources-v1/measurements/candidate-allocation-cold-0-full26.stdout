@@ -1,0 +1,2 @@
+case,temperature,nanos,positions,triangles,serialized_bytes,certainty,allocations,reallocations,allocated_bytes,reallocated_bytes,live_delta_bytes,peak_additional_requested_bytes,retained_delta_bytes
+full26,cold,63920237,244,480,72267,certified_local,186976,7499,19176037,3836872,110832,1678044,42984

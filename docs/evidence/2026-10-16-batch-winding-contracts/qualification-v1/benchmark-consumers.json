@@ -1,0 +1,7 @@
+[
+  {
+    "binary": "target/properties/batch-winding-contracts/qualification-v1/release/deps/feature_pipeline-63ce02836b73af16",
+    "filter": "feature/mesh_primitives/catalog,feature/profile_to_mesh/extrude_revolve_twist_sweep_loft,feature/hypermesh/buffers_hull_minkowski,feature/hypermesh/cube_minkowski",
+    "exit_code": 0
+  }
+]

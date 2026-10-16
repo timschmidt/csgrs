@@ -1,0 +1,5030 @@
+TRACE corefine 33 points=[9, 16, 17, 23, 25, 32, 40, 54, 64, 72, 73, 74] constraints=[[9, 16], [9, 40], [9, 64], [16, 64], [17, 25], [17, 40], [23, 54], [23, 74], [25, 32], [25, 54], [32, 72], [32, 73], [32, 74], [64, 72], [72, 73], [73, 74]] triangles=[[9, 64, 16], [9, 40, 25], [9, 25, 32], [23, 74, 32], [25, 54, 32], [40, 17, 25], [54, 23, 32], [9, 32, 72], [72, 64, 9], [73, 72, 32], [74, 73, 32]]
+TRACE corefine 45 points=[15, 23, 24, 25, 31, 32, 46, 49, 54, 65, 72, 73, 74, 81, 83] constraints=[[15, 24], [15, 46], [15, 65], [15, 83], [23, 49], [23, 54], [23, 74], [23, 81], [24, 65], [25, 32], [25, 54], [31, 81], [31, 83], [32, 72], [32, 73], [32, 74], [46, 49], [46, 73], [46, 83], [49, 74], [49, 81], [65, 72], [72, 73], [73, 74]] triangles=[[25, 54, 74], [24, 65, 15], [46, 49, 31], [74, 73, 32], [73, 46, 15], [31, 83, 46], [23, 49, 74], [23, 81, 49], [54, 23, 74], [65, 72, 15], [72, 73, 15], [32, 25, 74], [73, 72, 32], [74, 49, 46], [46, 73, 74], [81, 31, 49], [83, 15, 46]]
+TRACE corefine 57 points=[23, 25, 32, 33, 39, 49, 54, 74, 81] constraints=[[23, 49], [23, 54], [23, 74], [23, 81], [25, 32], [25, 33], [25, 54], [32, 74], [33, 39], [39, 81], [49, 74], [49, 81]] triangles=[[25, 54, 32], [33, 39, 23], [39, 81, 23], [25, 33, 54], [49, 74, 23], [54, 23, 32], [54, 33, 23], [74, 32, 23], [81, 49, 23]]
+TRACE merge 0 1
+TRACE merge 0 7
+TRACE merge 0 9
+TRACE merge 1 4
+TRACE merge 1 10
+TRACE merge 2 3
+TRACE merge 2 5
+TRACE merge 2 11
+TRACE merge 3 6
+TRACE merge 3 8
+TRACE merge 4 5
+TRACE merge 4 11
+TRACE merge 5 8
+TRACE merge 6 7
+TRACE merge 6 9
+TRACE merge 7 10
+TRACE merge 8 9
+TRACE merge 10 11
+TRACE merge 12 13
+TRACE merge 12 19
+TRACE merge 12 21
+TRACE merge 13 16
+TRACE merge 13 22
+TRACE merge 14 15
+TRACE merge 14 17
+TRACE merge 14 23
+TRACE merge 15 18
+TRACE merge 15 20
+TRACE merge 16 17
+TRACE merge 16 23
+TRACE merge 17 20
+TRACE merge 18 19
+TRACE merge 18 21
+TRACE merge 19 22
+TRACE merge 20 21
+TRACE merge 22 23
+TRACE merge 24 25
+TRACE merge 24 31
+TRACE merge 24 33
+TRACE merge 25 28
+TRACE merge 25 34
+TRACE merge 26 27
+TRACE merge 26 29
+TRACE merge 26 35
+TRACE merge 27 30
+TRACE merge 27 32
+TRACE merge 28 29
+TRACE merge 28 35
+TRACE merge 29 32
+TRACE merge 30 31
+TRACE merge 30 33
+TRACE merge 31 34
+TRACE merge 32 33
+TRACE merge 34 35
+TRACE merge 36 37
+TRACE merge 36 43
+TRACE merge 36 45
+TRACE merge 37 40
+TRACE merge 37 46
+TRACE merge 38 39
+TRACE merge 38 41
+TRACE merge 38 47
+TRACE merge 39 42
+TRACE merge 39 44
+TRACE merge 40 41
+TRACE merge 40 47
+TRACE merge 41 44
+TRACE merge 42 43
+TRACE merge 42 45
+TRACE merge 43 46
+TRACE merge 44 45
+TRACE merge 46 47
+TRACE merge 48 49
+TRACE merge 48 55
+TRACE merge 48 57
+TRACE merge 49 52
+TRACE merge 49 58
+TRACE merge 50 51
+TRACE merge 50 53
+TRACE merge 50 59
+TRACE merge 51 54
+TRACE merge 51 56
+TRACE merge 52 53
+TRACE merge 52 59
+TRACE merge 53 56
+TRACE merge 54 55
+TRACE merge 54 57
+TRACE merge 55 58
+TRACE merge 56 57
+TRACE merge 58 59
+TRACE arrangement 5
+TRACE point 0 [{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 1 [{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 2 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 3 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 4 [{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 5 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 6 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 7 [{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 8 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 9 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 10 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 11 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 12 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 13 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 14 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 15 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 16 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 17 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 18 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 19 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 20 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 21 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 22 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 23 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 24 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 25 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 26 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 27 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 28 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 29 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 30 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 31 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 32 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 33 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 34 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 35 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 36 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 37 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 38 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 39 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 40 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 41 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 42 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 43 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 44 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 45 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 46 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 47 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 48 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 49 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 50 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 51 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 52 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 53 [{"rational":{"sign":1,"numerator":[17],"denominator":[5]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[8],"denominator":[5]},"class":"One","computable":null}]
+TRACE point 54 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 55 [{"rational":{"sign":1,"numerator":[17],"denominator":[5]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[8],"denominator":[5]},"class":"One","computable":null}]
+TRACE point 56 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 57 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 58 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 59 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 60 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 61 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 62 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 63 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 64 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 65 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 66 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 67 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 68 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 69 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 70 [{"rational":{"sign":1,"numerator":[13],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 71 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 72 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 73 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 74 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[17],"denominator":[5]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[8],"denominator":[5]},"class":"One","computable":null}]
+TRACE point 75 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 76 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 77 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[17],"denominator":[5]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[8],"denominator":[5]},"class":"One","computable":null}]
+TRACE point 78 [{"rational":{"sign":1,"numerator":[13],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 79 [{"rational":{"sign":1,"numerator":[13],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 80 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 81 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null}]
+TRACE point 82 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null}]
+TRACE point 83 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 84 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null}]
+TRACE facet 0 [0, 17, 40]
+TRACE facet 1 [0, 1, 17]
+TRACE facet 2 [2, 17, 40]
+TRACE facet 3 [0, 9, 16]
+TRACE facet 4 [3, 16, 62]
+TRACE facet 5 [2, 9, 40]
+TRACE facet 6 [9, 16, 62]
+TRACE facet 7 [0, 9, 40]
+TRACE facet 8 [2, 9, 62]
+TRACE facet 9 [2, 42, 62]
+TRACE facet 10 [3, 41, 62]
+TRACE facet 11 [41, 42, 62]
+TRACE facet 12 [4, 15, 20]
+TRACE facet 13 [15, 20, 63]
+TRACE facet 14 [6, 46, 48]
+TRACE facet 15 [20, 44, 63]
+TRACE facet 16 [15, 45, 63]
+TRACE facet 17 [5, 44, 63]
+TRACE facet 18 [15, 45, 47]
+TRACE facet 19 [4, 15, 46]
+TRACE facet 20 [6, 47, 48]
+TRACE facet 21 [15, 46, 48]
+TRACE facet 22 [15, 47, 48]
+TRACE facet 23 [5, 43, 63]
+TRACE facet 24 [43, 45, 63]
+TRACE facet 25 [4, 46, 49]
+TRACE facet 26 [4, 7, 23]
+TRACE facet 27 [6, 46, 49]
+TRACE facet 28 [4, 23, 49]
+TRACE facet 29 [6, 49, 50]
+TRACE facet 30 [23, 49, 50]
+TRACE facet 31 [0, 16, 24]
+TRACE facet 32 [3, 16, 52]
+TRACE facet 33 [5, 24, 52]
+TRACE facet 34 [5, 24, 53]
+TRACE facet 35 [0, 24, 51]
+TRACE facet 36 [16, 24, 52]
+TRACE facet 37 [24, 51, 53]
+TRACE facet 38 [0, 20, 51]
+TRACE facet 39 [0, 4, 20]
+TRACE facet 40 [20, 44, 53]
+TRACE facet 41 [20, 51, 53]
+TRACE facet 42 [5, 44, 53]
+TRACE facet 43 [1, 23, 54]
+TRACE facet 44 [1, 7, 23]
+TRACE facet 45 [23, 50, 55]
+TRACE facet 46 [23, 54, 55]
+TRACE facet 47 [6, 50, 55]
+TRACE facet 48 [1, 17, 25]
+TRACE facet 49 [2, 17, 56]
+TRACE facet 50 [6, 25, 56]
+TRACE facet 51 [6, 25, 55]
+TRACE facet 52 [1, 25, 54]
+TRACE facet 53 [25, 54, 55]
+TRACE facet 54 [17, 25, 56]
+TRACE facet 55 [0, 4, 7]
+TRACE facet 56 [0, 1, 7]
+TRACE facet 57 [41, 58, 60]
+TRACE facet 58 [41, 42, 60]
+TRACE facet 59 [2, 42, 60]
+TRACE facet 60 [6, 56, 60]
+TRACE facet 61 [3, 41, 57]
+TRACE facet 62 [41, 57, 58]
+TRACE facet 63 [58, 59, 60]
+TRACE facet 64 [6, 59, 60]
+TRACE facet 65 [2, 56, 60]
+TRACE facet 66 [45, 47, 59]
+TRACE facet 67 [5, 43, 61]
+TRACE facet 68 [3, 52, 61]
+TRACE facet 69 [43, 45, 59]
+TRACE facet 70 [5, 52, 61]
+TRACE facet 71 [57, 58, 61]
+TRACE facet 72 [43, 58, 59]
+TRACE facet 73 [6, 47, 59]
+TRACE facet 74 [3, 57, 61]
+TRACE facet 75 [43, 58, 61]
+TRACE facet 76 [3, 10, 41]
+TRACE facet 77 [3, 8, 16]
+TRACE facet 78 [3, 11, 19]
+TRACE facet 79 [3, 8, 11]
+TRACE facet 80 [3, 10, 19]
+TRACE facet 81 [5, 13, 21]
+TRACE facet 82 [5, 12, 13]
+TRACE facet 83 [5, 14, 21]
+TRACE facet 84 [5, 14, 43]
+TRACE facet 85 [12, 20, 44]
+TRACE facet 86 [5, 12, 44]
+TRACE facet 87 [8, 11, 13]
+TRACE facet 88 [8, 12, 13]
+TRACE facet 89 [9, 61, 66]
+TRACE facet 90 [15, 63, 66]
+TRACE facet 91 [14, 43, 61]
+TRACE facet 92 [15, 65, 66]
+TRACE facet 93 [43, 63, 66]
+TRACE facet 94 [64, 65, 66]
+TRACE facet 95 [43, 61, 66]
+TRACE facet 96 [9, 64, 66]
+TRACE facet 97 [9, 57, 62]
+TRACE facet 98 [10, 41, 68]
+TRACE facet 99 [14, 61, 67]
+TRACE facet 100 [57, 61, 67]
+TRACE facet 101 [9, 57, 61]
+TRACE facet 102 [41, 57, 62]
+TRACE facet 103 [41, 57, 67]
+TRACE facet 104 [41, 67, 68]
+TRACE facet 105 [8, 24, 51]
+TRACE facet 106 [8, 12, 20]
+TRACE facet 107 [15, 24, 51]
+TRACE facet 108 [8, 20, 51]
+TRACE facet 109 [15, 20, 51]
+TRACE facet 110 [15, 24, 65]
+TRACE facet 111 [9, 16, 64]
+TRACE facet 112 [8, 16, 24]
+TRACE facet 113 [16, 64, 65]
+TRACE facet 114 [16, 24, 65]
+TRACE facet 115 [14, 27, 67]
+TRACE facet 116 [10, 19, 68]
+TRACE facet 117 [11, 19, 27]
+TRACE facet 118 [19, 27, 67]
+TRACE facet 119 [19, 67, 68]
+TRACE facet 120 [11, 21, 27]
+TRACE facet 121 [11, 13, 21]
+TRACE facet 122 [14, 21, 27]
+TRACE facet 123 [2, 18, 42]
+TRACE facet 124 [10, 18, 42]
+TRACE facet 125 [10, 41, 42]
+TRACE facet 126 [20, 43, 44]
+TRACE facet 127 [14, 43, 45]
+TRACE facet 128 [14, 69, 70]
+TRACE facet 129 [5, 43, 44]
+TRACE facet 130 [20, 43, 63]
+TRACE facet 131 [69, 70, 71]
+TRACE facet 132 [14, 45, 70]
+TRACE facet 133 [22, 70, 71]
+TRACE facet 134 [45, 47, 70]
+TRACE facet 135 [6, 22, 70]
+TRACE facet 136 [6, 47, 70]
+TRACE facet 137 [3, 27, 52]
+TRACE facet 138 [3, 19, 27]
+TRACE facet 139 [21, 27, 52]
+TRACE facet 140 [5, 21, 52]
+TRACE facet 141 [6, 22, 56]
+TRACE facet 142 [2, 26, 56]
+TRACE facet 143 [2, 18, 26]
+TRACE facet 144 [22, 26, 56]
+TRACE facet 145 [46, 49, 74]
+TRACE facet 146 [15, 46, 73]
+TRACE facet 147 [15, 65, 72]
+TRACE facet 148 [64, 65, 72]
+TRACE facet 149 [15, 72, 73]
+TRACE facet 150 [46, 73, 74]
+TRACE facet 151 [23, 49, 74]
+TRACE facet 152 [9, 25, 40]
+TRACE facet 153 [9, 25, 32]
+TRACE facet 154 [23, 32, 74]
+TRACE facet 155 [25, 32, 54]
+TRACE facet 156 [17, 25, 40]
+TRACE facet 157 [23, 32, 54]
+TRACE facet 158 [9, 32, 72]
+TRACE facet 159 [9, 64, 72]
+TRACE facet 160 [32, 72, 73]
+TRACE facet 161 [32, 73, 74]
+TRACE facet 162 [10, 18, 26]
+TRACE facet 163 [10, 26, 35]
+TRACE facet 164 [22, 35, 77]
+TRACE facet 165 [22, 26, 35]
+TRACE facet 166 [10, 35, 75]
+TRACE facet 167 [10, 68, 75]
+TRACE facet 168 [35, 75, 76]
+TRACE facet 169 [35, 76, 77]
+TRACE facet 170 [69, 71, 77]
+TRACE facet 171 [67, 68, 75]
+TRACE facet 172 [14, 67, 75]
+TRACE facet 173 [14, 69, 76]
+TRACE facet 174 [14, 75, 76]
+TRACE facet 175 [69, 76, 77]
+TRACE facet 176 [22, 71, 77]
+TRACE facet 177 [26, 56, 60]
+TRACE facet 178 [32, 58, 72]
+TRACE facet 179 [25, 32, 56]
+TRACE facet 180 [58, 60, 78]
+TRACE facet 181 [32, 56, 60]
+TRACE facet 182 [32, 58, 60]
+TRACE facet 183 [24, 65, 66]
+TRACE facet 184 [58, 65, 66]
+TRACE facet 185 [58, 65, 72]
+TRACE facet 186 [26, 60, 78]
+TRACE facet 187 [24, 52, 61]
+TRACE facet 188 [26, 35, 78]
+TRACE facet 189 [27, 52, 61]
+TRACE facet 190 [58, 61, 66]
+TRACE facet 191 [61, 67, 75]
+TRACE facet 192 [35, 58, 61]
+TRACE facet 193 [24, 61, 66]
+TRACE facet 194 [27, 61, 67]
+TRACE facet 195 [35, 61, 75]
+TRACE facet 196 [35, 58, 78]
+TRACE facet 197 [28, 29, 37]
+TRACE facet 198 [30, 37, 79]
+TRACE facet 199 [28, 37, 79]
+TRACE facet 200 [30, 36, 80]
+TRACE facet 201 [28, 36, 79]
+TRACE facet 202 [30, 36, 79]
+TRACE facet 203 [31, 36, 80]
+TRACE facet 204 [5, 29, 44]
+TRACE facet 205 [5, 21, 29]
+TRACE facet 206 [20, 28, 29]
+TRACE facet 207 [20, 29, 44]
+TRACE facet 208 [23, 30, 80]
+TRACE facet 209 [23, 30, 50]
+TRACE facet 210 [31, 80, 81]
+TRACE facet 211 [23, 80, 81]
+TRACE facet 212 [6, 30, 50]
+TRACE facet 213 [6, 22, 82]
+TRACE facet 214 [6, 30, 82]
+TRACE facet 215 [15, 20, 28]
+TRACE facet 216 [15, 36, 83]
+TRACE facet 217 [15, 28, 36]
+TRACE facet 218 [31, 36, 83]
+TRACE facet 219 [25, 54, 74]
+TRACE facet 220 [31, 46, 49]
+TRACE facet 221 [31, 46, 83]
+TRACE facet 222 [23, 49, 81]
+TRACE facet 223 [23, 54, 74]
+TRACE facet 224 [25, 32, 74]
+TRACE facet 225 [31, 49, 81]
+TRACE facet 226 [15, 46, 83]
+TRACE facet 227 [30, 69, 71]
+TRACE facet 228 [30, 69, 84]
+TRACE facet 229 [22, 71, 82]
+TRACE facet 230 [30, 71, 82]
+TRACE facet 231 [14, 69, 84]
+TRACE facet 232 [14, 21, 29]
+TRACE facet 233 [14, 37, 84]
+TRACE facet 234 [14, 29, 37]
+TRACE facet 235 [30, 37, 84]
+TRACE facet 236 [25, 33, 34]
+TRACE facet 237 [25, 34, 56]
+TRACE facet 238 [26, 34, 56]
+TRACE facet 239 [30, 38, 80]
+TRACE facet 240 [31, 38, 39]
+TRACE facet 241 [31, 38, 80]
+TRACE facet 242 [32, 59, 60]
+TRACE facet 243 [35, 47, 70]
+TRACE facet 244 [37, 47, 48]
+TRACE facet 245 [32, 47, 48]
+TRACE facet 246 [35, 47, 59]
+TRACE facet 247 [32, 47, 59]
+TRACE facet 248 [59, 60, 78]
+TRACE facet 249 [37, 47, 70]
+TRACE facet 250 [35, 70, 76]
+TRACE facet 251 [69, 70, 84]
+TRACE facet 252 [69, 70, 76]
+TRACE facet 253 [35, 59, 78]
+TRACE facet 254 [37, 70, 84]
+TRACE facet 255 [37, 46, 83]
+TRACE facet 256 [46, 48, 73]
+TRACE facet 257 [37, 46, 48]
+TRACE facet 258 [32, 48, 73]
+TRACE facet 259 [36, 79, 83]
+TRACE facet 260 [37, 79, 83]
+TRACE facet 261 [33, 38, 39]
+TRACE facet 262 [33, 34, 38]
+TRACE facet 263 [31, 39, 81]
+TRACE facet 264 [23, 33, 39]
+TRACE facet 265 [23, 39, 81]
+TRACE facet 266 [25, 33, 54]
+TRACE facet 267 [23, 33, 54]
+TRACE facet 268 [22, 34, 38]
+TRACE facet 269 [22, 38, 82]
+TRACE facet 270 [22, 26, 34]
+TRACE facet 271 [30, 38, 82]
+TRACE sheet 0 0 [1, 0, 0, 0, 0]
+TRACE sheet 1 0 [1, 0, 0, 0, 0]
+TRACE sheet 2 0 [-1, 0, 0, 0, 0]
+TRACE sheet 3 24 [0, 0, -1, 0, 0]
+TRACE sheet 4 1 [1, 0, 0, 0, 0]
+TRACE sheet 5 1 [1, 0, 0, 0, 0]
+TRACE sheet 6 12 [0, 1, 0, 0, 0]
+TRACE sheet 7 25 [0, 0, 1, 0, 0]
+TRACE sheet 8 1 [1, 0, 0, 0, 0]
+TRACE sheet 9 24 [0, 0, 1, 0, 0]
+TRACE sheet 10 1 [-1, 0, 0, 0, 0]
+TRACE sheet 11 12 [0, -1, 0, 0, 0]
+TRACE sheet 12 24 [0, 0, -1, 0, 0]
+TRACE sheet 13 1 [-1, 0, 0, 0, 0]
+TRACE sheet 14 1 [-1, 0, 0, 0, 0]
+TRACE sheet 15 24 [0, 0, -1, 0, 0]
+TRACE sheet 16 1 [1, 0, 0, 0, 0]
+TRACE sheet 17 24 [0, 0, 1, 0, 0]
+TRACE sheet 18 1 [-1, 0, 0, 0, 0]
+TRACE sheet 19 12 [0, -1, 0, 0, 0]
+TRACE sheet 20 25 [0, 0, -1, 0, 0]
+TRACE sheet 21 1 [-1, 0, 0, 0, 0]
+TRACE sheet 22 25 [0, 0, -1, 0, 0]
+TRACE sheet 23 2 [-1, 0, 0, 0, 0]
+TRACE sheet 24 2 [1, 0, 0, 0, 0]
+TRACE sheet 25 15 [0, 1, 0, 0, 0]
+TRACE sheet 26 27 [0, 0, 1, 0, 0]
+TRACE sheet 27 2 [1, 0, 0, 0, 0]
+TRACE sheet 28 27 [0, 0, 1, 0, 0]
+TRACE sheet 29 2 [1, 0, 0, 0, 0]
+TRACE sheet 30 15 [0, 1, 0, 0, 0]
+TRACE sheet 31 2 [-1, 0, 0, 0, 0]
+TRACE sheet 32 27 [0, 0, -1, 0, 0]
+TRACE sheet 33 2 [-1, 0, 0, 0, 0]
+TRACE sheet 34 15 [0, -1, 0, 0, 0]
+TRACE sheet 35 2 [1, 0, 0, 0, 0]
+TRACE sheet 36 27 [0, 0, 1, 0, 0]
+TRACE sheet 37 2 [1, 0, 0, 0, 0]
+TRACE sheet 38 2 [-1, 0, 0, 0, 0]
+TRACE sheet 39 27 [0, 0, -1, 0, 0]
+TRACE sheet 40 2 [-1, 0, 0, 0, 0]
+TRACE sheet 41 27 [0, 0, -1, 0, 0]
+TRACE sheet 42 2 [1, 0, 0, 0, 0]
+TRACE sheet 43 27 [0, 0, 1, 0, 0]
+TRACE sheet 44 2 [1, 0, 0, 0, 0]
+TRACE sheet 45 15 [0, 1, 0, 0, 0]
+TRACE sheet 46 2 [1, 0, 0, 0, 0]
+TRACE sheet 47 26 [0, 0, 1, 0, 0]
+TRACE sheet 48 3 [1, 0, 0, 0, 0]
+TRACE sheet 49 3 [-1, 0, 0, 0, 0]
+TRACE sheet 50 3 [-1, 0, 0, 0, 0]
+TRACE sheet 51 27 [0, 0, -1, 0, 0]
+TRACE sheet 52 3 [-1, 0, 0, 0, 0]
+TRACE sheet 53 3 [-1, 0, 0, 0, 0]
+TRACE sheet 54 27 [0, 0, -1, 0, 0]
+TRACE sheet 55 3 [1, 0, 0, 0, 0]
+TRACE sheet 56 27 [0, 0, 1, 0, 0]
+TRACE sheet 57 4 [1, 0, 0, 0, 0]
+TRACE sheet 58 4 [-1, 0, 0, 0, 0]
+TRACE sheet 59 28 [0, 0, -1, 0, 0]
+TRACE sheet 60 4 [1, 0, 0, 0, 0]
+TRACE sheet 61 29 [0, 0, 1, 0, 0]
+TRACE sheet 62 40 [0, 0, 0, 1, 0]
+TRACE sheet 63 4 [-1, 0, 0, 0, 0]
+TRACE sheet 64 29 [0, 0, -1, 0, 0]
+TRACE sheet 65 40 [0, 0, 0, -1, 0]
+TRACE sheet 66 4 [1, 0, 0, 0, 0]
+TRACE sheet 67 4 [-1, 0, 0, 0, 0]
+TRACE sheet 68 29 [0, 0, -1, 0, 0]
+TRACE sheet 69 4 [-1, 0, 0, 0, 0]
+TRACE sheet 70 29 [0, 0, -1, 0, 0]
+TRACE sheet 71 41 [0, 0, 0, -1, 0]
+TRACE sheet 72 5 [-1, 0, 0, 0, 0]
+TRACE sheet 73 5 [-1, 0, 0, 0, 0]
+TRACE sheet 74 5 [-1, 0, 0, 0, 0]
+TRACE sheet 75 29 [0, 0, -1, 0, 0]
+TRACE sheet 76 41 [0, 0, 0, -1, 0]
+TRACE sheet 77 5 [1, 0, 0, 0, 0]
+TRACE sheet 78 29 [0, 0, 1, 0, 0]
+TRACE sheet 79 41 [0, 0, 0, 1, 0]
+TRACE sheet 80 5 [1, 0, 0, 0, 0]
+TRACE sheet 81 29 [0, 0, 1, 0, 0]
+TRACE sheet 82 40 [0, 0, 0, 1, 0]
+TRACE sheet 83 6 [1, 0, 0, 0, 0]
+TRACE sheet 84 6 [1, 0, 0, 0, 0]
+TRACE sheet 85 6 [1, 0, 0, 0, 0]
+TRACE sheet 86 30 [0, 0, 1, 0, 0]
+TRACE sheet 87 42 [0, 0, 0, 1, 0]
+TRACE sheet 88 6 [-1, 0, 0, 0, 0]
+TRACE sheet 89 30 [0, 0, -1, 0, 0]
+TRACE sheet 90 42 [0, 0, 0, -1, 0]
+TRACE sheet 91 6 [-1, 0, 0, 0, 0]
+TRACE sheet 92 30 [0, 0, -1, 0, 0]
+TRACE sheet 93 43 [0, 0, 0, -1, 0]
+TRACE sheet 94 7 [-1, 0, 0, 0, 0]
+TRACE sheet 95 7 [1, 0, 0, 0, 0]
+TRACE sheet 96 31 [0, 0, 1, 0, 0]
+TRACE sheet 97 7 [-1, 0, 0, 0, 0]
+TRACE sheet 98 30 [0, 0, -1, 0, 0]
+TRACE sheet 99 43 [0, 0, 0, -1, 0]
+TRACE sheet 100 7 [1, 0, 0, 0, 0]
+TRACE sheet 101 30 [0, 0, 1, 0, 0]
+TRACE sheet 102 43 [0, 0, 0, 1, 0]
+TRACE sheet 103 7 [-1, 0, 0, 0, 0]
+TRACE sheet 104 7 [1, 0, 0, 0, 0]
+TRACE sheet 105 30 [0, 0, 1, 0, 0]
+TRACE sheet 106 42 [0, 0, 0, 1, 0]
+TRACE sheet 107 7 [1, 0, 0, 0, 0]
+TRACE sheet 108 30 [0, 0, 1, 0, 0]
+TRACE sheet 109 8 [1, 0, 0, 0, 0]
+TRACE sheet 110 9 [-1, 0, 0, 0, 0]
+TRACE sheet 111 10 [-1, 0, 0, 0, 0]
+TRACE sheet 112 10 [1, 0, 0, 0, 0]
+TRACE sheet 113 10 [-1, 0, 0, 0, 0]
+TRACE sheet 114 10 [-1, 0, 0, 0, 0]
+TRACE sheet 115 10 [1, 0, 0, 0, 0]
+TRACE sheet 116 10 [-1, 0, 0, 0, 0]
+TRACE sheet 117 10 [-1, 0, 0, 0, 0]
+TRACE sheet 118 10 [1, 0, 0, 0, 0]
+TRACE sheet 119 10 [1, 0, 0, 0, 0]
+TRACE sheet 120 11 [-1, 0, 0, 0, 0]
+TRACE sheet 121 11 [-1, 0, 0, 0, 0]
+TRACE sheet 122 11 [-1, 0, 0, 0, 0]
+TRACE sheet 123 11 [-1, 0, 0, 0, 0]
+TRACE sheet 124 11 [1, 0, 0, 0, 0]
+TRACE sheet 125 11 [1, 0, 0, 0, 0]
+TRACE sheet 126 11 [1, 0, 0, 0, 0]
+TRACE sheet 127 11 [1, 0, 0, 0, 0]
+TRACE sheet 128 11 [1, 0, 0, 0, 0]
+TRACE sheet 129 11 [-1, 0, 0, 0, 0]
+TRACE sheet 130 12 [0, -1, 0, 0, 0]
+TRACE sheet 131 25 [0, 0, -1, 0, 0]
+TRACE sheet 132 12 [0, 1, 0, 0, 0]
+TRACE sheet 133 13 [0, -1, 0, 0, 0]
+TRACE sheet 134 13 [0, -1, 0, 0, 0]
+TRACE sheet 135 13 [0, 1, 0, 0, 0]
+TRACE sheet 136 25 [0, 0, 1, 0, 0]
+TRACE sheet 137 14 [0, 1, 0, 0, 0]
+TRACE sheet 138 14 [0, 1, 0, 0, 0]
+TRACE sheet 139 14 [0, -1, 0, 0, 0]
+TRACE sheet 140 26 [0, 0, -1, 0, 0]
+TRACE sheet 141 15 [0, 1, 0, 0, 0]
+TRACE sheet 142 26 [0, 0, 1, 0, 0]
+TRACE sheet 143 15 [0, -1, 0, 0, 0]
+TRACE sheet 144 15 [0, -1, 0, 0, 0]
+TRACE sheet 145 16 [0, 1, 0, 0, 0]
+TRACE sheet 146 17 [0, -1, 0, 0, 0]
+TRACE sheet 147 18 [0, -1, 0, 0, 0]
+TRACE sheet 148 18 [0, 1, 0, 0, 0]
+TRACE sheet 149 18 [0, -1, 0, 0, 0]
+TRACE sheet 150 18 [0, -1, 0, 0, 0]
+TRACE sheet 151 18 [0, -1, 0, 0, 0]
+TRACE sheet 152 18 [0, 1, 0, 0, 0]
+TRACE sheet 153 18 [0, 1, 0, 0, 0]
+TRACE sheet 154 18 [0, 1, 0, 0, 0]
+TRACE sheet 155 19 [0, 1, 0, 0, 0]
+TRACE sheet 156 19 [0, 1, 0, 0, 0]
+TRACE sheet 157 19 [0, -1, 0, 0, 0]
+TRACE sheet 158 19 [0, 1, 0, 0, 0]
+TRACE sheet 159 19 [0, -1, 0, 0, 0]
+TRACE sheet 160 19 [0, -1, 0, 0, 0]
+TRACE sheet 161 19 [0, 1, 0, 0, 0]
+TRACE sheet 162 19 [0, 1, 0, 0, 0]
+TRACE sheet 163 20 [0, -1, 0, 0, 0]
+TRACE sheet 164 20 [0, 1, 0, 0, 0]
+TRACE sheet 165 20 [0, 1, 0, 0, 0]
+TRACE sheet 166 32 [0, 0, 1, 0, 0]
+TRACE sheet 167 44 [0, 0, 0, 1, 0]
+TRACE sheet 168 20 [0, 1, 0, 0, 0]
+TRACE sheet 169 20 [0, -1, 0, 0, 0]
+TRACE sheet 170 32 [0, 0, -1, 0, 0]
+TRACE sheet 171 44 [0, 0, 0, -1, 0]
+TRACE sheet 172 21 [0, -1, 0, 0, 0]
+TRACE sheet 173 32 [0, 0, -1, 0, 0]
+TRACE sheet 174 45 [0, 0, 0, -1, 0]
+TRACE sheet 175 21 [0, 1, 0, 0, 0]
+TRACE sheet 176 33 [0, 0, 1, 0, 0]
+TRACE sheet 177 21 [0, -1, 0, 0, 0]
+TRACE sheet 178 21 [0, -1, 0, 0, 0]
+TRACE sheet 179 32 [0, 0, -1, 0, 0]
+TRACE sheet 180 21 [0, 1, 0, 0, 0]
+TRACE sheet 181 32 [0, 0, 1, 0, 0]
+TRACE sheet 182 22 [0, 1, 0, 0, 0]
+TRACE sheet 183 35 [0, 0, 1, 0, 0]
+TRACE sheet 184 46 [0, 0, 0, 1, 0]
+TRACE sheet 185 22 [0, -1, 0, 0, 0]
+TRACE sheet 186 34 [0, 0, -1, 0, 0]
+TRACE sheet 187 22 [0, 1, 0, 0, 0]
+TRACE sheet 188 22 [0, -1, 0, 0, 0]
+TRACE sheet 189 35 [0, 0, -1, 0, 0]
+TRACE sheet 190 22 [0, -1, 0, 0, 0]
+TRACE sheet 191 35 [0, 0, -1, 0, 0]
+TRACE sheet 192 23 [0, -1, 0, 0, 0]
+TRACE sheet 193 23 [0, -1, 0, 0, 0]
+TRACE sheet 194 23 [0, 1, 0, 0, 0]
+TRACE sheet 195 35 [0, 0, 1, 0, 0]
+TRACE sheet 196 47 [0, 0, 0, 1, 0]
+TRACE sheet 197 24 [0, 0, 1, 0, 0]
+TRACE sheet 198 25 [0, 0, -1, 0, 0]
+TRACE sheet 199 25 [0, 0, 1, 0, 0]
+TRACE sheet 200 26 [0, 0, -1, 0, 0]
+TRACE sheet 201 26 [0, 0, -1, 0, 0]
+TRACE sheet 202 26 [0, 0, 1, 0, 0]
+TRACE sheet 203 26 [0, 0, 1, 0, 0]
+TRACE sheet 204 26 [0, 0, 1, 0, 0]
+TRACE sheet 205 26 [0, 0, -1, 0, 0]
+TRACE sheet 206 26 [0, 0, -1, 0, 0]
+TRACE sheet 207 26 [0, 0, 1, 0, 0]
+TRACE sheet 208 27 [0, 0, -1, 0, 0]
+TRACE sheet 209 27 [0, 0, -1, 0, 0]
+TRACE sheet 210 27 [0, 0, 1, 0, 0]
+TRACE sheet 211 28 [0, 0, 1, 0, 0]
+TRACE sheet 212 28 [0, 0, 1, 0, 0]
+TRACE sheet 213 28 [0, 0, -1, 0, 0]
+TRACE sheet 214 40 [0, 0, 0, -1, 0]
+TRACE sheet 215 29 [0, 0, -1, 0, 0]
+TRACE sheet 216 40 [0, 0, 0, -1, 0]
+TRACE sheet 217 30 [0, 0, 1, 0, 0]
+TRACE sheet 218 43 [0, 0, 0, 1, 0]
+TRACE sheet 219 31 [0, 0, -1, 0, 0]
+TRACE sheet 220 31 [0, 0, -1, 0, 0]
+TRACE sheet 221 31 [0, 0, 1, 0, 0]
+TRACE sheet 222 43 [0, 0, 0, 1, 0]
+TRACE sheet 223 32 [0, 0, 1, 0, 0]
+TRACE sheet 224 45 [0, 0, 0, 1, 0]
+TRACE sheet 225 56 [0, 0, 0, 0, 1]
+TRACE sheet 226 32 [0, 0, 1, 0, 0]
+TRACE sheet 227 45 [0, 0, 0, 1, 0]
+TRACE sheet 228 32 [0, 0, -1, 0, 0]
+TRACE sheet 229 45 [0, 0, 0, -1, 0]
+TRACE sheet 230 32 [0, 0, 1, 0, 0]
+TRACE sheet 231 32 [0, 0, -1, 0, 0]
+TRACE sheet 232 45 [0, 0, 0, -1, 0]
+TRACE sheet 233 32 [0, 0, -1, 0, 0]
+TRACE sheet 234 45 [0, 0, 0, -1, 0]
+TRACE sheet 235 56 [0, 0, 0, 0, -1]
+TRACE sheet 236 32 [0, 0, -1, 0, 0]
+TRACE sheet 237 45 [0, 0, 0, -1, 0]
+TRACE sheet 238 57 [0, 0, 0, 0, -1]
+TRACE sheet 239 33 [0, 0, 1, 0, 0]
+TRACE sheet 240 33 [0, 0, -1, 0, 0]
+TRACE sheet 241 33 [0, 0, 1, 0, 0]
+TRACE sheet 242 57 [0, 0, 0, 0, 1]
+TRACE sheet 243 33 [0, 0, 1, 0, 0]
+TRACE sheet 244 57 [0, 0, 0, 0, 1]
+TRACE sheet 245 33 [0, 0, -1, 0, 0]
+TRACE sheet 246 33 [0, 0, -1, 0, 0]
+TRACE sheet 247 57 [0, 0, 0, 0, -1]
+TRACE sheet 248 33 [0, 0, -1, 0, 0]
+TRACE sheet 249 33 [0, 0, 1, 0, 0]
+TRACE sheet 250 33 [0, 0, 1, 0, 0]
+TRACE sheet 251 45 [0, 0, 0, 1, 0]
+TRACE sheet 252 33 [0, 0, 1, 0, 0]
+TRACE sheet 253 45 [0, 0, 0, 1, 0]
+TRACE sheet 254 56 [0, 0, 0, 0, 1]
+TRACE sheet 255 34 [0, 0, 1, 0, 0]
+TRACE sheet 256 34 [0, 0, 1, 0, 0]
+TRACE sheet 257 34 [0, 0, -1, 0, 0]
+TRACE sheet 258 46 [0, 0, 0, -1, 0]
+TRACE sheet 259 58 [0, 0, 0, 0, -1]
+TRACE sheet 260 34 [0, 0, -1, 0, 0]
+TRACE sheet 261 46 [0, 0, 0, -1, 0]
+TRACE sheet 262 58 [0, 0, 0, 0, -1]
+TRACE sheet 263 34 [0, 0, 1, 0, 0]
+TRACE sheet 264 34 [0, 0, -1, 0, 0]
+TRACE sheet 265 34 [0, 0, -1, 0, 0]
+TRACE sheet 266 46 [0, 0, 0, -1, 0]
+TRACE sheet 267 34 [0, 0, -1, 0, 0]
+TRACE sheet 268 46 [0, 0, 0, -1, 0]
+TRACE sheet 269 59 [0, 0, 0, 0, -1]
+TRACE sheet 270 35 [0, 0, -1, 0, 0]
+TRACE sheet 271 46 [0, 0, 0, -1, 0]
+TRACE sheet 272 59 [0, 0, 0, 0, -1]
+TRACE sheet 273 35 [0, 0, 1, 0, 0]
+TRACE sheet 274 35 [0, 0, 1, 0, 0]
+TRACE sheet 275 46 [0, 0, 0, 1, 0]
+TRACE sheet 276 35 [0, 0, -1, 0, 0]
+TRACE sheet 277 46 [0, 0, 0, -1, 0]
+TRACE sheet 278 35 [0, 0, 1, 0, 0]
+TRACE sheet 279 46 [0, 0, 0, 1, 0]
+TRACE sheet 280 35 [0, 0, 1, 0, 0]
+TRACE sheet 281 46 [0, 0, 0, 1, 0]
+TRACE sheet 282 59 [0, 0, 0, 0, 1]
+TRACE sheet 283 35 [0, 0, 1, 0, 0]
+TRACE sheet 284 46 [0, 0, 0, 1, 0]
+TRACE sheet 285 58 [0, 0, 0, 0, 1]
+TRACE sheet 286 36 [0, 0, 0, -1, 0]
+TRACE sheet 287 49 [0, 0, 0, 0, -1]
+TRACE sheet 288 36 [0, 0, 0, 1, 0]
+TRACE sheet 289 36 [0, 0, 0, -1, 0]
+TRACE sheet 290 48 [0, 0, 0, 0, -1]
+TRACE sheet 291 36 [0, 0, 0, 1, 0]
+TRACE sheet 292 36 [0, 0, 0, 1, 0]
+TRACE sheet 293 49 [0, 0, 0, 0, 1]
+TRACE sheet 294 36 [0, 0, 0, -1, 0]
+TRACE sheet 295 36 [0, 0, 0, 1, 0]
+TRACE sheet 296 36 [0, 0, 0, -1, 0]
+TRACE sheet 297 36 [0, 0, 0, 1, 0]
+TRACE sheet 298 36 [0, 0, 0, -1, 0]
+TRACE sheet 299 49 [0, 0, 0, 0, -1]
+TRACE sheet 300 37 [0, 0, 0, -1, 0]
+TRACE sheet 301 37 [0, 0, 0, 1, 0]
+TRACE sheet 302 49 [0, 0, 0, 0, 1]
+TRACE sheet 303 37 [0, 0, 0, 1, 0]
+TRACE sheet 304 37 [0, 0, 0, 1, 0]
+TRACE sheet 305 37 [0, 0, 0, -1, 0]
+TRACE sheet 306 37 [0, 0, 0, -1, 0]
+TRACE sheet 307 37 [0, 0, 0, -1, 0]
+TRACE sheet 308 37 [0, 0, 0, 1, 0]
+TRACE sheet 309 37 [0, 0, 0, -1, 0]
+TRACE sheet 310 37 [0, 0, 0, 1, 0]
+TRACE sheet 311 38 [0, 0, 0, 1, 0]
+TRACE sheet 312 38 [0, 0, 0, -1, 0]
+TRACE sheet 313 50 [0, 0, 0, 0, -1]
+TRACE sheet 314 38 [0, 0, 0, 1, 0]
+TRACE sheet 315 39 [0, 0, 0, -1, 0]
+TRACE sheet 316 50 [0, 0, 0, 0, -1]
+TRACE sheet 317 39 [0, 0, 0, -1, 0]
+TRACE sheet 318 39 [0, 0, 0, 1, 0]
+TRACE sheet 319 50 [0, 0, 0, 0, 1]
+TRACE sheet 320 39 [0, 0, 0, 1, 0]
+TRACE sheet 321 51 [0, 0, 0, 0, 1]
+TRACE sheet 322 40 [0, 0, 0, 1, 0]
+TRACE sheet 323 40 [0, 0, 0, 1, 0]
+TRACE sheet 324 41 [0, 0, 0, -1, 0]
+TRACE sheet 325 41 [0, 0, 0, -1, 0]
+TRACE sheet 326 42 [0, 0, 0, -1, 0]
+TRACE sheet 327 42 [0, 0, 0, 1, 0]
+TRACE sheet 328 42 [0, 0, 0, 1, 0]
+TRACE sheet 329 42 [0, 0, 0, -1, 0]
+TRACE sheet 330 43 [0, 0, 0, -1, 0]
+TRACE sheet 331 43 [0, 0, 0, -1, 0]
+TRACE sheet 332 43 [0, 0, 0, 1, 0]
+TRACE sheet 333 44 [0, 0, 0, 1, 0]
+TRACE sheet 334 44 [0, 0, 0, 1, 0]
+TRACE sheet 335 44 [0, 0, 0, 1, 0]
+TRACE sheet 336 44 [0, 0, 0, -1, 0]
+TRACE sheet 337 56 [0, 0, 0, 0, -1]
+TRACE sheet 338 45 [0, 0, 0, -1, 0]
+TRACE sheet 339 45 [0, 0, 0, -1, 0]
+TRACE sheet 340 56 [0, 0, 0, 0, -1]
+TRACE sheet 341 45 [0, 0, 0, 1, 0]
+TRACE sheet 342 56 [0, 0, 0, 0, 1]
+TRACE sheet 343 45 [0, 0, 0, 1, 0]
+TRACE sheet 344 57 [0, 0, 0, 0, 1]
+TRACE sheet 345 45 [0, 0, 0, 1, 0]
+TRACE sheet 346 45 [0, 0, 0, 1, 0]
+TRACE sheet 347 45 [0, 0, 0, -1, 0]
+TRACE sheet 348 56 [0, 0, 0, 0, -1]
+TRACE sheet 349 45 [0, 0, 0, -1, 0]
+TRACE sheet 350 46 [0, 0, 0, 1, 0]
+TRACE sheet 351 59 [0, 0, 0, 0, 1]
+TRACE sheet 352 46 [0, 0, 0, -1, 0]
+TRACE sheet 353 59 [0, 0, 0, 0, -1]
+TRACE sheet 354 46 [0, 0, 0, -1, 0]
+TRACE sheet 355 58 [0, 0, 0, 0, -1]
+TRACE sheet 356 46 [0, 0, 0, 1, 0]
+TRACE sheet 357 59 [0, 0, 0, 0, 1]
+TRACE sheet 358 46 [0, 0, 0, 1, 0]
+TRACE sheet 359 47 [0, 0, 0, -1, 0]
+TRACE sheet 360 47 [0, 0, 0, -1, 0]
+TRACE sheet 361 47 [0, 0, 0, -1, 0]
+TRACE sheet 362 47 [0, 0, 0, 1, 0]
+TRACE sheet 363 59 [0, 0, 0, 0, 1]
+TRACE sheet 364 48 [0, 0, 0, 0, 1]
+TRACE sheet 365 48 [0, 0, 0, 0, 1]
+TRACE sheet 366 49 [0, 0, 0, 0, -1]
+TRACE sheet 367 50 [0, 0, 0, 0, 1]
+TRACE sheet 368 51 [0, 0, 0, 0, 1]
+TRACE sheet 369 51 [0, 0, 0, 0, -1]
+TRACE sheet 370 52 [0, 0, 0, 0, -1]
+TRACE sheet 371 52 [0, 0, 0, 0, -1]
+TRACE sheet 372 52 [0, 0, 0, 0, -1]
+TRACE sheet 373 52 [0, 0, 0, 0, 1]
+TRACE sheet 374 52 [0, 0, 0, 0, 1]
+TRACE sheet 375 52 [0, 0, 0, 0, -1]
+TRACE sheet 376 52 [0, 0, 0, 0, 1]
+TRACE sheet 377 52 [0, 0, 0, 0, 1]
+TRACE sheet 378 52 [0, 0, 0, 0, -1]
+TRACE sheet 379 52 [0, 0, 0, 0, -1]
+TRACE sheet 380 52 [0, 0, 0, 0, 1]
+TRACE sheet 381 52 [0, 0, 0, 0, 1]
+TRACE sheet 382 52 [0, 0, 0, 0, 1]
+TRACE sheet 383 53 [0, 0, 0, 0, -1]
+TRACE sheet 384 53 [0, 0, 0, 0, -1]
+TRACE sheet 385 53 [0, 0, 0, 0, 1]
+TRACE sheet 386 53 [0, 0, 0, 0, 1]
+TRACE sheet 387 53 [0, 0, 0, 0, -1]
+TRACE sheet 388 53 [0, 0, 0, 0, 1]
+TRACE sheet 389 54 [0, 0, 0, 0, -1]
+TRACE sheet 390 55 [0, 0, 0, 0, -1]
+TRACE sheet 391 56 [0, 0, 0, 0, 1]
+TRACE sheet 392 57 [0, 0, 0, 0, -1]
+TRACE sheet 393 57 [0, 0, 0, 0, -1]
+TRACE sheet 394 57 [0, 0, 0, 0, -1]
+TRACE sheet 395 57 [0, 0, 0, 0, 1]
+TRACE sheet 396 58 [0, 0, 0, 0, 1]
+TRACE sheet 397 58 [0, 0, 0, 0, 1]
+TRACE sheet 398 58 [0, 0, 0, 0, 1]
+TRACE sheet 399 59 [0, 0, 0, 0, -1]
+TRACE components [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+TRACE unions_start
+TRACE edge [0, 1]
+TRACE merge 2 221
+TRACE merge 220 3
+TRACE edge [0, 4]
+TRACE merge 146 219
+TRACE merge 218 147
+TRACE edge [0, 7]
+TRACE merge 219 220
+TRACE merge 221 218
+TRACE edge [0, 9]
+TRACE merge 8 27
+TRACE merge 26 9
+TRACE edge [0, 16]
+TRACE merge 9 115
+TRACE merge 114 8
+TRACE edge [0, 17]
+TRACE merge 0 2
+TRACE merge 3 1
+TRACE edge [0, 20]
+TRACE merge 144 146
+TRACE merge 147 145
+TRACE edge [0, 24]
+TRACE merge 115 133
+TRACE merge 132 114
+TRACE edge [0, 40]
+TRACE merge 1 26
+TRACE merge 27 0
+TRACE edge [0, 51]
+TRACE merge 133 144
+TRACE merge 145 132
+TRACE edge [1, 7]
+TRACE merge 168 221
+TRACE merge 220 169
+TRACE edge [1, 17]
+TRACE merge 2 189
+TRACE merge 188 3
+TRACE edge [1, 23]
+TRACE merge 166 168
+TRACE merge 169 167
+TRACE edge [1, 25]
+TRACE merge 189 207
+TRACE merge 206 188
+TRACE edge [1, 54]
+TRACE merge 167 206
+TRACE merge 207 166
+TRACE edge [2, 9]
+TRACE merge 18 17
+TRACE merge 16 29
+TRACE merge 28 31
+TRACE merge 30 19
+TRACE merge 28 18
+TRACE edge [2, 17]
+TRACE merge 4 7
+TRACE merge 6 193
+TRACE merge 192 191
+TRACE merge 190 5
+TRACE merge 192 4
+TRACE edge [2, 18]
+TRACE merge 394 441
+TRACE merge 440 395
+TRACE edge [2, 26]
+TRACE merge 438 440
+TRACE merge 441 439
+TRACE edge [2, 40]
+TRACE merge 7 4
+TRACE merge 5 16
+TRACE merge 17 18
+TRACE merge 19 6
+TRACE merge 17 7
+TRACE edge [2, 42]
+TRACE merge 34 33
+TRACE merge 32 394
+TRACE merge 395 227
+TRACE merge 226 35
+TRACE edge [2, 56]
+TRACE merge 191 192
+TRACE merge 193 239
+TRACE merge 238 438
+TRACE merge 439 190
+TRACE edge [2, 60]
+TRACE merge 227 238
+TRACE merge 239 226
+TRACE edge [2, 62]
+TRACE merge 31 28
+TRACE merge 29 32
+TRACE merge 33 34
+TRACE merge 35 30
+TRACE merge 33 31
+TRACE edge [3, 8]
+TRACE merge 264 269
+TRACE merge 268 265
+TRACE edge [3, 10]
+TRACE merge 260 263
+TRACE merge 262 273
+TRACE merge 272 271
+TRACE merge 270 261
+TRACE merge 272 260
+TRACE edge [3, 11]
+TRACE merge 266 268
+TRACE merge 269 267
+TRACE edge [3, 16]
+TRACE merge 14 13
+TRACE merge 12 11
+TRACE merge 10 264
+TRACE merge 265 117
+TRACE merge 116 119
+TRACE merge 118 15
+TRACE edge [3, 19]
+TRACE merge 267 270
+TRACE merge 271 272
+TRACE merge 273 425
+TRACE merge 424 266
+TRACE edge [3, 27]
+TRACE merge 422 424
+TRACE merge 425 423
+TRACE edge [3, 41]
+TRACE merge 36 39
+TRACE merge 38 41
+TRACE merge 40 231
+TRACE merge 230 262
+TRACE merge 263 260
+TRACE merge 261 37
+TRACE edge [3, 52]
+TRACE merge 119 116
+TRACE merge 117 422
+TRACE merge 423 245
+TRACE merge 244 118
+TRACE edge [3, 57]
+TRACE merge 231 257
+TRACE merge 256 230
+TRACE edge [3, 61]
+TRACE merge 245 256
+TRACE merge 257 244
+TRACE edge [3, 62]
+TRACE merge 11 12
+TRACE merge 13 14
+TRACE merge 15 40
+TRACE merge 41 38
+TRACE merge 39 36
+TRACE merge 37 10
+TRACE merge 39 11
+TRACE merge 41 13
+TRACE edge [4, 7]
+TRACE merge 98 219
+TRACE merge 218 99
+TRACE edge [4, 15]
+TRACE merge 46 75
+TRACE merge 74 47
+TRACE edge [4, 20]
+TRACE merge 47 147
+TRACE merge 146 46
+TRACE edge [4, 23]
+TRACE merge 99 105
+TRACE merge 104 98
+TRACE edge [4, 46]
+TRACE merge 75 97
+TRACE merge 96 74
+TRACE edge [4, 49]
+TRACE merge 97 104
+TRACE merge 105 96
+TRACE edge [5, 12]
+TRACE merge 276 289
+TRACE merge 288 277
+TRACE edge [5, 13]
+TRACE merge 274 276
+TRACE merge 277 275
+TRACE edge [5, 14]
+TRACE merge 278 281
+TRACE merge 280 285
+TRACE merge 284 283
+TRACE merge 282 279
+TRACE merge 284 278
+TRACE edge [5, 21]
+TRACE merge 275 431
+TRACE merge 430 433
+TRACE merge 432 280
+TRACE merge 281 278
+TRACE merge 279 647
+TRACE merge 646 274
+TRACE edge [5, 24]
+TRACE merge 124 123
+TRACE merge 122 121
+TRACE merge 120 127
+TRACE merge 126 129
+TRACE merge 128 131
+TRACE merge 130 125
+TRACE merge 126 122
+TRACE merge 128 124
+TRACE edge [5, 29]
+TRACE merge 644 646
+TRACE merge 647 645
+TRACE edge [5, 43]
+TRACE merge 406 91
+TRACE merge 90 89
+TRACE merge 88 282
+TRACE merge 283 284
+TRACE merge 285 243
+TRACE merge 242 407
+TRACE edge [5, 44]
+TRACE merge 66 69
+TRACE merge 68 406
+TRACE merge 407 165
+TRACE merge 164 163
+TRACE merge 162 161
+TRACE merge 160 288
+TRACE merge 289 644
+TRACE merge 645 67
+TRACE edge [5, 52]
+TRACE merge 121 122
+TRACE merge 123 124
+TRACE merge 125 249
+TRACE merge 248 432
+TRACE merge 433 430
+TRACE merge 431 120
+TRACE edge [5, 53]
+TRACE merge 131 128
+TRACE merge 129 126
+TRACE merge 127 160
+TRACE merge 161 162
+TRACE merge 163 164
+TRACE merge 165 130
+TRACE merge 161 129
+TRACE merge 163 131
+TRACE edge [5, 61]
+TRACE merge 243 248
+TRACE merge 249 242
+TRACE edge [5, 63]
+TRACE merge 69 66
+TRACE merge 67 88
+TRACE merge 89 90
+TRACE merge 91 68
+TRACE merge 89 69
+TRACE edge [6, 22]
+TRACE merge 418 437
+TRACE merge 436 435
+TRACE merge 434 663
+TRACE merge 662 419
+TRACE edge [6, 25]
+TRACE merge 194 197
+TRACE merge 196 199
+TRACE merge 198 205
+TRACE merge 204 203
+TRACE merge 202 201
+TRACE merge 200 195
+TRACE merge 202 194
+TRACE merge 204 196
+TRACE edge [6, 30]
+TRACE merge 660 665
+TRACE merge 664 661
+TRACE edge [6, 46]
+TRACE merge 56 55
+TRACE merge 54 101
+TRACE merge 100 103
+TRACE merge 102 57
+TRACE merge 100 56
+TRACE edge [6, 47]
+TRACE merge 76 79
+TRACE merge 78 255
+TRACE merge 254 421
+TRACE merge 420 77
+TRACE edge [6, 48]
+TRACE merge 55 56
+TRACE merge 57 78
+TRACE merge 79 76
+TRACE merge 77 54
+TRACE merge 79 55
+TRACE edge [6, 49]
+TRACE merge 103 100
+TRACE merge 101 107
+TRACE merge 106 109
+TRACE merge 108 102
+TRACE merge 106 103
+TRACE edge [6, 50]
+TRACE merge 109 106
+TRACE merge 107 660
+TRACE merge 661 183
+TRACE merge 182 185
+TRACE merge 184 187
+TRACE merge 186 108
+TRACE edge [6, 55]
+TRACE merge 187 184
+TRACE merge 185 182
+TRACE merge 183 200
+TRACE merge 201 202
+TRACE merge 203 204
+TRACE merge 205 186
+TRACE merge 201 185
+TRACE merge 203 187
+TRACE edge [6, 56]
+TRACE merge 199 196
+TRACE merge 197 194
+TRACE merge 195 434
+TRACE merge 435 436
+TRACE merge 437 229
+TRACE merge 228 198
+TRACE edge [6, 59]
+TRACE merge 236 254
+TRACE merge 255 237
+TRACE edge [6, 60]
+TRACE merge 229 236
+TRACE merge 237 228
+TRACE edge [6, 70]
+TRACE merge 419 420
+TRACE merge 421 418
+TRACE edge [6, 82]
+TRACE merge 663 664
+TRACE merge 665 662
+TRACE edge [7, 23]
+TRACE merge 98 169
+TRACE merge 168 99
+TRACE edge [8, 11]
+TRACE merge 268 291
+TRACE merge 290 269
+TRACE edge [8, 12]
+TRACE merge 292 329
+TRACE merge 328 293
+TRACE edge [8, 13]
+TRACE merge 291 292
+TRACE merge 293 290
+TRACE edge [8, 16]
+TRACE merge 264 355
+TRACE merge 354 265
+TRACE edge [8, 20]
+TRACE merge 329 337
+TRACE merge 336 328
+TRACE edge [8, 24]
+TRACE merge 326 354
+TRACE merge 355 327
+TRACE edge [8, 51]
+TRACE merge 327 336
+TRACE merge 337 326
+TRACE edge [9, 16]
+TRACE merge 8 21
+TRACE merge 20 23
+TRACE merge 22 25
+TRACE merge 24 353
+TRACE merge 352 351
+TRACE merge 350 9
+TRACE merge 352 22
+TRACE edge [9, 25]
+TRACE merge 478 481
+TRACE merge 480 479
+TRACE edge [9, 32]
+TRACE merge 481 497
+TRACE merge 496 480
+TRACE edge [9, 40]
+TRACE merge 18 17
+TRACE merge 16 27
+TRACE merge 26 478
+TRACE merge 479 19
+TRACE edge [9, 57]
+TRACE merge 310 319
+TRACE merge 318 311
+TRACE edge [9, 61]
+TRACE merge 294 318
+TRACE merge 319 295
+TRACE edge [9, 62]
+TRACE merge 25 22
+TRACE merge 23 20
+TRACE merge 21 29
+TRACE merge 28 31
+TRACE merge 30 310
+TRACE merge 311 24
+TRACE edge [9, 64]
+TRACE merge 308 499
+TRACE merge 498 350
+TRACE merge 351 352
+TRACE merge 353 309
+TRACE edge [9, 66]
+TRACE merge 295 308
+TRACE merge 309 294
+TRACE edge [9, 72]
+TRACE merge 497 498
+TRACE merge 499 496
+TRACE edge [10, 18]
+TRACE merge 396 511
+TRACE merge 510 397
+TRACE edge [10, 19]
+TRACE merge 272 271
+TRACE merge 270 371
+TRACE merge 370 373
+TRACE merge 372 273
+TRACE merge 370 272
+TRACE edge [10, 26]
+TRACE merge 511 513
+TRACE merge 512 510
+TRACE edge [10, 35]
+TRACE merge 513 527
+TRACE merge 526 512
+TRACE edge [10, 41]
+TRACE merge 260 263
+TRACE merge 262 313
+TRACE merge 312 399
+TRACE merge 398 261
+TRACE edge [10, 42]
+TRACE merge 397 398
+TRACE merge 399 396
+TRACE edge [10, 68]
+TRACE merge 313 372
+TRACE merge 373 370
+TRACE merge 371 529
+TRACE merge 528 312
+TRACE edge [10, 75]
+TRACE merge 527 528
+TRACE merge 529 526
+TRACE edge [11, 13]
+TRACE merge 290 387
+TRACE merge 386 291
+TRACE edge [11, 19]
+TRACE merge 266 375
+TRACE merge 374 267
+TRACE edge [11, 21]
+TRACE merge 384 386
+TRACE merge 387 385
+TRACE edge [11, 27]
+TRACE merge 375 384
+TRACE merge 385 374
+TRACE edge [12, 13]
+TRACE merge 276 293
+TRACE merge 292 277
+TRACE edge [12, 20]
+TRACE merge 286 329
+TRACE merge 328 287
+TRACE edge [12, 44]
+TRACE merge 287 289
+TRACE merge 288 286
+TRACE edge [13, 21]
+TRACE merge 274 387
+TRACE merge 386 275
+TRACE edge [14, 21]
+TRACE merge 278 281
+TRACE merge 280 393
+TRACE merge 392 391
+TRACE merge 390 389
+TRACE merge 388 719
+TRACE merge 718 279
+TRACE edge [14, 27]
+TRACE merge 368 367
+TRACE merge 366 365
+TRACE merge 364 388
+TRACE merge 389 390
+TRACE merge 391 392
+TRACE merge 393 369
+TRACE merge 389 366
+TRACE merge 391 368
+TRACE edge [14, 29]
+TRACE merge 719 723
+TRACE merge 722 718
+TRACE edge [14, 37]
+TRACE merge 720 722
+TRACE merge 723 721
+TRACE edge [14, 43]
+TRACE merge 284 283
+TRACE merge 282 403
+TRACE merge 402 299
+TRACE merge 298 285
+TRACE edge [14, 45]
+TRACE merge 403 413
+TRACE merge 412 402
+TRACE edge [14, 61]
+TRACE merge 299 315
+TRACE merge 314 298
+TRACE edge [14, 67]
+TRACE merge 315 551
+TRACE merge 550 549
+TRACE merge 548 364
+TRACE merge 365 366
+TRACE merge 367 368
+TRACE merge 369 314
+TRACE edge [14, 69]
+TRACE merge 404 717
+TRACE merge 716 553
+TRACE merge 552 555
+TRACE merge 554 405
+TRACE edge [14, 70]
+TRACE merge 405 412
+TRACE merge 413 404
+TRACE edge [14, 75]
+TRACE merge 549 550
+TRACE merge 551 559
+TRACE merge 558 557
+TRACE merge 556 548
+TRACE merge 558 549
+TRACE edge [14, 76]
+TRACE merge 555 552
+TRACE merge 553 556
+TRACE merge 557 558
+TRACE merge 559 554
+TRACE merge 557 555
+TRACE edge [14, 84]
+TRACE merge 717 720
+TRACE merge 721 716
+TRACE edge [15, 20]
+TRACE merge 46 339
+TRACE merge 338 341
+TRACE merge 340 343
+TRACE merge 342 53
+TRACE merge 52 51
+TRACE merge 50 49
+TRACE merge 48 667
+TRACE merge 666 47
+TRACE edge [15, 24]
+TRACE merge 334 333
+TRACE merge 332 331
+TRACE merge 330 345
+TRACE merge 344 347
+TRACE merge 346 349
+TRACE merge 348 335
+TRACE merge 344 332
+TRACE merge 346 334
+TRACE edge [15, 28]
+TRACE merge 667 671
+TRACE merge 670 666
+TRACE edge [15, 36]
+TRACE merge 668 670
+TRACE merge 671 669
+TRACE edge [15, 45]
+TRACE merge 62 65
+TRACE merge 64 73
+TRACE merge 72 71
+TRACE merge 70 63
+TRACE merge 72 62
+TRACE edge [15, 46]
+TRACE merge 74 699
+TRACE merge 698 81
+TRACE merge 80 83
+TRACE merge 82 455
+TRACE merge 454 453
+TRACE merge 452 75
+TRACE edge [15, 47]
+TRACE merge 71 72
+TRACE merge 73 87
+TRACE merge 86 85
+TRACE merge 84 70
+TRACE merge 86 71
+TRACE edge [15, 48]
+TRACE merge 83 80
+TRACE merge 81 84
+TRACE merge 85 86
+TRACE merge 87 82
+TRACE merge 85 83
+TRACE edge [15, 51]
+TRACE merge 331 332
+TRACE merge 333 334
+TRACE merge 335 342
+TRACE merge 343 340
+TRACE merge 341 338
+TRACE merge 339 330
+TRACE merge 341 331
+TRACE merge 343 333
+TRACE edge [15, 63]
+TRACE merge 49 50
+TRACE merge 51 52
+TRACE merge 53 297
+TRACE merge 296 64
+TRACE merge 65 62
+TRACE merge 63 48
+TRACE edge [15, 65]
+TRACE merge 300 348
+TRACE merge 349 346
+TRACE merge 347 344
+TRACE merge 345 457
+TRACE merge 456 459
+TRACE merge 458 301
+TRACE edge [15, 66]
+TRACE merge 297 300
+TRACE merge 301 296
+TRACE edge [15, 72]
+TRACE merge 459 456
+TRACE merge 457 463
+TRACE merge 462 465
+TRACE merge 464 458
+TRACE merge 462 459
+TRACE edge [15, 73]
+TRACE merge 453 454
+TRACE merge 455 464
+TRACE merge 465 462
+TRACE merge 463 452
+TRACE merge 465 453
+TRACE edge [15, 83]
+TRACE merge 669 698
+TRACE merge 699 668
+TRACE edge [16, 24]
+TRACE merge 114 355
+TRACE merge 354 135
+TRACE merge 134 137
+TRACE merge 136 363
+TRACE merge 362 361
+TRACE merge 360 115
+TRACE edge [16, 52]
+TRACE merge 116 119
+TRACE merge 118 136
+TRACE merge 137 134
+TRACE merge 135 117
+TRACE merge 137 116
+TRACE edge [16, 62]
+TRACE merge 14 13
+TRACE merge 12 11
+TRACE merge 10 21
+TRACE merge 20 23
+TRACE merge 22 25
+TRACE merge 24 15
+TRACE merge 20 12
+TRACE merge 14 22
+TRACE edge [16, 64]
+TRACE merge 352 351
+TRACE merge 350 357
+TRACE merge 356 359
+TRACE merge 358 353
+TRACE merge 352 356
+TRACE edge [16, 65]
+TRACE merge 359 356
+TRACE merge 357 360
+TRACE merge 361 362
+TRACE merge 363 358
+TRACE merge 361 359
+TRACE edge [17, 25]
+TRACE merge 188 491
+TRACE merge 490 217
+TRACE merge 216 215
+TRACE merge 214 189
+TRACE edge [17, 40]
+TRACE merge 0 5
+TRACE merge 4 7
+TRACE merge 6 490
+TRACE merge 491 1
+TRACE edge [17, 56]
+TRACE merge 192 191
+TRACE merge 190 214
+TRACE merge 215 216
+TRACE merge 217 193
+TRACE merge 192 215
+TRACE edge [18, 26]
+TRACE merge 440 511
+TRACE merge 510 441
+TRACE edge [18, 42]
+TRACE merge 394 397
+TRACE merge 396 395
+TRACE edge [19, 27]
+TRACE merge 374 377
+TRACE merge 376 379
+TRACE merge 378 425
+TRACE merge 424 375
+TRACE edge [19, 67]
+TRACE merge 379 376
+TRACE merge 377 381
+TRACE merge 380 383
+TRACE merge 382 378
+TRACE merge 380 379
+TRACE edge [19, 68]
+TRACE merge 370 373
+TRACE merge 372 382
+TRACE merge 383 380
+TRACE merge 381 371
+TRACE merge 383 370
+TRACE edge [20, 28]
+TRACE merge 648 667
+TRACE merge 666 649
+TRACE edge [20, 29]
+TRACE merge 649 651
+TRACE merge 650 648
+TRACE edge [20, 43]
+TRACE merge 400 409
+TRACE merge 408 401
+TRACE edge [20, 44]
+TRACE merge 401 61
+TRACE merge 60 59
+TRACE merge 58 650
+TRACE merge 651 287
+TRACE merge 286 149
+TRACE merge 148 151
+TRACE merge 150 153
+TRACE merge 152 400
+TRACE edge [20, 51]
+TRACE merge 144 339
+TRACE merge 338 341
+TRACE merge 340 343
+TRACE merge 342 159
+TRACE merge 158 157
+TRACE merge 156 155
+TRACE merge 154 337
+TRACE merge 336 145
+TRACE merge 340 158
+TRACE edge [20, 53]
+TRACE merge 153 150
+TRACE merge 151 148
+TRACE merge 149 154
+TRACE merge 155 156
+TRACE merge 157 158
+TRACE merge 159 152
+TRACE merge 155 151
+TRACE merge 157 153
+TRACE edge [20, 63]
+TRACE merge 52 51
+TRACE merge 50 49
+TRACE merge 48 58
+TRACE merge 59 60
+TRACE merge 61 408
+TRACE merge 409 53
+TRACE merge 59 50
+TRACE merge 52 61
+TRACE edge [21, 27]
+TRACE merge 384 427
+TRACE merge 426 429
+TRACE merge 428 393
+TRACE merge 392 391
+TRACE merge 390 389
+TRACE merge 388 385
+TRACE merge 392 426
+TRACE edge [21, 29]
+TRACE merge 646 719
+TRACE merge 718 647
+TRACE edge [21, 52]
+TRACE merge 429 426
+TRACE merge 427 431
+TRACE merge 430 433
+TRACE merge 432 428
+TRACE merge 430 429
+TRACE edge [22, 26]
+TRACE merge 444 443
+TRACE merge 442 797
+TRACE merge 796 521
+TRACE merge 520 523
+TRACE merge 522 525
+TRACE merge 524 445
+TRACE edge [22, 34]
+TRACE merge 792 796
+TRACE merge 797 793
+TRACE edge [22, 35]
+TRACE merge 514 517
+TRACE merge 516 519
+TRACE merge 518 524
+TRACE merge 525 522
+TRACE merge 523 520
+TRACE merge 521 515
+TRACE merge 523 514
+TRACE merge 525 516
+TRACE edge [22, 38]
+TRACE merge 793 795
+TRACE merge 794 792
+TRACE edge [22, 56]
+TRACE merge 436 435
+TRACE merge 434 442
+TRACE merge 443 444
+TRACE merge 445 437
+TRACE merge 443 436
+TRACE edge [22, 70]
+TRACE merge 414 419
+TRACE merge 418 415
+TRACE edge [22, 71]
+TRACE merge 415 571
+TRACE merge 570 569
+TRACE merge 568 567
+TRACE merge 566 709
+TRACE merge 708 711
+TRACE merge 710 414
+TRACE edge [22, 77]
+TRACE merge 519 516
+TRACE merge 517 514
+TRACE merge 515 566
+TRACE merge 567 568
+TRACE merge 569 570
+TRACE merge 571 518
+TRACE merge 567 517
+TRACE merge 569 519
+TRACE edge [22, 82]
+TRACE merge 662 710
+TRACE merge 711 708
+TRACE merge 709 794
+TRACE merge 795 663
+TRACE edge [23, 30]
+TRACE merge 652 655
+TRACE merge 654 653
+TRACE edge [23, 32]
+TRACE merge 484 483
+TRACE merge 482 493
+TRACE merge 492 495
+TRACE merge 494 485
+TRACE merge 492 484
+TRACE edge [23, 33]
+TRACE merge 784 791
+TRACE merge 790 785
+TRACE edge [23, 39]
+TRACE merge 785 787
+TRACE merge 786 784
+TRACE edge [23, 49]
+TRACE merge 104 473
+TRACE merge 472 475
+TRACE merge 474 477
+TRACE merge 476 113
+TRACE merge 112 111
+TRACE merge 110 689
+TRACE merge 688 687
+TRACE merge 686 105
+TRACE edge [23, 50]
+TRACE merge 111 112
+TRACE merge 113 175
+TRACE merge 174 173
+TRACE merge 172 171
+TRACE merge 170 654
+TRACE merge 655 110
+TRACE edge [23, 54]
+TRACE merge 166 790
+TRACE merge 791 177
+TRACE merge 176 179
+TRACE merge 178 181
+TRACE merge 180 494
+TRACE merge 495 691
+TRACE merge 690 492
+TRACE merge 493 167
+TRACE edge [23, 55]
+TRACE merge 171 172
+TRACE merge 173 174
+TRACE merge 175 180
+TRACE merge 181 178
+TRACE merge 179 176
+TRACE merge 177 170
+TRACE merge 179 171
+TRACE merge 181 173
+TRACE edge [23, 74]
+TRACE merge 477 474
+TRACE merge 475 472
+TRACE merge 473 482
+TRACE merge 483 690
+TRACE merge 691 484
+TRACE merge 485 476
+TRACE merge 483 475
+TRACE merge 691 477
+TRACE edge [23, 80]
+TRACE merge 653 659
+TRACE merge 658 652
+TRACE edge [23, 81]
+TRACE merge 659 786
+TRACE merge 787 686
+TRACE merge 687 688
+TRACE merge 689 658
+TRACE edge [24, 51]
+TRACE merge 132 327
+TRACE merge 326 139
+TRACE merge 138 141
+TRACE merge 140 143
+TRACE merge 142 335
+TRACE merge 334 333
+TRACE merge 332 331
+TRACE merge 330 133
+TRACE merge 334 140
+TRACE edge [24, 52]
+TRACE merge 124 123
+TRACE merge 122 121
+TRACE merge 120 135
+TRACE merge 134 137
+TRACE merge 136 601
+TRACE merge 600 125
+TRACE merge 134 122
+TRACE edge [24, 53]
+TRACE merge 126 129
+TRACE merge 128 131
+TRACE merge 130 142
+TRACE merge 143 140
+TRACE merge 141 138
+TRACE merge 139 127
+TRACE merge 141 126
+TRACE merge 143 128
+TRACE edge [24, 61]
+TRACE merge 601 615
+TRACE merge 614 600
+TRACE edge [24, 65]
+TRACE merge 344 347
+TRACE merge 346 349
+TRACE merge 348 591
+TRACE merge 590 363
+TRACE merge 362 361
+TRACE merge 360 345
+TRACE merge 362 344
+TRACE edge [24, 66]
+TRACE merge 591 614
+TRACE merge 615 590
+TRACE edge [25, 32]
+TRACE merge 480 579
+TRACE merge 578 581
+TRACE merge 580 489
+TRACE merge 488 693
+TRACE merge 692 487
+TRACE merge 486 481
+TRACE merge 488 578
+TRACE edge [25, 33]
+TRACE merge 728 789
+TRACE merge 788 729
+TRACE edge [25, 34]
+TRACE merge 729 731
+TRACE merge 730 728
+TRACE edge [25, 40]
+TRACE merge 478 491
+TRACE merge 490 479
+TRACE edge [25, 54]
+TRACE merge 206 486
+TRACE merge 487 677
+TRACE merge 676 488
+TRACE merge 489 213
+TRACE merge 212 211
+TRACE merge 210 209
+TRACE merge 208 788
+TRACE merge 789 207
+TRACE edge [25, 55]
+TRACE merge 204 203
+TRACE merge 202 201
+TRACE merge 200 208
+TRACE merge 209 210
+TRACE merge 211 212
+TRACE merge 213 205
+TRACE merge 209 202
+TRACE merge 204 211
+TRACE edge [25, 56]
+TRACE merge 194 197
+TRACE merge 196 199
+TRACE merge 198 580
+TRACE merge 581 578
+TRACE merge 579 217
+TRACE merge 216 215
+TRACE merge 214 730
+TRACE merge 731 195
+TRACE edge [25, 74]
+TRACE merge 677 692
+TRACE merge 693 676
+TRACE edge [26, 34]
+TRACE merge 732 797
+TRACE merge 796 733
+TRACE edge [26, 35]
+TRACE merge 512 521
+TRACE merge 520 523
+TRACE merge 522 525
+TRACE merge 524 605
+TRACE merge 604 603
+TRACE merge 602 513
+TRACE merge 522 604
+TRACE edge [26, 56]
+TRACE merge 438 573
+TRACE merge 572 575
+TRACE merge 574 445
+TRACE merge 444 443
+TRACE merge 442 732
+TRACE merge 733 439
+TRACE edge [26, 60]
+TRACE merge 575 572
+TRACE merge 573 597
+TRACE merge 596 599
+TRACE merge 598 574
+TRACE merge 596 575
+TRACE edge [26, 78]
+TRACE merge 599 596
+TRACE merge 597 602
+TRACE merge 603 604
+TRACE merge 605 598
+TRACE merge 603 599
+TRACE edge [27, 52]
+TRACE merge 422 427
+TRACE merge 426 429
+TRACE merge 428 607
+TRACE merge 606 423
+TRACE edge [27, 61]
+TRACE merge 607 617
+TRACE merge 616 606
+TRACE edge [27, 67]
+TRACE merge 368 367
+TRACE merge 366 365
+TRACE merge 364 377
+TRACE merge 376 379
+TRACE merge 378 616
+TRACE merge 617 369
+TRACE merge 376 366
+TRACE edge [28, 29]
+TRACE merge 622 649
+TRACE merge 648 623
+TRACE edge [28, 36]
+TRACE merge 634 671
+TRACE merge 670 635
+TRACE edge [28, 37]
+TRACE merge 623 629
+TRACE merge 628 622
+TRACE edge [28, 79]
+TRACE merge 629 634
+TRACE merge 635 628
+TRACE edge [29, 37]
+TRACE merge 622 723
+TRACE merge 722 623
+TRACE edge [29, 44]
+TRACE merge 644 651
+TRACE merge 650 645
+TRACE edge [30, 36]
+TRACE merge 630 633
+TRACE merge 632 639
+TRACE merge 638 637
+TRACE merge 636 631
+TRACE merge 638 630
+TRACE edge [30, 37]
+TRACE merge 624 627
+TRACE merge 626 727
+TRACE merge 726 725
+TRACE merge 724 625
+TRACE merge 726 624
+TRACE edge [30, 38]
+TRACE merge 734 799
+TRACE merge 798 735
+TRACE edge [30, 50]
+TRACE merge 654 661
+TRACE merge 660 655
+TRACE edge [30, 69]
+TRACE merge 702 701
+TRACE merge 700 705
+TRACE merge 704 707
+TRACE merge 706 703
+TRACE merge 704 702
+TRACE edge [30, 71]
+TRACE merge 701 702
+TRACE merge 703 715
+TRACE merge 714 713
+TRACE merge 712 700
+TRACE merge 714 701
+TRACE edge [30, 79]
+TRACE merge 627 624
+TRACE merge 625 636
+TRACE merge 637 638
+TRACE merge 639 626
+TRACE merge 637 627
+TRACE edge [30, 80]
+TRACE merge 633 630
+TRACE merge 631 734
+TRACE merge 735 653
+TRACE merge 652 632
+TRACE edge [30, 82]
+TRACE merge 664 798
+TRACE merge 799 712
+TRACE merge 713 714
+TRACE merge 715 665
+TRACE edge [30, 84]
+TRACE merge 707 704
+TRACE merge 705 724
+TRACE merge 725 726
+TRACE merge 727 706
+TRACE merge 725 707
+TRACE edge [31, 36]
+TRACE merge 642 641
+TRACE merge 640 673
+TRACE merge 672 675
+TRACE merge 674 643
+TRACE merge 672 642
+TRACE edge [31, 38]
+TRACE merge 736 739
+TRACE merge 738 737
+TRACE edge [31, 39]
+TRACE merge 737 783
+TRACE merge 782 736
+TRACE edge [31, 46]
+TRACE merge 678 681
+TRACE merge 680 685
+TRACE merge 684 683
+TRACE merge 682 679
+TRACE merge 684 678
+TRACE edge [31, 49]
+TRACE merge 681 678
+TRACE merge 679 695
+TRACE merge 694 697
+TRACE merge 696 680
+TRACE merge 694 681
+TRACE edge [31, 80]
+TRACE merge 641 642
+TRACE merge 643 657
+TRACE merge 656 738
+TRACE merge 739 640
+TRACE edge [31, 81]
+TRACE merge 657 696
+TRACE merge 697 694
+TRACE merge 695 782
+TRACE merge 783 656
+TRACE edge [31, 83]
+TRACE merge 675 672
+TRACE merge 673 682
+TRACE merge 683 684
+TRACE merge 685 674
+TRACE merge 683 675
+TRACE edge [32, 47]
+TRACE merge 746 751
+TRACE merge 750 747
+TRACE edge [32, 48]
+TRACE merge 747 773
+TRACE merge 772 746
+TRACE edge [32, 54]
+TRACE merge 488 487
+TRACE merge 486 493
+TRACE merge 492 495
+TRACE merge 494 489
+TRACE merge 492 488
+TRACE edge [32, 56]
+TRACE merge 578 581
+TRACE merge 580 587
+TRACE merge 586 585
+TRACE merge 584 579
+TRACE merge 586 578
+TRACE edge [32, 58]
+TRACE merge 576 589
+TRACE merge 588 577
+TRACE edge [32, 59]
+TRACE merge 740 750
+TRACE merge 751 741
+TRACE edge [32, 60]
+TRACE merge 585 586
+TRACE merge 587 740
+TRACE merge 741 588
+TRACE merge 589 584
+TRACE edge [32, 72]
+TRACE merge 496 576
+TRACE merge 577 503
+TRACE merge 502 501
+TRACE merge 500 497
+TRACE edge [32, 73]
+TRACE merge 501 502
+TRACE merge 503 772
+TRACE merge 773 509
+TRACE merge 508 507
+TRACE merge 506 505
+TRACE merge 504 500
+TRACE merge 506 501
+TRACE edge [32, 74]
+TRACE merge 484 693
+TRACE merge 692 483
+TRACE merge 482 504
+TRACE merge 505 506
+TRACE merge 507 508
+TRACE merge 509 485
+TRACE merge 505 692
+TRACE merge 484 507
+TRACE edge [33, 34]
+TRACE merge 728 781
+TRACE merge 780 729
+TRACE edge [33, 38]
+TRACE merge 778 780
+TRACE merge 781 779
+TRACE edge [33, 39]
+TRACE merge 779 785
+TRACE merge 784 778
+TRACE edge [33, 54]
+TRACE merge 788 791
+TRACE merge 790 789
+TRACE edge [34, 38]
+TRACE merge 780 793
+TRACE merge 792 781
+TRACE edge [34, 56]
+TRACE merge 730 733
+TRACE merge 732 731
+TRACE edge [35, 47]
+TRACE merge 742 749
+TRACE merge 748 743
+TRACE edge [35, 58]
+TRACE merge 612 621
+TRACE merge 620 613
+TRACE edge [35, 59]
+TRACE merge 749 763
+TRACE merge 762 748
+TRACE edge [35, 61]
+TRACE merge 613 619
+TRACE merge 618 612
+TRACE edge [35, 70]
+TRACE merge 743 757
+TRACE merge 756 742
+TRACE edge [35, 75]
+TRACE merge 526 531
+TRACE merge 530 533
+TRACE merge 532 618
+TRACE merge 619 527
+TRACE edge [35, 76]
+TRACE merge 533 530
+TRACE merge 531 535
+TRACE merge 534 537
+TRACE merge 536 539
+TRACE merge 538 756
+TRACE merge 757 532
+TRACE merge 534 533
+TRACE edge [35, 77]
+TRACE merge 514 517
+TRACE merge 516 519
+TRACE merge 518 538
+TRACE merge 539 536
+TRACE merge 537 534
+TRACE merge 535 515
+TRACE merge 537 514
+TRACE merge 539 516
+TRACE edge [35, 78]
+TRACE merge 604 603
+TRACE merge 602 620
+TRACE merge 621 762
+TRACE merge 763 605
+TRACE edge [36, 79]
+TRACE merge 634 775
+TRACE merge 774 639
+TRACE merge 638 637
+TRACE merge 636 635
+TRACE edge [36, 80]
+TRACE merge 630 633
+TRACE merge 632 643
+TRACE merge 642 641
+TRACE merge 640 631
+TRACE merge 642 630
+TRACE edge [36, 83]
+TRACE merge 668 673
+TRACE merge 672 675
+TRACE merge 674 774
+TRACE merge 775 669
+TRACE edge [37, 46]
+TRACE merge 766 771
+TRACE merge 770 767
+TRACE edge [37, 47]
+TRACE merge 744 755
+TRACE merge 754 745
+TRACE edge [37, 48]
+TRACE merge 745 770
+TRACE merge 771 744
+TRACE edge [37, 70]
+TRACE merge 755 765
+TRACE merge 764 754
+TRACE edge [37, 79]
+TRACE merge 624 627
+TRACE merge 626 777
+TRACE merge 776 629
+TRACE merge 628 625
+TRACE edge [37, 83]
+TRACE merge 767 776
+TRACE merge 777 766
+TRACE edge [37, 84]
+TRACE merge 720 764
+TRACE merge 765 727
+TRACE merge 726 725
+TRACE merge 724 721
+TRACE edge [38, 39]
+TRACE merge 736 779
+TRACE merge 778 737
+TRACE edge [38, 80]
+TRACE merge 734 739
+TRACE merge 738 735
+TRACE edge [38, 82]
+TRACE merge 794 799
+TRACE merge 798 795
+TRACE edge [39, 81]
+TRACE merge 782 787
+TRACE merge 786 783
+TRACE edge [41, 42]
+TRACE merge 42 45
+TRACE merge 44 225
+TRACE merge 224 399
+TRACE merge 398 43
+TRACE edge [41, 57]
+TRACE merge 230 323
+TRACE merge 322 233
+TRACE merge 232 321
+TRACE merge 320 231
+TRACE edge [41, 58]
+TRACE merge 222 232
+TRACE merge 233 223
+TRACE edge [41, 60]
+TRACE merge 223 224
+TRACE merge 225 222
+TRACE edge [41, 62]
+TRACE merge 36 39
+TRACE merge 38 41
+TRACE merge 40 320
+TRACE merge 321 44
+TRACE merge 45 42
+TRACE merge 43 37
+TRACE edge [41, 67]
+TRACE merge 323 325
+TRACE merge 324 322
+TRACE edge [41, 68]
+TRACE merge 312 324
+TRACE merge 325 313
+TRACE edge [42, 60]
+TRACE merge 224 227
+TRACE merge 226 225
+TRACE edge [42, 62]
+TRACE merge 34 33
+TRACE merge 32 43
+TRACE merge 42 45
+TRACE merge 44 35
+TRACE merge 42 34
+TRACE edge [43, 44]
+TRACE merge 400 407
+TRACE merge 406 401
+TRACE edge [43, 45]
+TRACE merge 94 93
+TRACE merge 92 403
+TRACE merge 402 247
+TRACE merge 246 95
+TRACE edge [43, 58]
+TRACE merge 252 259
+TRACE merge 258 253
+TRACE edge [43, 59]
+TRACE merge 247 252
+TRACE merge 253 246
+TRACE edge [43, 61]
+TRACE merge 242 307
+TRACE merge 306 258
+TRACE merge 259 299
+TRACE merge 298 243
+TRACE edge [43, 63]
+TRACE merge 408 91
+TRACE merge 90 89
+TRACE merge 88 92
+TRACE merge 93 94
+TRACE merge 95 303
+TRACE merge 302 409
+TRACE edge [43, 66]
+TRACE merge 303 306
+TRACE merge 307 302
+TRACE edge [44, 53]
+TRACE merge 148 151
+TRACE merge 150 153
+TRACE merge 152 165
+TRACE merge 164 163
+TRACE merge 162 161
+TRACE merge 160 149
+TRACE merge 162 148
+TRACE merge 150 164
+TRACE edge [44, 63]
+TRACE merge 60 59
+TRACE merge 58 67
+TRACE merge 66 69
+TRACE merge 68 61
+TRACE merge 66 60
+TRACE edge [45, 47]
+TRACE merge 72 71
+TRACE merge 70 417
+TRACE merge 416 241
+TRACE merge 240 73
+TRACE edge [45, 59]
+TRACE merge 241 247
+TRACE merge 246 240
+TRACE edge [45, 63]
+TRACE merge 62 65
+TRACE merge 64 95
+TRACE merge 94 93
+TRACE merge 92 63
+TRACE merge 62 94
+TRACE edge [45, 70]
+TRACE merge 412 416
+TRACE merge 417 413
+TRACE edge [46, 48]
+TRACE merge 56 55
+TRACE merge 54 771
+TRACE merge 770 81
+TRACE merge 80 83
+TRACE merge 82 769
+TRACE merge 768 57
+TRACE edge [46, 49]
+TRACE merge 96 679
+TRACE merge 678 681
+TRACE merge 680 101
+TRACE merge 100 103
+TRACE merge 102 451
+TRACE merge 450 449
+TRACE merge 448 447
+TRACE merge 446 97
+TRACE edge [46, 73]
+TRACE merge 454 453
+TRACE merge 452 467
+TRACE merge 466 469
+TRACE merge 468 471
+TRACE merge 470 768
+TRACE merge 769 455
+TRACE merge 466 454
+TRACE edge [46, 74]
+TRACE merge 447 448
+TRACE merge 449 450
+TRACE merge 451 470
+TRACE merge 471 468
+TRACE merge 469 466
+TRACE merge 467 446
+TRACE merge 469 447
+TRACE merge 471 449
+TRACE edge [46, 83]
+TRACE merge 684 683
+TRACE merge 682 699
+TRACE merge 698 767
+TRACE merge 766 685
+TRACE edge [47, 48]
+TRACE merge 76 79
+TRACE merge 78 747
+TRACE merge 746 87
+TRACE merge 86 85
+TRACE merge 84 745
+TRACE merge 744 77
+TRACE edge [47, 59]
+TRACE merge 240 751
+TRACE merge 750 255
+TRACE merge 254 749
+TRACE merge 748 241
+TRACE edge [47, 70]
+TRACE merge 416 743
+TRACE merge 742 421
+TRACE merge 420 755
+TRACE merge 754 417
+TRACE edge [48, 73]
+TRACE merge 768 773
+TRACE merge 772 769
+TRACE edge [49, 50]
+TRACE merge 106 109
+TRACE merge 108 113
+TRACE merge 112 111
+TRACE merge 110 107
+TRACE merge 112 106
+TRACE edge [49, 74]
+TRACE merge 450 449
+TRACE merge 448 447
+TRACE merge 446 473
+TRACE merge 472 475
+TRACE merge 474 477
+TRACE merge 476 451
+TRACE merge 472 448
+TRACE merge 474 450
+TRACE edge [49, 81]
+TRACE merge 688 687
+TRACE merge 686 695
+TRACE merge 694 697
+TRACE merge 696 689
+TRACE merge 688 694
+TRACE edge [50, 55]
+TRACE merge 174 173
+TRACE merge 172 171
+TRACE merge 170 183
+TRACE merge 182 185
+TRACE merge 184 187
+TRACE merge 186 175
+TRACE merge 182 172
+TRACE merge 184 174
+TRACE edge [51, 53]
+TRACE merge 138 141
+TRACE merge 140 143
+TRACE merge 142 159
+TRACE merge 158 157
+TRACE merge 156 155
+TRACE merge 154 139
+TRACE merge 156 138
+TRACE merge 158 140
+TRACE edge [52, 61]
+TRACE merge 244 601
+TRACE merge 600 249
+TRACE merge 248 607
+TRACE merge 606 245
+TRACE edge [54, 55]
+TRACE merge 176 179
+TRACE merge 178 181
+TRACE merge 180 213
+TRACE merge 212 211
+TRACE merge 210 209
+TRACE merge 208 177
+TRACE merge 210 176
+TRACE merge 212 178
+TRACE edge [54, 74]
+TRACE merge 676 691
+TRACE merge 690 677
+TRACE edge [56, 60]
+TRACE merge 228 587
+TRACE merge 586 585
+TRACE merge 584 239
+TRACE merge 238 573
+TRACE merge 572 575
+TRACE merge 574 229
+TRACE edge [57, 58]
+TRACE merge 232 251
+TRACE merge 250 233
+TRACE edge [57, 61]
+TRACE merge 251 319
+TRACE merge 318 257
+TRACE merge 256 317
+TRACE merge 316 250
+TRACE edge [57, 62]
+TRACE merge 310 321
+TRACE merge 320 311
+TRACE edge [57, 67]
+TRACE merge 317 323
+TRACE merge 322 316
+TRACE edge [58, 59]
+TRACE merge 234 253
+TRACE merge 252 235
+TRACE edge [58, 60]
+TRACE merge 222 589
+TRACE merge 588 234
+TRACE merge 235 583
+TRACE merge 582 223
+TRACE edge [58, 61]
+TRACE merge 250 613
+TRACE merge 612 259
+TRACE merge 258 609
+TRACE merge 608 251
+TRACE edge [58, 65]
+TRACE merge 592 595
+TRACE merge 594 593
+TRACE edge [58, 66]
+TRACE merge 593 608
+TRACE merge 609 592
+TRACE edge [58, 72]
+TRACE merge 576 594
+TRACE merge 595 577
+TRACE edge [58, 78]
+TRACE merge 583 621
+TRACE merge 620 582
+TRACE edge [59, 60]
+TRACE merge 234 741
+TRACE merge 740 237
+TRACE merge 236 753
+TRACE merge 752 235
+TRACE edge [59, 78]
+TRACE merge 753 763
+TRACE merge 762 752
+TRACE edge [60, 78]
+TRACE merge 582 597
+TRACE merge 596 599
+TRACE merge 598 753
+TRACE merge 752 583
+TRACE edge [61, 66]
+TRACE merge 294 615
+TRACE merge 614 307
+TRACE merge 306 609
+TRACE merge 608 295
+TRACE edge [61, 67]
+TRACE merge 314 617
+TRACE merge 616 317
+TRACE merge 316 611
+TRACE merge 610 315
+TRACE edge [61, 75]
+TRACE merge 611 619
+TRACE merge 618 610
+TRACE edge [63, 66]
+TRACE merge 296 303
+TRACE merge 302 297
+TRACE edge [64, 65]
+TRACE merge 304 461
+TRACE merge 460 357
+TRACE merge 356 359
+TRACE merge 358 305
+TRACE edge [64, 66]
+TRACE merge 305 309
+TRACE merge 308 304
+TRACE edge [64, 72]
+TRACE merge 461 499
+TRACE merge 498 460
+TRACE edge [65, 66]
+TRACE merge 300 591
+TRACE merge 590 305
+TRACE merge 304 593
+TRACE merge 592 301
+TRACE edge [65, 72]
+TRACE merge 456 459
+TRACE merge 458 595
+TRACE merge 594 461
+TRACE merge 460 457
+TRACE edge [67, 68]
+TRACE merge 324 547
+TRACE merge 546 381
+TRACE merge 380 383
+TRACE merge 382 325
+TRACE edge [67, 75]
+TRACE merge 547 611
+TRACE merge 610 551
+TRACE merge 550 549
+TRACE merge 548 546
+TRACE edge [68, 75]
+TRACE merge 528 547
+TRACE merge 546 529
+TRACE edge [69, 70]
+TRACE merge 404 759
+TRACE merge 758 411
+TRACE merge 410 761
+TRACE merge 760 405
+TRACE edge [69, 71]
+TRACE merge 411 703
+TRACE merge 702 701
+TRACE merge 700 541
+TRACE merge 540 543
+TRACE merge 542 545
+TRACE merge 544 410
+TRACE edge [69, 76]
+TRACE merge 552 555
+TRACE merge 554 760
+TRACE merge 761 565
+TRACE merge 564 563
+TRACE merge 562 561
+TRACE merge 560 553
+TRACE merge 562 552
+TRACE edge [69, 77]
+TRACE merge 545 542
+TRACE merge 543 540
+TRACE merge 541 560
+TRACE merge 561 562
+TRACE merge 563 564
+TRACE merge 565 544
+TRACE merge 561 543
+TRACE merge 563 545
+TRACE edge [69, 84]
+TRACE merge 704 707
+TRACE merge 706 758
+TRACE merge 759 717
+TRACE merge 716 705
+TRACE edge [70, 71]
+TRACE merge 410 415
+TRACE merge 414 411
+TRACE edge [70, 76]
+TRACE merge 756 761
+TRACE merge 760 757
+TRACE edge [70, 84]
+TRACE merge 758 765
+TRACE merge 764 759
+TRACE edge [71, 77]
+TRACE merge 540 543
+TRACE merge 542 545
+TRACE merge 544 571
+TRACE merge 570 569
+TRACE merge 568 567
+TRACE merge 566 541
+TRACE merge 568 540
+TRACE merge 542 570
+TRACE edge [71, 82]
+TRACE merge 708 711
+TRACE merge 710 715
+TRACE merge 714 713
+TRACE merge 712 709
+TRACE merge 714 708
+TRACE edge [72, 73]
+TRACE merge 462 465
+TRACE merge 464 503
+TRACE merge 502 501
+TRACE merge 500 463
+TRACE merge 502 462
+TRACE edge [73, 74]
+TRACE merge 466 469
+TRACE merge 468 471
+TRACE merge 470 509
+TRACE merge 508 507
+TRACE merge 506 505
+TRACE merge 504 467
+TRACE merge 506 466
+TRACE merge 508 468
+TRACE edge [75, 76]
+TRACE merge 530 533
+TRACE merge 532 559
+TRACE merge 558 557
+TRACE merge 556 531
+TRACE merge 558 530
+TRACE edge [76, 77]
+TRACE merge 534 537
+TRACE merge 536 539
+TRACE merge 538 565
+TRACE merge 564 563
+TRACE merge 562 561
+TRACE merge 560 535
+TRACE merge 562 534
+TRACE merge 564 536
+TRACE edge [79, 83]
+TRACE merge 774 777
+TRACE merge 776 775
+TRACE edge [80, 81]
+TRACE merge 656 659
+TRACE merge 658 657
+TRACE unions_end
+TRACE inconsistent sheet=292 current=3 neighbor=31 component=3 delta=1 expected=1 retained=0
+TRACE corefine 33 points=[9, 16, 17, 23, 25, 32, 40, 54, 64, 72, 73, 74] constraints=[[9, 16], [9, 40], [9, 64], [16, 64], [17, 25], [17, 40], [23, 54], [23, 74], [25, 32], [25, 54], [32, 72], [32, 73], [32, 74], [64, 72], [72, 73], [73, 74]] triangles=[[9, 64, 16], [9, 40, 25], [9, 25, 32], [23, 74, 32], [25, 54, 32], [40, 17, 25], [54, 23, 32], [9, 32, 72], [72, 64, 9], [73, 72, 32], [74, 73, 32]]
+TRACE corefine 45 points=[15, 23, 24, 25, 31, 32, 46, 49, 54, 65, 72, 73, 74, 81, 83] constraints=[[15, 24], [15, 46], [15, 65], [15, 83], [23, 49], [23, 54], [23, 74], [23, 81], [24, 65], [25, 32], [25, 54], [31, 81], [31, 83], [32, 72], [32, 73], [32, 74], [46, 49], [46, 73], [46, 83], [49, 74], [49, 81], [65, 72], [72, 73], [73, 74]] triangles=[[25, 54, 74], [24, 65, 15], [46, 49, 31], [74, 73, 32], [73, 46, 15], [31, 83, 46], [23, 49, 74], [23, 81, 49], [54, 23, 74], [65, 72, 15], [72, 73, 15], [32, 25, 74], [73, 72, 32], [74, 49, 46], [46, 73, 74], [81, 31, 49], [83, 15, 46]]
+TRACE corefine 57 points=[23, 25, 32, 33, 39, 49, 54, 74, 81] constraints=[[23, 49], [23, 54], [23, 74], [23, 81], [25, 32], [25, 33], [25, 54], [32, 74], [33, 39], [39, 81], [49, 74], [49, 81]] triangles=[[25, 54, 32], [33, 39, 23], [39, 81, 23], [25, 33, 54], [49, 74, 23], [54, 23, 32], [54, 33, 23], [74, 32, 23], [81, 49, 23]]
+TRACE merge 0 1
+TRACE merge 0 7
+TRACE merge 0 9
+TRACE merge 1 4
+TRACE merge 1 10
+TRACE merge 2 3
+TRACE merge 2 5
+TRACE merge 2 11
+TRACE merge 3 6
+TRACE merge 3 8
+TRACE merge 4 5
+TRACE merge 4 11
+TRACE merge 5 8
+TRACE merge 6 7
+TRACE merge 6 9
+TRACE merge 7 10
+TRACE merge 8 9
+TRACE merge 10 11
+TRACE merge 12 13
+TRACE merge 12 19
+TRACE merge 12 21
+TRACE merge 13 16
+TRACE merge 13 22
+TRACE merge 14 15
+TRACE merge 14 17
+TRACE merge 14 23
+TRACE merge 15 18
+TRACE merge 15 20
+TRACE merge 16 17
+TRACE merge 16 23
+TRACE merge 17 20
+TRACE merge 18 19
+TRACE merge 18 21
+TRACE merge 19 22
+TRACE merge 20 21
+TRACE merge 22 23
+TRACE merge 24 25
+TRACE merge 24 31
+TRACE merge 24 33
+TRACE merge 25 28
+TRACE merge 25 34
+TRACE merge 26 27
+TRACE merge 26 29
+TRACE merge 26 35
+TRACE merge 27 30
+TRACE merge 27 32
+TRACE merge 28 29
+TRACE merge 28 35
+TRACE merge 29 32
+TRACE merge 30 31
+TRACE merge 30 33
+TRACE merge 31 34
+TRACE merge 32 33
+TRACE merge 34 35
+TRACE merge 36 37
+TRACE merge 36 43
+TRACE merge 36 45
+TRACE merge 37 40
+TRACE merge 37 46
+TRACE merge 38 39
+TRACE merge 38 41
+TRACE merge 38 47
+TRACE merge 39 42
+TRACE merge 39 44
+TRACE merge 40 41
+TRACE merge 40 47
+TRACE merge 41 44
+TRACE merge 42 43
+TRACE merge 42 45
+TRACE merge 43 46
+TRACE merge 44 45
+TRACE merge 46 47
+TRACE merge 48 49
+TRACE merge 48 55
+TRACE merge 48 57
+TRACE merge 49 52
+TRACE merge 49 58
+TRACE merge 50 51
+TRACE merge 50 53
+TRACE merge 50 59
+TRACE merge 51 54
+TRACE merge 51 56
+TRACE merge 52 53
+TRACE merge 52 59
+TRACE merge 53 56
+TRACE merge 54 55
+TRACE merge 54 57
+TRACE merge 55 58
+TRACE merge 56 57
+TRACE merge 58 59
+TRACE arrangement 1
+TRACE point 0 [{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 1 [{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 2 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 3 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 4 [{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 5 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 6 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 7 [{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 8 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 9 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 10 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 11 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 12 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 13 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 14 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 15 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 16 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 17 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 18 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 19 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 20 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 21 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 22 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 23 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 24 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 25 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 26 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 27 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 28 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 29 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 30 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 31 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 32 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 33 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 34 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 35 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 36 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 37 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 38 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 39 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 40 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 41 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 42 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 43 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 44 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 45 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 46 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 47 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 48 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 49 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 50 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 51 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 52 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 53 [{"rational":{"sign":1,"numerator":[17],"denominator":[5]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[8],"denominator":[5]},"class":"One","computable":null}]
+TRACE point 54 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 55 [{"rational":{"sign":1,"numerator":[17],"denominator":[5]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[8],"denominator":[5]},"class":"One","computable":null}]
+TRACE point 56 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 57 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 58 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 59 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 60 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 61 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 62 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":0,"numerator":[],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 63 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 64 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 65 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 66 [{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 67 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 68 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 69 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 70 [{"rational":{"sign":1,"numerator":[13],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 71 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[11],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[2],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 72 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 73 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 74 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[17],"denominator":[5]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[8],"denominator":[5]},"class":"One","computable":null}]
+TRACE point 75 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 76 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[3]},"class":"One","computable":null}]
+TRACE point 77 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[17],"denominator":[5]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[8],"denominator":[5]},"class":"One","computable":null}]
+TRACE point 78 [{"rational":{"sign":1,"numerator":[13],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[1],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 79 [{"rational":{"sign":1,"numerator":[13],"denominator":[3]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 80 [{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 81 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null}]
+TRACE point 82 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[4],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[5],"denominator":[2]},"class":"One","computable":null}]
+TRACE point 83 [{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null}]
+TRACE point 84 [{"rational":{"sign":1,"numerator":[5],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null},{"rational":{"sign":1,"numerator":[3],"denominator":[1]},"class":"One","computable":null}]
+TRACE facet 0 [0, 17, 40]
+TRACE facet 1 [0, 1, 17]
+TRACE facet 2 [2, 17, 40]
+TRACE facet 3 [0, 9, 16]
+TRACE facet 4 [3, 16, 62]
+TRACE facet 5 [2, 9, 40]
+TRACE facet 6 [9, 16, 62]
+TRACE facet 7 [0, 9, 40]
+TRACE facet 8 [2, 9, 62]
+TRACE facet 9 [2, 42, 62]
+TRACE facet 10 [3, 41, 62]
+TRACE facet 11 [41, 42, 62]
+TRACE facet 12 [4, 15, 20]
+TRACE facet 13 [15, 20, 63]
+TRACE facet 14 [6, 46, 48]
+TRACE facet 15 [20, 44, 63]
+TRACE facet 16 [15, 45, 63]
+TRACE facet 17 [5, 44, 63]
+TRACE facet 18 [15, 45, 47]
+TRACE facet 19 [4, 15, 46]
+TRACE facet 20 [6, 47, 48]
+TRACE facet 21 [15, 46, 48]
+TRACE facet 22 [15, 47, 48]
+TRACE facet 23 [5, 43, 63]
+TRACE facet 24 [43, 45, 63]
+TRACE facet 25 [4, 46, 49]
+TRACE facet 26 [4, 7, 23]
+TRACE facet 27 [6, 46, 49]
+TRACE facet 28 [4, 23, 49]
+TRACE facet 29 [6, 49, 50]
+TRACE facet 30 [23, 49, 50]
+TRACE facet 31 [0, 16, 24]
+TRACE facet 32 [3, 16, 52]
+TRACE facet 33 [5, 24, 52]
+TRACE facet 34 [5, 24, 53]
+TRACE facet 35 [0, 24, 51]
+TRACE facet 36 [16, 24, 52]
+TRACE facet 37 [24, 51, 53]
+TRACE facet 38 [0, 20, 51]
+TRACE facet 39 [0, 4, 20]
+TRACE facet 40 [20, 44, 53]
+TRACE facet 41 [20, 51, 53]
+TRACE facet 42 [5, 44, 53]
+TRACE facet 43 [1, 23, 54]
+TRACE facet 44 [1, 7, 23]
+TRACE facet 45 [23, 50, 55]
+TRACE facet 46 [23, 54, 55]
+TRACE facet 47 [6, 50, 55]
+TRACE facet 48 [1, 17, 25]
+TRACE facet 49 [2, 17, 56]
+TRACE facet 50 [6, 25, 56]
+TRACE facet 51 [6, 25, 55]
+TRACE facet 52 [1, 25, 54]
+TRACE facet 53 [25, 54, 55]
+TRACE facet 54 [17, 25, 56]
+TRACE facet 55 [0, 4, 7]
+TRACE facet 56 [0, 1, 7]
+TRACE facet 57 [41, 58, 60]
+TRACE facet 58 [41, 42, 60]
+TRACE facet 59 [2, 42, 60]
+TRACE facet 60 [6, 56, 60]
+TRACE facet 61 [3, 41, 57]
+TRACE facet 62 [41, 57, 58]
+TRACE facet 63 [58, 59, 60]
+TRACE facet 64 [6, 59, 60]
+TRACE facet 65 [2, 56, 60]
+TRACE facet 66 [45, 47, 59]
+TRACE facet 67 [5, 43, 61]
+TRACE facet 68 [3, 52, 61]
+TRACE facet 69 [43, 45, 59]
+TRACE facet 70 [5, 52, 61]
+TRACE facet 71 [57, 58, 61]
+TRACE facet 72 [43, 58, 59]
+TRACE facet 73 [6, 47, 59]
+TRACE facet 74 [3, 57, 61]
+TRACE facet 75 [43, 58, 61]
+TRACE facet 76 [3, 10, 41]
+TRACE facet 77 [3, 8, 16]
+TRACE facet 78 [3, 11, 19]
+TRACE facet 79 [3, 8, 11]
+TRACE facet 80 [3, 10, 19]
+TRACE facet 81 [5, 13, 21]
+TRACE facet 82 [5, 12, 13]
+TRACE facet 83 [5, 14, 21]
+TRACE facet 84 [5, 14, 43]
+TRACE facet 85 [12, 20, 44]
+TRACE facet 86 [5, 12, 44]
+TRACE facet 87 [8, 11, 13]
+TRACE facet 88 [8, 12, 13]
+TRACE facet 89 [9, 61, 66]
+TRACE facet 90 [15, 63, 66]
+TRACE facet 91 [14, 43, 61]
+TRACE facet 92 [15, 65, 66]
+TRACE facet 93 [43, 63, 66]
+TRACE facet 94 [64, 65, 66]
+TRACE facet 95 [43, 61, 66]
+TRACE facet 96 [9, 64, 66]
+TRACE facet 97 [9, 57, 62]
+TRACE facet 98 [10, 41, 68]
+TRACE facet 99 [14, 61, 67]
+TRACE facet 100 [57, 61, 67]
+TRACE facet 101 [9, 57, 61]
+TRACE facet 102 [41, 57, 62]
+TRACE facet 103 [41, 57, 67]
+TRACE facet 104 [41, 67, 68]
+TRACE facet 105 [8, 24, 51]
+TRACE facet 106 [8, 12, 20]
+TRACE facet 107 [15, 24, 51]
+TRACE facet 108 [8, 20, 51]
+TRACE facet 109 [15, 20, 51]
+TRACE facet 110 [15, 24, 65]
+TRACE facet 111 [9, 16, 64]
+TRACE facet 112 [8, 16, 24]
+TRACE facet 113 [16, 64, 65]
+TRACE facet 114 [16, 24, 65]
+TRACE facet 115 [14, 27, 67]
+TRACE facet 116 [10, 19, 68]
+TRACE facet 117 [11, 19, 27]
+TRACE facet 118 [19, 27, 67]
+TRACE facet 119 [19, 67, 68]
+TRACE facet 120 [11, 21, 27]
+TRACE facet 121 [11, 13, 21]
+TRACE facet 122 [14, 21, 27]
+TRACE facet 123 [2, 18, 42]
+TRACE facet 124 [10, 18, 42]
+TRACE facet 125 [10, 41, 42]
+TRACE facet 126 [20, 43, 44]
+TRACE facet 127 [14, 43, 45]
+TRACE facet 128 [14, 69, 70]
+TRACE facet 129 [5, 43, 44]
+TRACE facet 130 [20, 43, 63]
+TRACE facet 131 [69, 70, 71]
+TRACE facet 132 [14, 45, 70]
+TRACE facet 133 [22, 70, 71]
+TRACE facet 134 [45, 47, 70]
+TRACE facet 135 [6, 22, 70]
+TRACE facet 136 [6, 47, 70]
+TRACE facet 137 [3, 27, 52]
+TRACE facet 138 [3, 19, 27]
+TRACE facet 139 [21, 27, 52]
+TRACE facet 140 [5, 21, 52]
+TRACE facet 141 [6, 22, 56]
+TRACE facet 142 [2, 26, 56]
+TRACE facet 143 [2, 18, 26]
+TRACE facet 144 [22, 26, 56]
+TRACE facet 145 [46, 49, 74]
+TRACE facet 146 [15, 46, 73]
+TRACE facet 147 [15, 65, 72]
+TRACE facet 148 [64, 65, 72]
+TRACE facet 149 [15, 72, 73]
+TRACE facet 150 [46, 73, 74]
+TRACE facet 151 [23, 49, 74]
+TRACE facet 152 [9, 25, 40]
+TRACE facet 153 [9, 25, 32]
+TRACE facet 154 [23, 32, 74]
+TRACE facet 155 [25, 32, 54]
+TRACE facet 156 [17, 25, 40]
+TRACE facet 157 [23, 32, 54]
+TRACE facet 158 [9, 32, 72]
+TRACE facet 159 [9, 64, 72]
+TRACE facet 160 [32, 72, 73]
+TRACE facet 161 [32, 73, 74]
+TRACE facet 162 [10, 18, 26]
+TRACE facet 163 [10, 26, 35]
+TRACE facet 164 [22, 35, 77]
+TRACE facet 165 [22, 26, 35]
+TRACE facet 166 [10, 35, 75]
+TRACE facet 167 [10, 68, 75]
+TRACE facet 168 [35, 75, 76]
+TRACE facet 169 [35, 76, 77]
+TRACE facet 170 [69, 71, 77]
+TRACE facet 171 [67, 68, 75]
+TRACE facet 172 [14, 67, 75]
+TRACE facet 173 [14, 69, 76]
+TRACE facet 174 [14, 75, 76]
+TRACE facet 175 [69, 76, 77]
+TRACE facet 176 [22, 71, 77]
+TRACE facet 177 [26, 56, 60]
+TRACE facet 178 [32, 58, 72]
+TRACE facet 179 [25, 32, 56]
+TRACE facet 180 [58, 60, 78]
+TRACE facet 181 [32, 56, 60]
+TRACE facet 182 [32, 58, 60]
+TRACE facet 183 [24, 65, 66]
+TRACE facet 184 [58, 65, 66]
+TRACE facet 185 [58, 65, 72]
+TRACE facet 186 [26, 60, 78]
+TRACE facet 187 [24, 52, 61]
+TRACE facet 188 [26, 35, 78]
+TRACE facet 189 [27, 52, 61]
+TRACE facet 190 [58, 61, 66]
+TRACE facet 191 [61, 67, 75]
+TRACE facet 192 [35, 58, 61]
+TRACE facet 193 [24, 61, 66]
+TRACE facet 194 [27, 61, 67]
+TRACE facet 195 [35, 61, 75]
+TRACE facet 196 [35, 58, 78]
+TRACE facet 197 [28, 29, 37]
+TRACE facet 198 [30, 37, 79]
+TRACE facet 199 [28, 37, 79]
+TRACE facet 200 [30, 36, 80]
+TRACE facet 201 [28, 36, 79]
+TRACE facet 202 [30, 36, 79]
+TRACE facet 203 [31, 36, 80]
+TRACE facet 204 [5, 29, 44]
+TRACE facet 205 [5, 21, 29]
+TRACE facet 206 [20, 28, 29]
+TRACE facet 207 [20, 29, 44]
+TRACE facet 208 [23, 30, 80]
+TRACE facet 209 [23, 30, 50]
+TRACE facet 210 [31, 80, 81]
+TRACE facet 211 [23, 80, 81]
+TRACE facet 212 [6, 30, 50]
+TRACE facet 213 [6, 22, 82]
+TRACE facet 214 [6, 30, 82]
+TRACE facet 215 [15, 20, 28]
+TRACE facet 216 [15, 36, 83]
+TRACE facet 217 [15, 28, 36]
+TRACE facet 218 [31, 36, 83]
+TRACE facet 219 [25, 54, 74]
+TRACE facet 220 [31, 46, 49]
+TRACE facet 221 [31, 46, 83]
+TRACE facet 222 [23, 49, 81]
+TRACE facet 223 [23, 54, 74]
+TRACE facet 224 [25, 32, 74]
+TRACE facet 225 [31, 49, 81]
+TRACE facet 226 [15, 46, 83]
+TRACE facet 227 [30, 69, 71]
+TRACE facet 228 [30, 69, 84]
+TRACE facet 229 [22, 71, 82]
+TRACE facet 230 [30, 71, 82]
+TRACE facet 231 [14, 69, 84]
+TRACE facet 232 [14, 21, 29]
+TRACE facet 233 [14, 37, 84]
+TRACE facet 234 [14, 29, 37]
+TRACE facet 235 [30, 37, 84]
+TRACE facet 236 [25, 33, 34]
+TRACE facet 237 [25, 34, 56]
+TRACE facet 238 [26, 34, 56]
+TRACE facet 239 [30, 38, 80]
+TRACE facet 240 [31, 38, 39]
+TRACE facet 241 [31, 38, 80]
+TRACE facet 242 [32, 59, 60]
+TRACE facet 243 [35, 47, 70]
+TRACE facet 244 [37, 47, 48]
+TRACE facet 245 [32, 47, 48]
+TRACE facet 246 [35, 47, 59]
+TRACE facet 247 [32, 47, 59]
+TRACE facet 248 [59, 60, 78]
+TRACE facet 249 [37, 47, 70]
+TRACE facet 250 [35, 70, 76]
+TRACE facet 251 [69, 70, 84]
+TRACE facet 252 [69, 70, 76]
+TRACE facet 253 [35, 59, 78]
+TRACE facet 254 [37, 70, 84]
+TRACE facet 255 [37, 46, 83]
+TRACE facet 256 [46, 48, 73]
+TRACE facet 257 [37, 46, 48]
+TRACE facet 258 [32, 48, 73]
+TRACE facet 259 [36, 79, 83]
+TRACE facet 260 [37, 79, 83]
+TRACE facet 261 [33, 38, 39]
+TRACE facet 262 [33, 34, 38]
+TRACE facet 263 [31, 39, 81]
+TRACE facet 264 [23, 33, 39]
+TRACE facet 265 [23, 39, 81]
+TRACE facet 266 [25, 33, 54]
+TRACE facet 267 [23, 33, 54]
+TRACE facet 268 [22, 34, 38]
+TRACE facet 269 [22, 38, 82]
+TRACE facet 270 [22, 26, 34]
+TRACE facet 271 [30, 38, 82]
+TRACE sheet 0 0 [1]
+TRACE sheet 1 0 [1]
+TRACE sheet 2 0 [-1]
+TRACE sheet 3 24 [-1]
+TRACE sheet 4 1 [1]
+TRACE sheet 5 1 [1]
+TRACE sheet 6 12 [1]
+TRACE sheet 7 25 [1]
+TRACE sheet 8 1 [1]
+TRACE sheet 9 24 [1]
+TRACE sheet 10 1 [-1]
+TRACE sheet 11 12 [-1]
+TRACE sheet 12 24 [-1]
+TRACE sheet 13 1 [-1]
+TRACE sheet 14 1 [-1]
+TRACE sheet 15 24 [-1]
+TRACE sheet 16 1 [1]
+TRACE sheet 17 24 [1]
+TRACE sheet 18 1 [-1]
+TRACE sheet 19 12 [-1]
+TRACE sheet 20 25 [-1]
+TRACE sheet 21 1 [-1]
+TRACE sheet 22 25 [-1]
+TRACE sheet 23 2 [-1]
+TRACE sheet 24 2 [1]
+TRACE sheet 25 15 [1]
+TRACE sheet 26 27 [1]
+TRACE sheet 27 2 [1]
+TRACE sheet 28 27 [1]
+TRACE sheet 29 2 [1]
+TRACE sheet 30 15 [1]
+TRACE sheet 31 2 [-1]
+TRACE sheet 32 27 [-1]
+TRACE sheet 33 2 [-1]
+TRACE sheet 34 15 [-1]
+TRACE sheet 35 2 [1]
+TRACE sheet 36 27 [1]
+TRACE sheet 37 2 [1]
+TRACE sheet 38 2 [-1]
+TRACE sheet 39 27 [-1]
+TRACE sheet 40 2 [-1]
+TRACE sheet 41 27 [-1]
+TRACE sheet 42 2 [1]
+TRACE sheet 43 27 [1]
+TRACE sheet 44 2 [1]
+TRACE sheet 45 15 [1]
+TRACE sheet 46 2 [1]
+TRACE sheet 47 26 [1]
+TRACE sheet 48 3 [1]
+TRACE sheet 49 3 [-1]
+TRACE sheet 50 3 [-1]
+TRACE sheet 51 27 [-1]
+TRACE sheet 52 3 [-1]
+TRACE sheet 53 3 [-1]
+TRACE sheet 54 27 [-1]
+TRACE sheet 55 3 [1]
+TRACE sheet 56 27 [1]
+TRACE sheet 57 4 [1]
+TRACE sheet 58 4 [-1]
+TRACE sheet 59 28 [-1]
+TRACE sheet 60 4 [1]
+TRACE sheet 61 29 [1]
+TRACE sheet 62 40 [1]
+TRACE sheet 63 4 [-1]
+TRACE sheet 64 29 [-1]
+TRACE sheet 65 40 [-1]
+TRACE sheet 66 4 [1]
+TRACE sheet 67 4 [-1]
+TRACE sheet 68 29 [-1]
+TRACE sheet 69 4 [-1]
+TRACE sheet 70 29 [-1]
+TRACE sheet 71 41 [-1]
+TRACE sheet 72 5 [-1]
+TRACE sheet 73 5 [-1]
+TRACE sheet 74 5 [-1]
+TRACE sheet 75 29 [-1]
+TRACE sheet 76 41 [-1]
+TRACE sheet 77 5 [1]
+TRACE sheet 78 29 [1]
+TRACE sheet 79 41 [1]
+TRACE sheet 80 5 [1]
+TRACE sheet 81 29 [1]
+TRACE sheet 82 40 [1]
+TRACE sheet 83 6 [1]
+TRACE sheet 84 6 [1]
+TRACE sheet 85 6 [1]
+TRACE sheet 86 30 [1]
+TRACE sheet 87 42 [1]
+TRACE sheet 88 6 [-1]
+TRACE sheet 89 30 [-1]
+TRACE sheet 90 42 [-1]
+TRACE sheet 91 6 [-1]
+TRACE sheet 92 30 [-1]
+TRACE sheet 93 43 [-1]
+TRACE sheet 94 7 [-1]
+TRACE sheet 95 7 [1]
+TRACE sheet 96 31 [1]
+TRACE sheet 97 7 [-1]
+TRACE sheet 98 30 [-1]
+TRACE sheet 99 43 [-1]
+TRACE sheet 100 7 [1]
+TRACE sheet 101 30 [1]
+TRACE sheet 102 43 [1]
+TRACE sheet 103 7 [-1]
+TRACE sheet 104 7 [1]
+TRACE sheet 105 30 [1]
+TRACE sheet 106 42 [1]
+TRACE sheet 107 7 [1]
+TRACE sheet 108 30 [1]
+TRACE sheet 109 8 [1]
+TRACE sheet 110 9 [-1]
+TRACE sheet 111 10 [-1]
+TRACE sheet 112 10 [1]
+TRACE sheet 113 10 [-1]
+TRACE sheet 114 10 [-1]
+TRACE sheet 115 10 [1]
+TRACE sheet 116 10 [-1]
+TRACE sheet 117 10 [-1]
+TRACE sheet 118 10 [1]
+TRACE sheet 119 10 [1]
+TRACE sheet 120 11 [-1]
+TRACE sheet 121 11 [-1]
+TRACE sheet 122 11 [-1]
+TRACE sheet 123 11 [-1]
+TRACE sheet 124 11 [1]
+TRACE sheet 125 11 [1]
+TRACE sheet 126 11 [1]
+TRACE sheet 127 11 [1]
+TRACE sheet 128 11 [1]
+TRACE sheet 129 11 [-1]
+TRACE sheet 130 12 [-1]
+TRACE sheet 131 25 [-1]
+TRACE sheet 132 12 [1]
+TRACE sheet 133 13 [-1]
+TRACE sheet 134 13 [-1]
+TRACE sheet 135 13 [1]
+TRACE sheet 136 25 [1]
+TRACE sheet 137 14 [1]
+TRACE sheet 138 14 [1]
+TRACE sheet 139 14 [-1]
+TRACE sheet 140 26 [-1]
+TRACE sheet 141 15 [1]
+TRACE sheet 142 26 [1]
+TRACE sheet 143 15 [-1]
+TRACE sheet 144 15 [-1]
+TRACE sheet 145 16 [1]
+TRACE sheet 146 17 [-1]
+TRACE sheet 147 18 [-1]
+TRACE sheet 148 18 [1]
+TRACE sheet 149 18 [-1]
+TRACE sheet 150 18 [-1]
+TRACE sheet 151 18 [-1]
+TRACE sheet 152 18 [1]
+TRACE sheet 153 18 [1]
+TRACE sheet 154 18 [1]
+TRACE sheet 155 19 [1]
+TRACE sheet 156 19 [1]
+TRACE sheet 157 19 [-1]
+TRACE sheet 158 19 [1]
+TRACE sheet 159 19 [-1]
+TRACE sheet 160 19 [-1]
+TRACE sheet 161 19 [1]
+TRACE sheet 162 19 [1]
+TRACE sheet 163 20 [-1]
+TRACE sheet 164 20 [1]
+TRACE sheet 165 20 [1]
+TRACE sheet 166 32 [1]
+TRACE sheet 167 44 [1]
+TRACE sheet 168 20 [1]
+TRACE sheet 169 20 [-1]
+TRACE sheet 170 32 [-1]
+TRACE sheet 171 44 [-1]
+TRACE sheet 172 21 [-1]
+TRACE sheet 173 32 [-1]
+TRACE sheet 174 45 [-1]
+TRACE sheet 175 21 [1]
+TRACE sheet 176 33 [1]
+TRACE sheet 177 21 [-1]
+TRACE sheet 178 21 [-1]
+TRACE sheet 179 32 [-1]
+TRACE sheet 180 21 [1]
+TRACE sheet 181 32 [1]
+TRACE sheet 182 22 [1]
+TRACE sheet 183 35 [1]
+TRACE sheet 184 46 [1]
+TRACE sheet 185 22 [-1]
+TRACE sheet 186 34 [-1]
+TRACE sheet 187 22 [1]
+TRACE sheet 188 22 [-1]
+TRACE sheet 189 35 [-1]
+TRACE sheet 190 22 [-1]
+TRACE sheet 191 35 [-1]
+TRACE sheet 192 23 [-1]
+TRACE sheet 193 23 [-1]
+TRACE sheet 194 23 [1]
+TRACE sheet 195 35 [1]
+TRACE sheet 196 47 [1]
+TRACE sheet 197 24 [1]
+TRACE sheet 198 25 [-1]
+TRACE sheet 199 25 [1]
+TRACE sheet 200 26 [-1]
+TRACE sheet 201 26 [-1]
+TRACE sheet 202 26 [1]
+TRACE sheet 203 26 [1]
+TRACE sheet 204 26 [1]
+TRACE sheet 205 26 [-1]
+TRACE sheet 206 26 [-1]
+TRACE sheet 207 26 [1]
+TRACE sheet 208 27 [-1]
+TRACE sheet 209 27 [-1]
+TRACE sheet 210 27 [1]
+TRACE sheet 211 28 [1]
+TRACE sheet 212 28 [1]
+TRACE sheet 213 28 [-1]
+TRACE sheet 214 40 [-1]
+TRACE sheet 215 29 [-1]
+TRACE sheet 216 40 [-1]
+TRACE sheet 217 30 [1]
+TRACE sheet 218 43 [1]
+TRACE sheet 219 31 [-1]
+TRACE sheet 220 31 [-1]
+TRACE sheet 221 31 [1]
+TRACE sheet 222 43 [1]
+TRACE sheet 223 32 [1]
+TRACE sheet 224 45 [1]
+TRACE sheet 225 56 [1]
+TRACE sheet 226 32 [1]
+TRACE sheet 227 45 [1]
+TRACE sheet 228 32 [-1]
+TRACE sheet 229 45 [-1]
+TRACE sheet 230 32 [1]
+TRACE sheet 231 32 [-1]
+TRACE sheet 232 45 [-1]
+TRACE sheet 233 32 [-1]
+TRACE sheet 234 45 [-1]
+TRACE sheet 235 56 [-1]
+TRACE sheet 236 32 [-1]
+TRACE sheet 237 45 [-1]
+TRACE sheet 238 57 [-1]
+TRACE sheet 239 33 [1]
+TRACE sheet 240 33 [-1]
+TRACE sheet 241 33 [1]
+TRACE sheet 242 57 [1]
+TRACE sheet 243 33 [1]
+TRACE sheet 244 57 [1]
+TRACE sheet 245 33 [-1]
+TRACE sheet 246 33 [-1]
+TRACE sheet 247 57 [-1]
+TRACE sheet 248 33 [-1]
+TRACE sheet 249 33 [1]
+TRACE sheet 250 33 [1]
+TRACE sheet 251 45 [1]
+TRACE sheet 252 33 [1]
+TRACE sheet 253 45 [1]
+TRACE sheet 254 56 [1]
+TRACE sheet 255 34 [1]
+TRACE sheet 256 34 [1]
+TRACE sheet 257 34 [-1]
+TRACE sheet 258 46 [-1]
+TRACE sheet 259 58 [-1]
+TRACE sheet 260 34 [-1]
+TRACE sheet 261 46 [-1]
+TRACE sheet 262 58 [-1]
+TRACE sheet 263 34 [1]
+TRACE sheet 264 34 [-1]
+TRACE sheet 265 34 [-1]
+TRACE sheet 266 46 [-1]
+TRACE sheet 267 34 [-1]
+TRACE sheet 268 46 [-1]
+TRACE sheet 269 59 [-1]
+TRACE sheet 270 35 [-1]
+TRACE sheet 271 46 [-1]
+TRACE sheet 272 59 [-1]
+TRACE sheet 273 35 [1]
+TRACE sheet 274 35 [1]
+TRACE sheet 275 46 [1]
+TRACE sheet 276 35 [-1]
+TRACE sheet 277 46 [-1]
+TRACE sheet 278 35 [1]
+TRACE sheet 279 46 [1]
+TRACE sheet 280 35 [1]
+TRACE sheet 281 46 [1]
+TRACE sheet 282 59 [1]
+TRACE sheet 283 35 [1]
+TRACE sheet 284 46 [1]
+TRACE sheet 285 58 [1]
+TRACE sheet 286 36 [-1]
+TRACE sheet 287 49 [-1]
+TRACE sheet 288 36 [1]
+TRACE sheet 289 36 [-1]
+TRACE sheet 290 48 [-1]
+TRACE sheet 291 36 [1]
+TRACE sheet 292 36 [1]
+TRACE sheet 293 49 [1]
+TRACE sheet 294 36 [-1]
+TRACE sheet 295 36 [1]
+TRACE sheet 296 36 [-1]
+TRACE sheet 297 36 [1]
+TRACE sheet 298 36 [-1]
+TRACE sheet 299 49 [-1]
+TRACE sheet 300 37 [-1]
+TRACE sheet 301 37 [1]
+TRACE sheet 302 49 [1]
+TRACE sheet 303 37 [1]
+TRACE sheet 304 37 [1]
+TRACE sheet 305 37 [-1]
+TRACE sheet 306 37 [-1]
+TRACE sheet 307 37 [-1]
+TRACE sheet 308 37 [1]
+TRACE sheet 309 37 [-1]
+TRACE sheet 310 37 [1]
+TRACE sheet 311 38 [1]
+TRACE sheet 312 38 [-1]
+TRACE sheet 313 50 [-1]
+TRACE sheet 314 38 [1]
+TRACE sheet 315 39 [-1]
+TRACE sheet 316 50 [-1]
+TRACE sheet 317 39 [-1]
+TRACE sheet 318 39 [1]
+TRACE sheet 319 50 [1]
+TRACE sheet 320 39 [1]
+TRACE sheet 321 51 [1]
+TRACE sheet 322 40 [1]
+TRACE sheet 323 40 [1]
+TRACE sheet 324 41 [-1]
+TRACE sheet 325 41 [-1]
+TRACE sheet 326 42 [-1]
+TRACE sheet 327 42 [1]
+TRACE sheet 328 42 [1]
+TRACE sheet 329 42 [-1]
+TRACE sheet 330 43 [-1]
+TRACE sheet 331 43 [-1]
+TRACE sheet 332 43 [1]
+TRACE sheet 333 44 [1]
+TRACE sheet 334 44 [1]
+TRACE sheet 335 44 [1]
+TRACE sheet 336 44 [-1]
+TRACE sheet 337 56 [-1]
+TRACE sheet 338 45 [-1]
+TRACE sheet 339 45 [-1]
+TRACE sheet 340 56 [-1]
+TRACE sheet 341 45 [1]
+TRACE sheet 342 56 [1]
+TRACE sheet 343 45 [1]
+TRACE sheet 344 57 [1]
+TRACE sheet 345 45 [1]
+TRACE sheet 346 45 [1]
+TRACE sheet 347 45 [-1]
+TRACE sheet 348 56 [-1]
+TRACE sheet 349 45 [-1]
+TRACE sheet 350 46 [1]
+TRACE sheet 351 59 [1]
+TRACE sheet 352 46 [-1]
+TRACE sheet 353 59 [-1]
+TRACE sheet 354 46 [-1]
+TRACE sheet 355 58 [-1]
+TRACE sheet 356 46 [1]
+TRACE sheet 357 59 [1]
+TRACE sheet 358 46 [1]
+TRACE sheet 359 47 [-1]
+TRACE sheet 360 47 [-1]
+TRACE sheet 361 47 [-1]
+TRACE sheet 362 47 [1]
+TRACE sheet 363 59 [1]
+TRACE sheet 364 48 [1]
+TRACE sheet 365 48 [1]
+TRACE sheet 366 49 [-1]
+TRACE sheet 367 50 [1]
+TRACE sheet 368 51 [1]
+TRACE sheet 369 51 [-1]
+TRACE sheet 370 52 [-1]
+TRACE sheet 371 52 [-1]
+TRACE sheet 372 52 [-1]
+TRACE sheet 373 52 [1]
+TRACE sheet 374 52 [1]
+TRACE sheet 375 52 [-1]
+TRACE sheet 376 52 [1]
+TRACE sheet 377 52 [1]
+TRACE sheet 378 52 [-1]
+TRACE sheet 379 52 [-1]
+TRACE sheet 380 52 [1]
+TRACE sheet 381 52 [1]
+TRACE sheet 382 52 [1]
+TRACE sheet 383 53 [-1]
+TRACE sheet 384 53 [-1]
+TRACE sheet 385 53 [1]
+TRACE sheet 386 53 [1]
+TRACE sheet 387 53 [-1]
+TRACE sheet 388 53 [1]
+TRACE sheet 389 54 [-1]
+TRACE sheet 390 55 [-1]
+TRACE sheet 391 56 [1]
+TRACE sheet 392 57 [-1]
+TRACE sheet 393 57 [-1]
+TRACE sheet 394 57 [-1]
+TRACE sheet 395 57 [1]
+TRACE sheet 396 58 [1]
+TRACE sheet 397 58 [1]
+TRACE sheet 398 58 [1]
+TRACE sheet 399 59 [-1]
+TRACE components [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+TRACE unions_start
+TRACE edge [0, 1]
+TRACE merge 2 221
+TRACE merge 220 3
+TRACE edge [0, 4]
+TRACE merge 146 219
+TRACE merge 218 147
+TRACE edge [0, 7]
+TRACE merge 219 220
+TRACE merge 221 218
+TRACE edge [0, 9]
+TRACE merge 8 27
+TRACE merge 26 9
+TRACE edge [0, 16]
+TRACE merge 9 115
+TRACE merge 114 8
+TRACE edge [0, 17]
+TRACE merge 0 2
+TRACE merge 3 1
+TRACE edge [0, 20]
+TRACE merge 144 146
+TRACE merge 147 145
+TRACE edge [0, 24]
+TRACE merge 115 133
+TRACE merge 132 114
+TRACE edge [0, 40]
+TRACE merge 1 26
+TRACE merge 27 0
+TRACE edge [0, 51]
+TRACE merge 133 144
+TRACE merge 145 132
+TRACE edge [1, 7]
+TRACE merge 168 221
+TRACE merge 220 169
+TRACE edge [1, 17]
+TRACE merge 2 189
+TRACE merge 188 3
+TRACE edge [1, 23]
+TRACE merge 166 168
+TRACE merge 169 167
+TRACE edge [1, 25]
+TRACE merge 189 207
+TRACE merge 206 188
+TRACE edge [1, 54]
+TRACE merge 167 206
+TRACE merge 207 166
+TRACE edge [2, 9]
+TRACE merge 18 17
+TRACE merge 16 29
+TRACE merge 28 31
+TRACE merge 30 19
+TRACE merge 28 18
+TRACE edge [2, 17]
+TRACE merge 4 7
+TRACE merge 6 193
+TRACE merge 192 191
+TRACE merge 190 5
+TRACE merge 192 4
+TRACE edge [2, 18]
+TRACE merge 394 441
+TRACE merge 440 395
+TRACE edge [2, 26]
+TRACE merge 438 440
+TRACE merge 441 439
+TRACE edge [2, 40]
+TRACE merge 7 4
+TRACE merge 5 16
+TRACE merge 17 18
+TRACE merge 19 6
+TRACE merge 17 7
+TRACE edge [2, 42]
+TRACE merge 34 33
+TRACE merge 32 394
+TRACE merge 395 227
+TRACE merge 226 35
+TRACE edge [2, 56]
+TRACE merge 191 192
+TRACE merge 193 239
+TRACE merge 238 438
+TRACE merge 439 190
+TRACE edge [2, 60]
+TRACE merge 227 238
+TRACE merge 239 226
+TRACE edge [2, 62]
+TRACE merge 31 28
+TRACE merge 29 32
+TRACE merge 33 34
+TRACE merge 35 30
+TRACE merge 33 31
+TRACE edge [3, 8]
+TRACE merge 264 269
+TRACE merge 268 265
+TRACE edge [3, 10]
+TRACE merge 260 263
+TRACE merge 262 273
+TRACE merge 272 271
+TRACE merge 270 261
+TRACE merge 272 260
+TRACE edge [3, 11]
+TRACE merge 266 268
+TRACE merge 269 267
+TRACE edge [3, 16]
+TRACE merge 14 13
+TRACE merge 12 11
+TRACE merge 10 264
+TRACE merge 265 117
+TRACE merge 116 119
+TRACE merge 118 15
+TRACE edge [3, 19]
+TRACE merge 267 270
+TRACE merge 271 272
+TRACE merge 273 425
+TRACE merge 424 266
+TRACE edge [3, 27]
+TRACE merge 422 424
+TRACE merge 425 423
+TRACE edge [3, 41]
+TRACE merge 36 39
+TRACE merge 38 41
+TRACE merge 40 231
+TRACE merge 230 262
+TRACE merge 263 260
+TRACE merge 261 37
+TRACE edge [3, 52]
+TRACE merge 119 116
+TRACE merge 117 422
+TRACE merge 423 245
+TRACE merge 244 118
+TRACE edge [3, 57]
+TRACE merge 231 257
+TRACE merge 256 230
+TRACE edge [3, 61]
+TRACE merge 245 256
+TRACE merge 257 244
+TRACE edge [3, 62]
+TRACE merge 11 12
+TRACE merge 13 14
+TRACE merge 15 40
+TRACE merge 41 38
+TRACE merge 39 36
+TRACE merge 37 10
+TRACE merge 39 11
+TRACE merge 41 13
+TRACE edge [4, 7]
+TRACE merge 98 219
+TRACE merge 218 99
+TRACE edge [4, 15]
+TRACE merge 46 75
+TRACE merge 74 47
+TRACE edge [4, 20]
+TRACE merge 47 147
+TRACE merge 146 46
+TRACE edge [4, 23]
+TRACE merge 99 105
+TRACE merge 104 98
+TRACE edge [4, 46]
+TRACE merge 75 97
+TRACE merge 96 74
+TRACE edge [4, 49]
+TRACE merge 97 104
+TRACE merge 105 96
+TRACE edge [5, 12]
+TRACE merge 276 289
+TRACE merge 288 277
+TRACE edge [5, 13]
+TRACE merge 274 276
+TRACE merge 277 275
+TRACE edge [5, 14]
+TRACE merge 278 281
+TRACE merge 280 285
+TRACE merge 284 283
+TRACE merge 282 279
+TRACE merge 284 278
+TRACE edge [5, 21]
+TRACE merge 275 431
+TRACE merge 430 433
+TRACE merge 432 280
+TRACE merge 281 278
+TRACE merge 279 647
+TRACE merge 646 274
+TRACE edge [5, 24]
+TRACE merge 124 123
+TRACE merge 122 121
+TRACE merge 120 127
+TRACE merge 126 129
+TRACE merge 128 131
+TRACE merge 130 125
+TRACE merge 126 122
+TRACE merge 128 124
+TRACE edge [5, 29]
+TRACE merge 644 646
+TRACE merge 647 645
+TRACE edge [5, 43]
+TRACE merge 406 91
+TRACE merge 90 89
+TRACE merge 88 282
+TRACE merge 283 284
+TRACE merge 285 243
+TRACE merge 242 407
+TRACE edge [5, 44]
+TRACE merge 66 69
+TRACE merge 68 406
+TRACE merge 407 165
+TRACE merge 164 163
+TRACE merge 162 161
+TRACE merge 160 288
+TRACE merge 289 644
+TRACE merge 645 67
+TRACE edge [5, 52]
+TRACE merge 121 122
+TRACE merge 123 124
+TRACE merge 125 249
+TRACE merge 248 432
+TRACE merge 433 430
+TRACE merge 431 120
+TRACE edge [5, 53]
+TRACE merge 131 128
+TRACE merge 129 126
+TRACE merge 127 160
+TRACE merge 161 162
+TRACE merge 163 164
+TRACE merge 165 130
+TRACE merge 161 129
+TRACE merge 163 131
+TRACE edge [5, 61]
+TRACE merge 243 248
+TRACE merge 249 242
+TRACE edge [5, 63]
+TRACE merge 69 66
+TRACE merge 67 88
+TRACE merge 89 90
+TRACE merge 91 68
+TRACE merge 89 69
+TRACE edge [6, 22]
+TRACE merge 418 437
+TRACE merge 436 435
+TRACE merge 434 663
+TRACE merge 662 419
+TRACE edge [6, 25]
+TRACE merge 194 197
+TRACE merge 196 199
+TRACE merge 198 205
+TRACE merge 204 203
+TRACE merge 202 201
+TRACE merge 200 195
+TRACE merge 202 194
+TRACE merge 204 196
+TRACE edge [6, 30]
+TRACE merge 660 665
+TRACE merge 664 661
+TRACE edge [6, 46]
+TRACE merge 56 55
+TRACE merge 54 101
+TRACE merge 100 103
+TRACE merge 102 57
+TRACE merge 100 56
+TRACE edge [6, 47]
+TRACE merge 76 79
+TRACE merge 78 255
+TRACE merge 254 421
+TRACE merge 420 77
+TRACE edge [6, 48]
+TRACE merge 55 56
+TRACE merge 57 78
+TRACE merge 79 76
+TRACE merge 77 54
+TRACE merge 79 55
+TRACE edge [6, 49]
+TRACE merge 103 100
+TRACE merge 101 107
+TRACE merge 106 109
+TRACE merge 108 102
+TRACE merge 106 103
+TRACE edge [6, 50]
+TRACE merge 109 106
+TRACE merge 107 660
+TRACE merge 661 183
+TRACE merge 182 185
+TRACE merge 184 187
+TRACE merge 186 108
+TRACE edge [6, 55]
+TRACE merge 187 184
+TRACE merge 185 182
+TRACE merge 183 200
+TRACE merge 201 202
+TRACE merge 203 204
+TRACE merge 205 186
+TRACE merge 201 185
+TRACE merge 203 187
+TRACE edge [6, 56]
+TRACE merge 199 196
+TRACE merge 197 194
+TRACE merge 195 434
+TRACE merge 435 436
+TRACE merge 437 229
+TRACE merge 228 198
+TRACE edge [6, 59]
+TRACE merge 236 254
+TRACE merge 255 237
+TRACE edge [6, 60]
+TRACE merge 229 236
+TRACE merge 237 228
+TRACE edge [6, 70]
+TRACE merge 419 420
+TRACE merge 421 418
+TRACE edge [6, 82]
+TRACE merge 663 664
+TRACE merge 665 662
+TRACE edge [7, 23]
+TRACE merge 98 169
+TRACE merge 168 99
+TRACE edge [8, 11]
+TRACE merge 268 291
+TRACE merge 290 269
+TRACE edge [8, 12]
+TRACE merge 292 329
+TRACE merge 328 293
+TRACE edge [8, 13]
+TRACE merge 291 292
+TRACE merge 293 290
+TRACE edge [8, 16]
+TRACE merge 264 355
+TRACE merge 354 265
+TRACE edge [8, 20]
+TRACE merge 329 337
+TRACE merge 336 328
+TRACE edge [8, 24]
+TRACE merge 326 354
+TRACE merge 355 327
+TRACE edge [8, 51]
+TRACE merge 327 336
+TRACE merge 337 326
+TRACE edge [9, 16]
+TRACE merge 8 21
+TRACE merge 20 23
+TRACE merge 22 25
+TRACE merge 24 353
+TRACE merge 352 351
+TRACE merge 350 9
+TRACE merge 352 22
+TRACE edge [9, 25]
+TRACE merge 478 481
+TRACE merge 480 479
+TRACE edge [9, 32]
+TRACE merge 481 497
+TRACE merge 496 480
+TRACE edge [9, 40]
+TRACE merge 18 17
+TRACE merge 16 27
+TRACE merge 26 478
+TRACE merge 479 19
+TRACE edge [9, 57]
+TRACE merge 310 319
+TRACE merge 318 311
+TRACE edge [9, 61]
+TRACE merge 294 318
+TRACE merge 319 295
+TRACE edge [9, 62]
+TRACE merge 25 22
+TRACE merge 23 20
+TRACE merge 21 29
+TRACE merge 28 31
+TRACE merge 30 310
+TRACE merge 311 24
+TRACE edge [9, 64]
+TRACE merge 308 499
+TRACE merge 498 350
+TRACE merge 351 352
+TRACE merge 353 309
+TRACE edge [9, 66]
+TRACE merge 295 308
+TRACE merge 309 294
+TRACE edge [9, 72]
+TRACE merge 497 498
+TRACE merge 499 496
+TRACE edge [10, 18]
+TRACE merge 396 511
+TRACE merge 510 397
+TRACE edge [10, 19]
+TRACE merge 272 271
+TRACE merge 270 371
+TRACE merge 370 373
+TRACE merge 372 273
+TRACE merge 370 272
+TRACE edge [10, 26]
+TRACE merge 511 513
+TRACE merge 512 510
+TRACE edge [10, 35]
+TRACE merge 513 527
+TRACE merge 526 512
+TRACE edge [10, 41]
+TRACE merge 260 263
+TRACE merge 262 313
+TRACE merge 312 399
+TRACE merge 398 261
+TRACE edge [10, 42]
+TRACE merge 397 398
+TRACE merge 399 396
+TRACE edge [10, 68]
+TRACE merge 313 372
+TRACE merge 373 370
+TRACE merge 371 529
+TRACE merge 528 312
+TRACE edge [10, 75]
+TRACE merge 527 528
+TRACE merge 529 526
+TRACE edge [11, 13]
+TRACE merge 290 387
+TRACE merge 386 291
+TRACE edge [11, 19]
+TRACE merge 266 375
+TRACE merge 374 267
+TRACE edge [11, 21]
+TRACE merge 384 386
+TRACE merge 387 385
+TRACE edge [11, 27]
+TRACE merge 375 384
+TRACE merge 385 374
+TRACE edge [12, 13]
+TRACE merge 276 293
+TRACE merge 292 277
+TRACE edge [12, 20]
+TRACE merge 286 329
+TRACE merge 328 287
+TRACE edge [12, 44]
+TRACE merge 287 289
+TRACE merge 288 286
+TRACE edge [13, 21]
+TRACE merge 274 387
+TRACE merge 386 275
+TRACE edge [14, 21]
+TRACE merge 278 281
+TRACE merge 280 393
+TRACE merge 392 391
+TRACE merge 390 389
+TRACE merge 388 719
+TRACE merge 718 279
+TRACE edge [14, 27]
+TRACE merge 368 367
+TRACE merge 366 365
+TRACE merge 364 388
+TRACE merge 389 390
+TRACE merge 391 392
+TRACE merge 393 369
+TRACE merge 389 366
+TRACE merge 391 368
+TRACE edge [14, 29]
+TRACE merge 719 723
+TRACE merge 722 718
+TRACE edge [14, 37]
+TRACE merge 720 722
+TRACE merge 723 721
+TRACE edge [14, 43]
+TRACE merge 284 283
+TRACE merge 282 403
+TRACE merge 402 299
+TRACE merge 298 285
+TRACE edge [14, 45]
+TRACE merge 403 413
+TRACE merge 412 402
+TRACE edge [14, 61]
+TRACE merge 299 315
+TRACE merge 314 298
+TRACE edge [14, 67]
+TRACE merge 315 551
+TRACE merge 550 549
+TRACE merge 548 364
+TRACE merge 365 366
+TRACE merge 367 368
+TRACE merge 369 314
+TRACE edge [14, 69]
+TRACE merge 404 717
+TRACE merge 716 553
+TRACE merge 552 555
+TRACE merge 554 405
+TRACE edge [14, 70]
+TRACE merge 405 412
+TRACE merge 413 404
+TRACE edge [14, 75]
+TRACE merge 549 550
+TRACE merge 551 559
+TRACE merge 558 557
+TRACE merge 556 548
+TRACE merge 558 549
+TRACE edge [14, 76]
+TRACE merge 555 552
+TRACE merge 553 556
+TRACE merge 557 558
+TRACE merge 559 554
+TRACE merge 557 555
+TRACE edge [14, 84]
+TRACE merge 717 720
+TRACE merge 721 716
+TRACE edge [15, 20]
+TRACE merge 46 339
+TRACE merge 338 341
+TRACE merge 340 343
+TRACE merge 342 53
+TRACE merge 52 51
+TRACE merge 50 49
+TRACE merge 48 667
+TRACE merge 666 47
+TRACE edge [15, 24]
+TRACE merge 334 333
+TRACE merge 332 331
+TRACE merge 330 345
+TRACE merge 344 347
+TRACE merge 346 349
+TRACE merge 348 335
+TRACE merge 344 332
+TRACE merge 346 334
+TRACE edge [15, 28]
+TRACE merge 667 671
+TRACE merge 670 666
+TRACE edge [15, 36]
+TRACE merge 668 670
+TRACE merge 671 669
+TRACE edge [15, 45]
+TRACE merge 62 65
+TRACE merge 64 73
+TRACE merge 72 71
+TRACE merge 70 63
+TRACE merge 72 62
+TRACE edge [15, 46]
+TRACE merge 74 699
+TRACE merge 698 81
+TRACE merge 80 83
+TRACE merge 82 455
+TRACE merge 454 453
+TRACE merge 452 75
+TRACE edge [15, 47]
+TRACE merge 71 72
+TRACE merge 73 87
+TRACE merge 86 85
+TRACE merge 84 70
+TRACE merge 86 71
+TRACE edge [15, 48]
+TRACE merge 83 80
+TRACE merge 81 84
+TRACE merge 85 86
+TRACE merge 87 82
+TRACE merge 85 83
+TRACE edge [15, 51]
+TRACE merge 331 332
+TRACE merge 333 334
+TRACE merge 335 342
+TRACE merge 343 340
+TRACE merge 341 338
+TRACE merge 339 330
+TRACE merge 341 331
+TRACE merge 343 333
+TRACE edge [15, 63]
+TRACE merge 49 50
+TRACE merge 51 52
+TRACE merge 53 297
+TRACE merge 296 64
+TRACE merge 65 62
+TRACE merge 63 48
+TRACE edge [15, 65]
+TRACE merge 300 348
+TRACE merge 349 346
+TRACE merge 347 344
+TRACE merge 345 457
+TRACE merge 456 459
+TRACE merge 458 301
+TRACE edge [15, 66]
+TRACE merge 297 300
+TRACE merge 301 296
+TRACE edge [15, 72]
+TRACE merge 459 456
+TRACE merge 457 463
+TRACE merge 462 465
+TRACE merge 464 458
+TRACE merge 462 459
+TRACE edge [15, 73]
+TRACE merge 453 454
+TRACE merge 455 464
+TRACE merge 465 462
+TRACE merge 463 452
+TRACE merge 465 453
+TRACE edge [15, 83]
+TRACE merge 669 698
+TRACE merge 699 668
+TRACE edge [16, 24]
+TRACE merge 114 355
+TRACE merge 354 135
+TRACE merge 134 137
+TRACE merge 136 363
+TRACE merge 362 361
+TRACE merge 360 115
+TRACE edge [16, 52]
+TRACE merge 116 119
+TRACE merge 118 136
+TRACE merge 137 134
+TRACE merge 135 117
+TRACE merge 137 116
+TRACE edge [16, 62]
+TRACE merge 14 13
+TRACE merge 12 11
+TRACE merge 10 21
+TRACE merge 20 23
+TRACE merge 22 25
+TRACE merge 24 15
+TRACE merge 20 12
+TRACE merge 14 22
+TRACE edge [16, 64]
+TRACE merge 352 351
+TRACE merge 350 357
+TRACE merge 356 359
+TRACE merge 358 353
+TRACE merge 352 356
+TRACE edge [16, 65]
+TRACE merge 359 356
+TRACE merge 357 360
+TRACE merge 361 362
+TRACE merge 363 358
+TRACE merge 361 359
+TRACE edge [17, 25]
+TRACE merge 188 491
+TRACE merge 490 217
+TRACE merge 216 215
+TRACE merge 214 189
+TRACE edge [17, 40]
+TRACE merge 0 5
+TRACE merge 4 7
+TRACE merge 6 490
+TRACE merge 491 1
+TRACE edge [17, 56]
+TRACE merge 192 191
+TRACE merge 190 214
+TRACE merge 215 216
+TRACE merge 217 193
+TRACE merge 192 215
+TRACE edge [18, 26]
+TRACE merge 440 511
+TRACE merge 510 441
+TRACE edge [18, 42]
+TRACE merge 394 397
+TRACE merge 396 395
+TRACE edge [19, 27]
+TRACE merge 374 377
+TRACE merge 376 379
+TRACE merge 378 425
+TRACE merge 424 375
+TRACE edge [19, 67]
+TRACE merge 379 376
+TRACE merge 377 381
+TRACE merge 380 383
+TRACE merge 382 378
+TRACE merge 380 379
+TRACE edge [19, 68]
+TRACE merge 370 373
+TRACE merge 372 382
+TRACE merge 383 380
+TRACE merge 381 371
+TRACE merge 383 370
+TRACE edge [20, 28]
+TRACE merge 648 667
+TRACE merge 666 649
+TRACE edge [20, 29]
+TRACE merge 649 651
+TRACE merge 650 648
+TRACE edge [20, 43]
+TRACE merge 400 409
+TRACE merge 408 401
+TRACE edge [20, 44]
+TRACE merge 401 61
+TRACE merge 60 59
+TRACE merge 58 650
+TRACE merge 651 287
+TRACE merge 286 149
+TRACE merge 148 151
+TRACE merge 150 153
+TRACE merge 152 400
+TRACE edge [20, 51]
+TRACE merge 144 339
+TRACE merge 338 341
+TRACE merge 340 343
+TRACE merge 342 159
+TRACE merge 158 157
+TRACE merge 156 155
+TRACE merge 154 337
+TRACE merge 336 145
+TRACE merge 340 158
+TRACE edge [20, 53]
+TRACE merge 153 150
+TRACE merge 151 148
+TRACE merge 149 154
+TRACE merge 155 156
+TRACE merge 157 158
+TRACE merge 159 152
+TRACE merge 155 151
+TRACE merge 157 153
+TRACE edge [20, 63]
+TRACE merge 52 51
+TRACE merge 50 49
+TRACE merge 48 58
+TRACE merge 59 60
+TRACE merge 61 408
+TRACE merge 409 53
+TRACE merge 59 50
+TRACE merge 52 61
+TRACE edge [21, 27]
+TRACE merge 384 427
+TRACE merge 426 429
+TRACE merge 428 393
+TRACE merge 392 391
+TRACE merge 390 389
+TRACE merge 388 385
+TRACE merge 392 426
+TRACE edge [21, 29]
+TRACE merge 646 719
+TRACE merge 718 647
+TRACE edge [21, 52]
+TRACE merge 429 426
+TRACE merge 427 431
+TRACE merge 430 433
+TRACE merge 432 428
+TRACE merge 430 429
+TRACE edge [22, 26]
+TRACE merge 444 443
+TRACE merge 442 797
+TRACE merge 796 521
+TRACE merge 520 523
+TRACE merge 522 525
+TRACE merge 524 445
+TRACE edge [22, 34]
+TRACE merge 792 796
+TRACE merge 797 793
+TRACE edge [22, 35]
+TRACE merge 514 517
+TRACE merge 516 519
+TRACE merge 518 524
+TRACE merge 525 522
+TRACE merge 523 520
+TRACE merge 521 515
+TRACE merge 523 514
+TRACE merge 525 516
+TRACE edge [22, 38]
+TRACE merge 793 795
+TRACE merge 794 792
+TRACE edge [22, 56]
+TRACE merge 436 435
+TRACE merge 434 442
+TRACE merge 443 444
+TRACE merge 445 437
+TRACE merge 443 436
+TRACE edge [22, 70]
+TRACE merge 414 419
+TRACE merge 418 415
+TRACE edge [22, 71]
+TRACE merge 415 571
+TRACE merge 570 569
+TRACE merge 568 567
+TRACE merge 566 709
+TRACE merge 708 711
+TRACE merge 710 414
+TRACE edge [22, 77]
+TRACE merge 519 516
+TRACE merge 517 514
+TRACE merge 515 566
+TRACE merge 567 568
+TRACE merge 569 570
+TRACE merge 571 518
+TRACE merge 567 517
+TRACE merge 569 519
+TRACE edge [22, 82]
+TRACE merge 662 710
+TRACE merge 711 708
+TRACE merge 709 794
+TRACE merge 795 663
+TRACE edge [23, 30]
+TRACE merge 652 655
+TRACE merge 654 653
+TRACE edge [23, 32]
+TRACE merge 484 483
+TRACE merge 482 493
+TRACE merge 492 495
+TRACE merge 494 485
+TRACE merge 492 484
+TRACE edge [23, 33]
+TRACE merge 784 791
+TRACE merge 790 785
+TRACE edge [23, 39]
+TRACE merge 785 787
+TRACE merge 786 784
+TRACE edge [23, 49]
+TRACE merge 104 473
+TRACE merge 472 475
+TRACE merge 474 477
+TRACE merge 476 113
+TRACE merge 112 111
+TRACE merge 110 689
+TRACE merge 688 687
+TRACE merge 686 105
+TRACE edge [23, 50]
+TRACE merge 111 112
+TRACE merge 113 175
+TRACE merge 174 173
+TRACE merge 172 171
+TRACE merge 170 654
+TRACE merge 655 110
+TRACE edge [23, 54]
+TRACE merge 166 790
+TRACE merge 791 177
+TRACE merge 176 179
+TRACE merge 178 181
+TRACE merge 180 494
+TRACE merge 495 691
+TRACE merge 690 492
+TRACE merge 493 167
+TRACE edge [23, 55]
+TRACE merge 171 172
+TRACE merge 173 174
+TRACE merge 175 180
+TRACE merge 181 178
+TRACE merge 179 176
+TRACE merge 177 170
+TRACE merge 179 171
+TRACE merge 181 173
+TRACE edge [23, 74]
+TRACE merge 477 474
+TRACE merge 475 472
+TRACE merge 473 482
+TRACE merge 483 690
+TRACE merge 691 484
+TRACE merge 485 476
+TRACE merge 483 475
+TRACE merge 691 477
+TRACE edge [23, 80]
+TRACE merge 653 659
+TRACE merge 658 652
+TRACE edge [23, 81]
+TRACE merge 659 786
+TRACE merge 787 686
+TRACE merge 687 688
+TRACE merge 689 658
+TRACE edge [24, 51]
+TRACE merge 132 327
+TRACE merge 326 139
+TRACE merge 138 141
+TRACE merge 140 143
+TRACE merge 142 335
+TRACE merge 334 333
+TRACE merge 332 331
+TRACE merge 330 133
+TRACE merge 334 140
+TRACE edge [24, 52]
+TRACE merge 124 123
+TRACE merge 122 121
+TRACE merge 120 135
+TRACE merge 134 137
+TRACE merge 136 601
+TRACE merge 600 125
+TRACE merge 134 122
+TRACE edge [24, 53]
+TRACE merge 126 129
+TRACE merge 128 131
+TRACE merge 130 142
+TRACE merge 143 140
+TRACE merge 141 138
+TRACE merge 139 127
+TRACE merge 141 126
+TRACE merge 143 128
+TRACE edge [24, 61]
+TRACE merge 601 615
+TRACE merge 614 600
+TRACE edge [24, 65]
+TRACE merge 344 347
+TRACE merge 346 349
+TRACE merge 348 591
+TRACE merge 590 363
+TRACE merge 362 361
+TRACE merge 360 345
+TRACE merge 362 344
+TRACE edge [24, 66]
+TRACE merge 591 614
+TRACE merge 615 590
+TRACE edge [25, 32]
+TRACE merge 480 579
+TRACE merge 578 581
+TRACE merge 580 489
+TRACE merge 488 693
+TRACE merge 692 487
+TRACE merge 486 481
+TRACE merge 488 578
+TRACE edge [25, 33]
+TRACE merge 728 789
+TRACE merge 788 729
+TRACE edge [25, 34]
+TRACE merge 729 731
+TRACE merge 730 728
+TRACE edge [25, 40]
+TRACE merge 478 491
+TRACE merge 490 479
+TRACE edge [25, 54]
+TRACE merge 206 486
+TRACE merge 487 677
+TRACE merge 676 488
+TRACE merge 489 213
+TRACE merge 212 211
+TRACE merge 210 209
+TRACE merge 208 788
+TRACE merge 789 207
+TRACE edge [25, 55]
+TRACE merge 204 203
+TRACE merge 202 201
+TRACE merge 200 208
+TRACE merge 209 210
+TRACE merge 211 212
+TRACE merge 213 205
+TRACE merge 209 202
+TRACE merge 204 211
+TRACE edge [25, 56]
+TRACE merge 194 197
+TRACE merge 196 199
+TRACE merge 198 580
+TRACE merge 581 578
+TRACE merge 579 217
+TRACE merge 216 215
+TRACE merge 214 730
+TRACE merge 731 195
+TRACE edge [25, 74]
+TRACE merge 677 692
+TRACE merge 693 676
+TRACE edge [26, 34]
+TRACE merge 732 797
+TRACE merge 796 733
+TRACE edge [26, 35]
+TRACE merge 512 521
+TRACE merge 520 523
+TRACE merge 522 525
+TRACE merge 524 605
+TRACE merge 604 603
+TRACE merge 602 513
+TRACE merge 522 604
+TRACE edge [26, 56]
+TRACE merge 438 573
+TRACE merge 572 575
+TRACE merge 574 445
+TRACE merge 444 443
+TRACE merge 442 732
+TRACE merge 733 439
+TRACE edge [26, 60]
+TRACE merge 575 572
+TRACE merge 573 597
+TRACE merge 596 599
+TRACE merge 598 574
+TRACE merge 596 575
+TRACE edge [26, 78]
+TRACE merge 599 596
+TRACE merge 597 602
+TRACE merge 603 604
+TRACE merge 605 598
+TRACE merge 603 599
+TRACE edge [27, 52]
+TRACE merge 422 427
+TRACE merge 426 429
+TRACE merge 428 607
+TRACE merge 606 423
+TRACE edge [27, 61]
+TRACE merge 607 617
+TRACE merge 616 606
+TRACE edge [27, 67]
+TRACE merge 368 367
+TRACE merge 366 365
+TRACE merge 364 377
+TRACE merge 376 379
+TRACE merge 378 616
+TRACE merge 617 369
+TRACE merge 376 366
+TRACE edge [28, 29]
+TRACE merge 622 649
+TRACE merge 648 623
+TRACE edge [28, 36]
+TRACE merge 634 671
+TRACE merge 670 635
+TRACE edge [28, 37]
+TRACE merge 623 629
+TRACE merge 628 622
+TRACE edge [28, 79]
+TRACE merge 629 634
+TRACE merge 635 628
+TRACE edge [29, 37]
+TRACE merge 622 723
+TRACE merge 722 623
+TRACE edge [29, 44]
+TRACE merge 644 651
+TRACE merge 650 645
+TRACE edge [30, 36]
+TRACE merge 630 633
+TRACE merge 632 639
+TRACE merge 638 637
+TRACE merge 636 631
+TRACE merge 638 630
+TRACE edge [30, 37]
+TRACE merge 624 627
+TRACE merge 626 727
+TRACE merge 726 725
+TRACE merge 724 625
+TRACE merge 726 624
+TRACE edge [30, 38]
+TRACE merge 734 799
+TRACE merge 798 735
+TRACE edge [30, 50]
+TRACE merge 654 661
+TRACE merge 660 655
+TRACE edge [30, 69]
+TRACE merge 702 701
+TRACE merge 700 705
+TRACE merge 704 707
+TRACE merge 706 703
+TRACE merge 704 702
+TRACE edge [30, 71]
+TRACE merge 701 702
+TRACE merge 703 715
+TRACE merge 714 713
+TRACE merge 712 700
+TRACE merge 714 701
+TRACE edge [30, 79]
+TRACE merge 627 624
+TRACE merge 625 636
+TRACE merge 637 638
+TRACE merge 639 626
+TRACE merge 637 627
+TRACE edge [30, 80]
+TRACE merge 633 630
+TRACE merge 631 734
+TRACE merge 735 653
+TRACE merge 652 632
+TRACE edge [30, 82]
+TRACE merge 664 798
+TRACE merge 799 712
+TRACE merge 713 714
+TRACE merge 715 665
+TRACE edge [30, 84]
+TRACE merge 707 704
+TRACE merge 705 724
+TRACE merge 725 726
+TRACE merge 727 706
+TRACE merge 725 707
+TRACE edge [31, 36]
+TRACE merge 642 641
+TRACE merge 640 673
+TRACE merge 672 675
+TRACE merge 674 643
+TRACE merge 672 642
+TRACE edge [31, 38]
+TRACE merge 736 739
+TRACE merge 738 737
+TRACE edge [31, 39]
+TRACE merge 737 783
+TRACE merge 782 736
+TRACE edge [31, 46]
+TRACE merge 678 681
+TRACE merge 680 685
+TRACE merge 684 683
+TRACE merge 682 679
+TRACE merge 684 678
+TRACE edge [31, 49]
+TRACE merge 681 678
+TRACE merge 679 695
+TRACE merge 694 697
+TRACE merge 696 680
+TRACE merge 694 681
+TRACE edge [31, 80]
+TRACE merge 641 642
+TRACE merge 643 657
+TRACE merge 656 738
+TRACE merge 739 640
+TRACE edge [31, 81]
+TRACE merge 657 696
+TRACE merge 697 694
+TRACE merge 695 782
+TRACE merge 783 656
+TRACE edge [31, 83]
+TRACE merge 675 672
+TRACE merge 673 682
+TRACE merge 683 684
+TRACE merge 685 674
+TRACE merge 683 675
+TRACE edge [32, 47]
+TRACE merge 746 751
+TRACE merge 750 747
+TRACE edge [32, 48]
+TRACE merge 747 773
+TRACE merge 772 746
+TRACE edge [32, 54]
+TRACE merge 488 487
+TRACE merge 486 493
+TRACE merge 492 495
+TRACE merge 494 489
+TRACE merge 492 488
+TRACE edge [32, 56]
+TRACE merge 578 581
+TRACE merge 580 587
+TRACE merge 586 585
+TRACE merge 584 579
+TRACE merge 586 578
+TRACE edge [32, 58]
+TRACE merge 576 589
+TRACE merge 588 577
+TRACE edge [32, 59]
+TRACE merge 740 750
+TRACE merge 751 741
+TRACE edge [32, 60]
+TRACE merge 585 586
+TRACE merge 587 740
+TRACE merge 741 588
+TRACE merge 589 584
+TRACE edge [32, 72]
+TRACE merge 496 576
+TRACE merge 577 503
+TRACE merge 502 501
+TRACE merge 500 497
+TRACE edge [32, 73]
+TRACE merge 501 502
+TRACE merge 503 772
+TRACE merge 773 509
+TRACE merge 508 507
+TRACE merge 506 505
+TRACE merge 504 500
+TRACE merge 506 501
+TRACE edge [32, 74]
+TRACE merge 484 693
+TRACE merge 692 483
+TRACE merge 482 504
+TRACE merge 505 506
+TRACE merge 507 508
+TRACE merge 509 485
+TRACE merge 505 692
+TRACE merge 484 507
+TRACE edge [33, 34]
+TRACE merge 728 781
+TRACE merge 780 729
+TRACE edge [33, 38]
+TRACE merge 778 780
+TRACE merge 781 779
+TRACE edge [33, 39]
+TRACE merge 779 785
+TRACE merge 784 778
+TRACE edge [33, 54]
+TRACE merge 788 791
+TRACE merge 790 789
+TRACE edge [34, 38]
+TRACE merge 780 793
+TRACE merge 792 781
+TRACE edge [34, 56]
+TRACE merge 730 733
+TRACE merge 732 731
+TRACE edge [35, 47]
+TRACE merge 742 749
+TRACE merge 748 743
+TRACE edge [35, 58]
+TRACE merge 612 621
+TRACE merge 620 613
+TRACE edge [35, 59]
+TRACE merge 749 763
+TRACE merge 762 748
+TRACE edge [35, 61]
+TRACE merge 613 619
+TRACE merge 618 612
+TRACE edge [35, 70]
+TRACE merge 743 757
+TRACE merge 756 742
+TRACE edge [35, 75]
+TRACE merge 526 531
+TRACE merge 530 533
+TRACE merge 532 618
+TRACE merge 619 527
+TRACE edge [35, 76]
+TRACE merge 533 530
+TRACE merge 531 535
+TRACE merge 534 537
+TRACE merge 536 539
+TRACE merge 538 756
+TRACE merge 757 532
+TRACE merge 534 533
+TRACE edge [35, 77]
+TRACE merge 514 517
+TRACE merge 516 519
+TRACE merge 518 538
+TRACE merge 539 536
+TRACE merge 537 534
+TRACE merge 535 515
+TRACE merge 537 514
+TRACE merge 539 516
+TRACE edge [35, 78]
+TRACE merge 604 603
+TRACE merge 602 620
+TRACE merge 621 762
+TRACE merge 763 605
+TRACE edge [36, 79]
+TRACE merge 634 775
+TRACE merge 774 639
+TRACE merge 638 637
+TRACE merge 636 635
+TRACE edge [36, 80]
+TRACE merge 630 633
+TRACE merge 632 643
+TRACE merge 642 641
+TRACE merge 640 631
+TRACE merge 642 630
+TRACE edge [36, 83]
+TRACE merge 668 673
+TRACE merge 672 675
+TRACE merge 674 774
+TRACE merge 775 669
+TRACE edge [37, 46]
+TRACE merge 766 771
+TRACE merge 770 767
+TRACE edge [37, 47]
+TRACE merge 744 755
+TRACE merge 754 745
+TRACE edge [37, 48]
+TRACE merge 745 770
+TRACE merge 771 744
+TRACE edge [37, 70]
+TRACE merge 755 765
+TRACE merge 764 754
+TRACE edge [37, 79]
+TRACE merge 624 627
+TRACE merge 626 777
+TRACE merge 776 629
+TRACE merge 628 625
+TRACE edge [37, 83]
+TRACE merge 767 776
+TRACE merge 777 766
+TRACE edge [37, 84]
+TRACE merge 720 764
+TRACE merge 765 727
+TRACE merge 726 725
+TRACE merge 724 721
+TRACE edge [38, 39]
+TRACE merge 736 779
+TRACE merge 778 737
+TRACE edge [38, 80]
+TRACE merge 734 739
+TRACE merge 738 735
+TRACE edge [38, 82]
+TRACE merge 794 799
+TRACE merge 798 795
+TRACE edge [39, 81]
+TRACE merge 782 787
+TRACE merge 786 783
+TRACE edge [41, 42]
+TRACE merge 42 45
+TRACE merge 44 225
+TRACE merge 224 399
+TRACE merge 398 43
+TRACE edge [41, 57]
+TRACE merge 230 323
+TRACE merge 322 233
+TRACE merge 232 321
+TRACE merge 320 231
+TRACE edge [41, 58]
+TRACE merge 222 232
+TRACE merge 233 223
+TRACE edge [41, 60]
+TRACE merge 223 224
+TRACE merge 225 222
+TRACE edge [41, 62]
+TRACE merge 36 39
+TRACE merge 38 41
+TRACE merge 40 320
+TRACE merge 321 44
+TRACE merge 45 42
+TRACE merge 43 37
+TRACE edge [41, 67]
+TRACE merge 323 325
+TRACE merge 324 322
+TRACE edge [41, 68]
+TRACE merge 312 324
+TRACE merge 325 313
+TRACE edge [42, 60]
+TRACE merge 224 227
+TRACE merge 226 225
+TRACE edge [42, 62]
+TRACE merge 34 33
+TRACE merge 32 43
+TRACE merge 42 45
+TRACE merge 44 35
+TRACE merge 42 34
+TRACE edge [43, 44]
+TRACE merge 400 407
+TRACE merge 406 401
+TRACE edge [43, 45]
+TRACE merge 94 93
+TRACE merge 92 403
+TRACE merge 402 247
+TRACE merge 246 95
+TRACE edge [43, 58]
+TRACE merge 252 259
+TRACE merge 258 253
+TRACE edge [43, 59]
+TRACE merge 247 252
+TRACE merge 253 246
+TRACE edge [43, 61]
+TRACE merge 242 307
+TRACE merge 306 258
+TRACE merge 259 299
+TRACE merge 298 243
+TRACE edge [43, 63]
+TRACE merge 408 91
+TRACE merge 90 89
+TRACE merge 88 92
+TRACE merge 93 94
+TRACE merge 95 303
+TRACE merge 302 409
+TRACE edge [43, 66]
+TRACE merge 303 306
+TRACE merge 307 302
+TRACE edge [44, 53]
+TRACE merge 148 151
+TRACE merge 150 153
+TRACE merge 152 165
+TRACE merge 164 163
+TRACE merge 162 161
+TRACE merge 160 149
+TRACE merge 162 148
+TRACE merge 150 164
+TRACE edge [44, 63]
+TRACE merge 60 59
+TRACE merge 58 67
+TRACE merge 66 69
+TRACE merge 68 61
+TRACE merge 66 60
+TRACE edge [45, 47]
+TRACE merge 72 71
+TRACE merge 70 417
+TRACE merge 416 241
+TRACE merge 240 73
+TRACE edge [45, 59]
+TRACE merge 241 247
+TRACE merge 246 240
+TRACE edge [45, 63]
+TRACE merge 62 65
+TRACE merge 64 95
+TRACE merge 94 93
+TRACE merge 92 63
+TRACE merge 62 94
+TRACE edge [45, 70]
+TRACE merge 412 416
+TRACE merge 417 413
+TRACE edge [46, 48]
+TRACE merge 56 55
+TRACE merge 54 771
+TRACE merge 770 81
+TRACE merge 80 83
+TRACE merge 82 769
+TRACE merge 768 57
+TRACE edge [46, 49]
+TRACE merge 96 679
+TRACE merge 678 681
+TRACE merge 680 101
+TRACE merge 100 103
+TRACE merge 102 451
+TRACE merge 450 449
+TRACE merge 448 447
+TRACE merge 446 97
+TRACE edge [46, 73]
+TRACE merge 454 453
+TRACE merge 452 467
+TRACE merge 466 469
+TRACE merge 468 471
+TRACE merge 470 768
+TRACE merge 769 455
+TRACE merge 466 454
+TRACE edge [46, 74]
+TRACE merge 447 448
+TRACE merge 449 450
+TRACE merge 451 470
+TRACE merge 471 468
+TRACE merge 469 466
+TRACE merge 467 446
+TRACE merge 469 447
+TRACE merge 471 449
+TRACE edge [46, 83]
+TRACE merge 684 683
+TRACE merge 682 699
+TRACE merge 698 767
+TRACE merge 766 685
+TRACE edge [47, 48]
+TRACE merge 76 79
+TRACE merge 78 747
+TRACE merge 746 87
+TRACE merge 86 85
+TRACE merge 84 745
+TRACE merge 744 77
+TRACE edge [47, 59]
+TRACE merge 240 751
+TRACE merge 750 255
+TRACE merge 254 749
+TRACE merge 748 241
+TRACE edge [47, 70]
+TRACE merge 416 743
+TRACE merge 742 421
+TRACE merge 420 755
+TRACE merge 754 417
+TRACE edge [48, 73]
+TRACE merge 768 773
+TRACE merge 772 769
+TRACE edge [49, 50]
+TRACE merge 106 109
+TRACE merge 108 113
+TRACE merge 112 111
+TRACE merge 110 107
+TRACE merge 112 106
+TRACE edge [49, 74]
+TRACE merge 450 449
+TRACE merge 448 447
+TRACE merge 446 473
+TRACE merge 472 475
+TRACE merge 474 477
+TRACE merge 476 451
+TRACE merge 472 448
+TRACE merge 474 450
+TRACE edge [49, 81]
+TRACE merge 688 687
+TRACE merge 686 695
+TRACE merge 694 697
+TRACE merge 696 689
+TRACE merge 688 694
+TRACE edge [50, 55]
+TRACE merge 174 173
+TRACE merge 172 171
+TRACE merge 170 183
+TRACE merge 182 185
+TRACE merge 184 187
+TRACE merge 186 175
+TRACE merge 182 172
+TRACE merge 184 174
+TRACE edge [51, 53]
+TRACE merge 138 141
+TRACE merge 140 143
+TRACE merge 142 159
+TRACE merge 158 157
+TRACE merge 156 155
+TRACE merge 154 139
+TRACE merge 156 138
+TRACE merge 158 140
+TRACE edge [52, 61]
+TRACE merge 244 601
+TRACE merge 600 249
+TRACE merge 248 607
+TRACE merge 606 245
+TRACE edge [54, 55]
+TRACE merge 176 179
+TRACE merge 178 181
+TRACE merge 180 213
+TRACE merge 212 211
+TRACE merge 210 209
+TRACE merge 208 177
+TRACE merge 210 176
+TRACE merge 212 178
+TRACE edge [54, 74]
+TRACE merge 676 691
+TRACE merge 690 677
+TRACE edge [56, 60]
+TRACE merge 228 587
+TRACE merge 586 585
+TRACE merge 584 239
+TRACE merge 238 573
+TRACE merge 572 575
+TRACE merge 574 229
+TRACE edge [57, 58]
+TRACE merge 232 251
+TRACE merge 250 233
+TRACE edge [57, 61]
+TRACE merge 251 319
+TRACE merge 318 257
+TRACE merge 256 317
+TRACE merge 316 250
+TRACE edge [57, 62]
+TRACE merge 310 321
+TRACE merge 320 311
+TRACE edge [57, 67]
+TRACE merge 317 323
+TRACE merge 322 316
+TRACE edge [58, 59]
+TRACE merge 234 253
+TRACE merge 252 235
+TRACE edge [58, 60]
+TRACE merge 222 589
+TRACE merge 588 234
+TRACE merge 235 583
+TRACE merge 582 223
+TRACE edge [58, 61]
+TRACE merge 250 613
+TRACE merge 612 259
+TRACE merge 258 609
+TRACE merge 608 251
+TRACE edge [58, 65]
+TRACE merge 592 595
+TRACE merge 594 593
+TRACE edge [58, 66]
+TRACE merge 593 608
+TRACE merge 609 592
+TRACE edge [58, 72]
+TRACE merge 576 594
+TRACE merge 595 577
+TRACE edge [58, 78]
+TRACE merge 583 621
+TRACE merge 620 582
+TRACE edge [59, 60]
+TRACE merge 234 741
+TRACE merge 740 237
+TRACE merge 236 753
+TRACE merge 752 235
+TRACE edge [59, 78]
+TRACE merge 753 763
+TRACE merge 762 752
+TRACE edge [60, 78]
+TRACE merge 582 597
+TRACE merge 596 599
+TRACE merge 598 753
+TRACE merge 752 583
+TRACE edge [61, 66]
+TRACE merge 294 615
+TRACE merge 614 307
+TRACE merge 306 609
+TRACE merge 608 295
+TRACE edge [61, 67]
+TRACE merge 314 617
+TRACE merge 616 317
+TRACE merge 316 611
+TRACE merge 610 315
+TRACE edge [61, 75]
+TRACE merge 611 619
+TRACE merge 618 610
+TRACE edge [63, 66]
+TRACE merge 296 303
+TRACE merge 302 297
+TRACE edge [64, 65]
+TRACE merge 304 461
+TRACE merge 460 357
+TRACE merge 356 359
+TRACE merge 358 305
+TRACE edge [64, 66]
+TRACE merge 305 309
+TRACE merge 308 304
+TRACE edge [64, 72]
+TRACE merge 461 499
+TRACE merge 498 460
+TRACE edge [65, 66]
+TRACE merge 300 591
+TRACE merge 590 305
+TRACE merge 304 593
+TRACE merge 592 301
+TRACE edge [65, 72]
+TRACE merge 456 459
+TRACE merge 458 595
+TRACE merge 594 461
+TRACE merge 460 457
+TRACE edge [67, 68]
+TRACE merge 324 547
+TRACE merge 546 381
+TRACE merge 380 383
+TRACE merge 382 325
+TRACE edge [67, 75]
+TRACE merge 547 611
+TRACE merge 610 551
+TRACE merge 550 549
+TRACE merge 548 546
+TRACE edge [68, 75]
+TRACE merge 528 547
+TRACE merge 546 529
+TRACE edge [69, 70]
+TRACE merge 404 759
+TRACE merge 758 411
+TRACE merge 410 761
+TRACE merge 760 405
+TRACE edge [69, 71]
+TRACE merge 411 703
+TRACE merge 702 701
+TRACE merge 700 541
+TRACE merge 540 543
+TRACE merge 542 545
+TRACE merge 544 410
+TRACE edge [69, 76]
+TRACE merge 552 555
+TRACE merge 554 760
+TRACE merge 761 565
+TRACE merge 564 563
+TRACE merge 562 561
+TRACE merge 560 553
+TRACE merge 562 552
+TRACE edge [69, 77]
+TRACE merge 545 542
+TRACE merge 543 540
+TRACE merge 541 560
+TRACE merge 561 562
+TRACE merge 563 564
+TRACE merge 565 544
+TRACE merge 561 543
+TRACE merge 563 545
+TRACE edge [69, 84]
+TRACE merge 704 707
+TRACE merge 706 758
+TRACE merge 759 717
+TRACE merge 716 705
+TRACE edge [70, 71]
+TRACE merge 410 415
+TRACE merge 414 411
+TRACE edge [70, 76]
+TRACE merge 756 761
+TRACE merge 760 757
+TRACE edge [70, 84]
+TRACE merge 758 765
+TRACE merge 764 759
+TRACE edge [71, 77]
+TRACE merge 540 543
+TRACE merge 542 545
+TRACE merge 544 571
+TRACE merge 570 569
+TRACE merge 568 567
+TRACE merge 566 541
+TRACE merge 568 540
+TRACE merge 542 570
+TRACE edge [71, 82]
+TRACE merge 708 711
+TRACE merge 710 715
+TRACE merge 714 713
+TRACE merge 712 709
+TRACE merge 714 708
+TRACE edge [72, 73]
+TRACE merge 462 465
+TRACE merge 464 503
+TRACE merge 502 501
+TRACE merge 500 463
+TRACE merge 502 462
+TRACE edge [73, 74]
+TRACE merge 466 469
+TRACE merge 468 471
+TRACE merge 470 509
+TRACE merge 508 507
+TRACE merge 506 505
+TRACE merge 504 467
+TRACE merge 506 466
+TRACE merge 508 468
+TRACE edge [75, 76]
+TRACE merge 530 533
+TRACE merge 532 559
+TRACE merge 558 557
+TRACE merge 556 531
+TRACE merge 558 530
+TRACE edge [76, 77]
+TRACE merge 534 537
+TRACE merge 536 539
+TRACE merge 538 565
+TRACE merge 564 563
+TRACE merge 562 561
+TRACE merge 560 535
+TRACE merge 562 534
+TRACE merge 564 536
+TRACE edge [79, 83]
+TRACE merge 774 777
+TRACE merge 776 775
+TRACE edge [80, 81]
+TRACE merge 656 659
+TRACE merge 658 657
+TRACE unions_end
+TRACE inconsistent sheet=292 current=3 neighbor=31 component=0 delta=1 expected=3 retained=2
