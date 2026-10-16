@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
 Status: implementation blueprint. Updated 2026-10-15 for upstream
-`7cf9d82acee6f152047eb37e5ff2e6dcece51a0d` and its acceptance contract.
+`362e157c1dfb39701749ed2c154b0edff717fec0` and concurrent development ownership.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,
@@ -57,6 +57,35 @@ units, failure vocabulary and validation evidence. Current accepted ADRs
 remain binding until the specific amendments below land with their types
 and tests. The permitted API/archive break does not authorize loss of an
 existing exact capability or its replay evidence.
+
+### Implementation scope and concurrent development
+
+The project owner directs this branch's further implementation to
+`crates/hyperbrep`, `crates/hyperbrep-io`, and their tests, benchmarks and
+documentation. Surrounding crates are being developed concurrently in another
+thread. Their responsibilities remain in this architectural roadmap, but
+unrelated dependency repairs are not implementation tasks for this branch.
+
+Change a surrounding crate only when leaving it unchanged would make BREP
+incorrect, lose supported behavior or evidence, or violate a demonstrated BREP
+resource/performance contract. Reproduce the concrete BREP failure on the
+current revision, check for an upstream correction, and make only the necessary
+owning-layer change. Preserve typed blockers for genuinely unsupported work;
+do not duplicate another kernel or resume a parked dependency prototype merely
+because it exists. Report unrelated dependency findings for upstream ownership.
+
+Expect further merges. Occasionally fetch upstream at coherent work boundaries,
+especially before establishing a new baseline or diagnosing a dependency
+problem. Preserve local work and both histories, review conflicts against the
+latest upstream intent, and update BREP callers directly. Requalify the affected
+native, feature, WASM and composition paths after integration. Keep a fixed
+revision throughout checks and matched measurements; refresh source-specific
+evidence before making claims on the merged code.
+
+The [latest integration record](evidence/2026-10-15-upstream-corrections/README.md)
+records the parked scalar investigation, conflict resolution and BREP checks.
+This ownership direction changes who performs dependency work; it does not
+weaken the shared properties or close any work-package gate.
 
 ## Properties and acceptance obligations
 
@@ -117,8 +146,11 @@ apply to each subsequent patch; these application notes do not replace them.
    must consume previous outputs and check the intended set, topology and
    source relationship separately. Preserve every certified success; record
    the exact failing operation and typed reason for incomplete workflows.
-   The upstream 16/32-segment polygonal drill compositions remain explicit
-   regression obligations even though the initial drill is certified.
+   Observe the upstream polygonal drill corpus during dependency integration,
+   including its full-resolution 16/32-segment compositions. Further repairs to
+   that root modeling path belong upstream unless a reproduced failure blocks
+   or regresses BREP. BREP's own strict workflows remain this branch's
+   implementation and acceptance obligations.
 3. **Complete user-path and release validation.** Exercise the documented
    distribution in a clean project: install, construct, transform, compose,
    inspect certainty, validate topology, export, reimport and check the

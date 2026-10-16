@@ -8,17 +8,28 @@
       "status": "in-progress",
       "plan": "crates/hyperbrep/docs/DEVELOPMENT_PLAN.md",
       "work_packages": "crates/hyperbrep/docs/IMPLEMENTATION_STATUS.json",
-      "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-step-circles/manifest.json",
+      "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-upstream-corrections/manifest.json",
       "contract": "Pure Rust native/WASM exact CAD implementation; greenfield API/archive changes with direct caller updates and no compatibility shims.",
-      "qualification": "See the source-bound work-package ledger for exact direct circular STEP mapping, shared scalar replay proofs and native/WASM composition. Root strict-drill 16/32 failures, the cached-arc timing exception and all broader resource/release/property gates remain open. Initial adverse and repeated performance observations are retained; no whole-plan completion or push is claimed.",
-      "upstream_revision": "7cf9d82acee6f152047eb37e5ff2e6dcece51a0d",
+      "qualification": "Upstream 362e157c1 integrated with BREP/IO implementation unchanged. All-feature debug/release suites each pass 399; minimal release passes 391. Eight WASM groups execute; scoped lint/docs/fuzz compilation/formatting pass. Selected upstream strict drill and typed-failure regressions now pass, including the former 16/32 failures. All 100 preserved benchmark cases retain receipts; the ten-call cached 256-arc sample measures 42.7 to 130 ns (3.044496), remains an open timing exception, and is not a general performance claim. BREP/IO owns further work; surrounding implementation is concurrent upstream work unless needed for a reproduced BREP blocker or regression. All work-package, broad resource, delivery and full pre-push gates remain open.",
+      "upstream_revision": "362e157c1dfb39701749ed2c154b0edff717fec0",
       "acceptance_protocol": "docs/admission.md",
       "integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-upstream-integration/README.md",
       "acceptance_order": [
         "Empty-result composition and visible failures",
         "Ordinary strict-mode completion",
         "Complete user-path and release validation"
-      ]
+      ],
+      "latest_integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-upstream-corrections/README.md",
+      "implementation_ownership": {
+        "primary": [
+          "hyperbrep",
+          "hyperbrep-io",
+          "their tests, benchmarks and documentation"
+        ],
+        "surrounding_crates": "Concurrent upstream development in another thread. Change only for a reproduced BREP regression or blocker whose repair is necessary to preserve the BREP contract.",
+        "updates": "Occasionally fetch and merge at coherent checkpoints; keep source fixed during checks/measurements, preserve both histories, and requalify affected BREP consumers.",
+        "parked_scalar_investigation": "96c308f87af6f3491828ada3e9b8e92cec858cf1; unfinished, not admitted, not restored over upstream corrections."
+      }
     },
     "existing_worktree_changes_in_scope": true,
     "accepted_cache_contract": "Warming may strengthen Unknown into Certified and reuse prior higher-precision proofs; it must never contradict or weaken an available certificate.",
@@ -9384,6 +9395,257 @@
       "numeric_scope": "Exact membership including +/-1/10^12 hole-boundary offsets and independently derived polygonal six-volume enclosure within 1/10^24. Exact large volume equality and analytic-cylinder fidelity are not claimed.",
       "remaining": "Confirm the next normalization decline and investigate exact factor cancellation or construction-proof retention. Independent conditional expansion encounters degrees 9/10 versus production cap 8. Preserve all limits and failing full-resolution tests; then run broad downstream qualification, matched cost/allocation evidence and release/user-path validation.",
       "runtime_admitted": false,
+      "full_plan_complete": false
+    },
+    "zero_quotient_proof_work": {
+      "status": "candidate: all original drills now compose with empty; complete 16/32 subtraction and admission remain open",
+      "baseline_commit": "3eca3cce8",
+      "progress": "docs/evidence/2026-10-15-quotient-factor-proofs/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-quotient-factor-proofs/zero-qualification-v2/result.json",
+      "model_acceptance": "docs/evidence/2026-10-15-quotient-factor-proofs/zero-candidate-v1/result.json",
+      "production_baseline_diagnosis": "docs/evidence/2026-10-15-quotient-factor-proofs/diagnostic-v4/result.json",
+      "conditional_algebra": "docs/evidence/2026-10-15-quotient-factor-proofs/factor-reduction-algebra-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-quotient-factor-proofs/checkpoint-v1.json",
+      "implementation_sha256": {
+        "crates/hyperreal/src/computable/node.rs": "8a90c811535f2962993f8978edd285ae080afe619056e2ef3b898818beeda6b9",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "2780131268cd79e776d117723c3c905aac1ae0b9b164c4e9e2b66b7293c115da",
+        "crates/hyperreal/src/computable/node/ring_quotient.rs": "e2c4888742d9fd8d428bacab12bd59a0a235f3d396e977d872500e54f121f6d9",
+        "crates/hyperreal/src/computable/node/ring_quotient_tests.rs": "f7450a735f03a1d915a5fe0bacc1c49b50f0c4fed8118b68842f97684bab5053",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "0de54f502ec5678bd884155c2d27f9025ccc00c05c3c7c92f90df524ce60e9ae",
+        "crates/hyperreal/tests/quotient_polynomial_cancellation.rs": "8ada040e2e132950be6853038160925aadea99c7e63117293ff7ae73c2f990bc",
+        "tests/mesh_boolean_context.rs": "49d8e88febbe7ed8aa234c3ac58add009008f3680250c8c905d4d9e98cc7a307",
+        "tests/strict_drilled_workflows.rs": "1dd8a22959400ca3f4b78e5c6bbed7afecf83b767b832634ef9b55ae523a4abe"
+      },
+      "qualification": "912 default and 1019 all-feature scalar tests, 28 scalar doctests, scalar all-feature/all-target and root curve/all-target Clippy with warnings denied, and workspace formatting pass. Direct downstream context and independent polygonal membership/volume-enclosure/topology checks pass. Counts overlap.",
+      "workflow": "8/24 still complete empty accumulation, complete subtraction and reunion. 16/32 now pass Certified empty accumulation and subsequent membership, then fail complete subtraction with typed Real sign classification Unknown. The original full-resolution tests remain failing.",
+      "resource_contract": "Discard proved-zero denominators only after both operands pass expansion and inverse-domain guards. No recognition limit or policy change; no persistent cache or authoritative expression rewrite. External containment is not an internal total-work or heap-byte bound.",
+      "remaining": "Reproduce the remaining subtraction decline on this candidate and investigate exact factor cancellation or retained construction proofs without weakening limits. Broad downstream, matched cost/allocation/artifact comparisons, release and external user-path validation remain open.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
+    },
+    "polynomial_quotient_reduction_work": {
+      "status": "tested candidate: original 16-segment full chain is now Certified; 32-segment subtraction and admission remain open",
+      "baseline_commit": "cfcd73640",
+      "progress": "docs/evidence/2026-10-15-polynomial-quotient-reduction/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-polynomial-quotient-reduction/factor-qualification-v1/result.json",
+      "model_acceptance": "docs/evidence/2026-10-15-polynomial-quotient-reduction/factor-candidate-v2/result.json",
+      "current_remaining_diagnosis": "docs/evidence/2026-10-15-polynomial-quotient-reduction/diagnostic-v3/result.json",
+      "independent_algebra": "docs/evidence/2026-10-15-polynomial-quotient-reduction/remaining-algebra-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-polynomial-quotient-reduction/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-polynomial-quotient-reduction/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "crates/hyperreal/src/computable/node.rs": "51b7d4236df602b1ccbd64471838e31c84271aa3e0eda936083c67c6452053cf",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "2780131268cd79e776d117723c3c905aac1ae0b9b164c4e9e2b66b7293c115da",
+        "crates/hyperreal/src/computable/node/ring_quotient.rs": "9f98f2c5000cd044fb27f1dda0fa47460594b2f7bacb809e8f55b83380c78421",
+        "crates/hyperreal/src/computable/node/ring_quotient_reduction.rs": "61c9105325283a4efa0b264ab67a0f5a8d4a06eef58433bf2c13b84ec1e4f350",
+        "crates/hyperreal/src/computable/node/ring_quotient_reduction_tests.rs": "ba67826e6e0805683dd630e55307670ffa77ef433065f63e744c9a792f906cca",
+        "crates/hyperreal/src/computable/node/ring_quotient_tests.rs": "f7450a735f03a1d915a5fe0bacc1c49b50f0c4fed8118b68842f97684bab5053",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "042816145e1684e39003dca2c6cc263eaf043868e2f00da87dc8af261f0968a6",
+        "crates/hyperreal/tests/quotient_factor_reduction.rs": "f6e6927d1737d2307180b1a1ad0a0e550b51a10ea5034c313dbe475547e409bd",
+        "crates/hyperreal/tests/quotient_polynomial_cancellation.rs": "8ada040e2e132950be6853038160925aadea99c7e63117293ff7ae73c2f990bc",
+        "tests/mesh_boolean_context.rs": "49d8e88febbe7ed8aa234c3ac58add009008f3680250c8c905d4d9e98cc7a307",
+        "tests/strict_drilled_workflows.rs": "1dd8a22959400ca3f4b78e5c6bbed7afecf83b767b832634ef9b55ae523a4abe"
+      },
+      "qualification": "919 default and 1026 all-feature scalar tests, 28 doctests, selected scalar/root Clippy with warnings denied and formatting pass. The original 8/16/24/32 membership, volume-enclosure and topology checks pass. Counts overlap with direct tests.",
+      "workflow": "8/16/24 complete Certified empty accumulation, subtraction to canonical empty and reunion. 32 retains a failing full test at complete subtraction with typed PredicateUndecided. Fresh diagnosis identifies a later 64-term limit; independent algebra needs 145 terms for an exact-zero degree-eight expression with shared factors.",
+      "resource_contract": "Optional full-denominator division after arithmetic declines, with strict existing divisor witnesses and the same remaining recognition budget. No cap, policy, fixture or authoritative expression change. External containment is not an internal total-work or heap-byte bound.",
+      "historical_preservation": "Incomplete: 26957 inherited /tmp artifacts and additional pinned diagnostic source copies were externally lost. Every expected hash is retained, separately from verified survivors. No recovery claim.",
+      "remaining": "Investigate bounded common-factor cancellation for the current 32-segment predicate. Broad downstream, matched cost/allocation/artifact, external-consumer and release checks, and the 35 pending native files remain open.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
+    },
+    "factored_product_proof_work": {
+      "status": "certified original 8/16/24/32 strict composition corpus; focused qualification and cost evidence retained; full admission remains open",
+      "baseline_commit": "045621eba",
+      "progress": "docs/evidence/2026-10-15-factored-product-proofs/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-factored-product-proofs/qualification-summary-v1.json",
+      "rust_validation": "docs/evidence/2026-10-15-factored-product-proofs/qualification-v5/result.json",
+      "binding_validation": "docs/evidence/2026-10-15-factored-product-proofs/wasm-bindings-v2/result.json",
+      "model_acceptance": "docs/evidence/2026-10-15-factored-product-proofs/candidate-v2/result.json",
+      "cost_contract": "docs/evidence/2026-10-15-factored-product-proofs/cost-contract-v1.json",
+      "cost_summary": "docs/evidence/2026-10-15-factored-product-proofs/cost-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-factored-product-proofs/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-factored-product-proofs/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "crates/hyperreal/src/computable/node.rs": "da3677332103ca52e7cdaf36ac0943a29b64b57f7728c310ac8e06722305dd45",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "2780131268cd79e776d117723c3c905aac1ae0b9b164c4e9e2b66b7293c115da",
+        "crates/hyperreal/src/computable/node/ring_product_sum.rs": "b8eb8cfa09694350c64e9425ed7c0e7c440648a7c876b62db6d7d8c55f513676",
+        "crates/hyperreal/src/computable/node/ring_product_sum_tests.rs": "8c72556bdbb7c22076774a0e62289f792854a6b24fb4eec599bbae0d775b037e",
+        "crates/hyperreal/src/computable/node/ring_quotient.rs": "3277d6548033b8c318533ecf30ac1f2c72c90fe912359a381cf769db1775fc27",
+        "crates/hyperreal/src/computable/node/ring_quotient_reduction.rs": "180a92e6e9540b33799c05e37531042c61c863bec8d846c2d2f6c8a4e8278c4c",
+        "crates/hyperreal/src/computable/node/ring_quotient_reduction_tests.rs": "ba67826e6e0805683dd630e55307670ffa77ef433065f63e744c9a792f906cca",
+        "crates/hyperreal/src/computable/node/ring_quotient_tests.rs": "f7450a735f03a1d915a5fe0bacc1c49b50f0c4fed8118b68842f97684bab5053",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "be111d90a4273d3c77f624956b127b17c105b5e89ac4070c0a82ee851c1e54e5",
+        "crates/hyperreal/tests/quotient_factor_reduction.rs": "f6e6927d1737d2307180b1a1ad0a0e550b51a10ea5034c313dbe475547e409bd",
+        "crates/hyperreal/tests/quotient_polynomial_cancellation.rs": "8ada040e2e132950be6853038160925aadea99c7e63117293ff7ae73c2f990bc",
+        "crates/hypersolve/src/residual_replay.rs": "7bbe324979c47746da6ee1087691d5c857c1dc184909d587cac182952163ffe6",
+        "crates/hypersolve/tests/real_representations.rs": "009ff4b07c3ffb007db32d11806a4236c3eb6fcbbd7db21af80e565ca3865401",
+        "src/curve/native.rs": "db08a17e43a2824adc8daaa04b11cc8253ec173805681b4405ed3f0b58c9f803",
+        "tests/geometry_context.rs": "e21670e6c172b0ad4b632d4dfd934a53bb25a43b2b7b789a59aa2d74f0225772",
+        "tests/mesh_boolean_context.rs": "49d8e88febbe7ed8aa234c3ac58add009008f3680250c8c905d4d9e98cc7a307",
+        "tests/strict_drilled_workflows.rs": "1dd8a22959400ca3f4b78e5c6bbed7afecf83b767b832634ef9b55ae523a4abe",
+        "tests/wasm/geometry_certainty.cjs": "eafc9cb6b82fb6d52514a89b9dda93a56d3db12015a457e60afae20744359c9e"
+      },
+      "test_totals": {
+        "scalar-default": {
+          "passed": 924,
+          "ignored": 0
+        },
+        "scalar-all-features": {
+          "passed": 1031,
+          "ignored": 0
+        },
+        "foundations": {
+          "passed": 1545,
+          "ignored": 0
+        },
+        "native-mesh": {
+          "passed": 240,
+          "ignored": 7
+        },
+        "root-curve": {
+          "passed": 237,
+          "ignored": 0
+        },
+        "curve-native": {
+          "passed": 2493,
+          "ignored": 33
+        },
+        "root-minimal": {
+          "passed": 102,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 344,
+          "ignored": 1
+        },
+        "scalar-docs": {
+          "passed": 28,
+          "ignored": 0
+        }
+      },
+      "workflow": "All original full-resolution 8/16/24/32 drill workflows now complete Certified empty accumulation, subtraction to canonical empty and reunion. Independent point membership, polygonal-volume enclosure and separate manifold checks pass.",
+      "certainty": "Original e/pi dense and all 22 representation solver cases, crescent, rack boundary, 16-segment scalar/JavaScript drill and rotated VRML fixtures remain; obsolete permanent-Unknown and redundant-vertex assertions are replaced with stronger receipts and semantic checks. Additional genuinely unresolved trigonometric fixtures preserve strict/approximate/strict behavior.",
+      "resource_contract": "Shared-factor zero recovery reuses the same remaining depth/node/term/degree/coefficient/work budget and validates every operand. Query-local storage, no larger caps or persistent negative cache. External containment is not an internal full-query work or heap-byte bound.",
+      "cost_scope": "Five fixed alternating instrumented scalar pairs against 7d69ef51d; all 380 raw rows and unfavorable results retained. Completion is separate from timing. This is a completeness extension, not a downstream or cross-library speedup claim.",
+      "historical_preservation": "Incomplete: inherited 27093 missing artifact paths retain expected hashes. No new loss or mismatch at this checkpoint; no historical recovery claim.",
+      "remaining": "Scalar Boolean adapter typed-error propagation, wider supported workloads and release/external-consumer validation; full-query resources/provenance/formal/coverage obligations remain. The 35 pending native files retain their prior hashes and are not admitted by these checks.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
+    },
+    "adapter_boolean_failure_work": {
+      "status": "typed native Boolean causes preserved; focused Rust and real C/C++/Python/Go qualification passed",
+      "baseline_commit": "5080ba4b4",
+      "properties": [
+        "P6",
+        "P18",
+        "P25",
+        "P30",
+        "P35",
+        "P37"
+      ],
+      "progress": "docs/evidence/2026-10-15-adapter-failure-kinds/progress-v1.md",
+      "contract": "docs/evidence/2026-10-15-adapter-failure-kinds/contract-v2.md",
+      "baseline": "docs/evidence/2026-10-15-adapter-failure-kinds/baseline-summary-v1.json",
+      "validation": "docs/evidence/2026-10-15-adapter-failure-kinds/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-adapter-failure-kinds/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-adapter-failure-kinds/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "bindings/README.md": "7cd5b4e7f03a068558c101cf019016864bd61aa18c50dcffe384c2ff7bbdcfd0",
+        "bindings/go/boolean_failures_test.go": "628388535ad5da9f786efe5cb6cabf0b38264e04e9b7c03c58645f7dcb5f56cc",
+        "crates/csgrs-ffi/README.md": "72b7a397ab49ab8dc1e373c0aec8bbb77fd8fd2494e49d26cea31b19f000d27d",
+        "readme.md": "a08625e88f4be66172fa7748ef7c3050f4b0882b27c8c4d1e109ddd55e65bd3e",
+        "src/adapter/mesh.rs": "fd513c27ee59b134725a408733a9340b30cd72ee7cc888c736c608bbce81b1fd",
+        "src/adapter/scalar.rs": "19cd8f11c0100629000ee8209d1efdda5c5ee8d9bd0395ecf8e532a957012bd9",
+        "tests/adapter_boolean_failures.rs": "2f73531a5ca9cbca1d29f69e5115b276403b702845c40f786cbbf3247f7a0623",
+        "tests/ffi/boolean_failures.c": "7cdf173d57ed4744e3077634faf7139be7507c98e313bc9e1731f0c27c1bf6ea",
+        "tests/ffi/boolean_failures.cpp": "ec0d10c3e96941300187ed097779a91ada1c29202cb45883c9611ee6a04321a4",
+        "tests/ffi/boolean_failures.py": "ccfdef2d8986d7cd472ef38070b5ea7f22967e31f4765e1472c962219ed24f7a"
+      },
+      "test_totals": {
+        "typed-errors": {
+          "passed": 2,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 239,
+          "ignored": 0
+        },
+        "root-minimal": {
+          "passed": 104,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 346,
+          "ignored": 1
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "ignored": 0
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        }
+      },
+      "migration": "All eight ScalarMesh Boolean methods use the shared HypermeshError conversion through ValidationError::Mesh and AdapterError::Construction. Both source links and Display survive. C-family undecided status changes from generic 4 to existing 5; invalid input remains 4, including empty/malformed pairs. No successful model is published on failure.",
+      "scope": "192 invalid-input and 32 undecided Rust cases across four scalar families. All four operations exercised in actual C/C++/Python/Go consumers, followed by successful empty composition and recovery. Lower-layer and real WASM sources match E12; their qualification is inherited, not rerun.",
+      "resource_contract": "External 1800-second command and 8-GiB per-process address-space containment. No new internal full-query work, heap-byte or cancellation bound; no performance claim.",
+      "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
+      "remaining": "Other text-only adapter paths, wider workload/provenance/resource contracts, clean external package and release validation. The 35 pending native files remain unchanged and separately unadmitted.",
+      "full_plan_complete": false
+    },
+    "exact_path_failure_work": {
+      "status": "typed exact-path and closed-Bezier construction; focused semantics, downstream suites and real caller checks passed",
+      "baseline_commit": "958d2fa76",
+      "properties": [
+        "P6",
+        "P8",
+        "P9",
+        "P16",
+        "P18",
+        "P25",
+        "P30",
+        "P35",
+        "P37"
+      ],
+      "contract": "docs/evidence/2026-10-15-exact-path-failures/contract-v1.md",
+      "baseline": "docs/evidence/2026-10-15-exact-path-failures/baseline-findings-v1.md",
+      "progress": "docs/evidence/2026-10-15-exact-path-failures/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-exact-path-failures/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-exact-path-failures/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-exact-path-failures/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "benchmarks/rust/feature_pipeline.rs": "6196a2fd26f85761a3d2cf62d9dc54e3f3694920a200a71021cdfd63ec255d5e",
+        "benchmarks/rust/profile_primitives.rs": "1992f83c0484ac96c1a02148c97e174b863682bfd5895cccc1a031d187a76888",
+        "examples/readme_renders.rs": "83de127ee39e0cc5e0ac54ea7f4959eff01768af116c07da935899e8199afcd1",
+        "readme.md": "8e1e3d0199a9c2d60157448e988bc873ee5693517b9cc385424b157ee98e6c24",
+        "src/curve/native.rs": "c0b3dd7039dada3ab8bbdeb0fb1e065f6cf7da6c09671cc282ac672cc4dc62ec",
+        "tests/exact_path_failures.rs": "e467bc25d2ae129bfefcd12c8ddbb0b8f2709278fbc8a67eb7b5da5ebf856fbb"
+      },
+      "test_totals": {
+        "exact-paths": {
+          "passed": 6,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 245,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 352,
+          "ignored": 1
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        }
+      },
+      "migration": "bezier_path/bspline_path now return Result rather than Option; bezier_region returns Result rather than empty-on-error. The new Bezier path context implementation is shared with closed-region construction. Native Curve/ExactCurve causes and invalid/undecided categories survive. Existing examples, benchmark callers and docs propagate the new result.",
+      "semantics": "Preserved exact midpoint values for four Bezier families and matching polynomial splines at all original display counts; native family tags, reversal and local certainty pass. Cubic area 27/20, independent membership, union with empty and affine area 81/10 pass. A retraced quadratic remains successful Certified empty and composes. The unresolved cubic remains typed Undecided in strict/approximate/strict.",
+      "resources": "Private copy-on-write target over the unchanged E13 lower build; all lower hashes rechecked. External 1800-second/8-GiB per-process containment only. Original workload fixtures run once as completion checks, without performance claims. The /tmp quota remains full; historical targets and failed copies are retained.",
+      "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
+      "remaining": "Hilbert midpoint-only clipping and lossy wrapper; legacy sampled gear/airfoil and text construction failures; remaining adapters; wider resources/provenance, external package/release, formal/fuzz/coverage and full properties obligations. The 35 pending native files remain separately unadmitted.",
       "full_plan_complete": false
     }
   },

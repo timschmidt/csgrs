@@ -1834,41 +1834,65 @@ fn sampled_cycloidal_gear(
 /// Exact arbitrary-degree Bezier path.
 ///
 /// Closed controls should be passed to [`bezier_region`] instead.
-pub fn bezier_path(control: &[[Real; 2]], display_segments: usize) -> Option<CurvePath2> {
+/// Invalid arguments and native construction failures retain typed diagnostics.
+pub fn bezier_path(
+    control: &[[Real; 2]],
+    display_segments: usize,
+) -> Result<CurvePath2, ValidationError> {
+    bezier_path_with_context(control, display_segments, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Constructs a native Bezier path with the selected policy and local certainty.
+///
+/// The positive display count does not sample or replace the exact control net.
+pub fn bezier_path_with_context(
+    control: &[[Real; 2]],
+    display_segments: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurvePath2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     if control.len() < 2 || display_segments < 1 {
-        return None;
+        return Err(ValidationError::InvalidArguments);
     }
     let points = control
         .iter()
         .map(|point| Point2::new(point[0].clone(), point[1].clone()))
         .collect::<Vec<_>>();
-    let curve = match points.as_slice() {
-        [start, end] => LineSeg2::try_new(start.clone(), end.clone())
-            .ok()
-            .map(Curve2::from),
-        [start, control, end] => Some(Curve2::from(QuadraticBezier2::new(
-            start.clone(),
-            control.clone(),
-            end.clone(),
-        ))),
-        [start, control1, control2, end] => Some(Curve2::from(CubicBezier2::new(
-            start.clone(),
-            control1.clone(),
-            control2.clone(),
-            end.clone(),
-        ))),
-        _ => RationalBezier2::try_new(points, vec![Real::one(); control.len()])
-            .ok()
-            .map(Curve2::from),
-    }?;
-    CurvePath2::try_new(vec![curve]).ok()
+    let path = decisions.exact_curve(|| -> Result<_, ValidationError> {
+        let curve = match points.as_slice() {
+            [start, end] => Curve2::from(LineSeg2::try_new(start.clone(), end.clone())?),
+            [start, control, end] => Curve2::from(QuadraticBezier2::new(
+                start.clone(),
+                control.clone(),
+                end.clone(),
+            )),
+            [start, control1, control2, end] => Curve2::from(CubicBezier2::new(
+                start.clone(),
+                control1.clone(),
+                control2.clone(),
+                end.clone(),
+            )),
+            _ => Curve2::from(RationalBezier2::try_new(
+                points,
+                vec![Real::one(); control.len()],
+            )?),
+        };
+        Ok(CurvePath2::try_new(vec![curve])?)
+    })?;
+    Ok(decisions.finish(path))
 }
 
 /// Closed arbitrary-degree Bezier boundary as a filled region.
-pub fn bezier_region(control: &[[Real; 2]], display_segments: usize) -> CurveRegion2 {
+///
+/// Construction failures are errors; a successfully regularized retraced
+/// boundary can still represent the empty set.
+pub fn bezier_region(
+    control: &[[Real; 2]],
+    display_segments: usize,
+) -> Result<CurveRegion2, ValidationError> {
     bezier_region_with_context(control, display_segments, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
-        .unwrap_or_else(|_| empty())
 }
 
 /// Publishes a closed Bezier boundary with the selected policy and aggregate certainty.
@@ -1878,27 +1902,20 @@ pub fn bezier_region_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let path =
-        bezier_path(control, display_segments).ok_or(ValidationError::InvalidArguments)?;
-    match decisions.exact_curve(|| path.start().coincides_with(&path.end())) {
-        Ok(true) => {},
-        Ok(false) => return Err(ValidationError::InvalidArguments),
-        Err(hypercurve::ExactCurveError::Blocked(blocker)) => {
-            return Err(ValidationError::Geometry(format!(
-                "Bezier boundary closure is undecided: {:?}",
-                blocker.reason()
-            )));
-        },
-        Err(error) => return Err(ValidationError::Geometry(error.to_string())),
+    let path = decisions.consume_geometry(bezier_path_with_context(
+        control,
+        display_segments,
+        context,
+    )?);
+    if !decisions.exact_curve(|| path.start().coincides_with(&path.end()))? {
+        return Err(ValidationError::InvalidArguments);
     }
-    let region = decisions
-        .exact_curve(|| {
-            CurveRegion2::try_from_boundary_paths(
-                std::slice::from_ref(&path),
-                hypercurve::FillRule::EvenOdd,
-            )
-        })
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+    let region = decisions.exact_curve(|| {
+        CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            hypercurve::FillRule::EvenOdd,
+        )
+    })?;
     Ok(decisions.finish(region))
 }
 
@@ -1907,14 +1924,13 @@ pub fn bspline_path(
     control: &[[Real; 2]],
     degree: usize,
     display_segments_per_span: usize,
-) -> Option<CurvePath2> {
+) -> Result<CurvePath2, ValidationError> {
     bspline_path_with_context(
         control,
         degree,
         display_segments_per_span,
         &GeometryContext::STRICT,
     )
-    .ok()
     .map(GeometryOutcome::into_value)
 }
 
@@ -1953,11 +1969,9 @@ pub fn bspline_path_with_context(
         .iter()
         .map(|point| Point2::new(point[0].clone(), point[1].clone()))
         .collect();
-    let spline = decisions
-        .exact_curve(|| PolynomialSplineCurve2::try_new(degree, points, knots))
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
-    let path = CurvePath2::try_new(vec![Curve2::from(spline)])
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+    let spline =
+        decisions.exact_curve(|| PolynomialSplineCurve2::try_new(degree, points, knots))?;
+    let path = decisions.exact_curve(|| CurvePath2::try_new(vec![Curve2::from(spline)]))?;
     Ok(decisions.finish(path))
 }
 
@@ -3627,7 +3641,7 @@ mod tests {
             )
             .is_empty()
         );
-        assert!(bspline_path(&[], usize::MAX, 1).is_none());
+        assert!(bspline_path(&[], usize::MAX, 1).is_err());
     }
 
     #[test]
@@ -3752,11 +3766,47 @@ mod tests {
                 })
                 .count()
         };
-        assert_eq!(
-            vertices_at(&pitch_line),
-            teeth * 2,
-            "both sides of every tooth must cross the pitch line"
-        );
+        // The neighboring root/face samples are scalar multiples of the
+        // same (run, rise), so native admission may remove their collinear
+        // pitch vertex. Count geometric crossings, independent of that split.
+        let pitch = hypercurve::CurvePoint2::from(Point2::new(Real::zero(), pitch_line));
+        let crossings = curves
+            .iter()
+            .filter(|curve| {
+                let start = curve
+                    .start()
+                    .compare_coordinate(&pitch, hypercurve::Axis2::Y)
+                    .expect("rack start height");
+                let end = curve
+                    .end()
+                    .compare_coordinate(&pitch, hypercurve::Axis2::Y)
+                    .expect("rack end height");
+                (start == Ordering::Less) != (end == Ordering::Less)
+            })
+            .count();
+        assert_eq!(crossings, teeth * 2, "both sides must cross the pitch line");
+        let epsilon = (Real::one() / Real::from(1_000_000_000_000_u64)).unwrap();
+        for tooth in 0..teeth {
+            for side in [-1, 1] {
+                let x = Real::pi()
+                    * (Real::from(tooth as u64) + (Real::from(side) / Real::from(4)).unwrap());
+                for (y, expected) in [
+                    (Real::zero(), None),
+                    (-&epsilon, Some(true)),
+                    (epsilon.clone(), Some(false)),
+                ] {
+                    let location = contains_xy_with_context(
+                        &rack,
+                        x.clone(),
+                        y,
+                        &GeometryContext::STRICT,
+                    )
+                    .expect("exact rack pitch contact and displaced membership");
+                    assert_eq!(location.certainty, crate::GeometryCertainty::Certified);
+                    assert_eq!(location.value, expected);
+                }
+            }
+        }
         assert_eq!(
             vertices_at(&tip),
             teeth * 2,
@@ -3861,10 +3911,10 @@ mod tests {
             [two.clone(), one.clone()],
             [Real::from(3_u8), zero.clone()],
         ];
-        assert!(bezier_path(&controls, 16).is_some());
-        assert!(bspline_path(&controls, 2, 8).is_some());
-        assert!(bezier_path(&controls, 0).is_none());
-        assert!(bspline_path(&controls, 2, 0).is_none());
+        assert!(bezier_path(&controls, 16).is_ok());
+        assert!(bspline_path(&controls, 2, 8).is_ok());
+        assert!(bezier_path(&controls, 0).is_err());
+        assert!(bspline_path(&controls, 2, 0).is_err());
         assert!(matches!(
             bezier_region_with_context(&controls, 16, &GeometryContext::STRICT),
             Err(ValidationError::InvalidArguments)
@@ -3876,7 +3926,7 @@ mod tests {
             [two.clone(), two.clone()],
             [zero.clone(), zero],
         ];
-        assert!(!bezier_region(&closed_controls, 16).is_empty());
+        assert!(!bezier_region(&closed_controls, 16).unwrap().is_empty());
 
         let mesh = try_triangulate(
             &square(two).expect("valid planar fixture"),
@@ -3902,39 +3952,29 @@ mod tests {
         let compound = |result: Result<GeometryOutcome<CurveRegion2>, ValidationError>| {
             result.expect("nominal compound region").into_value()
         };
-        assert!(
-            crescent(
-                two.clone(),
-                one.clone(),
-                one.clone(),
-                16,
-                &GeometryContext::STRICT,
-            )
-            .is_err(),
-            "strict compound construction must retain its symbolic boundary blocker"
-        );
-        let approximate_crescent = crescent(
-            two.clone(),
-            one.clone(),
-            one.clone(),
-            16,
-            &GeometryContext::APPROXIMATE_512,
-        )
-        .expect("the authorized terminal should complete the sampled crescent");
-        assert_eq!(
-            approximate_crescent.certainty,
-            crate::GeometryCertainty::Approximate512Consumed
-        );
-        assert!(!approximate_crescent.value.is_empty());
-        assert!(
-            !try_finite_profiles(
-                &approximate_crescent.value,
-                &GeometryContext::APPROXIMATE_512,
-            )
-            .expect("the completed crescent should retain projectable boundary topology")
-            .into_value()
-            .is_empty()
-        );
+        for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
+            let crescent = crescent(two.clone(), one.clone(), one.clone(), 16, &context)
+                .expect("the symbolic crescent now has a strict scalar proof");
+            assert_eq!(crescent.certainty, crate::GeometryCertainty::Certified);
+            assert!(!crescent.value.is_empty());
+            let profiles = try_finite_profiles(&crescent.value, &GeometryContext::STRICT)
+                .expect("the certified crescent retains projectable boundary topology");
+            assert_eq!(profiles.certainty, crate::GeometryCertainty::Certified);
+            assert!(!profiles.value.is_empty());
+            // (-1,0) is material, (1,0) lies in the removed unit polygon,
+            // and (3,0) lies outside the outer radius-two polygon.
+            for (x, expected) in [(-1, true), (1, false), (3, false)] {
+                let location = contains_xy_with_context(
+                    &crescent.value,
+                    Real::from(x),
+                    Real::zero(),
+                    &GeometryContext::STRICT,
+                )
+                .expect("certified crescent membership");
+                assert_eq!(location.certainty, crate::GeometryCertainty::Certified);
+                assert_eq!(location.value, Some(expected));
+            }
+        }
         let shapes = [
             rectangle(two.clone(), one.clone()).expect("valid planar fixture"),
             square(two.clone()).expect("valid planar fixture"),

@@ -137,14 +137,31 @@ try {
   assert.equal(square.containsXY(0, 0.5), undefined);
   assert.throws(() => square.containsXYWithContext(NaN, 0, false));
 
-  // Opposite rotations retain an exact identity that bounded predicates cannot
-  // certify at this angle. A warm terminal answer must not satisfy STRICT.
+  // Opposite rotations now certify the origin-axis boundary by cancellation.
+  // Preserve that original query and independently known inside/outside points.
   const rotatedSquare = keep(square.rotate(13));
   const restoredSquare = keep(rotatedSquare.rotate(-13));
-  assert.throws(() => restoredSquare.containsXY(0.5, 0), (error) =>
+  assert.equal(restoredSquare.containsXY(0.5, 0), undefined);
+  for (const approximate of [false, true, false]) {
+    for (const [x, y, value, status] of [
+      [0.5, 0, undefined, Status.Boundary],
+      [0.5, 0.5, true, Status.Decided],
+      [2, 0.5, false, Status.Decided],
+    ]) {
+      const result = keep(restoredSquare.containsXYWithContext(x, y, approximate));
+      assert.equal(result.value, value);
+      assert.equal(result.status, status);
+      assert.equal(result.certainty, Certainty.Certified);
+      assert.equal(result.approximate512Consumed, false);
+      assert.equal(result.reason, undefined);
+    }
+  }
+  // A nonzero-coordinate boundary still needs an unproved unit-norm relation.
+  // Its approximate terminal must not satisfy a subsequent strict request.
+  assert.throws(() => restoredSquare.containsXY(1, 0.5), (error) =>
     error instanceof Error && error.name === "GeometryError" && error.code === "undecided");
   for (const approximate of [false, true, false]) {
-    const result = keep(restoredSquare.containsXYWithContext(0.5, 0, approximate));
+    const result = keep(restoredSquare.containsXYWithContext(1, 0.5, approximate));
     assert.equal(result.value, undefined);
     assert.equal(result.status, approximate ? Status.Boundary : Status.Uncertain);
     assert.equal(result.certainty, approximate ? Certainty.Approximate512Consumed : undefined);
@@ -306,14 +323,24 @@ try {
   const body = keep(MeshJs.cuboid(12, 12, 4));
   const cylinder = keep(MeshJs.cylinder(2, 6, 16));
   const drill = keep(cylinder.translate(6, 6, -1));
-  assert.throws(() => body.differenceWithContext(drill, false));
-  const difference = keep(body.differenceWithContext(drill, true));
-  assert.equal(difference.certainty, Certainty.Approximate512Consumed);
-  assert.equal(difference.approximate512Consumed, true);
-  // intoMesh consumes its result wrapper, so release that wrapper from owned.
-  owned.pop();
-  const mesh = keep(difference.intoMesh());
-  assert.equal(mesh.triangleCount(), 144);
+  for (const approximate of [false, true]) {
+    const difference = keep(body.differenceWithContext(drill, approximate));
+    assert.equal(difference.certainty, Certainty.Certified);
+    assert.equal(difference.approximate512Consumed, false);
+    // intoMesh consumes its result wrapper, so release that wrapper from owned.
+    owned.pop();
+    const mesh = keep(difference.intoMesh());
+    assert.equal(mesh.triangleCount(), 144);
+    for (const [x, y, z, expected] of [
+      [1, 1, 2, true], [6, 6, 2, false], [-1, 6, 2, false],
+    ]) {
+      const point = keep(new Point3Js(x, y, z));
+      const membership = keep(mesh.containsPointWithContext(point, false));
+      assert.equal(membership.status, Status.Decided);
+      assert.equal(membership.certainty, Certainty.Certified);
+      assert.equal(membership.value, expected);
+    }
+  }
 
   const planeResult = keep(PlaneJs.FromComponentsWithContext(0, 0, 0, 1, 0, 0, 0, 1, 0, false));
   assert.equal(planeResult.certainty, Certainty.Certified);

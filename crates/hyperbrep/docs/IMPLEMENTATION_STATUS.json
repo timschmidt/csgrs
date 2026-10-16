@@ -858,6 +858,44 @@
       "validation": "399 combined native/IO passes in debug and release; 391 minimal-feature passes. Scalar all/minimal configurations pass 1050/937; predicates 365/352; the unchanged complete curve suite passes 2441 with 28 existing ignores, and solver passes 974. Counts overlap. Eight exact native groups execute in zero-import Wasmtime, including partial arcs, reversed normals and oblique/quadratic frames. Independent OCCT reads the six original exact fixtures; the byte-identical original off-carrier OCCT cylinder remains a typed rejection. Scoped strict Clippy/docs, examples, fuzz-target compilation, fmt and diff checks pass. Root acceptance retains 141 passes and the same two strict 16/32 drill failures. Every attempt and source difference is recorded.",
       "cost_evidence": "Complete preserved 6/7 advanced/faceted, 64 native, 12 arc and 5 closed-edge corpora retain receipts. Initial native median/max ratios 1.256921/1.340681 remain recorded; one predefined complete geometry repeat gives 0.992343/1.036984, and all six pairs pooled give 0.997557/1.053811. Pooled arc median/max are 0.998373/1.103316, with cached 256-arc queries increasing 39.2 to 43.25 ns; this timing gate remains open. Pooled closed-edge median/max are 0.984569/1.046618. Existing import allocation-call counts are unchanged, with advanced requested bytes increasing about 1-2%. Selected 134/124 scalar probes have maxima 1.082050/1.073026. New circular import/reused syntax cost 0.982/0.875 ms; full edit/replay/composition costs 10.176 ms and requests 52617.88 allocations/4674464.28 bytes per completion. These are descriptive costs, not a speedup or resource-bound claim. The broad scalar fallback and anchored-frame prototype are rejected with retained evidence.",
       "limits": "All 28 work packages remain open. Curved supplied SURFACE_CURVE/SEAM_CURVE, other analytic/spline/void/assembly mappings, exact curved STEP export, explicit healing/approximation and general shell completeness remain open. Detailed operation provenance/receipts, total-work/retained-byte/cancellation bounds, published-package/MSRV and real C/Python/JS consumers are not qualified. No new runtime fuzz/ASan/lexicase/coverage/formal campaign or complete pre-push matrix is claimed. Initial, repeat and pooled timing failures and earlier archive/closed-edge observations remain visible; no push is performed."
+    },
+    {
+      "id": "upstream-corrections-brep-ownership",
+      "work_packages": [
+        "WP00",
+        "WP01",
+        "WP08",
+        "WP14a",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P2",
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "Integrate upstream exact-composition and typed-failure corrections, preserve both histories and concentrate implementation in BREP/IO. Keep the current cached-arc timing exception and all broader gates open; no optimization or release admission is claimed.",
+      "change": "Merge upstream 362e157c1 over BREP 561eae237. Resolve the two solver test conflicts with complete upstream versions, which retain all 22 strict sparse successes and exact symbolic residuals under both policies. Preserve the unfinished local scalar prototype in stash 96c308f87af6f3491828ada3e9b8e92cec858cf1 without restoring it. All 98 BREP/IO implementation and manifest files remain unchanged. Update the plan and ownership guidance: surrounding crates are concurrent upstream work; modify them only for a reproduced BREP blocker or regression, check upstream first, and requalify after future merges.",
+      "source": "DEVELOPMENT_PLAN.md",
+      "evidence": "evidence/2026-10-15-upstream-corrections/manifest.json",
+      "validation": "All 16 scoped qualification commands pass. BREP/IO debug and release all-feature suites each pass 399 tests; minimal release passes 391. Hyperreal all-feature release passes 1066, solver residuals 14 and representation matrices four. Selected root workflows pass 13, including all five original strict drill tests at unchanged 8/16/24/32 resolutions; the previously failing 16/32 compositions now pass. Strict BREP/IO Clippy, warning-denied docs, circular example, fuzz-target compilation, formatting and an eight-group zero-import Wasmtime execution pass. Counts overlap; only the generated probe lockfile was added between source snapshots. No new BREP production behavior is claimed.",
+      "cost_evidence": "All 100 cases across six complete preserved corpora retain receipts and fixture facts in 36 alternating baseline/candidate processes. Median/max ratios: native 1.001774/1.026703, advanced STEP 0.997291/1.006123, faceted STEP 0.995317/1.013709, closed edges 0.795725/0.934629, circular STEP 0.990671/0.997090, and default 256-arc 1.001702/3.044496. The adverse cached 256-arc query measures 42.7 to 130 ns with ten calls per short sample; the 10% timing gate is not met and controlled qualification remains open. All 19 STEP allocation-call/requested-byte observations match. Benchmark executable sizes grow approximately 30 KiB (0.12-0.18%). All raw samples, hashes, process resources and prior timing qualifications remain; no speedup or internal resource bound is claimed.",
+      "limits": "All 28 work packages remain open. General geometry/composition/provenance, total-work/retained-byte/cancellation bounds, clean published-package/MSRV and actual C/C++/Python/JavaScript consumers remain unqualified. No new runtime fuzz/ASan/lexicase/coverage/formal campaign or full pre-push matrix is claimed. Inherited raw upstream evidence retains its byte-identical whitespace findings. No push is performed."
     }
   ],
   "work_packages": [
@@ -1032,7 +1070,7 @@
   ],
   "next_actions": [
     "Preserve and broaden the BodySet empty/multi-body/overlapping-selection composition corpus. Add shared arrangements across expression roots, durable boundary provenance and certainty receipts, complete work/memory/cancellation bounds, and mixed analytic/spline closure without losing the newly certified finite composition path (WP01/WP08, P6/P17-P20).",
-    "Preserve and exercise named ordinary strict workflows with independent set, topology and source-fidelity checks. Retain upstream 16/32-segment drilled composition failures and all certified controls; inherited scalar candidate status is not admission. Record all seven outcome categories and the failing stage (WP00/WP21, P39).",
+    "Preserve and extend named BREP strict workflows with independent set, topology and source-fidelity checks. Observe upstream drilled-body and dependency corrections during integration; unrelated repairs remain upstream work. Record all seven outcome categories and the concrete failing BREP stage (WP00/WP21, P39).",
     "Complete the documented-package pipeline in clean external consumers and actual affected bindings; verify features, dependency versions, MSRV, certainty and format-specific round trips. Local paths, source builds and WASM probes do not close delivery gates (WP17/WP18/WP23, P37).",
     "Continue WP03 beyond native single-vertex circle/ellipse edges: add regular closed-spline and singular-chart certificates, complete periodic chart gluing, and general ellipse/plane pcurve-image proofs. Keep the new closed-edge/BodySet/empty composition corpus. The verified stash remains a historical backup; its selectively recovered candidate is requalified on integrated dependencies.",
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
@@ -1041,10 +1079,10 @@
     "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue WP14a from selected exact faceted exchange, planar advanced import and direct circular edges on planes/cylinders. Preserve the new strict split/replay/reflection/BodySet/empty workflow and exact source angle/frame/sense maps. Add all supplied curved SURFACE_CURVE/SEAM_CURVE representations with basis-aware units and complete 3D/UV correspondence proofs, then other analytic families and exact curved export. WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. Keep the unchanged off-carrier decimal cylinder as a typed rejection; no implicit repair or whole-document exchange claim.",
-    "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
+    "Continue every BREP work package and its cross-stack integration requirements in the plan. Surrounding-crate implementation is concurrent upstream work unless a reproduced dependency failure would make BREP worse; foundational progress does not close broader project gates."
   ],
   "acceptance_contract": {
-    "upstream_revision": "7cf9d82acee6f152047eb37e5ff2e6dcece51a0d",
+    "upstream_revision": "362e157c1dfb39701749ed2c154b0edff717fec0",
     "properties": "../../../properties.md",
     "protocol": "../../../docs/admission.md",
     "agent_rules": "../../../AGENTS.md",
@@ -1068,6 +1106,17 @@
       "resource exhaustion",
       "incorrect result"
     ],
-    "admission": "Documentation and integration do not establish implementation compliance. Source-specific evidence remains tied to its original revision; requalify after dependency changes."
+    "admission": "Documentation and integration do not establish implementation compliance. Source-specific evidence remains tied to its original revision; requalify after dependency changes.",
+    "latest_integration": "evidence/2026-10-15-upstream-corrections/README.md",
+    "implementation_ownership": {
+      "primary": [
+        "hyperbrep",
+        "hyperbrep-io",
+        "their tests, benchmarks and documentation"
+      ],
+      "surrounding_crates": "Concurrent upstream development in another thread. Change only for a reproduced BREP regression or blocker whose repair is necessary to preserve the BREP contract.",
+      "updates": "Occasionally fetch and merge at coherent checkpoints; keep source fixed during checks/measurements, preserve both histories, and requalify affected BREP consumers.",
+      "parked_scalar_investigation": "96c308f87af6f3491828ada3e9b8e92cec858cf1; unfinished, not admitted, not restored over upstream corrections."
+    }
   }
 }

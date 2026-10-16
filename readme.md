@@ -199,7 +199,7 @@ Rendered filled constructors:
 | <img src="docs/involute_rack.png" width="144" alt="Filled involute rack profile with visible edges and vertices"/> | `curve::involute_rack(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real) -> CurveRegion2` |
 | <img src="docs/cycloidal_rack.png" width="144" alt="Filled cycloidal rack profile with visible edges and vertices"/> | `curve::cycloidal_rack(module: Real, teeth: usize, clearance: Real, segments_per_flank: usize) -> CurveRegion2` |
 | <img src="docs/airfoil_naca4.png" width="144" alt="Filled NACA four-digit airfoil with visible edges and vertices"/> | `curve::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize) -> CurveRegion2` |
-| <img src="docs/bezier.png" width="144" alt="Filled exact Bezier boundary with visible edge and vertex"/> | `curve::bezier_region(control: &[[Real; 2]], display_segments: usize) -> CurveRegion2` |
+| <img src="docs/bezier.png" width="144" alt="Filled exact Bezier boundary with visible edge and vertex"/> | `curve::bezier_region(control: &[[Real; 2]], display_segments: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/metaballs_2d.png" width="144" alt="Filled planar metaball contours with visible edges and vertices"/> | `curve::metaballs(balls: &[(Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/from_image.png" width="144" alt="Filled raster-traced region with visible edges and vertices"/> | `curve::from_image(image: &GrayImage, threshold: u8) -> Result<CurveRegion2, RasterTraceError>` |
 | <img src="docs/truetype.png" width="144" alt="Filled TrueType glyph regions with visible exact edges and vertices"/> | `curve::truetype_text(text: &str, font_data: &[u8], scale: Real) -> CurveRegion2` |
@@ -212,10 +212,24 @@ Open constructors retain their native path/string topology:
 
 | Preview | Function |
 |---|---|
-| <img src="docs/bezier_path.png" width="144" alt="Exact open Bezier path with visible edge and authored vertices"/> | `curve::bezier_path(control: &[[Real; 2]], display_segments: usize) -> Option<CurvePath2>` |
-| <img src="docs/bspline_path.png" width="144" alt="Exact open B-spline path with visible edge and authored vertices"/> | `curve::bspline_path(control: &[[Real; 2]], degree: usize, display_segments_per_span: usize) -> Option<CurvePath2>` |
+| <img src="docs/bezier_path.png" width="144" alt="Exact open Bezier path with visible edge and authored vertices"/> | `curve::bezier_path(control: &[[Real; 2]], display_segments: usize) -> Result<CurvePath2, ValidationError>` |
+| <img src="docs/bspline_path.png" width="144" alt="Exact open B-spline path with visible edge and authored vertices"/> | `curve::bspline_path(control: &[[Real; 2]], degree: usize, display_segments_per_span: usize) -> Result<CurvePath2, ValidationError>` |
 | <img src="docs/hilbert_strings.png" width="144" alt="Open Hilbert curve strings with visible edges and vertices"/> | `curve::hilbert_strings(boundary: &CurveRegion2, order: usize, padding: Real) -> Vec<CurveString2>` |
 | <img src="docs/hershey_strings.png" width="144" alt="Open Hershey text curve strings with visible edges and vertices"/> | `curve::hershey_strings(text: &str, font: &hypercurve::hershey::Font<'_>, size: Real) -> Vec<CurveString2>` |
+
+`bezier_path`, `bspline_path`, and `bezier_region` now return `Result`.
+Propagate `?` or handle `ValidationError`; missing paths and empty geometry
+are no longer substitutes for failed construction. Native line and spline
+errors retain their causes in `ValidationError::Curve` and `ExactCurve`.
+Invalid spline degree is `InvalidInput`, and unresolved closure is `Undecided`;
+match `kind()` instead of parsing diagnostic text. A successfully regularized
+retraced boundary can still return an empty region.
+
+All three have `_with_context` forms returning `GeometryOutcome`; the ordinary
+constructors select `STRICT`. Positive display counts preserve the exact
+control net and do not sample these constructors. Local predicate certainty
+does not establish end-to-end provenance, mesh topology, or fidelity of a later
+finite projection to the source curve.
 
 The Hershey catalog is compiled into Hypercurve and exposed as
 `hypercurve::hershey::fonts`; no font files or runtime parser are required.
@@ -419,6 +433,17 @@ when the result is necessarily empty. Conversion from a shared Hypermesh
 Boolean batch now gives empty rows zero positions as well as zero triangles;
 nonempty rows continue sharing the batch's position allocation.
 
+`ScalarMesh::{union, difference, intersection, xor}` and their context variants
+now preserve native Boolean failures as
+`AdapterError::Construction(ValidationError::Mesh(...))`, replacing text-only
+`AdapterError::Validation`. Callers that match errors should inspect
+`ValidationError::kind()` or follow `std::error::Error::source`; the native
+diagnostic text is retained. In the C ABI and its C++/Python/Go wrappers,
+undecided mesh Booleans now report the existing `PREDICATE_UNDECIDED` (5) status
+instead of generic `VALIDATION_FAILED` (4). Invalid input still reports (4),
+including malformed operands paired with empty geometry. No failure publishes
+a successful model.
+
 Primitive constructors (`cube`, `cuboid`, `sphere`, `cylinder`, `ellipsoid`,
 `frustum`, `frustum_between`, `octahedron`, `icosahedron`, `arrow`, and `torus`)
 now return `Result<TriangleMesh, ValidationError>`. This is an API migration:
@@ -515,7 +540,7 @@ report. The existing convenience entry points retain their strict default.
 | Projection and slicing | `solid::flatten_with_context`, `slice_z_with_context` |
 | Native Real metaball meshing | `solid::metaballs_with_context`, `metaballs_with_diagnostics_and_context` |
 | Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context`, `sdf_expr_with_diagnostics_and_context` |
-| Curve construction | `curve::polygon_with_context`, `rectangle_with_context`, `square_with_context`, `circle_with_context`, `ellipse_with_context`, `regular_ngon_with_context`, `rounded_rectangle_with_context`, `bezier_region_with_context`, `bspline_path_with_context` |
+| Curve construction | `curve::polygon_with_context`, `rectangle_with_context`, `square_with_context`, `circle_with_context`, `ellipse_with_context`, `regular_ngon_with_context`, `rounded_rectangle_with_context`, `bezier_path_with_context`, `bezier_region_with_context`, `bspline_path_with_context` |
 | Curve transforms and queries | `curve::try_transformed_with_context`, `try_translated_with_context`, `try_rotated_with_context`, `try_scaled_with_context`, `try_bounding_box_with_context`, `contains_xy_with_context`, `hilbert_strings_with_context` |
 | Mesh imports | `io::obj::from_obj_with_context`, `from_obj_attributed_with_context`, `io::dxf::from_dxf_with_context`, `io::vrml::from_vrml_with_context` |
 | Gerber conversion | `io::gerber::import_gerber_with_context`, `export_gerber_with_options_and_context` |

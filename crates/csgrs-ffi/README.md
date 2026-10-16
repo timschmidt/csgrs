@@ -81,6 +81,11 @@ finite region projections, and curve-to-solid operations.
 - Mesh transforms retain native failure categories. A projective image that
   reaches or crosses infinity reports `UNBOUNDED` (9). Invalid transforms and
   undecided predicates remain distinct failures, and publish no model handle.
+- Mesh union, difference, intersection and xor retain native failure categories.
+  Undecided Booleans now report `PREDICATE_UNDECIDED` (5), replacing the previous
+  generic `VALIDATION_FAILED` (4); invalid inputs still report (4), even when
+  paired with empty geometry. Diagnostic text is retained and failed Booleans
+  publish no model handle. Signatures and numeric status values are unchanged.
 - Mesh and curve bounds return `NO_BOUNDS` (10) for a completed empty query.
   They require a valid output pointer but leave its record untouched; no
   opaque-real endpoints are allocated. Only `OK` writes an owned bounds record.

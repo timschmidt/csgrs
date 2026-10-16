@@ -266,7 +266,8 @@ fn main() {
         [Real::from(4), Real::from(4)],
         [Real::from(0), Real::from(0)],
     ];
-    let curved_region = curve::bezier_region(&closed_control, 16);
+    let curved_region =
+        curve::bezier_region(&closed_control, 16).expect("closed Bezier region");
     config.run("profile_curves", "extrusion", "cubic_region", 4, || {
         let mesh = curve::try_extrude(
             black_box(&curved_region),
