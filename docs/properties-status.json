@@ -12191,6 +12191,37 @@
     "runtime_admitted": false,
     "full_plan_complete": false,
     "next": "Validate the minimal OBJ index correction against reproduced failures, positive composition controls and unchanged valid output. Keep native timing gates and all other format failures open."
+  },
+  "obj_index_validation": {
+    "status": "kept: OBJ index validation with preserved valid serialization",
+    "main_parent_commit": "d44bada176878d8ee180ae21d729acbd488d7c90",
+    "contract": "docs/evidence/2026-10-16-obj-index-validation/contract-v1.md",
+    "progress": "docs/evidence/2026-10-16-obj-index-validation/progress-v1.md",
+    "decision": "docs/evidence/2026-10-16-obj-index-validation/decision-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-obj-index-validation/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-obj-index-validation/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "src/io/obj.rs": "e2e84f6744ed67bd8093a07feade5c21157d79fc04ef5c8f21d40567d6f54333",
+      "tests/obj_export_failures.rs": "85d953ea48fca98569becafbe3402d06563c00c286eddb25a1e0d90a06161de0"
+    },
+    "original_format_diagnostic": {
+      "passed": 7,
+      "failed": 5,
+      "known_remaining_failures": [
+        "ascii_stl_small_coordinate_projection_survives_text",
+        "ascii_stl_small_representable_cube_composes",
+        "binary_stl_rejects_faces_collapsed_by_quantization",
+        "binary_stl_small_representable_cube_composes",
+        "obj_small_coordinate_projection_survives_text"
+      ]
+    },
+    "cost": "docs/evidence/2026-10-16-obj-index-validation/cost-v1/result.json",
+    "obj_index_fix_admitted": true,
+    "native_runtime_admitted": false,
+    "pending_native_files_unchanged": 35,
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "next": "Correct STL import topology through native validation, retaining small-scale, malformed-edge and balanced-winding regressions. Keep text projection, binary STL collapse, native timing gates and full distribution/resource work open."
   }
 },
   "status_meanings": {
