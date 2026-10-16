@@ -1,0 +1,35 @@
+{
+  "commands": [
+    {
+      "name": "mkdir",
+      "exit_code": 0,
+      "seconds": 1.8731096079573035,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "0649f148701172ddf0c2c3171c03a2029ef276efd3140fb22e204079e74d1eaa"
+    },
+    {
+      "name": "probe-build",
+      "exit_code": 1,
+      "seconds": 1.9167523039504886,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "11c7c6132f671ffd5816aaade7d617b8741e806482fc3d69ee09a5050e7ed428",
+      "resources_sha256": "0995846a686d6db1a5aa60667fec2c3b64e10cd6687ae354d551bdcd864bded3"
+    },
+    {
+      "name": "probe",
+      "exit_code": 127,
+      "seconds": 1.8838610514067113,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "d6154d8959bea4fdf82695a2fe0be6d32fe5e5f51eb56efed6178c825e74aaf8",
+      "resources_sha256": "a73e9ddefa1a33930b8901386040f9048ce661721edb84617b5ede8725298e97"
+    }
+  ],
+  "passed": false
+}

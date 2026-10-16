@@ -1,0 +1,141 @@
+{
+  "passed": true,
+  "qualification": "docs/evidence/2026-10-15-exact-path-failures/candidate-v1/result.json",
+  "consumer_workloads": "docs/evidence/2026-10-15-exact-path-failures/workloads-v1/result.json",
+  "test_totals": {
+    "exact-paths": {
+      "passed": 6,
+      "ignored": 0
+    },
+    "root-curve": {
+      "passed": 245,
+      "ignored": 0
+    },
+    "root-all-features": {
+      "passed": 352,
+      "ignored": 1
+    },
+    "root-doctests": {
+      "passed": 1,
+      "ignored": 0
+    }
+  },
+  "changed_sources_from_E13": [
+    "benchmarks/rust/feature_pipeline.rs",
+    "benchmarks/rust/profile_primitives.rs",
+    "examples/readme_renders.rs",
+    "readme.md",
+    "src/curve/native.rs",
+    "tests/exact_path_failures.rs"
+  ],
+  "extra_unchanged_inputs_sha256": {
+    "benchmarks/support/harness.rs": "9b10a16b524ca47c6ae79ee45e10ebe894f396e86ce47025610b8aa25e531b5b",
+    "asar.ttf": "40c2e988901bbfaec3fc7d0372421aede9ff94573a992d5c4cb1d1f3f2c1252f"
+  },
+  "extra_input_scope": "The shared benchmark harness and embedded example font match the target Git revision. These are reconstruction pins verified at closure; the frozen runner watches benchmarks/rust but not benchmarks/support or root TTF files on every command.",
+  "workload_rows": [
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "bezier",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "65075",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_primitives",
+      "benchmark": "constructor",
+      "case": "bspline",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "25248",
+      "work_units": "1",
+      "output_size": "1",
+      "checksum": "1"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_curves",
+      "benchmark": "finite_projection",
+      "case": "cubic_bezier",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "1107804",
+      "work_units": "1",
+      "output_size": "59",
+      "checksum": "59"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "profile_curves",
+      "benchmark": "extrusion",
+      "case": "cubic_region",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "2772700",
+      "work_units": "1",
+      "output_size": "292",
+      "checksum": "292"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "feature",
+      "benchmark": "profile_primitives",
+      "case": "catalog",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "308058761",
+      "work_units": "21",
+      "output_size": "22",
+      "checksum": "90194313217"
+    }
+  ],
+  "workload_scope": "Original inputs/resolutions, one iteration each. These are real caller completion checks, not matched timing, independent set oracles, or fidelity/certainty certification of the entire mixed feature catalog and its legacy constructors. Semantic evidence is in exact_path_failures.rs.",
+  "retained_phases": {
+    "candidate-v1": {
+      "passed": true,
+      "commands": 10,
+      "failures": []
+    },
+    "reproduction-v1": {
+      "passed": true,
+      "commands": 3,
+      "failures": []
+    },
+    "reproduction-v2": {
+      "passed": false,
+      "commands": 3,
+      "failures": [
+        [
+          "probe-build",
+          1
+        ],
+        [
+          "probe",
+          127
+        ]
+      ]
+    },
+    "reproduction-v3": {
+      "passed": true,
+      "commands": 3,
+      "failures": []
+    },
+    "workloads-v1": {
+      "passed": true,
+      "commands": 3,
+      "failures": []
+    }
+  },
+  "scope": "Typed public exact-path and Bezier region construction, with unchanged native geometry and successful corpus. Workspace qualification only; no release/external-package/full-CI or full-plan completion claim."
+}

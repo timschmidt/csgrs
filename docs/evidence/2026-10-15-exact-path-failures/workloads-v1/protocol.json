@@ -1,0 +1,95 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-exact-path-failures/validate_v2.py": "a44865694ce1ad01d64df1a79fdf355aba3d25adf8d3417a48066846fabf85ec",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-exact-path-failures/setup_overlay_v1.py": "c5e62de938ef731167ce999af89661d9b38c0a9341810a2f7232d586ea6f30af",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-exact-path-failures/contract-v1.md": "8ba997415474adb30f8182fc3f0b196624ed47c906c541e697c0aedc895b4e1a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-exact-path-failures/baseline-findings-v1.md": "8d1dda5457961827758b8059f462b1025b3cbead9328aef298ecc61d2d7b8479",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/checkpoint-v1.json": "52bcfffe1063c65fb71163c0bb64ba4996aa030ac3984358f6581a371643d5aa",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/feature_pipeline-7fecdce69333ac9d": "05e5fac34d6ea58fcab4cd2e3d9b741dbe5e41789366430a4c9fd97de2f424ab",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e": "2e3f6a9d9cadda5da27e03e9468e2f72a1d430f13da7ba3f60d8c06cd3161b94"
+  },
+  "base_commit": "958d2fa768fc0fb99a49aebc9174fb6a237814a1",
+  "runner_sha256": "f3ee76657ed7c1e8792452ded7c2380c1ad03a41abb312d80f9adf68b4dc6f05",
+  "phase": "workloads-v1",
+  "commands": [
+    [
+      "mkdir",
+      [
+        "mkdir",
+        "-p",
+        "/run/user/1000/csgrs-exact-path-failures/workloads-v1"
+      ]
+    ],
+    [
+      "profile-workloads",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_FILTER=profile_primitives/constructor/bezier,profile_primitives/constructor/bspline,profile_curves/finite_projection/cubic_bezier,profile_curves/extrusion/cubic_region",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+      ]
+    ],
+    [
+      "feature-catalog",
+      [
+        "env",
+        "CSGRS_BENCH_SAMPLES=1",
+        "CSGRS_BENCH_WARMUP=0",
+        "CSGRS_BENCH_ITERATIONS=1",
+        "CSGRS_BENCH_FILTER=feature/profile_primitives/catalog",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/feature_pipeline-7fecdce69333ac9d"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/run/user/1000/csgrs-exact-path-failures/workloads-v1",
+    "TMPDIR": "/run/user/1000/csgrs-exact-path-failures/workloads-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P16",
+    "P18",
+    "P25",
+    "P30",
+    "P35",
+    "P37"
+  ],
+  "owning_layers": [
+    "CSGRS exact Bezier and B-spline construction grammar"
+  ],
+  "domain": "Exact native path and closed Bezier region construction; preserve primary typed failures, native causes and operation-local policy certainty. See contract-v1.md.",
+  "consumers": [
+    "Public Rust constructors",
+    "Readme render example",
+    "Feature and profile benchmark callers"
+  ],
+  "missing_acceptance_test": [
+    "candidate-v2 passes every original 8/16/24/32 full strict composition test and all independent initial-drill semantics/topology checks. Broad downstream qualification on the final source remains required.",
+    "Retain the new zero, signed displacement, inner nonzero residual, scaled nested sum, invalid domain, degree, work exhaustion and cancellation regressions.",
+    "qualification-v1 exposed an obsolete Hypersolve Unknown expectation. residual-policy-v1 proves exact acceptance on both committed 045621eba and E12. Keep the original system as exact success under both policies and add existing terminal_zero mixed-row coverage for strict/approximate/strict certainty; see residual-policy-contract-v1.md.",
+    "qualification-v2 exposed a second obsolete Unknown-count assertion. representation-policy-v1 confirms all 22 original sparse and pattern-preserving cases now certify on both 045621eba and E12. Require 22/22 strict successes and exact receipts; see representation-policy-contract-v1.md.",
+    "qualification-v3 exposed root-curve assertions about permanent crescent uncertainty and authored rack subdivision vertices. curve-semantics-v2 verifies both 045621eba and E12 preserve exact set semantics: eight rack pitch crossings with +/-1e-12 witnesses and certified crescent membership/projection under both policies. Retain original geometry and strengthen the semantic tests; see curve-semantics-contract-v1.md."
+  ],
+  "semantic_oracle": "Independent polynomial evaluations and area/membership, plus valid downstream native operations. Native error comparisons establish propagation only.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "diagnostic_collection": "All commands are attempted on frozen source; Cargo test --no-fail-fast retains every failed test target. Every nonzero result remains a failure; source or artifact mutation still aborts immediately.",
+  "limitations": "External containment only; no internal full-query work/heap-byte/cancellation bound or end-to-end provenance claim. Inherited 27093 missing artifact paths remain recorded. No full-plan or release admission.",
+  "previous_goal_turn": "Progress: 958d2fa76 preserves typed mesh Boolean errors with passing affected tests/bindings. Exact path constructors still erase errors or return empty geometry; reproduce before editing.",
+  "wrapper_sha256": "1454b59fcbe0f2bb2c7a52c7f49f0f33a784352d9b3e96bd324029a1e3f7ac67"
+}

@@ -211,17 +211,16 @@ fn main() {
                 80,
             ),
         ];
-        let paths = usize::from(
-            curve::bezier_path(
-                &[
-                    [Real::zero(), Real::zero()],
-                    [Real::one(), Real::from(2)],
-                    [Real::from(3), Real::zero()],
-                ],
-                16,
-            )
-            .is_some(),
-        );
+        let path = curve::bezier_path(
+            &[
+                [Real::zero(), Real::zero()],
+                [Real::one(), Real::from(2)],
+                [Real::from(3), Real::zero()],
+            ],
+            16,
+        )
+        .expect("valid exact Bezier fixture");
+        let paths = usize::from(!path.curves().is_empty());
         let contours = regions.iter().map(CurveRegion2::len).sum::<usize>();
         Measurement::new(
             (regions.len() + paths) as u64,

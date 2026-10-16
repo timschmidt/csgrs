@@ -1,0 +1,32 @@
+[
+  [
+    "mkdir",
+    [
+      "mkdir",
+      "-p",
+      "/run/user/1000/csgrs-exact-path-failures/workloads-v1"
+    ]
+  ],
+  [
+    "profile-workloads",
+    [
+      "env",
+      "CSGRS_BENCH_SAMPLES=1",
+      "CSGRS_BENCH_WARMUP=0",
+      "CSGRS_BENCH_ITERATIONS=1",
+      "CSGRS_BENCH_FILTER=profile_primitives/constructor/bezier,profile_primitives/constructor/bspline,profile_curves/finite_projection/cubic_bezier,profile_curves/extrusion/cubic_region",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e"
+    ]
+  ],
+  [
+    "feature-catalog",
+    [
+      "env",
+      "CSGRS_BENCH_SAMPLES=1",
+      "CSGRS_BENCH_WARMUP=0",
+      "CSGRS_BENCH_ITERATIONS=1",
+      "CSGRS_BENCH_FILTER=feature/profile_primitives/catalog",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/feature_pipeline-7fecdce69333ac9d"
+    ]
+  ]
+]

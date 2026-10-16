@@ -1,0 +1,9 @@
+{
+  "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-exact-path-failures/validate_v2.py": "a44865694ce1ad01d64df1a79fdf355aba3d25adf8d3417a48066846fabf85ec",
+  "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-exact-path-failures/setup_overlay_v1.py": "c5e62de938ef731167ce999af89661d9b38c0a9341810a2f7232d586ea6f30af",
+  "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-exact-path-failures/contract-v1.md": "8ba997415474adb30f8182fc3f0b196624ed47c906c541e697c0aedc895b4e1a",
+  "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-exact-path-failures/baseline-findings-v1.md": "8d1dda5457961827758b8059f462b1025b3cbead9328aef298ecc61d2d7b8479",
+  "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-adapter-failure-kinds/checkpoint-v1.json": "52bcfffe1063c65fb71163c0bb64ba4996aa030ac3984358f6581a371643d5aa",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/feature_pipeline-7fecdce69333ac9d": "05e5fac34d6ea58fcab4cd2e3d9b741dbe5e41789366430a4c9fd97de2f424ab",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e": "2e3f6a9d9cadda5da27e03e9468e2f72a1d430f13da7ba3f60d8c06cd3161b94"
+}

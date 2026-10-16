@@ -1,0 +1,11 @@
+
+running 6 tests
+test certified_retraced_boundary_is_empty_and_remains_composable ... ok
+test exact_control_nets_survive_display_counts_policies_and_reversal ... ok
+test malformed_controls_and_display_counts_are_typed_failures ... ok
+test native_line_and_spline_errors_retain_their_causes ... ok
+test closed_cubic_preserves_exact_area_membership_and_composition ... ok
+test unresolved_closure_is_undecided_across_policy_reuse ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

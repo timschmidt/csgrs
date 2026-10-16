@@ -1,0 +1,35 @@
+{
+  "commands": [
+    {
+      "name": "mkdir",
+      "exit_code": 0,
+      "seconds": 1.8456705277785659,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "26036ded08ee9bed6fe47e196a8f7bce8389f58fa11a1d499f77f7e880c4797b"
+    },
+    {
+      "name": "profile-workloads",
+      "exit_code": 0,
+      "seconds": 1.8553539640270174,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "93e14e2126b8f9dde21e34a1733d61c82159833384173506ca10d313b234a88f",
+      "stderr_sha256": "9978905b39ac1f9658bfa4e5b74ed6e180a0d6dc61c74a7715cf09e5dc89585d",
+      "resources_sha256": "e0cf28981f1d5980598e695192becd87d76d472d5a12b621f2928ee15baa5769"
+    },
+    {
+      "name": "feature-catalog",
+      "exit_code": 0,
+      "seconds": 2.2351437639445066,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "ac76c013b745636a34c658019b19b78303ca7d76017fe02347b7ce6bf4f0993c",
+      "stderr_sha256": "ecdddd07e22b62b098367e1e32f7c2cba12fcab8cf9062fc89ab5007d0a4fc5d",
+      "resources_sha256": "c596b954a875143c7d34c4d23a1840fbf7abc8006ff2d26de82a6c3e60b896d3"
+    }
+  ],
+  "passed": true
+}

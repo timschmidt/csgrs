@@ -1834,41 +1834,65 @@ fn sampled_cycloidal_gear(
 /// Exact arbitrary-degree Bezier path.
 ///
 /// Closed controls should be passed to [`bezier_region`] instead.
-pub fn bezier_path(control: &[[Real; 2]], display_segments: usize) -> Option<CurvePath2> {
+/// Invalid arguments and native construction failures retain typed diagnostics.
+pub fn bezier_path(
+    control: &[[Real; 2]],
+    display_segments: usize,
+) -> Result<CurvePath2, ValidationError> {
+    bezier_path_with_context(control, display_segments, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Constructs a native Bezier path with the selected policy and local certainty.
+///
+/// The positive display count does not sample or replace the exact control net.
+pub fn bezier_path_with_context(
+    control: &[[Real; 2]],
+    display_segments: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurvePath2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
     if control.len() < 2 || display_segments < 1 {
-        return None;
+        return Err(ValidationError::InvalidArguments);
     }
     let points = control
         .iter()
         .map(|point| Point2::new(point[0].clone(), point[1].clone()))
         .collect::<Vec<_>>();
-    let curve = match points.as_slice() {
-        [start, end] => LineSeg2::try_new(start.clone(), end.clone())
-            .ok()
-            .map(Curve2::from),
-        [start, control, end] => Some(Curve2::from(QuadraticBezier2::new(
-            start.clone(),
-            control.clone(),
-            end.clone(),
-        ))),
-        [start, control1, control2, end] => Some(Curve2::from(CubicBezier2::new(
-            start.clone(),
-            control1.clone(),
-            control2.clone(),
-            end.clone(),
-        ))),
-        _ => RationalBezier2::try_new(points, vec![Real::one(); control.len()])
-            .ok()
-            .map(Curve2::from),
-    }?;
-    CurvePath2::try_new(vec![curve]).ok()
+    let path = decisions.exact_curve(|| -> Result<_, ValidationError> {
+        let curve = match points.as_slice() {
+            [start, end] => Curve2::from(LineSeg2::try_new(start.clone(), end.clone())?),
+            [start, control, end] => Curve2::from(QuadraticBezier2::new(
+                start.clone(),
+                control.clone(),
+                end.clone(),
+            )),
+            [start, control1, control2, end] => Curve2::from(CubicBezier2::new(
+                start.clone(),
+                control1.clone(),
+                control2.clone(),
+                end.clone(),
+            )),
+            _ => Curve2::from(RationalBezier2::try_new(
+                points,
+                vec![Real::one(); control.len()],
+            )?),
+        };
+        Ok(CurvePath2::try_new(vec![curve])?)
+    })?;
+    Ok(decisions.finish(path))
 }
 
 /// Closed arbitrary-degree Bezier boundary as a filled region.
-pub fn bezier_region(control: &[[Real; 2]], display_segments: usize) -> CurveRegion2 {
+///
+/// Construction failures are errors; a successfully regularized retraced
+/// boundary can still represent the empty set.
+pub fn bezier_region(
+    control: &[[Real; 2]],
+    display_segments: usize,
+) -> Result<CurveRegion2, ValidationError> {
     bezier_region_with_context(control, display_segments, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
-        .unwrap_or_else(|_| empty())
 }
 
 /// Publishes a closed Bezier boundary with the selected policy and aggregate certainty.
@@ -1878,27 +1902,20 @@ pub fn bezier_region_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let path =
-        bezier_path(control, display_segments).ok_or(ValidationError::InvalidArguments)?;
-    match decisions.exact_curve(|| path.start().coincides_with(&path.end())) {
-        Ok(true) => {},
-        Ok(false) => return Err(ValidationError::InvalidArguments),
-        Err(hypercurve::ExactCurveError::Blocked(blocker)) => {
-            return Err(ValidationError::Geometry(format!(
-                "Bezier boundary closure is undecided: {:?}",
-                blocker.reason()
-            )));
-        },
-        Err(error) => return Err(ValidationError::Geometry(error.to_string())),
+    let path = decisions.consume_geometry(bezier_path_with_context(
+        control,
+        display_segments,
+        context,
+    )?);
+    if !decisions.exact_curve(|| path.start().coincides_with(&path.end()))? {
+        return Err(ValidationError::InvalidArguments);
     }
-    let region = decisions
-        .exact_curve(|| {
-            CurveRegion2::try_from_boundary_paths(
-                std::slice::from_ref(&path),
-                hypercurve::FillRule::EvenOdd,
-            )
-        })
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+    let region = decisions.exact_curve(|| {
+        CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            hypercurve::FillRule::EvenOdd,
+        )
+    })?;
     Ok(decisions.finish(region))
 }
 
@@ -1907,14 +1924,13 @@ pub fn bspline_path(
     control: &[[Real; 2]],
     degree: usize,
     display_segments_per_span: usize,
-) -> Option<CurvePath2> {
+) -> Result<CurvePath2, ValidationError> {
     bspline_path_with_context(
         control,
         degree,
         display_segments_per_span,
         &GeometryContext::STRICT,
     )
-    .ok()
     .map(GeometryOutcome::into_value)
 }
 
@@ -1953,11 +1969,9 @@ pub fn bspline_path_with_context(
         .iter()
         .map(|point| Point2::new(point[0].clone(), point[1].clone()))
         .collect();
-    let spline = decisions
-        .exact_curve(|| PolynomialSplineCurve2::try_new(degree, points, knots))
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
-    let path = CurvePath2::try_new(vec![Curve2::from(spline)])
-        .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+    let spline =
+        decisions.exact_curve(|| PolynomialSplineCurve2::try_new(degree, points, knots))?;
+    let path = decisions.exact_curve(|| CurvePath2::try_new(vec![Curve2::from(spline)]))?;
     Ok(decisions.finish(path))
 }
 
@@ -3627,7 +3641,7 @@ mod tests {
             )
             .is_empty()
         );
-        assert!(bspline_path(&[], usize::MAX, 1).is_none());
+        assert!(bspline_path(&[], usize::MAX, 1).is_err());
     }
 
     #[test]
@@ -3897,10 +3911,10 @@ mod tests {
             [two.clone(), one.clone()],
             [Real::from(3_u8), zero.clone()],
         ];
-        assert!(bezier_path(&controls, 16).is_some());
-        assert!(bspline_path(&controls, 2, 8).is_some());
-        assert!(bezier_path(&controls, 0).is_none());
-        assert!(bspline_path(&controls, 2, 0).is_none());
+        assert!(bezier_path(&controls, 16).is_ok());
+        assert!(bspline_path(&controls, 2, 8).is_ok());
+        assert!(bezier_path(&controls, 0).is_err());
+        assert!(bspline_path(&controls, 2, 0).is_err());
         assert!(matches!(
             bezier_region_with_context(&controls, 16, &GeometryContext::STRICT),
             Err(ValidationError::InvalidArguments)
@@ -3912,7 +3926,7 @@ mod tests {
             [two.clone(), two.clone()],
             [zero.clone(), zero],
         ];
-        assert!(!bezier_region(&closed_controls, 16).is_empty());
+        assert!(!bezier_region(&closed_controls, 16).unwrap().is_empty());
 
         let mesh = try_triangulate(
             &square(two).expect("valid planar fixture"),

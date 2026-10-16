@@ -1,0 +1,37 @@
+missing controls: primary_empty=true checked_kind=InvalidInput checked=invalid arguments
+unclosed controls: primary_empty=true checked_kind=InvalidInput checked=invalid arguments
+invalid display: primary_empty=true checked_kind=InvalidInput checked=invalid arguments
+coincident line Bezier path absent=true
+spline degree=0: primary_absent=true checked_kind=Geometry source=false checked=invalid PolynomialBSpline during exact Construction: B-spline degree, knots, or controls are invalid
+spline degree=18446744073709551615: primary_absent=true checked_kind=InvalidInput source=false checked=invalid arguments
+unresolved closure GeometryContext { predicates: PredicatePolicy(0) }: kind=Geometry source=false error=Bezier boundary closure is undecided: RealSign
+unresolved closure GeometryContext { predicates: PredicatePolicy(1) }: kind=Geometry source=false error=exact Construction for CubicBezier against CubicBezier was blocked by RealSign
+unresolved closure GeometryContext { predicates: PredicatePolicy(0) }: kind=Geometry source=false error=Bezier boundary closure is undecided: RealSign
+valid cubic GeometryContext { predicates: PredicatePolicy(0) }: certainty=Certified empty=false area=Ok(Some(Real { rational: Rational { sign: Plus, numerator: 27, denominator: 20 }, class: One, computable: None, primitive_approx_cache: Empty }))
+valid cubic GeometryContext { predicates: PredicatePolicy(1) }: certainty=Certified empty=false area=Ok(Some(Real { rational: Rational { sign: Plus, numerator: 27, denominator: 20 }, class: One, computable: None, primitive_approx_cache: Empty }))
+retraced quadratic GeometryContext { predicates: PredicatePolicy(0) }: certainty=Certified empty=true
+retraced quadratic GeometryContext { predicates: PredicatePolicy(1) }: certainty=Certified empty=true
+exact Bezier degree=1 display=1: midpoint=(1/2,1/1)
+exact B-spline degree=1 display=1: midpoint=(1/2,1/1)
+exact Bezier degree=1 display=16: midpoint=(1/2,1/1)
+exact B-spline degree=1 display=16: midpoint=(1/2,1/1)
+exact Bezier degree=1 display=18446744073709551615: midpoint=(1/2,1/1)
+exact B-spline degree=1 display=18446744073709551615: midpoint=(1/2,1/1)
+exact Bezier degree=2 display=1: midpoint=(1/1,5/4)
+exact B-spline degree=2 display=1: midpoint=(1/1,5/4)
+exact Bezier degree=2 display=16: midpoint=(1/1,5/4)
+exact B-spline degree=2 display=16: midpoint=(1/1,5/4)
+exact Bezier degree=2 display=18446744073709551615: midpoint=(1/1,5/4)
+exact B-spline degree=2 display=18446744073709551615: midpoint=(1/1,5/4)
+exact Bezier degree=3 display=1: midpoint=(3/2,9/8)
+exact B-spline degree=3 display=1: midpoint=(3/2,9/8)
+exact Bezier degree=3 display=16: midpoint=(3/2,9/8)
+exact B-spline degree=3 display=16: midpoint=(3/2,9/8)
+exact Bezier degree=3 display=18446744073709551615: midpoint=(3/2,9/8)
+exact B-spline degree=3 display=18446744073709551615: midpoint=(3/2,9/8)
+exact Bezier degree=4 display=1: midpoint=(2/1,1/1)
+exact B-spline degree=4 display=1: midpoint=(2/1,1/1)
+exact Bezier degree=4 display=16: midpoint=(2/1,1/1)
+exact B-spline degree=4 display=16: midpoint=(2/1,1/1)
+exact Bezier degree=4 display=18446744073709551615: midpoint=(2/1,1/1)
+exact B-spline degree=4 display=18446744073709551615: midpoint=(2/1,1/1)

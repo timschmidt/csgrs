@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `bench` profile [optimized] target(s) in 2.99s
+  Executable benchmarks/rust/feature_pipeline.rs (target/properties/exact-path-failures/candidate-v1/release/deps/feature_pipeline-7fecdce69333ac9d)
+  Executable benchmarks/rust/profile_primitives.rs (target/properties/exact-path-failures/candidate-v1/release/deps/profile_primitives-a860b8425128ee3e)

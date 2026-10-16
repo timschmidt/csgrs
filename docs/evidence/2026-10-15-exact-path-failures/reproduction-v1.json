@@ -1,0 +1,31 @@
+[
+  [
+    "mkdir",
+    [
+      "mkdir",
+      "-p",
+      "/run/user/1000/csgrs-exact-path-failures/reproduction-v1"
+    ]
+  ],
+  [
+    "probe-build",
+    [
+      "rustc",
+      "--edition=2024",
+      "-Copt-level=2",
+      "docs/evidence/2026-10-15-exact-path-failures/baseline_probe_v1.rs",
+      "--extern",
+      "csgrs=/tmp/csgrs-adapter-failure-kinds/candidate-v1/release/deps/libcsgrs.rlib",
+      "-L",
+      "dependency=/tmp/csgrs-adapter-failure-kinds/candidate-v1/release/deps",
+      "-o",
+      "/run/user/1000/csgrs-exact-path-failures/reproduction-v1/probe"
+    ]
+  ],
+  [
+    "probe",
+    [
+      "/run/user/1000/csgrs-exact-path-failures/reproduction-v1/probe"
+    ]
+  ]
+]

@@ -197,7 +197,8 @@ fn render_readme_curves() {
                 [r(0.0), r(0.0)],
             ],
             96,
-        ),
+        )
+        .expect("valid closed Bezier fixture"),
     );
     let curve_balls = [(Point2::new(r(0.0), r(0.0)), r(1.0))];
     render_curve(

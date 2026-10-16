@@ -1,0 +1,5 @@
+engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum
+csgrs,warm,profile_primitives,constructor,bezier,0,1,65075,1,1,1
+csgrs,warm,profile_primitives,constructor,bspline,0,1,25248,1,1,1
+csgrs,warm,profile_curves,finite_projection,cubic_bezier,0,1,1107804,1,59,59
+csgrs,warm,profile_curves,extrusion,cubic_region,0,1,2772700,1,292,292
