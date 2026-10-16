@@ -1,0 +1,21 @@
+{
+  "complete": true,
+  "commands": 11,
+  "unexpected_exits": [],
+  "known_unfixed_format_failures": [
+    "ascii_stl_small_coordinate_projection_survives_text",
+    "ascii_stl_small_representable_cube_composes",
+    "binary_stl_rejects_faces_collapsed_by_quantization",
+    "binary_stl_small_representable_cube_composes",
+    "obj_small_coordinate_projection_survives_text"
+  ],
+  "probe_binaries_sha256": {
+    "/dev/shm/csgrs-obj-index-contracts/obj-cost-baseline-v1": "61ac1ac1a19bd69ba04534ea031223d0fdf9cbde4a24076929c5175f4ee471cb",
+    "/dev/shm/csgrs-obj-index-contracts/obj-cost-candidate-v1": "4f009831f5f0b12607a30e581a119545fabb65c2c0ac13cf35c7c22a8d9ba11e",
+    "/dev/shm/csgrs-obj-index-contracts/format-boundary-candidate-v1": "e72e898d35ce0635f4b0c8b729d12e68f881e474d012745bec08936802dabe11"
+  },
+  "sources_unchanged": true,
+  "main_sources_modified": false,
+  "runtime_admitted": false,
+  "full_plan_complete": false
+}

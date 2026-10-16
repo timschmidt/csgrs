@@ -1,0 +1,469 @@
+{
+  "main_parent_commit": "d44bada176878d8ee180ae21d729acbd488d7c90",
+  "implementation_sha256": {
+    "src/io/obj.rs": "e2e84f6744ed67bd8093a07feade5c21157d79fc04ef5c8f21d40567d6f54333",
+    "tests/obj_export_failures.rs": "85d953ea48fca98569becafbe3402d06563c00c286eddb25a1e0d90a06161de0"
+  },
+  "candidate_input_hashes_sha256": "d5f6f7a94f3e336fbbf5a19a2442bec31a8266d7aaf5cf56b2aae8b4deb5a67f",
+  "main_build_inputs_equal_tested_snapshot_except_status_ledger": true,
+  "format_command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "format_exit_code": 0,
+  "format_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "format_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "retained_completed_evidence": {
+    "candidate-validation-v1/result.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/result.json",
+      "sha256": "6f0f256ac073ddbad9b6c1053e3e3747dd24d3f151a04a27bc0e905b8c6a8a3a"
+    },
+    "candidate-validation-v1/docs.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/docs.resources",
+      "sha256": "b2a37438c187a326f30a39026a646e2d05fb5f6f8bb89e2aa688e28b2884ad88"
+    },
+    "candidate-validation-v1/docs.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/docs.stderr",
+      "sha256": "136802a40e5d904bfbe247bf209c273d8dcfb79a5d2354b73b473780b70adfa2"
+    },
+    "candidate-validation-v1/docs.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/docs.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/obj-clippy.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/obj-clippy.resources",
+      "sha256": "7ddde99f7092d41238aa02232a4e6a5c34a6bbc13373d17fa774323a5c0cbb18"
+    },
+    "candidate-validation-v1/obj-clippy.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/obj-clippy.stderr",
+      "sha256": "4db307e211ee1d1b40fee01004409c2ce8457138b1b7d6b943d768b2ec51e643"
+    },
+    "candidate-validation-v1/obj-clippy.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/obj-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/strict-clippy.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/strict-clippy.resources",
+      "sha256": "5d7d978927b35be75e4283d65a62c681ee282a2aef3cc32e18754af921805070"
+    },
+    "candidate-validation-v1/strict-clippy.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/strict-clippy.stderr",
+      "sha256": "b357c8ca9c11a420f36716b0503ee350085b9ef5535df1cf95eb1f69ae0d4a35"
+    },
+    "candidate-validation-v1/strict-clippy.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/strict-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/obj-only.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/obj-only.resources",
+      "sha256": "45ee9e495b5362834f055a5db72aaf839db3995f1154bd7867c4b40824481a92"
+    },
+    "candidate-validation-v1/obj-only.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/obj-only.stderr",
+      "sha256": "c5fa7da5147af156659bc476b784382e389cbfd1a0917c21963b80ad9605d13d"
+    },
+    "candidate-validation-v1/obj-only.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/obj-only.stdout",
+      "sha256": "208503cff043ae8820dd594733d7b595ab258d44ca41d0b208f9311abc4c004b"
+    },
+    "candidate-validation-v1/root-all.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/root-all.resources",
+      "sha256": "10aecf48b862ce3fb34b7b4036f7fa87635e0865cdc7af11414f5050347750d0"
+    },
+    "candidate-validation-v1/root-all.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/root-all.stderr",
+      "sha256": "71e8133f9ed935f355356c2bc89d6ace52ae8c60c5d5c852c44691967d097c27"
+    },
+    "candidate-validation-v1/root-all.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/root-all.stdout",
+      "sha256": "c6ac45b203e084bc0e55c7779f1af1da81f00a802a3e8398568616889a400465"
+    },
+    "candidate-validation-v1/probe-bindings.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/probe-bindings.json",
+      "sha256": "1da508fe49ebb0cd26f9fd92f4fc2630bbaef94c3a2196c9a714c844c53cb4d2"
+    },
+    "candidate-validation-v1/format-probe.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/format-probe.resources",
+      "sha256": "a9dce20ae77cd72cd5d6d3871c1aeb2b3ee1bad18a0de65924e865d53f7d9a58"
+    },
+    "candidate-validation-v1/format-probe.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/format-probe.stderr",
+      "sha256": "c3c6c4b90f49dd6cc14893471d99a66e5562a5dd4852bbf9ed8405519f0541a0"
+    },
+    "candidate-validation-v1/format-probe.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/format-probe.stdout",
+      "sha256": "20a0aa6707331dd13b98a7c2a8f635cd233d1668e38f3673ee5326bada23f483"
+    },
+    "candidate-validation-v1/compile-format-probe.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/compile-format-probe.resources",
+      "sha256": "d2841c1ce4e09fd996037baae8db01678ed02f7a32d8f7dda90fbb7d5f69c61a"
+    },
+    "candidate-validation-v1/compile-format-probe.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/compile-format-probe.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/compile-format-probe.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/compile-format-probe.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/compile-cost-candidate.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/compile-cost-candidate.resources",
+      "sha256": "50364a2e122f44447d5d93a894a251bc5093b3466c96534ecb2111ee59ded3dc"
+    },
+    "candidate-validation-v1/compile-cost-candidate.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/compile-cost-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/compile-cost-candidate.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/compile-cost-candidate.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/compile-cost-baseline.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/compile-cost-baseline.resources",
+      "sha256": "015d412f1defc85d211451e4f5322f6d5336a0ebc035c02bca5f15d96bfc094a"
+    },
+    "candidate-validation-v1/compile-cost-baseline.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/compile-cost-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/compile-cost-baseline.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/compile-cost-baseline.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/minimal-regression.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/minimal-regression.resources",
+      "sha256": "045886df2664da3dbfec69527e2aa4441eba18dde94362682687237d5b7a5a3d"
+    },
+    "candidate-validation-v1/minimal-regression.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/minimal-regression.stderr",
+      "sha256": "c592f76ccfcc0cb169a4316a5daa932bf01e5081723fa74599f32afa5633e698"
+    },
+    "candidate-validation-v1/minimal-regression.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/minimal-regression.stdout",
+      "sha256": "0af33334ef3a1e41facafd908683f9580762bedc9603264d99a6ba29fc9ed322"
+    },
+    "candidate-validation-v1/commands.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/commands.json",
+      "sha256": "e00f78861146673d9a9fc19860244b85e9125580ebbd51cb53bbeecac107f5a0"
+    },
+    "candidate-validation-v1/format.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/format.resources",
+      "sha256": "38ff1064a4fef3dde2a19b56c162d5f721b536cb213ee62a5e8405e0a22961c4"
+    },
+    "candidate-validation-v1/format.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/format.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/protocol.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/protocol.json",
+      "sha256": "28194690301c591f06053ab63de2ae4dc3a278d8b29f5350d79829c92441d375"
+    },
+    "candidate-validation-v1/source-hashes.json.gz": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/candidate-validation-v1/source-hashes.json.gz",
+      "sha256": "d5f6f7a94f3e336fbbf5a19a2442bec31a8266d7aaf5cf56b2aae8b4deb5a67f"
+    },
+    "cost-v1/result.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/result.json",
+      "sha256": "9102d5eac0eaecd6e9fda3c7c9746ebdd36b227e718e45988499b374c3211437"
+    },
+    "cost-v1/pair-5-candidate.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-candidate.json",
+      "sha256": "d37eaf2cec13e989a17e97ad40952e437b18ea1e61b461736150f821c8287dc6"
+    },
+    "cost-v1/pair-5-candidate.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-candidate.resources",
+      "sha256": "86581fc0684e30ddcc3ce52192a788179a7a1eee6a204f2810c8f28055d848be"
+    },
+    "cost-v1/pair-5-candidate.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/pair-5-candidate.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-candidate.stdout",
+      "sha256": "b20370f6c6eb719062e6461bcc00d7ab236428055aca0bfbcb7a325236afd601"
+    },
+    "cost-v1/pair-5-baseline.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-baseline.json",
+      "sha256": "043f98245e1dc795d31bb002704c8effb1ff1ce50ae85e1d7cee1db70f882d4c"
+    },
+    "cost-v1/pair-5-baseline.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-baseline.resources",
+      "sha256": "334356409d030c7407fad156fefeadf54ba500e5b8be05be040a74270c106b24"
+    },
+    "cost-v1/pair-5-baseline.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/pair-5-baseline.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-baseline.stdout",
+      "sha256": "7d659cbcfc0caf1032b1c734b589e2ec67b45b6fd7485f2e48f15d550271a251"
+    },
+    "cost-v1/pair-4-baseline.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-baseline.json",
+      "sha256": "8201887e67988bd3c317029ed2747887070dcf966148fe3c5c67eddaad51f071"
+    },
+    "cost-v1/pair-4-baseline.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-baseline.resources",
+      "sha256": "db340f7bc483260043aee7869f5e7244cb112a53914dfcefdc266a10e10cf9b7"
+    },
+    "cost-v1/pair-4-baseline.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/pair-4-baseline.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-baseline.stdout",
+      "sha256": "c000c694a9635fe9a33bf926e4ea976bc878d581cfaa1fe23e247190163a7cc7"
+    },
+    "cost-v1/pair-4-candidate.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-candidate.json",
+      "sha256": "490bc3b6ea2df8c5cc3253e9499e864c61df6b0f6f80af004344f4badf8310ba"
+    },
+    "cost-v1/pair-4-candidate.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-candidate.resources",
+      "sha256": "b9d8d71339a10cbb763e9b3f9c183680fe01b1ed13c2aec58bb5f6212da5ea6e"
+    },
+    "cost-v1/pair-4-candidate.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/pair-4-candidate.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-candidate.stdout",
+      "sha256": "f6683480b64e73723b9ce24873f3779256d34841e4e5bb32f9970e891b581ce5"
+    },
+    "cost-v1/pair-3-candidate.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-candidate.json",
+      "sha256": "2cba1413240ba8e8c49290754f71755c541b17ec6a230830bb96fa8759562aa4"
+    },
+    "cost-v1/pair-3-candidate.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-candidate.resources",
+      "sha256": "a77f7d3f6556e39f3fbe18441241bd13ce52f6233ea165ac9f87542a8b7c925d"
+    },
+    "cost-v1/pair-3-candidate.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/pair-3-candidate.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-candidate.stdout",
+      "sha256": "dc9e3d064570a00e10ac509ed9400703612faecab0cfb948e42503460baa8696"
+    },
+    "cost-v1/pair-3-baseline.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-baseline.json",
+      "sha256": "bb695eae1ff9073235403a9e0df95aa62af63f8cc67c557f5c7a91f24c34f869"
+    },
+    "cost-v1/pair-3-baseline.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-baseline.resources",
+      "sha256": "190ac0fe3ea451f42badb44549e361e59d422d582f594878d56da716821756be"
+    },
+    "cost-v1/pair-3-baseline.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/pair-3-baseline.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-baseline.stdout",
+      "sha256": "aafa5b31d0078707ef40939f90de97ee3dc9f26a7b13bb639980ab7f79a92303"
+    },
+    "cost-v1/pair-2-baseline.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-baseline.json",
+      "sha256": "652a16987569901412e376fa116de5d88e1c0c7d9eff07c6e2643ee1cbfcfd93"
+    },
+    "cost-v1/pair-2-baseline.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-baseline.resources",
+      "sha256": "5cbf019e035af4d5df3c251df358527e04786392b92127e915b55527eecf5b25"
+    },
+    "cost-v1/pair-2-baseline.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/pair-2-baseline.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-baseline.stdout",
+      "sha256": "e54b529252d90122d685e6da9acf84fceb75bc4ffb8627ecc90d435b4c3d6447"
+    },
+    "cost-v1/pair-2-candidate.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-candidate.json",
+      "sha256": "0c27ef0ff94bd7cc45ac43710236548c1c74d7552d7501c011ac2d0503c2668e"
+    },
+    "cost-v1/pair-2-candidate.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-candidate.resources",
+      "sha256": "4b4e3de7e82297065618c5a8c3c28522faff21b980ff52792f8da183869a2d98"
+    },
+    "cost-v1/pair-2-candidate.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/pair-2-candidate.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-candidate.stdout",
+      "sha256": "8f407389b9d2fcfadb44dee1f01bfc518c21a3d48c31dbb824b4f2e6ab6e8221"
+    },
+    "cost-v1/pair-1-candidate.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-candidate.json",
+      "sha256": "93bf8e7d7cb783109493dc4786e633cc923fb333ee0066da6e79b7c09e738728"
+    },
+    "cost-v1/pair-1-candidate.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-candidate.resources",
+      "sha256": "1324d96301f2b904925fe26b9b76d5f4170c0f0d8f45b1760bd6eb34ccee6c67"
+    },
+    "cost-v1/pair-1-candidate.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/pair-1-candidate.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-candidate.stdout",
+      "sha256": "850fedf524dce27d4d2d798cf41e09d2b14672de259543efc8f789eed3f7cddb"
+    },
+    "cost-v1/rows.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/rows.json",
+      "sha256": "7fc77936295840bcdc574abe007afee63babee9916a16e4f4e1d70adfb599269"
+    },
+    "cost-v1/pair-1-baseline.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-baseline.json",
+      "sha256": "bc9203b54eed865d71f77d57423b0f544bf34ef1433f7bc25d003ef28cf7cad2"
+    },
+    "cost-v1/pair-1-baseline.resources": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-baseline.resources",
+      "sha256": "c41dcf60fea1a0844ebedad449ae7b58288d14fff90c1791b0586e4d69e31528"
+    },
+    "cost-v1/pair-1-baseline.stderr": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/pair-1-baseline.stdout": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-baseline.stdout",
+      "sha256": "4668e2981aaaba5f15641d57c6a60fdbe501a3dcf9d5a7932fa00c103740bf09"
+    },
+    "cost-v1/protocol.json": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/protocol.json",
+      "sha256": "26cb956606f8fc453a6f5eb67783b4b9d1b3b5424a8515bdd8892df66fb68ff4"
+    },
+    "cost-v1/pair-5-candidate/disconnected_256.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-candidate/disconnected_256.obj",
+      "sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f"
+    },
+    "cost-v1/pair-5-candidate/unit.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-candidate/unit.obj",
+      "sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b"
+    },
+    "cost-v1/pair-5-candidate/empty.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-candidate/empty.obj",
+      "sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e"
+    },
+    "cost-v1/pair-5-baseline/disconnected_256.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-baseline/disconnected_256.obj",
+      "sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f"
+    },
+    "cost-v1/pair-5-baseline/unit.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-baseline/unit.obj",
+      "sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b"
+    },
+    "cost-v1/pair-5-baseline/empty.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-5-baseline/empty.obj",
+      "sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e"
+    },
+    "cost-v1/pair-4-baseline/disconnected_256.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-baseline/disconnected_256.obj",
+      "sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f"
+    },
+    "cost-v1/pair-4-baseline/unit.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-baseline/unit.obj",
+      "sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b"
+    },
+    "cost-v1/pair-4-baseline/empty.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-baseline/empty.obj",
+      "sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e"
+    },
+    "cost-v1/pair-4-candidate/disconnected_256.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-candidate/disconnected_256.obj",
+      "sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f"
+    },
+    "cost-v1/pair-4-candidate/unit.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-candidate/unit.obj",
+      "sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b"
+    },
+    "cost-v1/pair-4-candidate/empty.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-4-candidate/empty.obj",
+      "sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e"
+    },
+    "cost-v1/pair-3-candidate/disconnected_256.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-candidate/disconnected_256.obj",
+      "sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f"
+    },
+    "cost-v1/pair-3-candidate/unit.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-candidate/unit.obj",
+      "sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b"
+    },
+    "cost-v1/pair-3-candidate/empty.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-candidate/empty.obj",
+      "sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e"
+    },
+    "cost-v1/pair-3-baseline/disconnected_256.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-baseline/disconnected_256.obj",
+      "sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f"
+    },
+    "cost-v1/pair-3-baseline/unit.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-baseline/unit.obj",
+      "sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b"
+    },
+    "cost-v1/pair-3-baseline/empty.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-baseline/empty.obj",
+      "sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e"
+    },
+    "cost-v1/pair-2-baseline/disconnected_256.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-baseline/disconnected_256.obj",
+      "sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f"
+    },
+    "cost-v1/pair-2-baseline/unit.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-baseline/unit.obj",
+      "sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b"
+    },
+    "cost-v1/pair-2-baseline/empty.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-baseline/empty.obj",
+      "sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e"
+    },
+    "cost-v1/pair-2-candidate/disconnected_256.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-candidate/disconnected_256.obj",
+      "sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f"
+    },
+    "cost-v1/pair-2-candidate/unit.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-candidate/unit.obj",
+      "sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b"
+    },
+    "cost-v1/pair-2-candidate/empty.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-2-candidate/empty.obj",
+      "sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e"
+    },
+    "cost-v1/pair-1-candidate/disconnected_256.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-candidate/disconnected_256.obj",
+      "sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f"
+    },
+    "cost-v1/pair-1-candidate/unit.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-candidate/unit.obj",
+      "sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b"
+    },
+    "cost-v1/pair-1-candidate/empty.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-candidate/empty.obj",
+      "sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e"
+    },
+    "cost-v1/pair-1-baseline/disconnected_256.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-baseline/disconnected_256.obj",
+      "sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f"
+    },
+    "cost-v1/pair-1-baseline/unit.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-baseline/unit.obj",
+      "sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b"
+    },
+    "cost-v1/pair-1-baseline/empty.obj": {
+      "original": "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-1-baseline/empty.obj",
+      "sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e"
+    }
+  },
+  "pending_native_files_unchanged": 35,
+  "native_runtime_admitted": false,
+  "published_package_pipeline_executed": false,
+  "full_plan_complete": false
+}

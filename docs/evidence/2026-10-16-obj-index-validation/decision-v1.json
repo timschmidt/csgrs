@@ -1,0 +1,408 @@
+{
+  "status": "kept: OBJ index validation with preserved valid serialization",
+  "main_parent_commit": "d44bada176878d8ee180ae21d729acbd488d7c90",
+  "source_snapshot_commit": "3b69af324a9642d1f71b9cc38de58b59a236f740",
+  "owning_layer": "CSGRS OBJ boundary reusing Hypermesh position-index resolution",
+  "properties": [
+    "P6",
+    "P18",
+    "P26",
+    "P27",
+    "P35",
+    "P36",
+    "P37"
+  ],
+  "implementation_sha256": {
+    "src/io/obj.rs": "e2e84f6744ed67bd8093a07feade5c21157d79fc04ef5c8f21d40567d6f54333",
+    "tests/obj_export_failures.rs": "85d953ea48fca98569becafbe3402d06563c00c286eddb25a1e0d90a06161de0"
+  },
+  "qualification_commands": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "/dev/shm/csgrs-obj-index-contracts/candidate-source-v1/Cargo.toml",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "elapsed_seconds": 10.726236423943192,
+      "reported_test_counts": {}
+    },
+    {
+      "name": "minimal-regression",
+      "command": [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "/dev/shm/csgrs-obj-index-contracts/candidate-source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "obj-io,stl-io",
+        "--test",
+        "obj_export_failures",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "elapsed_seconds": 151.24991529574618,
+      "reported_test_counts": {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "compile-cost-baseline",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=3",
+        "-C",
+        "debug-assertions=off",
+        "-L",
+        "dependency=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps",
+        "--extern",
+        "csgrs=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libcsgrs.rlib",
+        "--extern",
+        "hyperlattice=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib",
+        "--extern",
+        "hypermesh=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/obj_cost_probe_v1.rs",
+        "-o",
+        "/dev/shm/csgrs-obj-index-contracts/obj-cost-baseline-v1"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "elapsed_seconds": 0.5619673421606421,
+      "reported_test_counts": {}
+    },
+    {
+      "name": "compile-cost-candidate",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=3",
+        "-C",
+        "debug-assertions=off",
+        "-L",
+        "dependency=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps",
+        "--extern",
+        "csgrs=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libcsgrs.rlib",
+        "--extern",
+        "hyperlattice=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib",
+        "--extern",
+        "hypermesh=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/obj_cost_probe_v1.rs",
+        "-o",
+        "/dev/shm/csgrs-obj-index-contracts/obj-cost-candidate-v1"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "elapsed_seconds": 0.5642372667789459,
+      "reported_test_counts": {}
+    },
+    {
+      "name": "compile-format-probe",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-C",
+        "opt-level=3",
+        "-C",
+        "debug-assertions=off",
+        "-L",
+        "dependency=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps",
+        "--extern",
+        "csgrs=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libcsgrs.rlib",
+        "--extern",
+        "hyperlattice=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib",
+        "--extern",
+        "hypermesh=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+        "--test",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs",
+        "-o",
+        "/dev/shm/csgrs-obj-index-contracts/format-boundary-candidate-v1"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "elapsed_seconds": 0.698309872765094,
+      "reported_test_counts": {}
+    },
+    {
+      "name": "format-probe",
+      "command": [
+        "/dev/shm/csgrs-obj-index-contracts/format-boundary-candidate-v1",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "expected_exit_code": 101,
+      "elapsed_seconds": 0.22371798800304532,
+      "reported_test_counts": {
+        "passed": 7,
+        "failed": 5,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "root-all",
+      "command": [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "/dev/shm/csgrs-obj-index-contracts/candidate-source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--no-fail-fast",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "elapsed_seconds": 480.4311721040867,
+      "reported_test_counts": {
+        "passed": 412,
+        "failed": 0,
+        "ignored": 1
+      }
+    },
+    {
+      "name": "obj-only",
+      "command": [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "/dev/shm/csgrs-obj-index-contracts/candidate-source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "obj-io",
+        "--no-fail-fast",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "elapsed_seconds": 33.19358689291403,
+      "reported_test_counts": {
+        "passed": 148,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    {
+      "name": "strict-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--manifest-path",
+        "/dev/shm/csgrs-obj-index-contracts/candidate-source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "elapsed_seconds": 54.62740691984072,
+      "reported_test_counts": {}
+    },
+    {
+      "name": "obj-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--manifest-path",
+        "/dev/shm/csgrs-obj-index-contracts/candidate-source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "obj-io",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "elapsed_seconds": 20.838374169077724,
+      "reported_test_counts": {}
+    },
+    {
+      "name": "docs",
+      "command": [
+        "cargo",
+        "doc",
+        "--manifest-path",
+        "/dev/shm/csgrs-obj-index-contracts/candidate-source-v1/Cargo.toml",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "elapsed_seconds": 34.41120134387165,
+      "reported_test_counts": {}
+    }
+  ],
+  "fixed_cost_comparison": {
+    "complete": true,
+    "fresh_processes": 10,
+    "completed_rows": 30,
+    "summary": [
+      {
+        "case": "empty",
+        "complete_output_bytes_equal_in_all_processes": true,
+        "output_bytes": 31,
+        "output_sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e",
+        "retained_string_capacity_bytes": 3145728,
+        "baseline_nanoseconds": [
+          6156988,
+          5858378,
+          5827020,
+          6524833,
+          5823690
+        ],
+        "candidate_nanoseconds": [
+          5877497,
+          5512792,
+          5790333,
+          5608176,
+          6170937
+        ],
+        "paired_ratios": [
+          0.9546058884636449,
+          0.9410099519013625,
+          0.9937039859138976,
+          0.859512572965469,
+          1.0596266284778209
+        ],
+        "median_paired_ratio": 0.9546058884636449,
+        "slower_candidate_pairs": 1
+      },
+      {
+        "case": "unit",
+        "complete_output_bytes_equal_in_all_processes": true,
+        "output_bytes": 623,
+        "output_sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b",
+        "retained_string_capacity_bytes": 3145728,
+        "baseline_nanoseconds": [
+          14667804,
+          14864851,
+          15888980,
+          14875810,
+          14661765
+        ],
+        "candidate_nanoseconds": [
+          15551323,
+          15604540,
+          15247585,
+          14816044,
+          15038179
+        ],
+        "paired_ratios": [
+          1.0602352608474996,
+          1.049760942777025,
+          0.9596327139942274,
+          0.9959823364240333,
+          1.0256731709995353
+        ],
+        "median_paired_ratio": 1.0256731709995353,
+        "slower_candidate_pairs": 3
+      },
+      {
+        "case": "disconnected_256",
+        "complete_output_bytes_equal_in_all_processes": true,
+        "output_bytes": 178047,
+        "output_sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f",
+        "retained_string_capacity_bytes": 6291456,
+        "baseline_nanoseconds": [
+          37421454,
+          38225328,
+          39022994,
+          37456361,
+          37889731
+        ],
+        "candidate_nanoseconds": [
+          40412849,
+          38940539,
+          39145155,
+          38333232,
+          38484171
+        ],
+        "paired_ratios": [
+          1.0799379682040147,
+          1.0187103953692693,
+          1.0031304876299343,
+          1.0234104695861939,
+          1.01568868356442
+        ],
+        "median_paired_ratio": 1.0187103953692693,
+        "slower_candidate_pairs": 5
+      }
+    ],
+    "binary_bytes": {
+      "baseline": 8429728,
+      "candidate": 8436296
+    },
+    "all_exact_output_bytes_equal": true,
+    "all_retained_string_capacities_equal": true,
+    "application_speedup_claimed": false,
+    "statistical_significance_claimed": false,
+    "cold_export_measured": false,
+    "total_allocations_measured": false,
+    "runtime_admitted": false,
+    "full_plan_complete": false
+  },
+  "original_format_diagnostic": {
+    "passed": 7,
+    "failed": 5,
+    "known_remaining_failures": [
+      "ascii_stl_small_coordinate_projection_survives_text",
+      "ascii_stl_small_representable_cube_composes",
+      "binary_stl_rejects_faces_collapsed_by_quantization",
+      "binary_stl_small_representable_cube_composes",
+      "obj_small_coordinate_projection_survives_text"
+    ]
+  },
+  "obj_index_fix_admitted": true,
+  "native_runtime_admitted": false,
+  "pending_native_files_unchanged": 35,
+  "tests_or_policies_weakened": false,
+  "valid_output_serialization_changed": false,
+  "optimization_claimed": false,
+  "application_speedup_claimed": false,
+  "published_package_pipeline_executed": false,
+  "full_workflow_matrix_executed": false,
+  "full_plan_complete": false,
+  "next": "Correct STL import topology through native validation, retaining small-scale, malformed-edge and balanced-winding regressions. Keep text projection, binary STL collapse, native timing gates and full distribution/resource work open."
+}

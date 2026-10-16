@@ -1,0 +1,19 @@
+
+running 7 tests
+test coordinate_projection_failure_remains_typed_and_unwritten ... ok
+test empty_and_solid_outputs_reimport_and_compose ... ok
+test largest_index_is_rejected_before_obj_index_conversion ... FAILED
+test metadata_failure_keeps_its_existing_priority ... ok
+test missing_position_is_an_export_error ... FAILED
+test open_triangle_keeps_its_documented_geometry_and_serialization ... ok
+test stream_writer_preserves_the_index_diagnostic_and_existing_bytes ... FAILED
+
+failures:
+
+failures:
+    largest_index_is_rejected_before_obj_index_conversion
+    missing_position_is_an_export_error
+    stream_writer_preserves_the_index_diagnostic_and_existing_bytes
+
+test result: FAILED. 4 passed; 3 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,28 @@
+{
+  "runner_sha256": "0c2169f8e83d3d79a8f1f95f8ae9bc88e728465550a8f9c6d29fdee4e589959b",
+  "preparation_sha256": "9352922ba431d10800f36040b7b32f4c11642f491c2325f693e92d6f87ee7354",
+  "source": "/dev/shm/csgrs-obj-index-contracts/candidate-source-v1",
+  "target": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1",
+  "target_initially_empty": true,
+  "target_strategy": "New empty physical tmpfs; no inherited build artifacts or overlays.",
+  "source_hashes_sha256": "d5f6f7a94f3e336fbbf5a19a2442bec31a8266d7aaf5cf56b2aae8b4deb5a67f",
+  "format_probe": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs",
+  "format_probe_sha256": "e11a2adb013478d5f5083e473099b8d26dbf004c0efc586aa6c37bcc98c5c2a0",
+  "cost_probe": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/obj_cost_probe_v1.rs",
+  "cost_probe_sha256": "8ff7654d60df379cc62532b53d9ae2c2458bea94e1a34ce50432b19275014615",
+  "native_validation_completed_before_start": true,
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)\n",
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CARGO_TARGET_DIR": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_INCREMENTAL": "0",
+    "TMPDIR": "/dev/shm/csgrs-obj-index-contracts/candidate-scratch-v1"
+  },
+  "elapsed_limit_seconds_per_command": 1800,
+  "address_space_limit_bytes_per_process": 8589934592,
+  "runtime_admitted": false,
+  "full_plan_complete": false
+}

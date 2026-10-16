@@ -1,0 +1,3 @@
+{"case":"empty","iterations":65536,"nanoseconds":5823690,"output_bytes":31,"retained_string_capacity_bytes":3145728,"all_outputs_identical":true}
+{"case":"unit","iterations":4096,"nanoseconds":14661765,"output_bytes":623,"retained_string_capacity_bytes":3145728,"all_outputs_identical":true}
+{"case":"disconnected_256","iterations":32,"nanoseconds":37889731,"output_bytes":178047,"retained_string_capacity_bytes":6291456,"all_outputs_identical":true}

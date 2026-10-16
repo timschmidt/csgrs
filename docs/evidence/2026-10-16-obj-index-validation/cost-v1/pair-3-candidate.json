@@ -1,0 +1,13 @@
+{
+  "pair": 3,
+  "variant": "candidate",
+  "command": [
+    "/dev/shm/csgrs-obj-index-contracts/obj-cost-candidate-v1",
+    "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-candidate"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.06908439192920923,
+  "stdout_sha256": "dc9e3d064570a00e10ac509ed9400703612faecab0cfb948e42503460baa8696",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "a77f7d3f6556e39f3fbe18441241bd13ce52f6233ea165ac9f87542a8b7c925d"
+}

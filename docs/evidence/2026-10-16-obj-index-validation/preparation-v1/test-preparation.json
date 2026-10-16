@@ -1,0 +1,7 @@
+{
+  "path": "/dev/shm/csgrs-obj-index-contracts/preparation-v1/obj_export_failures.rs",
+  "sha256": "85d953ea48fca98569becafbe3402d06563c00c286eddb25a1e0d90a06161de0",
+  "tests": 7,
+  "purpose": "Preserve explicit OBJ failure, atomic rejection of invalid input, exact valid serialization, topology and downstream composition.",
+  "production_modified": false
+}

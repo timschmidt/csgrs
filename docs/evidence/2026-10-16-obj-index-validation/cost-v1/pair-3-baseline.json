@@ -1,0 +1,13 @@
+{
+  "pair": 3,
+  "variant": "baseline",
+  "command": [
+    "/dev/shm/csgrs-obj-index-contracts/obj-cost-baseline-v1",
+    "/dev/shm/csgrs-obj-index-contracts/cost-v1/pair-3-baseline"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.06999847991392016,
+  "stdout_sha256": "aafa5b31d0078707ef40939f90de97ee3dc9f26a7b13bb639980ab7f79a92303",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "190ac0fe3ea451f42badb44549e361e59d422d582f594878d56da716821756be"
+}

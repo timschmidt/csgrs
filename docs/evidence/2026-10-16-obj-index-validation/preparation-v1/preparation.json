@@ -1,0 +1,24 @@
+{
+  "base_commit": "3b69af324a9642d1f71b9cc38de58b59a236f740",
+  "owning_layer": "CSGRS OBJ boundary, using native Hypermesh vertex resolution",
+  "properties": [
+    "P6",
+    "P18",
+    "P26",
+    "P27",
+    "P36",
+    "P37"
+  ],
+  "baseline_reproduction": "docs/evidence/2026-10-16-physical-build-requalification/format-reproduction-v1/result.json",
+  "failing_tests": [
+    "obj_rejects_missing_vertex_index",
+    "obj_rejects_overflowing_vertex_index",
+    "obj_writer_rejects_invalid_input_without_writing"
+  ],
+  "input_domain": "Native TriangleMesh values with out-of-range triangle references; preserve existing finite-coordinate serialization for valid references, including open surfaces and canonical empty geometry.",
+  "base_obj_sha256": "37caa578342c9b618d9e7b70f03d2ee0cf7b33670308a630299f1691b33d5bb0",
+  "candidate_obj_sha256": "8667074ccd67d5ce51b39a4b6646a7e861eea393ced9d0c000e2001673ded297",
+  "main_sources_modified": false,
+  "tests_or_policies_weakened": false,
+  "runtime_admitted": false
+}

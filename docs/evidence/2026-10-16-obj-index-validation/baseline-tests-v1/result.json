@@ -1,0 +1,51 @@
+{
+  "complete": true,
+  "commands": [
+    {
+      "name": "compile",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "--crate-name",
+        "obj_export_contract_baseline_v1",
+        "--test",
+        "/dev/shm/csgrs-obj-index-contracts/preparation-v1/obj_export_failures.rs",
+        "-C",
+        "opt-level=3",
+        "-C",
+        "debug-assertions=off",
+        "--cfg",
+        "feature=\"obj-io\"",
+        "-L",
+        "dependency=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps",
+        "-o",
+        "/dev/shm/csgrs-obj-index-contracts/baseline-tests-v1/obj_export_failures",
+        "--extern",
+        "csgrs=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libcsgrs.rlib",
+        "--extern",
+        "hypermesh=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+        "--extern",
+        "hyperlattice=/dev/shm/csgrs-physical-build-requalification/format-target-v1/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "9e2087ed008de3fdc6bd22bccb4ec0d19277892c925e0e054e0bd38ddbc836f0"
+    },
+    {
+      "name": "test",
+      "command": [
+        "/dev/shm/csgrs-obj-index-contracts/baseline-tests-v1/obj_export_failures",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "2bd015c584c222db42051cee4f71ab2907d4123e226e8231df58afc35a5c94fd",
+      "stderr_sha256": "bdae76a5c0799734811458620b9420993d6ffe1d8bc7708f6e2aed78737d135a",
+      "resources_sha256": "ed6290da7b39809758da04f67c3f71fbaff30bb83e77021e263da223c63a840d"
+    }
+  ],
+  "inputs_unchanged": true,
+  "binary_sha256": "986823ba0c2aa9444e8c1c36deef537f710fedc53f3cb317b3215559054fe644",
+  "runtime_admitted": false
+}

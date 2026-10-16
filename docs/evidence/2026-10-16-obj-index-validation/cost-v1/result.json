@@ -1,0 +1,109 @@
+{
+  "complete": true,
+  "fresh_processes": 10,
+  "completed_rows": 30,
+  "summary": [
+    {
+      "case": "empty",
+      "complete_output_bytes_equal_in_all_processes": true,
+      "output_bytes": 31,
+      "output_sha256": "367e1f7e56b8dcd29e2797a8f3f27c97f2a989e6457ce4ff42b944131438fb6e",
+      "retained_string_capacity_bytes": 3145728,
+      "baseline_nanoseconds": [
+        6156988,
+        5858378,
+        5827020,
+        6524833,
+        5823690
+      ],
+      "candidate_nanoseconds": [
+        5877497,
+        5512792,
+        5790333,
+        5608176,
+        6170937
+      ],
+      "paired_ratios": [
+        0.9546058884636449,
+        0.9410099519013625,
+        0.9937039859138976,
+        0.859512572965469,
+        1.0596266284778209
+      ],
+      "median_paired_ratio": 0.9546058884636449,
+      "slower_candidate_pairs": 1
+    },
+    {
+      "case": "unit",
+      "complete_output_bytes_equal_in_all_processes": true,
+      "output_bytes": 623,
+      "output_sha256": "70dbce93b1ef6b47b65ddf01df988b85d2aa7b7fae1dd0696389b51863aa0b8b",
+      "retained_string_capacity_bytes": 3145728,
+      "baseline_nanoseconds": [
+        14667804,
+        14864851,
+        15888980,
+        14875810,
+        14661765
+      ],
+      "candidate_nanoseconds": [
+        15551323,
+        15604540,
+        15247585,
+        14816044,
+        15038179
+      ],
+      "paired_ratios": [
+        1.0602352608474996,
+        1.049760942777025,
+        0.9596327139942274,
+        0.9959823364240333,
+        1.0256731709995353
+      ],
+      "median_paired_ratio": 1.0256731709995353,
+      "slower_candidate_pairs": 3
+    },
+    {
+      "case": "disconnected_256",
+      "complete_output_bytes_equal_in_all_processes": true,
+      "output_bytes": 178047,
+      "output_sha256": "ee47c3925a4fe2e9f80a859d70500e1971019f5f4b2ef29a91ef21844ae8082f",
+      "retained_string_capacity_bytes": 6291456,
+      "baseline_nanoseconds": [
+        37421454,
+        38225328,
+        39022994,
+        37456361,
+        37889731
+      ],
+      "candidate_nanoseconds": [
+        40412849,
+        38940539,
+        39145155,
+        38333232,
+        38484171
+      ],
+      "paired_ratios": [
+        1.0799379682040147,
+        1.0187103953692693,
+        1.0031304876299343,
+        1.0234104695861939,
+        1.01568868356442
+      ],
+      "median_paired_ratio": 1.0187103953692693,
+      "slower_candidate_pairs": 5
+    }
+  ],
+  "binary_bytes": {
+    "baseline": 8429728,
+    "candidate": 8436296
+  },
+  "all_exact_output_bytes_equal": true,
+  "all_retained_string_capacities_equal": true,
+  "application_speedup_claimed": false,
+  "statistical_significance_claimed": false,
+  "cold_export_measured": false,
+  "total_allocations_measured": false,
+  "runtime_admitted": false,
+  "full_plan_complete": false
+}

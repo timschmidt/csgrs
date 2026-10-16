@@ -1,0 +1,29 @@
+{
+  "base_commit": "3b69af324a9642d1f71b9cc38de58b59a236f740",
+  "owning_layer": "CSGRS OBJ boundary, using native Hypermesh vertex resolution",
+  "properties": [
+    "P6",
+    "P18",
+    "P26",
+    "P27",
+    "P36",
+    "P37"
+  ],
+  "baseline_reproduction": "docs/evidence/2026-10-16-physical-build-requalification/format-reproduction-v1/result.json",
+  "failing_tests": [
+    "obj_rejects_missing_vertex_index",
+    "obj_rejects_overflowing_vertex_index",
+    "obj_writer_rejects_invalid_input_without_writing"
+  ],
+  "input_domain": "Native TriangleMesh values with out-of-range triangle references; preserve existing finite-coordinate serialization for valid references, including open surfaces and canonical empty geometry.",
+  "base_obj_sha256": "37caa578342c9b618d9e7b70f03d2ee0cf7b33670308a630299f1691b33d5bb0",
+  "candidate_obj_sha256": "e2e84f6744ed67bd8093a07feade5c21157d79fc04ef5c8f21d40567d6f54333",
+  "main_sources_modified": false,
+  "tests_or_policies_weakened": false,
+  "runtime_admitted": false,
+  "test_sha256": "85d953ea48fca98569becafbe3402d06563c00c286eddb25a1e0d90a06161de0",
+  "prior_preparation_sha256": "b347d66912dffa448b0a4182ac5538615213ceedd62fb5e6052713a2355d0e2f",
+  "revision_reason": "Remove incidental default-rustfmt changes by applying repository configuration before candidate compilation. Prior prepared files are retained unchanged.",
+  "test_changes": "Formatting only from the seven tests reproduced on baseline; no assertions, fixtures or policies changed.",
+  "formatter_config_sha256": "766c73ae19da812c2c9606b8732cb691c720919aaaef89e82bf7ff6c1254e601"
+}
