@@ -248,7 +248,8 @@ fn render_readme_curves() {
             &curve::square(r(2.0)).expect("valid planar fixture"),
             4,
             r(0.12),
-        ),
+        )
+        .expect("exact Hilbert strings in a square"),
     );
     render_open_curves(
         "hershey_strings",

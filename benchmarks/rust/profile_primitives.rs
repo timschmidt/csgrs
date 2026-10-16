@@ -239,7 +239,8 @@ fn main() {
                 &curve::square(Real::from(8)).expect("valid planar fixture"),
                 3,
                 Real::from(1),
-            );
+            )
+            .expect("exact Hilbert strings in a square");
             Measurement::new(1, strings.len() as u64, strings.len() as u64)
         },
     );
