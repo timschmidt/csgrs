@@ -1,0 +1,55 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.8577703079208732,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "1b4283b1b303ba51774d446419083a99feb6fffddfa9d071bc01a7e81b76a9ba"
+    },
+    {
+      "name": "head-045621eba-build",
+      "exit_code": 0,
+      "seconds": 2.7627023961395025,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "cf24dd77ac18b4f1fa07b39dffb77e3533fa3c1f898c375025ab14d0ed0d95f0"
+    },
+    {
+      "name": "head-045621eba-observe",
+      "exit_code": 0,
+      "seconds": 1.8920192387886345,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "f324ea4860b0850e3a2f41a8deb6a99f1d3d6adef9df357df77b5ad49d44f16d",
+      "stderr_sha256": "44577a194a8eb5d4735a32163f7d2b6579abccb0fb1423e294a23337c0bde196",
+      "resources_sha256": "79aabe9d7d68b37d2398c539dd3db61fc249a6d989df08d52ec586e1eec83966"
+    },
+    {
+      "name": "candidate-v2-build",
+      "exit_code": 0,
+      "seconds": 2.8179926332086325,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "1ba93db21fad99545de056e4aeaa82ea548deb04d6527a2b60bf6fd35d0e7115"
+    },
+    {
+      "name": "candidate-v2-observe",
+      "exit_code": 0,
+      "seconds": 1.869940472766757,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "72fe58c03eab3676c22991fa4af86c12d6d388c24b1da90ad5e1cb576588a939",
+      "stderr_sha256": "e26f9ab17d0841e4eb7366d66b60d590fca5e392900b39448541415236845701",
+      "resources_sha256": "087ed603ddee1a001b155eed3382c80b3ba6d6e06e21a94eacb3d795579b10a1"
+    }
+  ],
+  "passed": true
+}

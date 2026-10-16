@@ -1,0 +1,84 @@
+{"angles":[13,-13],"x":0.5,"y":0,"legacy":{}}
+{"angles":[13,-13],"x":0.5,"y":0,"kind":"curve","approximate":false,"status":1,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":0,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":0,"kind":"curve","approximate":true,"status":1,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":0,"kind":"mesh","approximate":true,"value":false,"status":0,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,-13],"x":0.5,"y":0,"kind":"curve","approximate":false,"status":1,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":0,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,-13],"x":0,"y":0.5,"legacy":{}}
+{"angles":[13,-13],"x":0,"y":0.5,"kind":"curve","approximate":false,"status":1,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":0,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,-13],"x":0,"y":0.5,"kind":"curve","approximate":true,"status":1,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":0,"y":0.5,"kind":"mesh","approximate":true,"value":false,"status":0,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,-13],"x":0,"y":0.5,"kind":"curve","approximate":false,"status":1,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":0,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,-13],"x":1,"y":0.5,"legacy":{"code":"undecided","message":"exact Classification was blocked by Predicate"}}
+{"angles":[13,-13],"x":1,"y":0.5,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,-13],"x":1,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: Real ordering","approximate512Consumed":false}
+{"angles":[13,-13],"x":1,"y":0.5,"kind":"curve","approximate":true,"status":1,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,-13],"x":1,"y":0.5,"kind":"mesh","approximate":true,"value":false,"status":0,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,-13],"x":1,"y":0.5,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,-13],"x":1,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: Real ordering","approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":1,"legacy":{"code":"undecided","message":"exact Classification was blocked by Predicate"}}
+{"angles":[13,-13],"x":0.5,"y":1,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":1,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: Real ordering","approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":1,"kind":"curve","approximate":true,"status":1,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,-13],"x":0.5,"y":1,"kind":"mesh","approximate":true,"value":false,"status":0,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,-13],"x":0.5,"y":1,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":1,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: Real ordering","approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":0.5,"legacy":{"value":true}}
+{"angles":[13,-13],"x":0.5,"y":0.5,"kind":"curve","approximate":false,"value":true,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":0.5,"kind":"mesh","approximate":false,"value":true,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":0.5,"kind":"curve","approximate":true,"value":true,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":0.5,"kind":"mesh","approximate":true,"value":true,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":0.5,"kind":"curve","approximate":false,"value":true,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":0.5,"y":0.5,"kind":"mesh","approximate":false,"value":true,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":2,"y":0.5,"legacy":{"value":false}}
+{"angles":[13,-13],"x":2,"y":0.5,"kind":"curve","approximate":false,"value":false,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":2,"y":0.5,"kind":"mesh","approximate":false,"value":false,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":2,"y":0.5,"kind":"curve","approximate":true,"value":false,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":2,"y":0.5,"kind":"mesh","approximate":true,"value":false,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":2,"y":0.5,"kind":"curve","approximate":false,"value":false,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,-13],"x":2,"y":0.5,"kind":"mesh","approximate":false,"value":false,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":0,"legacy":{"code":"undecided","message":"exact Classification was blocked by Predicate"}}
+{"angles":[13,17,-30],"x":0.5,"y":0,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":0,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":0,"kind":"curve","approximate":true,"status":1,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,17,-30],"x":0.5,"y":0,"kind":"mesh","approximate":true,"value":false,"status":0,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,17,-30],"x":0.5,"y":0,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":0,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0,"y":0.5,"legacy":{"code":"undecided","message":"exact Classification was blocked by Predicate"}}
+{"angles":[13,17,-30],"x":0,"y":0.5,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0,"y":0.5,"kind":"curve","approximate":true,"status":1,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,17,-30],"x":0,"y":0.5,"kind":"mesh","approximate":true,"value":false,"status":0,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,17,-30],"x":0,"y":0.5,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":1,"y":0.5,"legacy":{"code":"undecided","message":"exact Classification was blocked by Predicate"}}
+{"angles":[13,17,-30],"x":1,"y":0.5,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":1,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":1,"y":0.5,"kind":"curve","approximate":true,"status":1,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,17,-30],"x":1,"y":0.5,"kind":"mesh","approximate":true,"value":false,"status":0,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,17,-30],"x":1,"y":0.5,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":1,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":1,"legacy":{"code":"undecided","message":"exact Classification was blocked by Predicate"}}
+{"angles":[13,17,-30],"x":0.5,"y":1,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":1,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":1,"kind":"curve","approximate":true,"status":1,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,17,-30],"x":0.5,"y":1,"kind":"mesh","approximate":true,"value":false,"status":0,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,17,-30],"x":0.5,"y":1,"kind":"curve","approximate":false,"status":2,"reason":"Predicate","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":1,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":0.5,"legacy":{"value":true}}
+{"angles":[13,17,-30],"x":0.5,"y":0.5,"kind":"curve","approximate":false,"value":true,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":0.5,"kind":"curve","approximate":true,"value":true,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":0.5,"kind":"mesh","approximate":true,"value":true,"status":0,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,17,-30],"x":0.5,"y":0.5,"kind":"curve","approximate":false,"value":true,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,17,-30],"x":0.5,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":2,"y":0.5,"legacy":{"value":false}}
+{"angles":[13,17,-30],"x":2,"y":0.5,"kind":"curve","approximate":false,"value":false,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,17,-30],"x":2,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}
+{"angles":[13,17,-30],"x":2,"y":0.5,"kind":"curve","approximate":true,"value":false,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,17,-30],"x":2,"y":0.5,"kind":"mesh","approximate":true,"value":false,"status":0,"certainty":1,"approximate512Consumed":true}
+{"angles":[13,17,-30],"x":2,"y":0.5,"kind":"curve","approximate":false,"value":false,"status":0,"certainty":0,"approximate512Consumed":false}
+{"angles":[13,17,-30],"x":2,"y":0.5,"kind":"mesh","approximate":false,"status":3,"reason":"predicate could not be decided: point-triangle classification","approximate512Consumed":false}

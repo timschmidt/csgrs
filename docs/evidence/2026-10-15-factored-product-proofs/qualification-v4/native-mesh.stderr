@@ -1,0 +1,9 @@
+    Finished `release` profile [optimized] target(s) in 0.15s
+     Running unittests src/lib.rs (/tmp/csgrs-factored-product-proofs/qualification-v4/release/deps/hypermesh-3f582b4ca1636641)
+     Running tests/boolean.rs (/tmp/csgrs-factored-product-proofs/qualification-v4/release/deps/boolean-5f62d1118823ec97)
+     Running tests/competitive.rs (/tmp/csgrs-factored-product-proofs/qualification-v4/release/deps/competitive-6172fbc55a698b35)
+     Running tests/corpus_manifest.rs (/tmp/csgrs-factored-product-proofs/qualification-v4/release/deps/corpus_manifest-70e8b02b4630cdcf)
+     Running tests/intersection_corpus.rs (/tmp/csgrs-factored-product-proofs/qualification-v4/release/deps/intersection_corpus-fd36003a26964264)
+     Running tests/predicate_policy.rs (/tmp/csgrs-factored-product-proofs/qualification-v4/release/deps/predicate_policy-da601e01ee57d6f5)
+     Running tests/readme.rs (/tmp/csgrs-factored-product-proofs/qualification-v4/release/deps/readme-6edeb87a0e9ac66f)
+     Running tests/symbolic_plane_normals.rs (/tmp/csgrs-factored-product-proofs/qualification-v4/release/deps/symbolic_plane_normals-c88d849271f3b9cb)

@@ -1,0 +1,19 @@
+error[E0277]: the trait bound `CurvePoint2: From<hyperlattice::Point2>` is not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-factored-product-proofs/curve_semantics_probe_v1.rs:14:17
+   |
+14 |     let pitch = CurvePoint2::from(Point2::new(Real::zero(), Real::zero()));
+   |                 ^^^^^^^^^^^ the trait `From<hyperlattice::Point2>` is not implemented for `CurvePoint2`
+   |
+   = help: `CurvePoint2` implements trait `From<T>`:
+             From<hypercurve::Point2>
+             From<hypercurve::bezier_algebraic_image::RationalBezierAlgebraicPointImage2>
+             From<hypercurve::bezier_offset::BezierAlgebraicChordPairPoint2>
+             From<hypercurve::bezier_offset::BezierAlgebraicChordParallelPoint2>
+             From<hypercurve::bezier_offset::BezierAlgebraicCuspChordDerivedPoint2>
+             From<hypercurve::bezier_offset::BezierAlgebraicCuspChordPoint2>
+             From<hypercurve::bezier_offset::BezierAnalyticParallelPoint2>
+             From<hypercurve::bezier_offset::BezierSimilarityPoint2>
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0277`.

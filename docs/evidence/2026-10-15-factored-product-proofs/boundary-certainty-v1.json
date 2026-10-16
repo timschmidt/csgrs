@@ -1,0 +1,28 @@
+[
+  [
+    "workspace-fmt",
+    [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ]
+  ],
+  [
+    "geometry-context",
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--test",
+      "geometry_context",
+      "--",
+      "--test-threads=2"
+    ]
+  ]
+]

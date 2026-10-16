@@ -1,0 +1,9 @@
+
+running 4 tests
+test strict_drill_16_composes_through_empty_and_complete_subtraction ... ok
+test strict_drill_24_composes_through_empty_and_complete_subtraction ... ok
+test strict_drill_8_composes_through_empty_and_complete_subtraction ... ok
+test strict_drill_32_composes_through_empty_and_complete_subtraction ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 4.88s
+

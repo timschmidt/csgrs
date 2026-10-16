@@ -1,0 +1,9 @@
+
+running 4 tests
+test computable::node::ring_product_sum_tests::shared_product_cancellation_preserves_budgets_and_recovers_after_cancel ... ok
+test computable::node::ring_product_sum_tests::shared_product_cancellation_preserves_operand_domains_and_degree ... ok
+test computable::node::ring_product_sum_tests::shared_products_cancel_before_large_polynomial_expansion ... ok
+test computable::node::ring_product_sum_tests::shared_product_cancellation_rejects_a_nonzero_residual ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 800 filtered out; finished in 0.00s
+

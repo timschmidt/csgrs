@@ -1,0 +1,14 @@
+{"case":"affine","prepared":false,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":27838,"allocations":610,"requested_bytes":34432,"peak_live_bytes":7496,"retained_bytes":0}
+{"case":"affine","prepared":true,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":17699,"allocations":460,"requested_bytes":26912,"peak_live_bytes":4408,"retained_bytes":0}
+{"case":"quotient","prepared":false,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":87904,"allocations":1292,"requested_bytes":67686,"peak_live_bytes":17398,"retained_bytes":0}
+{"case":"quotient","prepared":true,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":34117,"allocations":707,"requested_bytes":41686,"peak_live_bytes":11590,"retained_bytes":0}
+{"case":"factor","prepared":false,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":472308,"allocations":7054,"requested_bytes":385750,"peak_live_bytes":83968,"retained_bytes":0}
+{"case":"factor","prepared":true,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":461558,"allocations":6860,"requested_bytes":376222,"peak_live_bytes":80912,"retained_bytes":0}
+{"case":"shared","prepared":false,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":301869,"allocations":4674,"requested_bytes":266073,"peak_live_bytes":65201,"retained_bytes":0}
+{"case":"shared","prepared":true,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":285421,"allocations":4478,"requested_bytes":255689,"peak_live_bytes":59681,"retained_bytes":0}
+{"case":"shared_negative","prepared":false,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":299639,"allocations":4691,"requested_bytes":266913,"peak_live_bytes":65513,"retained_bytes":0}
+{"case":"shared_negative","prepared":true,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":285680,"allocations":4486,"requested_bytes":256065,"peak_live_bytes":59681,"retained_bytes":0}
+{"case":"shared_positive","prepared":false,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":301159,"allocations":4691,"requested_bytes":266913,"peak_live_bytes":65513,"retained_bytes":0}
+{"case":"shared_positive","prepared":true,"iterations":1,"certified":1,"unknown":0,"constructed_rational":0,"nanoseconds":282371,"allocations":4486,"requested_bytes":256065,"peak_live_bytes":59681,"retained_bytes":0}
+{"case":"unresolved_trig","prepared":false,"iterations":1,"certified":0,"unknown":1,"constructed_rational":0,"nanoseconds":5750,"allocations":151,"requested_bytes":7354,"peak_live_bytes":2086,"retained_bytes":0}
+{"case":"unresolved_trig","prepared":true,"iterations":1,"certified":0,"unknown":1,"constructed_rational":0,"nanoseconds":2420,"allocations":75,"requested_bytes":3514,"peak_live_bytes":1142,"retained_bytes":0}

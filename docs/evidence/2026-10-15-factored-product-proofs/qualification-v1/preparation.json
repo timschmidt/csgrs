@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--no-preserve=links",
+    "--reflink=auto",
+    "/run/user/1000/csgrs-polynomial-quotient-reduction/factor-qualification-v1/release",
+    "/tmp/csgrs-factored-product-proofs/qualification-v1/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "1389cd68cfb4c3f86d472369f19e0134816b3b467b4819c12dc8827eba2178fe",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

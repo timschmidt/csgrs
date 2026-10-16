@@ -99,6 +99,11 @@ impl Real {
     /// work charges. Successful expansions do not perform this factor search;
     /// recovery adds no new attempt or larger limit and never bypasses a divisor
     /// witness, node admission, child depth, or cancellation check.
+    /// If expansion of an opposite product sum still fails, individually
+    /// admitted polynomial factors may be matched before multiplication. A
+    /// proved-zero residual certifies the sum without expanding its common
+    /// product. Every operand is checked, and total product degree and all
+    /// remaining recognition limits still apply.
     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
         if let Some(rational) = self.exact_rational() {
             return Some(rational);

@@ -1,0 +1,5 @@
+   text	   data	    bss	    dec	    hex	filename
+1390853	 222488	   1680	1615021	 18a4ad	/tmp/csgrs-factored-product-proofs/cost-build-v1/baseline-controls
+1429081	 222920	   3984	1655985	 1944b1	/tmp/csgrs-factored-product-proofs/cost-build-v1/baseline-forms
+1395037	 222416	   1672	1619125	 18b4b5	/tmp/csgrs-factored-product-proofs/cost-build-v1/candidate-controls
+1486074	 223160	   4096	1713330	 1a24b2	/tmp/csgrs-factored-product-proofs/cost-build-v1/candidate-forms

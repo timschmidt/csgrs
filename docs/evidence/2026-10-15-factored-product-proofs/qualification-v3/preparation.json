@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--no-preserve=links",
+    "--reflink=auto",
+    "/tmp/csgrs-factored-product-proofs/qualification-v2/release",
+    "/tmp/csgrs-factored-product-proofs/qualification-v3/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "f0e2b202f231683edf94841bfbb8463857109990d614698c9718a683955b9d5e",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

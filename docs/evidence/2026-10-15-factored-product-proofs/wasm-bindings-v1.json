@@ -1,0 +1,18 @@
+[
+  [
+    "prepare-target",
+    [
+      "mkdir",
+      "/tmp/csgrs-factored-product-proofs/wasm-bindings-v1"
+    ]
+  ],
+  [
+    "wasm",
+    [
+      "env",
+      "WASM_BINDGEN=/tmp/csgrs-factored-product-proofs/wasm-tools-v1/install/bin/wasm-bindgen",
+      "bash",
+      "scripts/test-wasm-bindings.sh"
+    ]
+  ]
+]

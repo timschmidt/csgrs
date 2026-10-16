@@ -1,0 +1,56 @@
+[
+  {
+    "mode": "chain",
+    "trials": [
+      {
+        "name": "quotient-expansion",
+        "zero_numerator": true,
+        "metrics": {
+          "coefficient_products": 2266,
+          "maximum_product_degree": 8,
+          "maximum_terms": 155
+        },
+        "unique_structural_expansions": 59,
+        "calls": 85
+      },
+      {
+        "name": "eager-exact-division",
+        "zero_numerator": true,
+        "metrics": {
+          "coefficient_products": 2266,
+          "maximum_product_degree": 8,
+          "maximum_terms": 155
+        },
+        "unique_structural_expansions": 59,
+        "calls": 85
+      }
+    ]
+  },
+  {
+    "mode": "direct",
+    "trials": [
+      {
+        "name": "quotient-expansion",
+        "zero_numerator": true,
+        "metrics": {
+          "coefficient_products": 2266,
+          "maximum_product_degree": 8,
+          "maximum_terms": 155
+        },
+        "unique_structural_expansions": 59,
+        "calls": 85
+      },
+      {
+        "name": "eager-exact-division",
+        "zero_numerator": true,
+        "metrics": {
+          "coefficient_products": 2266,
+          "maximum_product_degree": 8,
+          "maximum_terms": 155
+        },
+        "unique_structural_expansions": 59,
+        "calls": 85
+      }
+    ]
+  }
+]

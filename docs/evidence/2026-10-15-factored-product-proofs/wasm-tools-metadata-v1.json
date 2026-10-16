@@ -1,0 +1,15 @@
+{
+  "required_cli": "wasm-bindgen 0.2.126",
+  "cli_source_archive_sha256": "670d5e0de6c882d38c1a613f3ef82d7b4bc067ebee336165e548317ea1fbb440",
+  "cli_binaries_sha256": {
+    "/tmp/csgrs-factored-product-proofs/wasm-tools-v1/install/bin/wasm2es6js": "4f638b5702f9debe52d3ed9261941b0a0f03d23af74bea9ae2a7eecf045504c1",
+    "/tmp/csgrs-factored-product-proofs/wasm-tools-v1/install/bin/wasm-bindgen-test-runner": "fce658eedf012bf3325f91c525bfa312091122b74e02cd70a4d46bf1fc84b760",
+    "/tmp/csgrs-factored-product-proofs/wasm-tools-v1/install/bin/wasm-bindgen": "83f7eb3b73eaec4757eb245e66ff8a7b0101692024d040a5c5d2438112d8fd90",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-factored-product-proofs/boundary-certainty-contract-v1.md": "3249fb9f5cdf6ebe6783f7a438757b0f4a0c4575e8514d4afab8364d751fe65e"
+  },
+  "node_version": "v22.22.2",
+  "typescript_version": "Version 5.7.3",
+  "failed_version_guard": "qualification-v5/wasm.stderr",
+  "source_changes_after_rust_qualification": false,
+  "scope": "Binding-only rerun after selecting the CLI version required by the unchanged lockfile. The original failed phase is retained; Rust checks are reused on identical source hashes."
+}

@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cp",
+    "-a",
+    "--no-preserve=links",
+    "--reflink=auto",
+    "/tmp/csgrs-factored-product-proofs/downstream-frontier-v1/release",
+    "/tmp/csgrs-factored-product-proofs/boundary-certainty-v1/release"
+  ],
+  "exit_code": 0,
+  "runner_sha256": "f3ee76657ed7c1e8792452ded7c2380c1ad03a41abb312d80f9adf68b4dc6f05",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

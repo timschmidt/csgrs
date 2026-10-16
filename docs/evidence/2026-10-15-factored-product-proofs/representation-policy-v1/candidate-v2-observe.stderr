@@ -1,0 +1,5 @@
+observed counts: sparse=22, sparse_unknown=0, pattern=22, pattern_unknown=0
+
+thread 'every_real_certificate_crosses_solver_analysis_and_proof_surfaces' (155) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-factored-product-proofs/representation_policy_probe_v1.rs:474:5:
+assertion failed: sparse_explicitly_unknown > 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

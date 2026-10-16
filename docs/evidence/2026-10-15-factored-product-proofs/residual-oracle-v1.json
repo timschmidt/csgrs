@@ -1,0 +1,32 @@
+{
+  "scope": "Rational interval arithmetic plus the alternating sine-series bound; independent of Hyperreal and the polynomial recovery.",
+  "atom_intervals": [
+    [
+      "53/162",
+      "1/3"
+    ],
+    [
+      "149/750",
+      "1/5"
+    ],
+    [
+      "293/2058",
+      "1/7"
+    ],
+    [
+      "725/7986",
+      "1/11"
+    ]
+  ],
+  "z_interval": [
+    "133841/20250",
+    "16097/2430"
+  ],
+  "h_interval": [
+    "-31187036567/41601569625",
+    "-591669436/924479325"
+  ],
+  "residual_identity": "-epsilon*z*h^2",
+  "strict_sign": "opposite the sign of nonzero epsilon",
+  "script_sha256": "0aa72322cabc1bfd24c7ac18be6d38a7859a9da5e295ba25532fbfb791d4d0d5"
+}

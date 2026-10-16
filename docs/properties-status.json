@@ -9426,6 +9426,85 @@
       "remaining": "Investigate bounded common-factor cancellation for the current 32-segment predicate. Broad downstream, matched cost/allocation/artifact, external-consumer and release checks, and the 35 pending native files remain open.",
       "runtime_admitted": false,
       "full_plan_complete": false
+    },
+    "factored_product_proof_work": {
+      "status": "certified original 8/16/24/32 strict composition corpus; focused qualification and cost evidence retained; full admission remains open",
+      "baseline_commit": "045621eba",
+      "progress": "docs/evidence/2026-10-15-factored-product-proofs/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-factored-product-proofs/qualification-summary-v1.json",
+      "rust_validation": "docs/evidence/2026-10-15-factored-product-proofs/qualification-v5/result.json",
+      "binding_validation": "docs/evidence/2026-10-15-factored-product-proofs/wasm-bindings-v2/result.json",
+      "model_acceptance": "docs/evidence/2026-10-15-factored-product-proofs/candidate-v2/result.json",
+      "cost_contract": "docs/evidence/2026-10-15-factored-product-proofs/cost-contract-v1.json",
+      "cost_summary": "docs/evidence/2026-10-15-factored-product-proofs/cost-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-factored-product-proofs/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-factored-product-proofs/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "crates/hyperreal/src/computable/node.rs": "da3677332103ca52e7cdaf36ac0943a29b64b57f7728c310ac8e06722305dd45",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "2780131268cd79e776d117723c3c905aac1ae0b9b164c4e9e2b66b7293c115da",
+        "crates/hyperreal/src/computable/node/ring_product_sum.rs": "b8eb8cfa09694350c64e9425ed7c0e7c440648a7c876b62db6d7d8c55f513676",
+        "crates/hyperreal/src/computable/node/ring_product_sum_tests.rs": "8c72556bdbb7c22076774a0e62289f792854a6b24fb4eec599bbae0d775b037e",
+        "crates/hyperreal/src/computable/node/ring_quotient.rs": "3277d6548033b8c318533ecf30ac1f2c72c90fe912359a381cf769db1775fc27",
+        "crates/hyperreal/src/computable/node/ring_quotient_reduction.rs": "180a92e6e9540b33799c05e37531042c61c863bec8d846c2d2f6c8a4e8278c4c",
+        "crates/hyperreal/src/computable/node/ring_quotient_reduction_tests.rs": "ba67826e6e0805683dd630e55307670ffa77ef433065f63e744c9a792f906cca",
+        "crates/hyperreal/src/computable/node/ring_quotient_tests.rs": "f7450a735f03a1d915a5fe0bacc1c49b50f0c4fed8118b68842f97684bab5053",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "be111d90a4273d3c77f624956b127b17c105b5e89ac4070c0a82ee851c1e54e5",
+        "crates/hyperreal/tests/quotient_factor_reduction.rs": "f6e6927d1737d2307180b1a1ad0a0e550b51a10ea5034c313dbe475547e409bd",
+        "crates/hyperreal/tests/quotient_polynomial_cancellation.rs": "8ada040e2e132950be6853038160925aadea99c7e63117293ff7ae73c2f990bc",
+        "crates/hypersolve/src/residual_replay.rs": "7bbe324979c47746da6ee1087691d5c857c1dc184909d587cac182952163ffe6",
+        "crates/hypersolve/tests/real_representations.rs": "009ff4b07c3ffb007db32d11806a4236c3eb6fcbbd7db21af80e565ca3865401",
+        "src/curve/native.rs": "db08a17e43a2824adc8daaa04b11cc8253ec173805681b4405ed3f0b58c9f803",
+        "tests/geometry_context.rs": "e21670e6c172b0ad4b632d4dfd934a53bb25a43b2b7b789a59aa2d74f0225772",
+        "tests/mesh_boolean_context.rs": "49d8e88febbe7ed8aa234c3ac58add009008f3680250c8c905d4d9e98cc7a307",
+        "tests/strict_drilled_workflows.rs": "1dd8a22959400ca3f4b78e5c6bbed7afecf83b767b832634ef9b55ae523a4abe",
+        "tests/wasm/geometry_certainty.cjs": "eafc9cb6b82fb6d52514a89b9dda93a56d3db12015a457e60afae20744359c9e"
+      },
+      "test_totals": {
+        "scalar-default": {
+          "passed": 924,
+          "ignored": 0
+        },
+        "scalar-all-features": {
+          "passed": 1031,
+          "ignored": 0
+        },
+        "foundations": {
+          "passed": 1545,
+          "ignored": 0
+        },
+        "native-mesh": {
+          "passed": 240,
+          "ignored": 7
+        },
+        "root-curve": {
+          "passed": 237,
+          "ignored": 0
+        },
+        "curve-native": {
+          "passed": 2493,
+          "ignored": 33
+        },
+        "root-minimal": {
+          "passed": 102,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 344,
+          "ignored": 1
+        },
+        "scalar-docs": {
+          "passed": 28,
+          "ignored": 0
+        }
+      },
+      "workflow": "All original full-resolution 8/16/24/32 drill workflows now complete Certified empty accumulation, subtraction to canonical empty and reunion. Independent point membership, polygonal-volume enclosure and separate manifold checks pass.",
+      "certainty": "Original e/pi dense and all 22 representation solver cases, crescent, rack boundary, 16-segment scalar/JavaScript drill and rotated VRML fixtures remain; obsolete permanent-Unknown and redundant-vertex assertions are replaced with stronger receipts and semantic checks. Additional genuinely unresolved trigonometric fixtures preserve strict/approximate/strict behavior.",
+      "resource_contract": "Shared-factor zero recovery reuses the same remaining depth/node/term/degree/coefficient/work budget and validates every operand. Query-local storage, no larger caps or persistent negative cache. External containment is not an internal full-query work or heap-byte bound.",
+      "cost_scope": "Five fixed alternating instrumented scalar pairs against 7d69ef51d; all 380 raw rows and unfavorable results retained. Completion is separate from timing. This is a completeness extension, not a downstream or cross-library speedup claim.",
+      "historical_preservation": "Incomplete: inherited 27093 missing artifact paths retain expected hashes. No new loss or mismatch at this checkpoint; no historical recovery claim.",
+      "remaining": "Scalar Boolean adapter typed-error propagation, wider supported workloads and release/external-consumer validation; full-query resources/provenance/formal/coverage obligations remain. The 35 pending native files retain their prior hashes and are not admitted by these checks.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
     }
   },
   "status_meanings": {

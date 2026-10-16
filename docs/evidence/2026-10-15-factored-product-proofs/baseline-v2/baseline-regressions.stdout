@@ -1,0 +1,30 @@
+
+running 3 tests
+test computable::node::ring_product_sum_tests::shared_product_cancellation_preserves_budgets_and_recovers_after_cancel ... FAILED
+test computable::node::ring_product_sum_tests::shared_product_cancellation_preserves_operand_domains_and_degree ... ok
+test computable::node::ring_product_sum_tests::shared_products_cancel_before_large_polynomial_expansion ... FAILED
+
+failures:
+
+---- computable::node::ring_product_sum_tests::shared_product_cancellation_preserves_budgets_and_recovers_after_cancel stdout ----
+
+thread 'computable::node::ring_product_sum_tests::shared_product_cancellation_preserves_budgets_and_recovers_after_cancel' (50) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/computable/node/ring_product_sum_tests.rs:116:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- computable::node::ring_product_sum_tests::shared_products_cancel_before_large_polynomial_expansion stdout ----
+
+thread 'computable::node::ring_product_sum_tests::shared_products_cancel_before_large_polynomial_expansion' (52) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/computable/node/ring_product_sum_tests.rs:80:13:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+
+
+failures:
+    computable::node::ring_product_sum_tests::shared_product_cancellation_preserves_budgets_and_recovers_after_cancel
+    computable::node::ring_product_sum_tests::shared_products_cancel_before_large_polynomial_expansion
+
+test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 800 filtered out; finished in 0.00s
+

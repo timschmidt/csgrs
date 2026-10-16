@@ -1,0 +1,27 @@
+{
+  "commands": [
+    {
+      "name": "workspace-fmt",
+      "exit_code": 0,
+      "seconds": 12.20595406088978,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "90cb8c3974ea865bf3fe0c828c43b33e25397f489bbf7b4180feef94bb93367c"
+    },
+    {
+      "name": "geometry-context",
+      "exit_code": 0,
+      "seconds": 4.838924061041325,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "/tmp/csgrs-factored-product-proofs/boundary-certainty-v1/release/deps/geometry_context-e14123ad7d9b5126": "ed75fd10af106b136e43f73d62c7ed4b49dabdaf4ac55d04eda6ba023764d16c"
+      },
+      "stdout_sha256": "51f80e32d34fd5d10f53488d94b4deff4d6bbf88c450f2fd30f70ddfa829a8f9",
+      "stderr_sha256": "b120bd35807171d2433844dd1ba930ffebb463434bc09ee37b2ab7a84958a6db",
+      "resources_sha256": "690e1798f17e645704b220f41637f11fcf546947b99481dca306bde7a97deb27"
+    }
+  ],
+  "passed": true
+}

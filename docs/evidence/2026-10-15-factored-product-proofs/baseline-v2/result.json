@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.8639879883266985,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "ef5136b2841e3b0fdb090df1be51abeedaec97859e4bd315fc8bf6f19b4b8af6"
+    },
+    {
+      "name": "baseline-regressions",
+      "exit_code": 101,
+      "seconds": 1.847433403134346,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "d1aa05d007d74f7b0e1bb9fbdae3deccec3b092b170500e2ef2bf87964f3f384",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "859b278ef2e7bae1ba7bb6807cbf960d662acba68c0c050d3b2c5ca7416fa4fe"
+    }
+  ],
+  "passed": false
+}

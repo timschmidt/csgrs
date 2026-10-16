@@ -1,0 +1,19 @@
+{
+  "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libcriterion-5f457bd23124a537.rlib": "6d9fad92c28abbb9abf5ccc720f77e3794b42387d27386c4eefdf8ade54b6e04",
+  "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/librug-3d33bb73cd141873.rlib": "cfd5bf1ed6e91c2d15f93da65217da5d367da155a6c5c75c324c0b76a319ae1f",
+  "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libproptest-5b9232ea59dd59b0.rlib": "3dff70486ef0e05dc4ba0389579693c62b79b2cfd8d6e9d58a8522e6fb0bfeed",
+  "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libnum-4e6167d0c6b63d8a.rlib": "84ae3701117d1fa136f46cca158c8461abe06393d12ceb5f67c8a9314441118e",
+  "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libserde_json-009c5ce345acb49f.rlib": "e545588dc8ce8c9b06a78a6489f6f2c224a965c25ec8c7f104c4f216cc76b3c6",
+  "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/checkpoint-v1.json": "2c43f34c7d54d7f49f3502b6506afca662a500693670b9d0edaf8b95933ec551",
+  "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/artifact-audit-v1.json.gz": "914313b41660dba6114cd1eb228510cebc902783bf179a68e5c1ba2af57cc109",
+  "/run/user/1000/csgrs-factored-product-proofs/baseline-v1/units": "afe546651d1fdda29e5614b84bef20647fb7182b4437ecb319ff6ac68c3d3608",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhyperreal.rlib": "aa4bfb30d882ebe07718d0af814f7bd2c6301a2d75d73399cb36ea51cc49fd83",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhyperlattice.rlib": "d26a0a8aaeeb66af89041b9b5ff7da689944d1b3a7954abb17188cd408823890",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhyperlimit.rlib": "3906d3b42dc4ed95eec9cd3a06ff6c057df6117091d8b6e8fbaa115147e73ab8",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polynomial-quotient-reduction/factor-candidate-v2/libhypersolve.rlib": "066586a12079a350fb554e68f6479b9d18d66c9449ffe569dfb033da94dc88de",
+  "/tmp/csgrs-factored-product-proofs/candidate-v2/libhyperreal.rlib": "e4c032aca8abd7805a4ff60b983c87f198db4102f8fd3632cc0e7844b6d641cc",
+  "/tmp/csgrs-factored-product-proofs/candidate-v2/libhyperlattice.rlib": "85e6c695ea671197623df78d199d04498e37312bb3c611c11e996a139cb8f7c8",
+  "/tmp/csgrs-factored-product-proofs/candidate-v2/libhyperlimit.rlib": "32fa97224f2f5881ae622bee314193e9eb5dcea24e51f08aebcfd081c730033c",
+  "/tmp/csgrs-factored-product-proofs/candidate-v2/libhypersolve.rlib": "7458c38ed1ac22d13abf465ff8a3695b1cecddaf327ea77dcc374a99e5e08a88",
+  "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-factored-product-proofs/residual_policy_probe_v1.rs": "03c70320cf5a3df680051f8f6da4e7141c171ffea25bfbfbaabf9389b930efcb"
+}

@@ -1,0 +1,24 @@
+
+running 5 tests
+test computable::node::ring_product_sum_tests::shared_product_cancellation_preserves_budgets_and_recovers_after_cancel ... ok
+test computable::node::ring_product_sum_tests::common_factors_survive_scaled_nested_product_sums ... FAILED
+test computable::node::ring_product_sum_tests::shared_product_cancellation_preserves_operand_domains_and_degree ... ok
+test computable::node::ring_product_sum_tests::shared_products_cancel_before_large_polynomial_expansion ... ok
+test computable::node::ring_product_sum_tests::shared_product_cancellation_rejects_a_nonzero_residual ... ok
+
+failures:
+
+---- computable::node::ring_product_sum_tests::common_factors_survive_scaled_nested_product_sums stdout ----
+
+thread 'computable::node::ring_product_sum_tests::common_factors_survive_scaled_nested_product_sums' (119) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/src/computable/node/ring_product_sum_tests.rs:143:9:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: NoSign, numerator: 0, denominator: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::ring_product_sum_tests::common_factors_survive_scaled_nested_product_sums
+
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 800 filtered out; finished in 0.00s
+

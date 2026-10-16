@@ -1,0 +1,12 @@
+
+running 1 test
+test every_real_certificate_crosses_solver_analysis_and_proof_surfaces ... FAILED
+
+failures:
+
+failures:
+    every_real_certificate_crosses_solver_analysis_and_proof_surfaces
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.01s
+
+observed_original_test_exit_code=101

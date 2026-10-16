@@ -1,0 +1,45 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.86847401317209,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "fd699083439e2b154095f4047775c71bceeef35938fbe619f17009b3daece58e"
+    },
+    {
+      "name": "installed-version",
+      "exit_code": 0,
+      "seconds": 1.8394899810664356,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "be8fc52c50d33101325cc194e8ddc242160e61a09e62fb8e298fac0279d9a51b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "14ce6869d5ce1723f9ecc13ed3902cd53f3fbb40f8b81a3df345b855dac5f744"
+    },
+    {
+      "name": "install-locked-cli",
+      "exit_code": 0,
+      "seconds": 92.89142767479643,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "04131e09d823837672fc467f4f933b615db29cc0b91e38c00f7b2647f2da61bc",
+      "resources_sha256": "07858deba3d9d693beb66c9feac5e76c146b093f33ad9f002475fb8a17d4c633"
+    },
+    {
+      "name": "matching-version",
+      "exit_code": 0,
+      "seconds": 1.8389021717011929,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "9665b51d243c180bb4c9c723552ddca2ee5a212f1dd5f4d27424266754321d91",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "a05de52fb5beabbf09e23f928c36f13881a7a3dabfdf8b81bd210f1ffc59f512"
+    }
+  ],
+  "passed": true
+}

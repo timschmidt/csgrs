@@ -1,0 +1,3 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 1.84s
+     Running tests/geometry_context.rs (/tmp/csgrs-factored-product-proofs/boundary-certainty-v1/release/deps/geometry_context-e14123ad7d9b5126)

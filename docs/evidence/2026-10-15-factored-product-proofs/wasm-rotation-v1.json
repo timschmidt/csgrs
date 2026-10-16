@@ -1,0 +1,17 @@
+[
+  [
+    "prepare-target",
+    [
+      "mkdir",
+      "/tmp/csgrs-factored-product-proofs/wasm-rotation-v1"
+    ]
+  ],
+  [
+    "wasm",
+    [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-factored-product-proofs/wasm_rotation_probe_v1.cjs",
+      "/tmp/csgrs-factored-product-proofs/wasm-bindings-v1/wasm-bindings-node/csgrs.js"
+    ]
+  ]
+]

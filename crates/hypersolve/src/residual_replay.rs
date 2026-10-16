@@ -579,43 +579,79 @@ mod tests {
     }
 
     #[test]
-    fn dense_replay_obeys_terminal_equality_policy_and_retains_certainty() {
-        let e = Real::e();
-        let pi = Real::pi();
-        let determinant = &e * &e - &pi * &pi;
-        let matrix = [vec![e.clone(), pi.clone()], vec![pi.clone(), e.clone()]];
-        let rhs = [real(1), real(2)];
-        let candidate = [
-            ((e.clone() - real(2) * &pi) / determinant.clone()).unwrap(),
-            ((real(2) * &e - pi) / determinant).unwrap(),
-        ];
-
-        assert_eq!(
-            replay_dense_linear_residuals(
-                &matrix,
-                &rhs,
-                &candidate,
-                -128,
+    fn dense_replay_certifies_symbolic_solution_under_both_policies() {
+        for first_policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let e = Real::e();
+            let pi = Real::pi();
+            let determinant = &e * &e - &pi * &pi;
+            let matrix = [vec![e.clone(), pi.clone()], vec![pi.clone(), e.clone()]];
+            let rhs = [real(1), real(2)];
+            let candidate = [
+                ((e.clone() - real(2) * &pi) / determinant.clone()).unwrap(),
+                ((real(2) * &e - pi) / determinant).unwrap(),
+            ];
+            // Distribution gives numerators determinant and 2*determinant.
+            // e < 3 < pi proves the denominator is nonzero. This original
+            // fixture now has a scalar proof; neither policy consumes the
+            // approximate terminal. Exercise both cold and reused evidence.
+            for policy in [
+                first_policy,
+                PredicatePolicy::APPROXIMATE_512,
                 PredicatePolicy::STRICT,
-            )
-            .unwrap_err(),
-            DenseResidualReplayError::UnknownResidual
-        );
+            ] {
+                let report =
+                    replay_dense_linear_residuals(&matrix, &rhs, &candidate, -128, policy).unwrap();
+                assert!(report.accepted);
+                assert_eq!(report.certainty, PredicateCertainty::Exact);
+                assert_eq!(report.rows.len(), 2);
+                for row in &report.rows {
+                    assert_eq!(row.sign, RealSign::Zero);
+                    assert_eq!(row.certainty, PredicateCertainty::Exact);
+                }
+            }
+        }
+    }
 
-        let approximate = replay_dense_linear_residuals(
-            &matrix,
-            &rhs,
-            &candidate,
-            -128,
-            PredicatePolicy::APPROXIMATE_512,
-        )
-        .unwrap();
-        assert!(approximate.accepted);
-        assert_eq!(approximate.certainty, PredicateCertainty::Approximate);
-        assert_eq!(
-            approximate.rows[0].certainty,
-            PredicateCertainty::Approximate
-        );
+    #[test]
+    fn dense_replay_obeys_terminal_equality_policy_and_retains_certainty() {
+        for terminal_row in 0..2 {
+            let matrix = [vec![real(1), real(0)], vec![real(0), real(1)]];
+            let rhs = [real(0), real(0)];
+            let mut candidate = [real(0), real(0)];
+            // sin(e)^2 + cos(e)^2 = 1 is outside the currently admitted
+            // polynomial relationships between opaque trigonometric atoms.
+            candidate[terminal_row] = crate::test_support::terminal_zero();
+            for policy in [
+                PredicatePolicy::STRICT,
+                PredicatePolicy::APPROXIMATE_512,
+                PredicatePolicy::STRICT,
+            ] {
+                let result = replay_dense_linear_residuals(&matrix, &rhs, &candidate, -128, policy);
+                if policy == PredicatePolicy::STRICT {
+                    // Approximate reuse must not supply a strict certificate.
+                    assert_eq!(
+                        result.unwrap_err(),
+                        DenseResidualReplayError::UnknownResidual
+                    );
+                } else {
+                    let report = result.unwrap();
+                    assert!(report.accepted);
+                    assert_eq!(report.certainty, PredicateCertainty::Approximate);
+                    assert_eq!(report.rows.len(), 2);
+                    for (index, row) in report.rows.iter().enumerate() {
+                        assert_eq!(row.sign, RealSign::Zero);
+                        assert_eq!(
+                            row.certainty,
+                            if index == terminal_row {
+                                PredicateCertainty::Approximate
+                            } else {
+                                PredicateCertainty::Exact
+                            }
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[test]

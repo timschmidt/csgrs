@@ -1,0 +1,195 @@
+{
+  "commands": [
+    {
+      "name": "prepare-target",
+      "exit_code": 0,
+      "seconds": 1.8518922277726233,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "1f1100a4e48371163d37fcbddb16617d5addaad9b5266a23e90568b3cd19d94e"
+    },
+    {
+      "name": "current-unit-build",
+      "exit_code": 0,
+      "seconds": 14.357173875905573,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "907e1d6d4e5e6758bf192fa87b475310264c762df418d3c114299d1502d51dca"
+    },
+    {
+      "name": "residual-controls",
+      "exit_code": 0,
+      "seconds": 1.8546470887959003,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "95165e064bcc5ef3997580a3f6d252ebe4a1c13587c22934f8d45a07608d2803",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "94bd20d5641e21e7cce9ff9377bde9fa544248566f2a924068792294c34fd319"
+    },
+    {
+      "name": "hyperreal-build",
+      "exit_code": 0,
+      "seconds": 9.513274928089231,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "c6deedd1803caa85d766f870ef7a699399f25370bd403ca20deb0330cc1bfe9f"
+    },
+    {
+      "name": "hyperlattice-build",
+      "exit_code": 0,
+      "seconds": 6.833865313790739,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "9c5590ed8324ef9bd87092ac9ed5ebb94d4f1c23e8093bc71863532a7d295392"
+    },
+    {
+      "name": "hyperlimit-build",
+      "exit_code": 0,
+      "seconds": 4.478834860958159,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "ad7bc3570abf2fd18839eaaa1c81c52a8ca05449b624bb1cbe445306f5a43b15"
+    },
+    {
+      "name": "hypersolve-build",
+      "exit_code": 0,
+      "seconds": 12.710049571935087,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "36d887d7f28b13ca95ad2abc5b231a8edf153dda96622bb11f621a8a5b74c35d"
+    },
+    {
+      "name": "hypertri-build",
+      "exit_code": 0,
+      "seconds": 3.346914755180478,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "046bafd00029977bc6770d42903e158ef670013b1cbd2f5981608eca5454129e"
+    },
+    {
+      "name": "hypercurve-build",
+      "exit_code": 0,
+      "seconds": 57.179410664364696,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "533e29262d9523113031393ea788b53d2d8627af6281ec64a7af4f466680dfe7"
+    },
+    {
+      "name": "hypermesh-build",
+      "exit_code": 0,
+      "seconds": 5.969251323956996,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "2e83a55e07bed2cd28a3a06d499f35e8534c662fe5d4766240dcd7f05010e08a"
+    },
+    {
+      "name": "hyperphysics-build",
+      "exit_code": 0,
+      "seconds": 3.275949252769351,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "4aad60123506b35dff447a858510c0b59b7b8e4b21ef33ffcfaf5942d7618154"
+    },
+    {
+      "name": "csgrs-build",
+      "exit_code": 0,
+      "seconds": 5.03913993621245,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "91ba80f2cd6e0d4e373cc020747caa0de07a0e84b99da50f3ce6366854500949"
+    },
+    {
+      "name": "probe-build",
+      "exit_code": 0,
+      "seconds": 2.212231180164963,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "02f0f0d7d14169f827dd9831df37b06ce7c34d9dd37777997bc6bccb91f657b8"
+    },
+    {
+      "name": "compose-8-chain",
+      "exit_code": 0,
+      "seconds": 2.1925217621028423,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "7fee7dd4607ea3b2da54d01a22800154cf9c631113748f7e7150d2f4ee034c10",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "c836deeecac607a81f59e9992f6ed72b0ce8a9327574fdb82ab2d56de374f6dd"
+    },
+    {
+      "name": "compose-16-chain",
+      "exit_code": 0,
+      "seconds": 3.007861142978072,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "a7bb17de165d7670ba65d4d31fdf02fa5c9a277630bc811f0f8573a43c5f9aa9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "87ed96956124e8b389f3bd188d05aa77d7970049c64b42c7c48e9366e53d2e60"
+    },
+    {
+      "name": "compose-24-chain",
+      "exit_code": 0,
+      "seconds": 4.191852565854788,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "8c09fe8be10d2a80f7772d0eb71d95bb1f6b0987226aa2dc73714b6fdf728208",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "9b49d4dc1b86f89489089ddb24f32c09654e22597c9c6f7a849663cbe6ba94a1"
+    },
+    {
+      "name": "compose-32-chain",
+      "exit_code": 0,
+      "seconds": 4.036956480704248,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "29c812ca63c5fc9409cc11b13e47fc72b965e5eb29c151d96c30aedb135f3107",
+      "stderr_sha256": "b0200ad309d71770930210b849d2078a43fa030f091230b3996e9784f99f6e02",
+      "resources_sha256": "2613e798e8fbda0e316b6f83d9fb9e946789278c84aa203ab44c4346da81f52d"
+    },
+    {
+      "name": "compose-16-direct",
+      "exit_code": 0,
+      "seconds": 2.8561613988131285,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "1b7da63f6e2bc6867c6d017bb305005f25c7dbd2ae83341443553189d1207ed0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "5db5ec56863ec1e6125ca2983f4c66044024a28d70e4c34f0eddf0afb127a162"
+    },
+    {
+      "name": "compose-32-direct",
+      "exit_code": 0,
+      "seconds": 3.47418827470392,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "046e9d142b2bfa9fe1d4daddf1bc976ecd21803e435e54426ae5f850d226d124",
+      "stderr_sha256": "b0200ad309d71770930210b849d2078a43fa030f091230b3996e9784f99f6e02",
+      "resources_sha256": "bbcc6e6d3e9ddac1e66a35ba652a7471c2acd3031c27196a7a2b1e3594502b12"
+    }
+  ],
+  "passed": true
+}

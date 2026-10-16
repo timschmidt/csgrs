@@ -1,0 +1,10 @@
+{
+  "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libcriterion-5f457bd23124a537.rlib": "6d9fad92c28abbb9abf5ccc720f77e3794b42387d27386c4eefdf8ade54b6e04",
+  "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/librug-3d33bb73cd141873.rlib": "cfd5bf1ed6e91c2d15f93da65217da5d367da155a6c5c75c324c0b76a319ae1f",
+  "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libproptest-5b9232ea59dd59b0.rlib": "3dff70486ef0e05dc4ba0389579693c62b79b2cfd8d6e9d58a8522e6fb0bfeed",
+  "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libnum-4e6167d0c6b63d8a.rlib": "84ae3701117d1fa136f46cca158c8461abe06393d12ceb5f67c8a9314441118e",
+  "/run/user/1000/csgrs-shared-scalar-proofs/scalar-and-drill-v1/release/deps/libserde_json-009c5ce345acb49f.rlib": "e545588dc8ce8c9b06a78a6489f6f2c224a965c25ec8c7f104c4f216cc76b3c6",
+  "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/checkpoint-v1.json": "2c43f34c7d54d7f49f3502b6506afca662a500693670b9d0edaf8b95933ec551",
+  "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-polynomial-quotient-reduction/artifact-audit-v1.json.gz": "914313b41660dba6114cd1eb228510cebc902783bf179a68e5c1ba2af57cc109",
+  "/run/user/1000/csgrs-factored-product-proofs/baseline-v1/units": "afe546651d1fdda29e5614b84bef20647fb7182b4437ecb319ff6ac68c3d3608"
+}

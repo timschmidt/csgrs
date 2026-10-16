@@ -1,0 +1,127 @@
+{
+  "passed": true,
+  "rust_commands": [
+    {
+      "phase": "qualification-v5",
+      "name": "workspace-fmt",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "scalar-default",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "scalar-all-features",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "foundations",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "native-mesh",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "scalar-native-clippy",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "root-curve",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "curve-native",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "root-curve-clippy",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "root-minimal",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "root-all-features",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "root-all-feature-clippy",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    },
+    {
+      "phase": "qualification-v5",
+      "name": "scalar-docs",
+      "result_sha256": "833995abd22eb22c904cee85558f389e579b6c7afd17097ae66ccd5cba95a6f9"
+    }
+  ],
+  "binding_commands": [
+    {
+      "phase": "wasm-bindings-v2",
+      "name": "prepare-target",
+      "result_sha256": "54e07bdbcc50d08c9793970f49d3d36f003e716ef43fcd7d564400781037e663"
+    },
+    {
+      "phase": "wasm-bindings-v2",
+      "name": "wasm",
+      "result_sha256": "54e07bdbcc50d08c9793970f49d3d36f003e716ef43fcd7d564400781037e663"
+    }
+  ],
+  "identical_rust_and_other_compiled_sources": true,
+  "binding_consumer_test_changes": [
+    "tests/wasm/geometry_certainty.cjs"
+  ],
+  "source_hashes_sha256": "e66bf9ec0de19b034201b53c425353c61dd9076912e8e249bfa6d1ebf7a0d304",
+  "final_source_hashes_sha256": "33843566ca898cb228314d7471543b9c628688bfeaf7267bc73ebfbaac2c8619",
+  "retained_failures": "The original qualification remains failed: its last command rejected installed wasm-bindgen 0.2.122 before building. With locked CLI 0.2.126, wasm-bindings-v1 reproduced a stale curve uncertainty expectation. Only the CJS consumer changed: preserve the original certified point and add the independently checked unresolved nonzero-coordinate boundary. All Rust/other compiled source hashes are identical; their passed checks are reused. Both failed binding phases remain unchanged.",
+  "test_totals": {
+    "scalar-default": {
+      "passed": 924,
+      "ignored": 0
+    },
+    "scalar-all-features": {
+      "passed": 1031,
+      "ignored": 0
+    },
+    "foundations": {
+      "passed": 1545,
+      "ignored": 0
+    },
+    "native-mesh": {
+      "passed": 240,
+      "ignored": 7
+    },
+    "root-curve": {
+      "passed": 237,
+      "ignored": 0
+    },
+    "curve-native": {
+      "passed": 2493,
+      "ignored": 33
+    },
+    "root-minimal": {
+      "passed": 102,
+      "ignored": 0
+    },
+    "root-all-features": {
+      "passed": 344,
+      "ignored": 1
+    },
+    "scalar-docs": {
+      "passed": 28,
+      "ignored": 0
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "python3",
+    "docs/evidence/2026-10-15-factored-product-proofs/checkpoint_v1.py",
+    "qualification-v5",
+    "wasm-bindings-v2"
+  ],
+  "exec_session": 98214,
+  "exit_code": 1,
+  "script_sha256": "e68ef6216b0aa35b02a87d988d6af2982eef390d58564ea688f7c3c9e6e36633",
+  "error": "AssertionError: /tmp/csgrs-factored-product-proofs/analysis-v1",
+  "ledger_modified": false,
+  "audit_written": false,
+  "diagnosis": "analysis-v1 executes only analyze_remaining_v1.py, writes its output into the evidence directory, declares but never creates a build target, and has no expected artifact beneath it. All other declared targets exist. v2 records this explicitly rather than expecting a never-created directory."
+}

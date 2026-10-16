@@ -1,0 +1,17 @@
+[
+  [
+    "prepare-target",
+    [
+      "mkdir",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/factored-product-proofs/baseline-v2"
+    ]
+  ],
+  [
+    "baseline-regressions",
+    [
+      "/run/user/1000/csgrs-factored-product-proofs/baseline-v1/units",
+      "ring_product_sum_tests",
+      "--test-threads=2"
+    ]
+  ]
+]
