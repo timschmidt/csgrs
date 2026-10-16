@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/measure_resources_v1.py", line 40, in <module>
+    assert len(rows) == 64 and all(row['exit_code'] == 0 for row in rows)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

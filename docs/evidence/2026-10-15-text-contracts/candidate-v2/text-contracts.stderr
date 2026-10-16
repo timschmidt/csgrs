@@ -1,0 +1,5 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 1m 31s
+     Running tests/text_contracts.rs (target/properties/text-contracts/candidate-v2/release/deps/text_contracts-84d126534db53fda)
+error: test failed, to rerun pass `-p csgrs --test text_contracts`

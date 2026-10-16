@@ -35,6 +35,9 @@ cargo run --example scalar_adapter
 cargo run --example readme_renders --features curve,image-io,truetype-text,metaballs,sdf,offset
 ```
 
+Set `README_RENDER_TEXT_ONLY=1` to regenerate the two text images using the
+same rendering path; `README_RENDER_OUTPUT_DIR` selects a review directory.
+
 Most geometry examples write output under `stl/examples/`. The README render
 generator writes PNG files under `docs/`. Check that every maintained example
 still compiles with:

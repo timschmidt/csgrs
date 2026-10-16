@@ -1,0 +1,4 @@
+
+thread 'main' (2103857) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resource_probe_v3.rs:219:34:
+original fixture has native geometry
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

@@ -1,0 +1,34 @@
+    Checking byteorder v1.5.0
+    Checking either v1.15.0
+    Checking hash32 v0.3.1
+    Checking rayon v1.12.0
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking heapless v0.8.0
+    Checking zerocopy v0.8.48
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking i_float v1.16.0
+    Checking rand_core v0.10.1
+    Checking spade v2.15.1
+    Checking ppv-lite86 v0.2.21
+    Checking i_shape v1.18.0
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking thiserror v2.0.21
+    Checking rstar v0.12.2
+    Checking i_key_sort v0.10.3
+    Checking approx v0.5.1
+    Checking i_tree v0.18.0
+    Checking geo-types v0.7.20
+    Checking i_overlay v4.5.2
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking rand_chacha v0.9.0
+    Checking rand v0.10.3
+    Checking rand_pcg v0.10.2
+    Checking earcut v0.4.5
+    Checking geographiclib-rs v0.2.7
+    Checking sif-itree v0.4.1
+    Checking log v0.4.29
+    Checking float_next_after v2.0.0
+    Checking proptest v1.11.0
+    Checking geo v0.33.1
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 35.63s

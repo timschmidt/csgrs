@@ -1,0 +1,3 @@
+fixture=benchmark input_paths=19 input_curves=662 exact_point_unit=127/360 layout=advance-only
+native exact region components=19
+strict translation and empty-union composition completed

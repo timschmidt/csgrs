@@ -1,0 +1,9 @@
+
+running 4 tests
+test parts::dimension::tests::dimension_x_keeps_the_exact_length ... ok
+test parts::dimension::tests::failed_label_leaves_existing_drawing_unchanged ... ok
+test parts::dimension::tests::zero_and_negative_lengths_are_rejected ... ok
+test parts::dimension::tests::label_adds_hershey_strokes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 82 filtered out; finished in 0.00s
+

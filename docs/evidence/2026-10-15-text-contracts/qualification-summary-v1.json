@@ -1,0 +1,4246 @@
+{
+  "passed": true,
+  "qualification_phase": "qualification-v3",
+  "resource_phase": "resources-v2",
+  "phases": {
+    "candidate-v1": {
+      "passed": false,
+      "commands": 4,
+      "failed_commands": [
+        "text-contracts",
+        "native-hershey",
+        "dimension"
+      ]
+    },
+    "candidate-v2": {
+      "passed": false,
+      "commands": 6,
+      "failed_commands": [
+        "text-contracts"
+      ]
+    },
+    "gpos-reproduction-v1": {
+      "passed": false,
+      "commands": 3,
+      "failed_commands": [
+        "probe-build",
+        "gpos-probe"
+      ]
+    },
+    "gpos-reproduction-v2": {
+      "passed": false,
+      "commands": 3,
+      "failed_commands": [
+        "gpos-probe"
+      ]
+    },
+    "gpos-reproduction-v3": {
+      "passed": true,
+      "commands": 3,
+      "failed_commands": []
+    },
+    "layout-witness-v1": {
+      "passed": true,
+      "commands": 3,
+      "failed_commands": []
+    },
+    "native-outline-v1": {
+      "passed": true,
+      "commands": 4,
+      "failed_commands": []
+    },
+    "qualification-v1": {
+      "passed": false,
+      "commands": 15,
+      "failed_commands": [
+        "root-clippy"
+      ]
+    },
+    "qualification-v2": {
+      "passed": true,
+      "commands": 16,
+      "failed_commands": []
+    },
+    "qualification-v3": {
+      "passed": true,
+      "commands": 16,
+      "failed_commands": []
+    },
+    "reproduction-v1": {
+      "passed": true,
+      "commands": 3,
+      "failed_commands": []
+    },
+    "resources-v1": {
+      "passed": false,
+      "commands": 6,
+      "failed_commands": [
+        "measure"
+      ]
+    },
+    "resources-v2": {
+      "passed": true,
+      "commands": 6,
+      "failed_commands": []
+    },
+    "serialization-v1": {
+      "passed": true,
+      "commands": 7,
+      "failed_commands": []
+    }
+  },
+  "test_totals": {
+    "truetype-only": {
+      "passed": 5,
+      "ignored": 0
+    },
+    "hershey-only": {
+      "passed": 2,
+      "ignored": 0
+    },
+    "root-curve": {
+      "passed": 260,
+      "ignored": 0
+    },
+    "root-all-features": {
+      "passed": 377,
+      "ignored": 1
+    },
+    "native-hershey": {
+      "passed": 6,
+      "ignored": 0
+    },
+    "root-doctests": {
+      "passed": 1,
+      "ignored": 0
+    },
+    "native-full-library": {
+      "passed": 1760,
+      "ignored": 1
+    }
+  },
+  "semantics": [
+    "Independent cubic callback area 24000 with inside/boundary/outside witnesses; invalid callback retains glyph/scalar cause without publishing a path.",
+    "Independent square and quadratic area/membership, exact 127/360 point conversion and scales 1 vs 1+2^-100, pi, and 2^+/-1100.",
+    "Independent Hershey Cartesian endpoints, advances and negative/symbolic scale; every record in all 32 compiled fonts decodes.",
+    "Blank geometry, malformed fonts/glyphs, missing glyphs, invalid and undecided scales remain distinct typed outcomes; dimension failure is atomic.",
+    "GPOS class coverage and spacing witnesses; exact translation/Boolean empty composition; original full text workloads extrude and validate topology under both policies.",
+    "STL round trips compare the represented f32 vertex set and independently validate reimported mesh topology; this does not certify original curved-font fidelity.",
+    "Four original Hershey coordinate artifacts remain byte-identical; native TrueType geometry and its PNG explicitly migrate. Counts from CurveRegion2::len denote boundary loops, including holes."
+  ],
+  "diagnostics": "All failed compilation, probe and qualification phases remain in phases and raw logs; see diagnostic-findings-v1.md and gpos-findings-v1.md. No policy, input font, full-size fixture or validation was weakened.",
+  "earlier_measurement_rows": [
+    {
+      "name": "timing-cold-0-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-0-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "c9ac14c1e8ce6e8cf703212dd56cfb4da24f3ec5fe52c640a1bd055761707df6"
+    },
+    {
+      "name": "timing-cold-0-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-0-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "77b771eb15fa6cdd6342f132f8521eeeb9348eeee9bbea275d4d067aad97f511"
+    },
+    {
+      "name": "timing-cold-0-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-0-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ac0f8d836d3c011a6ce79c0bcc3a0fb31951327f95ca5902aa2b5ae0cd146ce1"
+    },
+    {
+      "name": "timing-cold-0-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-0-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "6cddeb9566c8f7f2c0a874692b5e444da70a1f7db3edc6d1552e1185e2062404"
+    },
+    {
+      "name": "timing-cold-0-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-0-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "2a4e589614c36136acf21ce0a36ee612fe011f72c5cfee3f4cb703734f75d51d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "289670",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-0-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-0-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "b68287e6131fa7e96555aaa6cd1645fffffffcaca07ab67ab8da51c134d6758b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "318568",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-0-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-0-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "fe067bf60e171f0bafd1edf16ad7a98b108579f58b7ec7c68e6da667576e6e9a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "326247",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-cold-0-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-0-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d2b1ab6829546cf7febb36394394f0d0112a2426ea2e3d0624cf3ae775678556",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "363575",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-cold-1-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-1-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "29496c52cd23f7e00663df9d99aea8704add69163fe012b3ab78a6a3ebe2fb0d"
+    },
+    {
+      "name": "timing-cold-1-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-1-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "c0746f52654b2680b85fa6ecb10ff7d7c9cab2c8149a91b0df7f3eb0786c662d"
+    },
+    {
+      "name": "timing-cold-1-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-1-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "cadfa518add104f29a965d75a9bbcab3d37b65096c94c614f8ddd333948cf38f"
+    },
+    {
+      "name": "timing-cold-1-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-1-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "3ec50c487565e71e123249528fb66c456b19d9b7feea756949a16d735671706f"
+    },
+    {
+      "name": "timing-cold-1-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-1-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "3fa6b0b7030e5e8f57841f7b3c34e5afc9863d47d904392dc65b86dc6e9a96ed",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "355086",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-1-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-1-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "82213a8015106f61066403a6d16046e604ecb7ea5be1995b1a3344db1847701c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "327468",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-1-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-1-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "30d48818a9c27af57033cf71f32cb5b4b3e75ec59eee5daf5c9bfe79a1fcaa4e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "308899",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-cold-1-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-1-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "487d898ba18459d7c9c8a8786805c5895bb7d2f9d49bb5a34b899c8a37ce3f93",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "382754",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-cold-2-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-2-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "26780526996e83cea5f7c2829165438dbcbf408451f9b2193ecab8bc56250161"
+    },
+    {
+      "name": "timing-cold-2-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-2-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "71580dfeddece8839a45b8df4201d743d2523372664c6f9afcf155a04fa860cf"
+    },
+    {
+      "name": "timing-cold-2-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-2-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "c2be9a967d116e0779d450f1e76d7547608e14f2d89080d722437fdc8975c1e6"
+    },
+    {
+      "name": "timing-cold-2-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-2-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "28af2ff508190f11c8b5e0b2ebdbe25c5cf10e34fea606950413e348bdfc15e8"
+    },
+    {
+      "name": "timing-cold-2-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-2-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d15f1b7fbb9c0a35d4e4390084b9dc72b0344a67471d7bdeebd807dbc0e4dd6f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "341866",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-2-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-2-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "bbcf0615a1df8602113af91918bea588479f69282d4b73c99dfd2ca66d466df2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "331147",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-2-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-2-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "fbfa43daf97eb34750d3f2b73a5222df6fbf623b318b118fe556d0707b0e9580",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "384363",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-cold-2-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-cold-2-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "f05588793639ccf0c3ffd82e19cd401505d06be6c977ca9db669b7e758f3c66b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "427480",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-0-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-0-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "82e99d3385958935e39f233f5f6c5be14b30fbef0d0529eeb4394c5a03a26ca8"
+    },
+    {
+      "name": "timing-warm-0-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-0-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "6058f512d0b102c00503e1a23c39eeb3045c85e20c40b30f821b7583f5685601"
+    },
+    {
+      "name": "timing-warm-0-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-0-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "465264360f27537c9285801c8c3345f98bf08fa563e105b732ce4f00f32b9e8d"
+    },
+    {
+      "name": "timing-warm-0-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-0-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "8a2aeec43876cdcd922fec85daf28125e61ae2ad2d4a48a273fc40cf365e82eb"
+    },
+    {
+      "name": "timing-warm-0-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-0-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "f9864a4f08d81e6b6c9ccafce8093908d3a89c571d5c5fbac24d1497fd45a88a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "88754",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-0-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-0-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "533305b3296ccf1619b5ac8713cf604e0158e0fdce6828b933484a1836bbae05",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "93863",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-0-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-0-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d79f2d9db7c802de6a667a084020be7dda1bf654bd74bdd5616403b4583d051c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "135530",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-0-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-0-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "5ce3f44d6a9478f9cbc8ce14aa52feb17679f7a58d50086b606ae28429fa9c8e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "132521",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-1-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-1-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "5771d94854892502d59decb46d3b93224532858df82ad9905d6347fa2fddb615"
+    },
+    {
+      "name": "timing-warm-1-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-1-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "6c2da7b5e490c3dfbd9333700c5ec47b5abb58d50217ea76e73c930967871121"
+    },
+    {
+      "name": "timing-warm-1-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-1-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "4174b58d1675643d2fb576d0c7088021592731cd900145a0256a66d7ef01d962"
+    },
+    {
+      "name": "timing-warm-1-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-1-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "1e4868150804d0c42d78a8269fa0879ebf06d52c3499d6dbf725c1ffb9d3e963"
+    },
+    {
+      "name": "timing-warm-1-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-1-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "27f1ee55427a2780b40b2bbde904fbbf7a13a6026dd88b637120c77efebc78cc",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "87464",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-1-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-1-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "25d2c3ce878a4009dca8b4171b6859d54c653616f5a0d2a9ed5d61d9565eab16",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "110263",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-1-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-1-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "b890c7e46101b615cffbc7a06eb116493ad1acc716c5c883e1c3d3486546116f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "134751",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-1-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-1-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "cfbe63709884cda4fe073d1c6d59770401a3ca0720b6f22e334547444546137f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "137331",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-2-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-2-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e636f9777a0445d4ecd7f0f55473fdb0ab0db92dc0feb41c75486832c84c7563"
+    },
+    {
+      "name": "timing-warm-2-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-2-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e850a387d19a34a84eedd85ca0fc03eab22fdd8975c5cf84092474a6abff4e80"
+    },
+    {
+      "name": "timing-warm-2-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-2-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "af9f82e9297e3782793cfa95f419aa678d7a3534ae80eeaf821de5c62b17905e"
+    },
+    {
+      "name": "timing-warm-2-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-2-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "aea28a61e57c2756977b7cd8eaa09df12079fd11ba5dc07549ccb78ab464a4a0"
+    },
+    {
+      "name": "timing-warm-2-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-2-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1b704da93e36471fd7862ec89faa44c24e74f463bc81d5ae79fe691780704aa0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "95813",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-2-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-2-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "da8c409db16220fbc7b5d40f6f470a73933d71fefa709703fb6c5cbbffdd5711",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "94503",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-2-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-2-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "286d2087b9ab80cfb57dd62257207273e538991dd943f8719ca65b9b62650139",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "220014",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-2-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/timing-warm-2-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "46dce75446ca1e17a600a32e221e2571396ce08aee12d103551157df5680d1ee",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "135471",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "allocation-cold-0-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-allocation",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-cold-0-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "82141c04746512161a494d978091e8d29700a663a9b2eb27dc5cc8dd2dfaffeb"
+    },
+    {
+      "name": "allocation-cold-0-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-allocation",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-cold-0-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e1d3713e0e11f340a41da28896e9684a0b64ff23bee67d36d1fefcd782b8285d"
+    },
+    {
+      "name": "allocation-cold-0-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-allocation",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-cold-0-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "29edfde589ac01858f7c36d813525522de6442b020432b121352e3360d1ed6a1"
+    },
+    {
+      "name": "allocation-cold-0-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-allocation",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-cold-0-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "1c11c02328839905811ee8b0b4c0e74a32fe8720f5fcd2f9732baa351747ae7f"
+    },
+    {
+      "name": "allocation-cold-0-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-allocation",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-cold-0-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "525aaaf8d7192d13a678d0db1b60e55a206d00c54e2a9434aa11e4e32d9df826",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "326988",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "663",
+        "reallocations": "18",
+        "allocated_bytes": "61104",
+        "reallocated_bytes": "18144",
+        "live_delta_bytes": "30952",
+        "peak_additional_requested_bytes": "41816",
+        "retained_delta_bytes": "10264"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "allocation-cold-0-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-allocation",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-cold-0-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "2d1335ef12167686da39bbe84edfaa1778601cdf28e6e5813ea6c61939033516",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "325647",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "664",
+        "reallocations": "9",
+        "allocated_bytes": "61776",
+        "reallocated_bytes": "16128",
+        "live_delta_bytes": "30952",
+        "peak_additional_requested_bytes": "41912",
+        "retained_delta_bytes": "10264"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "allocation-cold-0-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-allocation",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-cold-0-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "4d616b81c555c136ed13ea9e1f9f9d067aa7a44ba589bd6d95695bdd06b6efe4",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "346256",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "1166",
+        "reallocations": "29",
+        "allocated_bytes": "107896",
+        "reallocated_bytes": "26976",
+        "live_delta_bytes": "52496",
+        "peak_additional_requested_bytes": "64856",
+        "retained_delta_bytes": "13240"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "allocation-cold-0-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-allocation",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-cold-0-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "a3a6ebbaeef7b736fce0496d01793d38c25e3296eab42b4b74b3e17ec0add4a4",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "316209",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "1167",
+        "reallocations": "15",
+        "allocated_bytes": "109000",
+        "reallocated_bytes": "24000",
+        "live_delta_bytes": "52496",
+        "peak_additional_requested_bytes": "65048",
+        "retained_delta_bytes": "13240"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "allocation-warm-0-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-allocation",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-warm-0-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "19b6019c4fef4551527725855e9e685cc0f774cbe0d8f9ba36a90235b950c31f"
+    },
+    {
+      "name": "allocation-warm-0-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-allocation",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-warm-0-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "daf1a34626aaa691bcb4426a31b426d65f54675c86476b84bce3c39a0c5c777d"
+    },
+    {
+      "name": "allocation-warm-0-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-allocation",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-warm-0-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "06619ac3bd4c012453147da822bea59c6cb4edabd2a7fa93b1de109d346edc0c"
+    },
+    {
+      "name": "allocation-warm-0-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-allocation",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-warm-0-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 101,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "b3860052a031c73055bf01b5b2a2174c353c1fed5bdf43c4153ef12428e6ea87"
+    },
+    {
+      "name": "allocation-warm-0-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-allocation",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-warm-0-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "4f0ed7f346b1fedec6258591664f0803331fab038ca206840f608e3ccfb5b35f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "95564",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "521",
+        "reallocations": "18",
+        "allocated_bytes": "51400",
+        "reallocated_bytes": "18144",
+        "live_delta_bytes": "22968",
+        "peak_additional_requested_bytes": "32816",
+        "retained_delta_bytes": "2280"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "allocation-warm-0-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-allocation",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-warm-0-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "74db129711fad60f9d701c65c79cbbb3031444a2d527777087788fd37d2e9b10",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "100763",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "522",
+        "reallocations": "9",
+        "allocated_bytes": "52072",
+        "reallocated_bytes": "16128",
+        "live_delta_bytes": "22968",
+        "peak_additional_requested_bytes": "32912",
+        "retained_delta_bytes": "2280"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "allocation-warm-0-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/baseline-allocation",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-warm-0-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "fb30345b7bfb8efca593969d61926a78039baa4bcff22c29c11669efd2b4f449",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "221585",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "985",
+        "reallocations": "29",
+        "allocated_bytes": "96104",
+        "reallocated_bytes": "26976",
+        "live_delta_bytes": "41016",
+        "peak_additional_requested_bytes": "53896",
+        "retained_delta_bytes": "1760"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "allocation-warm-0-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v1/candidate-allocation",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v1/measurements/allocation-warm-0-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "c595dfc8b081e334471c512a16997e0b68be167a6f5f74343a21c8726516f71b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "192557",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "986",
+        "reallocations": "15",
+        "allocated_bytes": "97208",
+        "reallocated_bytes": "24000",
+        "live_delta_bytes": "41016",
+        "peak_additional_requested_bytes": "54088",
+        "retained_delta_bytes": "1760"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    }
+  ],
+  "timing_rows": [
+    {
+      "name": "timing-cold-0-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-0-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "fe560df92078231305acbcdc5644e7ec2afcebc7b4d288e210b686bc5c31ea22",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "cold",
+        "nanos": "28953054",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "1166",
+        "serialized_bytes": "531398",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "12a967c08f7bf464398c2a79e8fe4933c206e9c63dd885bfc12af6781ea0d44b"
+    },
+    {
+      "name": "timing-cold-0-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-0-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "cb2385e4d2f64fd080a50fcd4579456af7d8a3f1ed68d8780d931b77754d2a4a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "cold",
+        "nanos": "10699876",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "151",
+        "serialized_bytes": "88027",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "259d35905b9aec0f675c362543e18dfa8efdd0b99ea2fa818fb07aedeb57e91e"
+    },
+    {
+      "name": "timing-cold-0-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-0-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "9b8373413669956147d9e0fc53f3ad8285de758f21cba0b530c5765c5f660d4e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "cold",
+        "nanos": "128526396",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "4886",
+        "serialized_bytes": "2233084",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "65a6c39aa551c4b22d1f215e740e5e3d9f6e9b4eb573d104a66b3eed674ddcab"
+    },
+    {
+      "name": "timing-cold-0-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-0-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "a306b549eda9a40d91058ffe96a8bf06883d80bfd815a31740de602c7aa61b2d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "cold",
+        "nanos": "45990476",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "662",
+        "serialized_bytes": "379841",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "89e28ed9e87350c31bc45391ec3935f5c3bc82d845956bce3a9766004e616417"
+    },
+    {
+      "name": "timing-cold-0-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-0-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "799ac801dcf69364a6f12ec7c0e46d883480274e02fbb447f6a33c4a1cdff931",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "294400",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-0-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-0-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "6f99a113a654b28939cfb99793db5e962de78eeff661ba84a0a5c24a73bffdc6",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "263102",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-0-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-0-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "dfad4e07ff85d13347e5758913d4d027691941bcc7664bcbd9fa1813a14cfaf8",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "356756",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-cold-0-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-0-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "2f532fef293634f472513bf76ac45f92280177e05f4196e5078e27d852dcd4f7",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "333377",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-cold-1-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-1-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "ea73f67b21974731225847fa6211c4c00315e28b9e319cfc1af551bb8d738a3d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "cold",
+        "nanos": "10896863",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "151",
+        "serialized_bytes": "88027",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "259d35905b9aec0f675c362543e18dfa8efdd0b99ea2fa818fb07aedeb57e91e"
+    },
+    {
+      "name": "timing-cold-1-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-1-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d193e5db8e8c12c8724896a7065842a586b0c1914f4b35aed5e5aa6a4af15c7f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "cold",
+        "nanos": "28048167",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "1166",
+        "serialized_bytes": "531398",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "12a967c08f7bf464398c2a79e8fe4933c206e9c63dd885bfc12af6781ea0d44b"
+    },
+    {
+      "name": "timing-cold-1-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-1-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "80ee52e0616c221ff0819df8b3e8427345e6d7a98f0d09e8f223f0cd224e16cd",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "cold",
+        "nanos": "46841548",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "662",
+        "serialized_bytes": "379841",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "89e28ed9e87350c31bc45391ec3935f5c3bc82d845956bce3a9766004e616417"
+    },
+    {
+      "name": "timing-cold-1-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-1-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "8183fc376b447d56bfe1f5a11034b24cc44794883a47d2a97b94d3cff109b4b2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "cold",
+        "nanos": "123009284",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "4886",
+        "serialized_bytes": "2233084",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "65a6c39aa551c4b22d1f215e740e5e3d9f6e9b4eb573d104a66b3eed674ddcab"
+    },
+    {
+      "name": "timing-cold-1-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-1-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "74dc4292171c29b7248a8eb79b113a5d9c88b6731c470ca7ecd9bcec77c93b3a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "405023",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-1-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-1-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "3306f59424d93820047f2455102757387dfcc18abe409188f71d830c3626f5f9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "270572",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-1-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-1-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "747005ff32321321daa14c4ece87f1171fee80c09323eb5605239b6bbb401f9a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "320368",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-cold-1-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-1-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "963c7baf8f7be7d52ac4b4bedd618b2de4c5c38ee2f3ba458e6fb94a722e14fb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "360595",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-cold-2-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-2-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "a8f7cbbc039e9b44ba50c58fb38d93abcefce286709329c90ac4cfbdc0490a4d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "cold",
+        "nanos": "29902819",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "1166",
+        "serialized_bytes": "531398",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "12a967c08f7bf464398c2a79e8fe4933c206e9c63dd885bfc12af6781ea0d44b"
+    },
+    {
+      "name": "timing-cold-2-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-2-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1d193a67bb84f2f4c9f7d9534cb8ebbd3f1c018d2750217f6d3b223222cf4677",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "cold",
+        "nanos": "9485429",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "151",
+        "serialized_bytes": "88027",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "259d35905b9aec0f675c362543e18dfa8efdd0b99ea2fa818fb07aedeb57e91e"
+    },
+    {
+      "name": "timing-cold-2-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-2-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "e91009990c33ac018f6694c5bb65b437ab7e1efe3900eb6ed2b53fec2f48843f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "cold",
+        "nanos": "120951216",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "4886",
+        "serialized_bytes": "2233084",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "65a6c39aa551c4b22d1f215e740e5e3d9f6e9b4eb573d104a66b3eed674ddcab"
+    },
+    {
+      "name": "timing-cold-2-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-2-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "18631597db43e03e4cf2026e54ec8b6292a91aad37b8818a3f96424edf7eb9a6",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "cold",
+        "nanos": "46934732",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "662",
+        "serialized_bytes": "379841",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "89e28ed9e87350c31bc45391ec3935f5c3bc82d845956bce3a9766004e616417"
+    },
+    {
+      "name": "timing-cold-2-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-2-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d9357efed54c4bbb5b2cf217b0a777780f72504c469de65546600a0cfc9e1e2b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "316739",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-2-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-2-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "0419faaa412ca36e652a0c7603f376cb4dd438249a262cabb19a553a6d657175",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "277101",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-cold-2-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-2-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "ab37f94606d77ca19c20485ecf1745b7796f7e381534ae2820b31bb2271d2ec9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "325298",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-cold-2-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-cold-2-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "37edf56a1a4b5a7d9da106644c6ad72ec6895bd74069fc4625b173be925d3e35",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "353186",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-0-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-0-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "cfd4977c7d62b4163a8b5db51f6fd511dfa1d6657f0d60135f335a02922fcdc7",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "warm",
+        "nanos": "20332476",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "1166",
+        "serialized_bytes": "531398",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "12a967c08f7bf464398c2a79e8fe4933c206e9c63dd885bfc12af6781ea0d44b"
+    },
+    {
+      "name": "timing-warm-0-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-0-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "b557ab49a72c3e16e1f002a5c1f52387ac52a50f7c3a2350329d95c00976b82d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "warm",
+        "nanos": "8102134",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "151",
+        "serialized_bytes": "88027",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "259d35905b9aec0f675c362543e18dfa8efdd0b99ea2fa818fb07aedeb57e91e"
+    },
+    {
+      "name": "timing-warm-0-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-0-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "de2541490c853181ce5f38831cb01524d464f07582ac2af284de2b99ce8f34a0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "warm",
+        "nanos": "91270490",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "4886",
+        "serialized_bytes": "2233084",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "65a6c39aa551c4b22d1f215e740e5e3d9f6e9b4eb573d104a66b3eed674ddcab"
+    },
+    {
+      "name": "timing-warm-0-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-0-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "9de4ac9f91a5208b910c6e2e06359d02458d3385a5862c80d4a3bf366358967d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "warm",
+        "nanos": "38340600",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "662",
+        "serialized_bytes": "379841",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "89e28ed9e87350c31bc45391ec3935f5c3bc82d845956bce3a9766004e616417"
+    },
+    {
+      "name": "timing-warm-0-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-0-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "f11a992221e3b0b97a3d5d4a036ca3d20f4578cd47fa4934ae063bc8cdc9d97b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "112982",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-0-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-0-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "e12ca63db9de6497404140650e4a6edcbad958fe815f5dc68e45a98d23049d90",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "102813",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-0-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-0-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "7cbe375746b13d6aa3cd5d519a08e7cb3caeac615ac7abb22e89a41896651fa7",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "137481",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-0-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-0-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1d97fac75980b1205d2271b800bfdaec5b33a219d865e34bc8941edbebb5db9e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "140850",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-1-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-1-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "e363e5a30179f8a9663e39b1a436a7323aa3980b2c37e2028b2a93dab2e948fa",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "warm",
+        "nanos": "7282310",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "151",
+        "serialized_bytes": "88027",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "259d35905b9aec0f675c362543e18dfa8efdd0b99ea2fa818fb07aedeb57e91e"
+    },
+    {
+      "name": "timing-warm-1-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-1-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "8d0dc68dbbd766d070c1e137c1aa76664975af94a8901fd910f23996055ef418",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "warm",
+        "nanos": "21147099",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "1166",
+        "serialized_bytes": "531398",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "12a967c08f7bf464398c2a79e8fe4933c206e9c63dd885bfc12af6781ea0d44b"
+    },
+    {
+      "name": "timing-warm-1-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-1-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1dfd4a6af26e85b3c4d859e6776fc707acec25f043b15e888d620d3b477e9fa4",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "warm",
+        "nanos": "38485070",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "662",
+        "serialized_bytes": "379841",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "89e28ed9e87350c31bc45391ec3935f5c3bc82d845956bce3a9766004e616417"
+    },
+    {
+      "name": "timing-warm-1-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-1-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "211a2e330cfe42d82626e5825191700429b74e6d4afa7ca6bf0345e2d6d5d8a4",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "warm",
+        "nanos": "91118691",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "4886",
+        "serialized_bytes": "2233084",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "65a6c39aa551c4b22d1f215e740e5e3d9f6e9b4eb573d104a66b3eed674ddcab"
+    },
+    {
+      "name": "timing-warm-1-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-1-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "0fd065ce4f32acacf09db6aa3886fc4184d3619e7b913f6673bcab230e30dccd",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "111822",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-1-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-1-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "0080ee75c389f58390e1d74df9d27197d890324f58ee340c78ac3482cdd38500",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "92304",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-1-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-1-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "59483e713b8ec4d9b07a1dd74c7e30ffb827edccf8cc6f54a9a6fd976a56b8b5",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "158579",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-1-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-1-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1f525e96b0c7ff640228fa3f4ad7c75660c7636bb9ba74ba492348f8263f1080",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "162679",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-2-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-2-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "0753e0d7e4f67955b9362f4f363fd1d5c421f455447acc8774baf9ddab09d64d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "warm",
+        "nanos": "20582679",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "1166",
+        "serialized_bytes": "531398",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "12a967c08f7bf464398c2a79e8fe4933c206e9c63dd885bfc12af6781ea0d44b"
+    },
+    {
+      "name": "timing-warm-2-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-2-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "45229041cf340ee65ce25cbab53f1e731d4b6fc01db76802514aa3ba824da388",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "warm",
+        "nanos": "7444020",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "151",
+        "serialized_bytes": "88027",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "259d35905b9aec0f675c362543e18dfa8efdd0b99ea2fa818fb07aedeb57e91e"
+    },
+    {
+      "name": "timing-warm-2-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-2-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "f84d1b26a94b7092f647d53dac3d8103bfcb6dc4499f49074840798b764397bf",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "warm",
+        "nanos": "90398241",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "4886",
+        "serialized_bytes": "2233084",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "65a6c39aa551c4b22d1f215e740e5e3d9f6e9b4eb573d104a66b3eed674ddcab"
+    },
+    {
+      "name": "timing-warm-2-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-2-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "01cd1b9459a6a664afc82fa95b1e01e17abc90c5d56885559df53ebe26371f75",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "warm",
+        "nanos": "37703514",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "662",
+        "serialized_bytes": "379841",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "89e28ed9e87350c31bc45391ec3935f5c3bc82d845956bce3a9766004e616417"
+    },
+    {
+      "name": "timing-warm-2-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-2-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "2b393bccae7cb64f259cd436e2bcac634f7b9eeced3c940ee734c92ec3447e9e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "88544",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-2-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-2-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "983180180f1c2cf0bc06cb8d9ab14acb19c4fd42111ad4c70d02d6005834b786",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "94823",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "timing-warm-2-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-2-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "730ae47b60439a7e1736fb6f9095aa4fc07cf6a39f9cab6ee1a1e506b415d863",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "136700",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "timing-warm-2-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/timing-warm-2-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "2cf3973f6d1893acac7ceab9c24fe411d045eb4a56b02c9e6d8d66996489f44d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "135651",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    }
+  ],
+  "allocation_rows": [
+    {
+      "name": "allocation-cold-0-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-allocation",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-cold-0-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "b7d9469c8ff5f1ee4052fc1b2ad9c6f74412b58b7a742e0e246097e539fcb159",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "cold",
+        "nanos": "29914919",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "1166",
+        "serialized_bytes": "531398",
+        "certainty": "certified_local",
+        "allocations": "237560",
+        "reallocations": "2595",
+        "allocated_bytes": "25829617",
+        "reallocated_bytes": "7346440",
+        "live_delta_bytes": "6479080",
+        "peak_additional_requested_bytes": "14917792",
+        "retained_delta_bytes": "4912"
+      },
+      "geometry_sha256": "12a967c08f7bf464398c2a79e8fe4933c206e9c63dd885bfc12af6781ea0d44b"
+    },
+    {
+      "name": "allocation-cold-0-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-allocation",
+        "readme-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-cold-0-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "f6c158c1ceeff8ba41abffa7e4302d26499d0f6c1fda6ace5262efef3889607b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "cold",
+        "nanos": "10745963",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "151",
+        "serialized_bytes": "88027",
+        "certainty": "certified_local",
+        "allocations": "77756",
+        "reallocations": "812",
+        "allocated_bytes": "6945598",
+        "reallocated_bytes": "886504",
+        "live_delta_bytes": "1060528",
+        "peak_additional_requested_bytes": "3200638",
+        "retained_delta_bytes": "130544"
+      },
+      "geometry_sha256": "259d35905b9aec0f675c362543e18dfa8efdd0b99ea2fa818fb07aedeb57e91e"
+    },
+    {
+      "name": "allocation-cold-0-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-allocation",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-cold-0-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "2fe74d7a2db7f021adf47e9f677ff3248710c27dd7bd01cc7e767063eb4684bd",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "cold",
+        "nanos": "125075523",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "4886",
+        "serialized_bytes": "2233084",
+        "certainty": "certified_local",
+        "allocations": "1000121",
+        "reallocations": "11121",
+        "allocated_bytes": "107992509",
+        "reallocated_bytes": "30581708",
+        "live_delta_bytes": "27229360",
+        "peak_additional_requested_bytes": "62242509",
+        "retained_delta_bytes": "7688"
+      },
+      "geometry_sha256": "65a6c39aa551c4b22d1f215e740e5e3d9f6e9b4eb573d104a66b3eed674ddcab"
+    },
+    {
+      "name": "allocation-cold-0-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-allocation",
+        "bench-truetype",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-cold-0-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "ae98f9a3661fcb2cfb089e2bd61ae65fe24e09177dd7c9b2fd62098c4bd8ea7b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "cold",
+        "nanos": "45804129",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "662",
+        "serialized_bytes": "379841",
+        "certainty": "certified_local",
+        "allocations": "366550",
+        "reallocations": "2844",
+        "allocated_bytes": "32882313",
+        "reallocated_bytes": "3677832",
+        "live_delta_bytes": "4394360",
+        "peak_additional_requested_bytes": "12846860",
+        "retained_delta_bytes": "458040"
+      },
+      "geometry_sha256": "89e28ed9e87350c31bc45391ec3935f5c3bc82d845956bce3a9766004e616417"
+    },
+    {
+      "name": "allocation-cold-0-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-allocation",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-cold-0-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "c5473b8d68f03c10a96447943e80d9b0e3f8e00a434ce0b80b83434fa676de8c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "306929",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "663",
+        "reallocations": "18",
+        "allocated_bytes": "61104",
+        "reallocated_bytes": "18144",
+        "live_delta_bytes": "30952",
+        "peak_additional_requested_bytes": "41816",
+        "retained_delta_bytes": "10264"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "allocation-cold-0-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-allocation",
+        "readme-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-cold-0-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "0236d6fc38ab0863ef20c5b2e2f9010ac6ccd14eadf5d237ea23c1d93c74607e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "nanos": "400773",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "664",
+        "reallocations": "9",
+        "allocated_bytes": "61776",
+        "reallocated_bytes": "16128",
+        "live_delta_bytes": "30952",
+        "peak_additional_requested_bytes": "41912",
+        "retained_delta_bytes": "10264"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "allocation-cold-0-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-allocation",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-cold-0-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d5e0a538a215f6f969a1d64acd2885e7699095aa9cd65aabe1be4777b0a5debf",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "327358",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "1166",
+        "reallocations": "29",
+        "allocated_bytes": "107896",
+        "reallocated_bytes": "26976",
+        "live_delta_bytes": "52496",
+        "peak_additional_requested_bytes": "64856",
+        "retained_delta_bytes": "13240"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "allocation-cold-0-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-allocation",
+        "bench-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-cold-0-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "43bb51ef2ad0b1abb0c9e711397c9ef843915a0d678d032afadc4e4952844247",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "nanos": "331048",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "1167",
+        "reallocations": "15",
+        "allocated_bytes": "109000",
+        "reallocated_bytes": "24000",
+        "live_delta_bytes": "52496",
+        "peak_additional_requested_bytes": "65048",
+        "retained_delta_bytes": "13240"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "allocation-warm-0-readme-truetype-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-allocation",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-warm-0-readme-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1aa808a6d53e7c7bfe478baffe3191e0ac546f8bd7f5630c8456894d302e5be6",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "warm",
+        "nanos": "22223366",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "1166",
+        "serialized_bytes": "531398",
+        "certainty": "certified_local",
+        "allocations": "237506",
+        "reallocations": "2595",
+        "allocated_bytes": "25825921",
+        "reallocated_bytes": "7346440",
+        "live_delta_bytes": "6471096",
+        "peak_additional_requested_bytes": "14911848",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "12a967c08f7bf464398c2a79e8fe4933c206e9c63dd885bfc12af6781ea0d44b"
+    },
+    {
+      "name": "allocation-warm-0-readme-truetype-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "readme-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-allocation",
+        "readme-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-warm-0-readme-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "5124154353ff10883ea60ee4afa8fa94cb424cd4f2b46d6764290cbbb4be5877",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-truetype",
+        "temperature": "warm",
+        "nanos": "7945845",
+        "carrier_kind": "boundary_loops",
+        "carriers": "3",
+        "edges": "151",
+        "serialized_bytes": "88027",
+        "certainty": "certified_local",
+        "allocations": "78453",
+        "reallocations": "812",
+        "allocated_bytes": "6985038",
+        "reallocated_bytes": "886504",
+        "live_delta_bytes": "1019640",
+        "peak_additional_requested_bytes": "3171502",
+        "retained_delta_bytes": "68376"
+      },
+      "geometry_sha256": "259d35905b9aec0f675c362543e18dfa8efdd0b99ea2fa818fb07aedeb57e91e"
+    },
+    {
+      "name": "allocation-warm-0-bench-truetype-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-allocation",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-warm-0-bench-truetype-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "174f5127bd0f01e4b3f7c173a16aefcfb61fce1624f7cc933e1350b1a5956984",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "warm",
+        "nanos": "100763690",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "4886",
+        "serialized_bytes": "2233084",
+        "certainty": "certified_local",
+        "allocations": "1000040",
+        "reallocations": "11121",
+        "allocated_bytes": "107986965",
+        "reallocated_bytes": "30581708",
+        "live_delta_bytes": "27221288",
+        "peak_additional_requested_bytes": "62234893",
+        "retained_delta_bytes": "896"
+      },
+      "geometry_sha256": "65a6c39aa551c4b22d1f215e740e5e3d9f6e9b4eb573d104a66b3eed674ddcab"
+    },
+    {
+      "name": "allocation-warm-0-bench-truetype-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "bench-truetype",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-allocation",
+        "bench-truetype",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-warm-0-bench-truetype-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1b4ddb832c4cbd6b87b42303e7cf39627753c79be50ba083ca0519c9e6eaf9ed",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-truetype",
+        "temperature": "warm",
+        "nanos": "41113100",
+        "carrier_kind": "boundary_loops",
+        "carriers": "19",
+        "edges": "662",
+        "serialized_bytes": "379841",
+        "certainty": "certified_local",
+        "allocations": "366743",
+        "reallocations": "2844",
+        "allocated_bytes": "32915825",
+        "reallocated_bytes": "3677832",
+        "live_delta_bytes": "4435584",
+        "peak_additional_requested_bytes": "12908772",
+        "retained_delta_bytes": "110920"
+      },
+      "geometry_sha256": "89e28ed9e87350c31bc45391ec3935f5c3bc82d845956bce3a9766004e616417"
+    },
+    {
+      "name": "allocation-warm-0-readme-hershey-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-allocation",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-warm-0-readme-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d57b9717d030faf1cae542a7fe84b6032990e607649f8608a91487665c54f79e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "89134",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "521",
+        "reallocations": "18",
+        "allocated_bytes": "51400",
+        "reallocated_bytes": "18144",
+        "live_delta_bytes": "22968",
+        "peak_additional_requested_bytes": "32816",
+        "retained_delta_bytes": "2280"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "allocation-warm-0-readme-hershey-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "readme-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-allocation",
+        "readme-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-warm-0-readme-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "a656d665df5c51ae41547b7df368a7e2aa324082392a35ac6d8a337efdebcc7e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "nanos": "101913",
+        "carrier_kind": "strings",
+        "carriers": "4",
+        "edges": "55",
+        "serialized_bytes": "20365",
+        "certainty": "certified_local",
+        "allocations": "522",
+        "reallocations": "9",
+        "allocated_bytes": "52072",
+        "reallocated_bytes": "16128",
+        "live_delta_bytes": "22968",
+        "peak_additional_requested_bytes": "32912",
+        "retained_delta_bytes": "2280"
+      },
+      "geometry_sha256": "de18a8fcb0f26eb649ebb834817704b5b5356d7b13b30950bb56f2954d4ac12c"
+    },
+    {
+      "name": "allocation-warm-0-bench-hershey-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-allocation",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-warm-0-bench-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "40a3b561ff522dd9d75560f5d89778162b95305640263725179e9bd33102dea4",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "143510",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "985",
+        "reallocations": "29",
+        "allocated_bytes": "96104",
+        "reallocated_bytes": "26976",
+        "live_delta_bytes": "41016",
+        "peak_additional_requested_bytes": "53896",
+        "retained_delta_bytes": "1760"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    },
+    {
+      "name": "allocation-warm-0-bench-hershey-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "bench-hershey",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-allocation",
+        "bench-hershey",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/allocation-warm-0-bench-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "c92e0c943ec93af6a1aa39236e87181b061e0bc68e4fbb87790e78c98cd00fb4",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "nanos": "150550",
+        "carrier_kind": "strings",
+        "carriers": "8",
+        "edges": "85",
+        "serialized_bytes": "31630",
+        "certainty": "certified_local",
+        "allocations": "986",
+        "reallocations": "15",
+        "allocated_bytes": "97208",
+        "reallocated_bytes": "24000",
+        "live_delta_bytes": "41016",
+        "peak_additional_requested_bytes": "54088",
+        "retained_delta_bytes": "1760"
+      },
+      "geometry_sha256": "85853fc21910ce03682ff2fda799e5f1e507fe5a7e3a374f498c1316a4452573"
+    }
+  ],
+  "preservation_rows": [
+    {
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "custom-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/preservation-custom-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "case": "custom-hershey",
+      "variant": "baseline",
+      "byte_equal": true
+    },
+    {
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "custom-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/preservation-custom-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "case": "custom-hershey",
+      "variant": "candidate",
+      "byte_equal": true
+    },
+    {
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+        "negative-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/preservation-negative-hershey-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "case": "negative-hershey",
+      "variant": "baseline",
+      "byte_equal": true
+    },
+    {
+      "command": [
+        "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+        "negative-hershey",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/preservation-negative-hershey-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "case": "negative-hershey",
+      "variant": "candidate",
+      "byte_equal": true
+    }
+  ],
+  "cost": {
+    "scope": "Focused construction cost; all results retained, no optimization claim. TrueType migrates geometry/units; its ratios are not same-output speedups.",
+    "timing_pairs": [
+      {
+        "case": "readme-truetype",
+        "temperature": "cold",
+        "median_nanos": {
+          "baseline": 28953054,
+          "candidate": 10699876
+        },
+        "candidate_over_baseline": 0.36955949448372527,
+        "same_output_contract": false
+      },
+      {
+        "case": "readme-truetype",
+        "temperature": "warm",
+        "median_nanos": {
+          "baseline": 20582679,
+          "candidate": 7444020
+        },
+        "candidate_over_baseline": 0.361664290639717,
+        "same_output_contract": false
+      },
+      {
+        "case": "bench-truetype",
+        "temperature": "cold",
+        "median_nanos": {
+          "baseline": 123009284,
+          "candidate": 46841548
+        },
+        "candidate_over_baseline": 0.3807968510734523,
+        "same_output_contract": false
+      },
+      {
+        "case": "bench-truetype",
+        "temperature": "warm",
+        "median_nanos": {
+          "baseline": 91118691,
+          "candidate": 38340600
+        },
+        "candidate_over_baseline": 0.4207764573790903,
+        "same_output_contract": false
+      },
+      {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "median_nanos": {
+          "baseline": 294400,
+          "candidate": 277101
+        },
+        "candidate_over_baseline": 0.9412398097826087,
+        "same_output_contract": true
+      },
+      {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "median_nanos": {
+          "baseline": 92304,
+          "candidate": 102813
+        },
+        "candidate_over_baseline": 1.1138520540821633,
+        "same_output_contract": true
+      },
+      {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "median_nanos": {
+          "baseline": 356756,
+          "candidate": 333377
+        },
+        "candidate_over_baseline": 0.9344678155377906,
+        "same_output_contract": true
+      },
+      {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "median_nanos": {
+          "baseline": 137481,
+          "candidate": 140850
+        },
+        "candidate_over_baseline": 1.024505204355511,
+        "same_output_contract": true
+      }
+    ],
+    "earlier_successful_hershey_timing_pairs": [
+      {
+        "case": "readme-hershey",
+        "temperature": "cold",
+        "median_nanos": {
+          "baseline": 327468,
+          "candidate": 331147
+        },
+        "candidate_over_baseline": 1.0112346855265246,
+        "same_output_contract": true
+      },
+      {
+        "case": "readme-hershey",
+        "temperature": "warm",
+        "median_nanos": {
+          "baseline": 95813,
+          "candidate": 93863
+        },
+        "candidate_over_baseline": 0.9796478557189525,
+        "same_output_contract": true
+      },
+      {
+        "case": "bench-hershey",
+        "temperature": "cold",
+        "median_nanos": {
+          "baseline": 382754,
+          "candidate": 363575
+        },
+        "candidate_over_baseline": 0.949892097796496,
+        "same_output_contract": true
+      },
+      {
+        "case": "bench-hershey",
+        "temperature": "warm",
+        "median_nanos": {
+          "baseline": 137331,
+          "candidate": 134751
+        },
+        "candidate_over_baseline": 0.9812132730410468,
+        "same_output_contract": true
+      }
+    ],
+    "allocation_rows": 16,
+    "earlier_attempts": {
+      "phase": "resources-v1",
+      "attempts": 64,
+      "successful_hershey_rows": 32,
+      "failed_truetype_serializations": 32,
+      "scope": "Construction completed, then the helper rejected retained lines. All attempts and successful Hershey costs remain in earlier_measurement_rows; no TrueType cost is credited to failed children."
+    },
+    "library_bytes": {
+      "baseline": {
+        "libcsgrs.rlib": 9910970,
+        "libhypercurve-65c0df1f5cff6824.rlib": 49018684
+      },
+      "candidate": {
+        "libcsgrs.rlib": 10042160,
+        "libhypercurve-65c0df1f5cff6824.rlib": 49028054
+      }
+    },
+    "driver_sizes": {
+      "/dev/shm/csgrs-text-contracts/resources-v2/candidate-allocation": 36341616,
+      "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing": 36342344,
+      "/dev/shm/csgrs-text-contracts/resources-v2/baseline-allocation": 36296976,
+      "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing": 36293096
+    },
+    "limits": "External 1800-second/8-GiB process containment; measurement children additionally have 120-second walls. Requested allocator bytes exclude allocator overhead. No internal total-work, heap-byte or cancellation bound."
+  },
+  "full_plan_complete": false,
+  "remaining": "Complete font-file validation, CFF2 blank certification, end-to-end provenance/resources, external package/release, full CI, formal/fuzz/coverage and 35 separately unadmitted native files remain open."
+}

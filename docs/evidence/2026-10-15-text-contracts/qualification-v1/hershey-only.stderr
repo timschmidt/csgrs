@@ -1,0 +1,4 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 1m 20s
+     Running tests/text_contracts.rs (target/properties/text-contracts/qualification-v1/release/deps/text_contracts-ed9c13d3bf21e706)

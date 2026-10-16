@@ -33,8 +33,12 @@ fn main() {
     let output_dir = output_dir();
     fs::create_dir_all(&output_dir).expect("create README render output directory");
 
-    render_readme_curves();
-    render_readme_meshes();
+    if std::env::var_os("README_RENDER_TEXT_ONLY").is_some() {
+        render_readme_text();
+    } else {
+        render_readme_curves();
+        render_readme_meshes();
+    }
 
     println!("README renders written to {}/*.png", output_dir.display());
 }
@@ -212,10 +216,7 @@ fn render_readme_curves() {
             .expect("valid planar metaball fixture"),
     );
     render_curve("from_image", &readme_raster_shape());
-    render_curve(
-        "truetype",
-        &curve::truetype_text("CSG", include_bytes!("../asar.ttf"), r(72.0)),
-    );
+    render_readme_text();
     render_open_curves(
         "bezier_path",
         &[curve::bezier_path(
@@ -256,10 +257,19 @@ fn render_readme_curves() {
         )
         .expect("exact Hilbert strings in a square"),
     );
+}
+
+fn render_readme_text() {
+    render_curve(
+        "truetype",
+        &curve::truetype_text("CSG", include_bytes!("../asar.ttf"), r(72.0))
+            .expect("valid TrueType outlines"),
+    );
     render_open_curves(
         "hershey_strings",
         &[],
-        &curve::hershey_strings("CSG", &hypercurve::hershey::fonts::ROWMANS, r(1.0)),
+        &curve::hershey_strings("CSG", &hypercurve::hershey::fonts::ROWMANS, r(1.0))
+            .expect("valid Hershey strokes"),
     );
 }
 

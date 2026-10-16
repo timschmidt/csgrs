@@ -1,0 +1,11 @@
+
+running 6 tests
+test hershey::tests::built_in_catalog_is_compiled_and_named ... ok
+test hershey::tests::catalog_records_and_buffer_capacity_are_checked ... ok
+test hershey::tests::custom_font_decodes_bearings_and_pen_lifts ... ok
+test hershey::tests::built_in_ascii_text_produces_exact_native_strokes ... ok
+test hershey::tests::failures_never_publish_empty_or_partial_strokes ... ok
+test hershey::tests::policy_scope_does_not_turn_an_unproved_scale_into_a_strict_fact ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1755 filtered out; finished in 0.00s
+

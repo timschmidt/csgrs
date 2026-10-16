@@ -1,0 +1,7 @@
+
+running 2 tests
+test hershey::failures_retain_native_causes_through_public_wrappers ... ok
+test hershey::exact_cartesian_strokes_spacing_negative_and_symbolic_sizes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,16 @@
+error[E0308]: mismatched types
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/gpos_baseline_v1.rs:12:28
+   |
+12 |         assert_eq!(result, expected);
+   |                            ^^^^^^^^ expected `Result<Option<bool>, ValidationError>`, found `Option<bool>`
+   |
+   = note: expected enum `Result<Option<_>, ValidationError>`
+              found enum `Option<_>`
+help: try wrapping the expression in `Ok`
+   |
+12 |         assert_eq!(result, Ok(expected));
+   |                            +++        +
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0308`.

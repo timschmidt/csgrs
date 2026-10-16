@@ -1,0 +1,6 @@
+
+thread 'main' (2066762) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/gpos_baseline_v2.rs:12:9:
+assertion `left == right` failed
+  left: Some(false)
+ right: Some(true)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

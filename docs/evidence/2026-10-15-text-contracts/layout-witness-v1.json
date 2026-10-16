@@ -1,0 +1,35 @@
+[
+  [
+    "mkdir",
+    [
+      "mkdir",
+      "-p",
+      "/dev/shm/csgrs-text-contracts/layout-witness-v1"
+    ]
+  ],
+  [
+    "probe-build",
+    [
+      "rustc",
+      "--edition=2024",
+      "-Copt-level=2",
+      "-D",
+      "warnings",
+      "docs/evidence/2026-10-15-text-contracts/layout_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/text-contracts/candidate-v2/release/deps/libcsgrs.rlib",
+      "--extern",
+      "ttf_parser=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/text-contracts/candidate-v2/release/deps/libttf_parser-d1b812de8e79ab39.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/text-contracts/candidate-v2/release/deps",
+      "-o",
+      "/dev/shm/csgrs-text-contracts/layout-witness-v1/probe"
+    ]
+  ],
+  [
+    "probe",
+    [
+      "/dev/shm/csgrs-text-contracts/layout-witness-v1/probe"
+    ]
+  ]
+]

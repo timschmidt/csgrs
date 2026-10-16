@@ -1,0 +1,80 @@
+    Checking num-integer v0.1.46
+    Checking ppv-lite86 v0.2.21
+    Checking num-bigint v0.4.6
+    Checking rand_chacha v0.9.0
+    Checking getrandom v0.4.2
+    Checking hashbrown v0.16.1
+    Checking num-rational v0.4.2
+    Checking rand v0.9.4
+    Checking hashbrown v0.17.1
+    Checking uuid v1.23.1
+    Checking bevy_platform v0.18.1
+    Checking num-iter v0.1.45
+    Checking glam v0.30.10
+    Checking num v0.4.3
+    Checking bevy_utils v0.18.1
+    Checking indexmap v2.14.0
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking bevy_tasks v0.18.1
+    Checking bevy_reflect v0.18.1
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking hash32 v0.3.1
+    Checking safe_arch v1.2.0
+    Checking bevy_ecs v0.18.1
+    Checking wide v1.7.1
+    Checking heapless v0.8.0
+    Checking spade v2.15.1
+    Checking rstar v0.12.2
+    Checking simba v0.10.2
+    Checking bevy_app v0.18.1
+    Checking chacha20 v0.10.2
+    Checking i_key_sort v0.10.3
+   Compiling nalgebra-macros v0.3.0
+    Checking i_overlay v4.5.2
+    Checking nalgebra v0.35.0
+    Checking av-scenechange v0.14.1
+    Checking av1-grain v0.2.5
+    Checking rand v0.10.3
+    Checking geo-types v0.7.20
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking argmin-math v0.5.1
+    Checking rand_xoshiro v0.7.0
+    Checking i_float v3.0.0
+    Checking web-time v1.1.0
+    Checking geo v0.33.1
+    Checking gauss-quad v0.3.2
+    Checking argmin v0.11.0
+    Checking rav1e v0.8.1
+    Checking i_shape v3.0.0
+    Checking bevy_time v0.18.1
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking rand_distr v0.5.1
+    Checking itertools v0.15.0
+    Checking static_aabb2d_index v2.1.0
+    Checking ordered-float v5.5.0
+    Checking i_tree v0.19.0
+    Checking i_key_sort v0.11.0
+    Checking ravif v0.13.0
+    Checking bevy_diagnostic v0.18.1
+    Checking i_overlay v7.0.3
+    Checking curvo v0.1.92
+    Checking cavalier_contours v0.7.0
+    Checking bevy_math v0.18.1
+    Checking bevy_log v0.18.1
+    Checking gerber-types v0.7.0
+    Checking bevy_asset v0.18.1
+    Checking bevy_transform v0.18.1
+    Checking image v0.25.10
+    Checking hexasphere v16.0.0
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking dxf v0.6.1
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking bevy_mesh v0.18.1
+    Checking gerber_parser v0.4.0
+    Checking hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+ Documenting hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+ Documenting csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 3m 48s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/properties/text-contracts/qualification-v1/doc/csgrs/index.html and 1 other file

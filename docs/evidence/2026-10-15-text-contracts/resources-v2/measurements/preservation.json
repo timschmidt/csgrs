@@ -1,0 +1,50 @@
+[
+  {
+    "command": [
+      "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+      "custom-hershey",
+      "cold",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/preservation-custom-hershey-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "case": "custom-hershey",
+    "variant": "baseline",
+    "byte_equal": true
+  },
+  {
+    "command": [
+      "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+      "custom-hershey",
+      "cold",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/preservation-custom-hershey-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "case": "custom-hershey",
+    "variant": "candidate",
+    "byte_equal": true
+  },
+  {
+    "command": [
+      "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing",
+      "negative-hershey",
+      "cold",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/preservation-negative-hershey-baseline.geometry.json"
+    ],
+    "exit_code": 0,
+    "case": "negative-hershey",
+    "variant": "baseline",
+    "byte_equal": true
+  },
+  {
+    "command": [
+      "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing",
+      "negative-hershey",
+      "cold",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-15-text-contracts/resources-v2/measurements/preservation-negative-hershey-candidate.geometry.json"
+    ],
+    "exit_code": 0,
+    "case": "negative-hershey",
+    "variant": "candidate",
+    "byte_equal": true
+  }
+]

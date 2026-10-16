@@ -1,0 +1,39 @@
+   Compiling either v1.15.0
+   Compiling zerocopy v0.8.48
+   Compiling rayon v1.12.0
+   Compiling thiserror v2.0.21
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling spade v2.15.1
+   Compiling ppv-lite86 v0.2.21
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling i_key_sort v0.10.3
+   Compiling rstar v0.12.2
+   Compiling i_overlay v4.5.2
+   Compiling geo-types v0.7.20
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling rand_chacha v0.9.0
+   Compiling rand v0.10.3
+   Compiling proptest v1.11.0
+   Compiling geo v0.33.1
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0308]: mismatched types
+   --> crates/hypercurve/src/hershey.rs:489:33
+    |
+489 |             assert!(strings("", font, Real::one()).unwrap().is_empty());
+    |                     -------     ^^^^ expected `&Font<'_>`, found `Font<'_>`
+    |                     |
+    |                     arguments to this function are incorrect
+    |
+note: function defined here
+   --> crates/hypercurve/src/hershey.rs:332:8
+    |
+332 | pub fn strings(text: &str, font: &Font<'_>, size: Real) -> Result<Vec<CurveString2>, TextError> {
+    |        ^^^^^^^             ---------------
+help: consider borrowing here
+    |
+489 |             assert!(strings("", &font, Real::one()).unwrap().is_empty());
+    |                                 +
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `hypercurve` (lib test) due to 1 previous error

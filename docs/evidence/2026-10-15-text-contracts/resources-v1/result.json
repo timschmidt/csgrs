@@ -1,0 +1,65 @@
+{
+  "commands": [
+    {
+      "name": "mkdir",
+      "exit_code": 0,
+      "seconds": 1.8576874202117324,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "bce408a5645dddc46de08f7bc97703889c4b25217075155f926b59c7be41f50f"
+    },
+    {
+      "name": "build-baseline-timing",
+      "exit_code": 0,
+      "seconds": 2.5813312930986285,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "0512302ea1b635bc868ffe899fd4ceb493da696f994abe2e0f3f73a958532dd2"
+    },
+    {
+      "name": "build-baseline-allocation",
+      "exit_code": 0,
+      "seconds": 2.5628237719647586,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "999f56b77fb18ad51b4973e2f65addeebb5a3bd67d1795a94babc2832bac108c"
+    },
+    {
+      "name": "build-candidate-timing",
+      "exit_code": 0,
+      "seconds": 2.6604676959104836,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "65a706b29a90b49a0012fd94b08bb594a4d2b1c1ec09436aecc7f2b6d1fd9443"
+    },
+    {
+      "name": "build-candidate-allocation",
+      "exit_code": 0,
+      "seconds": 2.819312822073698,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "9000eedd219dea2f773dbe408de202f6f25470c8bee0c2994de64fc66e835d91"
+    },
+    {
+      "name": "measure",
+      "exit_code": 1,
+      "seconds": 6.309179618023336,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e83a8f7726bba0ae4bf2bff1f2a876625a955a2738c19d8d0b443075eae032e2",
+      "stderr_sha256": "67f5e3248e0c8f25abdcc343ccb1b55fc6339d001cfd50eb5b940e37e7c94e55",
+      "resources_sha256": "374d581401cbc1f1551b13b1ae108328cb0bd523c1369375af2ed673c6b6f380"
+    }
+  ],
+  "passed": false
+}

@@ -1,0 +1,23 @@
+	Command being timed: "cargo clippy --locked --release -p hypercurve --features hershey --lib --tests -- -D warnings"
+	User time (seconds): 48.55
+	System time (seconds): 5.62
+	Percent of CPU this job got: 151%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:35.71
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2159332
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 200
+	Minor (reclaiming a frame) page faults: 2162602
+	Voluntary context switches: 13078
+	Involuntary context switches: 2035
+	Swaps: 0
+	File system inputs: 31624
+	File system outputs: 200797
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

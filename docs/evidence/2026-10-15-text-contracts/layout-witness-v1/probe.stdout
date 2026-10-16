@@ -1,0 +1,8 @@
+R-space has covered pair adjustment -200; advances 1000 + 1000 => next R starts at 1800
+"RR" (850,50): Some(true), expected true
+"QQ" (1050,10): Some(true), expected true
+"R R" (1850,50): Some(true), expected true
+"R R" (2050,50): Some(false), expected false
+"R\tR" (5050,50): Some(true), expected true
+"R\nR" (50,-950): Some(true), expected true
+"R\rR" (50,50): Some(true), expected true

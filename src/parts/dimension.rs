@@ -4,6 +4,7 @@
 //! and an optional Hershey label. The measured length stays a `Real`. The
 //! glyphs are a picture of that length and are not read back as geometry.
 
+use crate::errors::ValidationError;
 use hyperlattice::{Point3, Real, Vector3};
 
 #[cfg(feature = "hershey-text")]
@@ -58,21 +59,33 @@ pub fn dimension_z(start: Point3, length: Real, offset: Vector3) -> Option<Dimen
 }
 
 /// Appends extension lines, the dimension line, and a label to `view`.
-pub fn annotate(view: &mut BlueprintView, dimension: &Dimension, handle: &str) {
+/// Label construction and buffer failures leave the drawing unchanged.
+pub fn annotate(
+    view: &mut BlueprintView,
+    dimension: &Dimension,
+    handle: &str,
+) -> Result<(), ValidationError> {
     let start = dimension.start.clone();
     let end = dimension.end.clone();
     let offset_start = start.clone() + &dimension.offset;
     let offset_end = end.clone() + &dimension.offset;
-    push_segment(view, handle, &start, &offset_start);
-    push_segment(view, handle, &end, &offset_end);
-    push_segment(view, handle, &offset_start, &offset_end);
-    view.edges.extend(label_edges(
+    let labels = label_edges(
         view.projection,
         &offset_start,
         &offset_end,
         &dimension.length,
         handle,
-    ));
+    )?;
+    let additional = labels
+        .len()
+        .checked_add(3)
+        .ok_or(ValidationError::CapacityOverflow)?;
+    crate::solid::reserve_additional(&mut view.edges, additional)?;
+    push_segment(view, handle, &start, &offset_start);
+    push_segment(view, handle, &end, &offset_end);
+    push_segment(view, handle, &offset_start, &offset_end);
+    view.edges.extend(labels);
+    Ok(())
 }
 
 fn axis_dimension(
@@ -140,56 +153,46 @@ fn label_edges(
     end: &Point3,
     length: &Real,
     handle: &str,
-) -> Vec<super::blueprint::BlueprintEdge> {
-    let text = length_label(length);
-    if text.is_empty() {
-        return Vec::new();
-    }
+) -> Result<Vec<super::blueprint::BlueprintEdge>, ValidationError> {
+    let text = length_label(length)?;
     let (start, _) = project_point(start, projection);
     let (end, _) = project_point(end, projection);
     let dx = &end.x - &start.x;
     let dy = &end.y - &start.y;
-    let span = match (&dx * &dx + &dy * &dy).sqrt() {
-        Ok(span) => span,
-        Err(_) => return Vec::new(),
-    };
-    if !is_positive(&span) {
-        return Vec::new();
+    let span = (&dx * &dx + &dy * &dy).sqrt()?;
+    let decisions = crate::context::GeometryDecisions::new(&crate::GeometryContext::STRICT);
+    if decisions.sign(&span, "dimension label projected span")? == hyperreal::RealSign::Zero {
+        // A dimension viewed along its axis has no direction for a label.
+        return Ok(Vec::new());
     }
-    let Ok(dir_x) = &dx / &span else {
-        return Vec::new();
-    };
-    let Ok(dir_y) = &dy / &span else {
-        return Vec::new();
-    };
+    let dir_x = (&dx / &span)?;
+    let dir_y = (&dy / &span)?;
     let perp_x = Real::zero() - &dir_y;
     let perp_y = dir_x.clone();
     let two = Real::from(2);
-    let Ok(mid_x) = (&start.x + &end.x) / &two else {
-        return Vec::new();
-    };
-    let Ok(mid_y) = (&start.y + &end.y) / &two else {
-        return Vec::new();
-    };
+    let mid_x = ((&start.x + &end.x) / &two)?;
+    let mid_y = ((&start.y + &end.y) / &two)?;
     let strings = crate::curve::hershey_strings(
         &text,
         &crate::curve::hershey::fonts::FUTURAL,
         Real::one(),
-    );
+    )?;
     let mut samples = Vec::new();
     for string in &strings {
         for segment in string.segments() {
+            crate::solid::reserve_additional(&mut samples, 2)?;
             samples.push((segment.start().x().clone(), segment.start().y().clone()));
             samples.push((segment.end().x().clone(), segment.end().y().clone()));
         }
     }
     let Some((center_x, center_y)) = glyph_center(&samples) else {
-        return Vec::new();
+        return Ok(Vec::new());
     };
     let gap = Real::from(2);
     let mut edges = Vec::new();
     for string in &strings {
         for segment in string.segments() {
+            crate::solid::reserve_additional(&mut edges, 1)?;
             let local_start = place_glyph(
                 &(segment.start().x().clone() - &center_x),
                 &(segment.start().y().clone() - &center_y + &gap),
@@ -220,7 +223,7 @@ fn label_edges(
             ));
         }
     }
-    edges
+    Ok(edges)
 }
 
 #[cfg(not(feature = "hershey-text"))]
@@ -230,8 +233,8 @@ const fn label_edges(
     _end: &Point3,
     _length: &Real,
     _handle: &str,
-) -> Vec<super::blueprint::BlueprintEdge> {
-    Vec::new()
+) -> Result<Vec<super::blueprint::BlueprintEdge>, ValidationError> {
+    Ok(Vec::new())
 }
 
 #[cfg(feature = "hershey-text")]
@@ -277,16 +280,18 @@ fn place_glyph(
 }
 
 #[cfg(feature = "hershey-text")]
-fn length_label(length: &Real) -> String {
-    let Some(value) = length.to_f64_lossy() else {
-        return String::new();
+fn length_label(length: &Real) -> Result<String, ValidationError> {
+    let unavailable = || ValidationError::UnsupportedPrimitive {
+        reason: "dimension length has no finite binary64 display label",
     };
+    let value = length
+        .to_f64_lossy()
+        .filter(|value| value.is_finite())
+        .ok_or_else(unavailable)?;
     if value.is_finite() && value.fract() == 0.0 && value.abs() < 1.0e15 {
-        format!("{}", value as i64)
-    } else if value.is_finite() {
-        format!("{value}")
+        Ok(format!("{}", value as i64))
     } else {
-        String::new()
+        Ok(format!("{value}"))
     }
 }
 
@@ -314,7 +319,7 @@ mod tests {
             dimension_x(Point3::origin(), Real::from(12), offset_y(-4)).expect("length");
         assert_eq!(real_eq(&annotation.length, &Real::from(12)), Some(true));
         let mut drawing = view();
-        annotate(&mut drawing, &annotation, "block");
+        annotate(&mut drawing, &annotation, "block").unwrap();
         assert!(drawing.edges.len() >= 3);
         assert!(
             drawing
@@ -346,7 +351,7 @@ mod tests {
         .expect("length");
         let mut drawing = view();
         drawing.projection = BlueprintProjection::Right;
-        annotate(&mut drawing, &annotation, "height");
+        annotate(&mut drawing, &annotation, "height").unwrap();
         assert!(drawing.edges.len() > 3);
         assert!(drawing.edges.iter().any(|edge| {
             edge.evidence
@@ -354,5 +359,23 @@ mod tests {
                 .iter()
                 .any(|note| note == "dimension label")
         }));
+    }
+
+    #[cfg(feature = "hershey-text")]
+    #[test]
+    fn failed_label_leaves_existing_drawing_unchanged() {
+        let mut drawing = view();
+        let annotation = dimension_x(Point3::origin(), Real::from(12), offset_y(-4)).unwrap();
+        annotate(&mut drawing, &annotation, "existing").unwrap();
+        let before = drawing.edges.clone();
+        let annotation = dimension_x(
+            Point3::origin(),
+            Real::from(2).powi_i64(2048).unwrap(),
+            offset_y(-4),
+        )
+        .unwrap();
+        let error = annotate(&mut drawing, &annotation, "failed").unwrap_err();
+        assert_eq!(error.kind(), crate::errors::ValidationErrorKind::Unsupported);
+        assert_eq!(drawing.edges, before);
     }
 }

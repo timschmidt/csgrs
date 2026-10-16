@@ -1,0 +1,9 @@
+{
+  "old_sha256": "1366034ef4d4223242d0b0f0dbc1b722869ff32d1dd6a86bd05e46b6dc04563e",
+  "new_sha256": "ed2ba2d6d91fe6ae6faa2ca43d9b245f348d26aab9d48601002c8c8eeedf4554",
+  "source": "candidate-v2/text-render",
+  "old_bytes": 83417,
+  "new_bytes": 75791,
+  "hershey_image_byte_identical": true,
+  "visual_review": "CSG filled glyphs preserved visually; native vertices replace sampled chord vertices. No geometric equality is inferred from the picture."
+}

@@ -1,0 +1,3 @@
+Q: point at (50,10) font units = Some(true); QQ should be inside at 1050, outside at 850
+QQ: point at (850,10) font units = Some(true); QQ should be inside at 1050, outside at 850
+QQ: point at (1050,10) font units = Some(false); QQ should be inside at 1050, outside at 850

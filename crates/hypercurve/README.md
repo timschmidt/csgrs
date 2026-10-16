@@ -570,6 +570,16 @@ representation is not the U.S. NTIS distribution format. The complete
 required acknowledgement is available as
 `hypercurve::hershey::FONT_DATA_NOTICE`.
 
+`hershey::strings(text, font, size)` returns `Result<Vec<CurveString2>,
+TextError>`. Missing glyphs, malformed records and failed strokes retain their
+typed causes and never publish partial text. Empty text and blank glyphs succeed
+after validating the font's record structure and nonzero size. Negative sizes
+remain supported. Whitespace advances horizontally by six times the size;
+other unmapped characters are errors. Use `evaluate_under` for an explicit
+predicate policy and a receipt for consumed certainty. Checked reservations
+diagnose buffer capacity/allocation failures; they are not a total-work,
+heap-byte or cancellation bound.
+
 ## License and contributing
 
 Licensed under the [Apache License 2.0](LICENSE).

@@ -1,0 +1,80 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+error[E0599]: no associated function or constant named `strict` found for struct `context::GeometryContext` in the current scope
+    --> src/curve/native.rs:3063:74
+     |
+3063 |     truetype_text_with_context(text, font_data, scale, &GeometryContext::strict())
+     |                                                                          ^^^^^^ associated function or constant not found in `context::GeometryContext`
+     |
+    ::: src/context.rs:14:1
+     |
+  14 | pub struct GeometryContext {
+     | -------------------------- associated function or constant `strict` not found for this struct
+     |
+note: if you're trying to build a new `context::GeometryContext`, consider using `context::GeometryContext::new` which returns `context::GeometryContext`
+    --> src/context.rs:26:5
+     |
+  26 |     pub const fn new(predicates: PredicatePolicy) -> Self {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no associated function or constant named `strict` found for struct `context::GeometryContext` in the current scope
+    --> src/curve/native.rs:3095:70
+     |
+3095 |     hershey_strings_with_context(text, font, size, &GeometryContext::strict())
+     |                                                                      ^^^^^^ associated function or constant not found in `context::GeometryContext`
+     |
+    ::: src/context.rs:14:1
+     |
+  14 | pub struct GeometryContext {
+     | -------------------------- associated function or constant `strict` not found for this struct
+     |
+note: if you're trying to build a new `context::GeometryContext`, consider using `context::GeometryContext::new` which returns `context::GeometryContext`
+    --> src/context.rs:26:5
+     |
+  26 |     pub const fn new(predicates: PredicatePolicy) -> Self {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0308]: mismatched types
+   --> src/curve/truetype.rs:116:45
+    |
+116 |             .any(|record| record.tag == Tag(tag))
+    |                                         --- ^^^ expected `u32`, found `[u8; 4]`
+    |                                         |
+    |                                         arguments to this struct are incorrect
+    |
+note: tuple struct defined here
+   --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ttf-parser-0.25.1/src/lib.rs:206:12
+    |
+206 | pub struct Tag(pub u32);
+    |            ^^^
+
+error[E0308]: mismatched types
+   --> src/curve/truetype.rs:130:39
+    |
+130 |         let locations = raw.table(Tag(*b"loca")).ok_or_else(invalid)?;
+    |                                   --- ^^^^^^^^ expected `u32`, found `[u8; 4]`
+    |                                   |
+    |                                   arguments to this struct are incorrect
+    |
+note: tuple struct defined here
+   --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ttf-parser-0.25.1/src/lib.rs:206:12
+    |
+206 | pub struct Tag(pub u32);
+    |            ^^^
+
+error[E0308]: mismatched types
+   --> src/curve/truetype.rs:131:38
+    |
+131 |         let outlines = raw.table(Tag(*b"glyf")).ok_or_else(invalid)?;
+    |                                  --- ^^^^^^^^ expected `u32`, found `[u8; 4]`
+    |                                  |
+    |                                  arguments to this struct are incorrect
+    |
+note: tuple struct defined here
+   --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/ttf-parser-0.25.1/src/lib.rs:206:12
+    |
+206 | pub struct Tag(pub u32);
+    |            ^^^
+
+Some errors have detailed explanations: E0308, E0599.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `csgrs` (lib test) due to 5 previous errors

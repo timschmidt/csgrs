@@ -1,0 +1,10 @@
+
+running 5 tests
+test truetype::blank_text_is_distinct_from_font_glyph_and_scale_failures ... ok
+test truetype::independent_square_and_quadratic_semantics_survive_composition ... ok
+test truetype::layout_advances_controls_and_class_coverage_have_independent_witnesses ... ok
+test truetype::requested_scale_and_point_units_never_round_through_binary64 ... ok
+test truetype::original_readme_and_benchmark_workloads_complete_under_both_policies ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+

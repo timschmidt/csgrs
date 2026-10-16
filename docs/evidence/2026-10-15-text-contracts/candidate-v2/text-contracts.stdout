@@ -1,0 +1,26 @@
+
+running 7 tests
+test hershey::failures_retain_native_causes_through_public_wrappers ... ok
+test hershey::exact_cartesian_strokes_spacing_negative_and_symbolic_sizes ... ok
+test truetype::blank_text_is_distinct_from_font_glyph_and_scale_failures ... ok
+test truetype::layout_advances_controls_and_class_coverage_have_independent_witnesses ... FAILED
+test truetype::independent_square_and_quadratic_semantics_survive_composition ... ok
+test truetype::requested_scale_and_point_units_never_round_through_binary64 ... ok
+test truetype::original_readme_and_benchmark_workloads_complete_under_both_policies ... ok
+
+failures:
+
+---- truetype::layout_advances_controls_and_class_coverage_have_independent_witnesses stdout ----
+
+thread 'truetype::layout_advances_controls_and_class_coverage_have_independent_witnesses' (2071227) panicked at tests/text_contracts.rs:40:9:
+assertion `left == right` failed
+  left: Some(false)
+ right: Some(true)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    truetype::layout_advances_controls_and_class_coverage_have_independent_witnesses
+
+test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+

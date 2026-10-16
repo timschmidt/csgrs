@@ -1,0 +1,2 @@
+case,temperature,nanos,carrier_kind,carriers,edges,serialized_bytes,certainty,allocations,reallocations,allocated_bytes,reallocated_bytes,live_delta_bytes,peak_additional_requested_bytes,retained_delta_bytes
+bench-truetype,warm,37703514,boundary_loops,19,662,379841,certified_local,0,0,0,0,0,0,0

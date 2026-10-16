@@ -75,6 +75,34 @@ pub enum ValidationError {
     /// Native planar sampled-field extraction failed, retaining its typed cause.
     #[error("{0}")]
     MarchingSquares(#[from] hypercurve::MarchingSquaresError),
+    /// The font face could not be parsed; retains the parser's diagnostic.
+    #[cfg(feature = "truetype-text")]
+    #[error("invalid font face: {0}")]
+    FontFace(#[source] ttf_parser::FaceParsingError),
+    /// A required font table is absent or malformed.
+    #[cfg(feature = "truetype-text")]
+    #[error("invalid or missing font table {table}")]
+    InvalidFontTable { table: &'static str },
+    /// The font's character map has no glyph for the requested character.
+    #[cfg(feature = "truetype-text")]
+    #[error("font has no glyph for {character:?}")]
+    MissingFontGlyph { character: char },
+    /// The selected glyph did not supply a complete valid outline.
+    #[cfg(feature = "truetype-text")]
+    #[error("invalid outline for font glyph {glyph_id}")]
+    InvalidFontOutline { glyph_id: u16 },
+    /// A parser-emitted outline coordinate could not be imported.
+    #[cfg(feature = "truetype-text")]
+    #[error("invalid coordinate in font glyph {glyph_id}: {source}")]
+    FontCoordinate {
+        glyph_id: u16,
+        #[source]
+        source: hyperreal::Problem,
+    },
+    /// Native Hershey text construction failed without publishing partial text.
+    #[cfg(feature = "hershey-text")]
+    #[error("{0}")]
+    HersheyText(#[from] hypercurve::hershey::TextError),
     /// Native triangulation failed before a modeling surface was published.
     #[error("{0}")]
     Triangulation(#[from] hypertri::Error),
@@ -133,18 +161,45 @@ impl ValidationErrorKind {
     }
 }
 
+const fn curve_error_kind(source: &CurveError) -> ValidationErrorKind {
+    match source {
+        CurveError::AmbiguousBulge | CurveError::AmbiguousCurveStringConnection => {
+            ValidationErrorKind::Undecided
+        },
+        CurveError::UnsupportedNurbsInterpolationDivision { .. } => {
+            ValidationErrorKind::Unsupported
+        },
+        CurveError::Topology(_) | CurveError::Real(_) => ValidationErrorKind::Geometry,
+        _ => ValidationErrorKind::InvalidInput,
+    }
+}
+
 impl ValidationError {
     pub const fn kind(&self) -> ValidationErrorKind {
         match self {
-            Self::Curve(source) => match source {
-                CurveError::AmbiguousBulge | CurveError::AmbiguousCurveStringConnection => {
+            Self::Curve(source) => curve_error_kind(source),
+            #[cfg(feature = "truetype-text")]
+            Self::MissingFontGlyph { .. } => ValidationErrorKind::Unsupported,
+            #[cfg(feature = "hershey-text")]
+            Self::HersheyText(source) => match source {
+                hypercurve::hershey::TextError::UndecidedSize { .. } => {
                     ValidationErrorKind::Undecided
                 },
-                CurveError::UnsupportedNurbsInterpolationDivision { .. } => {
-                    ValidationErrorKind::Unsupported
+                hypercurve::hershey::TextError::ZeroSize => ValidationErrorKind::InvalidInput,
+                hypercurve::hershey::TextError::Curve(source) => curve_error_kind(source),
+                hypercurve::hershey::TextError::Font(source) => match source {
+                    hypercurve::hershey::HersheyError::NoSuchGlyph(_)
+                    | hypercurve::hershey::HersheyError::NoSuchGlyphIndex(_) => {
+                        ValidationErrorKind::Unsupported
+                    },
+                    hypercurve::hershey::HersheyError::InvalidGlyph(_) => {
+                        ValidationErrorKind::InvalidInput
+                    },
+                    hypercurve::hershey::HersheyError::CapacityOverflow
+                    | hypercurve::hershey::HersheyError::AllocationFailed { .. } => {
+                        ValidationErrorKind::ResourceExhausted
+                    },
                 },
-                CurveError::Topology(_) | CurveError::Real(_) => ValidationErrorKind::Geometry,
-                _ => ValidationErrorKind::InvalidInput,
             },
             Self::Triangulation(source) => match source {
                 hypertri::Error::PredicateUndecided { .. } => ValidationErrorKind::Undecided,

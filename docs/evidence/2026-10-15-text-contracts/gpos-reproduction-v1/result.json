@@ -1,0 +1,35 @@
+{
+  "commands": [
+    {
+      "name": "mkdir",
+      "exit_code": 0,
+      "seconds": 1.8882602001540363,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "13bf04172c43b93f4ba16798943a858a998dbd2009104fa977c208ed0b1f9b18"
+    },
+    {
+      "name": "probe-build",
+      "exit_code": 1,
+      "seconds": 2.0913776718080044,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "b991ab5eb9096ae7f39145d97c1ad76534c5363ea0e1984f3537e04388336d84",
+      "resources_sha256": "42dc9a9ad751cc2a22d4bb2989ce3d96b1eab750022e05036992323734356e1c"
+    },
+    {
+      "name": "gpos-probe",
+      "exit_code": 127,
+      "seconds": 1.862751780077815,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "a60d2e2a7a185f3c1f5d3874375263603ee09de18e444d81d4f36c8e640fb111",
+      "resources_sha256": "4f19fee5fad11767b44241e910e4b840d62fd72eb7cacec39749ab798dc70469"
+    }
+  ],
+  "passed": false
+}

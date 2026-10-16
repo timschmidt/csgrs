@@ -1,0 +1,3 @@
+fixture=readme input_paths=3 input_curves=151 exact_point_unit=127/360 layout=advance-only
+native exact region components=3
+strict translation and empty-union composition completed

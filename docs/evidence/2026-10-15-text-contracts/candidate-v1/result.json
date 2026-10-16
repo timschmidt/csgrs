@@ -1,0 +1,45 @@
+{
+  "commands": [
+    {
+      "name": "overlay-setup",
+      "exit_code": 0,
+      "seconds": 9.479096001014113,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "f3985c75ff34e5a59524d7a660cbede001ef7aa5fe90c329971084b47686a4df",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "75d3097751fb221dfa2ec0dfd6fd2df53e686522f5d4f48063792cdc2985f6e1"
+    },
+    {
+      "name": "text-contracts",
+      "exit_code": 101,
+      "seconds": 79.9404513980262,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "c33480feb4239583e704509258d3f38dd09aec4b3c2ce547172dcac92478a9d7",
+      "resources_sha256": "caaa2005ccf9c81392e28f631b060e25519da987e8b50b6d66cc4fc19112f93c"
+    },
+    {
+      "name": "native-hershey",
+      "exit_code": 101,
+      "seconds": 73.41271554026753,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "a7b89b1bda6e8f6c20ff8032ef6009505fd32a1f672be4f997e106b0e1fe611d",
+      "resources_sha256": "8e2080bb3b578e90db209aeddf4b2ee08c9a3a394c110f6e3957dd25b2517458"
+    },
+    {
+      "name": "dimension",
+      "exit_code": 101,
+      "seconds": 4.251768036279827,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "4c8924542d17827e0ef73673e977360b5901c1ef3b08da7bbcd3f022b91d4adc",
+      "resources_sha256": "0ffedeb1ae0ffd0d952566d0c21a44a86862cfe520a0ac1e046485e64f8271c7"
+    }
+  ],
+  "passed": false
+}

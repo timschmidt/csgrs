@@ -1,0 +1,27 @@
+truetype invalid bytes: success_empty=true
+truetype invalid bytes on empty: success_empty=true
+truetype zero scale: success_empty=true
+truetype negative scale: success_empty=true
+truetype undecided scale: success_empty=true
+truetype missing glyph: success_empty=true
+truetype empty text: success_empty=true
+truetype whitespace: success_empty=true
+fixture readme-truetype: empty=false components=3
+fixture bench-truetype: empty=false components=19
+fixture truetype-unit: empty=false components=1
+fixture truetype-near-unit: empty=false components=1
+distinct exact TrueType scales have identical represented coordinates: true
+hershey malformed record: success_strings=0
+hershey degenerate stroke: success_strings=0
+hershey missing glyph: success_strings=0
+hershey partial text: success_strings=4
+hershey zero scale: success_strings=0
+hershey negative scale: success_strings=2
+hershey undecided scale: success_strings=2
+hershey empty text: success_strings=0
+hershey whitespace: success_strings=0
+fixture readme-hershey: strings=4 edges=55
+fixture bench-hershey: strings=8 edges=85
+fixture custom-hershey: strings=4 edges=4
+fixture negative-hershey: strings=4 edges=4
+independent Hershey coordinates, exact advance and Cartesian orientation passed
