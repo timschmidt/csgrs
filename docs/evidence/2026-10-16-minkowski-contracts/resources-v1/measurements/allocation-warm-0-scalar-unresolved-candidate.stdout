@@ -1,0 +1,2 @@
+revision,case,temperature,nanos,completion,allocations,reallocations,allocated_bytes,reallocated_bytes,live_query_delta_bytes,peak_additional_requested_bytes
+candidate,unresolved,warm,16879,undecided,114,3,6292,288,0,1494

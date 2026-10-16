@@ -1,0 +1,61 @@
+{"shape":"cube","approximate":false,"slot":0,"value":"-1","outcome":"success","certainty":0}
+{"shape":"cube","approximate":false,"slot":0,"value":"1.5","outcome":"success","certainty":0}
+{"shape":"cube","approximate":false,"slot":0,"value":"NaN","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski decomposition cells requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":false,"slot":0,"value":"Infinity","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski decomposition cells requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":false,"slot":0,"value":"4294967296","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski decomposition cells requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":false,"slot":1,"value":"-1","outcome":"success","certainty":0}
+{"shape":"cube","approximate":false,"slot":1,"value":"1.5","outcome":"success","certainty":0}
+{"shape":"cube","approximate":false,"slot":1,"value":"NaN","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski convex pairs requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":false,"slot":1,"value":"Infinity","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski convex pairs requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":false,"slot":1,"value":"4294967296","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski convex pairs requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":false,"slot":2,"value":"-1","outcome":"success","certainty":0}
+{"shape":"cube","approximate":false,"slot":2,"value":"1.5","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski vertex sums requires 64 entries; limit is 1"}
+{"shape":"cube","approximate":false,"slot":2,"value":"NaN","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski vertex sums requires 64 entries; limit is 0"}
+{"shape":"cube","approximate":false,"slot":2,"value":"Infinity","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski vertex sums requires 64 entries; limit is 0"}
+{"shape":"cube","approximate":false,"slot":2,"value":"4294967296","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski vertex sums requires 64 entries; limit is 0"}
+{"shape":"cube","approximate":true,"slot":0,"value":"-1","outcome":"success","certainty":0}
+{"shape":"cube","approximate":true,"slot":0,"value":"1.5","outcome":"success","certainty":0}
+{"shape":"cube","approximate":true,"slot":0,"value":"NaN","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski decomposition cells requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":true,"slot":0,"value":"Infinity","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski decomposition cells requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":true,"slot":0,"value":"4294967296","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski decomposition cells requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":true,"slot":1,"value":"-1","outcome":"success","certainty":0}
+{"shape":"cube","approximate":true,"slot":1,"value":"1.5","outcome":"success","certainty":0}
+{"shape":"cube","approximate":true,"slot":1,"value":"NaN","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski convex pairs requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":true,"slot":1,"value":"Infinity","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski convex pairs requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":true,"slot":1,"value":"4294967296","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski convex pairs requires 1 entries; limit is 0"}
+{"shape":"cube","approximate":true,"slot":2,"value":"-1","outcome":"success","certainty":0}
+{"shape":"cube","approximate":true,"slot":2,"value":"1.5","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski vertex sums requires 64 entries; limit is 1"}
+{"shape":"cube","approximate":true,"slot":2,"value":"NaN","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski vertex sums requires 64 entries; limit is 0"}
+{"shape":"cube","approximate":true,"slot":2,"value":"Infinity","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski vertex sums requires 64 entries; limit is 0"}
+{"shape":"cube","approximate":true,"slot":2,"value":"4294967296","outcome":"error","name":"GeometryError","code":"resource_exhausted","message":"Minkowski vertex sums requires 64 entries; limit is 0"}
+{"shape":"empty","approximate":false,"slot":0,"value":"-1","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":0,"value":"1.5","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":0,"value":"NaN","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":0,"value":"Infinity","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":0,"value":"4294967296","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":1,"value":"-1","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":1,"value":"1.5","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":1,"value":"NaN","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":1,"value":"Infinity","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":1,"value":"4294967296","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":2,"value":"-1","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":2,"value":"1.5","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":2,"value":"NaN","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":2,"value":"Infinity","outcome":"success","certainty":0}
+{"shape":"empty","approximate":false,"slot":2,"value":"4294967296","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":0,"value":"-1","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":0,"value":"1.5","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":0,"value":"NaN","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":0,"value":"Infinity","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":0,"value":"4294967296","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":1,"value":"-1","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":1,"value":"1.5","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":1,"value":"NaN","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":1,"value":"Infinity","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":1,"value":"4294967296","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":2,"value":"-1","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":2,"value":"1.5","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":2,"value":"NaN","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":2,"value":"Infinity","outcome":"success","certainty":0}
+{"shape":"empty","approximate":true,"slot":2,"value":"4294967296","outcome":"success","certainty":0}
+{"invalid_count_cases":60,"failures":60}

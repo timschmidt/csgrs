@@ -1,0 +1,2 @@
+revision,case,temperature,nanos,completion,allocations,reallocations,allocated_bytes,reallocated_bytes,live_query_delta_bytes,peak_additional_requested_bytes
+baseline,rational,cold,29768,certified,8,0,592,0,240,592

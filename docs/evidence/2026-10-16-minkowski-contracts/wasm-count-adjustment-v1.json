@@ -1,0 +1,24 @@
+{
+  "contract": "wasm-count-contract-v1.md",
+  "reproduction": "count-boundary-baseline-v1",
+  "baseline_summary": {
+    "invalid_count_cases": 60,
+    "failures": 60
+  },
+  "sources": {
+    "src/wasm/mesh_js.rs": {
+      "before_sha256": "7ceb3219b218fc8127fa10b1b2699563a62917a0dad0d79bb7a7769b6fca0457",
+      "after_sha256": "0d9bb76a15963b75004c8e9cc18709ce320532042922595071c4301b8510cdc8"
+    },
+    "tests/wasm/geometry_certainty.cjs": {
+      "before_sha256": "e22fc5361456e3a5012dd6c0876024dcf743a61acf4cf5d67fc5d54d841663a5",
+      "after_sha256": "20b92c13ae1bca3a708c2442d8fe38edb66ba3651429e117d6333fb833266507"
+    },
+    "readme.md": {
+      "before_sha256": "6e40748e60fc965033c42bdd5734496a8027787305a137c7a8e81ddb1c488bfb",
+      "after_sha256": "5acd87fb624693e85567f75ff2eb6da7f2845a5084b27d960702263448a1291a"
+    }
+  },
+  "change": "Preserve JavaScript numbers through the f64 ABI, validate finite integral u32 range before conversion, and exercise invalid values plus zero/upper endpoints through real bindings.",
+  "unaffected": "All native/scalar implementation and tests remain identical to the broad qualification phase."
+}

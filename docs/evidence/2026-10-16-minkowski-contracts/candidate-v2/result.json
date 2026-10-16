@@ -1,0 +1,60 @@
+{
+  "commands": [
+    {
+      "name": "overlay",
+      "exit_code": 0,
+      "seconds": 54.034140340052545,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "7d76ddbdf2fe9aeb910bb8b2dfddf57549fa04755bb3f3a433ee14b59c369d2b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "b24514ceead701b5489ff71458fca9f4d54a2c7879f582715ee1195078897ea3"
+    },
+    {
+      "name": "root-regressions",
+      "exit_code": 101,
+      "seconds": 39.19362610671669,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/minkowski-contracts/candidate-v2/release/deps/geometry_context-f3d29f7d6dc94528": "3a7ed6abedb259955f68ebb4fc8ed99516f6fa1b67ca82a75d94030e66e2a19c",
+        "target/properties/minkowski-contracts/candidate-v2/release/deps/minkowski_contracts-0128f2ac1f93f880": "78b47fd380d9ee67e49b70108b233e125761b95ea9672d02ca8f9cb51f4bd5a0"
+      },
+      "stdout_sha256": "1ccc1df271ca700b5375becd6a8c84491db071c52c19ef8cdb3e70120fb07e82",
+      "stderr_sha256": "dd36e56ef50fe4421a33d02ae3550b96ddbe6dba6a465cbfb1cf343acd5c1e2b",
+      "resources_sha256": "b89183180d1ab101e12cd5c541c34727eee1fad5288227331d74493462243f74"
+    },
+    {
+      "name": "mesh-regressions",
+      "exit_code": 0,
+      "seconds": 12.528230511117727,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/minkowski-contracts/candidate-v2/release/deps/minkowski-f9408f45951978bc": "76ec2fd75597af0754f380475a661b915e1a95a1623dbe94bb6c5082c07df0a4"
+      },
+      "stdout_sha256": "1dfcb009809025f849e69a455d09ca0946d6c17a5ed0b309742a0372c437bb8c",
+      "stderr_sha256": "dd029474f30fbc208add9266a29ebf2781cfa01bd8f0ca0f43c29550f352967b",
+      "resources_sha256": "1fa3b0e300ad594ec31ba337e2a8d0da135d01a7eff34432cadfac98cf960c58"
+    },
+    {
+      "name": "clippy",
+      "exit_code": 0,
+      "seconds": 66.68560501281172,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "24883717e58257bd6b427ee3c96ac25c1f2f3e7f5b0ed4c81ab5355e712ac277",
+      "resources_sha256": "548b42e8d6def4e62f50f108dac8a835f36ef809c1487056dee45fc247e77f99"
+    },
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.195823361165822,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "ed05e5f4092123c9fd872613101f7dd4242695da19b5a85ba5458129ed151461"
+    }
+  ],
+  "passed": false
+}

@@ -1,0 +1,21 @@
+{
+  "lower": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/hull-proof-v1",
+  "upper": "/dev/shm/csgrs-minkowski-contracts/candidate-v5/upper",
+  "work": "/dev/shm/csgrs-minkowski-contracts/candidate-v5/work",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/candidate-v5",
+  "command": [
+    "fuse-overlayfs",
+    "-o",
+    "lowerdir=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/hull-proof-v1,upperdir=/dev/shm/csgrs-minkowski-contracts/candidate-v5/upper,workdir=/dev/shm/csgrs-minkowski-contracts/candidate-v5/work",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/candidate-v5"
+  ],
+  "lower_files": 19627,
+  "lower_hashes_sha256": "c2a92b5a216a52c1d274136d7382558d20c6b8d8e01b2dc449f24cfda3db49fc",
+  "copy_up_probe": "boolean-failures-c",
+  "copy_up_probe_sha256": "9ae23a3bc7be1679dcac61e99b7f8ac838f88946d2f31be56035b099bfc91a45",
+  "fuse_overlayfs_sha256": "8fcd5a85ef3fcaf99c2c8f820ae6200427021b66f1988f6d3b49a224d55fdfe9",
+  "version": "fusermount3 version: 3.16.2\nfuse-overlayfs: version 1.13-dev\nFUSE library version 3.16.2\nusing FUSE kernel interface version 7.38\n",
+  "quota": "Disk quotas for user tim (uid 1000): \n     Filesystem   space   quota   limit   grace   files   quota   limit   grace\n          tmpfs  15841M  51490M  51490M           35477       0       0        \n          tmpfs  51437M  51490M  51490M            151k       0       0        \n",
+  "storage": "Filesystem      Size  Used Avail Use% Mounted on\ntmpfs            63G   16G   48G  25% /dev/shm\nfuse-overlayfs   63G   16G   48G  25% /home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/candidate-v5\n",
+  "scope": "The lower build is read-only through the overlay. New and changed artifacts go to a private upper directory. All lower hashes are checked again at closure. No prior target or failed partial copy is removed."
+}

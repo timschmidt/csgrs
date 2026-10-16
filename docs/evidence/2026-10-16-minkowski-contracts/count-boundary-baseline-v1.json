@@ -1,0 +1,19 @@
+[
+  [
+    "mkdir",
+    [
+      "mkdir",
+      "-p",
+      "/dev/shm/csgrs-minkowski-contracts/count-boundary-baseline-v1"
+    ]
+  ],
+  [
+    "wasm",
+    [
+      "node",
+      "-e",
+      "\nconst {MeshJs} = require(process.argv[1]);\nconst cube=MeshJs.cube(1), empty=new MeshJs();\nlet failures=0;\ntry {\n  for (const [shape,mesh] of [[\"cube\",cube],[\"empty\",empty]]) {\n    for (const approximate of [false,true]) {\n      for (let slot=0;slot<3;slot++) {\n        for (const value of [-1,1.5,NaN,Infinity,4294967296]) {\n          const limits=[1,1,64];limits[slot]=value;\n          let result;\n          try {\n            const out=mesh.minkowskiSumWithLimits(mesh,approximate,...limits);\n            result={outcome:\"success\",certainty:out.certainty};\n            out.intoMesh().free();\n          } catch(error) {result={outcome:\"error\",name:error.name,code:error.code,message:error.message};}\n          console.log(JSON.stringify({shape,approximate,slot,value:String(value),...result}));\n          if(result.outcome!==\"error\" || result.name!==\"GeometryError\" || result.code!==\"invalid_input\") failures++;\n        }\n      }\n    }\n  }\n} finally {cube.free();empty.free();}\nconsole.log(JSON.stringify({invalid_count_cases:60,failures}));\nprocess.exitCode=failures ? 1 : 0;\n",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/qualification-v1/wasm-bindings-node/csgrs.js"
+    ]
+  ]
+]

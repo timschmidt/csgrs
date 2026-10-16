@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-polyhedral-construction/run_benchmarks_v1.py", line 22, in <module>
+    assert binary.is_file() and binary.resolve().is_relative_to(TARGET.resolve())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

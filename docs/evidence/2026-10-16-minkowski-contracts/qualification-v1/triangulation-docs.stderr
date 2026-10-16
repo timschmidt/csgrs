@@ -1,0 +1,6 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+ Documenting hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Finished `release` profile [optimized] target(s) in 7.28s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/qualification-v1/doc/hypertri/index.html

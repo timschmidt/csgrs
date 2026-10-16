@@ -1,0 +1,12 @@
+{
+  "/dev/shm/csgrs-minkowski-contracts/resources-v1/candidate-expanded-allocation": 24605424,
+  "/dev/shm/csgrs-minkowski-contracts/resources-v1/candidate-expanded-timing": 24601728,
+  "/dev/shm/csgrs-minkowski-contracts/resources-v1/candidate-scalar-allocation": 19978408,
+  "/dev/shm/csgrs-minkowski-contracts/resources-v1/candidate-scalar-timing": 19973296,
+  "/dev/shm/csgrs-minkowski-contracts/resources-v1/candidate-cube-allocation": 23999200,
+  "/dev/shm/csgrs-minkowski-contracts/resources-v1/candidate-cube-timing": 23995048,
+  "/dev/shm/csgrs-minkowski-contracts/resources-v1/baseline-scalar-allocation": 19976648,
+  "/dev/shm/csgrs-minkowski-contracts/resources-v1/baseline-scalar-timing": 19971472,
+  "/dev/shm/csgrs-minkowski-contracts/resources-v1/baseline-cube-allocation": 22906744,
+  "/dev/shm/csgrs-minkowski-contracts/resources-v1/baseline-cube-timing": 22903088
+}

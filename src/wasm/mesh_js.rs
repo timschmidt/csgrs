@@ -43,6 +43,20 @@ pub(super) fn geometry_scalar(value: f64, name: &str) -> Result<crate::Real, JsV
     })
 }
 
+fn geometry_count(value: f64, name: &str) -> Result<usize, JsValue> {
+    if value.is_finite()
+        && (0.0..=f64::from(u32::MAX)).contains(&value)
+        && value.fract() == 0.0
+    {
+        Ok(value as usize)
+    } else {
+        Err(geometry_exception(
+            &format!("{name} must be a finite integer between 0 and {}", u32::MAX),
+            crate::errors::ValidationErrorKind::InvalidInput,
+        ))
+    }
+}
+
 fn face_normal(points: &[Point3; 3]) -> Option<hyperlattice::Vector3> {
     (&points[1] - &points[0])
         .unit_cross_checked(&(&points[2] - &points[0]))
@@ -413,7 +427,43 @@ impl MeshJs {
         let context = geometry_context(approximate_512);
         solid::minkowski_sum_with_context(&self.inner, &other.inner, &context)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(geometry_error)
+    }
+
+    /// Represented-set sum with count limits; these are not time or heap-byte bounds.
+    /// Counts must be finite integers from zero through `u32::MAX`.
+    #[wasm_bindgen(js_name = minkowskiSumWithLimits)]
+    pub fn minkowski_sum_with_limits(
+        &self,
+        other: &Self,
+        approximate_512: bool,
+        max_cells: f64,
+        max_pair_sums: f64,
+        max_pair_points: f64,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        let options = hypermesh::MinkowskiOptions {
+            max_cells: geometry_count(max_cells, "maxCells")?,
+            max_pair_sums: geometry_count(max_pair_sums, "maxPairSums")?,
+            max_pair_points: geometry_count(max_pair_points, "maxPairPoints")?,
+            cancellation: None,
+        };
+        solid::minkowski_sum_with_options(&self.inner, &other.inner, &options, &context)
+            .map(Into::into)
+            .map_err(geometry_error)
+    }
+
+    /// Convex hull of stored-position sums, including unused positions.
+    #[wasm_bindgen(js_name = minkowskiHullWithContext)]
+    pub fn minkowski_hull_with_context(
+        &self,
+        other: &Self,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        let context = geometry_context(approximate_512);
+        solid::minkowski_hull_with_context(&self.inner, &other.inner, &context)
+            .map(Into::into)
+            .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = containsPointWithContext)]
@@ -523,7 +573,15 @@ impl MeshJs {
     pub fn minkowski_sum(&self, other: &Self) -> Result<Self, JsValue> {
         solid::minkowski_sum(&self.inner, &other.inner)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(geometry_error)
+    }
+
+    /// Strict convex hull of stored-position sums, explicitly convexifying gaps.
+    #[wasm_bindgen(js_name = minkowskiHull)]
+    pub fn minkowski_hull(&self, other: &Self) -> Result<Self, JsValue> {
+        solid::minkowski_hull(&self.inner, &other.inner)
+            .map(Into::into)
+            .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = boundingBox)]

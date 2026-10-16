@@ -1,0 +1,23 @@
+	Command being timed: "cc -std=c11 -Wall -Wextra -Werror tests/ffi/polyhedral_construction.c -Ibindings/cpp -Icrates/csgrs-ffi/include -L/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/qualification-v1/release -Wl,-rpath,/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/qualification-v1/release -lcsgrs_ffi -o /home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/qualification-v1/polyhedral-construction-c"
+	User time (seconds): 0.02
+	System time (seconds): 0.01
+	Percent of CPU this job got: 76%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.05
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 26100
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 2
+	Minor (reclaiming a frame) page faults: 4647
+	Voluntary context switches: 125
+	Involuntary context switches: 5
+	Swaps: 0
+	File system inputs: 64
+	File system outputs: 107
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

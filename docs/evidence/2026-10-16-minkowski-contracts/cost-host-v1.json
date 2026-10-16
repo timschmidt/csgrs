@@ -1,0 +1,840 @@
+{
+  "builds": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/cost-build-v1/release/deps",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/benchmark-repair-v1/release/deps"
+  },
+  "fingerprints": {
+    "baseline": {
+      "csgrs": {
+        "rustc": 1625334936438085654,
+        "features": "[\"amf-io\", \"attributed\", \"base64\", \"bench-feature-pipeline\", \"bevymesh\", \"chrono\", \"curve\", \"default\", \"dispatch-trace\", \"dxf\", \"dxf-io\", \"gerber-io\", \"gerber-types\", \"gerber_parser\", \"gltf-io\", \"hershey-text\", \"hypersdf\", \"image\", \"image-io\", \"js-sys\", \"metaballs\", \"obj-io\", \"offset\", \"ply-io\", \"sdf\", \"serde\", \"serde-wasm-bindgen\", \"serde_json\", \"stl-io\", \"stl_io\", \"svg-io\", \"truetype-text\", \"ttf-parser\", \"vrml-io\", \"wasm\", \"wasm-bindgen\"]",
+        "declared_features": "[\"amf-io\", \"attributed\", \"base64\", \"bench-feature-pipeline\", \"bevymesh\", \"chrono\", \"curve\", \"default\", \"dispatch-trace\", \"dxf\", \"dxf-io\", \"gerber-io\", \"gerber-types\", \"gerber_parser\", \"gltf-io\", \"hershey-text\", \"hypersdf\", \"image\", \"image-io\", \"js-sys\", \"metaballs\", \"obj-io\", \"offset\", \"ply-io\", \"sdf\", \"serde\", \"serde-wasm-bindgen\", \"serde_json\", \"stl-io\", \"stl_io\", \"svg-io\", \"truetype-text\", \"ttf-parser\", \"vrml-io\", \"wasm\", \"wasm-bindgen\"]",
+        "target": 5989468832792710274,
+        "profile": 2040997289075261528,
+        "path": 10763286916239946207,
+        "deps": [
+          [
+            390430846265316719,
+            "gltf",
+            false,
+            10954389230542536713
+          ],
+          [
+            494870069918897175,
+            "wgpu_types",
+            false,
+            11927861132949516859
+          ],
+          [
+            899433757904706369,
+            "hyperlimit",
+            false,
+            6746321039763313663
+          ],
+          [
+            1156003183292959512,
+            "bevy_asset",
+            false,
+            15751725987929419850
+          ],
+          [
+            1846820732405487584,
+            "hypercurve",
+            false,
+            12572701528555124063
+          ],
+          [
+            1957009224993739128,
+            "thiserror",
+            false,
+            12764072969910641629
+          ],
+          [
+            2467858119226893296,
+            "hypersdf",
+            false,
+            2140512982104045199
+          ],
+          [
+            2538394439553624815,
+            "hyperlattice",
+            false,
+            8952339697568426234
+          ],
+          [
+            2551482934563074397,
+            "hyperreal",
+            false,
+            8188225851879686592
+          ],
+          [
+            2987262961022079395,
+            "image",
+            false,
+            16805939205746293942
+          ],
+          [
+            3525727601854660179,
+            "gerber_types",
+            false,
+            10918314897686527359
+          ],
+          [
+            3613059130379693208,
+            "js_sys",
+            false,
+            10637416330353925142
+          ],
+          [
+            3856126590694406759,
+            "chrono",
+            false,
+            7347134033710328533
+          ],
+          [
+            4961353526336270975,
+            "bevy_mesh",
+            false,
+            6312285845114917172
+          ],
+          [
+            8921336173939679069,
+            "hashbrown",
+            false,
+            3066191660678835510
+          ],
+          [
+            9740168411151160745,
+            "hypertri",
+            false,
+            11160836377438821133
+          ],
+          [
+            10434485102629434171,
+            "ttf_parser",
+            false,
+            17146230711837863931
+          ],
+          [
+            10809389552339631599,
+            "hyperphysics",
+            false,
+            10866316808234924468
+          ],
+          [
+            11261232116272131900,
+            "serde_wasm_bindgen",
+            false,
+            8431690803927059149
+          ],
+          [
+            12478975652986984749,
+            "wasm_bindgen",
+            false,
+            16426211253606090239
+          ],
+          [
+            13077212702700853852,
+            "base64",
+            false,
+            5676410146650003224
+          ],
+          [
+            13548984313718623784,
+            "serde",
+            false,
+            12557428926252199540
+          ],
+          [
+            13795362694956882968,
+            "serde_json",
+            false,
+            17145936489465920279
+          ],
+          [
+            14672936905117014492,
+            "dxf",
+            false,
+            3633365862201411644
+          ],
+          [
+            15229687275129989827,
+            "doc_image_embed",
+            false,
+            10927548722656719040
+          ],
+          [
+            15685192148630126011,
+            "gerber_parser",
+            false,
+            12693272910869092720
+          ],
+          [
+            16127592465096470790,
+            "hypermesh",
+            false,
+            6234921412119289084
+          ],
+          [
+            17821123799030700581,
+            "stl_io",
+            false,
+            6244712046359440564
+          ]
+        ],
+        "local": [
+          {
+            "CheckDepInfo": {
+              "dep_info": "release/.fingerprint/csgrs-5357807c720d8967/dep-lib-csgrs",
+              "checksum": false
+            }
+          }
+        ],
+        "rustflags": [],
+        "config": 9396254390672932401,
+        "compile_kind": 0
+      },
+      "hypermesh": {
+        "rustc": 1625334936438085654,
+        "features": "[\"default\", \"dispatch-trace\"]",
+        "declared_features": "[\"default\", \"dispatch-trace\", \"fuzz-bounded-campaign\"]",
+        "target": 10898001196705267233,
+        "profile": 2040997289075261528,
+        "path": 17037361589110580123,
+        "deps": [
+          [
+            899433757904706369,
+            "hyperlimit",
+            false,
+            6746321039763313663
+          ],
+          [
+            2538394439553624815,
+            "hyperlattice",
+            false,
+            8952339697568426234
+          ],
+          [
+            2551482934563074397,
+            "hyperreal",
+            false,
+            8188225851879686592
+          ],
+          [
+            9740168411151160745,
+            "hypertri",
+            false,
+            11160836377438821133
+          ]
+        ],
+        "local": [
+          {
+            "CheckDepInfo": {
+              "dep_info": "release/.fingerprint/hypermesh-98c5db38df7e7da0/dep-lib-hypermesh",
+              "checksum": false
+            }
+          }
+        ],
+        "rustflags": [],
+        "config": 9396254390672932401,
+        "compile_kind": 0
+      },
+      "hyperreal": {
+        "rustc": 1625334936438085654,
+        "features": "[\"cached-f64-approx\", \"default\", \"dispatch-trace\", \"serde\"]",
+        "declared_features": "[\"cached-f32-approx\", \"cached-f64-approx\", \"default\", \"dispatch-trace\", \"serde\", \"simple\"]",
+        "target": 11038293903651374506,
+        "profile": 14247865834374330005,
+        "path": 846433130786328259,
+        "deps": [
+          [
+            11934022306856972276,
+            "ciborium",
+            false,
+            10515742761436433446
+          ],
+          [
+            12905226474294026438,
+            "num",
+            false,
+            11156075448385866256
+          ],
+          [
+            13548984313718623784,
+            "serde",
+            false,
+            12557428926252199540
+          ],
+          [
+            13795362694956882968,
+            "serde_json",
+            false,
+            17145936489465920279
+          ]
+        ],
+        "local": [
+          {
+            "CheckDepInfo": {
+              "dep_info": "release/.fingerprint/hyperreal-8040aeb6a6d9c5b1/dep-lib-hyperreal",
+              "checksum": false
+            }
+          }
+        ],
+        "rustflags": [],
+        "config": 9396254390672932401,
+        "compile_kind": 0
+      },
+      "hyperlimit": {
+        "rustc": 1625334936438085654,
+        "features": "[\"default\", \"dispatch-trace\", \"std\"]",
+        "declared_features": "[\"default\", \"dispatch-trace\", \"parallel\", \"serde\", \"std\"]",
+        "target": 1931032375221060682,
+        "profile": 2040997289075261528,
+        "path": 7186429826546533413,
+        "deps": [
+          [
+            2538394439553624815,
+            "hyperlattice",
+            false,
+            8952339697568426234
+          ],
+          [
+            2551482934563074397,
+            "hyperreal",
+            false,
+            8188225851879686592
+          ]
+        ],
+        "local": [
+          {
+            "CheckDepInfo": {
+              "dep_info": "release/.fingerprint/hyperlimit-fcb37f2cb551f452/dep-lib-hyperlimit",
+              "checksum": false
+            }
+          }
+        ],
+        "rustflags": [],
+        "config": 9396254390672932401,
+        "compile_kind": 0
+      }
+    },
+    "candidate": {
+      "csgrs": {
+        "rustc": 1625334936438085654,
+        "features": "[\"amf-io\", \"attributed\", \"base64\", \"bench-feature-pipeline\", \"bevymesh\", \"chrono\", \"curve\", \"default\", \"dispatch-trace\", \"dxf\", \"dxf-io\", \"gerber-io\", \"gerber-types\", \"gerber_parser\", \"gltf-io\", \"hershey-text\", \"hypersdf\", \"image\", \"image-io\", \"js-sys\", \"metaballs\", \"obj-io\", \"offset\", \"ply-io\", \"sdf\", \"serde\", \"serde-wasm-bindgen\", \"serde_json\", \"stl-io\", \"stl_io\", \"svg-io\", \"truetype-text\", \"ttf-parser\", \"vrml-io\", \"wasm\", \"wasm-bindgen\"]",
+        "declared_features": "[\"amf-io\", \"attributed\", \"base64\", \"bench-feature-pipeline\", \"bevymesh\", \"chrono\", \"curve\", \"default\", \"dispatch-trace\", \"dxf\", \"dxf-io\", \"gerber-io\", \"gerber-types\", \"gerber_parser\", \"gltf-io\", \"hershey-text\", \"hypersdf\", \"image\", \"image-io\", \"js-sys\", \"metaballs\", \"obj-io\", \"offset\", \"ply-io\", \"sdf\", \"serde\", \"serde-wasm-bindgen\", \"serde_json\", \"stl-io\", \"stl_io\", \"svg-io\", \"truetype-text\", \"ttf-parser\", \"vrml-io\", \"wasm\", \"wasm-bindgen\"]",
+        "target": 5989468832792710274,
+        "profile": 2040997289075261528,
+        "path": 10763286916239946207,
+        "deps": [
+          [
+            390430846265316719,
+            "gltf",
+            false,
+            10954389230542536713
+          ],
+          [
+            494870069918897175,
+            "wgpu_types",
+            false,
+            11927861132949516859
+          ],
+          [
+            899433757904706369,
+            "hyperlimit",
+            false,
+            6746321039763313663
+          ],
+          [
+            1156003183292959512,
+            "bevy_asset",
+            false,
+            15751725987929419850
+          ],
+          [
+            1846820732405487584,
+            "hypercurve",
+            false,
+            12572701528555124063
+          ],
+          [
+            1957009224993739128,
+            "thiserror",
+            false,
+            12764072969910641629
+          ],
+          [
+            2467858119226893296,
+            "hypersdf",
+            false,
+            2140512982104045199
+          ],
+          [
+            2538394439553624815,
+            "hyperlattice",
+            false,
+            8952339697568426234
+          ],
+          [
+            2551482934563074397,
+            "hyperreal",
+            false,
+            8188225851879686592
+          ],
+          [
+            2987262961022079395,
+            "image",
+            false,
+            16805939205746293942
+          ],
+          [
+            3525727601854660179,
+            "gerber_types",
+            false,
+            10918314897686527359
+          ],
+          [
+            3613059130379693208,
+            "js_sys",
+            false,
+            10637416330353925142
+          ],
+          [
+            3856126590694406759,
+            "chrono",
+            false,
+            7347134033710328533
+          ],
+          [
+            4961353526336270975,
+            "bevy_mesh",
+            false,
+            6312285845114917172
+          ],
+          [
+            8921336173939679069,
+            "hashbrown",
+            false,
+            3066191660678835510
+          ],
+          [
+            9740168411151160745,
+            "hypertri",
+            false,
+            11160836377438821133
+          ],
+          [
+            10434485102629434171,
+            "ttf_parser",
+            false,
+            17146230711837863931
+          ],
+          [
+            10809389552339631599,
+            "hyperphysics",
+            false,
+            10866316808234924468
+          ],
+          [
+            11261232116272131900,
+            "serde_wasm_bindgen",
+            false,
+            8431690803927059149
+          ],
+          [
+            12478975652986984749,
+            "wasm_bindgen",
+            false,
+            16426211253606090239
+          ],
+          [
+            13077212702700853852,
+            "base64",
+            false,
+            5676410146650003224
+          ],
+          [
+            13548984313718623784,
+            "serde",
+            false,
+            12557428926252199540
+          ],
+          [
+            13795362694956882968,
+            "serde_json",
+            false,
+            17145936489465920279
+          ],
+          [
+            14672936905117014492,
+            "dxf",
+            false,
+            3633365862201411644
+          ],
+          [
+            15229687275129989827,
+            "doc_image_embed",
+            false,
+            10927548722656719040
+          ],
+          [
+            15685192148630126011,
+            "gerber_parser",
+            false,
+            12693272910869092720
+          ],
+          [
+            16127592465096470790,
+            "hypermesh",
+            false,
+            6234921412119289084
+          ],
+          [
+            17821123799030700581,
+            "stl_io",
+            false,
+            6244712046359440564
+          ]
+        ],
+        "local": [
+          {
+            "CheckDepInfo": {
+              "dep_info": "release/.fingerprint/csgrs-5357807c720d8967/dep-lib-csgrs",
+              "checksum": false
+            }
+          }
+        ],
+        "rustflags": [],
+        "config": 9396254390672932401,
+        "compile_kind": 0
+      },
+      "hypermesh": {
+        "rustc": 1625334936438085654,
+        "features": "[\"default\", \"dispatch-trace\"]",
+        "declared_features": "[\"default\", \"dispatch-trace\", \"fuzz-bounded-campaign\"]",
+        "target": 10898001196705267233,
+        "profile": 2040997289075261528,
+        "path": 17037361589110580123,
+        "deps": [
+          [
+            899433757904706369,
+            "hyperlimit",
+            false,
+            6746321039763313663
+          ],
+          [
+            2538394439553624815,
+            "hyperlattice",
+            false,
+            8952339697568426234
+          ],
+          [
+            2551482934563074397,
+            "hyperreal",
+            false,
+            8188225851879686592
+          ],
+          [
+            9740168411151160745,
+            "hypertri",
+            false,
+            11160836377438821133
+          ]
+        ],
+        "local": [
+          {
+            "CheckDepInfo": {
+              "dep_info": "release/.fingerprint/hypermesh-98c5db38df7e7da0/dep-lib-hypermesh",
+              "checksum": false
+            }
+          }
+        ],
+        "rustflags": [],
+        "config": 9396254390672932401,
+        "compile_kind": 0
+      },
+      "hyperreal": {
+        "rustc": 1625334936438085654,
+        "features": "[\"cached-f64-approx\", \"default\", \"dispatch-trace\", \"serde\"]",
+        "declared_features": "[\"cached-f32-approx\", \"cached-f64-approx\", \"default\", \"dispatch-trace\", \"serde\", \"simple\"]",
+        "target": 11038293903651374506,
+        "profile": 14247865834374330005,
+        "path": 846433130786328259,
+        "deps": [
+          [
+            11934022306856972276,
+            "ciborium",
+            false,
+            10515742761436433446
+          ],
+          [
+            12905226474294026438,
+            "num",
+            false,
+            11156075448385866256
+          ],
+          [
+            13548984313718623784,
+            "serde",
+            false,
+            12557428926252199540
+          ],
+          [
+            13795362694956882968,
+            "serde_json",
+            false,
+            17145936489465920279
+          ]
+        ],
+        "local": [
+          {
+            "CheckDepInfo": {
+              "dep_info": "release/.fingerprint/hyperreal-8040aeb6a6d9c5b1/dep-lib-hyperreal",
+              "checksum": false
+            }
+          }
+        ],
+        "rustflags": [],
+        "config": 9396254390672932401,
+        "compile_kind": 0
+      },
+      "hyperlimit": {
+        "rustc": 1625334936438085654,
+        "features": "[\"default\", \"dispatch-trace\", \"std\"]",
+        "declared_features": "[\"default\", \"dispatch-trace\", \"parallel\", \"serde\", \"std\"]",
+        "target": 1931032375221060682,
+        "profile": 2040997289075261528,
+        "path": 7186429826546533413,
+        "deps": [
+          [
+            2538394439553624815,
+            "hyperlattice",
+            false,
+            8952339697568426234
+          ],
+          [
+            2551482934563074397,
+            "hyperreal",
+            false,
+            8188225851879686592
+          ]
+        ],
+        "local": [
+          {
+            "CheckDepInfo": {
+              "dep_info": "release/.fingerprint/hyperlimit-fcb37f2cb551f452/dep-lib-hyperlimit",
+              "checksum": false
+            }
+          }
+        ],
+        "rustflags": [],
+        "config": 9396254390672932401,
+        "compile_kind": 0
+      }
+    }
+  },
+  "libraries": {
+    "baseline": {
+      "csgrs": "libcsgrs.rlib",
+      "hypermesh": "libhypermesh-98c5db38df7e7da0.rlib",
+      "hyperreal": "libhyperreal-8040aeb6a6d9c5b1.rlib",
+      "hyperlimit": "libhyperlimit-fcb37f2cb551f452.rlib"
+    },
+    "candidate": {
+      "csgrs": "libcsgrs.rlib",
+      "hypermesh": "libhypermesh-98c5db38df7e7da0.rlib",
+      "hyperreal": "libhyperreal-8040aeb6a6d9c5b1.rlib",
+      "hyperlimit": "libhyperlimit-fcb37f2cb551f452.rlib"
+    }
+  },
+  "source_sizes": {
+    "crates/hypermesh/README.md": {
+      "baseline_exists": true,
+      "baseline_bytes": 11161,
+      "candidate_bytes": 12944,
+      "baseline_lines": 268,
+      "candidate_lines": 297
+    },
+    "crates/hypermesh/src/convex_hull.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 26276,
+      "candidate_bytes": 26231,
+      "baseline_lines": 785,
+      "candidate_lines": 783
+    },
+    "crates/hypermesh/src/error.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 9302,
+      "candidate_bytes": 10266,
+      "baseline_lines": 227,
+      "candidate_lines": 252
+    },
+    "crates/hypermesh/src/lib.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 3470,
+      "candidate_bytes": 3587,
+      "baseline_lines": 89,
+      "candidate_lines": 91
+    },
+    "crates/hypermesh/src/minkowski.rs": {
+      "baseline_exists": false,
+      "baseline_bytes": 0,
+      "candidate_bytes": 20473,
+      "baseline_lines": 0,
+      "candidate_lines": 531
+    },
+    "crates/hypermesh/src/surface_arrangement.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 262673,
+      "candidate_bytes": 260977,
+      "baseline_lines": 6934,
+      "candidate_lines": 6883
+    },
+    "crates/hypermesh/src/winding.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 5765,
+      "candidate_bytes": 7667,
+      "baseline_lines": 190,
+      "candidate_lines": 246
+    },
+    "crates/hypermesh/tests/minkowski.rs": {
+      "baseline_exists": false,
+      "baseline_bytes": 0,
+      "candidate_bytes": 3451,
+      "baseline_lines": 0,
+      "candidate_lines": 93
+    },
+    "crates/hyperreal/src/computable/node.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 1952,
+      "candidate_bytes": 2044,
+      "baseline_lines": 53,
+      "candidate_lines": 55
+    },
+    "crates/hyperreal/src/computable/node/radical_eighth_angle_tests.rs": {
+      "baseline_exists": false,
+      "baseline_bytes": 0,
+      "candidate_bytes": 4094,
+      "baseline_lines": 0,
+      "candidate_lines": 114
+    },
+    "crates/hyperreal/src/computable/node/radical_tower.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 15685,
+      "candidate_bytes": 16992,
+      "baseline_lines": 391,
+      "candidate_lines": 413
+    },
+    "crates/hyperreal/src/computable/node/ring_polynomial.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 9199,
+      "candidate_bytes": 10828,
+      "baseline_lines": 246,
+      "candidate_lines": 291
+    },
+    "crates/hyperreal/src/computable/node/ring_quotient.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 10770,
+      "candidate_bytes": 11285,
+      "baseline_lines": 264,
+      "candidate_lines": 277
+    },
+    "crates/hyperreal/src/computable/node/ring_root_square_tests.rs": {
+      "baseline_exists": false,
+      "baseline_bytes": 0,
+      "candidate_bytes": 4468,
+      "baseline_lines": 0,
+      "candidate_lines": 118
+    },
+    "crates/hyperreal/src/real/arithmetic/facts.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 72959,
+      "candidate_bytes": 73340,
+      "baseline_lines": 1710,
+      "candidate_lines": 1715
+    },
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 17548,
+      "candidate_bytes": 17696,
+      "baseline_lines": 420,
+      "candidate_lines": 422
+    },
+    "readme.md": {
+      "baseline_exists": true,
+      "baseline_bytes": 64175,
+      "candidate_bytes": 65369,
+      "baseline_lines": 922,
+      "candidate_lines": 940
+    },
+    "src/errors.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 15649,
+      "candidate_bytes": 15794,
+      "baseline_lines": 328,
+      "candidate_lines": 330
+    },
+    "src/solid.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 105572,
+      "candidate_bytes": 106883,
+      "baseline_lines": 2981,
+      "candidate_lines": 3012
+    },
+    "src/wasm/mesh_js.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 20653,
+      "candidate_bytes": 22897,
+      "baseline_lines": 658,
+      "candidate_lines": 716
+    },
+    "tests/geometry_context.rs": {
+      "baseline_exists": true,
+      "baseline_bytes": 24033,
+      "candidate_bytes": 24575,
+      "baseline_lines": 650,
+      "candidate_lines": 663
+    },
+    "tests/minkowski_contracts.rs": {
+      "baseline_exists": false,
+      "baseline_bytes": 0,
+      "candidate_bytes": 14192,
+      "baseline_lines": 0,
+      "candidate_lines": 354
+    },
+    "tests/wasm/geometry_certainty.cjs": {
+      "baseline_exists": true,
+      "baseline_bytes": 18401,
+      "candidate_bytes": 21338,
+      "baseline_lines": 353,
+      "candidate_lines": 401
+    },
+    "tests/wasm/geometry_certainty.ts": {
+      "baseline_exists": true,
+      "baseline_bytes": 2705,
+      "candidate_bytes": 3098,
+      "baseline_lines": 78,
+      "candidate_lines": 86
+    }
+  },
+  "baseline_commit": "adef9a64a91a7524006ba41527e427e2edb79fbe",
+  "cargo_lock_sha256": "510d33eefcdf7e1a5ad19672f6860e20d67154693fa2d25dbafa9319443d771d",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "hardware": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           48 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  16\nOn-line CPU(s) list:                     0-15\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 7 5800X3D 8-Core Processor\nCPU family:                              25\nModel:                                   33\nThread(s) per core:                      2\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      80%\nCPU max MHz:                             4552.9521\nCPU min MHz:                             575.9760\nBogoMIPS:                                6800.15\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nVirtualization:                          AMD-V\nL1d cache:                               256 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                4 MiB (8 instances)\nL3 cache:                                96 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-15\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; Safe RET\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Mitigation; Clear CPU buffers\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "system": "Linux fedora 7.2.5-100.fc43.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026 x86_64 GNU/Linux\n",
+  "library_bytes": {
+    "baseline": {
+      "csgrs": 9987376,
+      "hypermesh": 5038386,
+      "hyperreal": 11616304,
+      "hyperlimit": 4013954
+    },
+    "candidate": {
+      "csgrs": 9940156,
+      "hypermesh": 5183942,
+      "hyperreal": 11625310,
+      "hyperlimit": 4013784
+    }
+  },
+  "scope": "Fixed pre-edit cube driver; retrospective scalar controls/proof expansion; new-only general sums. No optimization claim. See cost-contract-v1.md."
+}

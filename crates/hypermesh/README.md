@@ -105,6 +105,35 @@ keeps it byte-for-byte synchronized with this block.
 
 ## API guide
 
+### Minkowski sums
+
+`minkowski_sum(context, left, right)` computes the regularized sum of bounded
+closed-PWN solids. Nonzero winding defines material, so disconnected components,
+concavity, cavities, reversed shells and winding multiplicity keep their set
+meaning. Only referenced positions participate. Both operands are validated
+before canonical-empty identities; malformed meshes remain typed failures.
+
+General inputs are refined into convex cells by their source supporting planes.
+Exact signed ray predicates select interior cells. Each convex pair sum uses
+the native hull, and their union accumulates through the native Boolean kernel.
+The output is closed-PWN geometry or canonical empty. This does not certify
+fidelity to an analytic surface or the intent of an earlier approximate operation.
+The receipt reports the decisions consumed by this operation.
+
+`minkowski_sum_with_options` accepts `MinkowskiOptions`: maximum live decomposition
+cells per operand, maximum convex pair sums, maximum vertex sums per pair, and an
+optional cooperative cancellation flag. Defaults add no count limit. Exhaustion
+and cancellation return distinct typed causes before output publication. These
+counts do not bound total work, heap bytes or scalar growth; validation, hull and
+Boolean calls cannot be interrupted internally. A supporting-plane arrangement
+can be much larger than its source boundary.
+
+`minkowski_hull(context, left_points, right_points)` explicitly computes the
+convex hull of pairwise stored-point sums. It fills disconnected gaps and
+concavities and includes every supplied point. It is the migration path for
+CSGRS's former vertex-hull interpretation of `minkowski_sum`; point clouds and
+open surfaces belong to this explicit hull operation, not the solid-sum API.
+
 ### Multi-expression programs
 
 `BooleanProgram::Operation` evaluates one variadic built-in operation:

@@ -87,8 +87,10 @@ impl Real {
     /// earlier roots.
     ///
     /// This extends [`Self::quadratic_tower_sign`] to several independent or
-    /// nested radicals. `None` means the expression leaves that tower or
-    /// exceeds this query's size guards; the value itself is unchanged.
+    /// nested radicals, including retained `sin(pi/8)` and `sin(3pi/8)`
+    /// leaves through their selected half-angle roots. `None` means the
+    /// expression leaves that supported tower or exceeds this query's size
+    /// guards; the value and its symbolic representation are unchanged.
     pub fn radical_tower_sign(&self) -> Option<RealSign> {
         let scale_sign = real_sign_from_num(self.rational.sign());
         if scale_sign == RealSign::Zero || matches!(self.class, One) {

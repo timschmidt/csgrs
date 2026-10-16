@@ -1,0 +1,46 @@
+
+running 18 tests
+test obj_context_preserves_certified_concave_triangulation_and_parse_errors ... ok
+test dxf_context_preserves_exact_imports ... ok
+test bounds_and_positioning_propagate_policy_and_certainty ... ok
+test transformation_policy_does_not_allow_collapsed_geometry ... ok
+test polyhedron_and_loft_use_context_for_planarity_and_caps ... ok
+test sdf_meshing_consumes_the_selected_policy ... ok
+test slices_and_flattening_report_uncertainty_instead_of_empty_success ... ok
+test hulls_and_queries_accept_terminal_equality ... ok
+test curve_queries_preserve_boundary_and_uncertainty_distinctions ... ok
+test gerber_boundary_contours_preserve_nested_parity_and_roundtrip ... ok
+test explicit_geometry_context_is_independent_of_enclosing_display_preview ... ok
+test composite_curve_constructors_preserve_nested_predicate_certainty ... ok
+test vrml_context_reaches_transformed_polygon_triangulation ... ok
+test scalar_mesh_terminal_evidence_does_not_satisfy_a_later_strict_boolean ... ok
+test distributions_do_not_reuse_approximate_results_for_strict_calls ... ok
+test gerber_context_reaches_aperture_composition_and_projection ... ok
+test javascript_mesh_results_expose_the_consumed_certainty ... ok
+test scalar_mesh_booleans_expose_context_without_losing_certainty ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+
+
+running 6 tests
+test explicit_hull_preserves_point_set_interpretation_and_typed_failure ... ok
+test source_storage_and_empty_identities_do_not_hide_failures ... ok
+test limits_and_cancellation_fail_typed_then_recover ... ok
+test disconnected_sum_keeps_gaps_and_composes ... ok
+test concave_sum_preserves_notch_and_commutes ... ok
+test hollow_nested_and_multiply_wound_solids_use_nonzero_winding ... FAILED
+
+failures:
+
+---- hollow_nested_and_multiply_wound_solids_use_nonzero_winding stdout ----
+
+thread 'hollow_nested_and_multiply_wound_solids_use_nonzero_winding' (3646732) panicked at tests/minkowski_contracts.rs:35:75:
+called `Result::unwrap()` on an `Err` value: Mesh(SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    hollow_nested_and_multiply_wound_solids_use_nonzero_winding
+
+test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+

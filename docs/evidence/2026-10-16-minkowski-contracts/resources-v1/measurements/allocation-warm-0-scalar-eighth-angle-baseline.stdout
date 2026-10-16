@@ -1,0 +1,2 @@
+revision,case,temperature,nanos,completion,allocations,reallocations,allocated_bytes,reallocated_bytes,live_query_delta_bytes,peak_additional_requested_bytes
+baseline,eighth-angle,warm,22949,undecided,249,8,20171,1040,0,7552

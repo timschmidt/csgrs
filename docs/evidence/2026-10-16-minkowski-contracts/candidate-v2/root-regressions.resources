@@ -1,0 +1,24 @@
+Command exited with non-zero status 101
+	Command being timed: "cargo test --locked -p csgrs --release --all-features --test minkowski_contracts --test geometry_context --no-fail-fast -- --test-threads=2"
+	User time (seconds): 47.03
+	System time (seconds): 2.26
+	Percent of CPU this job got: 132%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:37.22
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 682628
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 3777
+	Minor (reclaiming a frame) page faults: 684725
+	Voluntary context switches: 30528
+	Involuntary context switches: 2490
+	Swaps: 0
+	File system inputs: 34120
+	File system outputs: 317279
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 101

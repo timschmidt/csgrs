@@ -1,0 +1,21 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/node/ring_root_square_tests.rs:16:83
+    |
+ 16 |         raw(Approximation::PrescaledSin(Computable::rational(Rational::fraction(1,n).unwrap())))
+    |                                                              ------------------   ^ expected `u64`, found `i32`
+    |                                                              |
+    |                                                              arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> crates/hyperreal/src/rational/arithmetic/construction.rs:321:12
+    |
+321 |     pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
+    |            ^^^^^^^^         ------
+help: you can convert an `i32` to a `u64` and panic if the converted value doesn't fit
+    |
+ 16 |         raw(Approximation::PrescaledSin(Computable::rational(Rational::fraction(1,n.try_into().unwrap()).unwrap())))
+    |                                                                                    ++++++++++++++++++++
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error

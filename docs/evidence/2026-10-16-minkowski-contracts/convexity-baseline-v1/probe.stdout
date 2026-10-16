@@ -1,0 +1,11 @@
+sphere positions=114 triangles=224
+pwn Ok(MeshOutcome { value: (), certainty: Certified })
+convex Err(PredicateUndecided { predicate: "Real sign classification" })
+original_sum Err(Geometry("convex hull could not certify predicate during face outside linear query"))
+unknown face=15 vertex=9 own=false plane=PredicateUndecided { predicate: "Real sign classification" } orient=Unknown { needed: RealRefinement, stage: Undecided }
+unknown face=16 vertex=15 own=false plane=PredicateUndecided { predicate: "Real sign classification" } orient=Unknown { needed: RealRefinement, stage: Undecided }
+unknown face=17 vertex=10 own=false plane=PredicateUndecided { predicate: "Real sign classification" } orient=Unknown { needed: RealRefinement, stage: Undecided }
+unknown face=18 vertex=16 own=false plane=PredicateUndecided { predicate: "Real sign classification" } orient=Unknown { needed: RealRefinement, stage: Undecided }
+unknown face=23 vertex=13 own=false plane=PredicateUndecided { predicate: "Real sign classification" } orient=Unknown { needed: RealRefinement, stage: Undecided }
+unknown face=24 vertex=19 own=false plane=PredicateUndecided { predicate: "Real sign classification" } orient=Unknown { needed: RealRefinement, stage: Undecided }
+plane_unknown=64 plane_outside=0

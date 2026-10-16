@@ -2361,7 +2361,11 @@ pub fn convex_hull_with_context(
     Ok(decisions.finish(hull))
 }
 
-/// Exact Minkowski sum of two native triangle meshes.
+/// Regularized Minkowski sum of the represented bounded closed-PWN solids.
+///
+/// Concavity, holes and disconnected components retain their set meaning.
+/// Unused positions do not contribute. Both operands are validated before empty
+/// identities. For the former stored-vertex convexification, use [`minkowski_hull`].
 pub fn minkowski_sum(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -2370,35 +2374,62 @@ pub fn minkowski_sum(
         .map(GeometryOutcome::into_value)
 }
 
-/// Computes the Minkowski hull with the selected policy and aggregate certainty.
+/// Computes the represented-set sum with operation-local aggregate certainty.
+///
+/// See [`hypermesh::minkowski_sum`] for the domain and provenance distinction.
 pub fn minkowski_sum_with_context(
     left: &TriangleMesh,
     right: &TriangleMesh,
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    minkowski_sum_with_options(left, right, &hypermesh::MinkowskiOptions::default(), context)
+}
+
+/// Computes a represented-set sum with native collection limits and cancellation.
+///
+/// Counts and cooperative cancellation do not bound primitive work or heap bytes;
+/// see [`hypermesh::MinkowskiOptions`]. Exhaustion never returns a partial mesh.
+pub fn minkowski_sum_with_options(
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+    options: &hypermesh::MinkowskiOptions<'_>,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if left.positions.is_empty() || right.positions.is_empty() {
-        return Ok(decisions.finish(empty()));
-    }
-    let capacity = left
-        .positions
-        .len()
-        .checked_mul(right.positions.len())
-        .ok_or(ValidationError::InvalidArguments)?;
-    let mut points = Vec::with_capacity(capacity);
-    for left in left.positions.iter() {
-        for right in right.positions.iter() {
-            points.push(Point3::new(
-                left.x.clone() + right.x.clone(),
-                left.y.clone() + right.y.clone(),
-                left.z.clone() + right.z.clone(),
-            ));
-        }
-    }
-    let hull = decisions.consume_mesh(
-        hypermesh::convex_hull(decisions.mesh_context(), &points)
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
+    let sum = decisions.consume_mesh(hypermesh::minkowski_sum_with_options(
+        decisions.mesh_context(),
+        left,
+        right,
+        options,
+    )?);
+    Ok(decisions.finish(sum))
+}
+
+/// Convex hull of pairwise stored-position sums, explicitly ignoring triangles.
+///
+/// This preserves the former vertex-hull interpretation of [`minkowski_sum`].
+/// Unused positions participate; concavity and disconnected gaps are filled.
+/// Use [`minkowski_sum`] for the sum of the represented solids.
+pub fn minkowski_hull(
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+) -> Result<TriangleMesh, ValidationError> {
+    minkowski_hull_with_context(left, right, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Computes a stored-position Minkowski hull with aggregate certainty.
+pub fn minkowski_hull_with_context(
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let hull = decisions.consume_mesh(hypermesh::minkowski_hull(
+        decisions.mesh_context(),
+        &left.positions,
+        &right.positions,
+    )?);
     Ok(decisions.finish(hull))
 }
 

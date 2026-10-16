@@ -1,0 +1,11 @@
+
+running 1 test
+test original_readme_and_full_example_inputs_complete_strictly ... FAILED
+
+failures:
+
+failures:
+    original_readme_and_full_example_inputs_complete_strictly
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.49s
+

@@ -1,0 +1,7 @@
+{
+  "template_sha256": "2bb658e518deef711bffcc67ea69e3384b2d321695b3d0085e8f1d34851d72ab",
+  "diagnostic_sha256": "e64293be67cb524366b2d997859dc49ec01d8b2cd551ddc73e33e45de38bc5ad",
+  "resource_driver_sha256": "c2c62b6ddfacec0cf0b54ec0d23ddfee591b1f858584ae90a0402675bed31a0e",
+  "commands": 13,
+  "library_pins": 2416
+}

@@ -1,0 +1,7 @@
+
+running 2 tests
+test closed_zero_winding_and_lower_dimensional_boundaries_regularize_to_empty ... ok
+test native_entry_points_certify_sums_and_reject_invalid_sources ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

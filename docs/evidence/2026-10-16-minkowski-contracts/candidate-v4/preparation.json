@@ -1,0 +1,4 @@
+{
+  "exit_code": 1,
+  "failure": "Missing phase seed configuration; runner stopped before recording sources or executing validation commands. No target build created. Formatting process completed before the replacement phase."
+}

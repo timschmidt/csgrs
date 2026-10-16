@@ -1,0 +1,3 @@
+batch-26: error SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+merged-26: error SurfaceArrangementFailed { reason: "surface cell winding propagation is inconsistent" }
+incremental-26: triangles=636 six_volume=Some(Rational { sign: Plus, numerator: 744, denominator: 1 }) topology=Ok(MeshOutcome { value: (), certainty: Certified })

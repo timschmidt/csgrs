@@ -1,0 +1,8 @@
+
+running 3 tests
+test computable::node::ring_root_square_tests::root_square_limits_and_cancellation_do_not_poison_recovery ... ok
+test computable::node::ring_root_square_tests::root_square_projection_keeps_domain_obligations_and_unknowns ... ok
+test computable::node::ring_root_square_tests::root_square_projection_combines_exact_roots_and_opaque_atoms ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 892 filtered out; finished in 0.00s
+

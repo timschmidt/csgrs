@@ -1,0 +1,32 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking gmp-mpfr-sys v1.7.1
+    Checking rug v1.30.0
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersdf)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/node/ring_root_square_tests.rs:16:83
+    |
+ 16 |         raw(Approximation::PrescaledSin(Computable::rational(Rational::fraction(1,n).unwrap())))
+    |                                                              ------------------   ^ expected `u64`, found `i32`
+    |                                                              |
+    |                                                              arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> crates/hyperreal/src/rational/arithmetic/construction.rs:321:12
+    |
+321 |     pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
+    |            ^^^^^^^^         ------
+help: you can convert an `i32` to a `u64` and panic if the converted value doesn't fit
+    |
+ 16 |         raw(Approximation::PrescaledSin(Computable::rational(Rational::fraction(1,n.try_into().unwrap()).unwrap())))
+    |                                                                                    ++++++++++++++++++++
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error

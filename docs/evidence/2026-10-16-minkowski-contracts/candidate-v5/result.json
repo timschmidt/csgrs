@@ -1,0 +1,70 @@
+{
+  "commands": [
+    {
+      "name": "overlay",
+      "exit_code": 0,
+      "seconds": 86.10137449996546,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e74c167b503e5615dd65f24103399030568f17864c76303896e298c85b16a870",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "3066b88251167e1512d9cc2dfdfe9f109544177f514038c386945c2ea0570662"
+    },
+    {
+      "name": "scalar-regressions",
+      "exit_code": 101,
+      "seconds": 13.985314960125834,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "06ff3284a11b0dccb8fe80e73a6d81d9c33965fe6461c86d48f8d080a5809262",
+      "resources_sha256": "36d1dd96d93a57a5afe06a4b78e9a0fbabd347d110a2ecbd93efa7944e7bbdac"
+    },
+    {
+      "name": "root-regressions",
+      "exit_code": 0,
+      "seconds": 152.66372668510303,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/minkowski-contracts/candidate-v5/release/deps/geometry_context-f3d29f7d6dc94528": "a20e5838d9d3b01934cd0974490571147db1844a3d01c641f6dec5f4ecfbd444",
+        "target/properties/minkowski-contracts/candidate-v5/release/deps/minkowski_contracts-0128f2ac1f93f880": "3c3495716fd8f19e8fc2122ed6108a9250ba4ee6a3695ca67c2d24e05273bcde"
+      },
+      "stdout_sha256": "d2411165ecd15aa0b964ec4432e4982a6a3f8ae20844fba75745ae73364ffa46",
+      "stderr_sha256": "98cac65b9808cc69be142cabeacfb328cc54e951c3d0852209d930e38af7aecb",
+      "resources_sha256": "abd845a1217b2b7d6f7c79163f04456fa040538f95ca4a48692af111a2368195"
+    },
+    {
+      "name": "mesh-regressions",
+      "exit_code": 0,
+      "seconds": 38.02772663999349,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/minkowski-contracts/candidate-v5/release/deps/minkowski-f9408f45951978bc": "7e039bc0b764fbafe3b7a0f6c0ca85ac2f54d4d22717bf70062c668225e7936c"
+      },
+      "stdout_sha256": "1dfcb009809025f849e69a455d09ca0946d6c17a5ed0b309742a0372c437bb8c",
+      "stderr_sha256": "0b82adc969a90f779652250aca475b5264d2eb97cdda2886dedd4504ba9b4885",
+      "resources_sha256": "1adf75929f7913bce83de040312bff82a27f6210465bd240d4cafcc55ab59d18"
+    },
+    {
+      "name": "clippy",
+      "exit_code": 101,
+      "seconds": 9.350457458291203,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "4b03d4c4d04c02aef8734ef4340cab2567b1370ca98095966c81200e013d3f98",
+      "resources_sha256": "846eecaa472fa5c67d133da925c80b231e285aa0c98b304f300205294e61fcde"
+    },
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.18606170732528,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "90fe759726bba0e1e3bdce0c590b653f50e90466d4d7c53f9f9086702250a164"
+    }
+  ],
+  "passed": false
+}

@@ -1,0 +1,50 @@
+{
+  "commands": [
+    {
+      "name": "overlay",
+      "exit_code": 0,
+      "seconds": 70.87632550485432,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "6c969449bb74b410c195a2a3117879ffb3dd4984dbe264dec6c76cb83d371861",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "8123b5304afead99d5078a75d9308d3766d0d0bc3e7db6c281f38d291b75aadd"
+    },
+    {
+      "name": "root-regressions",
+      "exit_code": 101,
+      "seconds": 36.52351038297638,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/minkowski-contracts/candidate-v1/release/deps/geometry_context-f3d29f7d6dc94528": "201295074f2b4c8e6e9b9f77e4b9221e29bd62f266b98f1cf1a88ca1a2d1bb40",
+        "target/properties/minkowski-contracts/candidate-v1/release/deps/minkowski_contracts-0128f2ac1f93f880": "f28985f6dd163f901fb4254c21b90aaf70e5b9c6ef0064f0dcef842cad581615"
+      },
+      "stdout_sha256": "88cc758290cbd21695ab5882129da770baf979774649b08a14d2ab0ae063e9fa",
+      "stderr_sha256": "84dafa9229b5886d09f86df830a2af0dac12fc855e9050ab003ed6e1d721107d",
+      "resources_sha256": "31768627717bad04cadcc65125ee5b6c1b2b90ecf11c0a828c4926a0b19113cc"
+    },
+    {
+      "name": "mesh-unit",
+      "exit_code": 0,
+      "seconds": 16.85640692897141,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/minkowski-contracts/candidate-v1/release/deps/hypermesh-3f582b4ca1636641": "1780e39548e400323e28ee3073a1a4bde129a2dda65d0d9f9d094ddd194f7f01"
+      },
+      "stdout_sha256": "80d9132e110335dead6b3f499824e65dabf29e3c2712c3e9ab6e4c268530af29",
+      "stderr_sha256": "285fe37557866c69ccf8938719118504d25a70d819f5dd56946bfd3ce3ea8f38",
+      "resources_sha256": "6d9af42a75d3f437d00150c1d163f8e9d27999494d99d29d0ab2fcf54c63f2d6"
+    },
+    {
+      "name": "clippy",
+      "exit_code": 0,
+      "seconds": 26.821039522998035,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "c9d8491e09f21b85d70dc88a149dfd1e48e12204c3bef6350bf43801a19439d1",
+      "resources_sha256": "e422fcdcf465a0207d6084da3515ef9684e3f051c6f5f6b036af9f2e8b022157"
+    }
+  ],
+  "passed": false
+}

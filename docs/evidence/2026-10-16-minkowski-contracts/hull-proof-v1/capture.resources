@@ -1,0 +1,24 @@
+Command exited with non-zero status 101
+	Command being timed: "env HYPERMESH_CAPTURE_ORIENTATION=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/hull-proof-v1 cargo test --locked -p csgrs --release --all-features --test minkowski_contracts original_readme_and_full_example_inputs_complete_strictly -- --nocapture"
+	User time (seconds): 253.67
+	System time (seconds): 5.94
+	Percent of CPU this job got: 176%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:27.13
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2052356
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 2979
+	Minor (reclaiming a frame) page faults: 2485048
+	Voluntary context switches: 29145
+	Involuntary context switches: 7581
+	Swaps: 0
+	File system inputs: 88
+	File system outputs: 1048216
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 101

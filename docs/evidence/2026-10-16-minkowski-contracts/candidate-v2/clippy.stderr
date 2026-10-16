@@ -1,0 +1,21 @@
+    Checking bevy_reflect v0.18.1
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+    Checking serde_spanned v0.6.9
+    Checking toml_datetime v0.6.11
+    Checking toml_edit v0.22.27
+    Checking bevy_ecs v0.18.1
+    Checking bevy_math v0.18.1
+    Checking tinytemplate v1.2.1
+    Checking is-terminal v0.4.17
+    Checking criterion v0.5.1
+    Checking bevy_app v0.18.1
+    Checking bevy_time v0.18.1
+    Checking bevy_log v0.18.1
+    Checking bevy_diagnostic v0.18.1
+    Checking bevy_transform v0.18.1
+    Checking bevy_asset v0.18.1
+    Checking toml v0.8.23
+    Checking bevy_mesh v0.18.1
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 1m 04s

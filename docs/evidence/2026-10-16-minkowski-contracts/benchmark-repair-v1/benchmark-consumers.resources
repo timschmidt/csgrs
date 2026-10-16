@@ -1,0 +1,23 @@
+	Command being timed: "python3 docs/evidence/2026-10-16-minkowski-contracts/run_benchmarks_v1.py /home/tim/Documents/GitHub/workspace/csgrs/target/properties/minkowski-contracts/benchmark-repair-v1"
+	User time (seconds): 7.50
+	System time (seconds): 0.01
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.55
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 23612
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 4049
+	Voluntary context switches: 20
+	Involuntary context switches: 153
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 120
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

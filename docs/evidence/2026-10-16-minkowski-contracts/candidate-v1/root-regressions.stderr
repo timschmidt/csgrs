@@ -1,0 +1,9 @@
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 33.44s
+     Running tests/geometry_context.rs (target/properties/minkowski-contracts/candidate-v1/release/deps/geometry_context-f3d29f7d6dc94528)
+     Running tests/minkowski_contracts.rs (target/properties/minkowski-contracts/candidate-v1/release/deps/minkowski_contracts-0128f2ac1f93f880)
+error: test failed, to rerun pass `-p csgrs --test minkowski_contracts`
+error: 1 target failed:
+    `-p csgrs --test minkowski_contracts`

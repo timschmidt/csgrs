@@ -17,6 +17,10 @@ struct RingRecognition<'a> {
     nodes_left: usize,
     operations_left: usize,
     signal: &'a Option<Signal>,
+    // An additional attempt may use only these built-in exact relations.
+    // Earlier polynomial/quotient attempts keep their original arithmetic.
+    root_squares: bool,
+    root_square_used: bool,
 }
 
 impl<'a> RingRecognition<'a> {
@@ -35,6 +39,8 @@ impl<'a> RingRecognition<'a> {
             nodes_left: Self::MAX_NODES,
             operations_left: Self::MAX_OPERATIONS,
             signal: &value.signal,
+            root_squares: false,
+            root_square_used: false,
         }
     }
 
@@ -137,10 +143,49 @@ impl<'a> RingRecognition<'a> {
                 // Both operands were admitted; temporary rational arithmetic
                 // can use twice the coefficient bits before the next check;
                 // a subsequent coefficient sum may also require a carry bit.
-                self.insert(&mut result, monomial, x * y)?;
+                let mut coefficient = x * y;
+                if self.root_squares {
+                    self.reduce_root_squares(&mut monomial, &mut coefficient)?;
+                }
+                self.insert(&mut result, monomial, coefficient)?;
             }
         }
         Some(result)
+    }
+
+    fn reduce_root_squares(
+        &mut self,
+        monomial: &mut Vec<u8>,
+        coefficient: &mut Rational,
+    ) -> Option<()> {
+        let mut read = 0;
+        let mut write = 0;
+        while read < monomial.len() {
+            self.charge()?;
+            let atom = monomial[read];
+            let square = match &self.atoms[usize::from(atom)].internal.approximation {
+                Approximation::Constant(SharedConstant::Sqrt2) => Some(2),
+                Approximation::Constant(SharedConstant::Sqrt3) => Some(3),
+                _ => None,
+            };
+            if let Some(square) = square
+                && monomial.get(read + 1) == Some(&atom)
+            {
+                self.charge()?;
+                *coefficient = &*coefficient * Rational::from(square);
+                if !Self::coefficient_fits(coefficient) {
+                    return None;
+                }
+                self.root_square_used = true;
+                read += 2;
+            } else {
+                monomial[write] = atom;
+                write += 1;
+                read += 1;
+            }
+        }
+        monomial.truncate(write);
+        Some(())
     }
 
     fn scale(&mut self, polynomial: RingPolynomial, value: Rational) -> Option<RingPolynomial> {

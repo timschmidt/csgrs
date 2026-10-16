@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "name": "mkdir",
+      "exit_code": 0,
+      "seconds": 1.8969832239672542,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "25acd4b3b9ec77d9be51d6b1f11d1fe90380001a727760c15826d4a95717e410"
+    },
+    {
+      "name": "wasm",
+      "exit_code": 1,
+      "seconds": 2.05133648077026,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "503fb92c158f8c8badf52e891f8990e6a42011d51bac4d49cf6c183b39bac6c5",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "228ac3ca2f1f89f336417a6d5985ac2d861de8ddc4876e93842d6f83f5b8a917"
+    }
+  ],
+  "passed": false
+}

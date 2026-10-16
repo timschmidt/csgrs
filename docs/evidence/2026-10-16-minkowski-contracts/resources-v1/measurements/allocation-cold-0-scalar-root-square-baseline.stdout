@@ -1,0 +1,2 @@
+revision,case,temperature,nanos,completion,allocations,reallocations,allocated_bytes,reallocated_bytes,live_query_delta_bytes,peak_additional_requested_bytes
+baseline,root-square,cold,2281914,undecided,28683,1862,1141842,74208,63176,90314

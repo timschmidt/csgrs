@@ -75,4 +75,12 @@ if (certainty === GeometryCertaintyJs.Certified) {
 } else {
   result.free();
 }
+const sumResult = cube.minkowskiSumWithLimits(cube, false, 1, 1, 64);
+const sumCertainty: GeometryCertaintyJs = sumResult.certainty;
+if (sumCertainty !== GeometryCertaintyJs.Certified) throw new Error("Uncertified sum");
+const sum = sumResult.intoMesh();
+sum.free();
+const hullResult = cube.minkowskiHullWithContext(cube, false);
+hullResult.intoMesh().free();
+cube.minkowskiHull(cube).free();
 cube.free();
