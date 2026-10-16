@@ -1,0 +1,20 @@
+{
+  "command": [
+    "gdb",
+    "--nx",
+    "--batch",
+    "-ex",
+    "set debuginfod enabled off",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "thread apply all bt 20",
+    "-ex",
+    "detach",
+    "-p",
+    "2132414"
+  ],
+  "seconds": 0.17591634718701243,
+  "exit_code": 1,
+  "scope": "Read-only stack sample of owned Cargo child; attach temporarily pauses it, then detaches."
+}

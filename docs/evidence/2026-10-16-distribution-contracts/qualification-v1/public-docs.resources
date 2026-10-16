@@ -1,0 +1,23 @@
+	Command being timed: "env RUSTDOCFLAGS=-D warnings cargo doc --locked --release -p csgrs -p hypermesh -p csgrs-ffi --all-features --no-deps"
+	User time (seconds): 191.24
+	System time (seconds): 6.74
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:17.91
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1403532
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1169
+	Minor (reclaiming a frame) page faults: 985470
+	Voluntary context switches: 283748
+	Involuntary context switches: 8351
+	Swaps: 0
+	File system inputs: 41784
+	File system outputs: 220595
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

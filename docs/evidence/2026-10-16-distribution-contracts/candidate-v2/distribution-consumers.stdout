@@ -1,0 +1,103 @@
+
+running 8 tests
+test cache_reuse_eviction_disable_and_mutation_preserve_validity ... ok
+test capacity_exhaustion_is_typed_and_leaves_subsequent_work_available ... ok
+test concatenation_preserves_multiplicity_and_pwn_distributions_accept_it ... ok
+test canonical_empty_and_zero_copy_outputs_remain_composable ... ok
+test native_causes_and_consumed_certainty_survive_strict_approximate_strict ... ok
+test source_validation_precedes_zero_one_and_disjoint_copy_shortcuts ... ok
+test touching_overlapping_signed_and_single_arc_layouts_have_the_expected_sets ... ok
+test original_full_distributions_satisfy_independent_volume_membership_and_composition ... FAILED
+
+failures:
+
+---- original_full_distributions_satisfy_independent_volume_membership_and_composition stdout ----
+
+thread 'original_full_distributions_satisfy_independent_volume_membership_and_composition' (2119469) panicked at tests/distribution_contracts.rs:19:5:
+assertion `left == right` failed
+  left: None
+ right: Some(true)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    original_full_distributions_satisfy_independent_volume_membership_and_composition
+
+test result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+
+running 18 tests
+test bounds_and_positioning_propagate_policy_and_certainty ... ok
+test curve_queries_preserve_boundary_and_uncertainty_distinctions ... ok
+test composite_curve_constructors_preserve_nested_predicate_certainty ... ok
+test dxf_context_preserves_exact_imports ... ok
+test explicit_geometry_context_is_independent_of_enclosing_display_preview ... ok
+test gerber_boundary_contours_preserve_nested_parity_and_roundtrip ... ok
+test distributions_do_not_reuse_approximate_results_for_strict_calls ... ok
+test hulls_and_queries_accept_terminal_equality ... ok
+test gerber_context_reaches_aperture_composition_and_projection ... ok
+test obj_context_preserves_certified_concave_triangulation_and_parse_errors ... ok
+test polyhedron_and_loft_use_context_for_planarity_and_caps ... ok
+test javascript_mesh_results_expose_the_consumed_certainty ... ok
+test scalar_mesh_terminal_evidence_does_not_satisfy_a_later_strict_boolean ... ok
+test sdf_meshing_consumes_the_selected_policy ... ok
+test slices_and_flattening_report_uncertainty_instead_of_empty_success ... ok
+test transformation_policy_does_not_allow_collapsed_geometry ... ok
+test vrml_context_reaches_transformed_polygon_triangulation ... ok
+test scalar_mesh_booleans_expose_context_without_losing_certainty ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.07s
+
+
+running 3 tests
+test disjoint_distributions_preserve_every_native_copy ... ok
+test sphere_diameter_ray_reports_only_surface_hits ... ok
+test sampled_sphere_at_fifteen_degree_steps_has_a_certified_convex_hull ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+
+running 25 tests
+test approximate_slice_never_certifies_a_later_strict_request ... ok
+test canonical_empty_and_outside_slices_remain_consumable ... ok
+test contextual_invalid_indices_preserve_the_native_diagnostic ... ok
+test coplanar_bottom_slice_keeps_hole_and_composes ... ok
+test cache_states_and_mutation_preserve_section_meaning ... ok
+test disconnected_hollow_components_preserve_both_voids ... ok
+test coplanar_top_slice_keeps_hole_and_composes ... ok
+test duplicate_material_shells_do_not_cancel ... ok
+test face_permutation_and_global_reversal_preserve_hollow_set ... ok
+test hollow_interior_slice_keeps_hole_and_composes ... ok
+test independent_position_rows_preserve_the_same_section ... ok
+test malformed_projection_is_an_error_not_empty_geometry ... ok
+test malformed_slice_is_an_error_not_empty_geometry ... ok
+test nested_material_shells_do_not_become_parity_holes ... ok
+test open_triangle_intersection_remains_an_open_wire ... ok
+test opposite_shells_cancel_interior_and_coplanar_sections ... ok
+test projection_of_hollow_prism_keeps_void ... ok
+test shared_on_plane_edges_do_not_change_hole_winding ... ok
+test shuffled_coincident_shell_faces_preserve_signed_set ... ok
+test signed_multiplicity_is_preserved_interior_and_coplanar ... ok
+test thread_local_cache_modes_preserve_hollow_sections ... ok
+test undecided_projection_is_an_error_not_empty_geometry ... ok
+test undecided_slice_is_an_error_not_empty_geometry ... ok
+test vertex_touching_components_retain_both_material_regions ... ok
+test interleaved_opposite_faces_preserve_winding_after_permutation ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+
+running 10 tests
+test all_active_caches_obey_their_limits_and_release_entries ... ok
+test curve_results_preserve_boundaries_and_context_when_warm_or_disabled ... ok
+test each_distribution_family_preserves_geometry_and_certainty ... ok
+test every_cached_primitive_family_replays_the_same_exact_rows ... ok
+test fifo_hits_do_not_refresh_insertion_order ... ok
+test merge_keys_include_input_order_and_both_storage_identities ... ok
+test nested_scopes_shrink_immediately_and_restore_after_unwinding ... ok
+test primitives_preserve_scalar_structure_with_and_without_retention ... ok
+test workers_have_independent_policy_and_retained_storage ... ok
+test approximate_distribution_cannot_satisfy_a_strict_request ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

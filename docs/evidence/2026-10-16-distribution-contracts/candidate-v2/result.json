@@ -1,0 +1,63 @@
+{
+  "commands": [
+    {
+      "name": "overlay-setup",
+      "exit_code": 0,
+      "seconds": 15.585002032108605,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "1fb90dbb961a776efb246799f4c820df211297ce1fc355c26618e96d572ff00c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "15f887b3361978252a2e3a628858ae2c6771b95b50e0dd88f85251ca750f3a09"
+    },
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.287028428167105,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "67f730e993ba1b8173cc754d8186ab094db4221740df814cf6838eb7d622f258"
+    },
+    {
+      "name": "native-concatenation",
+      "exit_code": 0,
+      "seconds": 16.83569620223716,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/distribution-contracts/candidate-v2/release/deps/hypermesh-10ab6775f7e6ac2c": "1006202eafd88cb18e035d2097b25e7fb4a5c955f3f8b36c34b770284b0abaf5"
+      },
+      "stdout_sha256": "84f8bb765b3fa3ff2618fdafdc313ddfa7f04dbc120237c28120aa3faa84f9c7",
+      "stderr_sha256": "18f745896bc263a4917dfb38c385a6ed5bbedd1e1d924b41b63d3052ad7e56c7",
+      "resources_sha256": "ed9264e0a331a7a1d7be022cd4cf36dfa7bc867fb99757aef63a7363aa8d85ef"
+    },
+    {
+      "name": "distribution-consumers",
+      "exit_code": 101,
+      "seconds": 36.506854285951704,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/distribution-contracts/candidate-v2/release/deps/distribution_contracts-555e8fcfefd73180": "9fdb0885f7143d8d5b0f92af41e5a3523180ed4fd79f81bc019f0812039eb2ea",
+        "target/properties/distribution-contracts/candidate-v2/release/deps/geometry_context-f3d29f7d6dc94528": "52de68db1d6117cc34150698f68a0ad7715db933b100733f826cc0ad17a6e95d",
+        "target/properties/distribution-contracts/candidate-v2/release/deps/native_queries-b33ec052b7501c8a": "70ee53b433c5aebc10330a23362767f6fc7cf266f099d5a5ebd75d9bd578777f",
+        "target/properties/distribution-contracts/candidate-v2/release/deps/slice_projection_contract-b55baaad948b2b8d": "8f857b2c24f67f435879e725864a07f55d81fb7123ef5bfcdc77d34e71005c16",
+        "target/properties/distribution-contracts/candidate-v2/release/deps/solid_cache-4b39500f97650a56": "d0c099fb4b84eb67b4f75b8e51f83a2a2ce59a3b6f6d9f2af31445a0e7c13083"
+      },
+      "stdout_sha256": "0c722f7ba77678ff05c3e78defbb0ea5196d8a27bdb29cc7c497837e555dc0d1",
+      "stderr_sha256": "92dfe4fbaba89236abb6c84d43dc26547e789f2d8c57d099f9ecfb6a1a150d41",
+      "resources_sha256": "22e85a0fd3a6fd66f61a50ef2f732e25416e4e4cc751c5c51fb9aa759a81e759"
+    },
+    {
+      "name": "root-clippy",
+      "exit_code": 0,
+      "seconds": 27.06745895417407,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "558a58809d27710134502edc7402ca505cad6a4b58639e52cec99349c53eab6c",
+      "resources_sha256": "ffbb94b7be8694d67b35369ff1eaf69ffd77d6f7b35788578c4452004b469010"
+    }
+  ],
+  "passed": false
+}

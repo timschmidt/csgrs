@@ -1,0 +1,24 @@
+[
+  [
+    "overlay-setup",
+    [
+      "python3",
+      "docs/evidence/2026-10-16-distribution-contracts/setup_overlay_v5.py",
+      "cost-build-v2"
+    ]
+  ],
+  [
+    "matched-benchmark-library",
+    [
+      "cargo",
+      "bench",
+      "--locked",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--bench",
+      "feature_pipeline",
+      "--no-run"
+    ]
+  ]
+]

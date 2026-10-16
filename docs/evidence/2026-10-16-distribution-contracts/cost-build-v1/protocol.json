@@ -1,0 +1,91 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {},
+  "base_commit": "00e6123077c14b0769dc0c421fdcdad3af43a9ed",
+  "runner_sha256": "f3ee76657ed7c1e8792452ded7c2380c1ad03a41abb312d80f9adf68b4dc6f05",
+  "phase": "cost-build-v1",
+  "commands": [
+    [
+      "overlay-setup",
+      [
+        "python3",
+        "docs/evidence/2026-10-16-distribution-contracts/setup_overlay_v4.py",
+        "cost-build-v1"
+      ]
+    ],
+    [
+      "all-features-library",
+      [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--all-features"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v1",
+    "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P4",
+    "P5",
+    "P6",
+    "P8",
+    "P9",
+    "P10",
+    "P11",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P21",
+    "P22",
+    "P23",
+    "P24",
+    "P25",
+    "P26",
+    "P27",
+    "P35",
+    "P36",
+    "P37",
+    "P38",
+    "P39"
+  ],
+  "owning_layers": [
+    "Hypermesh triangle indices, closed-PWN validation and native buffer composition",
+    "CSGRS distribution layout, public failure/certainty and modeling composition"
+  ],
+  "domain": "See contract-v1.md. Concatenation preserves open meshes and winding multiplicity; distribution is regularized set union with canonical-empty handling and validated source topology.",
+  "consumers": [
+    "Public native/CSGRS Rust mesh APIs",
+    "Cache and composition callers",
+    "Original kernel-comparison and feature benchmark workloads"
+  ],
+  "missing_acceptance_test": [
+    "Reproduce strict distribution failure becoming empty geometry, erased native causes and malformed-source shortcut acceptance.",
+    "Exercise index rebasing and capacity overflow without publishing a result or unbounded allocation.",
+    "Preserve original 8/16/12-copy workloads and the 22-copy feature concatenation, with independent semantics and downstream composition."
+  ],
+  "semantic_oracle": "Independent placement, membership, signed volume and topology. Exact coordinate/index serialization is a separate preservation check.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "diagnostic_collection": "All commands are attempted on frozen source; Cargo test --no-fail-fast retains every failed test target. Every nonzero result remains a failure; source or artifact mutation still aborts immediately.",
+  "limitations": "External containment only. No internal total-work, heap-byte, cancellation, inherited-provenance or full-plan claim. Baseline enormous-count children additionally use 512-MiB/10-second containment. All 27093 inherited missing artifact expectations remain.",
+  "previous_goal_turn": "Progress: 00e612307 committed typed text construction, exact native outlines and affected-consumer qualification; broader plan and 35 native files remain open.",
+  "wrapper_sha256": "d0c43198a9b5aadaf5d142bdd830b42d2cf2a14154a28392f1efdad6089eb65b",
+  "artifact_preparation": "Fresh /dev/shm targets or private copy-on-write overlays over preserved builds; all lower/dependency hashes rechecked at closure."
+}

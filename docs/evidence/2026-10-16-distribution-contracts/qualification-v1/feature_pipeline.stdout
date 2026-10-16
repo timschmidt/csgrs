@@ -1,0 +1,2 @@
+engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum
+csgrs,warm,feature,mesh_distribution,arc_linear_grid,0,1,366625,22,264,34603184

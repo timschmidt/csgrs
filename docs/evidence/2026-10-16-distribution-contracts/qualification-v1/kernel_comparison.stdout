@@ -1,0 +1,4 @@
+engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum
+csgrs,warm,kernel,distribute_linear,box_8,0,1,143301,12,96,12582976
+csgrs,warm,kernel,distribute_grid,box_4x4,0,1,258002,12,192,25165952
+csgrs,warm,kernel,distribute_arc,box_12_30_degree_steps,0,1,788745,12,144,18874464

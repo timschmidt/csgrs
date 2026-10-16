@@ -200,11 +200,14 @@ fn merge_keys_include_input_order_and_both_storage_identities() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let large = solid::cube(Real::from(2)).expect("valid primitive fixture");
     let inputs = [cube.clone(), large.clone()];
-    let merged = solid::merge(&inputs);
-    let mut warm = solid::merge(&inputs);
+    let merged = solid::merge(&inputs).expect("valid concatenation fixture");
+    let mut warm = solid::merge(&inputs).expect("valid concatenation fixture");
     assert!(Arc::ptr_eq(&merged.positions, &warm.positions));
     Arc::make_mut(&mut warm.positions)[0].x = Real::from(99);
-    assert_mesh_eq(&merged, &solid::merge(&inputs));
+    assert_mesh_eq(
+        &merged,
+        &solid::merge(&inputs).expect("valid concatenation fixture"),
+    );
     for changed in [
         [large, cube.clone()],
         [cube.clone(), warm],
@@ -214,8 +217,10 @@ fn merge_keys_include_input_order_and_both_storage_identities() {
             changed
         }],
     ] {
-        let cached = solid::merge(&changed);
-        let uncached = cache::with_policy(CachePolicy::DISABLED, || solid::merge(&changed));
+        let cached = solid::merge(&changed).expect("valid concatenation fixture");
+        let uncached = cache::with_policy(CachePolicy::DISABLED, || {
+            solid::merge(&changed).expect("valid concatenation fixture")
+        });
         assert_mesh_eq(&cached, &uncached);
         assert!(!Arc::ptr_eq(&merged.positions, &cached.positions));
     }
@@ -294,7 +299,7 @@ fn all_active_caches_obey_their_limits_and_release_entries() {
     cache::with_policy(ONE_EACH, || {
         for width in 1..=3 {
             let cube = solid::cube(Real::from(width)).expect("valid primitive fixture");
-            solid::merge(&[cube.clone(), cube.clone()]);
+            solid::merge(&[cube.clone(), cube.clone()]).expect("valid concatenation fixture");
             solid::distribute_linear_with_context(
                 &cube,
                 2,

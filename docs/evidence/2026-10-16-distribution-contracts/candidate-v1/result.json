@@ -1,0 +1,57 @@
+{
+  "commands": [
+    {
+      "name": "overlay-setup",
+      "exit_code": 0,
+      "seconds": 10.910983763169497,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "a2ec328c332db0f408132fcc5ca128fa7b964527a35b7a596d48edbc5fdca9c8",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "99346b3be6fd81db190e7e36d1085e64804a4b262e279cfef354dd248ac63966"
+    },
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.33334796084091,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "9ece6fbcfdc31b3c3a8dc5205a862b80918e440e61b7395829c43b9c1734b8db"
+    },
+    {
+      "name": "native-concatenation",
+      "exit_code": 0,
+      "seconds": 16.847540399990976,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/distribution-contracts/candidate-v1/release/deps/hypermesh-10ab6775f7e6ac2c": "0d99bb11083e992eb692b3118cbc81f73889cb16a5f9ab768055e526ba25a4de"
+      },
+      "stdout_sha256": "6737730f3f2d69f23ddac814718f4cd0373e29183e56aa440c24f15e58663ed2",
+      "stderr_sha256": "f8fdb7244617f54e5fb3dae3aacba527ba34c798cebfbacf3fa542a428b52409",
+      "resources_sha256": "358f9fa63d5b620f878e940ff0dac355839a575878b78b228bb7cfacfc4cb674"
+    },
+    {
+      "name": "distribution-consumers",
+      "exit_code": 101,
+      "seconds": 33.71823122166097,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "881f32139648c14336250b13b900de255fddbd7e28fd65b78d4956e74dba6b20",
+      "resources_sha256": "82073f4a0dd61cce39e0ecb2772fc89bbe52038cd6078b2ca8a15a5bfe54a082"
+    },
+    {
+      "name": "root-clippy",
+      "exit_code": 101,
+      "seconds": 9.83920250274241,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "29e8e437485937a32d67d7c2c98d031dbd72027d36f269d56ef38915110e113a",
+      "resources_sha256": "c713878a9658b294a9226c767f57217121f2e7279ddaa614956f141702c6a6d4"
+    }
+  ],
+  "passed": false
+}

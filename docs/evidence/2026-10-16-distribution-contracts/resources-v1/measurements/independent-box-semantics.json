@@ -1,0 +1,58 @@
+[
+  {
+    "case": "linear-8",
+    "variant": "baseline",
+    "components": 8,
+    "exact_unit_face_coverage": true,
+    "interpretation": "disjoint unit-box union"
+  },
+  {
+    "case": "linear-8",
+    "variant": "candidate",
+    "components": 8,
+    "exact_unit_face_coverage": true,
+    "interpretation": "disjoint unit-box union"
+  },
+  {
+    "case": "grid-4x4",
+    "variant": "baseline",
+    "components": 16,
+    "exact_unit_face_coverage": true,
+    "interpretation": "disjoint unit-box union"
+  },
+  {
+    "case": "grid-4x4",
+    "variant": "candidate",
+    "components": 16,
+    "exact_unit_face_coverage": true,
+    "interpretation": "disjoint unit-box union"
+  },
+  {
+    "case": "feature-merge-22",
+    "variant": "baseline",
+    "components": 22,
+    "exact_unit_face_coverage": true,
+    "interpretation": "disjoint unit-box union"
+  },
+  {
+    "case": "feature-merge-22",
+    "variant": "candidate",
+    "components": 22,
+    "exact_unit_face_coverage": true,
+    "interpretation": "disjoint unit-box union"
+  },
+  {
+    "case": "merge-duplicate",
+    "variant": "baseline",
+    "components": 2,
+    "exact_unit_face_coverage": true,
+    "interpretation": "positive winding multiplicity"
+  },
+  {
+    "case": "merge-duplicate",
+    "variant": "candidate",
+    "components": 2,
+    "exact_unit_face_coverage": true,
+    "interpretation": "positive winding multiplicity"
+  }
+]

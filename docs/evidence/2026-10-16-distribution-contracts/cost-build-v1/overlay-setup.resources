@@ -1,0 +1,23 @@
+	Command being timed: "python3 docs/evidence/2026-10-16-distribution-contracts/setup_overlay_v4.py cost-build-v1"
+	User time (seconds): 5.06
+	System time (seconds): 2.95
+	Percent of CPU this job got: 45%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:17.65
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 24780
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 5479
+	Voluntary context switches: 62654
+	Involuntary context switches: 1513
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 1504
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

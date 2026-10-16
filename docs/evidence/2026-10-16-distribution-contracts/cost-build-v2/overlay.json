@@ -1,0 +1,21 @@
+{
+  "lower": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v1",
+  "upper": "/dev/shm/csgrs-distribution-contracts/cost-build-v2/upper",
+  "work": "/dev/shm/csgrs-distribution-contracts/cost-build-v2/work",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v2",
+  "command": [
+    "fuse-overlayfs",
+    "-o",
+    "lowerdir=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v1,upperdir=/dev/shm/csgrs-distribution-contracts/cost-build-v2/upper,workdir=/dev/shm/csgrs-distribution-contracts/cost-build-v2/work",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v2"
+  ],
+  "lower_files": 17838,
+  "lower_hashes_sha256": "9fed9801a4939972b7e7bc78e17bd793da2f2a82d750d0be05a562ceac84bd3a",
+  "copy_up_probe": "boolean-failures-c",
+  "copy_up_probe_sha256": "29e7776c2c78675965ff45978d97f1f359dbb98bff79e779921b7f5fedd47751",
+  "fuse_overlayfs_sha256": "8fcd5a85ef3fcaf99c2c8f820ae6200427021b66f1988f6d3b49a224d55fdfe9",
+  "version": "fusermount3 version: 3.16.2\nfuse-overlayfs: version 1.13-dev\nFUSE library version 3.16.2\nusing FUSE kernel interface version 7.38\n",
+  "quota": "Disk quotas for user tim (uid 1000): \n     Filesystem   space   quota   limit   grace   files   quota   limit   grace\n          tmpfs  12106M  51490M  51490M           24168       0       0        \n          tmpfs  51490M  51490M  51490M            151k       0       0        \n",
+  "storage": "Filesystem      Size  Used Avail Use% Mounted on\ntmpfs            63G   12G   52G  19% /dev/shm\nfuse-overlayfs   63G   12G   52G  19% /home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v2\n",
+  "scope": "The lower build is read-only through the overlay. New and changed artifacts go to a private upper directory. All lower hashes are checked again at closure. No prior target or failed partial copy is removed."
+}

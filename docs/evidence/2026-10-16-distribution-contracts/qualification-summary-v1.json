@@ -1,0 +1,3195 @@
+{
+  "passed": true,
+  "qualification_phase": "qualification-v1",
+  "resource_phase": "resources-v1",
+  "phases": {
+    "candidate-v1": {
+      "passed": false,
+      "commands": 5,
+      "failed_commands": [
+        "distribution-consumers",
+        "root-clippy"
+      ]
+    },
+    "candidate-v2": {
+      "passed": false,
+      "commands": 5,
+      "failed_commands": [
+        "distribution-consumers"
+      ]
+    },
+    "cost-build-v1": {
+      "passed": true,
+      "commands": 2,
+      "failed_commands": []
+    },
+    "cost-build-v2": {
+      "passed": true,
+      "commands": 2,
+      "failed_commands": []
+    },
+    "qualification-v1": {
+      "passed": true,
+      "commands": 30,
+      "failed_commands": []
+    },
+    "reproduction-v1": {
+      "passed": false,
+      "commands": 5,
+      "failed_commands": [
+        "probe-build",
+        "probe",
+        "linear-overflow",
+        "arc-overflow"
+      ]
+    },
+    "reproduction-v2": {
+      "passed": false,
+      "commands": 5,
+      "failed_commands": [
+        "linear-overflow",
+        "arc-overflow"
+      ]
+    },
+    "resources-v1": {
+      "passed": true,
+      "commands": 7,
+      "failed_commands": []
+    },
+    "volume-witness-v1": {
+      "passed": false,
+      "commands": 5,
+      "failed_commands": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    "volume-witness-v2": {
+      "passed": false,
+      "commands": 5,
+      "failed_commands": [
+        "baseline-build",
+        "baseline",
+        "candidate-build",
+        "candidate"
+      ]
+    },
+    "volume-witness-v3": {
+      "passed": false,
+      "commands": 5,
+      "failed_commands": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    "volume-witness-v4": {
+      "passed": true,
+      "commands": 5,
+      "failed_commands": []
+    }
+  },
+  "test_totals": {
+    "native-mesh": {
+      "passed": 245,
+      "ignored": 7
+    },
+    "root-minimal": {
+      "passed": 112,
+      "ignored": 0
+    },
+    "root-curve": {
+      "passed": 268,
+      "ignored": 0
+    },
+    "root-all-features": {
+      "passed": 385,
+      "ignored": 1
+    },
+    "ffi-tests": {
+      "passed": 10,
+      "ignored": 0
+    },
+    "root-doctests": {
+      "passed": 1,
+      "ignored": 0
+    },
+    "native-doctests": {
+      "passed": 0,
+      "ignored": 0
+    }
+  },
+  "cost": {
+    "scope": "Fixed completed workload construction including inputs; same exact output rows. Correctness extension, no optimization or competitive speedup claim.",
+    "timing_pairs": [
+      {
+        "case": "linear-8",
+        "temperature": "cold",
+        "median_nanos": {
+          "baseline": 178218,
+          "candidate": 181768
+        },
+        "candidate_over_baseline": 1.0199194245250198
+      },
+      {
+        "case": "linear-8",
+        "temperature": "warm",
+        "median_nanos": {
+          "baseline": 940,
+          "candidate": 3320
+        },
+        "candidate_over_baseline": 3.5319148936170213
+      },
+      {
+        "case": "grid-4x4",
+        "temperature": "cold",
+        "median_nanos": {
+          "baseline": 256073,
+          "candidate": 272131
+        },
+        "candidate_over_baseline": 1.0627086807277613
+      },
+      {
+        "case": "grid-4x4",
+        "temperature": "warm",
+        "median_nanos": {
+          "baseline": 3220,
+          "candidate": 3270
+        },
+        "candidate_over_baseline": 1.015527950310559
+      },
+      {
+        "case": "arc-12",
+        "temperature": "cold",
+        "median_nanos": {
+          "baseline": 802915,
+          "candidate": 838043
+        },
+        "candidate_over_baseline": 1.0437505838102414
+      },
+      {
+        "case": "arc-12",
+        "temperature": "warm",
+        "median_nanos": {
+          "baseline": 1130,
+          "candidate": 1200
+        },
+        "candidate_over_baseline": 1.0619469026548674
+      },
+      {
+        "case": "feature-merge-22",
+        "temperature": "cold",
+        "median_nanos": {
+          "baseline": 292560,
+          "candidate": 308609
+        },
+        "candidate_over_baseline": 1.0548571233251298
+      },
+      {
+        "case": "feature-merge-22",
+        "temperature": "warm",
+        "median_nanos": {
+          "baseline": 256113,
+          "candidate": 224904
+        },
+        "candidate_over_baseline": 0.8781436319124761
+      },
+      {
+        "case": "merge-duplicate",
+        "temperature": "cold",
+        "median_nanos": {
+          "baseline": 37018,
+          "candidate": 33088
+        },
+        "candidate_over_baseline": 0.8938354314117456
+      },
+      {
+        "case": "merge-duplicate",
+        "temperature": "warm",
+        "median_nanos": {
+          "baseline": 3060,
+          "candidate": 3230
+        },
+        "candidate_over_baseline": 1.0555555555555556
+      }
+    ],
+    "allocation_rows": 20,
+    "library_bytes": {
+      "baseline": {
+        "libcsgrs.rlib": 10042160,
+        "libhypermesh-98c5db38df7e7da0.rlib": 5018816
+      },
+      "candidate": {
+        "libcsgrs.rlib": 10000252,
+        "libhypermesh-98c5db38df7e7da0.rlib": 5038452
+      }
+    },
+    "source_sizes": {
+      "src/solid.rs": {
+        "baseline_exists": true,
+        "baseline_bytes": 102749,
+        "candidate_bytes": 104121,
+        "baseline_lines": 2936,
+        "candidate_lines": 2955
+      },
+      "crates/hypermesh/src/mesh.rs": {
+        "baseline_exists": true,
+        "baseline_bytes": 82021,
+        "candidate_bytes": 83423,
+        "baseline_lines": 2112,
+        "candidate_lines": 2147
+      },
+      "crates/hypermesh/src/mesh/concatenation.rs": {
+        "baseline_exists": false,
+        "baseline_bytes": 0,
+        "candidate_bytes": 8949,
+        "baseline_lines": 0,
+        "candidate_lines": 233
+      },
+      "tests/distribution_contracts.rs": {
+        "baseline_exists": false,
+        "baseline_bytes": 0,
+        "candidate_bytes": 13426,
+        "baseline_lines": 0,
+        "candidate_lines": 355
+      },
+      "tests/native_queries.rs": {
+        "baseline_exists": true,
+        "baseline_bytes": 2729,
+        "candidate_bytes": 2863,
+        "baseline_lines": 65,
+        "candidate_lines": 68
+      },
+      "tests/slice_projection_contract.rs": {
+        "baseline_exists": true,
+        "baseline_bytes": 16908,
+        "candidate_bytes": 17275,
+        "baseline_lines": 467,
+        "candidate_lines": 470
+      },
+      "tests/solid_cache.rs": {
+        "baseline_exists": true,
+        "baseline_bytes": 13921,
+        "candidate_bytes": 14196,
+        "baseline_lines": 371,
+        "candidate_lines": 376
+      },
+      "benchmarks/rust/kernel_comparison.rs": {
+        "baseline_exists": true,
+        "baseline_bytes": 39408,
+        "candidate_bytes": 39562,
+        "baseline_lines": 1015,
+        "candidate_lines": 1018
+      },
+      "benchmarks/rust/feature_pipeline.rs": {
+        "baseline_exists": true,
+        "baseline_bytes": 33812,
+        "candidate_bytes": 33885,
+        "baseline_lines": 843,
+        "candidate_lines": 846
+      },
+      "readme.md": {
+        "baseline_exists": true,
+        "baseline_bytes": 61778,
+        "candidate_bytes": 63237,
+        "baseline_lines": 886,
+        "candidate_lines": 908
+      },
+      "crates/hypermesh/README.md": {
+        "baseline_exists": true,
+        "baseline_bytes": 10214,
+        "candidate_bytes": 11161,
+        "baseline_lines": 254,
+        "candidate_lines": 268
+      }
+    },
+    "driver_sizes": {
+      "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation": 24268680,
+      "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing": 24258288,
+      "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation": 24281512,
+      "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing": 24274872
+    },
+    "limits": "External 1800-second/8-GiB containment; cost children additionally have 120-second walls. Node/WASM has no virtual-address-space bound. Requested allocation bytes exclude allocator overhead. No internal total-work, heap-byte or cancellation contract."
+  },
+  "timing_rows": [
+    {
+      "name": "timing-cold-0-linear-8-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "linear-8",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "linear-8",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-0-linear-8-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "e5c7df561ecd58aca543b593d71173c644358b2d6b6c616d135a95f079a091e5",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "cold",
+        "nanos": "230434",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-cold-0-linear-8-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "linear-8",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "linear-8",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-0-linear-8-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "82240b6fce457ca2d387a55f39b65c3d3122d19daca85d5fbcd8d497e4738a4a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "cold",
+        "nanos": "243133",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-cold-0-grid-4x4-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "grid-4x4",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "grid-4x4",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-0-grid-4x4-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d17dba214b658029daf48f5cd85c8a54ca1b97d92efae977a197605f366eafb2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "cold",
+        "nanos": "301109",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-cold-0-grid-4x4-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "grid-4x4",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "grid-4x4",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-0-grid-4x4-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1f560109842d6d711983fc72091f566760a15fdb6ca0e9d4abe485af91e47f6c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "cold",
+        "nanos": "259072",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-cold-0-arc-12-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "arc-12",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "arc-12",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-0-arc-12-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "b22885929b9e3a5684a1052cd8cecb9998b49861d78ec305fad3427d8a3413fe",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "cold",
+        "nanos": "786876",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-cold-0-arc-12-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "arc-12",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "arc-12",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-0-arc-12-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "7660bff5b02eab72a6f879edcea94237de11ffa580d1f754a7845e29c4c0735d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "cold",
+        "nanos": "838043",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-cold-0-feature-merge-22-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "feature-merge-22",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "feature-merge-22",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-0-feature-merge-22-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "58a9f82999bda2f20d4f1628b605c42b993fd838923b8129c96ee3a4b99f6f0b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "cold",
+        "nanos": "331377",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-cold-0-feature-merge-22-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "feature-merge-22",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "feature-merge-22",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-0-feature-merge-22-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "80992e3e2695d3d17755559c07bdcfd3b09114e3244ceca52206d23c4006d80c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "cold",
+        "nanos": "373594",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-cold-0-merge-duplicate-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "merge-duplicate",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "merge-duplicate",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-0-merge-duplicate-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "f3018230ac70d389cddeffb6674a4421601366db11489a33622e5e5b6e11c9b1",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "cold",
+        "nanos": "68576",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "timing-cold-0-merge-duplicate-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "merge-duplicate",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "merge-duplicate",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-0-merge-duplicate-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "32a7b7f68bb2660f38cd11eaa4c9e635d8050c90d1119baca2f8f20c08fb55b7",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "cold",
+        "nanos": "48937",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "timing-cold-1-linear-8-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "linear-8",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "linear-8",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-1-linear-8-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "4379ff620cb08a250053c61cc75d7edb1add96ff895e1a4c138c08d504b98c4b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "cold",
+        "nanos": "173698",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-cold-1-linear-8-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "linear-8",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "linear-8",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-1-linear-8-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "009f40a0be9a34a563d7ade2cf7cc5e53705ab358519483e59c680d93026a1dd",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "cold",
+        "nanos": "168448",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-cold-1-grid-4x4-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "grid-4x4",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "grid-4x4",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-1-grid-4x4-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "b339f852213862e327df3c54c52af4a50df6ba6d289e09f642240b2763e5fe2f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "cold",
+        "nanos": "291610",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-cold-1-grid-4x4-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "grid-4x4",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "grid-4x4",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-1-grid-4x4-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "48d8046cbcc0ff5a458955b03a669b624723c468be7d2190e0d1b9f6beede473",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "cold",
+        "nanos": "256073",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-cold-1-arc-12-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "arc-12",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "arc-12",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-1-arc-12-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "7789b4a32c67799032f5018c4fa7fe2f4c742dfaf4128c500c53b6ba00573527",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "cold",
+        "nanos": "807654",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-cold-1-arc-12-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "arc-12",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "arc-12",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-1-arc-12-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "118fd0656673de88ad051eee36966cd825b1d2c4447b0da046ab5ef05333aded",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "cold",
+        "nanos": "871920",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-cold-1-feature-merge-22-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "feature-merge-22",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "feature-merge-22",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-1-feature-merge-22-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "b2bfdf62d186c28567d2a3b012f2080461ee3eb43c9106c2c73753ceae2076e3",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "cold",
+        "nanos": "308609",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-cold-1-feature-merge-22-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "feature-merge-22",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "feature-merge-22",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-1-feature-merge-22-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "42553dfe55bfdf9d9af9dc85111feb31d423bfff7300d6aa7c4abd7fc0020a26",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "cold",
+        "nanos": "291100",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-cold-1-merge-duplicate-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "merge-duplicate",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "merge-duplicate",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-1-merge-duplicate-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d0f2b38030fa75a7358b2bc1a782d6d6198aefcaa3f2847d12c0b363f0132b3e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "cold",
+        "nanos": "33088",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "timing-cold-1-merge-duplicate-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "merge-duplicate",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "merge-duplicate",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-1-merge-duplicate-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "b7599e574ebbdc2c8ec89d4424f44fbe3703c2ffa7cdf28bb03317acaa5fb355",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "cold",
+        "nanos": "29488",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "timing-cold-2-linear-8-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "linear-8",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "linear-8",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-2-linear-8-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "98947719234f691f00026b2e16939d1ee4290dd349579d18474f90f3952a0eff",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "cold",
+        "nanos": "178218",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-cold-2-linear-8-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "linear-8",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "linear-8",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-2-linear-8-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "e5562785e4abf83d5ededee481fc7347c4f83fdc797a52110fb08cf07c53bb2e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "cold",
+        "nanos": "181768",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-cold-2-grid-4x4-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "grid-4x4",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "grid-4x4",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-2-grid-4x4-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "5ed7a955ae975b8fd8ff209d7330ac76933033ac3b2ba4ea3e0029b61f09f2eb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "cold",
+        "nanos": "242004",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-cold-2-grid-4x4-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "grid-4x4",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "grid-4x4",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-2-grid-4x4-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "75d59e5cf78c2d42307f22d1805d8a90584e60b258e260b90c7b82c0de86cfbc",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "cold",
+        "nanos": "272131",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-cold-2-arc-12-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "arc-12",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "arc-12",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-2-arc-12-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "bf53a82d7571939d06b0688db5827d19edd7489f1ca1754ec33271f93e895788",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "cold",
+        "nanos": "802915",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-cold-2-arc-12-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "arc-12",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "arc-12",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-2-arc-12-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "8f9b556c5ee0314c731f90e114193e8e3a4c16d99442424757e839239f3a23ca",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "cold",
+        "nanos": "848172",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-cold-2-feature-merge-22-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "feature-merge-22",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "feature-merge-22",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-2-feature-merge-22-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1f56b888a64aecdd6713e772d28528dd7d38a94b8534b32b65a69d1f00f15af8",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "cold",
+        "nanos": "292560",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-cold-2-feature-merge-22-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "feature-merge-22",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "feature-merge-22",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-2-feature-merge-22-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "20d171bb800a44ec8c5361f89abd0dca86b5199e6f8c611e903001a873adb78e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "cold",
+        "nanos": "304429",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-cold-2-merge-duplicate-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "merge-duplicate",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "merge-duplicate",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-2-merge-duplicate-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "709a3afc8c1e713da5b154b1948a00ada7cd7ef4c4b2eb940297e63f1ddc1015",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "cold",
+        "nanos": "37018",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "timing-cold-2-merge-duplicate-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "cold",
+      "case": "merge-duplicate",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "merge-duplicate",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-cold-2-merge-duplicate-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "0e767a184320dba195b30b4121b794880ef5f77f70cb22bf23a789005db5741e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "cold",
+        "nanos": "32067",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "timing-warm-0-linear-8-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "linear-8",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "linear-8",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-0-linear-8-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "214c1d5d4c8d5a5c4224a8cb1d004e62ded416d62c36396e627606af2deaa945",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "warm",
+        "nanos": "890",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-warm-0-linear-8-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "linear-8",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "linear-8",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-0-linear-8-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "fcf8b4aa6e7c108990de42e9923c2dadf1becffae57b402051b2a109bdb69784",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "warm",
+        "nanos": "3320",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-warm-0-grid-4x4-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "grid-4x4",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "grid-4x4",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-0-grid-4x4-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "b5d7e7602c6e522fc657412b81ed9d3e336b7ebaaa5f9781ad78c14a911579cb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "warm",
+        "nanos": "699",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-warm-0-grid-4x4-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "grid-4x4",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "grid-4x4",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-0-grid-4x4-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d6f53cf57ddec12171a027ea9a2f69fa193d2b6ac0093e61116624bddd6f14f9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "warm",
+        "nanos": "3270",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-warm-0-arc-12-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "arc-12",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "arc-12",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-0-arc-12-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "c16d35b97f9cac74f03449a62c3daf26515e5a6a5db83e88fcbd554d6825985c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "warm",
+        "nanos": "1130",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-warm-0-arc-12-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "arc-12",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "arc-12",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-0-arc-12-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "2c88fe6b84852a4208b79228e9aacfe3460b6d18a8f2c1d88cc9bdce20420408",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "warm",
+        "nanos": "1580",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-warm-0-feature-merge-22-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "feature-merge-22",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "feature-merge-22",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-0-feature-merge-22-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "0b51cd112e18fc9cf2170dc50cb3e623176eec64af40165632fd3fb9f0e903b0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "warm",
+        "nanos": "272861",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-warm-0-feature-merge-22-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "feature-merge-22",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "feature-merge-22",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-0-feature-merge-22-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "3df7a2682e5d99d2d2e3438d47d1a48d447e4ce3044e0ae5f108ec2d7794324b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "warm",
+        "nanos": "251933",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-warm-0-merge-duplicate-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "merge-duplicate",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "merge-duplicate",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-0-merge-duplicate-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "a56f44a2525417f6785d5d50331b1ec2ac8a261de0c405766a3d6280bc046dfa",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "warm",
+        "nanos": "2900",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "timing-warm-0-merge-duplicate-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "merge-duplicate",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "merge-duplicate",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-0-merge-duplicate-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "5de80750ed45b8478cde7b06fcd340506ef0009aa93c03576c889353762ccc74",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "warm",
+        "nanos": "3020",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "timing-warm-1-linear-8-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "linear-8",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "linear-8",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-1-linear-8-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "011c0f097d995c0a63963c66872689230d8d264808a90ebcbd9c1895000ff7c0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "warm",
+        "nanos": "6810",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-warm-1-linear-8-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "linear-8",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "linear-8",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-1-linear-8-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "dc731ba5f5288a7da673e565264b59f960a186ce8fa2114b8ba3bdedd28b038d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "warm",
+        "nanos": "940",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-warm-1-grid-4x4-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "grid-4x4",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "grid-4x4",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-1-grid-4x4-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "7e246b44083cc3011c4e945272a5a7922ed2babbde5b2cb548ea81460583378a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "warm",
+        "nanos": "3840",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-warm-1-grid-4x4-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "grid-4x4",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "grid-4x4",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-1-grid-4x4-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "29d262df3f83e0da8d6893021020883aa097715bb38f057b405494ba3b9f53ae",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "warm",
+        "nanos": "3220",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-warm-1-arc-12-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "arc-12",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "arc-12",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-1-arc-12-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "4d78042555deda7ae3110a1d5de871795d7260c8a44002a1904e89bb16e832d9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "warm",
+        "nanos": "1200",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-warm-1-arc-12-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "arc-12",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "arc-12",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-1-arc-12-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "ef29cbde211f2a16f6cbe543b66061799b5d03c81f80e50c05a8876e5e03f115",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "warm",
+        "nanos": "1110",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-warm-1-feature-merge-22-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "feature-merge-22",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "feature-merge-22",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-1-feature-merge-22-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1c0b714777e4fefe7cfbe74818ea8226e81a4f8bf68f4475cfd78ea3ad9ea5c8",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "warm",
+        "nanos": "221945",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-warm-1-feature-merge-22-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "feature-merge-22",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "feature-merge-22",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-1-feature-merge-22-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "29dfc3ac681cd9417a5e27b3d6eb66213f361ebc55b8870dab59b438a443a519",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "warm",
+        "nanos": "256113",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-warm-1-merge-duplicate-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "merge-duplicate",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "merge-duplicate",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-1-merge-duplicate-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "11526e58d2a96c574ab3cfedcc3e67594ca5674e8e5893591689e1f3e1a2e6bb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "warm",
+        "nanos": "3900",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "timing-warm-1-merge-duplicate-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "merge-duplicate",
+      "pair": 1,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "merge-duplicate",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-1-merge-duplicate-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "7f27099d5d5d5426916748483d0a66622850dc5ea3fab99d1352bccaa5dea43f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "warm",
+        "nanos": "3060",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "timing-warm-2-linear-8-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "linear-8",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "linear-8",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-2-linear-8-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "bf456c9bb53220ccfbb2452635186f21738a0a2ac49b6530e3538b7d9833d8cb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "warm",
+        "nanos": "4240",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-warm-2-linear-8-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "linear-8",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "linear-8",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-2-linear-8-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "5526d8dae5bc3a71d9bc7d2718ecf6f570de942b2bb8ae621dfddc528ec702ed",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "warm",
+        "nanos": "830",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "timing-warm-2-grid-4x4-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "grid-4x4",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "grid-4x4",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-2-grid-4x4-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "bd41877b787e2a4d94ef986145bb89ed59654c6fac73c6053b73d532701f77dc",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "warm",
+        "nanos": "3339",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-warm-2-grid-4x4-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "grid-4x4",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "grid-4x4",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-2-grid-4x4-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "64a8558e19f9e7a6fac833b879310c4c5bd025f0d6ebc1de815c78d110601fb0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "warm",
+        "nanos": "3190",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "timing-warm-2-arc-12-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "arc-12",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "arc-12",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-2-arc-12-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "51941d937be7903c9053424266093811a29e98a77d6a7507bb21404de2511e3b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "warm",
+        "nanos": "1229",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-warm-2-arc-12-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "arc-12",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "arc-12",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-2-arc-12-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "c6b9007c5758985b009c8caa018a6b85168feed8804df08c0b2f7ad1f6f06650",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "warm",
+        "nanos": "1170",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "timing-warm-2-feature-merge-22-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "feature-merge-22",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "feature-merge-22",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-2-feature-merge-22-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d15de139cb2dbbc6ed3f2eaa859bf9a84a3ec1b993e2cafd3ad16c08fefac208",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "warm",
+        "nanos": "218105",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-warm-2-feature-merge-22-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "feature-merge-22",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "feature-merge-22",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-2-feature-merge-22-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "ad96bbc776f5d8aef1c4a3d15f30ddcbd4383bd807011ead93f4d38eccbb4450",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "warm",
+        "nanos": "224904",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "timing-warm-2-merge-duplicate-baseline",
+      "variant": "baseline",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "merge-duplicate",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing",
+        "merge-duplicate",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-2-merge-duplicate-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "e49160882586d0cea2ac873805ef26f223a0c2e007ed9f7be1bc6dca2aea6f14",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "warm",
+        "nanos": "3139",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "timing-warm-2-merge-duplicate-candidate",
+      "variant": "candidate",
+      "kind": "timing",
+      "temperature": "warm",
+      "case": "merge-duplicate",
+      "pair": 2,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing",
+        "merge-duplicate",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/timing-warm-2-merge-duplicate-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "cb6725f3de86d8e5d75ac041d9fb4fa7451bedcb075f883d2e30597e328dd313",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "warm",
+        "nanos": "3230",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    }
+  ],
+  "allocation_rows": [
+    {
+      "name": "allocation-cold-0-linear-8-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "linear-8",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation",
+        "linear-8",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-cold-0-linear-8-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "2dda0ead73d43edb5ce6f7108868be1c0f92b2519254e45a21e94dee599442d2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "cold",
+        "nanos": "207806",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "201",
+        "reallocations": "10",
+        "allocated_bytes": "77288",
+        "reallocated_bytes": "14144",
+        "live_delta_bytes": "32512",
+        "peak_additional_requested_bytes": "43528",
+        "retained_delta_bytes": "32512"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "allocation-cold-0-linear-8-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "linear-8",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation",
+        "linear-8",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-cold-0-linear-8-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "b92d216e615ab096b8d06bc4e56c45dcd3283f71c2c7500244003771aec8df77",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "cold",
+        "nanos": "209125",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "211",
+        "reallocations": "9",
+        "allocated_bytes": "80588",
+        "reallocated_bytes": "13824",
+        "live_delta_bytes": "32512",
+        "peak_additional_requested_bytes": "43528",
+        "retained_delta_bytes": "32512"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "allocation-cold-0-grid-4x4-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "grid-4x4",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation",
+        "grid-4x4",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-cold-0-grid-4x4-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "0c5c560c7271168dbdb224e7c17c3d11aa2e3f0d9df10b51e7ca05f037943e7c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "cold",
+        "nanos": "270001",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "434",
+        "reallocations": "18",
+        "allocated_bytes": "149920",
+        "reallocated_bytes": "29952",
+        "live_delta_bytes": "63360",
+        "peak_additional_requested_bytes": "86920",
+        "retained_delta_bytes": "63360"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "allocation-cold-0-grid-4x4-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "grid-4x4",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation",
+        "grid-4x4",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-cold-0-grid-4x4-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "c0d10fc5fb51ada33ebe09bc160dec3511f0120fe7aa5b5be5db03d3cdc76575",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "cold",
+        "nanos": "284411",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "444",
+        "reallocations": "18",
+        "allocated_bytes": "153060",
+        "reallocated_bytes": "29952",
+        "live_delta_bytes": "63360",
+        "peak_additional_requested_bytes": "86920",
+        "retained_delta_bytes": "63360"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "allocation-cold-0-arc-12-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "arc-12",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation",
+        "arc-12",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-cold-0-arc-12-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "090588e1c190e498e059bd6196a2b9a1b0d996dce138388ccd66069b79c3f927",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "cold",
+        "nanos": "1023389",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "8101",
+        "reallocations": "17",
+        "allocated_bytes": "575576",
+        "reallocated_bytes": "26592",
+        "live_delta_bytes": "81216",
+        "peak_additional_requested_bytes": "100240",
+        "retained_delta_bytes": "81216"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "allocation-cold-0-arc-12-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "arc-12",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation",
+        "arc-12",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-cold-0-arc-12-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "270eee3f8182e790f1a6fe4430784ec0445355018fdd2e815cf9703bc44abd2a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "cold",
+        "nanos": "966544",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "8111",
+        "reallocations": "15",
+        "allocated_bytes": "579036",
+        "reallocated_bytes": "25632",
+        "live_delta_bytes": "81216",
+        "peak_additional_requested_bytes": "100080",
+        "retained_delta_bytes": "81216"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "allocation-cold-0-feature-merge-22-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "feature-merge-22",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation",
+        "feature-merge-22",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-cold-0-feature-merge-22-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "ada9f0df43649484f536c70336c7ef1cad30744a9d8e5a79d9d9c8ac343f2a06",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "cold",
+        "nanos": "315088",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "600",
+        "reallocations": "22",
+        "allocated_bytes": "197384",
+        "reallocated_bytes": "31680",
+        "live_delta_bytes": "87176",
+        "peak_additional_requested_bytes": "114608",
+        "retained_delta_bytes": "87176"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "allocation-cold-0-feature-merge-22-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "feature-merge-22",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation",
+        "feature-merge-22",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-cold-0-feature-merge-22-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "9555668256810aeda05d508ec5bb7ae129339f65289d6279d2f26ebf95e35c00",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "cold",
+        "nanos": "309949",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "600",
+        "reallocations": "22",
+        "allocated_bytes": "197384",
+        "reallocated_bytes": "31680",
+        "live_delta_bytes": "87176",
+        "peak_additional_requested_bytes": "114608",
+        "retained_delta_bytes": "87176"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "allocation-cold-0-merge-duplicate-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "merge-duplicate",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation",
+        "merge-duplicate",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-cold-0-merge-duplicate-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "2d0f47fdba9c6c88b6c961a498d98c30548f6a4fb8363cd36d509a34f524d771",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "cold",
+        "nanos": "42807",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "18",
+        "reallocations": "0",
+        "allocated_bytes": "10264",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "5944",
+        "peak_additional_requested_bytes": "7808",
+        "retained_delta_bytes": "5944"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "allocation-cold-0-merge-duplicate-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "cold",
+      "case": "merge-duplicate",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation",
+        "merge-duplicate",
+        "cold",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-cold-0-merge-duplicate-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "a617a1dfaca532eab7cf7015c2d7a6488416e9d9a157137274efae83da43d951",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "cold",
+        "nanos": "91033",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "18",
+        "reallocations": "0",
+        "allocated_bytes": "10264",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "5944",
+        "peak_additional_requested_bytes": "7808",
+        "retained_delta_bytes": "5944"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "allocation-warm-0-linear-8-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "linear-8",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation",
+        "linear-8",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-warm-0-linear-8-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "1364cf63aba03d506e936064ca437afef5b17be9787fa1b4eaa859e11838d577",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "warm",
+        "nanos": "3800",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "allocation-warm-0-linear-8-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "linear-8",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation",
+        "linear-8",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-warm-0-linear-8-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "c3038fca11e6ebbce3087511defe453d765c793be1fe68a77f80b591f053ab98",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "linear-8",
+        "temperature": "warm",
+        "nanos": "6829",
+        "positions": "64",
+        "triangles": "96",
+        "serialized_bytes": "18404",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9"
+    },
+    {
+      "name": "allocation-warm-0-grid-4x4-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "grid-4x4",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation",
+        "grid-4x4",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-warm-0-grid-4x4-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "9b1b66c1e2675f04f6bfff03ef3123089a518f3813d9b3644fbc9583edaf76b5",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "warm",
+        "nanos": "4139",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "allocation-warm-0-grid-4x4-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "grid-4x4",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation",
+        "grid-4x4",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-warm-0-grid-4x4-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "523cf3f2bf63faa3cb000b4138fb311b765c55957a37ccadf8de70906a7525bd",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "grid-4x4",
+        "temperature": "warm",
+        "nanos": "3200",
+        "positions": "128",
+        "triangles": "192",
+        "serialized_bytes": "36942",
+        "certainty": "certified_local",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3"
+    },
+    {
+      "name": "allocation-warm-0-arc-12-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "arc-12",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation",
+        "arc-12",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-warm-0-arc-12-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "2b1193dbdd4d4ce507ee1ce63ca7470160f3cc07126a6d2e2a9227eafd260a04",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "warm",
+        "nanos": "1060",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "3",
+        "reallocations": "0",
+        "allocated_bytes": "144",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "144",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "allocation-warm-0-arc-12-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "arc-12",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation",
+        "arc-12",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-warm-0-arc-12-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "83f73f9577c677ccfaed1126ae01cad86015e2700d51b5cf459a4f09e189aaac",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "arc-12",
+        "temperature": "warm",
+        "nanos": "1140",
+        "positions": "96",
+        "triangles": "144",
+        "serialized_bytes": "41544",
+        "certainty": "certified_local",
+        "allocations": "3",
+        "reallocations": "0",
+        "allocated_bytes": "144",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "144",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95"
+    },
+    {
+      "name": "allocation-warm-0-feature-merge-22-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "feature-merge-22",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation",
+        "feature-merge-22",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-warm-0-feature-merge-22-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "9aaebe5cb0cd0574823a33f1a6bc8da72930655d5350e22e198e21831e7b134a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "warm",
+        "nanos": "221795",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "547",
+        "reallocations": "22",
+        "allocated_bytes": "189992",
+        "reallocated_bytes": "31680",
+        "live_delta_bytes": "81224",
+        "peak_additional_requested_bytes": "108912",
+        "retained_delta_bytes": "81224"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "allocation-warm-0-feature-merge-22-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "feature-merge-22",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation",
+        "feature-merge-22",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-warm-0-feature-merge-22-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "be3bea888bd5af842859669351e41573420b30c495181e34db520b9aaae72dd1",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "feature-merge-22",
+        "temperature": "warm",
+        "nanos": "239763",
+        "positions": "176",
+        "triangles": "264",
+        "serialized_bytes": "51054",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "547",
+        "reallocations": "22",
+        "allocated_bytes": "189992",
+        "reallocated_bytes": "31680",
+        "live_delta_bytes": "81224",
+        "peak_additional_requested_bytes": "108912",
+        "retained_delta_bytes": "81224"
+      },
+      "geometry_sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b"
+    },
+    {
+      "name": "allocation-warm-0-merge-duplicate-baseline",
+      "variant": "baseline",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "merge-duplicate",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation",
+        "merge-duplicate",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-warm-0-merge-duplicate-baseline.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "30968e6938813c117458607585d175b79eaace52c0546e048ae2e3a3194f6d34",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "warm",
+        "nanos": "5710",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    },
+    {
+      "name": "allocation-warm-0-merge-duplicate-candidate",
+      "variant": "candidate",
+      "kind": "allocation",
+      "temperature": "warm",
+      "case": "merge-duplicate",
+      "pair": 0,
+      "command": [
+        "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation",
+        "merge-duplicate",
+        "warm",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/resources-v1/measurements/allocation-warm-0-merge-duplicate-candidate.geometry.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "132b157202633bb2172edf0b8c11671f270a8b0ff093840f4abd89be846a3c46",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "measurement": {
+        "case": "merge-duplicate",
+        "temperature": "warm",
+        "nanos": "7000",
+        "positions": "16",
+        "triangles": "24",
+        "serialized_bytes": "4576",
+        "certainty": "structural_copy_no_topology_claim",
+        "allocations": "0",
+        "reallocations": "0",
+        "allocated_bytes": "0",
+        "reallocated_bytes": "0",
+        "live_delta_bytes": "0",
+        "peak_additional_requested_bytes": "0",
+        "retained_delta_bytes": "0"
+      },
+      "geometry_sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a"
+    }
+  ],
+  "preservation_rows": [
+    {
+      "case": "linear-8",
+      "sha256": "900a482da022d44bc9e989a31a422bdf949762ad707fb2a22b68eeec211d9dd9",
+      "bytes": 18404,
+      "all_replays_byte_equal": true
+    },
+    {
+      "case": "grid-4x4",
+      "sha256": "b89aa255dedc5aa663346a82fba677339c9cbe8e8b4fbba4a869c3ccd2f629f3",
+      "bytes": 36942,
+      "all_replays_byte_equal": true
+    },
+    {
+      "case": "arc-12",
+      "sha256": "5607cf6845424294e969dd4b0722ab7f3a6540a5acf5324e627c0c8906f5ad95",
+      "bytes": 41544,
+      "all_replays_byte_equal": true
+    },
+    {
+      "case": "feature-merge-22",
+      "sha256": "a7df71e00fea758d0240eb5c5e055b623ce3629d636bf7e259e06c233dc4344b",
+      "bytes": 51054,
+      "all_replays_byte_equal": true
+    },
+    {
+      "case": "merge-duplicate",
+      "sha256": "972231db7e51a85b16b078431790b164a4043e68434ea28ef23c54c70e8a9b6a",
+      "bytes": 4576,
+      "all_replays_byte_equal": true
+    }
+  ],
+  "independent_box_semantics": [
+    {
+      "case": "linear-8",
+      "variant": "baseline",
+      "components": 8,
+      "exact_unit_face_coverage": true,
+      "interpretation": "disjoint unit-box union"
+    },
+    {
+      "case": "linear-8",
+      "variant": "candidate",
+      "components": 8,
+      "exact_unit_face_coverage": true,
+      "interpretation": "disjoint unit-box union"
+    },
+    {
+      "case": "grid-4x4",
+      "variant": "baseline",
+      "components": 16,
+      "exact_unit_face_coverage": true,
+      "interpretation": "disjoint unit-box union"
+    },
+    {
+      "case": "grid-4x4",
+      "variant": "candidate",
+      "components": 16,
+      "exact_unit_face_coverage": true,
+      "interpretation": "disjoint unit-box union"
+    },
+    {
+      "case": "feature-merge-22",
+      "variant": "baseline",
+      "components": 22,
+      "exact_unit_face_coverage": true,
+      "interpretation": "disjoint unit-box union"
+    },
+    {
+      "case": "feature-merge-22",
+      "variant": "candidate",
+      "components": 22,
+      "exact_unit_face_coverage": true,
+      "interpretation": "disjoint unit-box union"
+    },
+    {
+      "case": "merge-duplicate",
+      "variant": "baseline",
+      "components": 2,
+      "exact_unit_face_coverage": true,
+      "interpretation": "positive winding multiplicity"
+    },
+    {
+      "case": "merge-duplicate",
+      "variant": "candidate",
+      "components": 2,
+      "exact_unit_face_coverage": true,
+      "interpretation": "positive winding multiplicity"
+    }
+  ],
+  "benchmark_rows": [
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "kernel",
+      "benchmark": "distribute_linear",
+      "case": "box_8",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "143301",
+      "work_units": "12",
+      "output_size": "96",
+      "checksum": "12582976"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "kernel",
+      "benchmark": "distribute_grid",
+      "case": "box_4x4",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "258002",
+      "work_units": "12",
+      "output_size": "192",
+      "checksum": "25165952"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "kernel",
+      "benchmark": "distribute_arc",
+      "case": "box_12_30_degree_steps",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "788745",
+      "work_units": "12",
+      "output_size": "144",
+      "checksum": "18874464"
+    },
+    {
+      "engine": "csgrs",
+      "temperature": "warm",
+      "suite": "feature",
+      "benchmark": "mesh_distribution",
+      "case": "arc_linear_grid",
+      "sample": "0",
+      "iterations": "1",
+      "elapsed_ns": "366625",
+      "work_units": "22",
+      "output_size": "264",
+      "checksum": "34603184"
+    }
+  ],
+  "semantics": [
+    "Invalid indices, malformed empties, open, degenerate and unbalanced sources fail before zero/one/disjoint shortcuts under both policies; native causes survive strict and context APIs.",
+    "Canonical empty, zero-count and subtraction-to-empty results compose; signed/zero spacing and single-arc midpoint retain their exact meaning.",
+    "Original 8/16/12-copy workflows satisfy independent membership, exact per-face volume proofs, strict topology, empty union and complete self subtraction.",
+    "Independent exact unit-face coverage establishes the original rational 8/16/22-copy boundaries and duplicate concatenation winding multiplicity on both revisions.",
+    "Touching, overlapping, balanced nonmanifold and winding-multiplicity inputs remain supported; concatenation preserves open buffers and unused points.",
+    "Native PWN facts preserve combined face/edge certainty and matching buffer identity; approximate facts cannot satisfy strict requests without a new proof.",
+    "Cold/warm/disabled/evicted/mutated cache states and strict-approximate-strict sequences retain errors, meanings and receipts.",
+    "Count/byte overflow produces typed exhaustion before copy allocation; recovery succeeds. This is not a total resource bound.",
+    "All five exact position/index artifacts remain byte-identical across all 80 completed timing/allocation replays."
+  ],
+  "diagnostics": "Every failed compilation, contained child and declined volume query remains retained; see baseline-findings-v1.md, volume-oracle-v1.md and diagnostic-findings-v1.md. No fixture resolution or predicate policy was weakened.",
+  "remaining": "Expanded arc-volume scalar recognition, inherited provenance, general work/heap/cancellation bounds, clean external package/release, full CI, formal/fuzz/coverage and 35 separately unadmitted native files remain open.",
+  "full_plan_complete": false
+}

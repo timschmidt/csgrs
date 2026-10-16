@@ -23,6 +23,8 @@ use crate::polygon::{
 use crate::predicate::classify_point_decision;
 use crate::storage_hash::StorageHashMap;
 
+mod concatenation;
+
 /// Triangle: three indices into a [`TriangleMesh`]'s position buffer.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Triangle {
@@ -235,6 +237,27 @@ impl TriangleMesh {
             }
         }
         Ok(())
+    }
+
+    /// Validates the nonempty closed-PWN input contract used by Boolean operations.
+    ///
+    /// This proves valid indices, nondegenerate faces and balanced geometric
+    /// edge multiplicities. It does not require manifoldness or nonzero enclosed
+    /// winding, regularize the surface, or compute its bounds. Canonical empty
+    /// geometry still belongs to the modeling layer's empty-set bridge.
+    /// Qualified facts are reused only for matching position/index storage and
+    /// an admissible policy. A stronger fact requires new native validation.
+    pub fn validate_closed_pwn(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<()>> {
+        let decisions = DecisionContext::new(context);
+        let view = self.as_ref();
+        validate_non_empty_mesh_views(&[view])?;
+        if !self
+            .geometry_facts()
+            .is_some_and(|facts| facts.valid_pwn.consume(&decisions))
+        {
+            validate_source_pwn(&decisions, view, 0)?;
+        }
+        Ok(decisions.finish(()))
     }
 
     /// Resolves a triangle's position rows, preserving invalid-index diagnostics.
@@ -1295,16 +1318,13 @@ pub(crate) fn build_polygon_soup_internal(
             })?;
         let position_owner = mesh.position_owner();
         let geometry_facts = mesh.geometry_facts();
-        let edge_balance_is_certified =
-            geometry_facts.is_some_and(|facts| facts.valid_pwn.consume(decisions));
         let normalize_wide_dyadic = position_owner
             .and_then(TriangleMesh::position_facts)
             .map_or_else(
                 || points_require_wide_dyadic_plane_normalization(mesh.positions),
                 |facts| facts.normalizes_wide_dyadic_planes(mesh.positions),
             );
-        let source_usage =
-            validate_source_triangles(decisions, *mesh, mesh_index, !edge_balance_is_certified)?;
+        let source_usage = validate_source_pwn(decisions, *mesh, mesh_index)?;
         source_vertex_count = source_vertex_count
             .checked_add(source_usage.referenced_count)
             .ok_or(HypermeshError::CapacityOverflow {
@@ -1360,27 +1380,6 @@ pub(crate) fn build_polygon_soup_internal(
             )?;
             polygons.push(finish_source_polygon(polygon, mesh_index, meshes.len()));
         }
-        if !edge_balance_is_certified {
-            let local = decisions.isolated();
-            let edge_balance = classify_indexed_edge_balance(&local, mesh);
-            decisions.absorb(local.certainty());
-            let edge_balance = edge_balance?;
-            if edge_balance.boundary_edges != 0 {
-                return Err(HypermeshError::OpenInput {
-                    mesh_index,
-                    boundary_edges: edge_balance.boundary_edges,
-                });
-            }
-            if edge_balance.unbalanced_edges != 0 {
-                return Err(HypermeshError::NonPwnInput {
-                    mesh_index,
-                    unbalanced_edges: edge_balance.unbalanced_edges,
-                });
-            }
-            if let Some(facts) = geometry_facts {
-                facts.valid_pwn.record(local.certainty());
-            }
-        }
     }
     crate::trace_dispatch!("build-polygon-soup", "complete");
     Ok(PolygonSoup {
@@ -1394,6 +1393,42 @@ pub(crate) fn build_polygon_soup_internal(
 struct SourceVertexUsage {
     referenced: Vec<bool>,
     referenced_count: usize,
+}
+
+fn validate_source_pwn(
+    decisions: &DecisionContext,
+    mesh: TriangleMeshRef<'_>,
+    mesh_index: usize,
+) -> HypermeshResult<SourceVertexUsage> {
+    let local = decisions.isolated();
+    let geometry_facts = mesh.geometry_facts();
+    let certified = geometry_facts.is_some_and(|facts| facts.valid_pwn.consume(&local));
+    let result = (|| {
+        let usage = validate_source_triangles(&local, mesh, mesh_index, !certified)?;
+        if !certified {
+            let edge_balance = classify_indexed_edge_balance(&local, &mesh)?;
+            if edge_balance.boundary_edges != 0 {
+                return Err(HypermeshError::OpenInput {
+                    mesh_index,
+                    boundary_edges: edge_balance.boundary_edges,
+                });
+            }
+            if edge_balance.unbalanced_edges != 0 {
+                return Err(HypermeshError::NonPwnInput {
+                    mesh_index,
+                    unbalanced_edges: edge_balance.unbalanced_edges,
+                });
+            }
+            if let Some(facts) = geometry_facts {
+                // The reusable claim depends on both nondegeneracy and edge
+                // balance; retain the certainty of the complete validation.
+                facts.valid_pwn.record(local.certainty());
+            }
+        }
+        Ok(usage)
+    })();
+    decisions.absorb(local.certainty());
+    result
 }
 
 fn validate_source_triangles(

@@ -1,0 +1,24 @@
+error[E0609]: no field `z` on type `Vector3`
+    --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/volume_probe_v2.rs:42:62
+     |
+  42 |         sum + (&a.z + &b.z + &c.z) * (b - a).cross(&(c - a)).z
+     |                                                              ^
+     |                                                              |
+     |                                                              this is an associated function, not a method
+     |                                                              unknown field
+     |
+     = note: found the following associated function; to be used as method, it must have a `self` parameter
+note: the candidate is defined in an impl for the type `Vector3`
+    --> crates/hyperlattice/src/vector.rs:1585:5
+     |
+1585 |     pub fn z() -> Self {
+     |     ^^^^^^^^^^^^^^^^^^
+help: use associated function syntax instead
+     |
+  42 -         sum + (&a.z + &b.z + &c.z) * (b - a).cross(&(c - a)).z
+  42 +         sum + (&a.z + &b.z + &c.z) * Vector3::z
+     |
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0609`.

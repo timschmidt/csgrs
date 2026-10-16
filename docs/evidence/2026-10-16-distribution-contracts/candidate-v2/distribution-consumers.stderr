@@ -1,0 +1,12 @@
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 32.76s
+     Running tests/distribution_contracts.rs (target/properties/distribution-contracts/candidate-v2/release/deps/distribution_contracts-555e8fcfefd73180)
+error: test failed, to rerun pass `-p csgrs --test distribution_contracts`
+     Running tests/geometry_context.rs (target/properties/distribution-contracts/candidate-v2/release/deps/geometry_context-f3d29f7d6dc94528)
+     Running tests/native_queries.rs (target/properties/distribution-contracts/candidate-v2/release/deps/native_queries-b33ec052b7501c8a)
+     Running tests/slice_projection_contract.rs (target/properties/distribution-contracts/candidate-v2/release/deps/slice_projection_contract-b55baaad948b2b8d)
+     Running tests/solid_cache.rs (target/properties/distribution-contracts/candidate-v2/release/deps/solid_cache-4b39500f97650a56)
+error: 1 target failed:
+    `-p csgrs --test distribution_contracts`

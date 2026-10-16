@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "name": "overlay-setup",
+      "exit_code": 0,
+      "seconds": 19.587694198824465,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "488291cb26b67c0185b96031c28e8970255678bdd7ed60b4e264b5f6aa75e25a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "44c17078354f6b3ad238c2137278827c8f1190327fee59fbf672803fa016bc45"
+    },
+    {
+      "name": "all-features-library",
+      "exit_code": 0,
+      "seconds": 278.1577869448811,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "7702d5ac01134de6339aa5aa3e749a2d265191a09dd76c77d42998c48ff2877c",
+      "resources_sha256": "325cb00a85847a6acc08df739c26b8779c61cc6c49badebc909611513b6bcb8a"
+    }
+  ],
+  "passed": true
+}

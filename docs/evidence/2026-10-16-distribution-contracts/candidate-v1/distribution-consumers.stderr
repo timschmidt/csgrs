@@ -1,0 +1,26 @@
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+error[E0382]: use of moved value: `theta`
+    --> tests/distribution_contracts.rs:231:20
+     |
+ 229 |         let theta = Real::pi() * q(i, 6);
+     |             ----- move occurs because `theta` has type `Real`, which does not implement the `Copy` trait
+ 230 |         let cosine = theta.cos();
+     |                            ----- `theta` moved due to this method call
+ 231 |         let sine = theta.sin();
+     |                    ^^^^^ value used here after move
+     |
+note: `Real::cos` takes ownership of the receiver `self`, which moves `theta`
+    --> crates/hyperreal/src/real/arithmetic/elementary_functions.rs:2470:16
+     |
+2470 |     pub fn cos(self) -> Real {
+     |                ^^^^
+help: you can `clone` the value and consume it, but this might not be your desired behavior
+     |
+ 230 |         let cosine = theta.clone().cos();
+     |                           ++++++++
+
+For more information about this error, try `rustc --explain E0382`.
+error: could not compile `csgrs` (test "distribution_contracts") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

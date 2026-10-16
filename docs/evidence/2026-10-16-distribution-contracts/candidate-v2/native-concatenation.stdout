@@ -1,0 +1,10 @@
+
+running 5 tests
+test mesh::concatenation::tests::count_and_byte_overflow_are_typed_before_reservation ... ok
+test mesh::concatenation::tests::concatenation_preserves_weakest_pwn_fact_and_allows_new_strict_proof ... ok
+test mesh::concatenation::tests::edited_sources_do_not_transfer_stale_pwn_facts ... ok
+test mesh::concatenation::tests::invalid_source_indices_cannot_alias_another_input_or_wrap ... ok
+test mesh::concatenation::tests::open_buffers_and_unused_points_preserve_exact_order_and_multiplicity ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 183 filtered out; finished in 0.00s
+

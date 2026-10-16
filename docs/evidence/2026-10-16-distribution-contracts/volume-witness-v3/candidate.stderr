@@ -1,0 +1,6 @@
+
+thread 'main' (2123194) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/volume_probe_v3.rs:47:5:
+assertion `left == right` failed
+  left: None
+ right: Some(true)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

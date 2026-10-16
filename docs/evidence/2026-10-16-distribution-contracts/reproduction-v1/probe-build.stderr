@@ -1,0 +1,20 @@
+error[E0425]: cannot find function `translate` in module `solid`
+    --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-distribution-contracts/baseline_probe_v1.rs:185:32
+     |
+ 185 |                         solid::translate(&cube, r((index % 6) * 3), r((index / 6) * 3), r(0))
+     |                                ^^^^^^^^^
+     |
+    ::: src/solid.rs:2626:1
+     |
+2626 | pub fn translation(vector: Vector3) -> Matrix4 {
+     | ---------------------------------------------- similarly named function `translation` defined here
+     |
+help: a function with a similar name exists
+     |
+ 185 -                         solid::translate(&cube, r((index % 6) * 3), r((index / 6) * 3), r(0))
+ 185 +                         solid::translation(&cube, r((index % 6) * 3), r((index / 6) * 3), r(0))
+     |
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0425`.

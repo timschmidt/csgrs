@@ -1,0 +1,15 @@
+linear-8: equality_before=Some(true) normal=Some(Rational { sign: Plus, numerator: 48, denominator: 1 }) difference_normal=Some(Rational { sign: NoSign, numerator: 0, denominator: 1 }) equality_after=Some(true)
+linear-8: per-face divergence equality=Some(true) normal=Some(Rational { sign: Plus, numerator: 48, denominator: 1 })
+linear-8-after-empty-union: equality_before=Some(true) normal=Some(Rational { sign: Plus, numerator: 48, denominator: 1 }) difference_normal=Some(Rational { sign: NoSign, numerator: 0, denominator: 1 }) equality_after=Some(true)
+linear-8-after-empty-union: per-face divergence equality=Some(true) normal=Some(Rational { sign: Plus, numerator: 48, denominator: 1 })
+linear-8: strict topology, empty union and complete self subtraction pass
+grid-4x4: equality_before=Some(true) normal=Some(Rational { sign: Plus, numerator: 96, denominator: 1 }) difference_normal=Some(Rational { sign: NoSign, numerator: 0, denominator: 1 }) equality_after=Some(true)
+grid-4x4: per-face divergence equality=Some(true) normal=Some(Rational { sign: Plus, numerator: 96, denominator: 1 })
+grid-4x4-after-empty-union: equality_before=Some(true) normal=Some(Rational { sign: Plus, numerator: 96, denominator: 1 }) difference_normal=Some(Rational { sign: NoSign, numerator: 0, denominator: 1 }) equality_after=Some(true)
+grid-4x4-after-empty-union: per-face divergence equality=Some(true) normal=Some(Rational { sign: Plus, numerator: 96, denominator: 1 })
+grid-4x4: strict topology, empty union and complete self subtraction pass
+arc-12: equality_before=None normal=None difference_normal=None equality_after=None
+arc-12: per-face divergence equality=Some(true) normal=Some(Rational { sign: Plus, numerator: 72, denominator: 1 })
+arc-12-after-empty-union: equality_before=None normal=None difference_normal=None equality_after=None
+arc-12-after-empty-union: per-face divergence equality=Some(true) normal=Some(Rational { sign: Plus, numerator: 72, denominator: 1 })
+arc-12: strict topology, empty union and complete self subtraction pass

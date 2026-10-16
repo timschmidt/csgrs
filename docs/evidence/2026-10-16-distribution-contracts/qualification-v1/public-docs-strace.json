@@ -1,0 +1,18 @@
+{
+  "command": [
+    "timeout",
+    "--signal=INT",
+    "5",
+    "strace",
+    "-c",
+    "-p",
+    "2132414",
+    "-o",
+    "docs/evidence/2026-10-16-distribution-contracts/qualification-v1/public-docs-strace.txt"
+  ],
+  "seconds": 5.010541018098593,
+  "exit_code": 124,
+  "stdout": "",
+  "stderr": "strace: Process 2132414 attached\nstrace: Process 2132414 detached\n",
+  "scope": "Five-second syscall-count sample of the owned Cargo documentation child; timeout stops the observer, not Cargo."
+}

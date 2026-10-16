@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `bench` profile [optimized] target(s) in 5.49s
+  Executable benchmarks/rust/feature_pipeline.rs (target/properties/distribution-contracts/qualification-v1/release/deps/feature_pipeline-63ce02836b73af16)
+  Executable benchmarks/rust/kernel_comparison.rs (target/properties/distribution-contracts/qualification-v1/release/deps/kernel_comparison-80a3df65300e51c2)

@@ -1,0 +1,45 @@
+linear-invalid-indices-0: success empty=true triangles=0 certainty=Certified
+grid-invalid-indices-0: success empty=true triangles=0 certainty=Certified
+arc-invalid-indices-0: success empty=true triangles=0 certainty=Certified
+linear-invalid-indices-1: error kind=InvalidInput source=true diagnostic=Mesh(VertexIndexOutOfBounds { index: 1, vertex_count: 1 })
+grid-invalid-indices-1: error kind=InvalidInput source=true diagnostic=Mesh(VertexIndexOutOfBounds { index: 1, vertex_count: 1 })
+arc-invalid-indices-1: error kind=InvalidInput source=true diagnostic=Mesh(VertexIndexOutOfBounds { index: 1, vertex_count: 1 })
+linear-invalid-indices-2: error kind=InvalidInput source=true diagnostic=Mesh(VertexIndexOutOfBounds { index: 1, vertex_count: 1 })
+grid-invalid-indices-2: error kind=InvalidInput source=true diagnostic=Mesh(VertexIndexOutOfBounds { index: 1, vertex_count: 1 })
+arc-invalid-indices-2: error kind=InvalidInput source=true diagnostic=Mesh(VertexIndexOutOfBounds { index: 1, vertex_count: 1 })
+strict-wrapper-invalid-indices: linear_empty=true grid_empty=true arc_empty=true
+linear-open-0: success empty=true triangles=0 certainty=Certified
+grid-open-0: success empty=true triangles=0 certainty=Certified
+arc-open-0: success empty=true triangles=0 certainty=Certified
+linear-open-1: success empty=false triangles=1 certainty=Certified
+grid-open-1: success empty=false triangles=1 certainty=Certified
+arc-open-1: success empty=false triangles=1 certainty=Certified
+linear-open-2: success empty=false triangles=2 certainty=Certified
+grid-open-2: success empty=false triangles=2 certainty=Certified
+arc-open-2: success empty=false triangles=2 certainty=Certified
+strict-wrapper-open: linear_empty=false grid_empty=false arc_empty=false
+linear-empty-0: success empty=true triangles=0 certainty=Certified
+grid-empty-0: success empty=true triangles=0 certainty=Certified
+arc-empty-0: success empty=true triangles=0 certainty=Certified
+linear-empty-1: success empty=true triangles=0 certainty=Certified
+grid-empty-1: success empty=true triangles=0 certainty=Certified
+arc-empty-1: success empty=true triangles=0 certainty=Certified
+linear-empty-2: success empty=true triangles=0 certainty=Certified
+grid-empty-2: success empty=true triangles=0 certainty=Certified
+arc-empty-2: success empty=true triangles=0 certainty=Certified
+strict-wrapper-empty: linear_empty=true grid_empty=true arc_empty=true
+zero-direction-0: success empty=true triangles=0 certainty=Certified
+zero-direction-1: error kind=InvalidInput source=false diagnostic=InvalidArguments
+zero-direction-2: error kind=InvalidInput source=false diagnostic=InvalidArguments
+strict-wrapper-zero-direction: empty=true
+open-overlapping: error kind=Geometry source=false diagnostic=Geometry("input mesh 0 has 3 boundary edges")
+undecided-grid: error kind=Geometry source=false diagnostic=Geometry("predicate could not be decided: Real ordering")
+strict-wrapper-undecided: empty=true
+grid-product-overflow: error kind=InvalidInput source=false diagnostic=InvalidArguments
+grid-byte-overflow: panic
+merge-invalid: success first_index=7
+fixture linear-8: positions=64 triangles=96
+fixture grid-4x4: positions=128 triangles=192
+fixture arc-12: positions=96 triangles=144
+fixture merge-duplicate: positions=16 triangles=24
+fixture feature-merge-22: positions=176 triangles=264
