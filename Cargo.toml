@@ -321,7 +321,7 @@ required-features = ["curve", "stl-io"]
 
 [[example]]
 name = "basic_shapes"
-required-features = ["stl-io"]
+required-features = ["curve", "stl-io"]
 
 [[example]]
 name = "boolean_operations"

@@ -12222,6 +12222,41 @@
     "published_package_pipeline_executed": false,
     "full_plan_complete": false,
     "next": "Correct STL import topology through native validation, retaining small-scale, malformed-edge and balanced-winding regressions. Keep text projection, binary STL collapse, native timing gates and full distribution/resource work open."
+  },
+  "stl_native_validation": {
+    "status": "kept: STL import uses strict native closed-PWN validation and preserves typed topology failures",
+    "main_parent_commit": "7a1f0c7e1f4f69499feb3b471f739dfb50f4776c",
+    "contract": "docs/evidence/2026-10-16-stl-native-validation/contract-v1.md",
+    "feature_followup": "docs/evidence/2026-10-16-stl-native-validation/contract-v2.md",
+    "progress": "docs/evidence/2026-10-16-stl-native-validation/progress-v3.md",
+    "decision": "docs/evidence/2026-10-16-stl-native-validation/decision-v3.json",
+    "checkpoint": "docs/evidence/2026-10-16-stl-native-validation/checkpoint-v3.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-stl-native-validation/artifact-expectations-v3.json.gz",
+    "implementation_sha256": {
+      "Cargo.toml": "712483e1d8a0a4b2b824ba8cb4fedeae4df023e6d2298301324211dbb0ea3eff",
+      "src/io/stl.rs": "0d4c7c8d08ac8508491fd2b09f4fa29d7b07f43cd13c90b638eb9ae1afccb8bc",
+      "tests/stl_import_contracts.rs": "05c38114c0252e440d4366b69b5e8b08329bb007c0640b77bcf0e3549f1d783b"
+    },
+    "original_format_diagnostic": {
+      "remaining_failures": [
+        "ascii_stl_small_coordinate_projection_survives_text",
+        "binary_stl_rejects_faces_collapsed_by_quantization",
+        "obj_small_coordinate_projection_survives_text"
+      ],
+      "source_unchanged": true
+    },
+    "cost": "docs/evidence/2026-10-16-stl-native-validation/cost-v3/result.json",
+    "cost_contract": "docs/evidence/2026-10-16-stl-native-validation/cost-contract-v2.md",
+    "stl_import_fix_admitted": true,
+    "native_runtime_admitted": false,
+    "pending_native_files_unchanged": 35,
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "next": [
+      "Correct the separately reproduced OBJ/ASCII STL coordinate formatting losses and binary STL quantization collapse without weakening the fixtures.",
+      "Keep the 35 pending native changes unadmitted until the original full-board and copper-neck runtime gates pass.",
+      "Continue the remaining properties, clean external distribution and full pre-push validation."
+    ]
   }
 },
   "status_meanings": {
