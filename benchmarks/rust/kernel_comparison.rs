@@ -623,7 +623,8 @@ fn run() {
                 8,
                 Vector3::x(),
                 Real::from(2_u8),
-            ),
+            )
+            .expect("valid distribution fixture"),
             12,
         )
     });
@@ -635,7 +636,8 @@ fn run() {
                 4,
                 Real::from(2_u8),
                 Real::from(2_u8),
-            ),
+            )
+            .expect("valid distribution fixture"),
             12,
         )
     });
@@ -652,7 +654,8 @@ fn run() {
                     Real::from(10_u8),
                     Real::zero(),
                     Real::from(330_u16),
-                ),
+                )
+                .expect("valid distribution fixture"),
                 12,
             )
         },

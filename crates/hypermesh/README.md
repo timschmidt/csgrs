@@ -165,12 +165,26 @@ total-work, retained-byte or cancellation bound is claimed.
 | Reusable indexed input | `TriangleMesh`, `TriangleMeshRef`, `Triangle` |
 | Policy and aggregate certainty | `MeshContext`, `PredicatePolicy`, `MeshOutcome`, `MeshCertainty` |
 | Explicit native conversion | `BooleanMeshBatch::into_triangle_meshes` |
-| Input validation | `polygon_soup` |
+| Input validation | `TriangleMesh::validate_closed_pwn`, `polygon_soup` |
+| Structural concatenation | `TriangleMesh::try_concatenate` |
 | Exact pairwise geometry | `intersect_polygons`, `PairwiseIntersection` |
 | Acceleration | `ExactBvh`, `ExactPointBvh` |
 | Convex hull | `convex_hull`, `convex_hull_with_coplanar_groups` |
 | Mesh queries and editing | methods on `TriangleMesh` |
 | Errors | `HypermeshError`, `HypermeshResult<T>` |
+
+`validate_closed_pwn` checks the same nonempty input contract as Boolean soup
+preparation without constructing polygons or computing bounds. It accepts
+balanced nonmanifold surfaces and retains the combined certainty of face and
+edge validation. Facts remain bound to matching source buffers and admissible
+policies; this validates topology, not inherited construction intent.
+
+`try_concatenate` preserves position/triangle order, open surfaces, unused
+vertices and winding multiplicity. It validates source indices and checks
+count/byte capacities before rebasing, with typed reservation failures. It
+does not compute a Boolean union. Existing closed-PWN facts retain their weakest
+certainty when all nonempty inputs supply them. These vector checks do not bound
+total work, scalar/shared-buffer allocation, retained heap bytes or cancellation.
 
 Primitive-float GPU buffers are explicit presentation boundaries. Do not feed
 their approximated coordinates back into topology decisions.

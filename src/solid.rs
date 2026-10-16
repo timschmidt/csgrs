@@ -1776,29 +1776,42 @@ pub fn float(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
     try_float(mesh)
 }
 
-/// Concatenates native meshes without performing a Boolean operation.
-pub fn merge(meshes: &[TriangleMesh]) -> TriangleMesh {
+/// Concatenates native buffers in input order, preserving typed failures.
+///
+/// Open surfaces and winding multiplicity are preserved. This is structural
+/// composition, not a Boolean union or a topology validation. Native index and
+/// capacity checks run before rebasing; only successful results are cached.
+pub fn merge(meshes: &[TriangleMesh]) -> Result<TriangleMesh, ValidationError> {
     if let Some(result) = retained_merge(meshes) {
-        return result;
+        return Ok(result);
     }
-    let position_count = meshes.iter().map(|mesh| mesh.positions.len()).sum();
-    let triangle_count = meshes.iter().map(|mesh| mesh.triangles.len()).sum();
-    let mut positions = Vec::with_capacity(position_count);
-    let mut triangles = Vec::with_capacity(triangle_count);
-    for mesh in meshes {
-        let base = positions.len();
-        positions.extend(mesh.positions.iter().cloned());
-        triangles.extend(mesh.triangles.iter().map(|triangle| {
-            hypermesh::Triangle::new(
-                base + triangle.v0,
-                base + triangle.v1,
-                base + triangle.v2,
-            )
-        }));
-    }
-    let result = TriangleMesh::new(positions, triangles);
+    let result = TriangleMesh::try_concatenate(meshes)?;
     retain_merge(meshes, &result);
-    result
+    Ok(result)
+}
+
+fn validate_distribution_source(
+    mesh: &TriangleMesh,
+    decisions: &GeometryDecisions,
+) -> Result<bool, ValidationError> {
+    let is_empty = mesh.positions.is_empty() && mesh.triangles.is_empty();
+    if !is_empty {
+        // Reuse the Boolean kernel's closed-PWN validation without requiring
+        // bounds or materializing a polygon soup just to check the source.
+        decisions.consume_mesh(mesh.validate_closed_pwn(decisions.mesh_context())?);
+    }
+    Ok(is_empty)
+}
+
+fn distribution_buffer(
+    mesh: &TriangleMesh,
+    count: usize,
+) -> Result<Vec<TriangleMesh>, ValidationError> {
+    capacity::<Point3>(count.checked_mul(mesh.positions.len()))?;
+    capacity::<Triangle>(count.checked_mul(mesh.triangles.len()))?;
+    // Index conversion below is exact on every supported platform.
+    u64::try_from(count).map_err(|_| ValidationError::CapacityOverflow)?;
+    reserved(count)
 }
 
 fn union_copies(
@@ -1838,7 +1851,7 @@ fn union_copies(
         }
     }
     if pairwise_disjoint {
-        return Ok(merge(&copies));
+        return merge(&copies);
     }
     let mut copies = copies.into_iter();
     let Some(first) = copies.next() else {
@@ -1848,23 +1861,27 @@ fn union_copies(
     copies.try_fold(first, |left, right| {
         boolean_with_context(&left, &right, BooleanOp::Union, &context)
             .map(|outcome| decisions.consume_geometry(outcome))
-            .map_err(|error| ValidationError::Geometry(error.to_string()))
+            .map_err(ValidationError::Mesh)
     })
 }
 
-/// Places `count` copies along a direction at exact spacing under strict policy.
+/// Unions `count` copies along a direction at exact spacing under strict policy.
+/// Invalid sources, zero direction and undecided predicates remain typed errors.
 pub fn distribute_linear(
     mesh: &TriangleMesh,
     count: usize,
     direction: Vector3,
     spacing: Real,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     distribute_linear_with_context(mesh, count, direction, spacing, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
-        .unwrap_or_else(|_| empty())
 }
 
 /// Distributes and unions copies with the selected policy, preserving errors and certainty.
+///
+/// The source must be canonical empty or valid closed PWN input. Validation and
+/// the nonzero-direction requirement also apply to zero-copy layouts. Spacing
+/// may be zero or negative. Checked copy buffers are not a total-work budget.
 pub fn distribute_linear_with_context(
     mesh: &TriangleMesh,
     count: usize,
@@ -1873,9 +1890,6 @@ pub fn distribute_linear_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if count == 0 {
-        return Ok(decisions.finish(empty()));
-    }
     let parameters = DistributionParameters::Linear {
         count,
         direction: direction.clone(),
@@ -1884,45 +1898,50 @@ pub fn distribute_linear_with_context(
     if let Some(result) = retained_distribution(mesh, &parameters, context) {
         return Ok(result);
     }
-    if decisions.sign(&direction.dot(&direction), "distribution direction")?
-        != RealSign::Positive
-    {
-        return Err(ValidationError::InvalidArguments);
+    let empty_source = validate_distribution_source(mesh, &decisions)?;
+    match decisions.sign(&direction.dot(&direction), "distribution direction")? {
+        RealSign::Positive => {},
+        RealSign::Zero => {
+            return Err(ValidationError::ZeroParameter {
+                name: "distribution direction",
+            });
+        },
+        RealSign::Negative => return Err(ValidationError::InvalidArguments),
     }
-    let step = direction
-        .normalize_checked()
-        .map_err(|_| ValidationError::InvalidArguments)?
-        * spacing;
-    let copies = (0..count)
-        .map(|index| {
-            let offset = step.clone() * Real::from(index as u64);
-            try_transform_with_known_orientation(
-                mesh,
-                &Matrix4::affine_translation(offset.0),
-                false,
-                &decisions,
-            )
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+    if empty_source || count == 0 {
+        return Ok(decisions.finish(empty()));
+    }
+    let mut copies = distribution_buffer(mesh, count)?;
+    let step = direction.normalize_checked()? * spacing;
+    for index in 0..count {
+        let offset = step.clone() * Real::from(index as u64);
+        copies.push(try_transform_with_known_orientation(
+            mesh,
+            &Matrix4::affine_translation(offset.0),
+            false,
+            &decisions,
+        )?);
+    }
     let result = decisions.finish(union_copies(copies, &decisions)?);
     retain_distribution(mesh, parameters, context, &result);
     Ok(result)
 }
 
-/// Places copies in an XY grid under strict policy.
+/// Unions copies in an XY grid under strict policy, preserving typed failures.
 pub fn distribute_grid(
     mesh: &TriangleMesh,
     rows: usize,
     columns: usize,
     dx: Real,
     dy: Real,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     distribute_grid_with_context(mesh, rows, columns, dx, dy, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
-        .unwrap_or_else(|_| empty())
 }
 
 /// Distributes and unions a grid with the selected policy and aggregate certainty.
+/// Source validation also applies when a row/column count is zero. Signed and
+/// zero spacing are supported; count/byte/reservation failures are typed.
 pub fn distribute_grid_with_context(
     mesh: &TriangleMesh,
     rows: usize,
@@ -1932,9 +1951,6 @@ pub fn distribute_grid_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if rows == 0 || columns == 0 {
-        return Ok(decisions.finish(empty()));
-    }
     let parameters = DistributionParameters::Grid {
         rows,
         columns,
@@ -1944,10 +1960,13 @@ pub fn distribute_grid_with_context(
     if let Some(result) = retained_distribution(mesh, &parameters, context) {
         return Ok(result);
     }
-    let capacity = rows
+    if validate_distribution_source(mesh, &decisions)? || rows == 0 || columns == 0 {
+        return Ok(decisions.finish(empty()));
+    }
+    let count = rows
         .checked_mul(columns)
-        .ok_or(ValidationError::InvalidArguments)?;
-    let mut copies = Vec::with_capacity(capacity);
+        .ok_or(ValidationError::CapacityOverflow)?;
+    let mut copies = distribution_buffer(mesh, count)?;
     for row in 0..rows {
         for column in 0..columns {
             copies.push(try_transform_with_known_orientation(
@@ -1967,14 +1986,14 @@ pub fn distribute_grid_with_context(
     Ok(result)
 }
 
-/// Places copies along a circular arc in the XY plane under strict policy.
+/// Unions copies along an XY arc under strict policy, preserving typed failures.
 pub fn distribute_arc(
     mesh: &TriangleMesh,
     count: usize,
     radius: Real,
     start_angle_degrees: Real,
     end_angle_degrees: Real,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     distribute_arc_with_context(
         mesh,
         count,
@@ -1984,10 +2003,11 @@ pub fn distribute_arc(
         &GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
-    .unwrap_or_else(|_| empty())
 }
 
 /// Distributes and unions an arc with the selected policy and aggregate certainty.
+/// The source is validated even with zero copies. Radius and sweep are directed;
+/// one copy uses the angular midpoint, while multiple copies include both ends.
 pub fn distribute_arc_with_context(
     mesh: &TriangleMesh,
     count: usize,
@@ -1997,9 +2017,6 @@ pub fn distribute_arc_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if count == 0 {
-        return Ok(decisions.finish(empty()));
-    }
     let parameters = DistributionParameters::Arc {
         count,
         radius: radius.clone(),
@@ -2009,6 +2026,10 @@ pub fn distribute_arc_with_context(
     if let Some(result) = retained_distribution(mesh, &parameters, context) {
         return Ok(result);
     }
+    if validate_distribution_source(mesh, &decisions)? || count == 0 {
+        return Ok(decisions.finish(empty()));
+    }
+    let mut copies = distribution_buffer(mesh, count)?;
     let start = start_angle_degrees.to_radians();
     let sweep = end_angle_degrees.to_radians() - start.clone();
     let translated = try_transform_with_known_orientation(
@@ -2017,23 +2038,21 @@ pub fn distribute_arc_with_context(
         false,
         &decisions,
     )?;
-    let copies = (0..count)
-        .map(|index| {
-            let fraction = if count == 1 {
-                (Real::one() / Real::from(2_u8)).expect("two is nonzero")
-            } else {
-                (Real::from(index as u64) / Real::from((count - 1) as u64))
-                    .expect("count minus one is nonzero")
-            };
-            let angle = start.clone() + sweep.clone() * fraction;
-            try_transform_with_known_orientation(
-                &translated,
-                &Matrix4::rotation_z(angle),
-                false,
-                &decisions,
-            )
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+    for index in 0..count {
+        let fraction = if count == 1 {
+            (Real::one() / Real::from(2_u8)).expect("two is nonzero")
+        } else {
+            (Real::from(index as u64) / Real::from((count - 1) as u64))
+                .expect("count minus one is nonzero")
+        };
+        let angle = start.clone() + sweep.clone() * fraction;
+        copies.push(try_transform_with_known_orientation(
+            &translated,
+            &Matrix4::rotation_z(angle),
+            false,
+            &decisions,
+        )?);
+    }
     let result = decisions.finish(union_copies(copies, &decisions)?);
     retain_distribution(mesh, parameters, context, &result);
     Ok(result)

@@ -10286,6 +10286,293 @@
       "historical_preservation": "27093 inherited missing artifact paths retain expected hashes; no new loss or mismatch.",
       "remaining": "Full font-file validation, wider symbolic/native consumers, end-to-end provenance and resource contracts, external release, formal/fuzz/coverage and other properties obligations remain open. The 35 pending native files remain separately unadmitted.",
       "full_plan_complete": false
+    },
+    "distribution_contract_work": {
+      "status": "focused typed distribution failures, native checked concatenation and affected consumers qualified",
+      "baseline_commit": "00e612307",
+      "properties": [
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P10",
+        "P11",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P21",
+        "P22",
+        "P23",
+        "P24",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P38",
+        "P39"
+      ],
+      "contract": "docs/evidence/2026-10-16-distribution-contracts/contract-v1.md",
+      "migration": "docs/evidence/2026-10-16-distribution-contracts/implementation-contract-v1.md",
+      "baseline": "docs/evidence/2026-10-16-distribution-contracts/baseline-findings-v1.md",
+      "progress": "docs/evidence/2026-10-16-distribution-contracts/progress-v1.md",
+      "validation": "docs/evidence/2026-10-16-distribution-contracts/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-16-distribution-contracts/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-16-distribution-contracts/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "benchmarks/rust/feature_pipeline.rs": "5ffc65201653f8a249d76403a3ba1f3cb0d6b4e231f20d74a34f6e17bc63793a",
+        "benchmarks/rust/kernel_comparison.rs": "b09a3c6464f1ec983bf921ebf445936643813d192e4039a8c2706af848237449",
+        "crates/hypermesh/README.md": "d29f7b16e3e7e8c12afc5843f435f7de2d38fb98702d29f7594c79c669e03b25",
+        "crates/hypermesh/src/mesh.rs": "d7b8703ab9bed7e557e6c24d04ac264479694b7885cf27fb43951347ea06a89b",
+        "crates/hypermesh/src/mesh/concatenation.rs": "cb30b01acf172891f25c5268d8d324dc79afc671ac412cefecd5346f921526d8",
+        "readme.md": "f005ee32e23590dfb750e3f57de59e72bf0d58d99fd6ac814fe321c2e7f0b3fe",
+        "src/solid.rs": "bcacd22eadb0cf94b3c86dd307f726b34fcbf1356f737a6976965c8c49d09d38",
+        "tests/distribution_contracts.rs": "bf7788d4d232eb331c667abdd5d45890643d4e1fc997cfdde0146dd707dd02a9",
+        "tests/native_queries.rs": "a336fd367f965a98df986f3bb267871c4fea8a7b9d2d2f05e05128c0821df340",
+        "tests/slice_projection_contract.rs": "5db6255e0a4feb3f7c6706a678e073bc6e135dab55178fa4941bbfcb4250a561",
+        "tests/solid_cache.rs": "57cbcedb6304b9b556a3cf123868bed317fe8ef44797a70d4a0ef6029614fd1c"
+      },
+      "test_totals": {
+        "native-mesh": {
+          "passed": 245,
+          "ignored": 7
+        },
+        "root-minimal": {
+          "passed": 112,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 268,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 385,
+          "ignored": 1
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "ignored": 0
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        },
+        "native-doctests": {
+          "passed": 0,
+          "ignored": 0
+        }
+      },
+      "cost": {
+        "scope": "Fixed completed workload construction including inputs; same exact output rows. Correctness extension, no optimization or competitive speedup claim.",
+        "timing_pairs": [
+          {
+            "case": "linear-8",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 178218,
+              "candidate": 181768
+            },
+            "candidate_over_baseline": 1.0199194245250198
+          },
+          {
+            "case": "linear-8",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 940,
+              "candidate": 3320
+            },
+            "candidate_over_baseline": 3.5319148936170213
+          },
+          {
+            "case": "grid-4x4",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 256073,
+              "candidate": 272131
+            },
+            "candidate_over_baseline": 1.0627086807277613
+          },
+          {
+            "case": "grid-4x4",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 3220,
+              "candidate": 3270
+            },
+            "candidate_over_baseline": 1.015527950310559
+          },
+          {
+            "case": "arc-12",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 802915,
+              "candidate": 838043
+            },
+            "candidate_over_baseline": 1.0437505838102414
+          },
+          {
+            "case": "arc-12",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 1130,
+              "candidate": 1200
+            },
+            "candidate_over_baseline": 1.0619469026548674
+          },
+          {
+            "case": "feature-merge-22",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 292560,
+              "candidate": 308609
+            },
+            "candidate_over_baseline": 1.0548571233251298
+          },
+          {
+            "case": "feature-merge-22",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 256113,
+              "candidate": 224904
+            },
+            "candidate_over_baseline": 0.8781436319124761
+          },
+          {
+            "case": "merge-duplicate",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 37018,
+              "candidate": 33088
+            },
+            "candidate_over_baseline": 0.8938354314117456
+          },
+          {
+            "case": "merge-duplicate",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 3060,
+              "candidate": 3230
+            },
+            "candidate_over_baseline": 1.0555555555555556
+          }
+        ],
+        "allocation_rows": 20,
+        "library_bytes": {
+          "baseline": {
+            "libcsgrs.rlib": 10042160,
+            "libhypermesh-98c5db38df7e7da0.rlib": 5018816
+          },
+          "candidate": {
+            "libcsgrs.rlib": 10000252,
+            "libhypermesh-98c5db38df7e7da0.rlib": 5038452
+          }
+        },
+        "source_sizes": {
+          "src/solid.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 102749,
+            "candidate_bytes": 104121,
+            "baseline_lines": 2936,
+            "candidate_lines": 2955
+          },
+          "crates/hypermesh/src/mesh.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 82021,
+            "candidate_bytes": 83423,
+            "baseline_lines": 2112,
+            "candidate_lines": 2147
+          },
+          "crates/hypermesh/src/mesh/concatenation.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 8949,
+            "baseline_lines": 0,
+            "candidate_lines": 233
+          },
+          "tests/distribution_contracts.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 13426,
+            "baseline_lines": 0,
+            "candidate_lines": 355
+          },
+          "tests/native_queries.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 2729,
+            "candidate_bytes": 2863,
+            "baseline_lines": 65,
+            "candidate_lines": 68
+          },
+          "tests/slice_projection_contract.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 16908,
+            "candidate_bytes": 17275,
+            "baseline_lines": 467,
+            "candidate_lines": 470
+          },
+          "tests/solid_cache.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 13921,
+            "candidate_bytes": 14196,
+            "baseline_lines": 371,
+            "candidate_lines": 376
+          },
+          "benchmarks/rust/kernel_comparison.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 39408,
+            "candidate_bytes": 39562,
+            "baseline_lines": 1015,
+            "candidate_lines": 1018
+          },
+          "benchmarks/rust/feature_pipeline.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 33812,
+            "candidate_bytes": 33885,
+            "baseline_lines": 843,
+            "candidate_lines": 846
+          },
+          "readme.md": {
+            "baseline_exists": true,
+            "baseline_bytes": 61778,
+            "candidate_bytes": 63237,
+            "baseline_lines": 886,
+            "candidate_lines": 908
+          },
+          "crates/hypermesh/README.md": {
+            "baseline_exists": true,
+            "baseline_bytes": 10214,
+            "candidate_bytes": 11161,
+            "baseline_lines": 254,
+            "candidate_lines": 268
+          }
+        },
+        "driver_sizes": {
+          "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation": 24268680,
+          "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing": 24258288,
+          "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation": 24281512,
+          "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing": 24274872
+        },
+        "limits": "External 1800-second/8-GiB containment; cost children additionally have 120-second walls. Node/WASM has no virtual-address-space bound. Requested allocation bytes exclude allocator overhead. No internal total-work, heap-byte or cancellation contract."
+      },
+      "semantics": [
+        "Invalid indices, malformed empties, open, degenerate and unbalanced sources fail before zero/one/disjoint shortcuts under both policies; native causes survive strict and context APIs.",
+        "Canonical empty, zero-count and subtraction-to-empty results compose; signed/zero spacing and single-arc midpoint retain their exact meaning.",
+        "Original 8/16/12-copy workflows satisfy independent membership, exact per-face volume proofs, strict topology, empty union and complete self subtraction.",
+        "Independent exact unit-face coverage establishes the original rational 8/16/22-copy boundaries and duplicate concatenation winding multiplicity on both revisions.",
+        "Touching, overlapping, balanced nonmanifold and winding-multiplicity inputs remain supported; concatenation preserves open buffers and unused points.",
+        "Native PWN facts preserve combined face/edge certainty and matching buffer identity; approximate facts cannot satisfy strict requests without a new proof.",
+        "Cold/warm/disabled/evicted/mutated cache states and strict-approximate-strict sequences retain errors, meanings and receipts.",
+        "Count/byte overflow produces typed exhaustion before copy allocation; recovery succeeds. This is not a total resource bound.",
+        "All five exact position/index artifacts remain byte-identical across all 80 completed timing/allocation replays."
+      ],
+      "diagnostics": "Every failed compilation, contained child and declined volume query remains retained; see baseline-findings-v1.md, volume-oracle-v1.md and diagnostic-findings-v1.md. No fixture resolution or predicate policy was weakened.",
+      "resources": "Checked native indices and owned vector counts/bytes/reservations. All 60 timing and 20 allocation rows complete with exact output preservation; no total-work, heap-byte or cancellation bound. No optimization claim.",
+      "historical_preservation": "27093 inherited missing artifact paths retain expected hashes; no new loss or mismatch.",
+      "remaining": "Expanded arc-volume scalar recognition, inherited provenance, general work/heap/cancellation bounds, clean external package/release, full CI, formal/fuzz/coverage and 35 separately unadmitted native files remain open.",
+      "full_plan_complete": false
     }
   },
   "status_meanings": {

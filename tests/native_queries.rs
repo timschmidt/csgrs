@@ -35,15 +35,18 @@ fn sphere_diameter_ray_reports_only_surface_hits() {
 #[test]
 fn disjoint_distributions_preserve_every_native_copy() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
-    let linear = solid::distribute_linear(&cube, 8, Vector3::x(), Real::from(2_u8));
-    let grid = solid::distribute_grid(&cube, 4, 4, Real::from(2_u8), Real::from(2_u8));
+    let linear = solid::distribute_linear(&cube, 8, Vector3::x(), Real::from(2_u8))
+        .expect("valid distribution fixture");
+    let grid = solid::distribute_grid(&cube, 4, 4, Real::from(2_u8), Real::from(2_u8))
+        .expect("valid distribution fixture");
     let arc = solid::distribute_arc(
         &cube,
         12,
         Real::from(10_u8),
         Real::zero(),
         Real::from(330_u16),
-    );
+    )
+    .expect("valid distribution fixture");
 
     assert_eq!(linear.triangles.len(), 8 * cube.triangles.len());
     assert_eq!(grid.triangles.len(), 16 * cube.triangles.len());

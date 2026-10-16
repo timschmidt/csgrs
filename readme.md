@@ -624,6 +624,28 @@ report. The existing convenience entry points retain their strict default.
 
 Curve composites such as `ring`, `crescent`, and `circle_with_keyway` pass their
 existing context through component construction, transforms, and Booleans.
+`solid::merge` and the strict `distribute_linear`, `distribute_grid`, and
+`distribute_arc` wrappers now return `Result`; propagate `?` or handle the typed
+failure. Merge calls native `TriangleMesh::try_concatenate`: it validates and
+rebases indices, preserves buffer order, open surfaces and winding multiplicity,
+and does not compute a Boolean union. Existing native PWN facts retain their
+qualification when concatenated; structural copying does not certify topology.
+
+Distribution accepts canonical empty geometry and closed PWN sources, including
+balanced nonmanifold inputs. Native validation applies even to zero-copy,
+single-copy and disjoint layouts. Linear direction must be provably nonzero,
+including for an empty result. Signed/zero spacing and signed arc radius remain
+supported; a single arc copy uses the angular midpoint. Context forms preserve
+consumed certainty and native failure causes. Invalid input, undecided
+predicates and capacity exhaustion no longer become empty successful models.
+
+Copy counts, aggregate buffer sizes and owned vector reservations are checked
+before creating copies. Empty sources require no copy buffers. These checks do
+not bound total work, retained heap bytes, scalar growth, secondary allocations
+or cancellation. A local receipt does not recover inherited construction
+provenance. Native `validate_closed_pwn` shares Boolean input validation without
+requiring a bounds query or constructing an output mesh.
+
 Mesh distributions, flattening, and slicing retain certainty in their caches
 and include the policy in cache keys. Their context-bearing APIs report
 undecided predicates as errors rather than substituting empty geometry.

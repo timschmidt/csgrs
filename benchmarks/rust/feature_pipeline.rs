@@ -431,7 +431,10 @@ fn main() {
                     .expect("valid transform fixture")
             })
             .collect::<Vec<_>>();
-        mesh_measurement(&solid::merge(&copies), 22)
+        mesh_measurement(
+            &solid::merge(&copies).expect("valid concatenation fixture"),
+            22,
+        )
     });
     config.run(
         "feature",
