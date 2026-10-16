@@ -617,20 +617,32 @@ pub fn failures() {
         import(&missing).unwrap_err().kind,
         ErrorKind::Expected("plane-angle unit for angular mapping")
     ));
-    for text in [
-        CYLINDER.replace("#24=CIRCLE('',#25,5.);", "#24=ELLIPSE('',#25,5.,3.);"),
-        append(
-            &argument(CYLINDER, 21, 3, "#90"),
-            "#90=SURFACE_CURVE('',#24,(#91),.CURVE_3D.);\n#91=PCURVE('',#45,#92);\n",
+    let ellipse = CYLINDER.replace("#24=CIRCLE('',#25,5.);", "#24=ELLIPSE('',#25,5.,3.);");
+    assert!(matches!(
+        import(&ellipse).unwrap_err().kind,
+        ErrorKind::Unsupported(_)
+    ));
+    // Supplied curved representations now reach their referenced definitions.
+    // Keep both original malformed inputs and require the specific missing ID.
+    for (text, missing) in [
+        (
+            append(
+                &argument(CYLINDER, 21, 3, "#90"),
+                "#90=SURFACE_CURVE('',#24,(#91),.CURVE_3D.);\n#91=PCURVE('',#45,#92);\n",
+            ),
+            92,
         ),
-        append(
-            &argument(CYLINDER, 21, 3, "#90"),
-            "#90=SEAM_CURVE('',#24,(#91,#92),.CURVE_3D.);\n",
+        (
+            append(
+                &argument(CYLINDER, 21, 3, "#90"),
+                "#90=SEAM_CURVE('',#24,(#91,#92),.CURVE_3D.);\n",
+            ),
+            91,
         ),
     ] {
         assert!(matches!(
             import(&text).unwrap_err().kind,
-            ErrorKind::Unsupported(_)
+            ErrorKind::MissingEntity(id) if id == missing
         ));
     }
     let duplicate = append(

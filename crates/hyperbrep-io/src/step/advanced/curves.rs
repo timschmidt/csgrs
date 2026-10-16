@@ -3,10 +3,10 @@ use super::super::decode::{component, parts};
 use super::*;
 use crate::part21::ValueKind;
 
-struct Line {
-    source: u64,
-    origin: Point3,
-    velocity: Vector3,
+pub(super) struct Line {
+    pub source: u64,
+    pub origin: Point3,
+    pub velocity: Vector3,
 }
 impl Line {
     fn parameter(&self, point: &Point3, site: Site) -> Result<Real, Error> {
@@ -18,7 +18,7 @@ impl Line {
         }
         Ok(parameter)
     }
-    fn same_oriented_image(&self, other: &Self, site: Site) -> Result<(), Error> {
+    pub(super) fn same_oriented_image(&self, other: &Self, site: Site) -> Result<(), Error> {
         self.parameter(&other.origin, site)?;
         let scale = (other.velocity.dot(&self.velocity) / self.velocity.dot(&self.velocity))
             .map_err(|e| site.error(ErrorKind::Numeric(e)))?;
@@ -29,7 +29,7 @@ impl Line {
         }
         Ok(())
     }
-    fn parameters(
+    pub(super) fn parameters(
         &self,
         start: &Point3,
         end: &Point3,
@@ -43,7 +43,7 @@ impl Line {
     }
 }
 impl Resolver<'_, '_, '_> {
-    fn vector(&mut self, id: u64, dimension: usize) -> Result<Vector3, Error> {
+    pub(super) fn vector(&mut self, id: u64, dimension: usize) -> Result<Vector3, Error> {
         let mut args = self.simple(id, "VECTOR")?;
         let site = args.site;
         self.text(args.next()?, site)?;
@@ -53,7 +53,10 @@ impl Resolver<'_, '_, '_> {
         if order(site, &magnitude, &Real::zero())? != Ordering::Greater {
             return Err(site.invalid("line vector must have positive magnitude"));
         }
-        let mut args = self.simple(direction, "DIRECTION")?;
+        Ok(self.vector_direction(direction, dimension)? * magnitude)
+    }
+    pub(super) fn vector_direction(&mut self, id: u64, dimension: usize) -> Result<Vector3, Error> {
+        let mut args = self.simple(id, "DIRECTION")?;
         let site = args.site;
         self.text(args.next()?, site)?;
         let mut values = args.list()?;
@@ -68,12 +71,11 @@ impl Resolver<'_, '_, '_> {
             return Err(site.error(ErrorKind::Expected("direction dimension")));
         }
         args.finish()?;
-        Ok(Vector3::new(coordinates)
+        Vector3::new(coordinates)
             .normalize_checked()
-            .map_err(|e| site.error(ErrorKind::Numeric(e)))?
-            * magnitude)
+            .map_err(|e| site.error(ErrorKind::Numeric(e)))
     }
-    fn point2(&mut self, id: u64) -> Result<Point2, Error> {
+    pub(super) fn point2(&mut self, id: u64) -> Result<Point2, Error> {
         let mut args = self.simple(id, "CARTESIAN_POINT")?;
         let site = args.site;
         self.text(args.next()?, site)?;
@@ -93,7 +95,7 @@ impl Resolver<'_, '_, '_> {
         args.finish()?;
         Ok(result)
     }
-    fn parametric_context(&mut self, id: u64) -> Result<(), Error> {
+    pub(super) fn parametric_context(&mut self, id: u64) -> Result<(), Error> {
         let entity = self.entity(id)?;
         let site = Site::entity(entity);
         let record = entity.components().next().expect("syntax component");
@@ -154,53 +156,24 @@ impl Resolver<'_, '_, '_> {
         })
     }
 }
-impl Builder {
-    fn pcurve(
-        &mut self,
-        resolver: &mut Resolver<'_, '_, '_>,
-        id: u64,
-        scale: &Real,
-    ) -> Result<Line, Error> {
-        let mut args = resolver.simple(id, "PCURVE")?;
-        let site = args.site;
-        resolver.text(args.next()?, site)?;
-        let plane = self.plane(resolver, args.reference()?, scale)?.geometry;
-        let representation = args.reference()?;
-        args.finish()?;
-        let mut args = resolver.simple(representation, "DEFINITIONAL_REPRESENTATION")?;
-        let site = args.site;
-        resolver.text(args.next()?, site)?;
-        let mut items = args.list()?;
-        let curve = reference(
-            items
-                .next()
-                .ok_or_else(|| site.error(ErrorKind::Expected("one pcurve basis curve")))?,
-            site,
-        )?;
-        if items.next().is_some() {
-            return Err(site.error(ErrorKind::Expected("one pcurve basis curve")));
+pub(super) fn require_sense(
+    parameters: &SourceCurveParameters,
+    same_sense: bool,
+    site: Site,
+) -> Result<(), Error> {
+    if order(site, &parameters.start, &parameters.end)?
+        != if same_sense {
+            Ordering::Less
+        } else {
+            Ordering::Greater
         }
-        resolver.parametric_context(args.reference()?)?;
-        args.finish()?;
-        let entity = resolver.entity(curve)?;
-        let site = Site::entity(entity);
-        let record = entity.components().next().expect("syntax component");
-        if entity.is_complex() || record.name() != "LINE" {
-            return Err(site.error(ErrorKind::Unsupported("advanced pcurve basis")));
-        }
-        let mut args = Args::new(record, site);
-        resolver.text(args.next()?, site)?;
-        let point = resolver.point2(args.reference()?)?;
-        let velocity = resolver.vector(args.reference()?, 2)?;
-        args.finish()?;
-        Ok(Line {
-            source: id,
-            origin: plane.origin
-                + plane.x.clone() * (point.x() * scale)
-                + plane.y.clone() * (point.y() * scale),
-            velocity: plane.x * (&velocity[0] * scale) + plane.y * (&velocity[1] * scale),
-        })
+    {
+        return Err(site.invalid("edge same_sense disagrees with source curve parameters"));
     }
+    Ok(())
+}
+
+impl Builder {
     pub(super) fn edge(
         &mut self,
         resolver: &mut Resolver<'_, '_, '_>,
@@ -226,103 +199,111 @@ impl Builder {
         if entity.is_complex() {
             return Err(geometry_site.error(ErrorKind::Unsupported("complex edge geometry")));
         }
-        if record.name() == "CIRCLE" {
-            return self.circular_edge(resolver, id, geometry, start, end, same_sense, scale);
-        }
-        let mut parameters = Vec::new();
-        let master;
-        if record.name() == "SURFACE_CURVE" {
+        let mut associations = [None, None];
+        let mut count = 0;
+        let seam = record.name() == "SEAM_CURVE";
+        let (spatial, master_index) = if matches!(record.name(), "SURFACE_CURVE" | "SEAM_CURVE") {
             let mut args = Args::new(record, geometry_site);
             resolver.text(args.next()?, geometry_site)?;
-            let line = resolver.line3(args.reference()?, scale)?;
-            let mut pcurves: [Option<Line>; 2] = [None, None];
-            let mut count = 0;
+            let spatial = args.reference()?;
             for value in args.list()? {
                 if count == 2 {
                     return Err(
                         geometry_site.invalid("surface curve requires one or two associations")
                     );
                 }
-                let associated = reference(value, geometry_site)?;
-                // ADVANCED_FACE WR9 requires every association to be a PCURVE.
-                let pcurve = self.pcurve(resolver, associated, scale)?;
-                line.same_oriented_image(&pcurve, geometry_site)?;
-                pcurves[count] = Some(pcurve);
+                associations[count] = Some(reference(value, geometry_site)?);
                 count += 1;
             }
             if count == 0 {
                 return Err(geometry_site.invalid("surface curve requires one or two associations"));
             }
-            let chosen = match args.next()?.kind() {
-                ValueKind::Enumeration("CURVE_3D") => &line,
-                ValueKind::Enumeration("PCURVE_S1") => {
-                    pcurves[0].as_ref().expect("nonempty associations")
+            let master = match args.next()?.kind() {
+                ValueKind::Enumeration("CURVE_3D") => 0,
+                ValueKind::Enumeration("PCURVE_S1") => 1,
+                ValueKind::Enumeration("PCURVE_S2") if count == 2 => 2,
+                ValueKind::Enumeration("PCURVE_S2") => {
+                    return Err(geometry_site.invalid("missing master pcurve"));
                 }
-                ValueKind::Enumeration("PCURVE_S2") => pcurves[1]
-                    .as_ref()
-                    .ok_or_else(|| geometry_site.invalid("missing master pcurve"))?,
                 _ => {
                     return Err(geometry_site
                         .error(ErrorKind::Expected("surface-curve master representation")));
                 }
             };
             args.finish()?;
-            master = chosen.source;
-            let mut master_parameters = chosen.parameters(&first.point, &second.point, site)?;
-            master_parameters.curve = geometry;
-            push(&mut parameters, master_parameters).map_err(|kind| site.error(kind))?;
-            push(
-                &mut parameters,
-                line.parameters(&first.point, &second.point, site)?,
-            )
-            .map_err(|kind| site.error(kind))?;
-            for pcurve in pcurves.iter().flatten() {
-                push(
-                    &mut parameters,
-                    pcurve.parameters(&first.point, &second.point, site)?,
-                )
-                .map_err(|kind| site.error(kind))?;
-            }
+            (spatial, master)
         } else {
-            let line = resolver.line3(geometry, scale)?;
-            master = line.source;
-            push(
-                &mut parameters,
-                line.parameters(&first.point, &second.point, site)?,
-            )
-            .map_err(|kind| site.error(kind))?;
-        }
-        let sense = order(site, &parameters[0].start, &parameters[0].end)?;
-        if sense
-            != if same_sense {
-                Ordering::Less
-            } else {
-                Ordering::Greater
-            }
-        {
-            return Err(site.invalid("edge same_sense disagrees with source curve parameters"));
-        }
-        let curve = Curve3::line(first.point, second.point)
-            .map_err(|e| site.error(ErrorKind::Geometry(e)))?;
-        let curve = self
-            .model
-            .curve(curve)
-            .map_err(|e| site.error(ErrorKind::Build(e)))?;
-        let key = self
-            .model
-            .edge(
-                &first.key,
-                &second.key,
-                &curve,
-                ParameterDomain::unit().into(),
-            )
-            .map_err(|e| site.error(ErrorKind::Build(e)))?;
-        let edge = Edge {
-            key: key.clone(),
-            start,
-            end,
-            circle: None,
+            (geometry, 0)
         };
+        let spatial_entity = if spatial == geometry {
+            entity
+        } else {
+            resolver.entity(spatial)?
+        };
+        let spatial_record = spatial_entity
+            .components()
+            .next()
+            .expect("syntax component");
+        let mut source_line = None;
+        let (edge, spatial_parameters) =
+            if !spatial_entity.is_complex() && spatial_record.name() == "CIRCLE" {
+                self.circular_edge(resolver, spatial, start, end, same_sense, scale)?
+            } else {
+                let line = resolver.line3(spatial, scale)?;
+                let parameters = line.parameters(&first.point, &second.point, site)?;
+                require_sense(&parameters, same_sense, site)?;
+                let curve = Curve3::line(first.point.clone(), second.point.clone())
+                    .map_err(|e| site.error(ErrorKind::Geometry(e)))?;
+                let curve = self
+                    .model
+                    .curve(curve)
+                    .map_err(|e| site.error(ErrorKind::Build(e)))?;
+                let key = self
+                    .model
+                    .edge(
+                        &first.key,
+                        &second.key,
+                        &curve,
+                        ParameterDomain::unit().into(),
+                    )
+                    .map_err(|e| site.error(ErrorKind::Build(e)))?;
+                source_line = Some(line);
+                (
+                    Edge {
+                        key,
+                        start,
+                        end,
+                        circle: None,
+                    },
+                    parameters,
+                )
+            };
+        let mut parameters = Vec::new();
+        push(&mut parameters, spatial_parameters).map_err(|kind| site.error(kind))?;
+        let mut checked = [None, None];
+        for (index, id) in associations.into_iter().flatten().enumerate() {
+            let pcurve = self.supplied_pcurve(
+                resolver,
+                id,
+                &edge,
+                source_line.as_ref(),
+                same_sense,
+                scale,
+                geometry_site,
+            )?;
+            push(&mut parameters, pcurve.parameters.clone()).map_err(|kind| site.error(kind))?;
+            checked[index] = Some(pcurve);
+        }
+        if seam {
+            pcurves::validate_seam(&checked, geometry_site)?;
+        }
+        let master = parameters[master_index].curve;
+        if count != 0 {
+            let mut selected = parameters[master_index].clone();
+            selected.curve = geometry;
+            push(&mut parameters, selected).map_err(|kind| site.error(kind))?;
+            parameters.rotate_right(1);
+        }
         cache(&mut self.by_edge, id, edge.clone(), site)?;
         push(
             &mut self.edges,
@@ -331,7 +312,7 @@ impl Builder {
                 geometry,
                 master,
                 parameters,
-                key,
+                key: edge.key.clone(),
             },
         )
         .map_err(|kind| site.error(kind))?;

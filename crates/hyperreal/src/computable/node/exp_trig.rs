@@ -560,6 +560,30 @@ impl Computable {
         ))
     }
 
+    fn diagonal_turn_atan_sin_cos(&self) -> Option<(Computable, Computable)> {
+        let (sine_sign, cosine_sign, atan_sign, argument) =
+            self.diagonal_turn_plus_or_minus_atan_argument()?;
+        let signed = |value: Computable, sign| {
+            if sign == Sign::Minus { value.negate() } else { value }
+        };
+        // For theta=+/-atan(x), cos(theta)=1/h and sin(theta)=+/-x/h,
+        // h=sqrt(1+x*x)>0. A diagonal rotation has components +/-1/sqrt(2).
+        // The addition identities therefore give both complete exact values.
+        let inverse_denominator = Self::one()
+            .add(argument.clone().square())
+            .shift_left(1)
+            .sqrt()
+            .inverse();
+        let argument = signed(argument, atan_sign);
+        let sine = signed(Self::one(), sine_sign)
+            .add(signed(argument.clone(), cosine_sign))
+            .multiply(inverse_denominator.clone());
+        let cosine = signed(Self::one(), cosine_sign)
+            .add(signed(argument, sine_sign).negate())
+            .multiply(inverse_denominator);
+        Some((sine, cosine))
+    }
+
     /// Cosine of this number.
     pub fn cos(self) -> Computable {
         if let Approximation::Negate(argument) = &self.internal.approximation {
@@ -576,6 +600,10 @@ impl Computable {
         }
         if let Some((_, cosine)) = self.quarter_turn_atan_sin_cos() {
             crate::trace_dispatch!("computable", "cos", "quarter-turn-atan-rewrite");
+            return cosine;
+        }
+        if let Some((_, cosine)) = self.diagonal_turn_atan_sin_cos() {
+            crate::trace_dispatch!("computable", "cos", "diagonal-turn-atan-rewrite");
             return cosine;
         }
         if let Some(argument) = self.asin_argument() {
@@ -677,6 +705,10 @@ impl Computable {
         }
         if let Some((sine, _)) = self.quarter_turn_atan_sin_cos() {
             crate::trace_dispatch!("computable", "sin", "quarter-turn-atan-rewrite");
+            return sine;
+        }
+        if let Some((sine, _)) = self.diagonal_turn_atan_sin_cos() {
+            crate::trace_dispatch!("computable", "sin", "diagonal-turn-atan-rewrite");
             return sine;
         }
         if let Some(argument) = self.asin_argument() {

@@ -67,20 +67,6 @@ impl Builder {
         cache(&mut self.by_surface, id, surface.clone(), site)?;
         Ok(surface)
     }
-
-    pub(super) fn plane(
-        &mut self,
-        resolver: &mut Resolver<'_, '_, '_>,
-        id: u64,
-        scale: &Real,
-    ) -> Result<FaceSurface, Error> {
-        let surface = self.surface(resolver, id, scale)?;
-        if surface.cylinder.is_some() {
-            return Err(Site::entity(resolver.entity(id)?)
-                .error(ErrorKind::Unsupported("advanced pcurve support surface")));
-        }
-        Ok(surface)
-    }
 }
 
 impl FaceSurface {

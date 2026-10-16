@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_on": "2026-10-15",
+  "updated_on": "2026-10-16",
   "plan": "DEVELOPMENT_PLAN.md",
   "research": "ALGORITHM_RESEARCH.md",
   "property_ledger": "../../../docs/properties-status.json",
@@ -939,6 +939,54 @@
       "validation": "Final BREP/IO all-feature debug and release each pass 407 tests; minimal release passes 399. All 12 scoped qualification commands pass, including strict all-feature/minimal Clippy, warning-denied docs, circular STEP example, fuzz-target compilation, formatting and 13 zero-import WASM groups. Counts overlap. Seven iso families cover 112 trim/frame/direction cases, each repeated with independent exact point checks, plus wrong phase/plane/radius/rate/sense, foreign-key, unsupported and strict/approximate/strict unresolved controls. All previous STEP source-map, split, reflection, archive and BodySet/empty successes remain. Six baseline false proofs and the first candidate's two native STEP failures/WASM trap remain recorded with source snapshots. Local image-dispatch failures do not establish publication of invalid complete solids.",
       "cost_evidence": "All 100 preserved cases retain required receipts and fixture facts across 36 alternating processes. Median/max timing ratios: native 0.965312/1.047286, advanced STEP 0.996656/1.022109, faceted STEP 1.006795/1.059451, closed edges 0.980285/0.996184, circular STEP 0.998881/1.002757, arc 1.007697/1.111463. The adverse arc structural replay measures 6.68385 to 7.42885 ns with byte-identical executables; retain this shared-host control rather than claiming all timing gates pass. Reversed shifted replay increases 23 allocation calls/664 requested bytes, fresh circular import about 21 calls/2294 bytes; full circular composition decreases about 920 calls/61166 bytes. Changed executable sizes shrink about 35-49 KiB. New staged-query absolute medians are 37.50 us fresh and 18.22 us reused, with separately labeled rejection cost 15.18 us. Different construction boundaries, no general speedup or internal work/heap bound.",
       "limits": "All 28 work packages remain open. Supplied curved SURFACE_CURVE/SEAM_CURVE source mapping, full operation provenance/receipts, general topology/composition, complete work/retained-byte/cancellation contracts, published-package/MSRV and actual C/C++/Python/JavaScript delivery remain unqualified. Earlier archive and short cached-arc timing exceptions retain their original scope. No new runtime fuzz/ASan/lexicase, coverage, formal-verification or complete pre-push campaign is claimed. No push."
+    },
+    {
+      "id": "step-supplied-pcurves",
+      "work_packages": [
+        "WP00",
+        "WP01",
+        "WP03",
+        "WP14a",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P10",
+        "P11",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "Keep the exact supplied analytic pcurve extension and its reproduced scalar dependency repair. Remove the unsuccessful importer normalization approaches. Preserve failures, adverse costs and all broader gates; no optimization claim.",
+      "change": "Map supplied planar CIRCLE and cylindrical LINE pcurves on spatial LINE/CIRCLE edges. Keep every directed source parameter map and master selector, with independent length/angle units. Use native staged whole-image proof for each new curved tuple and independent final face/shell/model validation. Preserve the exact planar-line specialization. Decode SEAM_CURVE and reject duplicate bounds and finite-decimal near-period encodings without claiming successful exact seam import. A directly reproduced partial-arc source-map blocker requires a bounded Hyperreal certificate for odd integer pi/4 +/- atan(x), after the existing quarter-turn path. No unrelated surrounding implementation changes; the earlier scalar prototype remains parked.",
+      "source": "../../hyperbrep-io/src/step/advanced/pcurves.rs",
+      "source_files": [
+        "../../hyperbrep-io/src/step/advanced/curves.rs",
+        "../../hyperbrep-io/src/step/advanced/circles.rs",
+        "../../hyperreal/src/computable/node/algebra.rs",
+        "../../hyperreal/src/computable/node/exp_trig.rs"
+      ],
+      "evidence": "evidence/2026-10-15-step-pcurves/manifest.json",
+      "validation": "All 28 final scoped qualification/measurement commands pass on identical source snapshots. BREP/IO debug and release pass 412 and 412 tests; minimal release passes 404. Scalar all/minimal pass 1072/958, predicates all/minimal 365/352, curve 2441, solver 974 and selected root acceptance 143. Counts overlap; inherited ignored counts: curve-release 28. Strict scoped Clippy, warning-denied docs, examples, fuzz-target compilation, formatting and 18 zero-import WASM groups pass. The independent pinned OCCT reader accepts the authored fixture with expected topology and floating-point mass properties; it does not certify exactness. Source maps are independently evaluated across master, direction, partial/full, placement and unit variants. Split/replay/reflection/BodySet/empty continuation and typed failures pass. Missing-capability and scalar-blocker failures, rejected normalization attempts, the corrected leaf-versus-value test and the invalidated overlapping-format run remain archived.",
+      "cost_evidence": "All 100 preserved geometry cases retain required receipts and fixture facts across 36 alternating processes; 258 selected scalar Criterion cases add 12 processes. Median/max geometry timing ratios: advanced 1.017804/1.088301; faceted 1.003410/1.038994; kernel 0.999319/1.035266; arc 0.999745/1.041956; closed_edges 1.006168/1.014471; circles 0.999882/1.066265. All adverse samples, allocation changes and executable sizes remain in the manifest; short scalar probes and shared-host timings do not establish a general speedup or complete timing admission. Three separate new-domain processes give absolute medians: pcurves/full_fresh 1275.624 us; pcurves/full_reused 1200.703 us; pcurves/partial_fresh 3251.227 us; pcurves/partial_reused 2704.441 us; pcurves/edit_replay_composition 3658.999 us; pcurves/reject_nonmaster_height 209.943 us. Fresh/reused syntax and rejection boundaries differ explicitly. Requested bytes and process RSS are not retained-memory or total-work bounds.",
+      "limits": "All 28 work packages remain open. Exact general seam success, other analytic/spline/trimmed/void/assembly mappings, curved STEP export and explicit healing remain open. Source maps belong to the imported revision and are not automatically propagated by native edits or archives. Full operation provenance/receipts, total-work/retained-byte/cancellation bounds, published-package/MSRV and actual C/C++/Python/JavaScript consumers remain unqualified. Earlier archive/cached-arc timing exceptions and every new adverse cost observation remain visible. No new runtime fuzz/ASan/lexicase, coverage, formal-verification or complete pre-push campaign is claimed. No push."
     }
   ],
   "work_packages": [
@@ -1121,7 +1169,7 @@
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
     "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
-    "Continue WP14a from selected exact faceted exchange, planar advanced import and direct circular edges on planes/cylinders. Preserve the new strict split/replay/reflection/BodySet/empty workflow and exact source angle/frame/sense maps. Use the new read-only native ModelBuilder::validate_edge_image boundary to add supplied curved SURFACE_CURVE/SEAM_CURVE representations with basis-aware units and complete 3D/UV correspondence proofs; retain every source parameter map and independently validate the final face, then other analytic families and exact curved export. WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. Keep the unchanged off-carrier decimal cylinder as a typed rejection; no implicit repair or whole-document exchange claim.",
+    "Continue WP14a from selected exact faceted, planar advanced, direct-circle and supplied analytic-pcurve exchange. Preserve every source/master map, basis-aware unit conversion, native complete-image validation and strict split/replay/reflection/BodySet/empty workflow. Extend to successful exact periodic seams, other analytic families and exact curved export; do not infer a period from decimal values or a familiar unit name. WP14b adds spline/trim/void/mapped/assembly exchange and explicit healing/export approximation. Keep the original off-carrier decimal cylinder and near-period seam as typed rejections. Imported-revision maps do not by themselves establish edit provenance or whole-document exchange.",
     "Continue every BREP work package and its cross-stack integration requirements in the plan. Surrounding-crate implementation is concurrent upstream work unless a reproduced dependency failure would make BREP worse; foundational progress does not close broader project gates."
   ],
   "acceptance_contract": {

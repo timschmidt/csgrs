@@ -1243,18 +1243,37 @@ model. Shared scalar quarter-turn and rational-coefficient certificates own the
 required inverse-trigonometric identities. The
 [mapping contract](../../hyperbrep-io/docs/STEP_MAPPING.md#direct-circular-edges-and-cylindrical-faces)
 and [admission evidence](evidence/2026-10-15-step-circles/README.md) define this
-subset. Curved `SURFACE_CURVE`/`SEAM_CURVE` evidence must be admitted in a future
-increment; it must not be ignored to accept the spatial representation. WP14a
-and WP14b remain open, including independent exporter corpora, other analytic
-families, exact curved export and the resource/delivery gates.
+subset. Supplied surface representations must also be admitted; they must not
+be ignored to accept the spatial representation. WP14a and WP14b remain open,
+including independent exporter corpora, other analytic families, exact curved
+export and the resource/delivery gates.
 
 The native `ModelBuilder::validate_edge_image` query now supplies the shared
 whole-curve check needed before selecting supplied pcurves. Its circle
 certificate compares complete angular frames, including radial phase and plane;
 the [repair and API evidence](evidence/2026-10-15-edge-image-proof/README.md)
-records the prior false proofs. The IO extension must use this native boundary,
-retain every source parameter map and independently validate the final face.
-This prerequisite does not itself implement supplied curved STEP mapping.
+records the prior false proofs. The supplied-pcurve increment uses this native
+boundary for planar circular and cylindrical linear pcurves on spatial
+`CIRCLE`/`LINE` edges. It retains the master selector and every directed source
+parameter map, converts length and angle units independently, and validates
+final faces and shells separately. The preexisting planar-line path retains
+its exact oriented affine-line proof. Source maps belong to the immutable
+imported revision; transformed models do not inherit an unproved map.
+
+The [mapping contract](../../hyperbrep-io/docs/STEP_MAPPING.md#supplied-analytic-pcurves)
+and [qualification record](evidence/2026-10-15-step-pcurves/README.md) cover this
+subset. A reproduced partial-arc source-map blocker required a narrow shared
+scalar certificate for odd multiples of `pi/4 +/- atan(x)`; failed importer
+normalizations were removed. Native/WASM checks and preserved downstream
+corpora qualify that dependency exception separately from general scalar work.
+
+`SEAM_CURVE` decoding requires two pcurves on the same surface at opposite
+exact parameter bounds. The finite-decimal cylinder seam controls are typed
+rejections, not evidence of a successful exact seam import. Decimal values
+near `tau` and familiar unit names cannot supply the missing equality. General
+periodic seam admission, spline/trimmed pcurves, other analytic families,
+operation-wide provenance, explicit healing and curved export remain work for
+WP14a/WP14b; this increment closes neither package.
 
 ```rust,ignore
 pub fn read_step(bytes: &[u8], options: &StepReadOptions)

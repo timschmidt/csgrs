@@ -85,7 +85,7 @@ pub(super) struct UseSource {
 /// Native lines use `[0,1]`; native circles use an increasing angular interval.
 #[derive(Clone, Debug)]
 pub struct SourceCurveParameters {
-    /// Source LINE, CIRCLE, PCURVE or SURFACE_CURVE ID.
+    /// Source LINE, CIRCLE, PCURVE, SURFACE_CURVE or SEAM_CURVE ID.
     pub curve: u64,
     /// Parameter at the original EDGE_CURVE start vertex, in source units.
     pub start: Real,

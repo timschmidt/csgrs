@@ -1,4 +1,4 @@
-//! Direct source circles. Native geometry owns radius, incidence and angle proofs.
+//! Source circles. Native geometry owns radius, incidence and angle proofs.
 use super::*;
 use hyperbrep::CurveParameterLocation;
 
@@ -27,6 +27,37 @@ pub(super) fn circle_parameter(curve: &Curve3, point: &Point3, site: Site) -> Re
         .ok_or_else(|| site.error(ErrorKind::Geometry(GeometryError::UnrepresentableParameter)))
 }
 
+pub(super) fn directed_parameters(
+    full: &Curve3,
+    first: &Point3,
+    second: &Point3,
+    closed: bool,
+    same_sense: bool,
+    site: Site,
+) -> Result<[Real; 2], Error> {
+    let a = circle_parameter(full, first, site)?;
+    let b = if closed {
+        if same_sense {
+            &a + Real::tau()
+        } else {
+            &a - Real::tau()
+        }
+    } else {
+        let mut b = circle_parameter(full, second, site)?;
+        let sense = order(site, &a, &b)?;
+        if sense == Ordering::Equal {
+            return Err(site.invalid("distinct circle vertices have the same exact position"));
+        }
+        if same_sense && sense == Ordering::Greater {
+            b += Real::tau();
+        } else if !same_sense && sense == Ordering::Less {
+            b -= Real::tau();
+        }
+        b
+    };
+    Ok([a, b])
+}
+
 impl Builder {
     pub(super) fn angular_scale(&self, site: Site) -> Result<&Real, Error> {
         self.angle_scale
@@ -34,17 +65,15 @@ impl Builder {
             .ok_or_else(|| site.error(ErrorKind::Expected("plane-angle unit for angular mapping")))
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub(super) fn circular_edge(
         &mut self,
         resolver: &mut Resolver<'_, '_, '_>,
-        id: u64,
         geometry: u64,
         start: u64,
         end: u64,
         same_sense: bool,
         scale: &Real,
-    ) -> Result<Edge, Error> {
+    ) -> Result<(Edge, SourceCurveParameters), Error> {
         let mut args = resolver.simple(geometry, "CIRCLE")?;
         let site = args.site;
         let angle_scale = self.angular_scale(site)?.clone();
@@ -63,26 +92,14 @@ impl Builder {
         .map_err(|e| site.error(ErrorKind::Geometry(e)))?;
         let first = self.by_vertex[&start].clone();
         let second = self.by_vertex[&end].clone();
-        let a = circle_parameter(&full, &first.point, site)?;
-        let b = if start == end {
-            if same_sense {
-                &a + Real::tau()
-            } else {
-                &a - Real::tau()
-            }
-        } else {
-            let mut b = circle_parameter(&full, &second.point, site)?;
-            let sense = order(site, &a, &b)?;
-            if sense == Ordering::Equal {
-                return Err(site.invalid("distinct circle vertices have the same exact position"));
-            }
-            if same_sense && sense == Ordering::Greater {
-                b += Real::tau();
-            } else if !same_sense && sense == Ordering::Less {
-                b -= Real::tau();
-            }
-            b
-        };
+        let [a, b] = directed_parameters(
+            &full,
+            &first.point,
+            &second.point,
+            start == end,
+            same_sense,
+            site,
+        )?;
         // Preserve the source frame and an increasing native angular domain.
         // Reversal changes traversal, while the directed source endpoints below
         // retain the source's phase, sense and declared angular unit.
@@ -129,28 +146,13 @@ impl Builder {
             end,
             circle: Some(circle),
         };
-        cache(&mut self.by_edge, id, edge.clone(), site)?;
-        let mut parameters = Vec::new();
-        push(
-            &mut parameters,
+        Ok((
+            edge,
             SourceCurveParameters {
                 curve: geometry,
                 start: (a / &angle_scale).map_err(|e| site.error(ErrorKind::Numeric(e)))?,
                 end: (b / &angle_scale).map_err(|e| site.error(ErrorKind::Numeric(e)))?,
             },
-        )
-        .map_err(|kind| site.error(kind))?;
-        push(
-            &mut self.edges,
-            EdgeSource {
-                source: id,
-                geometry,
-                master: geometry,
-                parameters,
-                key,
-            },
-        )
-        .map_err(|kind| site.error(kind))?;
-        Ok(edge)
+        ))
     }
 }

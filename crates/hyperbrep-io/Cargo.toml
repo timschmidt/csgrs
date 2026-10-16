@@ -36,3 +36,7 @@ harness = false
 [[bench]]
 name = "circles"
 harness = false
+
+[[bench]]
+name = "pcurves"
+harness = false

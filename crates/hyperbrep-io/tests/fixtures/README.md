@@ -56,6 +56,7 @@ twice), three faces and one solid. Expected geometry comes from these recipes:
 | File | Construction | Exact volume, m³ | Exact area, m² |
 | --- | --- | --- | --- |
 | [exact-cylinder.step](exact-cylinder.step) | Radius 5, height 7, seam at `(3,4)` | `175*pi` | `120*pi` |
+| [supplied-cylinder.step](supplied-cylinder.step) | Same solid with supplied planar circles and cylindrical lines, distinct source parameterizations and cylinder X direction `(3,4,0)` | `175*pi` | `120*pi` |
 | [negative-circle-axes.step](negative-circle-axes.step) | Reverse both circle axes and edge senses | `175*pi` | `120*pi` |
 | [negative-cylinder-axis.step](negative-cylinder-axis.step) | Reverse the cylindrical surface axis | `175*pi` | `120*pi` |
 | [negative-cap-axes.step](negative-cap-axes.step) | Reverse cap axes and face senses | `175*pi` | `120*pi` |

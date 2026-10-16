@@ -152,6 +152,45 @@ mod quarter_turn_atan_tests {
         assert!(quarter.quarter_turn_plus_or_minus_atan_argument().is_some());
         assert!(quarter.cached().is_none());
     }
+
+    #[test]
+    fn diagonal_rotation_reuses_exact_coefficients_without_refinement() {
+        let atan = Computable::rational(Rational::fraction(4, 3).unwrap()).atan();
+        let angle = raw(Approximation::Add(atan, Computable::pi().shift_right(2)));
+        assert!(angle.pi_atan_linear_form(0).is_none());
+        assert!(angle.diagonal_turn_plus_or_minus_atan_argument().is_some());
+        let sine = angle.clone().sin();
+        let cosine = angle.clone().cos();
+        assert_eq!(sine.exact_sign(), Some(Sign::Plus));
+        assert_eq!(cosine.exact_sign(), Some(Sign::Minus));
+        // These are composed quadratic values, not rational leaves. Require
+        // the exact value certificate, without claiming leaf representation.
+        assert_eq!(
+            sine.square().bounded_laurent_rational(64),
+            Some(Rational::fraction(49, 50).unwrap())
+        );
+        assert_eq!(
+            cosine.square().bounded_laurent_rational(64),
+            Some(Rational::fraction(1, 50).unwrap())
+        );
+        assert!(angle.cached().is_none());
+    }
+
+    #[test]
+    fn diagonal_rotation_never_discards_offsets_or_changes_atan_multiplicity() {
+        let atan = Computable::rational(Rational::fraction(4, 3).unwrap()).atan();
+        let diagonal = atan.clone().add(Computable::pi().shift_right(2));
+        for value in [
+            diagonal.clone().add(Computable::rational(Rational::fraction(1, 1_000_000_000_000).unwrap())),
+            diagonal.shift_left(1),
+            atan.clone().add(Computable::pi().multiply_rational(Rational::fraction(1, 3).unwrap())),
+            atan.clone().add(Computable::pi().shift_right(1)),
+            atan.add(Computable::rational(Rational::fraction(5, 12).unwrap()).atan()),
+        ] {
+            assert!(value.diagonal_turn_plus_or_minus_atan_argument().is_none());
+            assert!(value.cached().is_none());
+        }
+    }
 }
 
 #[cfg(test)]
@@ -907,6 +946,38 @@ impl Computable {
             cosine_sign
         };
         Some((false, sine_sign, cosine_sign, form.argument?))
+    }
+
+    /// Exact diagonal rotations `k*pi/4 +/- atan(x)`, for odd integer k.
+    /// The existing quarter-turn recognizer remains preferred. This uses its
+    /// same bounded coefficient proof and rejects nonzero constant offsets,
+    /// other atan coefficients and unrecognized/exhausted forms.
+    pub(crate) fn diagonal_turn_plus_or_minus_atan_argument(
+        &self,
+    ) -> Option<(Sign, Sign, Sign, Computable)> {
+        let form = self.pi_atan_linear_form(64)
+            .or_else(|| self.pi_atan_laurent_form(64))?;
+        if form.constant.sign() != Sign::NoSign
+            || (!form.atan.is_one() && !form.atan.is_minus_one())
+        {
+            return None;
+        }
+        let quadrupled = &form.pi * Rational::new(4);
+        let turns = quadrupled.integer_magnitude()?;
+        if !turns.bit(0) {
+            return None;
+        }
+        let sine_sign = if turns.bit(2) ^ (form.pi.sign() == Sign::Minus) {
+            Sign::Minus
+        } else {
+            Sign::Plus
+        };
+        let cosine_sign = if turns.bit(1) ^ turns.bit(2) {
+            Sign::Minus
+        } else {
+            Sign::Plus
+        };
+        Some((sine_sign, cosine_sign, form.atan.sign(), form.argument?))
     }
 
     fn pi_atan_laurent_form(&self, budget: usize) -> Option<PiAtanLinearForm> {

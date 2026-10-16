@@ -165,14 +165,68 @@ independent. A conversion named `degree` uses its authored exact decimal factor;
 it never substitutes symbolic `pi/180`. Uncertainty metadata cannot make an
 off-carrier decimal vertex incident.
 
-Curved `SURFACE_CURVE`, `SEAM_CURVE`, ellipses, other analytic surfaces and spline
-exchange remain typed unsupported. The planar line/supplied-pcurve mapping above
-is unchanged. Every selected body must finish admission before any result is
+Ellipses, other analytic surfaces and spline exchange remain typed unsupported.
+The planar line/supplied-pcurve mapping above is unchanged. Every selected body
+must finish admission before any result is
 published; all source entities remain interpreted or raw-retained. The exact
 faceted writer rejects these curved models. Native archive replay is a separate
 lossless operation, not a curved STEP round trip. See the
 [circular mapping evidence](../../hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
 and [runnable example](../examples/circular_step.rs).
+
+## Supplied analytic pcurves
+
+Selected `SURFACE_CURVE` edges may have a spatial `LINE` or `CIRCLE`, with one
+or two `PCURVE` associations. Every supplied representation must agree in image
+and sense, including non-master alternatives. `CURVE_3D`, `PCURVE_S1` and
+`PCURVE_S2` choose the source parameter map; a missing nominated pcurve is an
+error. The surface-curve map, spatial map and each pcurve map remain visible
+through `explicit_edges()`. All maps use the normalized directed edge fraction,
+including reversed edges and partial or single-vertex full circles.
+
+Each pcurve has a one-item `DEFINITIONAL_REPRESENTATION` in a two-dimensional
+parametric context. Supported basis combinations are:
+
+| Spatial image | Pcurve basis | Surface | Coordinate conversion |
+| --- | --- | --- | --- |
+| Line | LINE | PLANE | Both coordinates and velocity components use the length scale |
+| Circle | CIRCLE with AXIS2_PLACEMENT_2D | PLANE | Center/radius use length; circle parameter uses angle |
+| Constant-height circle | LINE | CYLINDRICAL_SURFACE | U uses angle, V uses length |
+| Axial line | LINE | CYLINDRICAL_SURFACE | U uses angle, V uses length |
+
+The pcurve vector is normalized in its authored parameter coordinates before
+the two basis scales are applied. Plane-circle placements normalize their 2D
+reference direction and use its positive perpendicular; an omitted direction
+defaults to X. Source angular intervals remain unwrapped, preserving traversal
+and a distinct endpoint for a full circle. Native chart coordinates are radians
+and metres. The source unit's authored conversion factor remains exact even if
+its name is `degree`.
+
+For new curved combinations, the mapper stages the candidate pcurve and calls
+`ModelBuilder::validate_edge_image`. That native proof checks the whole trim
+and correspondence; source endpoint samples cannot replace it. Candidates may
+remain as unused native geometry in the immutable model. Face construction
+independently validates its generated local charts, followed by shell and model
+admission. Source maps refer to the original imported revision. Native archive
+replay does not itself persist the external STEP source-accounting object.
+The existing planar-line specialization retains its exact infinite-line proof
+and deterministic native artifact contract.
+
+`SEAM_CURVE` checks two supplied pcurves on the same surface. For an axial
+cylindrical seam their constant native U values must be 0 and exact `tau`, in
+either order. Duplicate pcurves at U=0 are not opposite boundaries. A finite
+decimal such as `6.283185307179586` is not exact `tau`; this encoding is rejected,
+even in an ambient approximate-policy scope. This increment provides those
+checks, not a successful finite-decimal exact seam fixture. Other seam surfaces,
+trimmed/spline pcurves and explicit approximation/healing remain open.
+
+Malformed supplied encodings now reach their referenced definitions: missing
+definition IDs report `MissingEntity`, rather than the former unsupported-family
+guard. Original malformed fixtures remain failures with their exact missing IDs
+asserted. The [supplied fixture](../tests/fixtures/supplied-cylinder.step),
+[example](../examples/supplied_step.rs) and
+[acceptance evidence](../../hyperbrep/docs/evidence/2026-10-15-step-pcurves/README.md)
+record exact source-map evaluation, consumption and the remaining limits.
 
 ## Units and text
 

@@ -2,6 +2,7 @@
 mod circles;
 mod curves;
 mod faces;
+mod pcurves;
 mod surfaces;
 
 use super::{

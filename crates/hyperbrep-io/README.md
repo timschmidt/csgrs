@@ -7,7 +7,8 @@ HyperBRep and exact scalar arithmetic belongs to Hyperreal.
 The crate reads and writes bounded Part 21 syntax, imports an explicitly
 selected faceted or supported advanced representation into strictly validated
 native HyperBRep solids, and exports selected planar, straight-edged solids to STEP.
-Advanced import includes direct circular edges on planes and cylinders. Coordinates
+Advanced import includes circular edges on planes and cylinders and supplied
+planar/cylindrical pcurves. Coordinates
 and authored unit conversions remain exact. Whole-document/product traversal,
 other analytic/spline mappings, curved export and approximate export remain unfinished.
 
@@ -75,8 +76,13 @@ Direct `CIRCLE` edges retain the source angular frame, traversal and parameter
 map, including a closed edge with one vertex and distinct seam uses. Cylinder
 charts use native radians and metres; source angle units are converted exactly
 and independently of length units. Native validation proves the complete
-edge/pcurve image. Supplied curved `SURFACE_CURVE` and `SEAM_CURVE` records remain
-unsupported until every representation can be checked.
+edge/pcurve image. Selected `SURFACE_CURVE` records admit planar `CIRCLE` and
+cylindrical `LINE` pcurves, with every alternate checked and its parameter map
+retained. `SEAM_CURVE` additionally requires two pcurves at opposite exact
+parameter bounds on the same surface. Decimal approximations to a full angular
+period remain typed rejections; there is no inferred `pi` or implicit repair.
+See the [supplied-pcurve example](examples/supplied_step.rs) and
+[mapping contract](docs/STEP_MAPPING.md#supplied-analytic-pcurves).
 
 ```rust
 use hyperbrep::{OperationContext, WorkBudget};
