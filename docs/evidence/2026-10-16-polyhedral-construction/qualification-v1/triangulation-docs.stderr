@@ -1,0 +1,10 @@
+    Checking num-bigint v0.4.6
+    Checking num-complex v0.4.6
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+ Documenting hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Finished `release` profile [optimized] target(s) in 9.06s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/qualification-v1/doc/hypertri/index.html

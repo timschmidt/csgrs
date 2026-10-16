@@ -1,0 +1,141 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {},
+  "base_commit": "67a3daae8d8fc0c66706ba96c59e3e24be66ada8",
+  "runner_sha256": "f3ee76657ed7c1e8792452ded7c2380c1ad03a41abb312d80f9adf68b4dc6f05",
+  "phase": "candidate-v2",
+  "commands": [
+    [
+      "overlay-setup",
+      [
+        "python3",
+        "docs/evidence/2026-10-16-polyhedral-construction/setup_overlay_v2.py",
+        "candidate-v2"
+      ]
+    ],
+    [
+      "fmt",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "root-construction",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--test",
+        "polyhedral_construction",
+        "--test",
+        "geometry_context",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "native-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypertri",
+        "--features",
+        "earcut",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "root-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/candidate-v2",
+    "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/polyhedral-construction/candidate-v2"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P4",
+    "P5",
+    "P6",
+    "P8",
+    "P9",
+    "P10",
+    "P11",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P21",
+    "P22",
+    "P23",
+    "P24",
+    "P25",
+    "P26",
+    "P27",
+    "P35",
+    "P36",
+    "P37",
+    "P38",
+    "P39"
+  ],
+  "owning_layers": [
+    "Hypertri planar ring validation and triangulation",
+    "Hypermesh topology, convexity and native mesh operations",
+    "CSGRS modeling contracts, failure/certainty and composition"
+  ],
+  "domain": "See contract-v1.md. Reproduce polygon faces, lofted boundaries and represented-set versus vertex-hull Minkowski semantics before selecting an implementation milestone.",
+  "consumers": [
+    "Public native/CSGRS Rust construction APIs",
+    "Scalar adapters, C/C++/Python/Go and JS/WASM where affected",
+    "Original feature/mesh benchmarks and README renders"
+  ],
+  "missing_acceptance_test": [
+    "Reproduce polygon/loft success, failure categories, native causes and downstream topology on 67a3daae8.",
+    "Compare independently derived set meaning for concave/crossed faces, repeated sections and disconnected Minkowski operands.",
+    "Retain original tetrahedron, square-section loft and cube-sum benchmark/render workloads."
+  ],
+  "semantic_oracle": "Independent exact area, volume and membership, topology and subsequent composition. Deterministic coordinate/index serialization is a separate check.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "diagnostic_collection": "All commands are attempted on frozen source; Cargo test --no-fail-fast retains every failed test target. Every nonzero result remains a failure; source or artifact mutation still aborts immediately.",
+  "limitations": "External containment only. No internal total-work, heap-byte, cancellation, inherited-provenance or full-plan claim. All 27093 inherited missing artifact expectations remain.",
+  "previous_goal_turn": "Progress: 67a3daae8 committed typed distribution failure and native composition; 30 qualification commands and 80 fixed cost rows passed, exact artifacts preserved, no new artifact loss; broader plan and 35 native files remain open.",
+  "wrapper_sha256": "aba39d5cd6ea1ea39af9c6c624ffb02d8e3c637bb9c25fa4d1f7998021d0ad77",
+  "artifact_preparation": "Fresh /dev/shm targets or private copy-on-write overlays over preserved builds; all lower/dependency hashes rechecked at closure."
+}

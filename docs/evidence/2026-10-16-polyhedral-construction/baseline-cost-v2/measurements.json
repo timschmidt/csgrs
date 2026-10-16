@@ -1,0 +1,162 @@
+[
+  {
+    "name": "timing-tetrahedron-cold-0",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "tetrahedron",
+      "cold",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-tetrahedron-cold-0.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "timing-tetrahedron-cold-1",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "tetrahedron",
+      "cold",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-tetrahedron-cold-1.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "timing-tetrahedron-cold-2",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "tetrahedron",
+      "cold",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-tetrahedron-cold-2.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "timing-tetrahedron-warm-0",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "tetrahedron",
+      "warm",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-tetrahedron-warm-0.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "timing-tetrahedron-warm-1",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "tetrahedron",
+      "warm",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-tetrahedron-warm-1.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "timing-tetrahedron-warm-2",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "tetrahedron",
+      "warm",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-tetrahedron-warm-2.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "timing-loft-square-cold-0",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "loft-square",
+      "cold",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-loft-square-cold-0.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "timing-loft-square-cold-1",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "loft-square",
+      "cold",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-loft-square-cold-1.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "timing-loft-square-cold-2",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "loft-square",
+      "cold",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-loft-square-cold-2.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "timing-loft-square-warm-0",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "loft-square",
+      "warm",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-loft-square-warm-0.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "timing-loft-square-warm-1",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "loft-square",
+      "warm",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-loft-square-warm-1.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "timing-loft-square-warm-2",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing",
+      "loft-square",
+      "warm",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/timing-loft-square-warm-2.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "allocation-tetrahedron-cold-0",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/allocation",
+      "tetrahedron",
+      "cold",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/allocation-tetrahedron-cold-0.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "allocation-tetrahedron-warm-0",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/allocation",
+      "tetrahedron",
+      "warm",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/allocation-tetrahedron-warm-0.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "allocation-loft-square-cold-0",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/allocation",
+      "loft-square",
+      "cold",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/allocation-loft-square-cold-0.json"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "allocation-loft-square-warm-0",
+    "command": [
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/allocation",
+      "loft-square",
+      "warm",
+      "/dev/shm/csgrs-polyhedral-construction/baseline-cost-v2/allocation-loft-square-warm-0.json"
+    ],
+    "exit_code": 0
+  }
+]

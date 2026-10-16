@@ -1,0 +1,36 @@
+[
+  [
+    "mkdir",
+    [
+      "mkdir",
+      "-p",
+      "/dev/shm/csgrs-polyhedral-construction/reproduction-v1"
+    ]
+  ],
+  [
+    "baseline-build",
+    [
+      "rustc",
+      "--edition=2024",
+      "-Copt-level=2",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-polyhedral-construction/baseline_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v2/release/deps/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v2/release/deps/libhypermesh-98c5db38df7e7da0.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v2/release/deps",
+      "-o",
+      "/dev/shm/csgrs-polyhedral-construction/reproduction-v1/baseline"
+    ]
+  ],
+  [
+    "baseline",
+    [
+      "/dev/shm/csgrs-polyhedral-construction/reproduction-v1/baseline",
+      "/dev/shm/csgrs-polyhedral-construction/reproduction-v1/fixtures"
+    ]
+  ]
+]

@@ -1,0 +1,35 @@
+{
+  "commands": [
+    {
+      "name": "mkdir",
+      "exit_code": 0,
+      "seconds": 1.8379178340546787,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "1a43bf49c44cc5226fb710c7e438d16a9d766a6e32007008e7d920ec902c770a"
+    },
+    {
+      "name": "baseline-build",
+      "exit_code": 0,
+      "seconds": 3.1422074330039322,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "4ad99ed3267348ddd52aa398d91482dec4574ea61c5600b6df996a36a3bd9d63"
+    },
+    {
+      "name": "baseline",
+      "exit_code": 0,
+      "seconds": 1.9036706048063934,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "bc85dc18dca58796ddeb0abdd626f6870eba4f929bae36da7ca122d82d198a1d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "e2e75880a7a010ae13319442461f0d2ac6886d89189a89abdc6f97e6ef5d8b8d"
+    }
+  ],
+  "passed": true
+}

@@ -395,6 +395,20 @@ Functions in `csgrs::solid` return `TriangleMesh`:
 | <img src="docs/schwarz_p_surface.png" width="144" alt="Bounded Schwarz-P level surface with visible faces, edges, and vertices"/> | `solid::schwarz_p(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/schwarz_d_surface.png" width="144" alt="Bounded Schwarz-D level surface with visible faces, edges, and vertices"/> | `solid::schwarz_d(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
 
+Polyhedron faces must be simple and planar. Triangulation preserves each face's
+authored winding, including concave faces, and accepts an explicitly repeated
+closing coordinate. Crossed or self-touching faces return typed errors.
+Polyhedron construction can represent open surfaces; validate the complete
+mesh before using it as a solid. Unused positions remain structural data.
+
+Loft sections are corresponding simple planar loops without a repeated closing
+point. Consecutive sections proved pointwise equal are coalesced. A completed
+loft passes native closed-PWN validation before it is returned. This establishes
+a consumable winding boundary, without promising an embedded surface or fidelity
+to an unspecified continuous sweep. Context forms retain every consumed
+predicate's certainty and native error cause. Section validation takes quadratic
+edge-pair work; total work, heap bytes and cancellation remain unbounded internally.
+
 `solid::empty()` is intentionally image-free. Diagnostic variants
 `metaballs_with_diagnostics` and `sdf_with_diagnostics` produce the same shape
 families while returning sampling reports. `sdf_expr` and

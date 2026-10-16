@@ -1,0 +1,47 @@
+{
+  "commands": [
+    {
+      "name": "overlay-setup",
+      "exit_code": 0,
+      "seconds": 37.63219199702144,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "f0095860baadfab9f1b640651a3bbd46108dd74307177d9cd6347acfa5d50590",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "9262d839d700ee66161907e538f21567cab9338b144785649bd8870a786775ec"
+    },
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.475590498186648,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "029d37cc07bb81529ec866bfc382850601a82616d3724c66289e276366f4e065"
+    },
+    {
+      "name": "native-simple-ring",
+      "exit_code": 0,
+      "seconds": 25.01394376065582,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/polyhedral-construction/candidate-v1/release/deps/simple_ring-ce97515572b9b8c7": "f2d45d98a21d74fa5a2706607be58c025811d80c3b0658d2158cd9ce6f43f4cc"
+      },
+      "stdout_sha256": "752e844fce9e557203cef36d1ed347bcd98a77346a7e34150999afc0a2aee71a",
+      "stderr_sha256": "dd2351d7ded406f46c52236b8703683bbe031f340c9d53249a64965f0517dbda",
+      "resources_sha256": "af0944f045678846b37a1ea782a5ece128161634d7a81bbad21c64adede94182"
+    },
+    {
+      "name": "root-construction",
+      "exit_code": 101,
+      "seconds": 91.65966266999021,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "48b7be391f836eca3d873b0796fd57cfff679a2df86f7416e46ae96f6d52e9d7",
+      "resources_sha256": "0834720b1d0c52481323b5a00f9579b2cbf84b9ccd635923b82e5a32965b7f51"
+    }
+  ],
+  "passed": false
+}

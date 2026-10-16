@@ -933,7 +933,11 @@ pub fn helical_involute_gear(
     Ok(decisions.finish(mesh))
 }
 
-/// Builds native triangle geometry from polygon index rows.
+/// Builds native triangle geometry from simple planar polygon index rows.
+///
+/// Faces retain their authored winding and may form an open surface. A repeated
+/// closing coordinate is accepted; crossed or self-touching faces are rejected.
+/// This does not validate the topology of the complete collection of faces.
 pub fn polyhedron(
     points: &[[Real; 3]],
     faces: &[&[usize]],
@@ -949,10 +953,12 @@ pub fn polyhedron_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let positions = points
-        .iter()
-        .map(|[x, y, z]| Point3::new(x.clone(), y.clone(), z.clone()))
-        .collect::<Vec<_>>();
+    let mut positions = reserved(points.len())?;
+    positions.extend(
+        points
+            .iter()
+            .map(|[x, y, z]| Point3::new(x.clone(), y.clone(), z.clone())),
+    );
     let mut triangles = Vec::new();
     for face in faces {
         if face.len() < 3
@@ -971,20 +977,34 @@ pub fn polyhedron_with_context(
                 });
             }
         }
-        let points = face
-            .iter()
-            .map(|&index| &positions[index])
-            .collect::<Vec<_>>();
-        let (projected, _) = project_planar_ring(&points, &decisions)?;
-        let indices = decisions.consume_triangulation(
-            hypertri::earcut(&decisions.triangulation_context(), &projected, &[])
-                .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-        );
-        triangles.extend(indices.as_chunks::<3>().0.iter().map(|triangle| {
+        let mut points = reserved(face.len())?;
+        points.extend(face.iter().map(|&index| &positions[index]));
+        let (ring, _) = triangulate_planar_ring(&points, &decisions)?;
+        reserve_additional(&mut triangles, ring.triangles.len() / 3)?;
+        triangles.extend(ring.triangles.as_chunks::<3>().0.iter().map(|triangle| {
             Triangle::new(face[triangle[0]], face[triangle[1]], face[triangle[2]])
         }));
     }
     Ok(decisions.finish(TriangleMesh::new(positions, triangles)))
+}
+
+fn triangulate_planar_ring(
+    points: &[&Point3],
+    decisions: &GeometryDecisions,
+) -> Result<(hypertri::SimpleRingTriangulation, Vector3), ValidationError> {
+    let (projected, normal) = project_planar_ring(points, decisions)?;
+    let ring = decisions.consume_triangulation(hypertri::triangulate_simple_ring(
+        &decisions.triangulation_context(),
+        &projected,
+    )?);
+    // Projection aligns its positive orientation with the support triple.
+    // A concave ring's whole boundary can have the opposite winding.
+    let normal = if ring.winding == hypertri::Sign::Negative {
+        -normal
+    } else {
+        normal
+    };
+    Ok((ring, normal))
 }
 
 // A planar ring only needs an invertible coordinate projection for triangulation.
@@ -1012,7 +1032,7 @@ fn project_planar_ring(
                         break 'support;
                     }
                 },
-                Err(error) => blocker = Some(ValidationError::Geometry(error.to_string())),
+                Err(error) => blocker = Some(ValidationError::Mesh(error)),
             }
         }
     }
@@ -1025,31 +1045,29 @@ fn project_planar_ring(
     }
     // Any decidably nonzero normal component gives an invertible projection.
     // An undecided component need not block another component's certified proof.
-    let (axis, sign) = normal
-        .0
-        .iter()
-        .enumerate()
-        .find_map(|(axis, value)| {
-            decisions
-                .sign(value, "ring projection normal")
-                .ok()
-                .filter(|sign| *sign != RealSign::Zero)
-                .map(|sign| (axis, sign))
-        })
-        .ok_or_else(|| {
-            ValidationError::Geometry("ring has no decidably nonzero projection normal".into())
-        })?;
-    let projected = points
-        .iter()
-        .map(|point| {
-            let (u, v) = match axis {
-                0 => (point.y.clone(), point.z.clone()),
-                1 => (point.z.clone(), point.x.clone()),
-                _ => (point.x.clone(), point.y.clone()),
-            };
-            hypertri::Point2::new(u, if sign == RealSign::Negative { -v } else { v })
-        })
-        .collect();
+    let mut projection = None;
+    let mut blocker = None;
+    for (axis, value) in normal.0.iter().enumerate() {
+        match decisions.sign(value, "ring projection normal") {
+            Ok(RealSign::Zero) => {},
+            Ok(sign) => {
+                projection = Some((axis, sign));
+                break;
+            },
+            Err(error) => blocker = Some(error),
+        }
+    }
+    let (axis, sign) =
+        projection.ok_or_else(|| blocker.unwrap_or(ValidationError::InvalidArguments))?;
+    let mut projected = reserved(points.len())?;
+    projected.extend(points.iter().map(|point| {
+        let (u, v) = match axis {
+            0 => (point.y.clone(), point.z.clone()),
+            1 => (point.z.clone(), point.x.clone()),
+            _ => (point.x.clone(), point.y.clone()),
+        };
+        hypertri::Point2::new(u, if sign == RealSign::Negative { -v } else { v })
+    }));
     Ok((projected, normal))
 }
 
@@ -2384,7 +2402,11 @@ pub fn minkowski_sum_with_context(
     Ok(decisions.finish(hull))
 }
 
-/// Lofts corresponding closed point loops into reusable native geometry.
+/// Lofts corresponding simple planar point loops into closed PWN geometry.
+///
+/// Supply each loop without repeating its first vertex. Consecutive pointwise
+/// equal sections are coalesced. Cap winding follows the complete boundary;
+/// invalid or undecided section/mesh predicates return typed errors.
 pub fn loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError> {
     loft_with_context(sections, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
@@ -2412,78 +2434,80 @@ pub fn loft_with_context(
         });
     }
 
-    let projections = sections
-        .iter()
-        .map(|section| {
-            for (left, right) in section.iter().zip(section.iter().cycle().skip(1)) {
-                if decisions.points_equal(left, right)? {
-                    return Err(ValidationError::InvalidArguments);
+    let mut retained: Vec<&[Point3]> = reserved(sections.len())?;
+    let mut caps = reserved(sections.len())?;
+    for section in sections {
+        for (left, right) in section.iter().zip(section.iter().cycle().skip(1)) {
+            if decisions.points_equal(left, right)? {
+                return Err(ValidationError::InvalidArguments);
+            }
+        }
+        // Only equal corresponding points make a section redundant. Preserve
+        // every consumed equality's certainty, including terminal decisions.
+        if let Some(previous) = retained.last() {
+            let mut equal = true;
+            for (left, right) in previous.iter().zip(section) {
+                if !decisions.points_equal(left, right)? {
+                    equal = false;
+                    break;
                 }
             }
-            project_planar_ring(&section.iter().collect::<Vec<_>>(), &decisions)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    let first = &sections[0];
-    let normal = &projections[0].1;
-    let travel = &sections[sections.len() - 1][0] - &first[0];
+            if equal {
+                continue;
+            }
+        }
+        let mut points = reserved(vertex_count)?;
+        points.extend(section.iter());
+        caps.push(triangulate_planar_ring(&points, &decisions)?);
+        retained.push(section);
+    }
+    if retained.len() < 2 {
+        return Err(ValidationError::InvalidArguments);
+    }
+    let normal = &caps[0].1;
+    let travel = &retained[retained.len() - 1][0] - &retained[0][0];
     let forward = match decisions.sign(&normal.dot(&travel), "loft orientation")? {
         RealSign::Positive => true,
         RealSign::Negative => false,
         RealSign::Zero => return Err(ValidationError::InvalidArguments),
     };
 
-    let triangulate_cap =
-        |points: &[hypertri::Point2]| -> Result<Vec<[usize; 3]>, ValidationError> {
-            let flat = decisions.consume_triangulation(
-                hypertri::earcut(&decisions.triangulation_context(), points, &[])
-                    .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-            );
-            Ok(flat
-                .as_chunks::<3>()
-                .0
-                .iter()
-                .map(|triangle| [triangle[0], triangle[1], triangle[2]])
-                .collect())
-        };
-
-    let position_capacity = sections
-        .len()
-        .checked_mul(vertex_count)
-        .ok_or(ValidationError::InvalidArguments)?;
-    let side_triangle_count = sections
+    let position_capacity = capacity::<Point3>(retained.len().checked_mul(vertex_count))?;
+    let side_triangle_count = retained
         .len()
         .checked_sub(1)
         .and_then(|count| count.checked_mul(vertex_count))
         .and_then(|count| count.checked_mul(2))
-        .ok_or(ValidationError::InvalidArguments)?;
+        .ok_or(ValidationError::CapacityOverflow)?;
     let cap_triangle_count = vertex_count
         .checked_sub(2)
         .and_then(|count| count.checked_mul(2))
-        .ok_or(ValidationError::InvalidArguments)?;
-    let triangle_capacity = side_triangle_count
-        .checked_add(cap_triangle_count)
-        .ok_or(ValidationError::InvalidArguments)?;
-    let mut positions = Vec::with_capacity(position_capacity);
-    positions.extend(sections.iter().flatten().cloned());
-    let mut triangles = Vec::with_capacity(triangle_capacity);
-    for mut triangle in triangulate_cap(&projections[0].0)? {
+        .ok_or(ValidationError::CapacityOverflow)?;
+    let triangle_capacity =
+        capacity::<Triangle>(side_triangle_count.checked_add(cap_triangle_count))?;
+    let mut positions = reserved(position_capacity)?;
+    positions.extend(retained.iter().flat_map(|section| section.iter()).cloned());
+    let mut triangles = reserved(triangle_capacity)?;
+    for &triangle in caps[0].0.triangles.as_chunks::<3>().0 {
+        let mut triangle = triangle;
         if forward {
             triangle.swap(1, 2);
         }
-        triangles.push(triangle);
+        triangles.push(Triangle::new(triangle[0], triangle[1], triangle[2]));
     }
-    let top_base = (sections.len() - 1) * vertex_count;
-    for mut triangle in triangulate_cap(&projections[projections.len() - 1].0)? {
+    let top_base = (retained.len() - 1) * vertex_count;
+    for &triangle in caps[caps.len() - 1].0.triangles.as_chunks::<3>().0 {
+        let mut triangle = triangle;
         if !forward {
             triangle.swap(1, 2);
         }
-        triangles.push([
+        triangles.push(Triangle::new(
             top_base + triangle[0],
             top_base + triangle[1],
             top_base + triangle[2],
-        ]);
+        ));
     }
-    for section in 0..sections.len() - 1 {
+    for section in 0..retained.len() - 1 {
         let bottom = section * vertex_count;
         let top = bottom + vertex_count;
         for index in 0..vertex_count {
@@ -2494,11 +2518,13 @@ pub fn loft_with_context(
                 first.swap(1, 2);
                 second.swap(1, 2);
             }
-            triangles.push(first);
-            triangles.push(second);
+            triangles.push(Triangle::new(first[0], first[1], first[2]));
+            triangles.push(Triangle::new(second[0], second[1], second[2]));
         }
     }
-    Ok(decisions.finish(indexed(positions, triangles)))
+    let mesh = TriangleMesh::new(positions, triangles);
+    decisions.consume_mesh(mesh.validate_closed_pwn(decisions.mesh_context())?);
+    Ok(decisions.finish(mesh))
 }
 
 /// Fluent CSG grammar implemented directly for native Hypermesh geometry.

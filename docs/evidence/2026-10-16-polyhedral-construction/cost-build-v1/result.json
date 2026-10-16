@@ -1,0 +1,57 @@
+{
+  "commands": [
+    {
+      "name": "overlay-setup",
+      "exit_code": 0,
+      "seconds": 58.683221770916134,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "67459e26e1b3c76ddaf439c242dd15b85e8acf6a378c799c1ca59b89e65a3616",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "f6096754a0304321fd9e2039ec151d9c74695ee166a0c2f710b750bea60ae01d"
+    },
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.410411951132119,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "aafed88891c799ac29b63726da8232f64bf00f6409c8a9cf1a071420d0267428"
+    },
+    {
+      "name": "readme-tests",
+      "exit_code": 0,
+      "seconds": 22.448191616218537,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/polyhedral-construction/cost-build-v1/release/deps/readme-1992b521cbd1aa62": "c8d7e6710fcf40d350774a1bcdda649958f404417d2c8a6f7f54bceb36dc881d"
+      },
+      "stdout_sha256": "293d6068ed6b268888c81f9c3520df58b6d4e78fc6f1771f3474c111b2e83ecd",
+      "stderr_sha256": "e73f10cd4607eae390dc840c77a1a118214aa5f8eeb6dbfc0b7207e5fbd35f3b",
+      "resources_sha256": "463cf8baa0ff0792ec45e01a32426bae1dba6050c82badba7f333b2a4708a919"
+    },
+    {
+      "name": "public-docs",
+      "exit_code": 0,
+      "seconds": 208.81947672180831,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "998fc57c4b24c7306fa635c1cf16fcb5f0a3a59069abde07ae40c01746ee4d8b",
+      "resources_sha256": "fd44846b2a16f911e8dffa6373eed283734106d899d88e82084b87326de2126b"
+    },
+    {
+      "name": "matched-benchmark-library",
+      "exit_code": 0,
+      "seconds": 5.782908334862441,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e84b315144b04c271ef6483fe99354066e433b2c7b48d281754dd08dc91e1308",
+      "resources_sha256": "85d6cb70eb785c2033e5c92a384517761fb1eaa580574572dad770e4e30d0242"
+    }
+  ],
+  "passed": true
+}

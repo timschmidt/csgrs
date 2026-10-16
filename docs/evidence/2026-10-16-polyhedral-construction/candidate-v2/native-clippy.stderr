@@ -1,0 +1,13 @@
+    Checking num-bigint v0.4.6
+    Checking num-complex v0.4.6
+    Checking ciborium v0.2.2
+    Checking num-rational v0.4.2
+    Checking criterion v0.5.1
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking delaunator v1.1.0
+    Checking earcutr v0.5.0
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Finished `release` profile [optimized] target(s) in 19.44s

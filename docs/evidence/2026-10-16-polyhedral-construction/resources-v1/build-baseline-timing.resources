@@ -1,0 +1,23 @@
+	Command being timed: "rustc --edition=2024 -Copt-level=2 -D warnings --check-cfg cfg(allocation) /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-polyhedral-construction/resource_probe_v1.rs --extern csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v2/release/deps/libcsgrs.rlib --extern hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v2/release/deps/libhypermesh-98c5db38df7e7da0.rlib -L dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/distribution-contracts/cost-build-v2/release/deps -o /dev/shm/csgrs-polyhedral-construction/resources-v1/baseline-timing"
+	User time (seconds): 0.49
+	System time (seconds): 0.36
+	Percent of CPU this job got: 71%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.20
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 338868
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1616
+	Minor (reclaiming a frame) page faults: 62599
+	Voluntary context switches: 6773
+	Involuntary context switches: 168
+	Swaps: 0
+	File system inputs: 800
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

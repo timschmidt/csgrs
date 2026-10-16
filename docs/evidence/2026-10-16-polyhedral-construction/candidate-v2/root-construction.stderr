@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+    Finished `release` profile [optimized] target(s) in 4.80s
+     Running tests/geometry_context.rs (target/properties/polyhedral-construction/candidate-v2/release/deps/geometry_context-673fb3a0a6f0689a)
+     Running tests/polyhedral_construction.rs (target/properties/polyhedral-construction/candidate-v2/release/deps/polyhedral_construction-37f9e8a14557f156)

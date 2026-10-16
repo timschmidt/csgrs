@@ -1,0 +1,84 @@
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+error[E0599]: no associated function or constant named `default` found for struct `TriangleMesh` in the current scope
+   --> tests/polyhedral_construction.rs:103:60
+    |
+103 |                     .try_union_with_context(&TriangleMesh::default(), &context)
+    |                                                            ^^^^^^^ associated function or constant not found in `TriangleMesh`
+    |
+note: if you're trying to build a new `TriangleMesh` consider using one of the following associated functions:
+      hypermesh::mesh::concatenation::<impl TriangleMesh>::try_concatenate
+      TriangleMesh::new
+   --> crates/hypermesh/src/mesh.rs:128:5
+    |
+128 |     pub fn new(positions: Vec<Point3>, triangles: Vec<Triangle>) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+   ::: crates/hypermesh/src/mesh/concatenation.rs:33:5
+    |
+ 33 |     pub fn try_concatenate(meshes: &[Self]) -> HypermeshResult<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no associated function or constant named `default` found for struct `TriangleMesh` in the current scope
+   --> tests/polyhedral_construction.rs:279:51
+    |
+279 |     assert!(point_buffer.try_union(&TriangleMesh::default()).is_err());
+    |                                                   ^^^^^^^ associated function or constant not found in `TriangleMesh`
+    |
+note: if you're trying to build a new `TriangleMesh` consider using one of the following associated functions:
+      hypermesh::mesh::concatenation::<impl TriangleMesh>::try_concatenate
+      TriangleMesh::new
+   --> crates/hypermesh/src/mesh.rs:128:5
+    |
+128 |     pub fn new(positions: Vec<Point3>, triangles: Vec<Triangle>) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+   ::: crates/hypermesh/src/mesh/concatenation.rs:33:5
+    |
+ 33 |     pub fn try_concatenate(meshes: &[Self]) -> HypermeshResult<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no associated function or constant named `default` found for struct `TriangleMesh` in the current scope
+   --> tests/polyhedral_construction.rs:282:39
+    |
+282 |         face.try_union(&TriangleMesh::default()),
+    |                                       ^^^^^^^ associated function or constant not found in `TriangleMesh`
+    |
+note: if you're trying to build a new `TriangleMesh` consider using one of the following associated functions:
+      hypermesh::mesh::concatenation::<impl TriangleMesh>::try_concatenate
+      TriangleMesh::new
+   --> crates/hypermesh/src/mesh.rs:128:5
+    |
+128 |     pub fn new(positions: Vec<Point3>, triangles: Vec<Triangle>) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+   ::: crates/hypermesh/src/mesh/concatenation.rs:33:5
+    |
+ 33 |     pub fn try_concatenate(meshes: &[Self]) -> HypermeshResult<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no associated function or constant named `default` found for struct `TriangleMesh` in the current scope
+   --> tests/polyhedral_construction.rs:310:43
+    |
+310 |     volume(&loft.try_union(&TriangleMesh::default()).unwrap(), q(896, 3));
+    |                                           ^^^^^^^ associated function or constant not found in `TriangleMesh`
+    |
+note: if you're trying to build a new `TriangleMesh` consider using one of the following associated functions:
+      hypermesh::mesh::concatenation::<impl TriangleMesh>::try_concatenate
+      TriangleMesh::new
+   --> crates/hypermesh/src/mesh.rs:128:5
+    |
+128 |     pub fn new(positions: Vec<Point3>, triangles: Vec<Triangle>) -> Self {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+   ::: crates/hypermesh/src/mesh/concatenation.rs:33:5
+    |
+ 33 |     pub fn try_concatenate(meshes: &[Self]) -> HypermeshResult<Self> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `csgrs` (test "polyhedral_construction") due to 4 previous errors
+warning: build failed, waiting for other jobs to finish...

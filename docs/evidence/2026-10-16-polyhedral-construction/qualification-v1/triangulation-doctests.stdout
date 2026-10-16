@@ -1,0 +1,10 @@
+
+running 4 tests
+test crates/hypertri/src/nd.rs - nd (line 17) ... ok
+test crates/hypertri/src/nd.rs - nd (line 94) ... ok
+test crates/hypertri/src/nd.rs - nd (line 41) ... ok
+test crates/hypertri/src/nd.rs - nd (line 64) ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 1.54s; merged doctests compilation took 1.53s

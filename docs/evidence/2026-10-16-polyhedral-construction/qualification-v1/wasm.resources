@@ -1,0 +1,23 @@
+	Command being timed: "env WASM_BINDGEN=/tmp/csgrs-factored-product-proofs/wasm-tools-v1/install/bin/wasm-bindgen bash scripts/test-wasm-bindings.sh"
+	User time (seconds): 114.23
+	System time (seconds): 5.82
+	Percent of CPU this job got: 110%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:48.56
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2763240
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1775
+	Minor (reclaiming a frame) page faults: 2190516
+	Voluntary context switches: 17845
+	Involuntary context switches: 6456
+	Swaps: 0
+	File system inputs: 127960
+	File system outputs: 765508
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -1,0 +1,8 @@
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling criterion v0.5.1
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling delaunator v1.1.0
+   Compiling earcutr v0.5.0
+    Finished `release` profile [optimized] target(s) in 23.07s
+     Running tests/simple_ring.rs (target/properties/polyhedral-construction/candidate-v1/release/deps/simple_ring-ce97515572b9b8c7)

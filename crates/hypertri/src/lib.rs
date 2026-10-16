@@ -40,7 +40,8 @@ pub mod types;
 pub use context::{TriangulationCertainty, TriangulationContext, TriangulationOutcome};
 #[cfg(feature = "earcut")]
 pub use earcut::{
-    EarcutDiagnostics, EarcutReport, triangulate as earcut, triangulate_report as earcut_report,
+    EarcutDiagnostics, EarcutReport, SimpleRingTriangulation, triangulate as earcut,
+    triangulate_report as earcut_report, triangulate_simple_ring,
 };
 pub use error::{Error, Result};
 pub use hyperlimit::PredicatePolicy;

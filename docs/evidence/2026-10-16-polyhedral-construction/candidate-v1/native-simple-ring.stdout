@@ -1,0 +1,10 @@
+
+running 5 tests
+test collinear_vertices_and_explicit_closure_keep_the_same_boundary ... ok
+test exact_near_collinearity_is_not_tolerance_normalized ... ok
+test concave_ring_retains_authored_orientation_in_every_cyclic_order ... ok
+test invalid_boundaries_never_publish_a_partial_triangulation ... ok
+test qualified_closure_cannot_be_reused_as_a_strict_proof ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

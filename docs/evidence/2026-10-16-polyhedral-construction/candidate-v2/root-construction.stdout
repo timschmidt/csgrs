@@ -1,0 +1,26 @@
+
+running 7 tests
+test bounds_and_positioning_propagate_policy_and_certainty ... ok
+test hulls_and_queries_accept_terminal_equality ... ok
+test polyhedron_and_loft_use_context_for_planarity_and_caps ... ok
+test distributions_do_not_reuse_approximate_results_for_strict_calls ... ok
+test scalar_mesh_terminal_evidence_does_not_satisfy_a_later_strict_boolean ... ok
+test transformation_policy_does_not_allow_collapsed_geometry ... ok
+test scalar_mesh_booleans_expose_context_without_losing_certainty ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+
+
+running 9 tests
+test approximate_section_coalescing_retains_its_qualification ... ok
+test concave_loft_orientation_survives_axis_projection_and_negative_travel ... ok
+test invalid_faces_and_sections_fail_before_publishing_geometry ... ok
+test original_readme_polyhedron_and_three_section_loft_keep_their_meaning ... ok
+test original_tetrahedron_and_square_loft_keep_independent_exact_volumes ... ok
+test redundant_sections_coalesce_without_losing_the_result_or_receipt ... ok
+test structural_empty_and_open_faces_keep_their_distinct_contracts ... ok
+test support_predicate_cause_survives_and_approximate_evidence_stays_qualified ... ok
+test concave_faces_keep_authored_winding_and_lofts_compose_in_all_orders ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+

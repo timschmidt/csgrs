@@ -1,0 +1,58 @@
+{
+  "commands": [
+    {
+      "name": "overlay-setup",
+      "exit_code": 0,
+      "seconds": 44.20954822702333,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "22d68c598f127a378f1e3c93ec381325df3cfd1b88be21b2299396015378992b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "192cc9e8c5a1d8e8e148ee4696f91bf6b3056cc5bc3608e7cd416900a87104f3"
+    },
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 12.438168390188366,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "774ea9792c4743a4be432a9beb714ee5c84fa748a55c81e733fded1f350baded"
+    },
+    {
+      "name": "root-construction",
+      "exit_code": 0,
+      "seconds": 7.751421537715942,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/polyhedral-construction/candidate-v2/release/deps/geometry_context-673fb3a0a6f0689a": "bc54cde5141b359ad70920366877c2eadee6cdde5a8bc163e4827efcc7a86071",
+        "target/properties/polyhedral-construction/candidate-v2/release/deps/polyhedral_construction-37f9e8a14557f156": "9502dcaef15a91af8fc990e0a855ae7043085dd5a05e5eca18b83aafbffa7cad"
+      },
+      "stdout_sha256": "d37a02014c76a243394adf1651d336937c40cdbff848e38497e4921fbcbf9eb3",
+      "stderr_sha256": "f149adfd361d589f3263ad3f1d94d77e0536011082c40814c7519f1188e3bbf9",
+      "resources_sha256": "2b0aa030421befb58613b617b2ed3429ff165f0ed7aa5c7b20a9dd1448028cb5"
+    },
+    {
+      "name": "native-clippy",
+      "exit_code": 0,
+      "seconds": 21.421933139208704,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "d041967a82358be01cb29039cf42fef9a54518d7f41881aa028581f39a65a655",
+      "resources_sha256": "67cc082565c6cd132930f7f00086909edab99b17f8403ca6a9e81b8e9137be86"
+    },
+    {
+      "name": "root-clippy",
+      "exit_code": 0,
+      "seconds": 36.13161969790235,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "1136183c7b910f738e10d5da2a13256f24321bebfa0692053d12038bb6b31b2b",
+      "resources_sha256": "f4b616fbe3a6cab26a5b13267864c565659cfc6991c1164b790b2c28923abdd2"
+    }
+  ],
+  "passed": true
+}
