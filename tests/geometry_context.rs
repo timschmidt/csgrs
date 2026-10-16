@@ -118,10 +118,23 @@ fn hulls_and_queries_accept_terminal_equality() {
     let hull = solid::convex_hull_with_context(&mesh, &APPROXIMATE).unwrap();
     assert_eq!(hull.certainty, GeometryCertainty::Approximate512Consumed);
     assert!(hull.value.is_closed_manifold());
-    assert!(solid::minkowski_sum_with_context(&mesh, &cube, &STRICT).is_err());
-    let sum = solid::minkowski_sum_with_context(&mesh, &cube, &APPROXIMATE).unwrap();
+    assert!(solid::minkowski_hull_with_context(&mesh, &cube, &STRICT).is_err());
+    let sum = solid::minkowski_hull_with_context(&mesh, &cube, &APPROXIMATE).unwrap();
     assert_eq!(sum.certainty, GeometryCertainty::Approximate512Consumed);
     assert!(sum.value.is_closed_manifold());
+
+    // The represented-set sum ignores this same unreferenced symbolic position.
+    // Retain the old point-set fixture above under its explicit operation name.
+    for context in [STRICT, APPROXIMATE, STRICT] {
+        let sum = solid::minkowski_sum_with_context(&mesh, &cube, &context).unwrap();
+        assert_eq!(sum.certainty, GeometryCertainty::Certified);
+        assert!(
+            sum.value
+                .is_closed_manifold_geometry(&context.mesh_context())
+                .unwrap()
+                .value
+        );
+    }
 
     let half = (Real::one() / Real::from(2)).unwrap();
     let point = Point3::new(unresolved_zero(), half.clone(), half.clone());

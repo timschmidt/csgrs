@@ -125,10 +125,21 @@ admissible evidence under the selected policy.
 | --- | --- |
 | Return flat indices and certainty | `earcut` |
 | Include diagnostics and certainty | `earcut_report` |
+| Validate one simple ring and retain its winding | `triangulate_simple_ring` |
 
 The result contains three indices per triangle. Diagnostics measure candidate,
 containment, bounding-box, cure, and split-fallback work; they are not topology
 certificates.
+
+`triangulate_simple_ring` returns `SimpleRingTriangulation`: indices oriented
+with the input boundary and its nonzero signed-area winding. It accepts a
+repeated closing point and forward collinear boundary vertices. Crossings,
+self-touching, backtracking and other repeated coordinates return typed
+`InvalidInput`; unresolved validation remains `PredicateUndecided`. It shares
+the earcut implementation and aggregates validation and triangulation certainty.
+Its edge-pair validation takes quadratic work; total work, heap bytes and
+cancellation are not internally bounded. General `earcut` retains its existing
+normalization and hole behavior.
 
 Every predicate-bearing operation takes a [`TriangulationContext`] selecting
 either `PredicatePolicy::STRICT` or `PredicatePolicy::APPROXIMATE_512`.
@@ -152,6 +163,15 @@ Successful operations return a [`TriangulationOutcome`]. Its `certainty` is
 Constraint planarization may append exact Steiner vertices. `constraints()`
 retains caller input; `constraint_edges()` returns the protected subsegments
 actually present in the triangulation.
+
+`constrained_triangulation_convex_hull` chooses admissible diagonals in endpoint-pair
+order using exact orientation and incidence predicates. Identical protected cells
+with the same points and relative vertex order receive identical triangle sets,
+including cells with collinear boundary vertices. This corrects an earlier
+single-flip local-minimum rule: affected outputs can have different diagonals and
+triangle ordering while retaining their exact points, protected edges and represented
+regions. Consumers that store deterministic artifacts should regenerate those
+artifacts for this triangulation change. No Delaunay quality claim is implied.
 
 `delaunay_spatial` retains caller indices but can select another valid diagonal
 on cocircular input because the Delaunay triangulation is not unique.

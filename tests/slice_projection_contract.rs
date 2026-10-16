@@ -158,7 +158,7 @@ fn nested_material_shells_do_not_become_parity_holes() {
         &Matrix4::affine_translation([1.into(), 1.into(), 1.into()]),
     )
     .unwrap();
-    let mesh = solid::merge(&[outer, inner]);
+    let mesh = solid::merge(&[outer, inner]).expect("valid concatenation fixture");
     let (region, strings, paths) = solid::slice_z(&mesh, 2.into()).attempt().unwrap();
     assert_eq!(region.filled_area().unwrap(), Some(16.into()));
     assert_eq!(
@@ -170,7 +170,7 @@ fn nested_material_shells_do_not_become_parity_holes() {
 #[test]
 fn duplicate_material_shells_do_not_cancel() {
     let cube = solid::cube(2.into()).unwrap();
-    let mesh = solid::merge(&[cube.clone(), cube]);
+    let mesh = solid::merge(&[cube.clone(), cube]).expect("valid concatenation fixture");
     let (region, strings, paths) = solid::slice_z(&mesh, 1.into()).attempt().unwrap();
     assert_eq!(region.filled_area().unwrap(), Some(4.into()));
     assert_eq!(
@@ -187,7 +187,7 @@ fn disconnected_hollow_components_preserve_both_voids() {
         &Matrix4::affine_translation([6.into(), 0.into(), 0.into()]),
     )
     .unwrap();
-    let mesh = solid::merge(&[first, second]);
+    let mesh = solid::merge(&[first, second]).expect("valid concatenation fixture");
     let (region, strings, paths) = solid::slice_z(&mesh, 1.into()).attempt().unwrap();
     assert_eq!(region.filled_area().unwrap(), Some(24.into()));
     for x in [2, 8] {
@@ -307,7 +307,8 @@ fn reversed(mesh: &TriangleMesh) -> TriangleMesh {
 #[test]
 fn opposite_shells_cancel_interior_and_coplanar_sections() {
     let cube = solid::cube(2.into()).unwrap();
-    let mesh = solid::merge(&[cube.clone(), reversed(&cube)]);
+    let mesh =
+        solid::merge(&[cube.clone(), reversed(&cube)]).expect("valid concatenation fixture");
     for z in [0, 1, 2] {
         let (region, strings, paths) = solid::slice_z(&mesh, z.into()).attempt().unwrap();
         assert!(region.is_empty(), "opposite winding at Z={z}");
@@ -318,7 +319,8 @@ fn opposite_shells_cancel_interior_and_coplanar_sections() {
 #[test]
 fn signed_multiplicity_is_preserved_interior_and_coplanar() {
     let cube = solid::cube(2.into()).unwrap();
-    let mesh = solid::merge(&[cube.clone(), cube.clone(), reversed(&cube)]);
+    let mesh = solid::merge(&[cube.clone(), cube.clone(), reversed(&cube)])
+        .expect("valid concatenation fixture");
     for z in [0, 1, 2] {
         let (region, strings, paths) = solid::slice_z(&mesh, z.into()).attempt().unwrap();
         assert_eq!(region.filled_area().unwrap(), Some(4.into()));
@@ -334,7 +336,7 @@ fn shared_on_plane_edges_do_not_change_hole_winding() {
         &Matrix4::affine_translation([0.into(), 0.into(), 2.into()]),
     )
     .unwrap();
-    let mesh = solid::merge(&[lower, upper]);
+    let mesh = solid::merge(&[lower, upper]).expect("valid concatenation fixture");
     let (region, strings, paths) = solid::slice_z(&mesh, 2.into()).attempt().unwrap();
     assert_hollow(&region);
     assert!(strings.is_empty() && paths.is_empty());
@@ -348,7 +350,7 @@ fn vertex_touching_components_retain_both_material_regions() {
         &Matrix4::affine_translation([2.into(), 2.into(), 0.into()]),
     )
     .unwrap();
-    let mesh = solid::merge(&[first, second]);
+    let mesh = solid::merge(&[first, second]).expect("valid concatenation fixture");
     let (region, strings, paths) = solid::slice_z(&mesh, 1.into()).attempt().unwrap();
     assert_eq!(region.filled_area().unwrap(), Some(8.into()));
     for (x, y, inside) in [(1, 1, true), (3, 3, true), (1, 3, false), (3, 1, false)] {
@@ -381,7 +383,7 @@ fn interleaved_opposite_faces_preserve_winding_after_permutation() {
     for copies in [1, 2] {
         let mut operands = vec![cube.clone(); copies];
         operands.push(reversed(&cube));
-        let mesh = solid::merge(&operands);
+        let mesh = solid::merge(&operands).expect("valid concatenation fixture");
         let n = cube.triangles.len();
         let mut faces = (0..n)
             .flat_map(|i| (0..operands.len()).map(move |j| j * n + i))
@@ -450,7 +452,8 @@ fn independent_position_rows_preserve_the_same_section() {
 #[test]
 fn shuffled_coincident_shell_faces_preserve_signed_set() {
     let cube = solid::cube(2.into()).unwrap();
-    let source = solid::merge(&[cube.clone(), reversed(&cube)]);
+    let source =
+        solid::merge(&[cube.clone(), reversed(&cube)]).expect("valid concatenation fixture");
     let mut faces = source.triangles.to_vec();
     let mut state = 0x1734_abcd_u64;
     for case in 0..32 {

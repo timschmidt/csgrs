@@ -57,6 +57,89 @@ pub struct EarcutReport {
     pub diagnostics: EarcutDiagnostics,
 }
 
+/// A simple polygon's triangulation, oriented with its input boundary.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SimpleRingTriangulation {
+    /// Flat indices into the original vertex slice, with the input winding.
+    pub triangles: TriangleIndices,
+    /// Nonzero signed-area orientation consumed during this operation.
+    pub winding: Sign,
+}
+
+/// Validate and triangulate one simple, nonzero-area polygon without holes.
+///
+/// The final point may repeat the first. Other repeated points, backtracking,
+/// self-touching and crossing edges are invalid input. Forward collinear
+/// boundary vertices remain represented in the output. Triangles have the
+/// input winding; the outcome aggregates validation and triangulation certainty.
+/// Edge-pair validation takes quadratic work. This API has no total-work,
+/// heap-byte or cancellation bound.
+pub fn triangulate_simple_ring(
+    context: &TriangulationContext,
+    vertices: &[ExactPoint],
+) -> Result<TriangulationOutcome<SimpleRingTriangulation>> {
+    let evaluator = PredicateEvaluator::new(context);
+    let rings = rings_from_hole_indices(vertices, &[])?;
+    let ring = open_ring_indices(&evaluator, vertices, rings.exterior())?;
+    if ring.len() < 3 {
+        return Err(Error::InvalidInput {
+            reason: "simple ring requires at least three distinct vertices",
+        });
+    }
+    for left in 0..ring.len() {
+        let next_left = (left + 1) % ring.len();
+        let a = &vertices[ring[left]];
+        let b = &vertices[ring[next_left]];
+        if points_equal(&evaluator, a, b)? {
+            return Err(Error::InvalidInput {
+                reason: "simple ring has a zero-length edge",
+            });
+        }
+        for right in left + 1..ring.len() {
+            let next_right = (right + 1) % ring.len();
+            let intersection = predicates::segment_intersection(
+                &evaluator,
+                a,
+                b,
+                &vertices[ring[right]],
+                &vertices[ring[next_right]],
+            )?;
+            let adjacent = next_left == right || next_right == left;
+            let valid = if adjacent {
+                intersection == predicates::SegmentIntersection::EndpointTouch
+            } else {
+                intersection.is_disjoint()
+            };
+            if !valid {
+                return Err(Error::InvalidInput {
+                    reason: "simple ring edges cross, overlap or touch away from adjacent endpoints",
+                });
+            }
+        }
+    }
+    let winding = ring_area_sign(&evaluator, vertices, &ring)?;
+    if winding == Sign::Zero {
+        return Err(Error::InvalidInput {
+            reason: "simple ring has zero signed area",
+        });
+    }
+    let mut triangles = triangulate_report_inner(&evaluator, vertices, &[])?.triangles;
+    if triangles.len() / 3 != ring.len() - 2
+        || !triangles_match_input_boundary(&evaluator, vertices, &rings, &triangles)?
+    {
+        return Err(Error::NoEarFound);
+    }
+    // The shared earcut core emits CCW triangles. Retain the input orientation
+    // for consumers attaching these faces to an already oriented boundary.
+    if winding == Sign::Negative {
+        for triangle in triangles.as_chunks_mut::<3>().0 {
+            triangle.swap(1, 2);
+        }
+    }
+    Ok(evaluator.finish(SimpleRingTriangulation { triangles, winding }))
+}
+
 /// Triangulate an exact polygon.
 pub fn triangulate(
     context: &TriangulationContext,

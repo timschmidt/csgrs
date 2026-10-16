@@ -3,34 +3,7 @@
   "base_revision": "0c5508b89",
   "scope": "All 39 properties, all 14 known open targets, and crate-specific future work remain in scope. Inventory and documentation alone do not prove implementation.",
   "current_work": {
-    "updated_on": "2026-10-15",
-    "hyperbrep": {
-      "status": "in-progress",
-      "plan": "crates/hyperbrep/docs/DEVELOPMENT_PLAN.md",
-      "work_packages": "crates/hyperbrep/docs/IMPLEMENTATION_STATUS.json",
-      "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-16-oblique-cuts/manifest.json",
-      "contract": "Pure Rust native/WASM exact CAD implementation; greenfield API/archive changes with direct caller updates and no compatibility shims.",
-      "qualification": "BREP/IO all-feature debug and release each pass 496 tests; minimal release passes 488, with no ignored cases. Both warning-denied all-target Clippy configurations, rustdoc, six examples, eleven independent OCCT checks, fuzz-target compilation and 71 zero-import WASM groups pass. All 31 final qualification/diagnostic/measurement commands use the same final source hashes. Circle/ellipse query controls cover seven distant charts, both traversal directions, restriction, full-period seams and exact 1e-12 gaps. The oblique torus band has three global configurations, 18 nonempty outputs and three canonical empty results; independent exact volume/area and point tables, paired opposite incidence, subdivision, reflected rescaling, deterministic archive replay, both intersection orders and complementary reconstruction are checked. Four STEP attempts retain typed torus/body/entity rejection and same-context cylinder export recovers. All fifteen preceding continuation diagnostics succeed, and all 22 prior STEP artifacts remain byte-identical. The wider nine-fixture frontier remains separately recorded with its typed failures and dependent operations that could not be attempted. The full 84-process campaign compares 156 preserved cases in fourteen corpora; every receipt agrees. The largest case-median candidate/baseline ratio is 1.248962; 3 rows exceed 10%, and 37 rows change allocator observations. Every adverse row, raw sample, allocation request, process resource and executable size is retained. Three newly successful torus continuation workloads have separate absolute costs across three processes, with exact checks and full output materialization inside timing. No failed operation serves as a speedup baseline. Shared-host measurements do not close controlled-host/statistical gates or earlier timing exceptions. All 28 work packages remain open. This increment does not establish general oblique Boolean closure, nonlinear coincidence, general curved-shell embedding or operation-wide provenance/certainty delivery. Cone/torus STEP remains typed UnsupportedSurface. Scalar, predicate, curve and mesh implementations are unchanged in this increment; the preceding whole-scalar zero-factor failure remains an inherited failed gate, not a pre-push waiver. Periodic/archive limits and strict predicate policies are unchanged. No total-work, retained-heap, expression-growth or cancellation bound is claimed; watchdogs provide external containment only. WASM uses local workspace paths, not a shipped package/JS consumer. Runtime fuzz/ASan, lexicase, coverage, machine-checked proofs, package/MSRV and C/Python/JS release gates remain open. No complete workspace/pre-push matrix or push was performed.",
-      "upstream_revision": "72cd216cc758d364c9e40b8969fef2df155bec8b",
-      "acceptance_protocol": "docs/admission.md",
-      "integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-upstream-integration/README.md",
-      "acceptance_order": [
-        "Empty-result composition and visible failures",
-        "Ordinary strict-mode completion",
-        "Complete user-path and release validation"
-      ],
-      "latest_integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-16-upstream-corrections/README.md",
-      "implementation_ownership": {
-        "primary": [
-          "hyperbrep",
-          "hyperbrep-io",
-          "their tests, benchmarks and documentation"
-        ],
-        "surrounding_crates": "Concurrent upstream development in another thread. Change only for a reproduced BREP regression or blocker whose repair is necessary to preserve the BREP contract.",
-        "updates": "Occasionally fetch and merge at coherent checkpoints; keep source fixed during checks/measurements, preserve both histories, and requalify affected BREP consumers.",
-        "parked_scalar_investigation": "96c308f87af6f3491828ada3e9b8e92cec858cf1; unfinished, not admitted, not restored over upstream corrections."
-      }
-    },
+    "updated_on": "2026-10-16",
     "existing_worktree_changes_in_scope": true,
     "accepted_cache_contract": "Warming may strengthen Unknown into Certified and reuse prior higher-precision proofs; it must never contradict or weaken an available certificate.",
     "main_scalar_api": {
@@ -10064,6 +10037,2088 @@
       "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
       "remaining": "Legacy text construction failures and remaining adapters; broader resources/provenance, external package/release, formal/fuzz/coverage and full properties obligations. The 35 pending native files remain separately unadmitted and their failed cost gates are not discharged by these root suites.",
       "full_plan_complete": false
+    },
+    "text_contract_work": {
+      "status": "focused typed text construction, exact native outlines and affected consumers qualified",
+      "baseline_commit": "72cd216cc",
+      "properties": [
+        "P1",
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P29",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "contract": "docs/evidence/2026-10-15-text-contracts/contract-v1.md",
+      "migration": "docs/evidence/2026-10-15-text-contracts/implementation-contract-v1.md",
+      "baseline": "docs/evidence/2026-10-15-text-contracts/baseline-findings-v1.md",
+      "progress": "docs/evidence/2026-10-15-text-contracts/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-text-contracts/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-text-contracts/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-text-contracts/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "Cargo.lock": "510d33eefcdf7e1a5ad19672f6860e20d67154693fa2d25dbafa9319443d771d",
+        "Cargo.toml": "90edbcd0325fd8d1f8198c224d9accd2aec3d39d4943e095ff49f1e291ba3e3f",
+        "benchmarks/rust/feature_pipeline.rs": "0e02f569925c189f94fece684562cd234012132ab4cecdbb1eba817875326a84",
+        "crates/hypercurve/README.md": "47b4d86ed360e42339e011922f245ececf33488a5c8b41b61c5817727ac721fe",
+        "crates/hypercurve/src/hershey.rs": "4a13db1bc1ee0a88883af9c0134e302d5c36d3fde5e1586fdeddb8a3047fa546",
+        "docs/truetype.png": "ed2ba2d6d91fe6ae6faa2ca43d9b245f348d26aab9d48601002c8c8eeedf4554",
+        "examples/README.md": "f056c0cc5f09dc9049c7024bc412836341cfcdc97fd66f851da56ab3c21cecbd",
+        "examples/assembly_manual.rs": "66773b3cabc4e49d2c3d495cf7cffc684f9f32f14a355db7589fb37264d91148",
+        "examples/readme_renders.rs": "e7ce76a7e0a8c204cdab35d74131af006d6077f6824868a5e9146bf8c56b721b",
+        "readme.md": "7bb7d8863d757224c0e5c6b1bfe23f27d0eec36ffb4fb02ad34b3e99c114f3a4",
+        "src/curve/native.rs": "ac0496fadf26418c446093bf00188480f05585aa0780a0f8686b8878781a2edb",
+        "src/curve/truetype.rs": "038e713b1ce69db656368391c1573e5b252dee3b1d5363ddbaa508ded2133f5d",
+        "src/errors.rs": "eefc22f28d537a8d3e9471851087d09acac1550b54e649a05c66acf4c4aa1618",
+        "src/parts/dimension.rs": "301f5975017482465e03898285d786dbafbf5aa39b8d65557271f091ebddfa42",
+        "src/solid.rs": "a317f1b01f0ee1ed6b16a5c3f6f5a51cd063adede9b2634ded73f9c481d6ee17",
+        "tests/support/text_font.rs": "f8fda59d26b4c84ae3edcf9f33230e65bd2ef22fc3250368bd696a02dca45070",
+        "tests/text_contracts.rs": "e70042ba210e83667cc2661c7fc510017d9d5ca9ad5d317795e95df37c50d7a8"
+      },
+      "test_totals": {
+        "truetype-only": {
+          "passed": 5,
+          "ignored": 0
+        },
+        "hershey-only": {
+          "passed": 2,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 260,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 377,
+          "ignored": 1
+        },
+        "native-hershey": {
+          "passed": 6,
+          "ignored": 0
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        },
+        "native-full-library": {
+          "passed": 1760,
+          "ignored": 1
+        }
+      },
+      "cost": {
+        "scope": "Focused construction cost; all results retained, no optimization claim. TrueType migrates geometry/units; its ratios are not same-output speedups.",
+        "timing_pairs": [
+          {
+            "case": "readme-truetype",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 28953054,
+              "candidate": 10699876
+            },
+            "candidate_over_baseline": 0.36955949448372527,
+            "same_output_contract": false
+          },
+          {
+            "case": "readme-truetype",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 20582679,
+              "candidate": 7444020
+            },
+            "candidate_over_baseline": 0.361664290639717,
+            "same_output_contract": false
+          },
+          {
+            "case": "bench-truetype",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 123009284,
+              "candidate": 46841548
+            },
+            "candidate_over_baseline": 0.3807968510734523,
+            "same_output_contract": false
+          },
+          {
+            "case": "bench-truetype",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 91118691,
+              "candidate": 38340600
+            },
+            "candidate_over_baseline": 0.4207764573790903,
+            "same_output_contract": false
+          },
+          {
+            "case": "readme-hershey",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 294400,
+              "candidate": 277101
+            },
+            "candidate_over_baseline": 0.9412398097826087,
+            "same_output_contract": true
+          },
+          {
+            "case": "readme-hershey",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 92304,
+              "candidate": 102813
+            },
+            "candidate_over_baseline": 1.1138520540821633,
+            "same_output_contract": true
+          },
+          {
+            "case": "bench-hershey",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 356756,
+              "candidate": 333377
+            },
+            "candidate_over_baseline": 0.9344678155377906,
+            "same_output_contract": true
+          },
+          {
+            "case": "bench-hershey",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 137481,
+              "candidate": 140850
+            },
+            "candidate_over_baseline": 1.024505204355511,
+            "same_output_contract": true
+          }
+        ],
+        "earlier_successful_hershey_timing_pairs": [
+          {
+            "case": "readme-hershey",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 327468,
+              "candidate": 331147
+            },
+            "candidate_over_baseline": 1.0112346855265246,
+            "same_output_contract": true
+          },
+          {
+            "case": "readme-hershey",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 95813,
+              "candidate": 93863
+            },
+            "candidate_over_baseline": 0.9796478557189525,
+            "same_output_contract": true
+          },
+          {
+            "case": "bench-hershey",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 382754,
+              "candidate": 363575
+            },
+            "candidate_over_baseline": 0.949892097796496,
+            "same_output_contract": true
+          },
+          {
+            "case": "bench-hershey",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 137331,
+              "candidate": 134751
+            },
+            "candidate_over_baseline": 0.9812132730410468,
+            "same_output_contract": true
+          }
+        ],
+        "allocation_rows": 16,
+        "earlier_attempts": {
+          "phase": "resources-v1",
+          "attempts": 64,
+          "successful_hershey_rows": 32,
+          "failed_truetype_serializations": 32,
+          "scope": "Construction completed, then the helper rejected retained lines. All attempts and successful Hershey costs remain in earlier_measurement_rows; no TrueType cost is credited to failed children."
+        },
+        "library_bytes": {
+          "baseline": {
+            "libcsgrs.rlib": 9910970,
+            "libhypercurve-65c0df1f5cff6824.rlib": 49018684
+          },
+          "candidate": {
+            "libcsgrs.rlib": 10042160,
+            "libhypercurve-65c0df1f5cff6824.rlib": 49028054
+          }
+        },
+        "driver_sizes": {
+          "/dev/shm/csgrs-text-contracts/resources-v2/candidate-allocation": 36341616,
+          "/dev/shm/csgrs-text-contracts/resources-v2/candidate-timing": 36342344,
+          "/dev/shm/csgrs-text-contracts/resources-v2/baseline-allocation": 36296976,
+          "/dev/shm/csgrs-text-contracts/resources-v2/baseline-timing": 36293096
+        },
+        "limits": "External 1800-second/8-GiB process containment; measurement children additionally have 120-second walls. Requested allocator bytes exclude allocator overhead. No internal total-work, heap-byte or cancellation bound."
+      },
+      "semantics": [
+        "Independent cubic callback area 24000 with inside/boundary/outside witnesses; invalid callback retains glyph/scalar cause without publishing a path.",
+        "Independent square and quadratic area/membership, exact 127/360 point conversion and scales 1 vs 1+2^-100, pi, and 2^+/-1100.",
+        "Independent Hershey Cartesian endpoints, advances and negative/symbolic scale; every record in all 32 compiled fonts decodes.",
+        "Blank geometry, malformed fonts/glyphs, missing glyphs, invalid and undecided scales remain distinct typed outcomes; dimension failure is atomic.",
+        "GPOS class coverage and spacing witnesses; exact translation/Boolean empty composition; original full text workloads extrude and validate topology under both policies.",
+        "STL round trips compare the represented f32 vertex set and independently validate reimported mesh topology; this does not certify original curved-font fidelity.",
+        "Four original Hershey coordinate artifacts remain byte-identical; native TrueType geometry and its PNG explicitly migrate. Counts from CurveRegion2::len denote boundary loops, including holes."
+      ],
+      "diagnostics": "All failed compilation, probe and qualification phases remain in phases and raw logs; see diagnostic-findings-v1.md and gpos-findings-v1.md. No policy, input font, full-size fixture or validation was weakened.",
+      "resources": "Checked owned buffers, 48 timing rows and 16 allocation rows in the completed cost phase; all 64 earlier attempts, including 32 successful Hershey measurements, also retained; no total-work, heap-byte or cancellation bound. TrueType output migrates; no performance-only claim.",
+      "historical_preservation": "27093 inherited missing artifact paths retain expected hashes; no new loss or mismatch.",
+      "remaining": "Full font-file validation, wider symbolic/native consumers, end-to-end provenance and resource contracts, external release, formal/fuzz/coverage and other properties obligations remain open. The 35 pending native files remain separately unadmitted.",
+      "full_plan_complete": false
+    },
+    "distribution_contract_work": {
+      "status": "focused typed distribution failures, native checked concatenation and affected consumers qualified",
+      "baseline_commit": "00e612307",
+      "properties": [
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P10",
+        "P11",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P21",
+        "P22",
+        "P23",
+        "P24",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P38",
+        "P39"
+      ],
+      "contract": "docs/evidence/2026-10-16-distribution-contracts/contract-v1.md",
+      "migration": "docs/evidence/2026-10-16-distribution-contracts/implementation-contract-v1.md",
+      "baseline": "docs/evidence/2026-10-16-distribution-contracts/baseline-findings-v1.md",
+      "progress": "docs/evidence/2026-10-16-distribution-contracts/progress-v1.md",
+      "validation": "docs/evidence/2026-10-16-distribution-contracts/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-16-distribution-contracts/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-16-distribution-contracts/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "benchmarks/rust/feature_pipeline.rs": "5ffc65201653f8a249d76403a3ba1f3cb0d6b4e231f20d74a34f6e17bc63793a",
+        "benchmarks/rust/kernel_comparison.rs": "b09a3c6464f1ec983bf921ebf445936643813d192e4039a8c2706af848237449",
+        "crates/hypermesh/README.md": "d29f7b16e3e7e8c12afc5843f435f7de2d38fb98702d29f7594c79c669e03b25",
+        "crates/hypermesh/src/mesh.rs": "d7b8703ab9bed7e557e6c24d04ac264479694b7885cf27fb43951347ea06a89b",
+        "crates/hypermesh/src/mesh/concatenation.rs": "cb30b01acf172891f25c5268d8d324dc79afc671ac412cefecd5346f921526d8",
+        "readme.md": "f005ee32e23590dfb750e3f57de59e72bf0d58d99fd6ac814fe321c2e7f0b3fe",
+        "src/solid.rs": "bcacd22eadb0cf94b3c86dd307f726b34fcbf1356f737a6976965c8c49d09d38",
+        "tests/distribution_contracts.rs": "bf7788d4d232eb331c667abdd5d45890643d4e1fc997cfdde0146dd707dd02a9",
+        "tests/native_queries.rs": "a336fd367f965a98df986f3bb267871c4fea8a7b9d2d2f05e05128c0821df340",
+        "tests/slice_projection_contract.rs": "5db6255e0a4feb3f7c6706a678e073bc6e135dab55178fa4941bbfcb4250a561",
+        "tests/solid_cache.rs": "57cbcedb6304b9b556a3cf123868bed317fe8ef44797a70d4a0ef6029614fd1c"
+      },
+      "test_totals": {
+        "native-mesh": {
+          "passed": 245,
+          "ignored": 7
+        },
+        "root-minimal": {
+          "passed": 112,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 268,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 385,
+          "ignored": 1
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "ignored": 0
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        },
+        "native-doctests": {
+          "passed": 0,
+          "ignored": 0
+        }
+      },
+      "cost": {
+        "scope": "Fixed completed workload construction including inputs; same exact output rows. Correctness extension, no optimization or competitive speedup claim.",
+        "timing_pairs": [
+          {
+            "case": "linear-8",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 178218,
+              "candidate": 181768
+            },
+            "candidate_over_baseline": 1.0199194245250198
+          },
+          {
+            "case": "linear-8",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 940,
+              "candidate": 3320
+            },
+            "candidate_over_baseline": 3.5319148936170213
+          },
+          {
+            "case": "grid-4x4",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 256073,
+              "candidate": 272131
+            },
+            "candidate_over_baseline": 1.0627086807277613
+          },
+          {
+            "case": "grid-4x4",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 3220,
+              "candidate": 3270
+            },
+            "candidate_over_baseline": 1.015527950310559
+          },
+          {
+            "case": "arc-12",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 802915,
+              "candidate": 838043
+            },
+            "candidate_over_baseline": 1.0437505838102414
+          },
+          {
+            "case": "arc-12",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 1130,
+              "candidate": 1200
+            },
+            "candidate_over_baseline": 1.0619469026548674
+          },
+          {
+            "case": "feature-merge-22",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 292560,
+              "candidate": 308609
+            },
+            "candidate_over_baseline": 1.0548571233251298
+          },
+          {
+            "case": "feature-merge-22",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 256113,
+              "candidate": 224904
+            },
+            "candidate_over_baseline": 0.8781436319124761
+          },
+          {
+            "case": "merge-duplicate",
+            "temperature": "cold",
+            "median_nanos": {
+              "baseline": 37018,
+              "candidate": 33088
+            },
+            "candidate_over_baseline": 0.8938354314117456
+          },
+          {
+            "case": "merge-duplicate",
+            "temperature": "warm",
+            "median_nanos": {
+              "baseline": 3060,
+              "candidate": 3230
+            },
+            "candidate_over_baseline": 1.0555555555555556
+          }
+        ],
+        "allocation_rows": 20,
+        "library_bytes": {
+          "baseline": {
+            "libcsgrs.rlib": 10042160,
+            "libhypermesh-98c5db38df7e7da0.rlib": 5018816
+          },
+          "candidate": {
+            "libcsgrs.rlib": 10000252,
+            "libhypermesh-98c5db38df7e7da0.rlib": 5038452
+          }
+        },
+        "source_sizes": {
+          "src/solid.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 102749,
+            "candidate_bytes": 104121,
+            "baseline_lines": 2936,
+            "candidate_lines": 2955
+          },
+          "crates/hypermesh/src/mesh.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 82021,
+            "candidate_bytes": 83423,
+            "baseline_lines": 2112,
+            "candidate_lines": 2147
+          },
+          "crates/hypermesh/src/mesh/concatenation.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 8949,
+            "baseline_lines": 0,
+            "candidate_lines": 233
+          },
+          "tests/distribution_contracts.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 13426,
+            "baseline_lines": 0,
+            "candidate_lines": 355
+          },
+          "tests/native_queries.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 2729,
+            "candidate_bytes": 2863,
+            "baseline_lines": 65,
+            "candidate_lines": 68
+          },
+          "tests/slice_projection_contract.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 16908,
+            "candidate_bytes": 17275,
+            "baseline_lines": 467,
+            "candidate_lines": 470
+          },
+          "tests/solid_cache.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 13921,
+            "candidate_bytes": 14196,
+            "baseline_lines": 371,
+            "candidate_lines": 376
+          },
+          "benchmarks/rust/kernel_comparison.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 39408,
+            "candidate_bytes": 39562,
+            "baseline_lines": 1015,
+            "candidate_lines": 1018
+          },
+          "benchmarks/rust/feature_pipeline.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 33812,
+            "candidate_bytes": 33885,
+            "baseline_lines": 843,
+            "candidate_lines": 846
+          },
+          "readme.md": {
+            "baseline_exists": true,
+            "baseline_bytes": 61778,
+            "candidate_bytes": 63237,
+            "baseline_lines": 886,
+            "candidate_lines": 908
+          },
+          "crates/hypermesh/README.md": {
+            "baseline_exists": true,
+            "baseline_bytes": 10214,
+            "candidate_bytes": 11161,
+            "baseline_lines": 254,
+            "candidate_lines": 268
+          }
+        },
+        "driver_sizes": {
+          "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-allocation": 24268680,
+          "/dev/shm/csgrs-distribution-contracts/resources-v1/candidate-timing": 24258288,
+          "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-allocation": 24281512,
+          "/dev/shm/csgrs-distribution-contracts/resources-v1/baseline-timing": 24274872
+        },
+        "limits": "External 1800-second/8-GiB containment; cost children additionally have 120-second walls. Node/WASM has no virtual-address-space bound. Requested allocation bytes exclude allocator overhead. No internal total-work, heap-byte or cancellation contract."
+      },
+      "semantics": [
+        "Invalid indices, malformed empties, open, degenerate and unbalanced sources fail before zero/one/disjoint shortcuts under both policies; native causes survive strict and context APIs.",
+        "Canonical empty, zero-count and subtraction-to-empty results compose; signed/zero spacing and single-arc midpoint retain their exact meaning.",
+        "Original 8/16/12-copy workflows satisfy independent membership, exact per-face volume proofs, strict topology, empty union and complete self subtraction.",
+        "Independent exact unit-face coverage establishes the original rational 8/16/22-copy boundaries and duplicate concatenation winding multiplicity on both revisions.",
+        "Touching, overlapping, balanced nonmanifold and winding-multiplicity inputs remain supported; concatenation preserves open buffers and unused points.",
+        "Native PWN facts preserve combined face/edge certainty and matching buffer identity; approximate facts cannot satisfy strict requests without a new proof.",
+        "Cold/warm/disabled/evicted/mutated cache states and strict-approximate-strict sequences retain errors, meanings and receipts.",
+        "Count/byte overflow produces typed exhaustion before copy allocation; recovery succeeds. This is not a total resource bound.",
+        "All five exact position/index artifacts remain byte-identical across all 80 completed timing/allocation replays."
+      ],
+      "diagnostics": "Every failed compilation, contained child and declined volume query remains retained; see baseline-findings-v1.md, volume-oracle-v1.md and diagnostic-findings-v1.md. No fixture resolution or predicate policy was weakened.",
+      "resources": "Checked native indices and owned vector counts/bytes/reservations. All 60 timing and 20 allocation rows complete with exact output preservation; no total-work, heap-byte or cancellation bound. No optimization claim.",
+      "historical_preservation": "27093 inherited missing artifact paths retain expected hashes; no new loss or mismatch.",
+      "remaining": "Expanded arc-volume scalar recognition, inherited provenance, general work/heap/cancellation bounds, clean external package/release, full CI, formal/fuzz/coverage and 35 separately unadmitted native files remain open.",
+      "full_plan_complete": false
+    },
+    "polyhedral_construction_work": {
+      "status": "focused simple-face and closed-PWN loft repair qualified; general Minkowski semantics remain open",
+      "baseline_commit": "67a3daae8",
+      "contract": "docs/evidence/2026-10-16-polyhedral-construction/implementation-contract-v1.md",
+      "baseline": "docs/evidence/2026-10-16-polyhedral-construction/baseline-findings-v1.md",
+      "progress": "docs/evidence/2026-10-16-polyhedral-construction/progress-v1.md",
+      "validation": "docs/evidence/2026-10-16-polyhedral-construction/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-16-polyhedral-construction/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-16-polyhedral-construction/artifact-audit-v1.json.gz",
+      "artifact_audit_schema": 2,
+      "implementation_sha256": {
+        "bindings/go/polyhedral_construction_test.go": "9a80678cc52d02f16b8bfd8b24e29bf06e3265406bebf3e92b99e68db6fa878d",
+        "crates/hypertri/README.md": "8904e64400169bb33eceeb55a0918290b17299ea406a3f59208bc0b9386122c7",
+        "crates/hypertri/src/earcut.rs": "37e3255038e69854506700852479f5ddc41f8635fa05ee25ff392b6452506ab4",
+        "crates/hypertri/src/lib.rs": "5142886f9d970d60f1cace4dcac967d8448920464925d14c3a3d490ad4c7b6dd",
+        "crates/hypertri/tests/simple_ring.rs": "4322b69c5db1a08cf7d46bad410eb0cf2039ebe403a25dbab92b1e99188e9149",
+        "readme.md": "2c58f66c5bb5800cd30ba8196071dcb90c0155fc6e21a5cb1c6f8216598f50c5",
+        "src/solid.rs": "c2f454c196a58ffbc51071fabaae218845ab65714ad19899faabebe10546035e",
+        "tests/ffi/polyhedral_construction.c": "a366d83e52ba96d3e4b96f8805d8f28624dcf513fb4c4afc914395704998e47d",
+        "tests/ffi/polyhedral_construction.cpp": "377e3d59d8ba4a34fa0bb0f3b004eab21840d0cb0f865a2b6bbf9c5f6495b561",
+        "tests/ffi/polyhedral_construction.py": "56fb30c322e887f8958a6b6cf6eba53dc7e82fe2a64efc1491cf031a99090f30",
+        "tests/polyhedral_construction.rs": "f9bd8759f19485539a5de5f83208bb9bfce28a4b59a63712b50a897e08770e13"
+      },
+      "test_totals": {
+        "native-triangulation": {
+          "passed": 193,
+          "ignored": 0
+        },
+        "native-mesh": {
+          "passed": 245,
+          "ignored": 7
+        },
+        "root-minimal": {
+          "passed": 121,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 277,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 394,
+          "ignored": 1
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "ignored": 0
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        },
+        "native-doctests": {
+          "passed": 0,
+          "ignored": 0
+        },
+        "triangulation-doctests": {
+          "passed": 4,
+          "ignored": 0
+        }
+      },
+      "cost": {
+        "timing_pairs": [
+          {
+            "case": "tetrahedron",
+            "temperature": "cold",
+            "samples_nanos": {
+              "baseline": [
+                112623,
+                82015,
+                77895
+              ],
+              "candidate": [
+                117672,
+                89934,
+                84734
+              ]
+            },
+            "median_nanos": {
+              "baseline": 82015,
+              "candidate": 89934
+            },
+            "candidate_over_baseline": 1.096555508138755
+          },
+          {
+            "case": "tetrahedron",
+            "temperature": "warm",
+            "samples_nanos": {
+              "baseline": [
+                9589,
+                10139,
+                9399
+              ],
+              "candidate": [
+                15809,
+                15399,
+                15219
+              ]
+            },
+            "median_nanos": {
+              "baseline": 9589,
+              "candidate": 15399
+            },
+            "candidate_over_baseline": 1.6059025967254146
+          },
+          {
+            "case": "loft-square",
+            "temperature": "cold",
+            "samples_nanos": {
+              "baseline": [
+                79045,
+                84114,
+                81874
+              ],
+              "candidate": [
+                92884,
+                91804,
+                96913
+              ]
+            },
+            "median_nanos": {
+              "baseline": 81874,
+              "candidate": 92884
+            },
+            "candidate_over_baseline": 1.1344749248845787
+          },
+          {
+            "case": "loft-square",
+            "temperature": "warm",
+            "samples_nanos": {
+              "baseline": [
+                8680,
+                8679,
+                8749
+              ],
+              "candidate": [
+                14389,
+                18359,
+                16769
+              ]
+            },
+            "median_nanos": {
+              "baseline": 8680,
+              "candidate": 16769
+            },
+            "candidate_over_baseline": 1.9319124423963134
+          }
+        ],
+        "allocation_rows": 8,
+        "library_bytes": {
+          "baseline": {
+            "csgrs": 10000252,
+            "hypermesh": 5038452,
+            "hypertri": 1485868
+          },
+          "candidate": {
+            "csgrs": 9987376,
+            "hypermesh": 5038386,
+            "hypertri": 1498732
+          }
+        },
+        "source_sizes": {
+          "src/solid.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 104121,
+            "candidate_bytes": 105572,
+            "baseline_lines": 2955,
+            "candidate_lines": 2981
+          },
+          "crates/hypertri/src/earcut.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 68731,
+            "candidate_bytes": 72192,
+            "baseline_lines": 2183,
+            "candidate_lines": 2266
+          },
+          "crates/hypertri/src/lib.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 2321,
+            "candidate_bytes": 2375,
+            "baseline_lines": 64,
+            "candidate_lines": 65
+          },
+          "crates/hypertri/tests/simple_ring.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 6074,
+            "baseline_lines": 0,
+            "candidate_lines": 168
+          },
+          "tests/polyhedral_construction.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 15056,
+            "baseline_lines": 0,
+            "candidate_lines": 408
+          },
+          "crates/hypertri/README.md": {
+            "baseline_exists": true,
+            "baseline_bytes": 16189,
+            "candidate_bytes": 16914,
+            "baseline_lines": 368,
+            "candidate_lines": 379
+          },
+          "readme.md": {
+            "baseline_exists": true,
+            "baseline_bytes": 63237,
+            "candidate_bytes": 64175,
+            "baseline_lines": 908,
+            "candidate_lines": 922
+          },
+          "tests/ffi/polyhedral_construction.c": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 1446,
+            "baseline_lines": 0,
+            "candidate_lines": 32
+          },
+          "tests/ffi/polyhedral_construction.cpp": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 1131,
+            "baseline_lines": 0,
+            "candidate_lines": 28
+          },
+          "tests/ffi/polyhedral_construction.py": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 980,
+            "baseline_lines": 0,
+            "candidate_lines": 25
+          },
+          "bindings/go/polyhedral_construction_test.go": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 883,
+            "baseline_lines": 0,
+            "candidate_lines": 24
+          }
+        },
+        "scope": "Face and loft correctness repair; fixed completed construction costs with exact output preservation. No optimization or full-plan claim.",
+        "limits": "External 1800-second/8-GiB process containment (Node/WASM has no virtual-address-space bound); cost children additionally have 120-second walls. Requested allocator bytes exclude overhead. No internal total-work, heap-byte or cancellation contract."
+      },
+      "semantics": [
+        "Native simple-ring validation preserves authored winding, explicit closure, collinear boundary vertices and qualified predicates; general earcut remains unchanged.",
+        "Every cyclic/reversed L face and prism has independently checked orientation/volume. Lofts have volume 10, preserve the notch, validate topology and compose through empty union and complete subtraction.",
+        "Consecutive pointwise-equal sections coalesce with consumed certainty; invalid rings and degenerate final meshes fail typed before publication.",
+        "Strict-approximate-strict tests retain qualification and native error sources; exact rational and symbolically planar controls remain certified.",
+        "Original tetrahedron, square loft and cube-sum ordered artifacts remain byte-identical; full README fixtures retain independently checked volumes.",
+        "Real C/C++/Python/Go consumers preserve invalid-face diagnostics and recovery; existing WASM/TypeScript consumers pass."
+      ],
+      "diagnostics": "docs/evidence/2026-10-16-polyhedral-construction/diagnostic-findings-v1.md",
+      "historical_preservation": "27093 inherited missing paths retain their expected hashes through a hash-pinned parent audit. No new missing path or mismatch.",
+      "remaining": "General represented-set Minkowski sum, inherited provenance, complete internal resource contracts, clean external release, full CI/formal/fuzz/coverage and 35 separately unadmitted native files remain open.",
+      "full_plan_complete": false
+    },
+    "minkowski_contracts_work": {
+      "status": "represented-set Minkowski sums and supporting exact scalar proofs qualified locally",
+      "baseline_commit": "adef9a64a",
+      "contract": "docs/evidence/2026-10-16-minkowski-contracts/implementation-contract-v2.md",
+      "baseline": "docs/evidence/2026-10-16-minkowski-contracts/baseline-findings-v1.md",
+      "progress": "docs/evidence/2026-10-16-minkowski-contracts/progress-v1.md",
+      "validation": "docs/evidence/2026-10-16-minkowski-contracts/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-16-minkowski-contracts/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-16-minkowski-contracts/artifact-audit-v1.json.gz",
+      "artifact_audit_schema": 2,
+      "implementation_sha256": {
+        "crates/hypermesh/README.md": "4f7f43e3345ead317d919273696a25cdc2764a38708751b6fa0020375c707e6d",
+        "crates/hypermesh/src/convex_hull.rs": "22d2a6dfeaf2fe4abf113787c62b7108b1b365fbb24671caf68196d84665262f",
+        "crates/hypermesh/src/error.rs": "cde53c8d4c041fe812a74b78a3dd71af9a0334c6acf8da4c03f13ecafd39a63a",
+        "crates/hypermesh/src/lib.rs": "98e2e85a5ba628ac8c96f97f9fdc9de6a3bca9c2f044badd36c2bf2f6314a85b",
+        "crates/hypermesh/src/minkowski.rs": "357d0a6716c2bcc85b71dd5a6bb3457ac0ebda185af48878beaee680cf335bae",
+        "crates/hypermesh/src/surface_arrangement.rs": "da9f1382c9d7e80c0396eb27cf081b5069df016b5234c8aed1a0c17ed354af2b",
+        "crates/hypermesh/src/winding.rs": "b11400b9c34cd10ab34a1226f979df9ac9189acc36ce801480c83e1ab13b60e2",
+        "crates/hypermesh/tests/minkowski.rs": "d6b8554dfb798f74886057073ae570a9b59933144df67c4f73cc4ef5c346cd36",
+        "crates/hyperreal/src/computable/node.rs": "d874c92ede049e2bf7020ad525d22b273abb2c8512a86578cf38da18484b5d05",
+        "crates/hyperreal/src/computable/node/radical_eighth_angle_tests.rs": "0d3e1cc3ebbeb5abbb46821041e558ccc09a7ffdffad297c87a2d623d3769531",
+        "crates/hyperreal/src/computable/node/radical_tower.rs": "9ee990ae770b337cc4a17f6d9f71f65cc3050f6362663b3278c539d4500e9d9b",
+        "crates/hyperreal/src/computable/node/ring_polynomial.rs": "6a515ceb66f8b74eaf8c7e10b605b5c3ed198039471e2b2740901bd672b0414b",
+        "crates/hyperreal/src/computable/node/ring_quotient.rs": "499fdc7ec97a264f6c039c328da47592f81c61988df6b62e3fc5deac1cfd919f",
+        "crates/hyperreal/src/computable/node/ring_root_square_tests.rs": "a24e498d3cf54cff4f9a31808172fbd6a29090706b3169a47c332cfaf5dbf733",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "9aa85b1c0eb7f55ba314444480812b00464c1d66c15b2b19c8fe552d3dbead43",
+        "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "6ddebd3ffc19c22ccbb758537c07b3fbe44650adc81ba2734694af9ee756811c",
+        "readme.md": "5acd87fb624693e85567f75ff2eb6da7f2845a5084b27d960702263448a1291a",
+        "src/errors.rs": "808f11cb58207434de414f5958ff6a8bc2269601bff6885eef1afd038c4b45f7",
+        "src/solid.rs": "c8c396b4c2c76213f5e45974d264ae10317fe898e3456f77b352df75c87955e7",
+        "src/wasm/mesh_js.rs": "0d9bb76a15963b75004c8e9cc18709ce320532042922595071c4301b8510cdc8",
+        "tests/geometry_context.rs": "042db3c6809f34105a93238e6fa5c9d95ee3837f8f932442dccb32ed8ab476f1",
+        "tests/minkowski_contracts.rs": "7f37fd15a7f00060cd7f686c0b95489927734bbd1a48258658fdc8df41f2c500",
+        "tests/wasm/geometry_certainty.cjs": "20b92c13ae1bca3a708c2442d8fe38edb66ba3651429e117d6333fb833266507",
+        "tests/wasm/geometry_certainty.ts": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7"
+      },
+      "test_totals": {
+        "scalar-all-features": {
+          "passed": 1037,
+          "ignored": 0,
+          "phase": "qualification-v1"
+        },
+        "native-triangulation": {
+          "passed": 193,
+          "ignored": 0,
+          "phase": "qualification-v1"
+        },
+        "native-mesh": {
+          "passed": 247,
+          "ignored": 7,
+          "phase": "qualification-v1"
+        },
+        "root-minimal": {
+          "passed": 130,
+          "ignored": 0,
+          "phase": "qualification-v1"
+        },
+        "root-curve": {
+          "passed": 286,
+          "ignored": 0,
+          "phase": "qualification-v1"
+        },
+        "root-all-features": {
+          "passed": 403,
+          "ignored": 1,
+          "phase": "benchmark-repair-v1"
+        },
+        "ffi-tests": {
+          "passed": 10,
+          "ignored": 0,
+          "phase": "qualification-v1"
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0,
+          "phase": "benchmark-repair-v1"
+        },
+        "native-doctests": {
+          "passed": 0,
+          "ignored": 0,
+          "phase": "qualification-v1"
+        },
+        "triangulation-doctests": {
+          "passed": 4,
+          "ignored": 0,
+          "phase": "qualification-v1"
+        },
+        "scalar-default": {
+          "passed": 930,
+          "ignored": 0,
+          "phase": "qualification-v1"
+        },
+        "foundations": {
+          "passed": 1545,
+          "ignored": 0,
+          "phase": "qualification-v1"
+        },
+        "curve-native": {
+          "passed": 2496,
+          "ignored": 33,
+          "phase": "qualification-v1"
+        },
+        "scalar-docs": {
+          "passed": 28,
+          "ignored": 0,
+          "phase": "qualification-v1"
+        }
+      },
+      "cost": {
+        "rows": 104,
+        "timing_rows": 78,
+        "allocation_rows": 26,
+        "costs": [
+          {
+            "group": "cube",
+            "case": "cube-minkowski",
+            "temperature": "cold",
+            "samples_nanos": {
+              "baseline": [
+                298529,
+                365335,
+                318828
+              ],
+              "candidate": [
+                637506,
+                439579,
+                439260
+              ]
+            },
+            "median_nanos": {
+              "baseline": 318828,
+              "candidate": 439579
+            },
+            "completion": {
+              "baseline": [
+                "certified_local"
+              ],
+              "candidate": [
+                "certified_local"
+              ]
+            },
+            "candidate_over_baseline": 1.3787339882318994,
+            "same_completion": true
+          },
+          {
+            "group": "cube",
+            "case": "cube-minkowski",
+            "temperature": "warm",
+            "samples_nanos": {
+              "baseline": [
+                160109,
+                167308,
+                161929
+              ],
+              "candidate": [
+                193287,
+                186037,
+                193437
+              ]
+            },
+            "median_nanos": {
+              "baseline": 161929,
+              "candidate": 193287
+            },
+            "completion": {
+              "baseline": [
+                "certified_local"
+              ],
+              "candidate": [
+                "certified_local"
+              ]
+            },
+            "candidate_over_baseline": 1.1936527737465186,
+            "same_completion": true
+          },
+          {
+            "group": "expanded",
+            "case": "concave",
+            "temperature": "cold",
+            "samples_nanos": {
+              "candidate": [
+                5551349,
+                5893626,
+                5468625
+              ]
+            },
+            "median_nanos": {
+              "candidate": 5551349
+            },
+            "completion": {
+              "candidate": [
+                "certified_local"
+              ]
+            },
+            "same_completion": false
+          },
+          {
+            "group": "expanded",
+            "case": "concave",
+            "temperature": "warm",
+            "samples_nanos": {
+              "candidate": [
+                4714917,
+                4795491,
+                4760463
+              ]
+            },
+            "median_nanos": {
+              "candidate": 4760463
+            },
+            "completion": {
+              "candidate": [
+                "certified_local"
+              ]
+            },
+            "same_completion": false
+          },
+          {
+            "group": "expanded",
+            "case": "disconnected",
+            "temperature": "cold",
+            "samples_nanos": {
+              "candidate": [
+                1296141,
+                1371336,
+                1587241
+              ]
+            },
+            "median_nanos": {
+              "candidate": 1371336
+            },
+            "completion": {
+              "candidate": [
+                "certified_local"
+              ]
+            },
+            "same_completion": false
+          },
+          {
+            "group": "expanded",
+            "case": "disconnected",
+            "temperature": "warm",
+            "samples_nanos": {
+              "candidate": [
+                996671,
+                938775,
+                1006701
+              ]
+            },
+            "median_nanos": {
+              "candidate": 996671
+            },
+            "completion": {
+              "candidate": [
+                "certified_local"
+              ]
+            },
+            "same_completion": false
+          },
+          {
+            "group": "expanded",
+            "case": "hollow",
+            "temperature": "cold",
+            "samples_nanos": {
+              "candidate": [
+                301264082,
+                301866621,
+                299287197
+              ]
+            },
+            "median_nanos": {
+              "candidate": 301264082
+            },
+            "completion": {
+              "candidate": [
+                "certified_local"
+              ]
+            },
+            "same_completion": false
+          },
+          {
+            "group": "expanded",
+            "case": "hollow",
+            "temperature": "warm",
+            "samples_nanos": {
+              "candidate": [
+                296228218,
+                294066146,
+                298930053
+              ]
+            },
+            "median_nanos": {
+              "candidate": 296228218
+            },
+            "completion": {
+              "candidate": [
+                "certified_local"
+              ]
+            },
+            "same_completion": false
+          },
+          {
+            "group": "scalar",
+            "case": "eighth-angle",
+            "temperature": "cold",
+            "samples_nanos": {
+              "baseline": [
+                466288,
+                454109,
+                460208
+              ],
+              "candidate": [
+                521934,
+                546362,
+                617618
+              ]
+            },
+            "median_nanos": {
+              "baseline": 460208,
+              "candidate": 546362
+            },
+            "completion": {
+              "baseline": [
+                "undecided"
+              ],
+              "candidate": [
+                "certified"
+              ]
+            },
+            "same_completion": false
+          },
+          {
+            "group": "scalar",
+            "case": "eighth-angle",
+            "temperature": "warm",
+            "samples_nanos": {
+              "baseline": [
+                21589,
+                21659,
+                26709
+              ],
+              "candidate": [
+                2000,
+                2320,
+                2260
+              ]
+            },
+            "median_nanos": {
+              "baseline": 21659,
+              "candidate": 2260
+            },
+            "completion": {
+              "baseline": [
+                "undecided"
+              ],
+              "candidate": [
+                "certified"
+              ]
+            },
+            "same_completion": false
+          },
+          {
+            "group": "scalar",
+            "case": "rational",
+            "temperature": "cold",
+            "samples_nanos": {
+              "baseline": [
+                22268,
+                21488,
+                20499
+              ],
+              "candidate": [
+                21789,
+                18198,
+                17219
+              ]
+            },
+            "median_nanos": {
+              "baseline": 21488,
+              "candidate": 18198
+            },
+            "completion": {
+              "baseline": [
+                "certified"
+              ],
+              "candidate": [
+                "certified"
+              ]
+            },
+            "candidate_over_baseline": 0.8468912881608339,
+            "same_completion": true
+          },
+          {
+            "group": "scalar",
+            "case": "rational",
+            "temperature": "warm",
+            "samples_nanos": {
+              "baseline": [
+                1160,
+                990,
+                1089
+              ],
+              "candidate": [
+                1120,
+                1150,
+                1130
+              ]
+            },
+            "median_nanos": {
+              "baseline": 1089,
+              "candidate": 1130
+            },
+            "completion": {
+              "baseline": [
+                "certified"
+              ],
+              "candidate": [
+                "certified"
+              ]
+            },
+            "candidate_over_baseline": 1.0376492194674012,
+            "same_completion": true
+          },
+          {
+            "group": "scalar",
+            "case": "root-square",
+            "temperature": "cold",
+            "samples_nanos": {
+              "baseline": [
+                2114505,
+                2142133,
+                2097176
+              ],
+              "candidate": [
+                2229298,
+                2271774,
+                2360058
+              ]
+            },
+            "median_nanos": {
+              "baseline": 2114505,
+              "candidate": 2271774
+            },
+            "completion": {
+              "baseline": [
+                "undecided"
+              ],
+              "candidate": [
+                "certified"
+              ]
+            },
+            "same_completion": false
+          },
+          {
+            "group": "scalar",
+            "case": "root-square",
+            "temperature": "warm",
+            "samples_nanos": {
+              "baseline": [
+                120062,
+                117432,
+                117272
+              ],
+              "candidate": [
+                2690,
+                2740,
+                2620
+              ]
+            },
+            "median_nanos": {
+              "baseline": 117432,
+              "candidate": 2690
+            },
+            "completion": {
+              "baseline": [
+                "undecided"
+              ],
+              "candidate": [
+                "certified"
+              ]
+            },
+            "same_completion": false
+          },
+          {
+            "group": "scalar",
+            "case": "unresolved",
+            "temperature": "cold",
+            "samples_nanos": {
+              "baseline": [
+                359916,
+                266631,
+                365675
+              ],
+              "candidate": [
+                265282,
+                267702,
+                348066
+              ]
+            },
+            "median_nanos": {
+              "baseline": 359916,
+              "candidate": 267702
+            },
+            "completion": {
+              "baseline": [
+                "undecided"
+              ],
+              "candidate": [
+                "undecided"
+              ]
+            },
+            "candidate_over_baseline": 0.7437902177174675,
+            "same_completion": true
+          },
+          {
+            "group": "scalar",
+            "case": "unresolved",
+            "temperature": "warm",
+            "samples_nanos": {
+              "baseline": [
+                9199,
+                9080,
+                9429
+              ],
+              "candidate": [
+                7610,
+                8090,
+                8869
+              ]
+            },
+            "median_nanos": {
+              "baseline": 9199,
+              "candidate": 8090
+            },
+            "completion": {
+              "baseline": [
+                "undecided"
+              ],
+              "candidate": [
+                "undecided"
+              ]
+            },
+            "candidate_over_baseline": 0.8794434177628003,
+            "same_completion": true
+          }
+        ],
+        "library_bytes": {
+          "baseline": {
+            "csgrs": 9987376,
+            "hypermesh": 5038386,
+            "hyperreal": 11616304,
+            "hyperlimit": 4013954
+          },
+          "candidate": {
+            "csgrs": 9940156,
+            "hypermesh": 5183942,
+            "hyperreal": 11625310,
+            "hyperlimit": 4013784
+          }
+        },
+        "source_sizes": {
+          "crates/hypermesh/README.md": {
+            "baseline_exists": true,
+            "baseline_bytes": 11161,
+            "candidate_bytes": 12944,
+            "baseline_lines": 268,
+            "candidate_lines": 297
+          },
+          "crates/hypermesh/src/convex_hull.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 26276,
+            "candidate_bytes": 26231,
+            "baseline_lines": 785,
+            "candidate_lines": 783
+          },
+          "crates/hypermesh/src/error.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 9302,
+            "candidate_bytes": 10266,
+            "baseline_lines": 227,
+            "candidate_lines": 252
+          },
+          "crates/hypermesh/src/lib.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 3470,
+            "candidate_bytes": 3587,
+            "baseline_lines": 89,
+            "candidate_lines": 91
+          },
+          "crates/hypermesh/src/minkowski.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 20473,
+            "baseline_lines": 0,
+            "candidate_lines": 531
+          },
+          "crates/hypermesh/src/surface_arrangement.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 262673,
+            "candidate_bytes": 260977,
+            "baseline_lines": 6934,
+            "candidate_lines": 6883
+          },
+          "crates/hypermesh/src/winding.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 5765,
+            "candidate_bytes": 7667,
+            "baseline_lines": 190,
+            "candidate_lines": 246
+          },
+          "crates/hypermesh/tests/minkowski.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 3451,
+            "baseline_lines": 0,
+            "candidate_lines": 93
+          },
+          "crates/hyperreal/src/computable/node.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 1952,
+            "candidate_bytes": 2044,
+            "baseline_lines": 53,
+            "candidate_lines": 55
+          },
+          "crates/hyperreal/src/computable/node/radical_eighth_angle_tests.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 4094,
+            "baseline_lines": 0,
+            "candidate_lines": 114
+          },
+          "crates/hyperreal/src/computable/node/radical_tower.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 15685,
+            "candidate_bytes": 16992,
+            "baseline_lines": 391,
+            "candidate_lines": 413
+          },
+          "crates/hyperreal/src/computable/node/ring_polynomial.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 9199,
+            "candidate_bytes": 10828,
+            "baseline_lines": 246,
+            "candidate_lines": 291
+          },
+          "crates/hyperreal/src/computable/node/ring_quotient.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 10770,
+            "candidate_bytes": 11285,
+            "baseline_lines": 264,
+            "candidate_lines": 277
+          },
+          "crates/hyperreal/src/computable/node/ring_root_square_tests.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 4468,
+            "baseline_lines": 0,
+            "candidate_lines": 118
+          },
+          "crates/hyperreal/src/real/arithmetic/facts.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 72959,
+            "candidate_bytes": 73340,
+            "baseline_lines": 1710,
+            "candidate_lines": 1715
+          },
+          "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 17548,
+            "candidate_bytes": 17696,
+            "baseline_lines": 420,
+            "candidate_lines": 422
+          },
+          "readme.md": {
+            "baseline_exists": true,
+            "baseline_bytes": 64175,
+            "candidate_bytes": 65369,
+            "baseline_lines": 922,
+            "candidate_lines": 940
+          },
+          "src/errors.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 15649,
+            "candidate_bytes": 15794,
+            "baseline_lines": 328,
+            "candidate_lines": 330
+          },
+          "src/solid.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 105572,
+            "candidate_bytes": 106883,
+            "baseline_lines": 2981,
+            "candidate_lines": 3012
+          },
+          "src/wasm/mesh_js.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 20653,
+            "candidate_bytes": 22897,
+            "baseline_lines": 658,
+            "candidate_lines": 716
+          },
+          "tests/geometry_context.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 24033,
+            "candidate_bytes": 24575,
+            "baseline_lines": 650,
+            "candidate_lines": 663
+          },
+          "tests/minkowski_contracts.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 14192,
+            "baseline_lines": 0,
+            "candidate_lines": 354
+          },
+          "tests/wasm/geometry_certainty.cjs": {
+            "baseline_exists": true,
+            "baseline_bytes": 18401,
+            "candidate_bytes": 21338,
+            "baseline_lines": 353,
+            "candidate_lines": 401
+          },
+          "tests/wasm/geometry_certainty.ts": {
+            "baseline_exists": true,
+            "baseline_bytes": 2705,
+            "candidate_bytes": 3098,
+            "baseline_lines": 78,
+            "candidate_lines": 86
+          }
+        },
+        "scope": "Correct represented-set sums and bounded exact proof extensions; no optimization claim. Fixed pre-edit cube workload, retrospective scalar controls/proofs, and new-only completed general sums.",
+        "limits": "Bare meshes lack inherited provenance. Count limits/cooperative checks do not bound primitive/scalar total work or heap bytes. External 1800-second/8-GiB containment, except the WASM/Node command has wall containment only; cost children have 120-second walls. Requested Rust allocator bytes exclude native allocator internals. Native 26-input batch union, full CI, clean external release, and the full properties plan remain open."
+      },
+      "semantics": [
+        "Native supporting-plane cells and signed winding preserve disconnected gaps, concavity, cavities, reversal, multiplicity and cancellation; native binary unions accumulate convex pair sums.",
+        "Both operands validate before empty success; unused positions do not change the solid. Full dimension has a separate proof and hull failure never becomes empty.",
+        "Independent exact volumes, witness membership, affine/repeated composition, topology, tiny gaps, typed failures, limits and recovery pass under the declared policies.",
+        "Bounded constant-square and selected eighth-angle scalar proofs certify the original unchanged 16x8 sphere example; symbolic serialization remains intact.",
+        "Explicit minkowski_hull preserves the old point-set intent; Rust and JavaScript expose the migration, local certainty and typed errors.",
+        "The original cube-sum ordered output remains byte-identical. Scalar proof expansion changes completion and carries no same-completion speedup claim."
+      ],
+      "diagnostics": "docs/evidence/2026-10-16-minkowski-contracts/diagnostic-findings-v1.md",
+      "historical_preservation": "27093 inherited missing paths retain their expected hashes through the pinned parent audit; no new missing artifact or mismatch.",
+      "remaining": "Native 26-input batch union, inherited provenance, complete internal resource contracts, clean external release, full CI/formal/fuzz/coverage and 35 separately unadmitted native files remain open.",
+      "full_plan_complete": false
+    },
+    "batch_winding_contracts_work": {
+      "status": "canonical common-cell triangulation and original strict batch unions qualified locally",
+      "baseline_commit": "f74a7848805398eb62dddb167b3997662e6f90d5",
+      "contract": "docs/evidence/2026-10-16-batch-winding-contracts/triangulation-contract-v1.md",
+      "baseline": "docs/evidence/2026-10-16-batch-winding-contracts/baseline-findings-v1.md",
+      "diagnostics": "docs/evidence/2026-10-16-batch-winding-contracts/diagnostic-findings-v1.md",
+      "reasoning": "docs/evidence/2026-10-16-batch-winding-contracts/canonicalization-reasoning-v1.md",
+      "progress": "docs/evidence/2026-10-16-batch-winding-contracts/progress-v1.md",
+      "validation": "docs/evidence/2026-10-16-batch-winding-contracts/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-16-batch-winding-contracts/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-16-batch-winding-contracts/artifact-audit-v1.json.gz",
+      "artifact_audit_schema": 2,
+      "implementation_sha256": {
+        "crates/hypermesh/tests/boolean.rs": "29bf52f9d942ebdc1b66609581f12c8cd66cece4bbb7424b5afcbc065d70c8ba",
+        "crates/hypertri/README.md": "cb4d561e450c1075c257297a9533915b5dbb73aa09b094493675f47e41d68261",
+        "crates/hypertri/fuzz/fuzz_targets/hyperreal_representations.rs": "8a3eb84e97e4b3e0aba96d87192e432f88c2b8c395a4aa914b6fc6a3374a20f8",
+        "crates/hypertri/fuzz/fuzz_targets/topology_invariants.rs": "eaf9cdf017ee6bcea0fa6e02cb186a4072754110fe24707a98fa854d55a79561",
+        "crates/hypertri/src/cdt.rs": "be82beff0a959bf12116a07005c34da5cc4e461fd2eed45e5d01d9dc7fbd5023",
+        "crates/hypertri/src/cdt_insert.rs": "247e32748ef7f3fa2bd0a16dd82cafae847c3bc54f030634033ba995bc0e089d",
+        "crates/hypertri/tests/corefinement_cells.rs": "abcbf405c6c4a9ddb4809e1952dae77a2d45c467156a17b045d089f5f345effd",
+        "tests/batch_common_cells.rs": "dc4e0a8043ee69fac1438722d0e4c25f620eff19f828581bd9b165c377081f37"
+      },
+      "test_totals": {
+        "candidate-focused-v1/local-minimum": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 1
+        },
+        "candidate-focused-v1/public-cell": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 1
+        },
+        "candidate-focused-v2/batch-boxes": {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 1
+        },
+        "candidate-focused-v2/public-cells": {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 1
+        },
+        "candidate-focused-v2/modeling": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 1
+        },
+        "qualification-v1/native-triangulation": {
+          "passed": 196,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 10
+        },
+        "qualification-v1/native-minimal": {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 10
+        },
+        "qualification-v1/native-mesh": {
+          "passed": 249,
+          "failed": 0,
+          "ignored": 7,
+          "test_binaries_or_doctest_groups": 9
+        },
+        "qualification-v1/root-minimal": {
+          "passed": 131,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 34
+        },
+        "qualification-v1/root-curve": {
+          "passed": 287,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 38
+        },
+        "qualification-v1/root-all-features": {
+          "passed": 404,
+          "failed": 0,
+          "ignored": 1,
+          "test_binaries_or_doctest_groups": 42
+        },
+        "qualification-v1/ffi-tests": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 1
+        },
+        "qualification-v1/root-doctests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 1
+        },
+        "qualification-v1/native-doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 1
+        },
+        "qualification-v1/triangulation-doctests": {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 1
+        },
+        "qualification-v1/triangulation-cdt-only": {
+          "passed": 88,
+          "failed": 0,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 10
+        },
+        "triangulation-baseline-v1/local-minimum": {
+          "passed": 0,
+          "failed": 1,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 1
+        },
+        "triangulation-baseline-v1/public-cell": {
+          "passed": 0,
+          "failed": 1,
+          "ignored": 0,
+          "test_binaries_or_doctest_groups": 1
+        }
+      },
+      "cost": {
+        "rows": 88,
+        "timing_rows": 66,
+        "allocation_rows": 22,
+        "original_baseline_rows": 24,
+        "costs": [
+          {
+            "case": "overlap",
+            "temperature": "cold",
+            "samples_nanos": {
+              "original-baseline": [
+                931166,
+                1020940,
+                921197
+              ],
+              "replay-baseline": [
+                948275,
+                1125843,
+                1079406
+              ],
+              "replay-candidate": [
+                1184668,
+                1044618,
+                979533
+              ]
+            },
+            "median_nanos": {
+              "original-baseline": 931166,
+              "replay-baseline": 1079406,
+              "replay-candidate": 1044618
+            },
+            "completion": "certified_local",
+            "same_completion_baseline_available": true,
+            "candidate_over_original_baseline": 1.1218386410156729,
+            "candidate_over_replayed_baseline": 0.9677711630285546
+          },
+          {
+            "case": "overlap",
+            "temperature": "warm",
+            "samples_nanos": {
+              "original-baseline": [
+                709322,
+                694982,
+                692322
+              ],
+              "replay-baseline": [
+                913267,
+                960765,
+                693943
+              ],
+              "replay-candidate": [
+                726090,
+                718771,
+                720941
+              ]
+            },
+            "median_nanos": {
+              "original-baseline": 694982,
+              "replay-baseline": 913267,
+              "replay-candidate": 720941
+            },
+            "completion": "certified_local",
+            "same_completion_baseline_available": true,
+            "candidate_over_original_baseline": 1.0373520465278236,
+            "candidate_over_replayed_baseline": 0.7894087928283843
+          },
+          {
+            "case": "coincident",
+            "temperature": "cold",
+            "samples_nanos": {
+              "original-baseline": [
+                1013060,
+                969183,
+                1101244
+              ],
+              "replay-baseline": [
+                1009811,
+                995852,
+                904118
+              ],
+              "replay-candidate": [
+                995841,
+                1144682,
+                1026579
+              ]
+            },
+            "median_nanos": {
+              "original-baseline": 1013060,
+              "replay-baseline": 995852,
+              "replay-candidate": 1026579
+            },
+            "completion": "certified_local",
+            "same_completion_baseline_available": true,
+            "candidate_over_original_baseline": 1.0133447179831403,
+            "candidate_over_replayed_baseline": 1.0308549864839354
+          },
+          {
+            "case": "coincident",
+            "temperature": "warm",
+            "samples_nanos": {
+              "original-baseline": [
+                819134,
+                1252204,
+                746169
+              ],
+              "replay-baseline": [
+                925607,
+                802655,
+                785556
+              ],
+              "replay-candidate": [
+                867460,
+                820114,
+                919037
+              ]
+            },
+            "median_nanos": {
+              "original-baseline": 819134,
+              "replay-baseline": 802655,
+              "replay-candidate": 867460
+            },
+            "completion": "certified_local",
+            "same_completion_baseline_available": true,
+            "candidate_over_original_baseline": 1.0589964523508975,
+            "candidate_over_replayed_baseline": 1.080738299767646
+          },
+          {
+            "case": "touching",
+            "temperature": "cold",
+            "samples_nanos": {
+              "original-baseline": [
+                466848,
+                628477,
+                545353
+              ],
+              "replay-baseline": [
+                517684,
+                475678,
+                474788
+              ],
+              "replay-candidate": [
+                479697,
+                613508,
+                520174
+              ]
+            },
+            "median_nanos": {
+              "original-baseline": 545353,
+              "replay-baseline": 475678,
+              "replay-candidate": 520174
+            },
+            "completion": "certified_local",
+            "same_completion_baseline_available": true,
+            "candidate_over_original_baseline": 0.9538299046672523,
+            "candidate_over_replayed_baseline": 1.0935422701911797
+          },
+          {
+            "case": "touching",
+            "temperature": "warm",
+            "samples_nanos": {
+              "original-baseline": [
+                367325,
+                262862,
+                278001
+              ],
+              "replay-baseline": [
+                331627,
+                279341,
+                286700
+              ],
+              "replay-candidate": [
+                278291,
+                333537,
+                406672
+              ]
+            },
+            "median_nanos": {
+              "original-baseline": 278001,
+              "replay-baseline": 286700,
+              "replay-candidate": 333537
+            },
+            "completion": "certified_local",
+            "same_completion_baseline_available": true,
+            "candidate_over_original_baseline": 1.1997690655789008,
+            "candidate_over_replayed_baseline": 1.1633658876874782
+          },
+          {
+            "case": "full26",
+            "temperature": "cold",
+            "samples_nanos": {
+              "replay-candidate": [
+                64559153,
+                62220443,
+                62185936
+              ]
+            },
+            "median_nanos": {
+              "replay-candidate": 62220443
+            },
+            "completion": "certified_local",
+            "same_completion_baseline_available": false
+          },
+          {
+            "case": "full26",
+            "temperature": "warm",
+            "samples_nanos": {
+              "replay-candidate": [
+                66033942,
+                61320735,
+                59976637
+              ]
+            },
+            "median_nanos": {
+              "replay-candidate": 61320735
+            },
+            "completion": "certified_local",
+            "same_completion_baseline_available": false
+          },
+          {
+            "case": "merged26",
+            "temperature": "cold",
+            "samples_nanos": {
+              "replay-candidate": [
+                66118975,
+                64407053,
+                66194871
+              ]
+            },
+            "median_nanos": {
+              "replay-candidate": 66118975
+            },
+            "completion": "certified_local",
+            "same_completion_baseline_available": false
+          },
+          {
+            "case": "merged26",
+            "temperature": "warm",
+            "samples_nanos": {
+              "replay-candidate": [
+                59982497,
+                60820589,
+                60520540
+              ]
+            },
+            "median_nanos": {
+              "replay-candidate": 60520540
+            },
+            "completion": "certified_local",
+            "same_completion_baseline_available": false
+          }
+        ],
+        "library_bytes": {
+          "baseline": {
+            "csgrs": 9940156,
+            "hypermesh": 5183942,
+            "hypertri": 1498720,
+            "hyperreal": 11625310,
+            "hyperlimit": 4013784
+          },
+          "candidate": {
+            "csgrs": 9940156,
+            "hypermesh": 5183848,
+            "hypertri": 1508116,
+            "hyperreal": 11625310,
+            "hyperlimit": 4013784
+          }
+        },
+        "source_sizes": {
+          "crates/hypermesh/tests/boolean.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 23226,
+            "candidate_bytes": 30053,
+            "baseline_lines": 650,
+            "candidate_lines": 833
+          },
+          "crates/hypertri/README.md": {
+            "baseline_exists": true,
+            "baseline_bytes": 16914,
+            "candidate_bytes": 17563,
+            "baseline_lines": 379,
+            "candidate_lines": 388
+          },
+          "crates/hypertri/fuzz/fuzz_targets/hyperreal_representations.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 10033,
+            "candidate_bytes": 10036,
+            "baseline_lines": 279,
+            "candidate_lines": 279
+          },
+          "crates/hypertri/fuzz/fuzz_targets/topology_invariants.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 7657,
+            "candidate_bytes": 7660,
+            "baseline_lines": 233,
+            "candidate_lines": 233
+          },
+          "crates/hypertri/src/cdt.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 76986,
+            "candidate_bytes": 77305,
+            "baseline_lines": 2256,
+            "candidate_lines": 2260
+          },
+          "crates/hypertri/src/cdt_insert.rs": {
+            "baseline_exists": true,
+            "baseline_bytes": 92480,
+            "candidate_bytes": 98770,
+            "baseline_lines": 2678,
+            "candidate_lines": 2846
+          },
+          "crates/hypertri/tests/corefinement_cells.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 9721,
+            "baseline_lines": 0,
+            "candidate_lines": 291
+          },
+          "tests/batch_common_cells.rs": {
+            "baseline_exists": false,
+            "baseline_bytes": 0,
+            "candidate_bytes": 3778,
+            "baseline_lines": 0,
+            "candidate_lines": 104
+          }
+        },
+        "scope": "Canonical topology repair and strict completion of the original 26-box cavity and deletion-minimal five-box union. Fixed pre-edit probe, both baseline epochs retained, exact control artifacts compared. Small unpinned-host samples; no optimization claim.",
+        "limits": "Bare meshes still lack inherited end-to-end provenance. The canonical pair scan has finite combinatorial bounds but no internal scalar-work, heap-byte or cancellation guarantee. Qualification commands use external 1800-second/8-GiB containment except WASM/Node retains only wall containment; cost children have 120-second walls. Requested Rust allocator bytes exclude native allocator internals. Full workflow verification, clean external package/MSRV/release, formal proof, instrumented coverage and directed adversarial campaigns remain open. The 35 inherited native files remain separately unadmitted."
+      },
+      "semantics": [
+        "Identical protected planar cells use one ordered noncrossing edge selection through native exact constraint recovery; no incircle requirement or mesh-winding relaxation.",
+        "Independent exhaustive five-point triangulations under all 120 vertex orders, three affine maps and both policies supplement three complete captured face inputs.",
+        "Original 26-box volume-124 cavity and minimized five-box volume-46 union complete strictly in batch and merged-shell forms, with reversed/order variants and multiple expression roots.",
+        "Exact coordinate planes, closed PWN, exact bounds and every open integer-cell witness establish the represented box sets; downstream intersection, self-difference, empty reuse, accumulation and translation remain certified.",
+        "The three completed control artifacts remain byte-identical across both old-build epochs and the candidate. Affected formerly noncanonical outputs have an explicit triangulation/artifact migration."
+      ],
+      "historical_preservation": "27093 inherited missing paths retain their expected hashes through the parent audit; no new missing artifact or mismatch.",
+      "remaining": "Inherited provenance, complete internal resource contracts, clean external release, full CI/formal/fuzz/coverage and 35 separately unadmitted native files remain open.",
+      "full_plan_complete": false
+    },
+    "native_admission_recheck": {
+      "status": "current-native-runtime-admission-still-fails",
+      "baseline_commit": "5918d85aa0064614ba11dc3c8bcc6a0a7d4b7191",
+      "progress": "docs/evidence/2026-10-16-native-admission-recheck/progress-v1.md",
+      "review": "docs/evidence/2026-10-16-native-admission-recheck/review-v1/source-review.md",
+      "validation": "docs/evidence/2026-10-16-native-admission-recheck/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-16-native-admission-recheck/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-16-native-admission-recheck/artifact-audit-v1.json.gz",
+      "original_gates": {
+        "full_board": {
+          "worker_cpu_seconds": 191.564613212,
+          "limit_seconds": 120,
+          "passed": false
+        },
+        "copper_neck": {
+          "check_body_wall_seconds": 88.03321514,
+          "limit_seconds": 60,
+          "passed": false
+        },
+        "gerber": {
+          "passed": true
+        }
+      },
+      "reported_findings": [
+        12,
+        197
+      ],
+      "production_or_test_edits": 0,
+      "pending_native_files_unchanged": 35,
+      "profile_raw_bytes": 357002708,
+      "debugger_snapshots": 13,
+      "pi_laurent_on_stack": 8,
+      "limitations": [
+        "Runtime reproduction and diagnostic sampling only; no native implementation admission or speedup claim.",
+        "Finding counts are not an independent geometry oracle or a full report byte comparison.",
+        "Native full suites, affected lint/docs, clean package release and broad library costs remain unresolved.",
+        "External wall/address-space limits do not establish internal work or retained-heap bounds.",
+        "The perf caller unwinder failed. GDB snapshots are sparse diagnostics, not time proportions.",
+        "The new verbose unwinder diagnostic exhausted repository space; its available 25407488-byte stderr and all other outputs were retained under /dev/shm, with an explicit relocation record.",
+        "Historical missing artifacts remain inherited; no historical-completeness claim."
+      ],
+      "next": "Isolate transient exact-proof costs, metadata-first validation and endpoint proof reuse on the current revision; preserve the rejected combined trials and original workload contracts.",
+      "historical_preservation": "27093 inherited missing paths retain their expected hashes; no new missing artifact or mismatch.",
+      "runtime_admitted": false,
+      "full_plan_complete": false
+    },
+    "hyperbrep": {
+      "status": "in-progress",
+      "plan": "crates/hyperbrep/docs/DEVELOPMENT_PLAN.md",
+      "work_packages": "crates/hyperbrep/docs/IMPLEMENTATION_STATUS.json",
+      "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-16-oblique-cuts/manifest.json",
+      "contract": "Pure Rust native/WASM exact CAD implementation; greenfield API/archive changes with direct caller updates and no compatibility shims.",
+      "qualification": "BREP/IO all-feature debug and release each pass 496 tests; minimal release passes 488, with no ignored cases. Both warning-denied all-target Clippy configurations, rustdoc, six examples, eleven independent OCCT checks, fuzz-target compilation and 71 zero-import WASM groups pass. All 31 final qualification/diagnostic/measurement commands use the same final source hashes. Circle/ellipse query controls cover seven distant charts, both traversal directions, restriction, full-period seams and exact 1e-12 gaps. The oblique torus band has three global configurations, 18 nonempty outputs and three canonical empty results; independent exact volume/area and point tables, paired opposite incidence, subdivision, reflected rescaling, deterministic archive replay, both intersection orders and complementary reconstruction are checked. Four STEP attempts retain typed torus/body/entity rejection and same-context cylinder export recovers. All fifteen preceding continuation diagnostics succeed, and all 22 prior STEP artifacts remain byte-identical. The wider nine-fixture frontier remains separately recorded with its typed failures and dependent operations that could not be attempted. The full 84-process campaign compares 156 preserved cases in fourteen corpora; every receipt agrees. The largest case-median candidate/baseline ratio is 1.248962; 3 rows exceed 10%, and 37 rows change allocator observations. Every adverse row, raw sample, allocation request, process resource and executable size is retained. Three newly successful torus continuation workloads have separate absolute costs across three processes, with exact checks and full output materialization inside timing. No failed operation serves as a speedup baseline. Shared-host measurements do not close controlled-host/statistical gates or earlier timing exceptions. All 28 work packages remain open. This increment does not establish general oblique Boolean closure, nonlinear coincidence, general curved-shell embedding or operation-wide provenance/certainty delivery. Cone/torus STEP remains typed UnsupportedSurface. Scalar, predicate, curve and mesh implementations are unchanged in this increment; the preceding whole-scalar zero-factor failure remains an inherited failed gate, not a pre-push waiver. Periodic/archive limits and strict predicate policies are unchanged. No total-work, retained-heap, expression-growth or cancellation bound is claimed; watchdogs provide external containment only. WASM uses local workspace paths, not a shipped package/JS consumer. Runtime fuzz/ASan, lexicase, coverage, machine-checked proofs, package/MSRV and C/Python/JS release gates remain open. No complete workspace/pre-push matrix or push was performed.",
+      "upstream_revision": "72cd216cc758d364c9e40b8969fef2df155bec8b",
+      "acceptance_protocol": "docs/admission.md",
+      "integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-upstream-integration/README.md",
+      "acceptance_order": [
+        "Empty-result composition and visible failures",
+        "Ordinary strict-mode completion",
+        "Complete user-path and release validation"
+      ],
+      "latest_integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-16-upstream-corrections/README.md",
+      "implementation_ownership": {
+        "primary": [
+          "hyperbrep",
+          "hyperbrep-io",
+          "their tests, benchmarks and documentation"
+        ],
+        "surrounding_crates": "Concurrent upstream development in another thread. Change only for a reproduced BREP regression or blocker whose repair is necessary to preserve the BREP contract.",
+        "updates": "Occasionally fetch and merge at coherent checkpoints; keep source fixed during checks/measurements, preserve both histories, and requalify affected BREP consumers.",
+        "parked_scalar_investigation": "96c308f87af6f3491828ada3e9b8e92cec858cf1; unfinished, not admitted, not restored over upstream corrections."
+      }
     }
   },
   "status_meanings": {

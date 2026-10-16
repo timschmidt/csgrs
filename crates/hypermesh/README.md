@@ -105,6 +105,35 @@ keeps it byte-for-byte synchronized with this block.
 
 ## API guide
 
+### Minkowski sums
+
+`minkowski_sum(context, left, right)` computes the regularized sum of bounded
+closed-PWN solids. Nonzero winding defines material, so disconnected components,
+concavity, cavities, reversed shells and winding multiplicity keep their set
+meaning. Only referenced positions participate. Both operands are validated
+before canonical-empty identities; malformed meshes remain typed failures.
+
+General inputs are refined into convex cells by their source supporting planes.
+Exact signed ray predicates select interior cells. Each convex pair sum uses
+the native hull, and their union accumulates through the native Boolean kernel.
+The output is closed-PWN geometry or canonical empty. This does not certify
+fidelity to an analytic surface or the intent of an earlier approximate operation.
+The receipt reports the decisions consumed by this operation.
+
+`minkowski_sum_with_options` accepts `MinkowskiOptions`: maximum live decomposition
+cells per operand, maximum convex pair sums, maximum vertex sums per pair, and an
+optional cooperative cancellation flag. Defaults add no count limit. Exhaustion
+and cancellation return distinct typed causes before output publication. These
+counts do not bound total work, heap bytes or scalar growth; validation, hull and
+Boolean calls cannot be interrupted internally. A supporting-plane arrangement
+can be much larger than its source boundary.
+
+`minkowski_hull(context, left_points, right_points)` explicitly computes the
+convex hull of pairwise stored-point sums. It fills disconnected gaps and
+concavities and includes every supplied point. It is the migration path for
+CSGRS's former vertex-hull interpretation of `minkowski_sum`; point clouds and
+open surfaces belong to this explicit hull operation, not the solid-sum API.
+
 ### Multi-expression programs
 
 `BooleanProgram::Operation` evaluates one variadic built-in operation:
@@ -165,12 +194,26 @@ total-work, retained-byte or cancellation bound is claimed.
 | Reusable indexed input | `TriangleMesh`, `TriangleMeshRef`, `Triangle` |
 | Policy and aggregate certainty | `MeshContext`, `PredicatePolicy`, `MeshOutcome`, `MeshCertainty` |
 | Explicit native conversion | `BooleanMeshBatch::into_triangle_meshes` |
-| Input validation | `polygon_soup` |
+| Input validation | `TriangleMesh::validate_closed_pwn`, `polygon_soup` |
+| Structural concatenation | `TriangleMesh::try_concatenate` |
 | Exact pairwise geometry | `intersect_polygons`, `PairwiseIntersection` |
 | Acceleration | `ExactBvh`, `ExactPointBvh` |
 | Convex hull | `convex_hull`, `convex_hull_with_coplanar_groups` |
 | Mesh queries and editing | methods on `TriangleMesh` |
 | Errors | `HypermeshError`, `HypermeshResult<T>` |
+
+`validate_closed_pwn` checks the same nonempty input contract as Boolean soup
+preparation without constructing polygons or computing bounds. It accepts
+balanced nonmanifold surfaces and retains the combined certainty of face and
+edge validation. Facts remain bound to matching source buffers and admissible
+policies; this validates topology, not inherited construction intent.
+
+`try_concatenate` preserves position/triangle order, open surfaces, unused
+vertices and winding multiplicity. It validates source indices and checks
+count/byte capacities before rebasing, with typed reservation failures. It
+does not compute a Boolean union. Existing closed-PWN facts retain their weakest
+certainty when all nonempty inputs supply them. These vector checks do not bound
+total work, scalar/shared-buffer allocation, retained heap bytes or cancellation.
 
 Primitive-float GPU buffers are explicit presentation boundaries. Do not feed
 their approximated coordinates back into topology decisions.

@@ -513,6 +513,189 @@ fn same_operand_coplanar_shell_overlap_is_order_invariant() {
     }
 }
 
+fn batch_box_cells() -> Vec<([i32; 3], [i32; 3])> {
+    let mut cells = Vec::new();
+    for (x, a) in [(0, 2), (1, 3), (3, 2)] {
+        for (y, b) in [(0, 2), (1, 3), (3, 2)] {
+            for (z, c) in [(0, 2), (1, 3), (3, 2)] {
+                if (x, y, z) != (1, 1, 1) {
+                    cells.push(([x, y, z], [x + a, y + b, z + c]));
+                }
+            }
+        }
+    }
+    cells
+}
+
+fn point_axis(point: &Point3, axis: usize) -> &Real {
+    match axis {
+        0 => &point.x,
+        1 => &point.y,
+        2 => &point.z,
+        _ => unreachable!(),
+    }
+}
+
+fn assert_batch_box_union(
+    context: &MeshContext,
+    batch: BooleanMeshBatch,
+    cells: &[([i32; 3], [i32; 3])],
+    volume: i32,
+) -> TriangleMesh {
+    assert_certified_boundary(&batch, &batch.results[0]);
+    assert_eq!(
+        signed_six_volume(&batch.vertices, &batch.results[0]),
+        r(6 * volume)
+    );
+    assert!(
+        batch
+            .results
+            .iter()
+            .skip(1)
+            .all(|result| result.triangles.is_empty())
+    );
+    // All boundary faces lie on the integer coordinate planes. Together with
+    // closed topology and exact bounds, one witness in every open unit cell
+    // determines this regularized set; no triangle count is a semantic oracle.
+    for triangle in &batch.results[0].triangles {
+        assert!((0..3).any(|axis| (0..=5).any(|value| {
+            triangle
+                .iter()
+                .all(|&vertex| point_axis(&batch.vertices[vertex as usize], axis) == &r(value))
+        })));
+    }
+    let mut meshes = batch.into_triangle_meshes().unwrap();
+    let mesh = meshes.remove(0);
+    assert_eq!(
+        mesh.validate_closed_pwn(context).unwrap().certainty,
+        MeshCertainty::Certified
+    );
+    let bounds = mesh.exact_bounds(context).unwrap();
+    assert_eq!(bounds.certainty, MeshCertainty::Certified);
+    let bounds = bounds.value.unwrap();
+    for axis in 0..3 {
+        let min = cells.iter().map(|(min, _)| min[axis]).min().unwrap();
+        let max = cells.iter().map(|(_, max)| max[axis]).max().unwrap();
+        assert_eq!(point_axis(&bounds.mins, axis), &r(min));
+        assert_eq!(point_axis(&bounds.maxs, axis), &r(max));
+    }
+    let mut occupied = 0;
+    for x in 0..5 {
+        for y in 0..5 {
+            for z in 0..5 {
+                let cell = [x, y, z];
+                let expected = cells.iter().any(|(min, max)| {
+                    (0..3).all(|axis| min[axis] <= cell[axis] && cell[axis] < max[axis])
+                });
+                occupied += i32::from(expected);
+                let [x, y, z] = cell.map(|value| (r(2 * value + 1) / r(2)).unwrap());
+                let outcome = mesh.contains_point(context, &Point3::new(x, y, z)).unwrap();
+                assert_eq!(outcome.certainty, MeshCertainty::Certified);
+                assert_eq!(outcome.value, expected, "unit cell {cell:?}");
+            }
+        }
+    }
+    assert_eq!(occupied, volume);
+    mesh
+}
+
+fn check_batch_box_common_cells(indices: &[usize], volume: i32) {
+    let context = MeshContext::new(PredicatePolicy::STRICT);
+    let all_cells = batch_box_cells();
+    let cells = indices
+        .iter()
+        .map(|&index| all_cells[index])
+        .collect::<Vec<_>>();
+    let original = cells
+        .iter()
+        .map(|&(min, max)| {
+            let mesh = integer_box(min, max);
+            // Retain the original CSGRS cuboid face order used by the full failure.
+            let triangles = [2, 3, 0, 1, 10, 11, 8, 9, 6, 7, 4, 5]
+                .map(|index| mesh.triangles[index])
+                .to_vec();
+            TriangleMesh::new(mesh.positions.to_vec(), triangles)
+        })
+        .collect::<Vec<_>>();
+    for variant in 0..3 {
+        let mut inputs = original.clone();
+        if variant == 1 {
+            inputs.reverse();
+            inputs = inputs
+                .into_iter()
+                .enumerate()
+                .map(|(index, mesh)| with_rotated_triangle_order(mesh, index + 1))
+                .collect();
+        } else if variant == 2 {
+            inputs = inputs.iter().map(TriangleMesh::reversed_winding).collect();
+        }
+        for merged in [false, true] {
+            let operands = if merged {
+                vec![TriangleMesh::try_concatenate(&inputs).unwrap()]
+            } else {
+                inputs.clone()
+            };
+            for operand in &operands {
+                assert_eq!(
+                    operand.validate_closed_pwn(&context).unwrap().certainty,
+                    MeshCertainty::Certified
+                );
+            }
+            let nodes = [
+                BooleanExpression::Operation(BooleanOp::Union),
+                BooleanExpression::Operation(BooleanOp::Intersection),
+                BooleanExpression::False,
+            ];
+            let roots: &[u32] = if merged { &[0, 2] } else { &[0, 1, 2] };
+            let references = operands.iter().collect::<Vec<_>>();
+            let outcome = run(
+                &context,
+                &references,
+                BooleanProgram::Expressions {
+                    nodes: &nodes,
+                    roots,
+                },
+            )
+            .unwrap_or_else(|error| {
+                panic!("indices={indices:?} variant={variant} merged={merged}: {error:?}")
+            });
+            assert_eq!(outcome.certainty, MeshCertainty::Certified);
+            let result = assert_batch_box_union(&context, outcome.value, &cells, volume);
+            if variant == 0 && !merged {
+                let enclosing = integer_box([0, 0, 0], [5, 5, 5]);
+                let retained = run(
+                    &context,
+                    &[&result, &enclosing],
+                    BooleanProgram::Operation(BooleanOp::Intersection),
+                )
+                .unwrap();
+                assert_eq!(retained.certainty, MeshCertainty::Certified);
+                assert_batch_box_union(&context, retained.value, &cells, volume);
+                let removed = run(
+                    &context,
+                    &[&result, &result],
+                    BooleanProgram::Operation(BooleanOp::Difference),
+                )
+                .unwrap();
+                assert_eq!(removed.certainty, MeshCertainty::Certified);
+                assert!(removed.value.results[0].triangles.is_empty());
+            }
+        }
+    }
+}
+
+#[test]
+fn batch_box_common_cells_complete_the_minimized_five_box_union() {
+    // Independently, horizontal areas are 14, 16 and 8 over heights 1, 1 and 2.
+    check_batch_box_common_cells(&[12, 17, 20, 21, 24], 46);
+}
+
+#[test]
+fn batch_box_common_cells_complete_the_original_twenty_six_box_cavity() {
+    // [0,5]^3 minus the open unit cavity (2,3)^3, with regularized boundaries.
+    check_batch_box_common_cells(&(0..26).collect::<Vec<_>>(), 124);
+}
+
 #[test]
 fn subdivided_same_operand_overlap_has_empty_disjoint_intersection() {
     let first = with_rotated_triangle_order(integer_box([-5, -4, -3], [-3, -1, -1]), 4)

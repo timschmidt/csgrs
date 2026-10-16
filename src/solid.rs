@@ -94,6 +94,17 @@ pub(crate) fn reserved<T>(count: usize) -> Result<Vec<T>, ValidationError> {
     Ok(values)
 }
 
+/// Reserve input-controlled growth before publishing or appending geometry.
+pub(crate) fn reserve_additional<T>(
+    values: &mut Vec<T>,
+    additional: usize,
+) -> Result<(), ValidationError> {
+    let elements = capacity::<T>(values.len().checked_add(additional))?;
+    values
+        .try_reserve(additional)
+        .map_err(|_| ValidationError::AllocationFailed { elements })
+}
+
 fn sampled_circle(count: usize) -> Result<Vec<(Real, Real)>, ValidationError> {
     sample_minimum(count, 1, "circle samples")?;
     let denominator =
@@ -922,7 +933,11 @@ pub fn helical_involute_gear(
     Ok(decisions.finish(mesh))
 }
 
-/// Builds native triangle geometry from polygon index rows.
+/// Builds native triangle geometry from simple planar polygon index rows.
+///
+/// Faces retain their authored winding and may form an open surface. A repeated
+/// closing coordinate is accepted; crossed or self-touching faces are rejected.
+/// This does not validate the topology of the complete collection of faces.
 pub fn polyhedron(
     points: &[[Real; 3]],
     faces: &[&[usize]],
@@ -938,10 +953,12 @@ pub fn polyhedron_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let positions = points
-        .iter()
-        .map(|[x, y, z]| Point3::new(x.clone(), y.clone(), z.clone()))
-        .collect::<Vec<_>>();
+    let mut positions = reserved(points.len())?;
+    positions.extend(
+        points
+            .iter()
+            .map(|[x, y, z]| Point3::new(x.clone(), y.clone(), z.clone())),
+    );
     let mut triangles = Vec::new();
     for face in faces {
         if face.len() < 3
@@ -960,20 +977,34 @@ pub fn polyhedron_with_context(
                 });
             }
         }
-        let points = face
-            .iter()
-            .map(|&index| &positions[index])
-            .collect::<Vec<_>>();
-        let (projected, _) = project_planar_ring(&points, &decisions)?;
-        let indices = decisions.consume_triangulation(
-            hypertri::earcut(&decisions.triangulation_context(), &projected, &[])
-                .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-        );
-        triangles.extend(indices.as_chunks::<3>().0.iter().map(|triangle| {
+        let mut points = reserved(face.len())?;
+        points.extend(face.iter().map(|&index| &positions[index]));
+        let (ring, _) = triangulate_planar_ring(&points, &decisions)?;
+        reserve_additional(&mut triangles, ring.triangles.len() / 3)?;
+        triangles.extend(ring.triangles.as_chunks::<3>().0.iter().map(|triangle| {
             Triangle::new(face[triangle[0]], face[triangle[1]], face[triangle[2]])
         }));
     }
     Ok(decisions.finish(TriangleMesh::new(positions, triangles)))
+}
+
+fn triangulate_planar_ring(
+    points: &[&Point3],
+    decisions: &GeometryDecisions,
+) -> Result<(hypertri::SimpleRingTriangulation, Vector3), ValidationError> {
+    let (projected, normal) = project_planar_ring(points, decisions)?;
+    let ring = decisions.consume_triangulation(hypertri::triangulate_simple_ring(
+        &decisions.triangulation_context(),
+        &projected,
+    )?);
+    // Projection aligns its positive orientation with the support triple.
+    // A concave ring's whole boundary can have the opposite winding.
+    let normal = if ring.winding == hypertri::Sign::Negative {
+        -normal
+    } else {
+        normal
+    };
+    Ok((ring, normal))
 }
 
 // A planar ring only needs an invertible coordinate projection for triangulation.
@@ -1001,7 +1032,7 @@ fn project_planar_ring(
                         break 'support;
                     }
                 },
-                Err(error) => blocker = Some(ValidationError::Geometry(error.to_string())),
+                Err(error) => blocker = Some(ValidationError::Mesh(error)),
             }
         }
     }
@@ -1014,31 +1045,29 @@ fn project_planar_ring(
     }
     // Any decidably nonzero normal component gives an invertible projection.
     // An undecided component need not block another component's certified proof.
-    let (axis, sign) = normal
-        .0
-        .iter()
-        .enumerate()
-        .find_map(|(axis, value)| {
-            decisions
-                .sign(value, "ring projection normal")
-                .ok()
-                .filter(|sign| *sign != RealSign::Zero)
-                .map(|sign| (axis, sign))
-        })
-        .ok_or_else(|| {
-            ValidationError::Geometry("ring has no decidably nonzero projection normal".into())
-        })?;
-    let projected = points
-        .iter()
-        .map(|point| {
-            let (u, v) = match axis {
-                0 => (point.y.clone(), point.z.clone()),
-                1 => (point.z.clone(), point.x.clone()),
-                _ => (point.x.clone(), point.y.clone()),
-            };
-            hypertri::Point2::new(u, if sign == RealSign::Negative { -v } else { v })
-        })
-        .collect();
+    let mut projection = None;
+    let mut blocker = None;
+    for (axis, value) in normal.0.iter().enumerate() {
+        match decisions.sign(value, "ring projection normal") {
+            Ok(RealSign::Zero) => {},
+            Ok(sign) => {
+                projection = Some((axis, sign));
+                break;
+            },
+            Err(error) => blocker = Some(error),
+        }
+    }
+    let (axis, sign) =
+        projection.ok_or_else(|| blocker.unwrap_or(ValidationError::InvalidArguments))?;
+    let mut projected = reserved(points.len())?;
+    projected.extend(points.iter().map(|point| {
+        let (u, v) = match axis {
+            0 => (point.y.clone(), point.z.clone()),
+            1 => (point.z.clone(), point.x.clone()),
+            _ => (point.x.clone(), point.y.clone()),
+        };
+        hypertri::Point2::new(u, if sign == RealSign::Negative { -v } else { v })
+    }));
     Ok((projected, normal))
 }
 
@@ -1765,29 +1794,42 @@ pub fn float(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
     try_float(mesh)
 }
 
-/// Concatenates native meshes without performing a Boolean operation.
-pub fn merge(meshes: &[TriangleMesh]) -> TriangleMesh {
+/// Concatenates native buffers in input order, preserving typed failures.
+///
+/// Open surfaces and winding multiplicity are preserved. This is structural
+/// composition, not a Boolean union or a topology validation. Native index and
+/// capacity checks run before rebasing; only successful results are cached.
+pub fn merge(meshes: &[TriangleMesh]) -> Result<TriangleMesh, ValidationError> {
     if let Some(result) = retained_merge(meshes) {
-        return result;
+        return Ok(result);
     }
-    let position_count = meshes.iter().map(|mesh| mesh.positions.len()).sum();
-    let triangle_count = meshes.iter().map(|mesh| mesh.triangles.len()).sum();
-    let mut positions = Vec::with_capacity(position_count);
-    let mut triangles = Vec::with_capacity(triangle_count);
-    for mesh in meshes {
-        let base = positions.len();
-        positions.extend(mesh.positions.iter().cloned());
-        triangles.extend(mesh.triangles.iter().map(|triangle| {
-            hypermesh::Triangle::new(
-                base + triangle.v0,
-                base + triangle.v1,
-                base + triangle.v2,
-            )
-        }));
-    }
-    let result = TriangleMesh::new(positions, triangles);
+    let result = TriangleMesh::try_concatenate(meshes)?;
     retain_merge(meshes, &result);
-    result
+    Ok(result)
+}
+
+fn validate_distribution_source(
+    mesh: &TriangleMesh,
+    decisions: &GeometryDecisions,
+) -> Result<bool, ValidationError> {
+    let is_empty = mesh.positions.is_empty() && mesh.triangles.is_empty();
+    if !is_empty {
+        // Reuse the Boolean kernel's closed-PWN validation without requiring
+        // bounds or materializing a polygon soup just to check the source.
+        decisions.consume_mesh(mesh.validate_closed_pwn(decisions.mesh_context())?);
+    }
+    Ok(is_empty)
+}
+
+fn distribution_buffer(
+    mesh: &TriangleMesh,
+    count: usize,
+) -> Result<Vec<TriangleMesh>, ValidationError> {
+    capacity::<Point3>(count.checked_mul(mesh.positions.len()))?;
+    capacity::<Triangle>(count.checked_mul(mesh.triangles.len()))?;
+    // Index conversion below is exact on every supported platform.
+    u64::try_from(count).map_err(|_| ValidationError::CapacityOverflow)?;
+    reserved(count)
 }
 
 fn union_copies(
@@ -1827,7 +1869,7 @@ fn union_copies(
         }
     }
     if pairwise_disjoint {
-        return Ok(merge(&copies));
+        return merge(&copies);
     }
     let mut copies = copies.into_iter();
     let Some(first) = copies.next() else {
@@ -1837,23 +1879,27 @@ fn union_copies(
     copies.try_fold(first, |left, right| {
         boolean_with_context(&left, &right, BooleanOp::Union, &context)
             .map(|outcome| decisions.consume_geometry(outcome))
-            .map_err(|error| ValidationError::Geometry(error.to_string()))
+            .map_err(ValidationError::Mesh)
     })
 }
 
-/// Places `count` copies along a direction at exact spacing under strict policy.
+/// Unions `count` copies along a direction at exact spacing under strict policy.
+/// Invalid sources, zero direction and undecided predicates remain typed errors.
 pub fn distribute_linear(
     mesh: &TriangleMesh,
     count: usize,
     direction: Vector3,
     spacing: Real,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     distribute_linear_with_context(mesh, count, direction, spacing, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
-        .unwrap_or_else(|_| empty())
 }
 
 /// Distributes and unions copies with the selected policy, preserving errors and certainty.
+///
+/// The source must be canonical empty or valid closed PWN input. Validation and
+/// the nonzero-direction requirement also apply to zero-copy layouts. Spacing
+/// may be zero or negative. Checked copy buffers are not a total-work budget.
 pub fn distribute_linear_with_context(
     mesh: &TriangleMesh,
     count: usize,
@@ -1862,9 +1908,6 @@ pub fn distribute_linear_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if count == 0 {
-        return Ok(decisions.finish(empty()));
-    }
     let parameters = DistributionParameters::Linear {
         count,
         direction: direction.clone(),
@@ -1873,45 +1916,50 @@ pub fn distribute_linear_with_context(
     if let Some(result) = retained_distribution(mesh, &parameters, context) {
         return Ok(result);
     }
-    if decisions.sign(&direction.dot(&direction), "distribution direction")?
-        != RealSign::Positive
-    {
-        return Err(ValidationError::InvalidArguments);
+    let empty_source = validate_distribution_source(mesh, &decisions)?;
+    match decisions.sign(&direction.dot(&direction), "distribution direction")? {
+        RealSign::Positive => {},
+        RealSign::Zero => {
+            return Err(ValidationError::ZeroParameter {
+                name: "distribution direction",
+            });
+        },
+        RealSign::Negative => return Err(ValidationError::InvalidArguments),
     }
-    let step = direction
-        .normalize_checked()
-        .map_err(|_| ValidationError::InvalidArguments)?
-        * spacing;
-    let copies = (0..count)
-        .map(|index| {
-            let offset = step.clone() * Real::from(index as u64);
-            try_transform_with_known_orientation(
-                mesh,
-                &Matrix4::affine_translation(offset.0),
-                false,
-                &decisions,
-            )
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+    if empty_source || count == 0 {
+        return Ok(decisions.finish(empty()));
+    }
+    let mut copies = distribution_buffer(mesh, count)?;
+    let step = direction.normalize_checked()? * spacing;
+    for index in 0..count {
+        let offset = step.clone() * Real::from(index as u64);
+        copies.push(try_transform_with_known_orientation(
+            mesh,
+            &Matrix4::affine_translation(offset.0),
+            false,
+            &decisions,
+        )?);
+    }
     let result = decisions.finish(union_copies(copies, &decisions)?);
     retain_distribution(mesh, parameters, context, &result);
     Ok(result)
 }
 
-/// Places copies in an XY grid under strict policy.
+/// Unions copies in an XY grid under strict policy, preserving typed failures.
 pub fn distribute_grid(
     mesh: &TriangleMesh,
     rows: usize,
     columns: usize,
     dx: Real,
     dy: Real,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     distribute_grid_with_context(mesh, rows, columns, dx, dy, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
-        .unwrap_or_else(|_| empty())
 }
 
 /// Distributes and unions a grid with the selected policy and aggregate certainty.
+/// Source validation also applies when a row/column count is zero. Signed and
+/// zero spacing are supported; count/byte/reservation failures are typed.
 pub fn distribute_grid_with_context(
     mesh: &TriangleMesh,
     rows: usize,
@@ -1921,9 +1969,6 @@ pub fn distribute_grid_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if rows == 0 || columns == 0 {
-        return Ok(decisions.finish(empty()));
-    }
     let parameters = DistributionParameters::Grid {
         rows,
         columns,
@@ -1933,10 +1978,13 @@ pub fn distribute_grid_with_context(
     if let Some(result) = retained_distribution(mesh, &parameters, context) {
         return Ok(result);
     }
-    let capacity = rows
+    if validate_distribution_source(mesh, &decisions)? || rows == 0 || columns == 0 {
+        return Ok(decisions.finish(empty()));
+    }
+    let count = rows
         .checked_mul(columns)
-        .ok_or(ValidationError::InvalidArguments)?;
-    let mut copies = Vec::with_capacity(capacity);
+        .ok_or(ValidationError::CapacityOverflow)?;
+    let mut copies = distribution_buffer(mesh, count)?;
     for row in 0..rows {
         for column in 0..columns {
             copies.push(try_transform_with_known_orientation(
@@ -1956,14 +2004,14 @@ pub fn distribute_grid_with_context(
     Ok(result)
 }
 
-/// Places copies along a circular arc in the XY plane under strict policy.
+/// Unions copies along an XY arc under strict policy, preserving typed failures.
 pub fn distribute_arc(
     mesh: &TriangleMesh,
     count: usize,
     radius: Real,
     start_angle_degrees: Real,
     end_angle_degrees: Real,
-) -> TriangleMesh {
+) -> Result<TriangleMesh, ValidationError> {
     distribute_arc_with_context(
         mesh,
         count,
@@ -1973,10 +2021,11 @@ pub fn distribute_arc(
         &GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
-    .unwrap_or_else(|_| empty())
 }
 
 /// Distributes and unions an arc with the selected policy and aggregate certainty.
+/// The source is validated even with zero copies. Radius and sweep are directed;
+/// one copy uses the angular midpoint, while multiple copies include both ends.
 pub fn distribute_arc_with_context(
     mesh: &TriangleMesh,
     count: usize,
@@ -1986,9 +2035,6 @@ pub fn distribute_arc_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if count == 0 {
-        return Ok(decisions.finish(empty()));
-    }
     let parameters = DistributionParameters::Arc {
         count,
         radius: radius.clone(),
@@ -1998,6 +2044,10 @@ pub fn distribute_arc_with_context(
     if let Some(result) = retained_distribution(mesh, &parameters, context) {
         return Ok(result);
     }
+    if validate_distribution_source(mesh, &decisions)? || count == 0 {
+        return Ok(decisions.finish(empty()));
+    }
+    let mut copies = distribution_buffer(mesh, count)?;
     let start = start_angle_degrees.to_radians();
     let sweep = end_angle_degrees.to_radians() - start.clone();
     let translated = try_transform_with_known_orientation(
@@ -2006,23 +2056,21 @@ pub fn distribute_arc_with_context(
         false,
         &decisions,
     )?;
-    let copies = (0..count)
-        .map(|index| {
-            let fraction = if count == 1 {
-                (Real::one() / Real::from(2_u8)).expect("two is nonzero")
-            } else {
-                (Real::from(index as u64) / Real::from((count - 1) as u64))
-                    .expect("count minus one is nonzero")
-            };
-            let angle = start.clone() + sweep.clone() * fraction;
-            try_transform_with_known_orientation(
-                &translated,
-                &Matrix4::rotation_z(angle),
-                false,
-                &decisions,
-            )
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+    for index in 0..count {
+        let fraction = if count == 1 {
+            (Real::one() / Real::from(2_u8)).expect("two is nonzero")
+        } else {
+            (Real::from(index as u64) / Real::from((count - 1) as u64))
+                .expect("count minus one is nonzero")
+        };
+        let angle = start.clone() + sweep.clone() * fraction;
+        copies.push(try_transform_with_known_orientation(
+            &translated,
+            &Matrix4::rotation_z(angle),
+            false,
+            &decisions,
+        )?);
+    }
     let result = decisions.finish(union_copies(copies, &decisions)?);
     retain_distribution(mesh, parameters, context, &result);
     Ok(result)
@@ -2313,7 +2361,11 @@ pub fn convex_hull_with_context(
     Ok(decisions.finish(hull))
 }
 
-/// Exact Minkowski sum of two native triangle meshes.
+/// Regularized Minkowski sum of the represented bounded closed-PWN solids.
+///
+/// Concavity, holes and disconnected components retain their set meaning.
+/// Unused positions do not contribute. Both operands are validated before empty
+/// identities. For the former stored-vertex convexification, use [`minkowski_hull`].
 pub fn minkowski_sum(
     left: &TriangleMesh,
     right: &TriangleMesh,
@@ -2322,39 +2374,70 @@ pub fn minkowski_sum(
         .map(GeometryOutcome::into_value)
 }
 
-/// Computes the Minkowski hull with the selected policy and aggregate certainty.
+/// Computes the represented-set sum with operation-local aggregate certainty.
+///
+/// See [`hypermesh::minkowski_sum`] for the domain and provenance distinction.
 pub fn minkowski_sum_with_context(
     left: &TriangleMesh,
     right: &TriangleMesh,
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    minkowski_sum_with_options(left, right, &hypermesh::MinkowskiOptions::default(), context)
+}
+
+/// Computes a represented-set sum with native collection limits and cancellation.
+///
+/// Counts and cooperative cancellation do not bound primitive work or heap bytes;
+/// see [`hypermesh::MinkowskiOptions`]. Exhaustion never returns a partial mesh.
+pub fn minkowski_sum_with_options(
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+    options: &hypermesh::MinkowskiOptions<'_>,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if left.positions.is_empty() || right.positions.is_empty() {
-        return Ok(decisions.finish(empty()));
-    }
-    let capacity = left
-        .positions
-        .len()
-        .checked_mul(right.positions.len())
-        .ok_or(ValidationError::InvalidArguments)?;
-    let mut points = Vec::with_capacity(capacity);
-    for left in left.positions.iter() {
-        for right in right.positions.iter() {
-            points.push(Point3::new(
-                left.x.clone() + right.x.clone(),
-                left.y.clone() + right.y.clone(),
-                left.z.clone() + right.z.clone(),
-            ));
-        }
-    }
-    let hull = decisions.consume_mesh(
-        hypermesh::convex_hull(decisions.mesh_context(), &points)
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-    );
+    let sum = decisions.consume_mesh(hypermesh::minkowski_sum_with_options(
+        decisions.mesh_context(),
+        left,
+        right,
+        options,
+    )?);
+    Ok(decisions.finish(sum))
+}
+
+/// Convex hull of pairwise stored-position sums, explicitly ignoring triangles.
+///
+/// This preserves the former vertex-hull interpretation of [`minkowski_sum`].
+/// Unused positions participate; concavity and disconnected gaps are filled.
+/// Use [`minkowski_sum`] for the sum of the represented solids.
+pub fn minkowski_hull(
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+) -> Result<TriangleMesh, ValidationError> {
+    minkowski_hull_with_context(left, right, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Computes a stored-position Minkowski hull with aggregate certainty.
+pub fn minkowski_hull_with_context(
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let hull = decisions.consume_mesh(hypermesh::minkowski_hull(
+        decisions.mesh_context(),
+        &left.positions,
+        &right.positions,
+    )?);
     Ok(decisions.finish(hull))
 }
 
-/// Lofts corresponding closed point loops into reusable native geometry.
+/// Lofts corresponding simple planar point loops into closed PWN geometry.
+///
+/// Supply each loop without repeating its first vertex. Consecutive pointwise
+/// equal sections are coalesced. Cap winding follows the complete boundary;
+/// invalid or undecided section/mesh predicates return typed errors.
 pub fn loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError> {
     loft_with_context(sections, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
@@ -2382,78 +2465,80 @@ pub fn loft_with_context(
         });
     }
 
-    let projections = sections
-        .iter()
-        .map(|section| {
-            for (left, right) in section.iter().zip(section.iter().cycle().skip(1)) {
-                if decisions.points_equal(left, right)? {
-                    return Err(ValidationError::InvalidArguments);
+    let mut retained: Vec<&[Point3]> = reserved(sections.len())?;
+    let mut caps = reserved(sections.len())?;
+    for section in sections {
+        for (left, right) in section.iter().zip(section.iter().cycle().skip(1)) {
+            if decisions.points_equal(left, right)? {
+                return Err(ValidationError::InvalidArguments);
+            }
+        }
+        // Only equal corresponding points make a section redundant. Preserve
+        // every consumed equality's certainty, including terminal decisions.
+        if let Some(previous) = retained.last() {
+            let mut equal = true;
+            for (left, right) in previous.iter().zip(section) {
+                if !decisions.points_equal(left, right)? {
+                    equal = false;
+                    break;
                 }
             }
-            project_planar_ring(&section.iter().collect::<Vec<_>>(), &decisions)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    let first = &sections[0];
-    let normal = &projections[0].1;
-    let travel = &sections[sections.len() - 1][0] - &first[0];
+            if equal {
+                continue;
+            }
+        }
+        let mut points = reserved(vertex_count)?;
+        points.extend(section.iter());
+        caps.push(triangulate_planar_ring(&points, &decisions)?);
+        retained.push(section);
+    }
+    if retained.len() < 2 {
+        return Err(ValidationError::InvalidArguments);
+    }
+    let normal = &caps[0].1;
+    let travel = &retained[retained.len() - 1][0] - &retained[0][0];
     let forward = match decisions.sign(&normal.dot(&travel), "loft orientation")? {
         RealSign::Positive => true,
         RealSign::Negative => false,
         RealSign::Zero => return Err(ValidationError::InvalidArguments),
     };
 
-    let triangulate_cap =
-        |points: &[hypertri::Point2]| -> Result<Vec<[usize; 3]>, ValidationError> {
-            let flat = decisions.consume_triangulation(
-                hypertri::earcut(&decisions.triangulation_context(), points, &[])
-                    .map_err(|error| ValidationError::Geometry(error.to_string()))?,
-            );
-            Ok(flat
-                .as_chunks::<3>()
-                .0
-                .iter()
-                .map(|triangle| [triangle[0], triangle[1], triangle[2]])
-                .collect())
-        };
-
-    let position_capacity = sections
-        .len()
-        .checked_mul(vertex_count)
-        .ok_or(ValidationError::InvalidArguments)?;
-    let side_triangle_count = sections
+    let position_capacity = capacity::<Point3>(retained.len().checked_mul(vertex_count))?;
+    let side_triangle_count = retained
         .len()
         .checked_sub(1)
         .and_then(|count| count.checked_mul(vertex_count))
         .and_then(|count| count.checked_mul(2))
-        .ok_or(ValidationError::InvalidArguments)?;
+        .ok_or(ValidationError::CapacityOverflow)?;
     let cap_triangle_count = vertex_count
         .checked_sub(2)
         .and_then(|count| count.checked_mul(2))
-        .ok_or(ValidationError::InvalidArguments)?;
-    let triangle_capacity = side_triangle_count
-        .checked_add(cap_triangle_count)
-        .ok_or(ValidationError::InvalidArguments)?;
-    let mut positions = Vec::with_capacity(position_capacity);
-    positions.extend(sections.iter().flatten().cloned());
-    let mut triangles = Vec::with_capacity(triangle_capacity);
-    for mut triangle in triangulate_cap(&projections[0].0)? {
+        .ok_or(ValidationError::CapacityOverflow)?;
+    let triangle_capacity =
+        capacity::<Triangle>(side_triangle_count.checked_add(cap_triangle_count))?;
+    let mut positions = reserved(position_capacity)?;
+    positions.extend(retained.iter().flat_map(|section| section.iter()).cloned());
+    let mut triangles = reserved(triangle_capacity)?;
+    for &triangle in caps[0].0.triangles.as_chunks::<3>().0 {
+        let mut triangle = triangle;
         if forward {
             triangle.swap(1, 2);
         }
-        triangles.push(triangle);
+        triangles.push(Triangle::new(triangle[0], triangle[1], triangle[2]));
     }
-    let top_base = (sections.len() - 1) * vertex_count;
-    for mut triangle in triangulate_cap(&projections[projections.len() - 1].0)? {
+    let top_base = (retained.len() - 1) * vertex_count;
+    for &triangle in caps[caps.len() - 1].0.triangles.as_chunks::<3>().0 {
+        let mut triangle = triangle;
         if !forward {
             triangle.swap(1, 2);
         }
-        triangles.push([
+        triangles.push(Triangle::new(
             top_base + triangle[0],
             top_base + triangle[1],
             top_base + triangle[2],
-        ]);
+        ));
     }
-    for section in 0..sections.len() - 1 {
+    for section in 0..retained.len() - 1 {
         let bottom = section * vertex_count;
         let top = bottom + vertex_count;
         for index in 0..vertex_count {
@@ -2464,11 +2549,13 @@ pub fn loft_with_context(
                 first.swap(1, 2);
                 second.swap(1, 2);
             }
-            triangles.push(first);
-            triangles.push(second);
+            triangles.push(Triangle::new(first[0], first[1], first[2]));
+            triangles.push(Triangle::new(second[0], second[1], second[2]));
         }
     }
-    Ok(decisions.finish(indexed(positions, triangles)))
+    let mesh = TriangleMesh::new(positions, triangles);
+    decisions.consume_mesh(mesh.validate_closed_pwn(decisions.mesh_context())?);
+    Ok(decisions.finish(mesh))
 }
 
 /// Fluent CSG grammar implemented directly for native Hypermesh geometry.

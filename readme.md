@@ -202,7 +202,7 @@ Rendered filled constructors:
 | <img src="docs/bezier.png" width="144" alt="Filled exact Bezier boundary with visible edge and vertex"/> | `curve::bezier_region(control: &[[Real; 2]], display_segments: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/metaballs_2d.png" width="144" alt="Filled planar metaball contours with visible edges and vertices"/> | `curve::metaballs(balls: &[(Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/from_image.png" width="144" alt="Filled raster-traced region with visible edges and vertices"/> | `curve::from_image(image: &GrayImage, threshold: u8) -> Result<CurveRegion2, RasterTraceError>` |
-| <img src="docs/truetype.png" width="144" alt="Filled TrueType glyph regions with visible exact edges and vertices"/> | `curve::truetype_text(text: &str, font_data: &[u8], scale: Real) -> CurveRegion2` |
+| <img src="docs/truetype.png" width="144" alt="Filled TrueType glyph regions with visible edges and vertices"/> | `curve::truetype_text(text: &str, font_data: &[u8], scale: Real) -> Result<CurveRegion2, ValidationError>` |
 
 `curve::empty()` is intentionally image-free because it contains no visible
 geometry. `polygon_points` constructs the same polygon family from native
@@ -238,7 +238,7 @@ Open constructors retain their native path/string topology:
 | <img src="docs/bezier_path.png" width="144" alt="Exact open Bezier path with visible edge and authored vertices"/> | `curve::bezier_path(control: &[[Real; 2]], display_segments: usize) -> Result<CurvePath2, ValidationError>` |
 | <img src="docs/bspline_path.png" width="144" alt="Exact open B-spline path with visible edge and authored vertices"/> | `curve::bspline_path(control: &[[Real; 2]], degree: usize, display_segments_per_span: usize) -> Result<CurvePath2, ValidationError>` |
 | <img src="docs/hilbert_strings.png" width="144" alt="Open Hilbert curve strings with visible edges and vertices"/> | `curve::hilbert_strings(boundary: &CurveRegion2, order: usize, padding: Real) -> Result<Vec<CurveString2>, ValidationError>` |
-| <img src="docs/hershey_strings.png" width="144" alt="Open Hershey text curve strings with visible edges and vertices"/> | `curve::hershey_strings(text: &str, font: &hypercurve::hershey::Font<'_>, size: Real) -> Vec<CurveString2>` |
+| <img src="docs/hershey_strings.png" width="144" alt="Open Hershey text curve strings with visible edges and vertices"/> | `curve::hershey_strings(text: &str, font: &hypercurve::hershey::Font<'_>, size: Real) -> Result<Vec<CurveString2>, ValidationError>` |
 
 `bezier_path`, `bspline_path`, and `bezier_region` now return `Result`.
 Propagate `?` or handle `ValidationError`; missing paths and empty geometry
@@ -275,6 +275,44 @@ of an earlier approximate boundary construction.
 
 The Hershey catalog is compiled into Hypercurve and exposed as
 `hypercurve::hershey::fonts`; no font files or runtime parser are required.
+
+Both text constructors now return `Result`; propagate `?` or handle the typed
+error. Their `_with_context` variants return `GeometryOutcome` with local
+certainty. Invalid fonts, missing glyphs, failed outlines and undecided scales
+no longer produce successful empty or partial text. Valid empty text, whitespace
+and blank glyphs remain empty after input validation. Hershey sizes may be
+negative but must be provably nonzero; Cartesian coordinates and the existing
+horizontal spacing are preserved. `parts::dimension::annotate` also returns
+`Result` and leaves the drawing unchanged if label construction fails.
+
+TrueType geometry has an explicit migration: native lines and quadratic/cubic
+Bézier curves replace the former eight-chord sampling. The requested positive
+`Real` point size and layout arithmetic remain exact, using exactly `127/360`
+millimeters per point instead of binary64 `0.3527777`. Represented sets, edge
+counts and serialized artifacts may therefore change; this is not a
+performance-only change. Use an explicit finite projection for display or an
+interchange format that requires polygons. Native curve construction certifies
+the represented outline topology; it does not certify a display projection or
+an extruded mesh that has not been separately validated.
+`try_extrude` retains its documented finite-profile path for curved boundaries;
+its local certainty certifies decisions about the sampled mesh, not exact
+preservation of the curved font surface. STL adds a separate f32 quantization
+boundary. Reimport validation establishes facts about that quantized mesh.
+
+The font parser emits f32 coordinates, which are promoted exactly. Its rounding
+of composite, variable or CFF outlines remains a format-boundary limitation;
+local certification does not establish fidelity to coordinates before that
+rounding. Layout is simple left-to-right glyph mapping with horizontal advances,
+pair adjustments, newline, carriage return and four-space tabs, not shaping or
+bidirectional text. Class-based pair adjustments respect glyph coverage. An
+outline failure is distinct from a proved blank glyph; CFF2 outline absence
+currently reports unsupported when blankness cannot be established. The
+`truetype-text` feature now includes `curve` and no longer uses `ttf-parser-utils`.
+Parsing and selected-glyph checks are not a complete font-file validator; the
+parser's lazy handling of other table contents remains outside that guarantee.
+Text buffers use checked reservations, but total computation, retained heap
+bytes and cancellation are not internally bounded. Operation-local receipts do
+not recover provenance discarded by an earlier construction.
 
 Planar operations:
 
@@ -359,6 +397,20 @@ Functions in `csgrs::solid` return `TriangleMesh`:
 | <img src="docs/gyroid_surface.png" width="144" alt="Bounded gyroid level surface with visible faces, edges, and vertices"/> | `solid::gyroid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/schwarz_p_surface.png" width="144" alt="Bounded Schwarz-P level surface with visible faces, edges, and vertices"/> | `solid::schwarz_p(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/schwarz_d_surface.png" width="144" alt="Bounded Schwarz-D level surface with visible faces, edges, and vertices"/> | `solid::schwarz_d(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
+
+Polyhedron faces must be simple and planar. Triangulation preserves each face's
+authored winding, including concave faces, and accepts an explicitly repeated
+closing coordinate. Crossed or self-touching faces return typed errors.
+Polyhedron construction can represent open surfaces; validate the complete
+mesh before using it as a solid. Unused positions remain structural data.
+
+Loft sections are corresponding simple planar loops without a repeated closing
+point. Consecutive sections proved pointwise equal are coalesced. A completed
+loft passes native closed-PWN validation before it is returned. This establishes
+a consumable winding boundary, without promising an embedded surface or fidelity
+to an unspecified continuous sweep. Context forms retain every consumed
+predicate's certainty and native error cause. Section validation takes quadratic
+edge-pair work; total work, heap bytes and cancellation remain unbounded internally.
 
 `solid::empty()` is intentionally image-free. Diagnostic variants
 `metaballs_with_diagnostics` and `sdf_with_diagnostics` produce the same shape
@@ -578,7 +630,7 @@ report. The existing convenience entry points retain their strict default.
 |---|---|
 | Mesh transforms and positioning | `solid::try_transform_with_context`, `try_rotate_with_context`, `try_scale_with_context`, `try_mirror_with_context`, `try_center_with_context`, `try_float_with_context` |
 | Mesh bounds and queries | `solid::try_bounding_box_with_context`, `contains_point_with_context`, `polyline_intersections_with_context`, `dihedral_angle_with_context` |
-| Hulls, copies, and polygon caps | `solid::convex_hull_with_context`, `minkowski_sum_with_context`, `distribute_linear_with_context`, `distribute_grid_with_context`, `distribute_arc_with_context`, `polyhedron_with_context`, `loft_with_context` |
+| Hulls, sums, copies, and polygon caps | `solid::convex_hull_with_context`, `minkowski_sum_with_context`, `minkowski_hull_with_context`, `distribute_linear_with_context`, `distribute_grid_with_context`, `distribute_arc_with_context`, `polyhedron_with_context`, `loft_with_context` |
 | Projection and slicing | `solid::flatten_with_context`, `slice_z_with_context` |
 | Native Real metaball meshing | `solid::metaballs_with_context`, `metaballs_with_diagnostics_and_context` |
 | Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context`, `sdf_expr_with_diagnostics_and_context` |
@@ -587,8 +639,48 @@ report. The existing convenience entry points retain their strict default.
 | Mesh imports | `io::obj::from_obj_with_context`, `from_obj_attributed_with_context`, `io::dxf::from_dxf_with_context`, `io::vrml::from_vrml_with_context` |
 | Gerber conversion | `io::gerber::import_gerber_with_context`, `export_gerber_with_options_and_context` |
 
+`solid::minkowski_sum` now adds the represented bounded closed-PWN solids,
+including disconnected components and cavities. Unused positions do not change
+that set. Both operands are validated before empty identities. The former
+convexification of all stored vertex sums is explicitly available as
+`solid::minkowski_hull`; migrate point-cloud or intentional convex-hull callers
+to that name. Context variants preserve operation-local certainty and typed
+native failures. Bare meshes do not retain an earlier operation's provenance.
+
+`solid::minkowski_sum_with_options` accepts native `hypermesh::MinkowskiOptions`
+with cell, convex-pair and per-pair vertex-sum limits and cooperative cancellation.
+Defaults add no count limit; these controls are not total-work or heap-byte
+bounds. JavaScript exposes `minkowskiSumWithLimits` with the same three counts,
+and `minkowskiHull` / `minkowskiHullWithContext` for explicit convexification.
+Each JavaScript count must be a finite integer from 0 through 4,294,967,295;
+invalid counts raise `invalid_input`, including on empty operands.
+Minkowski failures are `GeometryError` objects with a machine-readable `code`.
+
+
 Curve composites such as `ring`, `crescent`, and `circle_with_keyway` pass their
 existing context through component construction, transforms, and Booleans.
+`solid::merge` and the strict `distribute_linear`, `distribute_grid`, and
+`distribute_arc` wrappers now return `Result`; propagate `?` or handle the typed
+failure. Merge calls native `TriangleMesh::try_concatenate`: it validates and
+rebases indices, preserves buffer order, open surfaces and winding multiplicity,
+and does not compute a Boolean union. Existing native PWN facts retain their
+qualification when concatenated; structural copying does not certify topology.
+
+Distribution accepts canonical empty geometry and closed PWN sources, including
+balanced nonmanifold inputs. Native validation applies even to zero-copy,
+single-copy and disjoint layouts. Linear direction must be provably nonzero,
+including for an empty result. Signed/zero spacing and signed arc radius remain
+supported; a single arc copy uses the angular midpoint. Context forms preserve
+consumed certainty and native failure causes. Invalid input, undecided
+predicates and capacity exhaustion no longer become empty successful models.
+
+Copy counts, aggregate buffer sizes and owned vector reservations are checked
+before creating copies. Empty sources require no copy buffers. These checks do
+not bound total work, retained heap bytes, scalar growth, secondary allocations
+or cancellation. A local receipt does not recover inherited construction
+provenance. Native `validate_closed_pwn` shares Boolean input validation without
+requiring a bounds query or constructing an output mesh.
+
 Mesh distributions, flattening, and slicing retain certainty in their caches
 and include the policy in cache keys. Their context-bearing APIs report
 undecided predicates as errors rather than substituting empty geometry.

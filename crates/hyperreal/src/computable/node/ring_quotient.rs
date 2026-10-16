@@ -249,16 +249,29 @@ impl<'a> RingRecognition<'a> {
 
 impl Computable {
     pub(crate) fn bounded_quotient_rational(&self) -> Option<Rational> {
+        self.bounded_quotient_projection(false)
+    }
+
+    pub(crate) fn bounded_root_square_rational(&self) -> Option<Rational> {
+        self.bounded_quotient_projection(true)
+    }
+
+    fn bounded_quotient_projection(&self, root_squares: bool) -> Option<Rational> {
         let mut recognition = RingRecognition::new(self);
+        recognition.root_squares = root_squares;
         let quotient = recognition.expand_quotient(self, RingRecognition::MAX_DEPTH)?;
         let rational = recognition.project_quotient(&quotient)?;
-        if should_stop(&self.signal) {
+        if should_stop(&self.signal) || (root_squares && !recognition.root_square_used) {
             return None;
         }
         self.internal
             .facts
             .replace_exact_sign(ExactSignCache::Valid(rational.sign()));
-        crate::trace_dispatch!("computable", "normal_form", "rational-quotient");
+        if root_squares {
+            crate::trace_dispatch!("computable", "normal_form", "root-square-quotient");
+        } else {
+            crate::trace_dispatch!("computable", "normal_form", "rational-quotient");
+        }
         Some(rational)
     }
 }

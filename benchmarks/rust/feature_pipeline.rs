@@ -431,7 +431,10 @@ fn main() {
                     .expect("valid transform fixture")
             })
             .collect::<Vec<_>>();
-        mesh_measurement(&solid::merge(&copies), 22)
+        mesh_measurement(
+            &solid::merge(&copies).expect("valid concatenation fixture"),
+            22,
+        )
     });
     config.run(
         "feature",
@@ -697,13 +700,15 @@ fn main() {
                 "csgrs benchmark",
                 include_bytes!("../../asar.ttf"),
                 Real::from(24),
-            ),
+            )
+            .expect("valid TrueType outlines"),
             15,
         )
     });
     config.run("feature", "text", "hershey_strokes", 8, || {
         let strings =
-            curve::hershey_strings("CSGRS", &curve::hershey::fonts::FUTURAL, Real::from(2));
+            curve::hershey_strings("CSGRS", &curve::hershey::fonts::FUTURAL, Real::from(2))
+                .expect("valid Hershey strokes");
         Measurement::new(4, strings.len() as u64, strings.len() as u64)
     });
     config.run("feature", "adapter", "bevy_mesh", 4, || {

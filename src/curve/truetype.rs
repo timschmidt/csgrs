@@ -1,214 +1,224 @@
-//! Native filled regions from TrueType font outlines.
+//! Native line and Bézier outlines from the coordinates emitted by ttf-parser.
+//!
+//! Requested Real scale and layout stay exact. Parser coordinates enter through
+//! explicit f32-to-Real promotion; composite/variable/CFF parser rounding is not
+//! an exact-source-font fidelity guarantee. No display chords feed construction.
 
-use crate::hyper_math::hreal_to_f64;
-use hypercurve::{Contour2, CurveRegion2};
-use hyperlattice::Real;
-use ttf_parser::{Face, GlyphId, OutlineBuilder};
-use ttf_utils::Outline;
+use crate::{Real, errors::ValidationError, solid};
+use hypercurve::{
+    CubicBezier2, Curve2, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2,
+    QuadraticBezier2,
+};
+use ttf_parser::{Face, GlyphId, OutlineBuilder, Tag};
 
-// For flattening curves, how many segments per quad/cubic
-const CURVE_STEPS: usize = 8;
-
-/// Create **2D text** (outlines only) in the XY plane using ttf-utils + ttf-parser.
-///
-/// Each glyph's closed contours become unified `hypercurve::CurveRegion2`
-/// contours, and any open contours become native `hypercurve::CurveString2`
-/// wires. The finite outline flattening is an API-edge tessellation of the
-/// font's quadratic/cubic curves; storage is immediately promoted into
-/// hyperreal-backed topology following Yap, "Towards Exact Geometric
-/// Computation," *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>). TrueType outline
-/// semantics follow Apple Computer, *The TrueType Reference Manual*, 1995.
-///
-/// # Arguments
-/// - `text`: the text string
-/// - `font_data`: raw bytes of a TTF file
-/// - `scale`: a uniform scale factor for glyphs
-///
-/// # Returns
-/// A native filled region containing the glyph outlines.
-pub(crate) fn text_region(text: &str, font_data: &[u8], scale: Real) -> CurveRegion2 {
-    // 1) Parse the TTF font
-    let face = match ttf_parser::Face::parse(font_data, 0) {
-        Ok(f) => f,
-        Err(_) => {
-            return CurveRegion2::empty();
-        },
-    };
-
-    // Treat `scale` as points-per-em and convert points to millimeters.
-    let units_per_em = f64::from(face.units_per_em());
-    let Some(scale) = hreal_to_f64(&scale) else {
-        return CurveRegion2::empty();
-    };
-    if scale <= 0.0 || units_per_em <= 0.0 {
-        return CurveRegion2::empty();
-    }
-    let font_scale = scale * 0.3527777 / units_per_em;
-    let default_advance = default_advance(&face, font_scale);
-    let line_advance = line_advance(&face, font_scale);
-    let tab_advance = default_advance * 4.0;
-
-    let mut material_contours = Vec::new();
-    let mut hole_contours = Vec::new();
-
-    // 3) A simple "pen" cursor for horizontal text layout
-    let mut cursor_x = 0.0;
-    let mut cursor_y = 0.0;
+/// Construct complete text under the enclosing GeometryDecisions scope.
+/// The public modeling entry point has already checked scale positive.
+pub(crate) fn text_region(
+    text: &str,
+    font_data: &[u8],
+    scale: Real,
+) -> Result<CurveRegion2, ValidationError> {
+    let face = Face::parse(font_data, 0).map_err(ValidationError::FontFace)?;
+    validate_layout_tables(&face)?;
+    // One typographic point is exactly 25.4 / 72 millimeters.
+    let font_scale =
+        (scale * Real::from(127) / (Real::from(360) * Real::from(face.units_per_em())))?;
+    let default_advance = default_advance(&face);
+    let line_units = (i32::from(face.ascender()) - i32::from(face.descender())
+        + i32::from(face.line_gap()))
+    .max(i32::from(face.units_per_em()));
+    let line_advance = Real::from(line_units);
+    let tab_advance = &default_advance * Real::from(4);
+    let mut cursor_x = Real::zero();
+    let mut cursor_y = Real::zero();
     let mut previous_glyph = None;
-
-    for ch in text.chars() {
-        match ch {
+    let mut paths = Vec::new();
+    for character in text.chars() {
+        match character {
             '\n' => {
-                cursor_x = 0.0;
-                cursor_y -= line_advance;
+                cursor_x = Real::zero();
+                cursor_y -= &line_advance;
                 previous_glyph = None;
                 continue;
             },
             '\r' => {
-                cursor_x = 0.0;
+                cursor_x = Real::zero();
                 previous_glyph = None;
                 continue;
             },
             '\t' => {
-                cursor_x += tab_advance;
+                cursor_x += &tab_advance;
                 previous_glyph = None;
                 continue;
             },
             ch if ch.is_control() => {
-                previous_glyph = None;
-                continue;
+                return Err(ValidationError::MissingFontGlyph { character: ch });
             },
             _ => {},
         }
+        let glyph = face
+            .glyph_index(character)
+            .ok_or(ValidationError::MissingFontGlyph { character })?;
+        if let Some(previous) = previous_glyph {
+            cursor_x += Real::from(glyph_pair_kerning(&face, previous, glyph));
+        }
+        let mut collector = NativeOutline::new(glyph, &font_scale, &cursor_x, &cursor_y);
+        let outlined = face.outline_glyph(glyph, &mut collector);
+        if let Some(error) = collector.error.take() {
+            return Err(error);
+        }
+        // The pull parser may emit partial callbacks and then fail. Never
+        // publish those callbacks as an apparently complete glyph.
+        if outlined.is_none() && (collector.emitted || !proven_blank_glyph(&face, glyph)?) {
+            return Err(ValidationError::InvalidFontOutline { glyph_id: glyph.0 });
+        }
+        if collector.first.is_some() || !collector.current.is_empty() {
+            return Err(ValidationError::InvalidFontOutline { glyph_id: glyph.0 });
+        }
+        solid::reserve_additional(&mut paths, collector.paths.len())?;
+        paths.extend(collector.paths);
+        let advance = face
+            .glyph_hor_advance(glyph)
+            .ok_or(ValidationError::InvalidFontTable { table: "hmtx" })?;
+        cursor_x += Real::from(advance);
+        previous_glyph = Some(glyph);
+    }
+    Ok(CurveRegion2::try_from_boundary_paths(
+        &paths,
+        FillRule::NonZero,
+    )?)
+}
 
-        // Find glyph index in the font
-        if let Some(gid) = face.glyph_index(ch) {
-            if let Some(previous) = previous_glyph {
-                cursor_x += glyph_pair_kerning(&face, previous, gid) * font_scale;
-            }
-
-            // Extract the glyph outline (if any)
-            if let Some(outline) = Outline::new(&face, gid) {
-                // Flatten the outline into line segments
-                let mut collector = OutlineFlattener::new(font_scale, cursor_x, cursor_y);
-                outline.emit(&mut collector);
-                collector.finish_open_subpath();
-
-                // TrueType stores outer loops clockwise and holes
-                // counter-clockwise. We classify with the shared hyperreal
-                // ring predicate before promoting rings into native
-                // hypercurve contours, keeping primitive font samples at
-                // the import boundary. See Yap, "Towards Exact Geometric
-                // Computation," *Computational Geometry* 7(1-2), 1997
-                // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-                for closed_pts in collector.contours {
-                    if closed_pts.len() < 3 {
-                        continue;
-                    }
-                    let ring = closed_pts
-                        .iter()
-                        .map(|point| {
-                            let x = Real::try_from(point[0]).ok()?;
-                            let y = Real::try_from(point[1]).ok()?;
-                            Some(hyperlimit::Point2::new(x, y))
-                        })
-                        .collect::<Option<Vec<_>>>();
-                    let Some(ring) = ring else {
-                        return CurveRegion2::empty();
-                    };
-                    let orientation =
-                        hyperlimit::ring_area_sign(&ring, crate::PREDICATE_POLICY).value();
-                    let Ok(contour) = Contour2::from_finite_ring(&closed_pts) else {
-                        return CurveRegion2::empty();
-                    };
-                    match orientation {
-                        Some(hyperlimit::Sign::Negative) => material_contours.push(contour),
-                        Some(hyperlimit::Sign::Positive) => hole_contours.push(contour),
-                        Some(hyperlimit::Sign::Zero) => continue,
-                        None => return CurveRegion2::empty(),
-                    }
-                }
-            }
-
-            cursor_x += glyph_advance(&face, gid, font_scale, default_advance);
-            previous_glyph = Some(gid);
-        } else {
-            // Missing glyph => small blank advance
-            cursor_x += default_advance;
-            previous_glyph = None;
+fn validate_layout_tables(face: &Face<'_>) -> Result<(), ValidationError> {
+    let raw = face.raw_face();
+    let tables = face.tables();
+    for (name, present) in [
+        ("cmap", tables.cmap.is_some()),
+        ("hmtx", tables.hmtx.is_some()),
+    ] {
+        if !present {
+            return Err(ValidationError::InvalidFontTable { table: name });
         }
     }
-
-    CurveRegion2::try_from_native_contours(material_contours, hole_contours)
-        .unwrap_or_else(|_| CurveRegion2::empty())
+    for (tag, name, parsed) in [
+        (*b"cmap", "cmap", tables.cmap.is_some()),
+        (*b"hmtx", "hmtx", tables.hmtx.is_some()),
+        (*b"kern", "kern", tables.kern.is_some()),
+        (*b"GPOS", "GPOS", tables.gpos.is_some()),
+        (*b"glyf", "glyf/loca", tables.glyf.is_some()),
+        (*b"CFF ", "CFF", tables.cff.is_some()),
+        (*b"CFF2", "CFF2", tables.cff2.is_some()),
+        (*b"gvar", "gvar", tables.gvar.is_some()),
+    ] {
+        if raw
+            .table_records
+            .into_iter()
+            .any(|record| record.tag == Tag::from_bytes(&tag))
+            && !parsed
+        {
+            return Err(ValidationError::InvalidFontTable { table: name });
+        }
+    }
+    Ok(())
 }
 
-fn glyph_advance(
-    face: &Face<'_>,
-    glyph_id: GlyphId,
-    font_scale: f64,
-    default_advance: f64,
-) -> f64 {
-    face.glyph_hor_advance(glyph_id)
-        .map(|advance| f64::from(advance) * font_scale)
-        .filter(|advance| *advance >= 0.0)
-        .unwrap_or(default_advance)
+/// Prove absence of ink rather than treating every parser failure as blank.
+fn proven_blank_glyph(face: &Face<'_>, glyph: GlyphId) -> Result<bool, ValidationError> {
+    let invalid = || ValidationError::InvalidFontOutline { glyph_id: glyph.0 };
+    if face.tables().glyf.is_some() {
+        let raw = face.raw_face();
+        let locations = raw.table(Tag::from_bytes(b"loca")).ok_or_else(invalid)?;
+        let outlines = raw.table(Tag::from_bytes(b"glyf")).ok_or_else(invalid)?;
+        let count = std::num::NonZeroU16::new(face.number_of_glyphs()).ok_or_else(invalid)?;
+        let locations = ttf_parser::loca::Table::parse(
+            count,
+            face.tables().head.index_to_location_format,
+            locations,
+        )
+        .ok_or_else(invalid)?;
+        let next = glyph.0.checked_add(1).ok_or_else(invalid)?;
+        let (start, end) = match locations {
+            ttf_parser::loca::Table::Short(values) => (
+                usize::from(values.get(glyph.0).ok_or_else(invalid)?) * 2,
+                usize::from(values.get(next).ok_or_else(invalid)?) * 2,
+            ),
+            ttf_parser::loca::Table::Long(values) => (
+                usize::try_from(values.get(glyph.0).ok_or_else(invalid)?)
+                    .map_err(|_| invalid())?,
+                usize::try_from(values.get(next).ok_or_else(invalid)?)
+                    .map_err(|_| invalid())?,
+            ),
+        };
+        if start > end || end > outlines.len() {
+            return Err(invalid());
+        }
+        if start == end {
+            return Ok(true);
+        }
+        let data = &outlines[start..end];
+        // A present glyf record with zero contours has its ten-byte header.
+        return Ok(data.len() >= 10 && i16::from_be_bytes([data[0], data[1]]) == 0);
+    }
+    if let Some(cff) = face.tables().cff {
+        // ZeroBBox follows a complete valid charstring with no emitted points.
+        return Ok(matches!(
+            cff.outline(glyph, &mut NoOutline),
+            Err(ttf_parser::CFFError::ZeroBBox)
+        ));
+    }
+    if face.tables().cff2.is_some() {
+        return Err(ValidationError::UnsupportedPrimitive {
+            reason: "CFF2 outline absence has no blank-glyph certificate",
+        });
+    }
+    Err(ValidationError::UnsupportedPrimitive {
+        reason: "font has no supported outline table",
+    })
 }
 
-fn default_advance(face: &Face<'_>, font_scale: f64) -> f64 {
+struct NoOutline;
+impl OutlineBuilder for NoOutline {
+    fn move_to(&mut self, _: f32, _: f32) {}
+    fn line_to(&mut self, _: f32, _: f32) {}
+    fn quad_to(&mut self, _: f32, _: f32, _: f32, _: f32) {}
+    fn curve_to(&mut self, _: f32, _: f32, _: f32, _: f32, _: f32, _: f32) {}
+    fn close(&mut self) {}
+}
+
+fn default_advance(face: &Face<'_>) -> Real {
     face.glyph_index(' ')
-        .and_then(|glyph_id| face.glyph_hor_advance(glyph_id))
-        .map(|advance| f64::from(advance) * font_scale)
-        .filter(|advance| *advance > 0.0)
-        .unwrap_or_else(|| f64::from(face.units_per_em()) * font_scale * 0.5)
+        .and_then(|glyph| face.glyph_hor_advance(glyph))
+        .filter(|advance| *advance > 0)
+        .map(Real::from)
+        .unwrap_or_else(|| {
+            (Real::from(face.units_per_em()) / Real::from(2)).expect("two is nonzero")
+        })
 }
 
-fn line_advance(face: &Face<'_>, font_scale: f64) -> f64 {
-    let height = f64::from(face.height());
-    let line_gap = f64::from(face.line_gap());
-    let nominal = height + line_gap;
-    let em = f64::from(face.units_per_em());
-    let line_units = if nominal < em { em } else { nominal };
-    let advance = line_units * font_scale;
-    if advance > 0.0 {
-        advance
-    } else {
-        em * font_scale
+fn glyph_pair_kerning(face: &Face<'_>, left: GlyphId, right: GlyphId) -> i64 {
+    let gpos = gpos_pair_adjustment(face, left, right);
+    if gpos != 0 {
+        return gpos;
     }
-}
-
-fn glyph_pair_kerning(face: &Face<'_>, left: GlyphId, right: GlyphId) -> f64 {
-    let gpos_adjustment = gpos_pair_adjustment(face, left, right);
-    if gpos_adjustment != 0.0 {
-        return gpos_adjustment;
-    }
-
-    kern_pair_adjustment(face, left, right)
-}
-
-fn kern_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> f64 {
     let Some(kern) = face.tables().kern else {
-        return 0.0;
+        return 0;
     };
-
     kern.subtables
         .into_iter()
-        .filter(|subtable| {
-            subtable.horizontal && !subtable.has_cross_stream && !subtable.has_state_machine
+        .filter(|table| {
+            table.horizontal && !table.has_cross_stream && !table.has_state_machine
         })
-        .filter_map(|subtable| subtable.glyphs_kerning(left, right))
-        .map(f64::from)
+        .filter_map(|table| table.glyphs_kerning(left, right))
+        .map(i64::from)
         .sum()
 }
 
-fn gpos_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> f64 {
+fn gpos_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> i64 {
     let Some(gpos) = face.tables().gpos else {
-        return 0.0;
+        return 0;
     };
-
-    let mut adjustment = 0.0;
-
+    let mut adjustment = 0_i64;
+    // Font u16/u32 record counts and i16 adjustments bound this sum below i64.
     for lookup in gpos.lookups {
         for subtable in lookup
             .subtables
@@ -217,191 +227,211 @@ fn gpos_pair_adjustment(face: &Face<'_>, left: GlyphId, right: GlyphId) -> f64 {
             let ttf_parser::gpos::PositioningSubtable::Pair(pair) = subtable else {
                 continue;
             };
-
             adjustment += match pair {
                 ttf_parser::gpos::PairAdjustment::Format1 { coverage, sets } => coverage
                     .get(left)
                     .and_then(|index| sets.get(index))
                     .and_then(|set| set.get(right))
-                    .map(|(left_value, right_value)| {
-                        f64::from(left_value.x_advance) + f64::from(right_value.x_placement)
-                    })
-                    .unwrap_or(0.0),
+                    .map(|(a, b)| i64::from(a.x_advance) + i64::from(b.x_placement))
+                    .unwrap_or(0),
                 ttf_parser::gpos::PairAdjustment::Format2 {
-                    classes, matrix, ..
-                } => {
-                    let class_pair = (classes.0.get(left), classes.1.get(right));
-                    matrix
-                        .get(class_pair)
-                        .map(|(left_value, right_value)| {
-                            f64::from(left_value.x_advance)
-                                + f64::from(right_value.x_placement)
-                        })
-                        .unwrap_or(0.0)
-                },
+                    coverage,
+                    classes,
+                    matrix,
+                } => coverage
+                    .get(left)
+                    .and_then(|_| matrix.get((classes.0.get(left), classes.1.get(right))))
+                    .map(|(a, b)| i64::from(a.x_advance) + i64::from(b.x_placement))
+                    .unwrap_or(0),
             };
         }
     }
-
     adjustment
 }
 
-/// A helper that implements `ttf_parser::OutlineBuilder`.
-/// It receives MoveTo/LineTo/QuadTo/CurveTo calls from `outline.emit(self)`.
-/// We flatten curves and accumulate polylines.
-///
-/// - Whenever `close()` occurs, we finalize the current subpath as a closed polygon (`contours`).
-/// - If we start a new MoveTo while the old subpath is open, that old subpath is treated as open (`open_contours`).
-struct OutlineFlattener {
-    // scale + offset
-    scale: f64,
-    offset_x: f64,
-    offset_y: f64,
-
-    // We gather shapes: each "subpath" can be closed or open
-    contours: Vec<Vec<[f64; 2]>>,      // closed polygons
-    open_contours: Vec<Vec<[f64; 2]>>, // open polylines
-
-    current: Vec<[f64; 2]>, // points for the subpath
-    last_pt: [f64; 2],      // current "cursor" in flattening
-    subpath_open: bool,
+struct NativeOutline<'a> {
+    glyph: GlyphId,
+    scale: &'a Real,
+    offset_x: &'a Real,
+    offset_y: &'a Real,
+    current: Vec<Curve2>,
+    paths: Vec<CurvePath2>,
+    first: Option<Point2>,
+    last: Option<Point2>,
+    emitted: bool,
+    error: Option<ValidationError>,
 }
 
-impl OutlineFlattener {
-    const fn new(scale: f64, offset_x: f64, offset_y: f64) -> Self {
+impl<'a> NativeOutline<'a> {
+    const fn new(
+        glyph: GlyphId,
+        scale: &'a Real,
+        offset_x: &'a Real,
+        offset_y: &'a Real,
+    ) -> Self {
         Self {
+            glyph,
             scale,
             offset_x,
             offset_y,
-            contours: Vec::new(),
-            open_contours: Vec::new(),
             current: Vec::new(),
-            last_pt: [0.0, 0.0],
-            subpath_open: false,
+            paths: Vec::new(),
+            first: None,
+            last: None,
+            emitted: false,
+            error: None,
         }
     }
-
-    /// Helper: transform TTF coordinates => final (x,y)
-    #[inline]
-    fn tx(&self, x: f32, y: f32) -> [f64; 2] {
-        let sx = f64::from(x) * self.scale + self.offset_x;
-        let sy = f64::from(y) * self.scale + self.offset_y;
-        [sx, sy]
-    }
-
-    /// Start a fresh subpath
-    fn begin_subpath(&mut self, x: f32, y: f32) {
-        // If we already had an open subpath, push it as open_contours:
-        if self.subpath_open && !self.current.is_empty() {
-            self.open_contours.push(self.current.clone());
+    const fn invalid(&self) -> ValidationError {
+        ValidationError::InvalidFontOutline {
+            glyph_id: self.glyph.0,
         }
-        self.current.clear();
-
-        self.subpath_open = true;
-        self.last_pt = self.tx(x, y);
-        self.current.push(self.last_pt);
     }
-
-    /// Finish the current subpath as open (do not close).
-    /// (We call this if a new `MoveTo` or the entire glyph ends.)
-    fn finish_open_subpath(&mut self) {
-        if self.subpath_open && !self.current.is_empty() {
-            self.open_contours.push(self.current.clone());
+    fn point(&self, x: f32, y: f32) -> Result<Point2, ValidationError> {
+        let x = Real::try_from(x).map_err(|source| ValidationError::FontCoordinate {
+            glyph_id: self.glyph.0,
+            source,
+        })?;
+        let y = Real::try_from(y).map_err(|source| ValidationError::FontCoordinate {
+            glyph_id: self.glyph.0,
+            source,
+        })?;
+        Ok(Point2::new(
+            (x + self.offset_x) * self.scale,
+            (y + self.offset_y) * self.scale,
+        ))
+    }
+    fn push(&mut self, curve: Curve2) -> Result<(), ValidationError> {
+        solid::reserve_additional(&mut self.current, 1)?;
+        self.current.push(curve);
+        Ok(())
+    }
+    fn capture(&mut self, operation: impl FnOnce(&mut Self) -> Result<(), ValidationError>) {
+        self.emitted = true;
+        if self.error.is_none() {
+            self.error = operation(self).err();
         }
-        self.current.clear();
-        self.subpath_open = false;
     }
-
-    /// Flatten a line from `last_pt` to `(x,y)`.
-    fn line_to_impl(&mut self, x: f32, y: f32) {
-        let point = self.tx(x, y);
-        self.current.push(point);
-        self.last_pt = point;
-    }
-
-    /// Flatten a quadratic Bézier from last_pt -> (x1,y1) -> (x2,y2)
-    fn quad_to_impl(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) {
-        let steps = CURVE_STEPS;
-        let [px0, py0] = self.last_pt;
-        let [px1, py1] = self.tx(x1, y1);
-        let [px2, py2] = self.tx(x2, y2);
-
-        // B(t) = (1 - t)^2 * p0 + 2(1 - t)t * cp + t^2 * p2
-        for i in 1..=steps {
-            let t = i as f64 / steps as f64;
-            let mt = 1.0 - t;
-            let bx = mt * mt * px0 + 2.0 * mt * t * px1 + t * t * px2;
-            let by = mt * mt * py0 + 2.0 * mt * t * py1 + t * t * py2;
-            self.current.push([bx, by]);
+    fn begin(&mut self, x: f32, y: f32) -> Result<(), ValidationError> {
+        if self.first.is_some() || !self.current.is_empty() {
+            return Err(self.invalid());
         }
-        self.last_pt = [px2, py2];
+        let point = self.point(x, y)?;
+        self.first = Some(point.clone());
+        self.last = Some(point);
+        Ok(())
     }
-
-    /// Flatten a cubic Bézier from last_pt -> (x1,y1) -> (x2,y2) -> (x3,y3)
-    fn curve_to_impl(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
-        let steps = CURVE_STEPS;
-        let [px0, py0] = self.last_pt;
-        let [cx1, cy1] = self.tx(x1, y1);
-        let [cx2, cy2] = self.tx(x2, y2);
-        let [px3, py3] = self.tx(x3, y3);
-
-        // B(t) = (1-t)^3 p0 + 3(1-t)^2 t c1 + 3(1-t) t^2 c2 + t^3 p3
-        for i in 1..=steps {
-            let t = i as f64 / steps as f64;
-            let mt = 1.0 - t;
-            let mt2 = mt * mt;
-            let t2 = t * t;
-            let bx = mt2 * mt * px0 + 3.0 * mt2 * t * cx1 + 3.0 * mt * t2 * cx2 + t2 * t * px3;
-            let by = mt2 * mt * py0 + 3.0 * mt2 * t * cy1 + 3.0 * mt * t2 * cy2 + t2 * t * py3;
-            self.current.push([bx, by]);
+    fn line(&mut self, x: f32, y: f32) -> Result<(), ValidationError> {
+        let point = self.point(x, y)?;
+        let last = self.last.take().ok_or_else(|| self.invalid())?;
+        if last != point {
+            self.push(LineSeg2::try_new(last, point.clone())?.into())?;
         }
-        self.last_pt = [px3, py3];
+        self.last = Some(point);
+        Ok(())
     }
-
-    /// Called when `close()` is invoked => store as a closed polygon.
-    fn close_impl(&mut self) {
-        // We have a subpath that should be closed => replicate first point as last if needed.
-        let n = self.current.len();
-        if n > 2 {
-            // Font outline samples are primitive boundary data; compare the
-            // closure predicate after hyperreal promotion instead of local
-            // absolute-value arithmetic. This keeps TrueType contour admission
-            // aligned with Yap's EGC boundary model
-            // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-            let first = self.current[0];
-            let last = self.current[n - 1];
-            if first != last {
-                self.current.push(first);
-            }
-            // That becomes one closed contour
-            self.contours.push(self.current.clone());
-        } else {
-            // If it's 2 or fewer points, ignore or treat as degenerate
+    fn quadratic(&mut self, x1: f32, y1: f32, x: f32, y: f32) -> Result<(), ValidationError> {
+        let control = self.point(x1, y1)?;
+        let point = self.point(x, y)?;
+        let last = self.last.take().ok_or_else(|| self.invalid())?;
+        self.push(QuadraticBezier2::new(last, control, point.clone()).into())?;
+        self.last = Some(point);
+        Ok(())
+    }
+    fn cubic(&mut self, controls: [(f32, f32); 3]) -> Result<(), ValidationError> {
+        let [(x1, y1), (x2, y2), (x, y)] = controls;
+        let first = self.point(x1, y1)?;
+        let second = self.point(x2, y2)?;
+        let point = self.point(x, y)?;
+        let last = self.last.take().ok_or_else(|| self.invalid())?;
+        self.push(CubicBezier2::new(last, first, second, point.clone()).into())?;
+        self.last = Some(point);
+        Ok(())
+    }
+    fn finish(&mut self) -> Result<(), ValidationError> {
+        let first = self.first.take().ok_or_else(|| self.invalid())?;
+        let last = self.last.take().ok_or_else(|| self.invalid())?;
+        if last != first {
+            self.push(LineSeg2::try_new(last, first)?.into())?;
         }
-
-        self.current.clear();
-        self.subpath_open = false;
+        if !self.current.is_empty() {
+            let path = CurvePath2::try_new(std::mem::take(&mut self.current))?;
+            solid::reserve_additional(&mut self.paths, 1)?;
+            self.paths.push(path);
+        }
+        Ok(())
     }
 }
 
-impl OutlineBuilder for OutlineFlattener {
+impl OutlineBuilder for NativeOutline<'_> {
     fn move_to(&mut self, x: f32, y: f32) {
-        self.begin_subpath(x, y);
+        self.capture(|this| this.begin(x, y));
     }
-
     fn line_to(&mut self, x: f32, y: f32) {
-        self.line_to_impl(x, y);
+        self.capture(|this| this.line(x, y));
     }
-
-    fn quad_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) {
-        self.quad_to_impl(x1, y1, x2, y2);
+    fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
+        self.capture(|this| this.quadratic(x1, y1, x, y));
     }
-
-    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x3: f32, y3: f32) {
-        self.curve_to_impl(x1, y1, x2, y2, x3, y3);
+    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
+        self.capture(|this| this.cubic([(x1, y1), (x2, y2), (x, y)]));
     }
-
     fn close(&mut self) {
-        self.close_impl();
+        self.capture(Self::finish);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cubic_callback_preserves_exact_controls_scale_and_layout() {
+        let scale = Real::from(2);
+        let x = Real::from(10);
+        let y = Real::from(-20);
+        let mut outline = NativeOutline::new(GlyphId(7), &scale, &x, &y);
+        outline.move_to(0.0, 0.0);
+        outline.curve_to(0.0, 100.0, 100.0, 100.0, 100.0, 0.0);
+        outline.close();
+        assert!(outline.error.is_none());
+        assert_eq!(outline.paths.len(), 1);
+        assert_eq!(
+            outline.paths[0].curves()[0].family(),
+            hypercurve::CurveFamily2::CubicBezier
+        );
+        let region =
+            CurveRegion2::try_from_boundary_paths(&outline.paths, FillRule::NonZero).unwrap();
+        // Before scaling: x=300t^2-200t^3, y=300t(1-t).
+        // Integral y dx = 180000 * integral t^2(1-t)^2 dt = 6000.
+        let area = region.filled_area().unwrap().unwrap();
+        assert_eq!(
+            area.certified_eq_until(&Real::from(24_000), -1024).as_bool(),
+            Some(true)
+        );
+        // The exact peak at (50,75) becomes (120,110) after layout and scale.
+        for (height, expected) in [(60, Some(true)), (110, None), (112, Some(false))] {
+            assert_eq!(
+                crate::curve::contains_xy(&region, Real::from(120), Real::from(height))
+                    .unwrap(),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn invalid_parser_coordinate_retains_its_glyph_and_scalar_cause() {
+        let one = Real::one();
+        let zero = Real::zero();
+        let mut outline = NativeOutline::new(GlyphId(7), &one, &zero, &zero);
+        outline.move_to(0.0, 0.0);
+        outline.curve_to(0.0, 100.0, f32::NAN, 100.0, 100.0, 0.0);
+        outline.close();
+        assert!(matches!(
+            outline.error,
+            Some(ValidationError::FontCoordinate { glyph_id: 7, .. })
+        ));
+        assert!(std::error::Error::source(outline.error.as_ref().unwrap()).is_some());
+        assert!(outline.paths.is_empty());
     }
 }

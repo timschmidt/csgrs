@@ -196,7 +196,7 @@ fn exercise_exact_nd_complex(input: RawInput) {
 
 fn assert_triangle_indices(indices: &TriangleIndices, vertex_count: usize) {
     assert_eq!(indices.len() % 3, 0);
-    for triangle in indices.chunks_exact(3) {
+    for triangle in indices.as_chunks::<3>().0 {
         assert!(triangle.iter().all(|&index| index < vertex_count));
         assert_ne!(triangle[0], triangle[1]);
         assert_ne!(triangle[1], triangle[2]);
