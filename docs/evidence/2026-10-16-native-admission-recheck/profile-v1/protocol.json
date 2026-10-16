@@ -1,0 +1,139 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/deps/hyperdrc-f2524bbb15bdb74d": "490665e4024c41a711734719be1144e36723fd3f73699b7136bc1d8ef6dcdb48",
+    "/lib64/libgcc_s.so.1": "5c4a8dcab096509ff454c0516cf364ecc9c727f67973d174606a590bd35baf05",
+    "/lib64/libm.so.6": "0ee3607107c776849da1e050a7accb6b84acffb75b40de6c51877aadb77cfac6",
+    "/lib64/libc.so.6": "61ffe37ef5fc0004f60308dc5b56f9fc6c19a7a751e632da91202419d0cf92a1",
+    "/lib64/ld-linux-x86-64.so.2": "94d6dcbe7e1dd2d6fff619aa76f6a8ebc6acf37a18ef67562889e8d075fd4518"
+  },
+  "base_commit": "5918d85aa0064614ba11dc3c8bcc6a0a7d4b7191",
+  "runner_sha256": "f3ee76657ed7c1e8792452ded7c2380c1ad03a41abb312d80f9adf68b4dc6f05",
+  "phase": "profile-v1",
+  "commands": [
+    [
+      "mkdir",
+      [
+        "mkdir",
+        "-p",
+        "/dev/shm/csgrs-native-admission-recheck/profile-v1"
+      ]
+    ],
+    [
+      "profile",
+      [
+        "python3",
+        "docs/evidence/2026-10-16-native-admission-recheck/profile_v1.py",
+        "profile-v1"
+      ]
+    ],
+    [
+      "flat",
+      [
+        "env",
+        "DEBUGINFOD_URLS=",
+        "perf",
+        "report",
+        "--stdio",
+        "-i",
+        "/dev/shm/csgrs-native-admission-recheck/profile-v1/full-board.perf.data",
+        "--no-children",
+        "--sort",
+        "symbol",
+        "--percent-limit",
+        "0.5",
+        "--show-nr-samples",
+        "-g",
+        "none"
+      ]
+    ],
+    [
+      "callgraph",
+      [
+        "env",
+        "DEBUGINFOD_URLS=",
+        "perf",
+        "report",
+        "--stdio",
+        "-i",
+        "/dev/shm/csgrs-native-admission-recheck/profile-v1/full-board.perf.data",
+        "--children",
+        "--sort",
+        "symbol",
+        "--percent-limit",
+        "1",
+        "--show-nr-samples",
+        "-g",
+        "graph,1,caller"
+      ]
+    ],
+    [
+      "buildids",
+      [
+        "perf",
+        "buildid-list",
+        "-i",
+        "/dev/shm/csgrs-native-admission-recheck/profile-v1/full-board.perf.data"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/dev/shm/csgrs-native-admission-recheck/profile-v1",
+    "TMPDIR": "/dev/shm/csgrs-native-admission-recheck/profile-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P6",
+    "P7",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P21",
+    "P22",
+    "P23",
+    "P24",
+    "P25",
+    "P27",
+    "P35",
+    "P36",
+    "P37",
+    "P38",
+    "P39"
+  ],
+  "owning_layers": [
+    "Hypercurve exact strokes, retained evidence and certified predicates",
+    "Hyperdrc native import and checked geometry consumers"
+  ],
+  "domain": "Original full CPArti FPGA and HVP109A KiCad fixtures and unchanged runtime assertions; see contract-v1.md.",
+  "consumers": [
+    "Original full-board suite under a separate CPU sampler"
+  ],
+  "missing_acceptance_test": [
+    "Attribute the current full-board CPU cost before selecting a lower-layer repair; both original gates have already failed unchanged."
+  ],
+  "semantic_oracle": "Original complete test assertions. Runtime reproduction alone does not establish independent geometry semantics or report byte identity.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "diagnostic_collection": "All commands are attempted on frozen source; Cargo test --no-fail-fast retains every failed test target. Every nonzero result remains a failure; source or artifact mutation still aborts immediately.",
+  "limitations": "Diagnostic reproduction only. Full source review, semantic qualification, library cost gates, release and full plan remain open. External containment is not an internal resource bound. Historical artifact loss remains recorded.",
+  "previous_goal_turn": "Progress: 5918d85 committed canonical shared-cell triangulation; the pending 35 native files remain unadmitted and unchanged.",
+  "wrapper_sha256": "85038ebe79ad81c961527b84c6cbc401ac21ff080729988c6aabac234c5d6aa8",
+  "purpose": "Separate CPU sampling of the unchanged reproduced failure; no timing comparison or runtime admission."
+}

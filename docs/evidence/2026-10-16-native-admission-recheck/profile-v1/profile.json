@@ -1,0 +1,32 @@
+{
+  "command": [
+    "perf",
+    "record",
+    "--no-buildid-cache",
+    "-e",
+    "cycles:u",
+    "-F",
+    "99",
+    "--call-graph",
+    "dwarf,16384",
+    "-o",
+    "/dev/shm/csgrs-native-admission-recheck/profile-v1/full-board.perf.data",
+    "--",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+    "--exact",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc",
+  "exit_code": 101,
+  "seconds": 198.73421434592456,
+  "perf_version": "perf version 7.2.5-100.fc43.x86_64\n",
+  "binary_sha256": "490665e4024c41a711734719be1144e36723fd3f73699b7136bc1d8ef6dcdb48",
+  "sampling": "99 Hz user-space cycles, DWARF stack capture 16 KiB; no timing or speedup claim",
+  "original_assertion_remains": true,
+  "expected_existing_runtime_failure_is_not_admission": true,
+  "raw_path": "/dev/shm/csgrs-native-admission-recheck/profile-v1/full-board.perf.data",
+  "raw_bytes": 357002708,
+  "raw_sha256": "7393fe880f932d077c051a8d2ece29593f7bd27f5114d858648656c5714d300d"
+}

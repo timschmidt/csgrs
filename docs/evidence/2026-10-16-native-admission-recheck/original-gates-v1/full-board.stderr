@@ -1,0 +1,243 @@
+   Compiling num-traits v0.2.19
+   Compiling serde_json v1.0.149
+   Compiling num-integer v0.1.46
+   Compiling num-bigint v0.4.6
+   Compiling half v2.7.1
+   Compiling num-complex v0.4.6
+   Compiling num-rational v0.4.2
+   Compiling ciborium-ll v0.2.2
+   Compiling num-iter v0.1.45
+   Compiling ciborium v0.2.2
+   Compiling num v0.4.3
+   Compiling chrono v0.4.44
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling syn v3.0.6
+   Compiling hashbrown v0.16.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling ahash v0.8.12
+   Compiling arrow-buffer v57.3.1
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling arrow-schema v57.3.1
+   Compiling lexical-util v1.0.7
+   Compiling arrow-data v57.3.1
+   Compiling generic-array v0.14.7
+   Compiling semver v1.0.28
+   Compiling simd-adler32 v0.3.9
+   Compiling rustc_version v0.4.1
+   Compiling arrow-array v57.3.1
+   Compiling thiserror-impl v2.0.21
+   Compiling miniz_oxide v0.8.9
+   Compiling arrow-select v57.3.1
+   Compiling regex-automata v0.4.14
+   Compiling thiserror v2.0.21
+   Compiling flatbuffers v25.12.19
+   Compiling lexical-write-integer v1.0.6
+   Compiling lexical-parse-integer v1.0.6
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling zlib-rs v0.6.8
+   Compiling vcpkg v0.2.15
+   Compiling pkg-config v0.3.34
+   Compiling utf8parse v0.2.2
+   Compiling zopfli v0.8.3
+   Compiling anstyle-parse v1.0.0
+   Compiling libsqlite3-sys v0.37.0
+   Compiling flate2 v1.1.9
+   Compiling lexical-parse-float v1.0.6
+   Compiling lexical-write-float v1.0.6
+   Compiling lazy-regex-proc_macros v3.6.0
+   Compiling regex v1.12.3
+   Compiling strum_macros v0.27.2
+   Compiling uuid v1.23.1
+   Compiling colorchoice v1.0.5
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling anstyle-query v1.1.5
+   Compiling anstream v1.0.0
+   Compiling gerber-types v0.7.0
+   Compiling lazy-regex v3.6.0
+   Compiling lexical-core v1.0.6
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling arrow-ord v57.3.1
+   Compiling ordered-float v2.10.1
+   Compiling atoi v2.0.0
+   Compiling debug_unsafe v0.1.4
+   Compiling ryu v1.0.23
+   Compiling integer-encoding v3.0.4
+   Compiling zip v2.4.2
+   Compiling strsim v0.11.1
+   Compiling typed-path v0.12.3
+   Compiling zip v7.2.0
+   Compiling clap_builder v4.6.7
+   Compiling arrow-cast v57.3.1
+   Compiling thrift v0.17.0
+   Compiling atoi_simd v0.17.0
+   Compiling digest v0.10.7
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling gerber_parser v0.4.0
+   Compiling arrow-ipc v57.3.1
+   Compiling quick-xml v0.39.4
+   Compiling codepage v0.1.3
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling xattr v1.6.1
+   Compiling clap_derive v4.6.7
+   Compiling hashlink v0.11.1
+   Compiling displaydoc v0.2.7
+   Compiling filetime v0.2.29
+   Compiling cpufeatures v0.2.17
+   Compiling fast-float2 v0.2.4
+   Compiling twox-hash v2.1.5
+   Compiling fallible-iterator v0.3.0
+   Compiling seq-macro v0.3.6
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling rusqlite v0.39.0
+   Compiling proptest v1.11.0
+   Compiling parquet v57.3.1
+   Compiling calamine v0.35.0
+   Compiling sha2 v0.10.9
+   Compiling tar v0.4.46
+   Compiling clap v4.6.7
+   Compiling hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 7m 34s
+     Running unittests src/lib.rs (target/properties/native-admission-recheck/original-gates-v1/release/deps/hyperdrc-f2524bbb15bdb74d)
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (7.079s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.006s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check layer-sanity
+hyperdrc: finished check layer-sanity (7 finding(s), 89.411s)
+hyperdrc: starting check board-outline-sanity
+hyperdrc: finished check board-outline-sanity (0 finding(s), 0.000s)
+hyperdrc: starting check min-copper-neck
+hyperdrc: check min-copper-neck progress 1/5 after 0.001s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/hyperdrc-complex-project-kicad-smoke-suite-3793698/cparti-fpga/CPArti FPGA dev board.kicad_pcb:B.Cu
+hyperdrc: check min-copper-neck progress 2/5 after 16.383s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/hyperdrc-complex-project-kicad-smoke-suite-3793698/cparti-fpga/CPArti FPGA dev board.kicad_pcb:F.Cu
+hyperdrc: check min-copper-neck progress 3/5 after 57.514s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/hyperdrc-complex-project-kicad-smoke-suite-3793698/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In1.Cu
+hyperdrc: check min-copper-neck progress 4/5 after 57.700s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/hyperdrc-complex-project-kicad-smoke-suite-3793698/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In2.Cu
+hyperdrc: check min-copper-neck progress 5/5 after 59.949s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/hyperdrc-complex-project-kicad-smoke-suite-3793698/cparti-fpga/CPArti FPGA dev board.kicad_pcb:unknown
+hyperdrc: finished check min-copper-neck (5 finding(s), 60.106s)
+hyperdrc: starting check drill-spacing
+hyperdrc: finished check drill-spacing (0 finding(s), 0.005s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.000s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+hyperdrc: finished emit report (0.001s)
+hyperdrc: finished run (12 active finding(s), 0 waived, 157.446s)
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (3.594s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.004s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check layer-sanity
+hyperdrc: finished check layer-sanity (1 finding(s), 19.673s)
+hyperdrc: starting check board-outline-sanity
+hyperdrc: finished check board-outline-sanity (0 finding(s), 0.000s)
+hyperdrc: starting check min-copper-neck
+hyperdrc: check min-copper-neck progress 1/4 after 0.002s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/hyperdrc-complex-project-kicad-smoke-suite-3793698/hvp109a/HVP109A.kicad_pcb:B.Cu
+hyperdrc: check min-copper-neck progress 2/4 after 5.863s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/hyperdrc-complex-project-kicad-smoke-suite-3793698/hvp109a/HVP109A.kicad_pcb:F.Cu
+hyperdrc: check min-copper-neck progress 3/4 after 7.452s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/hyperdrc-complex-project-kicad-smoke-suite-3793698/hvp109a/HVP109A.kicad_pcb:In1.Cu
+hyperdrc: check min-copper-neck progress 4/4 after 9.353s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/hyperdrc-complex-project-kicad-smoke-suite-3793698/hvp109a/HVP109A.kicad_pcb:In2.Cu
+hyperdrc: finished check min-copper-neck (4 finding(s), 11.677s)
+hyperdrc: starting check drill-spacing
+hyperdrc: finished check drill-spacing (192 finding(s), 0.004s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.002s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+hyperdrc: finished emit report (0.001s)
+hyperdrc: finished run (197 active finding(s), 0 waived, 35.230s)
+
+thread 'zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite' (3793699) panicked at crates/hyperdrc/src/app.rs:8769:9:
+complex project KiCad smoke suite took 191.564613212s of worker time
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+error: test failed, to rerun pass `-p hyperdrc --lib`

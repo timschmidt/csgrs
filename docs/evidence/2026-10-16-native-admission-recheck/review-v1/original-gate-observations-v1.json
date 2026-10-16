@@ -1,0 +1,21 @@
+{
+  "full-board": {
+    "seconds": 191.564613212,
+    "unchanged_limit_seconds": 120,
+    "assertion_metric": "worker thread CPU",
+    "passed": false
+  },
+  "copper-neck": {
+    "seconds": 88.03321514,
+    "unchanged_limit_seconds": 60,
+    "assertion_metric": "check-body wall",
+    "passed": false
+  },
+  "reported_findings": [
+    12,
+    197
+  ],
+  "full_report_identity_established": false,
+  "performance_improvement_claimed": false,
+  "phase_closure_pending": true
+}

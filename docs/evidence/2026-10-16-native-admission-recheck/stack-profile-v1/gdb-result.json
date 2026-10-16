@@ -1,0 +1,61 @@
+{
+  "samples": [
+    {
+      "index": 0,
+      "elapsed_seconds": 15.005534485913813
+    },
+    {
+      "index": 1,
+      "elapsed_seconds": 30.01891291514039
+    },
+    {
+      "index": 2,
+      "elapsed_seconds": 45.022237753961235
+    },
+    {
+      "index": 3,
+      "elapsed_seconds": 60.02465727413073
+    },
+    {
+      "index": 4,
+      "elapsed_seconds": 75.0272511029616
+    },
+    {
+      "index": 5,
+      "elapsed_seconds": 90.03027435205877
+    },
+    {
+      "index": 6,
+      "elapsed_seconds": 105.03312929999083
+    },
+    {
+      "index": 7,
+      "elapsed_seconds": 120.03551570698619
+    },
+    {
+      "index": 8,
+      "elapsed_seconds": 135.03823873214424
+    },
+    {
+      "index": 9,
+      "elapsed_seconds": 150.04037011694163
+    },
+    {
+      "index": 10,
+      "elapsed_seconds": 165.04337157215923
+    },
+    {
+      "index": 11,
+      "elapsed_seconds": 180.04603091115132
+    },
+    {
+      "index": 12,
+      "elapsed_seconds": 195.04887495702133
+    }
+  ],
+  "inferior_exit_code": 101,
+  "seconds": 196.03922477085143,
+  "interval_seconds": 15,
+  "maximum_snapshots": 60,
+  "scope": "Debugger snapshots only; pauses and debugger overhead invalidate timing comparisons. Original full fixtures and assertions remain unchanged."
+}

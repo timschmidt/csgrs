@@ -1,0 +1,32 @@
+[
+  [
+    "mkdir",
+    [
+      "mkdir",
+      "-p",
+      "/dev/shm/csgrs-native-admission-recheck/stack-profile-v1"
+    ]
+  ],
+  [
+    "stacks",
+    [
+      "env",
+      "CSGRS_STACK_RESULT=/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-admission-recheck/stack-profile-v1/gdb-result.json",
+      "DEBUGINFOD_URLS=",
+      "gdb",
+      "--batch",
+      "--quiet",
+      "--nx",
+      "-ex",
+      "cd /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc",
+      "-ex",
+      "source /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-native-admission-recheck/sample_stacks_v1.py",
+      "--args",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ]
+  ]
+]

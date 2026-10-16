@@ -1,0 +1,71 @@
+{
+  "commands": [
+    {
+      "name": "overlay",
+      "exit_code": 0,
+      "seconds": 124.44799640309066,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "84f186633f047352428d44fdcbdeb998b22aca7dab553d46a99ac0fbd4406bec",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "ac3a6a2b12996833aa722365b053699d8778f8ec5b1df0417946763d92308ee2"
+    },
+    {
+      "name": "fixtures",
+      "exit_code": 0,
+      "seconds": 2.038361188955605,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "761e4b8078603737a592771665f5366b1a93c4c9f2160584ba86b7b8af38dc9f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "9a67298e7b8ce818e63479863c93bbfe0bcfaca4dbb8a9a1f58f3e81d482eb7a"
+    },
+    {
+      "name": "full-board",
+      "exit_code": 101,
+      "seconds": 649.2175283958204,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/native-admission-recheck/original-gates-v1/release/deps/hyperdrc-f2524bbb15bdb74d": "490665e4024c41a711734719be1144e36723fd3f73699b7136bc1d8ef6dcdb48"
+      },
+      "stdout_sha256": "d13e8c2698d5dd00836f95da15754e7c642e188b9b064cd277a6154aa8a63ca9",
+      "stderr_sha256": "8a5dcb2fc96bcf12d164ebfc9093e7dd1406fd64eb32723f7c26baa2a973b3dc",
+      "resources_sha256": "d42f1c054456ab5058550831ea73212fb10c984e25a7ced1d05d4d96377977cb"
+    },
+    {
+      "name": "copper-neck",
+      "exit_code": 101,
+      "seconds": 203.36087540118024,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/native-admission-recheck/original-gates-v1/release/deps/hyperdrc-f2524bbb15bdb74d": "490665e4024c41a711734719be1144e36723fd3f73699b7136bc1d8ef6dcdb48"
+      },
+      "stdout_sha256": "d4eb15b5f858767ce94a1cf2541551fa4820c2259272aaf04654607000ec88da",
+      "stderr_sha256": "544479ccc9aa11006636342bf92cd60523a5308cf86cfc5775a3540d54b88385",
+      "resources_sha256": "ced5bce8da79416e2a2465cc73c836c939e0f4fe21db281e4635bd8a7867b33f"
+    },
+    {
+      "name": "gerber",
+      "exit_code": 0,
+      "seconds": 2.4104371718131006,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/native-admission-recheck/original-gates-v1/release/deps/hyperdrc-f2524bbb15bdb74d": "490665e4024c41a711734719be1144e36723fd3f73699b7136bc1d8ef6dcdb48"
+      },
+      "stdout_sha256": "bb26acaabc70b2617bf219bf637e1918dcd1bb0ba60afc2034e6c2de062db56e",
+      "stderr_sha256": "3c907801da9a1f78b02a8716c11a83dd5a16940b6ae580a2ac6f5fb13133d40c",
+      "resources_sha256": "e00f9c763830d9306d0fd03fb77b67ba7d765066c0905d77aefb7f6cdacb8d3b"
+    },
+    {
+      "name": "verify-lower",
+      "exit_code": 0,
+      "seconds": 107.92703364510089,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "2a1c1b4856ce9f285a4a72821e7e56f1f48181b47b1ffe9bd3ffc0c53bdae79b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "37340386b910110ad9ca7cb7d9f65aec9a3f960f188a69905d4f181cfe92559b"
+    }
+  ],
+  "passed": false
+}

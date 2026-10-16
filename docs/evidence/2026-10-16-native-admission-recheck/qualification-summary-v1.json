@@ -1,0 +1,434 @@
+{
+  "status": "current-native-runtime-admission-still-fails",
+  "base_commit": "5918d85aa0064614ba11dc3c8bcc6a0a7d4b7191",
+  "pending_source_files": 35,
+  "production_or_test_edits": 0,
+  "phases": {
+    "original-gates-v1": {
+      "passed": false,
+      "commands": [
+        {
+          "name": "overlay",
+          "exit_code": 0,
+          "seconds": 124.44799640309066
+        },
+        {
+          "name": "fixtures",
+          "exit_code": 0,
+          "seconds": 2.038361188955605
+        },
+        {
+          "name": "full-board",
+          "exit_code": 101,
+          "seconds": 649.2175283958204
+        },
+        {
+          "name": "copper-neck",
+          "exit_code": 101,
+          "seconds": 203.36087540118024
+        },
+        {
+          "name": "gerber",
+          "exit_code": 0,
+          "seconds": 2.4104371718131006
+        },
+        {
+          "name": "verify-lower",
+          "exit_code": 0,
+          "seconds": 107.92703364510089
+        }
+      ]
+    },
+    "profile-v1": {
+      "passed": false,
+      "commands": [
+        {
+          "name": "mkdir",
+          "exit_code": 0,
+          "seconds": 1.8752987841144204
+        },
+        {
+          "name": "profile",
+          "exit_code": 101,
+          "seconds": 201.19839006196707
+        },
+        {
+          "name": "flat",
+          "exit_code": 0,
+          "seconds": 2.1326311747543514
+        },
+        {
+          "name": "callgraph",
+          "exit_code": 0,
+          "seconds": 2.220420434139669
+        },
+        {
+          "name": "buildids",
+          "exit_code": 0,
+          "seconds": 4.668412270955741
+        }
+      ]
+    },
+    "stack-profile-v1": {
+      "passed": false,
+      "commands": [
+        {
+          "name": "mkdir",
+          "exit_code": 0,
+          "seconds": 1.8825778649188578
+        },
+        {
+          "name": "stacks",
+          "exit_code": 101,
+          "seconds": 198.15934651903808
+        }
+      ]
+    }
+  },
+  "original_gates": {
+    "full_board": {
+      "worker_cpu_seconds": 191.564613212,
+      "limit_seconds": 120,
+      "passed": false
+    },
+    "copper_neck": {
+      "check_body_wall_seconds": 88.03321514,
+      "limit_seconds": 60,
+      "passed": false
+    },
+    "gerber": {
+      "passed": true
+    }
+  },
+  "reported_findings": [
+    12,
+    197
+  ],
+  "full_report_identity_established": false,
+  "profile": {
+    "raw_bytes": 357002708,
+    "lost_samples": 0,
+    "native_caller_unwinding_available": false,
+    "flat_rows_at_or_above_half_percent": [
+      {
+        "self_percent": 7.57,
+        "samples": 1471,
+        "symbol": "_int_malloc"
+      },
+      {
+        "self_percent": 4.38,
+        "samples": 853,
+        "symbol": "__memcmp_avx2_movbe"
+      },
+      {
+        "self_percent": 3.84,
+        "samples": 756,
+        "symbol": "malloc"
+      },
+      {
+        "self_percent": 3.81,
+        "samples": 747,
+        "symbol": "cfree@GLIBC_2.2.5"
+      },
+      {
+        "self_percent": 3.79,
+        "samples": 743,
+        "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo"
+      },
+      {
+        "self_percent": 2.87,
+        "samples": 564,
+        "symbol": "_int_free_chunk"
+      },
+      {
+        "self_percent": 2.39,
+        "samples": 468,
+        "symbol": "<alloc::vec::Vec<(i16, hyperreal::computable::node::RadicalCoefficient)> as core::clone::Clone>::clone"
+      },
+      {
+        "self_percent": 2.24,
+        "samples": 439,
+        "symbol": "hyperreal::verified::gcd::gcd_u128"
+      },
+      {
+        "self_percent": 2.13,
+        "samples": 415,
+        "symbol": "unlink_chunk.isra.0"
+      },
+      {
+        "self_percent": 1.85,
+        "samples": 366,
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts"
+      },
+      {
+        "self_percent": 1.66,
+        "samples": 323,
+        "symbol": "malloc_consolidate"
+      },
+      {
+        "self_percent": 1.66,
+        "samples": 327,
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::from_word_magnitude_difference"
+      },
+      {
+        "self_percent": 1.59,
+        "samples": 309,
+        "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul"
+      },
+      {
+        "self_percent": 1.51,
+        "samples": 297,
+        "symbol": "__libc_malloc2"
+      },
+      {
+        "self_percent": 1.39,
+        "samples": 273,
+        "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1}"
+      },
+      {
+        "self_percent": 1.36,
+        "samples": 266,
+        "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::insert"
+      },
+      {
+        "self_percent": 1.23,
+        "samples": 241,
+        "symbol": "<hyperreal::computable::node::EvaluationCache>::at_precision"
+      },
+      {
+        "self_percent": 1.2,
+        "samples": 238,
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::mul_div_words"
+      },
+      {
+        "self_percent": 1.13,
+        "samples": 220,
+        "symbol": "__memmove_avx_unaligned_erms"
+      },
+      {
+        "self_percent": 1.07,
+        "samples": 211,
+        "symbol": "<hyperreal::computable::node::Computable>::exact_sign"
+      },
+      {
+        "self_percent": 1.04,
+        "samples": 202,
+        "symbol": "<hyperreal::computable::node::Computable>::approx_signal"
+      },
+      {
+        "self_percent": 0.94,
+        "samples": 184,
+        "symbol": "<alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::drop_slow"
+      },
+      {
+        "self_percent": 0.94,
+        "samples": 185,
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::add_ref"
+      },
+      {
+        "self_percent": 0.93,
+        "samples": 182,
+        "symbol": "<hyperreal::computable::node::Computable>::rational_offset_parts"
+      },
+      {
+        "self_percent": 0.91,
+        "samples": 177,
+        "symbol": "<alloc::vec::Vec<(hyperreal::rational::arithmetic::Rational, hyperreal::rational::arithmetic::Rational)> as core::ops::drop::Drop>::drop"
+      },
+      {
+        "self_percent": 0.9,
+        "samples": 176,
+        "symbol": "<hyperreal::computable::node::Computable>::add"
+      },
+      {
+        "self_percent": 0.89,
+        "samples": 175,
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::add_sub_words"
+      },
+      {
+        "self_percent": 0.76,
+        "samples": 149,
+        "symbol": "num_bigint::biguint::shift::biguint_shl2"
+      },
+      {
+        "self_percent": 0.74,
+        "samples": 146,
+        "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::multiply"
+      },
+      {
+        "self_percent": 0.74,
+        "samples": 145,
+        "symbol": "__rustc::__rust_no_alloc_shim_is_unstable_v2"
+      },
+      {
+        "self_percent": 0.74,
+        "samples": 144,
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced"
+      },
+      {
+        "self_percent": 0.69,
+        "samples": 136,
+        "symbol": "<hyperreal::computable::node::Computable>::internal_structural_eq::compare_bounded"
+      },
+      {
+        "self_percent": 0.69,
+        "samples": 135,
+        "symbol": "num_bigint::biguint::shift::biguint_shr2"
+      },
+      {
+        "self_percent": 0.65,
+        "samples": 128,
+        "symbol": "<hyperreal::computable::node::RadicalCoefficient>::multiply"
+      },
+      {
+        "self_percent": 0.65,
+        "samples": 127,
+        "symbol": "<num_bigint::biguint::BigUint>::normalized"
+      },
+      {
+        "self_percent": 0.65,
+        "samples": 128,
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_product_pair"
+      },
+      {
+        "self_percent": 0.62,
+        "samples": 122,
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::extract_square"
+      },
+      {
+        "self_percent": 0.62,
+        "samples": 121,
+        "symbol": "<hyperreal::computable::node::Node>::new"
+      },
+      {
+        "self_percent": 0.61,
+        "samples": 120,
+        "symbol": "<hyperreal::computable::node::RadicalCoefficient>::insert_radical"
+      },
+      {
+        "self_percent": 0.58,
+        "samples": 115,
+        "symbol": "<alloc::raw_vec::RawVecInner>::finish_grow"
+      },
+      {
+        "self_percent": 0.57,
+        "samples": 111,
+        "symbol": "<alloc::vec::Vec<(i16, hyperreal::computable::node::RadicalCoefficient)> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<(i16, hyperreal::computable::node::RadicalCoefficient), core::option::IntoIter<(i16, hyperreal::computable::node::RadicalCoefficient)>>>::from_iter"
+      },
+      {
+        "self_percent": 0.55,
+        "samples": 106,
+        "symbol": "num_bigint::biguint::division::div_rem_core"
+      },
+      {
+        "self_percent": 0.54,
+        "samples": 106,
+        "symbol": "__udivti3"
+      },
+      {
+        "self_percent": 0.53,
+        "samples": 100,
+        "symbol": "core::ptr::drop_glue::<(i16, hyperreal::computable::node::RadicalCoefficient)>"
+      },
+      {
+        "self_percent": 0.5,
+        "samples": 99,
+        "symbol": "<alloc::raw_vec::RawVec<u64>>::grow_one"
+      },
+      {
+        "self_percent": 0.5,
+        "samples": 100,
+        "symbol": "hypercurve::events::visit_aabb_pair_candidates::<&mut hypercurve::curve_region_boolean::build_unary_carrier_pairs::{closure#0}, hypercurve::error::ExactCurveError>"
+      },
+      {
+        "self_percent": 0.5,
+        "samples": 99,
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::retained_secondary_product"
+      }
+    ]
+  },
+  "debugger": {
+    "snapshots": 13,
+    "pi_laurent_on_stack": 8,
+    "finite_projection_on_stack": 2,
+    "region_constructor_on_stack": 1,
+    "gdb_result": {
+      "samples": [
+        {
+          "index": 0,
+          "elapsed_seconds": 15.005534485913813
+        },
+        {
+          "index": 1,
+          "elapsed_seconds": 30.01891291514039
+        },
+        {
+          "index": 2,
+          "elapsed_seconds": 45.022237753961235
+        },
+        {
+          "index": 3,
+          "elapsed_seconds": 60.02465727413073
+        },
+        {
+          "index": 4,
+          "elapsed_seconds": 75.0272511029616
+        },
+        {
+          "index": 5,
+          "elapsed_seconds": 90.03027435205877
+        },
+        {
+          "index": 6,
+          "elapsed_seconds": 105.03312929999083
+        },
+        {
+          "index": 7,
+          "elapsed_seconds": 120.03551570698619
+        },
+        {
+          "index": 8,
+          "elapsed_seconds": 135.03823873214424
+        },
+        {
+          "index": 9,
+          "elapsed_seconds": 150.04037011694163
+        },
+        {
+          "index": 10,
+          "elapsed_seconds": 165.04337157215923
+        },
+        {
+          "index": 11,
+          "elapsed_seconds": 180.04603091115132
+        },
+        {
+          "index": 12,
+          "elapsed_seconds": 195.04887495702133
+        }
+      ],
+      "inferior_exit_code": 101,
+      "seconds": 196.03922477085143,
+      "interval_seconds": 15,
+      "maximum_snapshots": 60,
+      "scope": "Debugger snapshots only; pauses and debugger overhead invalidate timing comparisons. Original full fixtures and assertions remain unchanged."
+    }
+  },
+  "source_review": "review-v1/source-review.md",
+  "prior_downstream_source_comparison": {
+    "shared_paths": 30538,
+    "changed_shared_paths": [],
+    "reference": "../2026-10-16-batch-winding-contracts/resources-v1/source-hashes.json.gz"
+  },
+  "limitations": [
+    "Runtime reproduction and diagnostic sampling only; no native implementation admission or speedup claim.",
+    "Finding counts are not an independent geometry oracle or a full report byte comparison.",
+    "Native full suites, affected lint/docs, clean package release and broad library costs remain unresolved.",
+    "External wall/address-space limits do not establish internal work or retained-heap bounds.",
+    "The perf caller unwinder failed. GDB snapshots are sparse diagnostics, not time proportions.",
+    "The new verbose unwinder diagnostic exhausted repository space; its available 25407488-byte stderr and all other outputs were retained under /dev/shm, with an explicit relocation record.",
+    "Historical missing artifacts remain inherited; no historical-completeness claim."
+  ],
+  "runtime_admitted": false,
+  "full_plan_complete": false
+}

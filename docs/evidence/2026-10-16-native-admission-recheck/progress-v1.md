@@ -1,0 +1,13 @@
+# Current native workload reproduction
+
+The unchanged 35 pending native files still fail their original runtime contract on revision `5918d85`: the full-board suite used **191.564613212 seconds of worker CPU** against 120 seconds; the copper-neck check body used **88.03321514 seconds of wall time** against 60 seconds. Both full archived boards ran. They reported 12 and 197 findings, and the Gerber smoke gate passed. Those counts do not establish independent geometry correctness or full report identity.
+
+The six-command reproduction retained both failures. All 21,141 files in the immutable overlay lower were rehashed with no mismatch. No production or test file changed; the 35 pending files remain unadmitted. The source review is in `review-v1/source-review.md`; the new snapshots agree on all 30,538 shared guarded paths with the preceding final source snapshot. That does not substitute for the outstanding native qualification.
+
+A separate CPU profile reused the exact failed-test executable and preserved 357,002,708 bytes of raw samples. No samples were reported lost. Flat samples identify allocation, rational arithmetic and Laurent/radical recognition costs, but the native caller unwinder failed. Byte-identical regular-file symbol copies did not repair that limitation. A verbose unwinder diagnostic filled the remaining repository space; every available output byte was preserved, with the large log moved to `/dev/shm` and its hash retained. Its final inline command ledger could not be written and remains explicitly incomplete.
+
+A separate bounded debugger run recovered caller stacks without source edits. It covers repeated exact proofs in circle parameter recovery, line intersections, tangent ordering, winding and bounds, as well as region validation and finite projection. Its original assertion still fails. Sparse snapshots do not establish percentage attribution or a speedup.
+
+Next, evaluate changes separately against this current baseline. Metadata-first duplicate-evidence validation and endpoint proof reuse appeared in an earlier rejected combination; they are hypotheses to isolate, not already admitted improvements. The shared Laurent recognizer also needs examination of transient allocation and repeated local proof work. Preserve the original algebraic recognition frontier, certainty, output/report contracts, complete fixtures and all runtime limits. A new proof-cache design must independently address the earlier construction and retained-memory regressions.
+
+No source implementation, runtime improvement, package release, full CI, or full-plan completion is claimed by this checkpoint.

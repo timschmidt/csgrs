@@ -1,0 +1,48 @@
+{
+  "status": "diagnostic-log-relocated-after-disk-exhaustion",
+  "files": [
+    {
+      "original": "docs/evidence/2026-10-16-native-admission-recheck/review-v1/unwind-v1/configuration.stdout",
+      "retained_path": "/dev/shm/csgrs-native-admission-recheck/unwind-v1/configuration.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "docs/evidence/2026-10-16-native-admission-recheck/review-v1/unwind-v1/debug.stdout",
+      "retained_path": "/dev/shm/csgrs-native-admission-recheck/unwind-v1/debug.stdout",
+      "bytes": 2811,
+      "sha256": "7de3aab453e9ea546b2650828857208a5fbec7cd56c5c465c503f61186e843cd"
+    },
+    {
+      "original": "docs/evidence/2026-10-16-native-admission-recheck/review-v1/unwind-v1/configuration.stderr",
+      "retained_path": "/dev/shm/csgrs-native-admission-recheck/unwind-v1/configuration.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "docs/evidence/2026-10-16-native-admission-recheck/review-v1/unwind-v1/debug.stderr",
+      "retained_path": "/dev/shm/csgrs-native-admission-recheck/unwind-v1/debug.stderr",
+      "bytes": 25407488,
+      "sha256": "25c44b29c155bcac5f37810915eccf5710d4f14f64378a3cb5d71d962a71a652"
+    },
+    {
+      "original": "docs/evidence/2026-10-16-native-admission-recheck/review-v1/unwind-v1/commands.json",
+      "retained_path": "/dev/shm/csgrs-native-admission-recheck/unwind-v1/commands.json",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "docs/evidence/2026-10-16-native-admission-recheck/review-v1/unwind-v1/events.stderr",
+      "retained_path": "/dev/shm/csgrs-native-admission-recheck/unwind-v1/events.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "original": "docs/evidence/2026-10-16-native-admission-recheck/review-v1/unwind-v1/events.stdout",
+      "retained_path": "/dev/shm/csgrs-native-admission-recheck/unwind-v1/events.stdout",
+      "bytes": 500,
+      "sha256": "520b3be2621cf3f67e58dfdbdce89d74b2149149f7f1e0f4ef3f0f31e43e90e7"
+    }
+  ],
+  "limitation": "The inline driver failed writing its final commands.json; every available output byte is preserved. No validation source or previous artifact was changed."
+}

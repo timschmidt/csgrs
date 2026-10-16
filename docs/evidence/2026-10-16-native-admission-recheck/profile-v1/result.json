@@ -1,0 +1,55 @@
+{
+  "commands": [
+    {
+      "name": "mkdir",
+      "exit_code": 0,
+      "seconds": 1.8752987841144204,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "10051ab875b651cb1ad037e9b21d3f68ac622f0c05b614b9fc7b8ac6b246a8df"
+    },
+    {
+      "name": "profile",
+      "exit_code": 101,
+      "seconds": 201.19839006196707,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "0bc586292a13d5216753d8de3d3a090989017b75c2481eb43345ec164f65ec5b",
+      "stderr_sha256": "1cfc428c94f805e68bfd968525e6ebcb49fe6ff43c2ac84bd5a42ec4e89b0759",
+      "resources_sha256": "cea98e5b12aac2dbe5a6646057f2330a015050c8b2186be2e555cce7f3ec934d"
+    },
+    {
+      "name": "flat",
+      "exit_code": 0,
+      "seconds": 2.1326311747543514,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "c448e027f65afbbb3ed6a90532aced4c0155e37191fb375d04b8a8889333094d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "c95d46cf7357d7f1d021979d8c89475188191674a2ac9d7149c508c68edbe941"
+    },
+    {
+      "name": "callgraph",
+      "exit_code": 0,
+      "seconds": 2.220420434139669,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "37d3c6028900d69b0f36afabbe9f1d8ee7fe89882f1dc92d5c9fbcb7e3ee20c5",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "a3a0d94d4677c168e95083408cd3a504aefd176e493f68d687401d71a80383ef"
+    },
+    {
+      "name": "buildids",
+      "exit_code": 0,
+      "seconds": 4.668412270955741,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "5742e238c10334fa41d436179760b6813235b456c2f8eb823fe445adad79964a",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "b00f8e664b3ce5405fd09c756d340b293f42436ccc622d7149014e551ab1c6b8"
+    }
+  ],
+  "passed": false
+}

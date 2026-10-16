@@ -1,0 +1,15 @@
+{
+  "command": [
+    "perf",
+    "stat",
+    "-e",
+    "cycles:u",
+    "--",
+    "true"
+  ],
+  "exit_code": 0,
+  "seconds": 0.057752588763833046,
+  "scope": "Tool availability check only; does not attach to or profile the original acceptance test.",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "ae724355d7c1f18f49911fccae4b38c244e682b7083614afb006f1a13cafc716"
+}

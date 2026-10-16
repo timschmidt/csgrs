@@ -1,0 +1,14 @@
+{
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/deps/hyperdrc-f2524bbb15bdb74d",
+  "sha256": "490665e4024c41a711734719be1144e36723fd3f73699b7136bc1d8ef6dcdb48",
+  "dynamic_libraries_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-admission-recheck/original-gates-v1/release/deps/hyperdrc-f2524bbb15bdb74d": "490665e4024c41a711734719be1144e36723fd3f73699b7136bc1d8ef6dcdb48",
+    "/lib64/libgcc_s.so.1": "5c4a8dcab096509ff454c0516cf364ecc9c727f67973d174606a590bd35baf05",
+    "/lib64/libm.so.6": "0ee3607107c776849da1e050a7accb6b84acffb75b40de6c51877aadb77cfac6",
+    "/lib64/libc.so.6": "61ffe37ef5fc0004f60308dc5b56f9fc6c19a7a751e632da91202419d0cf92a1",
+    "/lib64/ld-linux-x86-64.so.2": "94d6dcbe7e1dd2d6fff619aa76f6a8ebc6acf37a18ef67562889e8d075fd4518"
+  },
+  "ldd": "\tlinux-vdso.so.1 (0x00007fd62433f000)\n\tlibgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00007fd621996000)\n\tlibm.so.6 => /lib64/libm.so.6 (0x00007fd6218a1000)\n\tlibc.so.6 => /lib64/libc.so.6 (0x00007fd6216af000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007fd624341000)\n",
+  "original_result_sha256": "61e1804933ae62da56d09248fe285735fa38bf9332a04336344f210ffa233e18",
+  "scope": "Unchanged current executable and full fixtures; separate user-space CPU sampling. No performance comparison."
+}

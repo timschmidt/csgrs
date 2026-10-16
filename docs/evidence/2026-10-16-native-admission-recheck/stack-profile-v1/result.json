@@ -1,0 +1,25 @@
+{
+  "commands": [
+    {
+      "name": "mkdir",
+      "exit_code": 0,
+      "seconds": 1.8825778649188578,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "e2c2dd43edf5db328ae41847e1a928a5a68fab9ac48247dd2d9d3c2d19f4c4e3"
+    },
+    {
+      "name": "stacks",
+      "exit_code": 101,
+      "seconds": 198.15934651903808,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e7eb15fe58f617902f71f3c53d3d7f6dc3bdce360936b2263328fb1a8c7c5e13",
+      "stderr_sha256": "c9d0fe827a261481e1d2a2e10744a7eac2052d87f4ed2327f0443ba54f7d34eb",
+      "resources_sha256": "58a91986f3d85477ae1bbe6801b7c97c3725c0bf930a283557e551c950cc5bc7"
+    }
+  ],
+  "passed": false
+}
