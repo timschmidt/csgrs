@@ -41,6 +41,12 @@ pub type TriangleMeshF64 = ScalarMesh<F64>;
 pub type TriangleMeshI128 = ScalarMesh<I128>;
 
 /// Primitive-scalar boundary over native [`TriangleMesh`] geometry.
+///
+/// Boolean failures retain their native cause in [`AdapterError::Construction`]
+/// through [`crate::errors::ValidationError::Mesh`]. Inspect the validation
+/// error's [`kind`](crate::errors::ValidationError::kind) or follow
+/// [`std::error::Error::source`] to distinguish invalid input from an undecided
+/// predicate. This replaces text-only [`AdapterError::Validation`] failures.
 #[derive(Clone, Debug)]
 pub struct ScalarMesh<A>
 where
@@ -124,28 +130,28 @@ where
         self.inner
             .try_union(&other.inner)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn difference(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .try_difference(&other.inner)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn intersection(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .try_intersection(&other.inner)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn xor(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .try_xor(&other.inner)
             .map(Self::from_native)
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     /// Computes the Boolean with the selected policy and aggregate certainty.
@@ -157,7 +163,7 @@ where
         self.inner
             .try_union_with_context(&other.inner, context)
             .map(|outcome| outcome.map(Self::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     /// Computes the Boolean with the selected policy and aggregate certainty.
@@ -169,7 +175,7 @@ where
         self.inner
             .try_difference_with_context(&other.inner, context)
             .map(|outcome| outcome.map(Self::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     /// Computes the Boolean with the selected policy and aggregate certainty.
@@ -181,7 +187,7 @@ where
         self.inner
             .try_intersection_with_context(&other.inner, context)
             .map(|outcome| outcome.map(Self::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     /// Computes the Boolean with the selected policy and aggregate certainty.
@@ -193,7 +199,7 @@ where
         self.inner
             .try_xor_with_context(&other.inner, context)
             .map(|outcome| outcome.map(Self::from_native))
-            .map_err(|error| AdapterError::Validation(error.to_string()))
+            .map_err(AdapterError::from)
     }
 
     pub fn transform(&self, matrix: &Matrix4) -> AdapterResult<Self> {

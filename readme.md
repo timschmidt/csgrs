@@ -416,6 +416,17 @@ when the result is necessarily empty. Conversion from a shared Hypermesh
 Boolean batch now gives empty rows zero positions as well as zero triangles;
 nonempty rows continue sharing the batch's position allocation.
 
+`ScalarMesh::{union, difference, intersection, xor}` and their context variants
+now preserve native Boolean failures as
+`AdapterError::Construction(ValidationError::Mesh(...))`, replacing text-only
+`AdapterError::Validation`. Callers that match errors should inspect
+`ValidationError::kind()` or follow `std::error::Error::source`; the native
+diagnostic text is retained. In the C ABI and its C++/Python/Go wrappers,
+undecided mesh Booleans now report the existing `PREDICATE_UNDECIDED` (5) status
+instead of generic `VALIDATION_FAILED` (4). Invalid input still reports (4),
+including malformed operands paired with empty geometry. No failure publishes
+a successful model.
+
 Primitive constructors (`cube`, `cuboid`, `sphere`, `cylinder`, `ellipsoid`,
 `frustum`, `frustum_between`, `octahedron`, `icosahedron`, `arrow`, and `torus`)
 now return `Result<TriangleMesh, ValidationError>`. This is an API migration:
