@@ -189,3 +189,10 @@ Schema-independent syntax success grants no geometric authority.
 were not adopted for this boundary. [Performance](PERFORMANCE.md) records measured
 costs and the limits of the evidence. Extensions follow the stack's
 [admission protocol](../../docs/admission.md).
+
+Repeated native recuts and complementary reconstruction of torus/cone halves
+remain outside the current STEP surface mapping. Export of their independently
+replayed outputs returns `UnsupportedSurface` with body/entity identity; the same
+operation context still exports a supported cylinder afterwards. The
+[composition evidence](../hyperbrep/docs/evidence/2026-10-16-curved-coplanar/README.md)
+records this downstream boundary separately from native Boolean completion.

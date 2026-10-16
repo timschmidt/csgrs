@@ -697,8 +697,10 @@ domain. `BooleanOperation` maps the resulting inside/outside evidence to
 `Keep`, `KeepReversed`, or `Discard`, and `FaceSelection` accounts for every
 face rather than carrying a skipped-nonplane list. Coincident planar boundaries
 are overpartitioned by exact straight support arrangements and resolved from
-the two oriented material sides. Curved coincident ownership remains the typed
-`FaceBoundaryOwnershipUnsupported` boundary.
+the two oriented material sides. Cone/torus faces with exactly equal parameterizations and affine iso-boundaries
+also retain finite boundary traces through native partitioning. Other curved
+coincidence remains a typed unsupported boundary; the completed workflow domain
+is specified below.
 
 `SolidIntersectionGraph::stitch_selected_faces` transfers the selected
 faces into one new arena. It preserves source-local edge identity for every
@@ -758,11 +760,16 @@ radii-5/2, height-6 cone-frustum longitudinal half, using the original 40-unit
 cutters. The matrix includes scales 1/1000, 127/5000 and sqrt(2), rotations,
 translations and reflections, then shared-edge splitting, reflected rescaling,
 exact measurements/classification and independent archive validation.
-`FaceTracePartitionRef::boundary()` retains complete line-pcurve boundary
-coverage instead of producing a zero-area face. Periodic iso traces and full
+`FaceTracePartitionRef::boundary()` retains complete line or circular pcurve
+boundary coverage instead of producing a zero-area face. Periodic iso traces and full
 circular image matching preserve the authored charts and traversal.
 
 See the [native contract](ARCHITECTURE.md#seam-aligned-analytic-cuts) and
-[admission evidence](evidence/2026-10-16-seam-cuts/README.md). This does not close
-general coincident-cap or repeated Boolean composition, nonlinear periodic
-trace gluing, torus/cone STEP exchange, or the work-package gates.
+[admission evidence](evidence/2026-10-16-seam-cuts/README.md). The [repeated-composition increment](evidence/2026-10-16-curved-coplanar/README.md)
+adds recut, canonical-empty subtraction/recovery, and complementary-half union
+for these three fixtures, in both applicable orders and six exact similarities.
+Native circular overlap receipts retain actual public parameters and source
+revisions. Coincident cone/torus charts require exact full parameterization
+equality, including when shell faces reference different equal carrier records.
+General quarter/band cuts, nonlinear periodic gluing, torus/cone STEP exchange,
+full provenance/resource admission and work-package gates remain open.

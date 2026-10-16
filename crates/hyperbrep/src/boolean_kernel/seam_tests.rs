@@ -9,6 +9,61 @@ fn circle(x: Vector3, y: Vector3, start: Real, end: Real) -> Curve3 {
 }
 
 #[test]
+fn complete_circular_cone_cap_trim_replays_native_parameters() {
+    let (source, solid) = crate::construction::cone_frustum(5.into(), 2.into(), 6.into()).unwrap();
+    let (cutter, cutter_solid) =
+        crate::construction::cuboid(p(0, -20, -20), p(20, 20, 20)).unwrap();
+    let ArenaBooleanResult::Solid { model: half, .. } = sets::boolean(
+        &source,
+        &[solid],
+        &cutter,
+        &[cutter_solid],
+        BooleanOperation::Intersection,
+    )
+    .unwrap() else {
+        panic!("one half")
+    };
+    let ArenaBooleanResult::Solid { model: other, .. } = sets::boolean(
+        &source,
+        &[solid],
+        &cutter,
+        &[cutter_solid],
+        BooleanOperation::Difference,
+    )
+    .unwrap() else {
+        panic!("one complementary half")
+    };
+    let mut count = 0;
+    for (first, _) in half.faces() {
+        for (second, _) in other.faces() {
+            if face_surface(&half, first).kind() != crate::SurfaceKind::Plane
+                || face_surface(&other, second).kind() != crate::SurfaceKind::Cone
+            {
+                continue;
+            }
+            let SurfaceSurfaceIntersection::Curve(trace) = face_surface(&half, first)
+                .intersect_surface(face_surface(&other, second))
+                .unwrap()
+            else {
+                continue;
+            };
+            for (model, face, pcurve, name) in [
+                (&half, first, trace.first_pcurve(), "plane"),
+                (&other, second, trace.second_pcurve(), "cone"),
+            ] {
+                let region = planar_face_region(model, face).unwrap();
+                for carrier in pcurve.clipping_carriers().unwrap().unwrap() {
+                    let clipped = carrier.curve.trim_inside_region_with_parameters(&region);
+                    assert!(clipped.is_ok(), "{name} {face:?}: {clipped:?}");
+                    count += 1;
+                }
+            }
+        }
+    }
+    assert!(count > 0);
+}
+
+#[test]
 fn complete_circle_matching_distinguishes_phase_support_and_traversal() {
     let half_pi = (Real::pi() / Real::from(2)).unwrap();
     let first = circle(Vector3::x(), Vector3::y(), Real::zero(), half_pi.clone());
@@ -36,6 +91,84 @@ fn complete_circle_matching_distinguishes_phase_support_and_traversal() {
     assert!(exact_edge_curve_equal(&full, &full, false).unwrap());
     assert!(!exact_edge_curve_equal(&full, &full, true).unwrap());
     assert!(exact_edge_curve_equal(&full.reversed().unwrap(), &full, true).unwrap());
+}
+
+#[test]
+fn complete_planar_circle_trace_union_handles_reflected_and_redundant_charts() {
+    let plane = Surface::plane(p(0, 0, 0), Vector3::x(), Vector3::y()).unwrap();
+    let quarter = (Real::pi() / Real::from(2)).unwrap();
+    let mut traces = Vec::new();
+    for (x, y) in [(Vector3::x(), Vector3::y()), (Vector3::y(), Vector3::x())] {
+        for index in 0..4 {
+            traces.push(
+                SurfaceIntersectionCurve::on_plane(
+                    circle(
+                        x.clone(),
+                        y.clone(),
+                        &quarter * Real::from(index),
+                        &quarter * Real::from(index + 1),
+                    ),
+                    &plane,
+                )
+                .unwrap(),
+            );
+        }
+    }
+    traces.push(
+        SurfaceIntersectionCurve::on_plane(
+            circle(Vector3::x(), Vector3::y(), Real::zero(), Real::tau()),
+            &plane,
+        )
+        .unwrap(),
+    );
+    let result = coalesce_closed_circle_traces(&plane, traces).unwrap();
+    assert_eq!(result.len(), 1);
+    assert_eq!(
+        compare_reals(
+            &(result[0].curve().domain().end() - result[0].curve().domain().start()),
+            &Real::tau(),
+            crate::STRICT_PREDICATES,
+        )
+        .value(),
+        Some(Ordering::Equal)
+    );
+}
+
+#[test]
+fn native_circle_trace_union_requires_complete_coverage_in_actual_charts() {
+    let plane = Surface::plane(p(0, 0, 0), Vector3::x(), Vector3::y()).unwrap();
+    let retain = |curve| SurfaceIntersectionCurve::on_plane(curve, &plane).unwrap();
+    let upper = circle(Vector3::x(), Vector3::y(), Real::zero(), Real::pi());
+    let lower = circle(Vector3::x(), -Vector3::y(), Real::zero(), Real::pi());
+    let result =
+        coalesce_closed_circle_traces(&plane, vec![retain(upper.clone()), retain(lower)]).unwrap();
+    assert_eq!(result.len(), 1);
+    assert_eq!(
+        compare_reals(
+            &(result[0].curve().domain().end() - result[0].curve().domain().start()),
+            &Real::tau(),
+            crate::STRICT_PREDICATES
+        )
+        .value(),
+        Some(Ordering::Equal)
+    );
+    let quarter = (Real::pi() / Real::from(2)).unwrap();
+    let lower_quarter = circle(Vector3::x(), -Vector3::y(), Real::zero(), quarter);
+    let result =
+        coalesce_closed_circle_traces(&plane, vec![retain(upper.clone()), retain(lower_quarter)])
+            .unwrap();
+    assert_eq!(result.len(), 2);
+    // Adjacent numerical domains describe the SAME upper semicircle here.
+    // Discarding the retained angle offset would invent the missing lower half.
+    let Curve3ExactData::EllipseArc(mut duplicate) = upper.exact_data() else {
+        unreachable!()
+    };
+    duplicate.domain_start = Real::pi();
+    duplicate.domain_end = Real::tau();
+    let duplicate = Curve3::from_exact_data(Curve3ExactData::EllipseArc(duplicate)).unwrap();
+    let result =
+        coalesce_closed_circle_traces(&plane, vec![retain(upper), retain(duplicate)]).unwrap();
+    assert_eq!(result.len(), 2);
 }
 
 #[test]

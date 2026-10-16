@@ -1055,9 +1055,65 @@ Canonical expression bytes can change under the existing archive schema.
 
 The [evidence record](evidence/2026-10-16-seam-cuts/README.md) retains the original
 full-size seam failures and the subsequent repeated-use failures, including the
-70 MB swapped-cone line archive. General coincident curved caps, arbitrary
-periodic traces, further cut/reunion closure, STEP torus/cone encoding and the
-project-wide resource/provenance/delivery gates remain open.
+70 MB swapped-cone line archive. The repeated-composition extension below addresses those specific cap/recut/reunion
+failures. Arbitrary periodic traces, general Boolean closure, STEP torus/cone
+encoding and project-wide resource/provenance/delivery gates remain open.
+
+## Repeated curved composition
+
+`FacePairTrim::CoincidentFaces` replaces `CoincidentPlanar`; its two trace lists
+contain retained `SurfaceIntersectionCurve` values, including both actual
+surface charts, source intervals and clipping contacts. This is an intentional
+breaking API change without an alias. Planar straight boundaries retain their
+existing support-line arrangement; native circular boundaries retain finite
+curves. Cone/torus coincidence is admitted only when origins, oriented frames
+and all carrier parameters agree exactly and their validated boundary uses have
+affine iso-parameter maps. Existing bounded whole-period lifting moves only the
+target chart. Image coincidence alone does not establish a shared parameter map.
+
+Prepared region fragment indices do not identify authored edge uses. BREP contact
+mapping queries all actual boundary uses of the appropriate contour role through
+Hypercurve's native `point_locations`, retaining every supported incident
+parameter before applying the authored edge correspondence. Unrepresented
+selected-root values remain typed blockers at the existing contact boundary. Circular evaluation parameters use native rational
+charts; angular sweep fractions are not interchangeable with those parameters.
+Missing, unsupported or unresolved preimages remain typed failures. A strict
+native line-side certificate can exclude unrelated straight boundary uses before
+constructing incidence equations. On-line and blocked classifications retain
+the complete native inverse, and invalid input errors propagate. No additional
+cache or approximate predicate is introduced.
+
+A circular boundary no-op requires complete, closed native overlap coverage and
+full spatial image validation on the actual face carrier. It handles subdivided
+boundaries, holes and reversed charts, including circular images retained as
+rational curves. `BoundaryTraceOverlapRef::native_overlap()` exposes the original
+span overlap witness; its public paired ranges use the actual pcurve charts.
+The proof retains its source model revision. Wrong spatial interiors are rejected
+even when endpoints and an internal cached image flag agree. These records do
+not yet constitute complete operation provenance.
+
+Coplanar cap traces with equal parameterizations are coalesced by exact interval
+union including angle offsets. Different frames require either an existing
+complete period on the same circle support or full closed native overlap coverage
+of a complete circle candidate. Gaps and complementary parameter ranges that
+actually map to the same semicircle never establish full coverage. The graph
+retains original face incidences. Cone transverse sections share the authored
+meridian parameter and radial image, avoiding a separately reconstructed tangent
+radius. Cone/torus shell validators accept different arena records only after
+proving the same complete parameterization; all embedding, coverage, incidence
+and orientation checks remain required.
+
+The original three full-size half-cut fixtures now support recut intersection,
+subtraction to canonical empty with recovery, and complementary reconstruction.
+Both orders are exercised where applicable, at identity and six exact
+similarities: 63 configurations and 126 continuation outputs. Independent exact
+volume/area, inside/outside/boundary and near-offset classification, opposite
+paired edge uses, deterministic untrusted replay, subdivision and reflected
+rescaling accompany every nonempty result. The
+[evidence](evidence/2026-10-16-curved-coplanar/README.md) preserves the complete
+fifteen-case diagnostic frontier, failed candidates and cost observations.
+Quarter/band cuts, differently parameterized coincident surfaces, general curved
+shells, complete operation receipts and resource/release gates remain open.
 
 ## Performance contract
 

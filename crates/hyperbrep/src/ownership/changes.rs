@@ -839,14 +839,21 @@ impl<'a> BoundaryTraceOverlapRef<'a> {
         }
     }
 
-    /// Returns the covered interval in the materialized trace's normalized line chart.
+    /// Returns the covered interval in the materialized trace's public chart.
+    /// Circular parameters are rational evaluation parameters, not sweep fractions.
     pub fn trace_range(self) -> &'a hypercurve::ParamRange {
         &self.data.trace_range
     }
 
-    /// Returns the paired interval in the boundary pcurve's normalized line chart.
+    /// Returns the paired interval in the boundary pcurve's public chart.
     pub fn boundary_range(self) -> &'a hypercurve::ParamRange {
         &self.data.boundary_range
+    }
+
+    /// Returns the native circular span witness, including its original local
+    /// charts, orientation and complete parameter transport evidence.
+    pub fn native_overlap(self) -> Option<&'a hypercurve::CurveIntersectionOverlap2> {
+        self.data.native_overlap.as_ref()
     }
 }
 

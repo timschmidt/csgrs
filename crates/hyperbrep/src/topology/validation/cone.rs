@@ -23,7 +23,14 @@ impl ArenaModelBuilder {
                 _ => return Ok(None),
             }
             match cone_surface {
-                Some(expected) if expected != face.surface => return Ok(None),
+                Some(expected) if expected != face.surface => {
+                    if !self
+                        .surface_ref(expected)?
+                        .same_periodic_analytic_parameterization(self.surface_ref(face.surface)?)?
+                    {
+                        return Ok(None);
+                    }
+                }
                 Some(_) => {}
                 None => cone_surface = Some(face.surface),
             }

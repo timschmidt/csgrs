@@ -41,7 +41,14 @@ impl ArenaModelBuilder {
         for face_id in &side_faces {
             let face = self.face_ref(*face_id)?;
             match surface_id {
-                Some(expected) if expected != face.surface => return Ok(None),
+                Some(expected) if expected != face.surface => {
+                    if !self
+                        .surface_ref(expected)?
+                        .same_periodic_analytic_parameterization(self.surface_ref(face.surface)?)?
+                    {
+                        return Ok(None);
+                    }
+                }
                 Some(_) => {}
                 None => surface_id = Some(face.surface),
             }

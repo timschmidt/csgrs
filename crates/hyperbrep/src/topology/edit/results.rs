@@ -197,10 +197,13 @@ pub struct ArenaBoundarySurfaceTrace {
     pub overlaps: Vec<ArenaBoundaryTraceOverlap>,
 }
 
-/// Native line-pcurve overlap, with both original normalized parameter charts.
+/// Native boundary overlap in the two original public pcurve charts.
 #[derive(Clone, Debug)]
 pub struct ArenaBoundaryTraceOverlap {
     pub edge_use: EdgeUseId,
     pub trace_range: hypercurve::ParamRange,
     pub boundary_range: hypercurve::ParamRange,
+    /// Complete native span witness for a circular overlap. Line overlaps
+    /// retain their affine paired ranges directly.
+    pub native_overlap: Option<hypercurve::CurveIntersectionOverlap2>,
 }

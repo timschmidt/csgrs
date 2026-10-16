@@ -2425,7 +2425,7 @@ fn main() {
                 } => Some(surface_curve_fragments.len()),
                 boolean::FacePairTrim::NotAvailable
                 | boolean::FacePairTrim::CompleteCarrier
-                | boolean::FacePairTrim::CoincidentPlanar { .. }
+                | boolean::FacePairTrim::CoincidentFaces { .. }
                 | boolean::FacePairTrim::SurfaceRegion { .. }
                 | boolean::FacePairTrim::PointContact(_)
                 | boolean::FacePairTrim::NoContact

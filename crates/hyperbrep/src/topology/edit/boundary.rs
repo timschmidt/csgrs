@@ -18,14 +18,14 @@ impl ArenaModel {
         let Some(outer) = face.outer() else {
             return Ok(None);
         };
-        if !intersection.pcurve(operand).materializes_native_line() {
+        if !intersection
+            .pcurve(operand)
+            .materializes_native_boundary_segment()
+        {
             return Ok(None);
         }
         let materialized = intersection.pcurve(operand).materialize()?;
         let pcurve = Pcurve::new(materialized.curve().clone());
-        let Some(trace) = pcurve.line_segment() else {
-            return Ok(None);
-        };
         let order =
             |a: &Real, b: &Real| decided_model_order(compare_reals(a, b, crate::STRICT_PREDICATES));
         let mut overlaps = Vec::new();
@@ -33,26 +33,64 @@ impl ArenaModel {
             for &edge_use_id in self.wire(wire).expect("validated face wire").edge_uses() {
                 let edge_use = self.edge_use(edge_use_id).expect("validated wire use");
                 let boundary = self.pcurve(edge_use.pcurve()).expect("validated pcurve");
-                let Some(boundary) = boundary.line_segment() else {
-                    continue;
-                };
-                match trace
-                    .intersect_line(boundary)
-                    .map_err(GeometryError::from)?
+                if let (Some(trace), Some(boundary)) =
+                    (pcurve.line_segment(), boundary.line_segment())
                 {
-                    LineLineIntersection::Overlap {
-                        a_range, b_range, ..
-                    } => {
+                    match trace
+                        .intersect_line(boundary)
+                        .map_err(GeometryError::from)?
+                    {
+                        LineLineIntersection::Overlap {
+                            a_range, b_range, ..
+                        } => {
+                            overlaps.push(ArenaBoundaryTraceOverlap {
+                                edge_use: edge_use_id,
+                                trace_range: a_range,
+                                boundary_range: b_range,
+                                native_overlap: None,
+                            });
+                        }
+                        LineLineIntersection::None | LineLineIntersection::Point { .. } => {}
+                        // A missing overlap certificate is not evidence of
+                        // coincidence. Leave it to the ordinary split validator.
+                        LineLineIntersection::Uncertain { .. } => return Ok(None),
+                    }
+                } else if pcurve.circular_arc().is_some() {
+                    // Boundary editing may retain a circular image as a
+                    // rational Bezier or restriction. Native overlap witnesses
+                    // establish its complete image without changing family.
+                    let relation = pcurve
+                        .curve()
+                        .intersect_curve(boundary.curve())
+                        .map_err(GeometryError::from)?;
+                    if !relation.is_complete() {
+                        return Ok(None);
+                    }
+                    for overlap in relation.overlaps() {
+                        if !overlap.includes_start() || !overlap.includes_end() {
+                            return Ok(None);
+                        }
+                        let mut a = crate::geometry::native_span_parameter_range(
+                            pcurve.curve(),
+                            overlap.first_span_index(),
+                            overlap.first_range(),
+                        )?;
+                        let mut b = crate::geometry::native_span_parameter_range(
+                            boundary.curve(),
+                            overlap.second_span_index(),
+                            overlap.second_range(),
+                        )?;
+                        if order(a.start(), a.end())? == std::cmp::Ordering::Greater {
+                            a = hypercurve::ParamRange::new(a.end().clone(), a.start().clone());
+                            b = hypercurve::ParamRange::new(b.end().clone(), b.start().clone());
+                        }
                         overlaps.push(ArenaBoundaryTraceOverlap {
                             edge_use: edge_use_id,
-                            trace_range: a_range,
-                            boundary_range: b_range,
+                            trace_range: a,
+                            boundary_range: b,
+                            native_overlap: Some(overlap.clone()),
                         });
                     }
-                    LineLineIntersection::None | LineLineIntersection::Point { .. } => {}
-                    // A missing overlap certificate is not evidence of
-                    // coincidence. Leave it to the ordinary split validator.
-                    LineLineIntersection::Uncertain { .. } => return Ok(None),
                 }
             }
         }

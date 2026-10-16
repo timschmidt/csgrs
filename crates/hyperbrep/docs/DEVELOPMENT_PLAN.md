@@ -1327,11 +1327,17 @@ The [seam-cut increment](evidence/2026-10-16-seam-cuts/README.md) now completes
 those inputs, both intersection orders, directed subtraction, rational/radical
 similarities and split/transform/archive continuation. It retains boundary
 coverage and source revisions, periodic chart lifts and full circle matching at
-the native BREP owners. Continue from the newly recorded repeated-Boolean
-frontier: coincident curved planar caps and mixed angular/axial subdivisions
-still need complete partition/selection/shell proofs. Do not infer closure or
-STEP support from these successful cuts, and retain the full-size regressions
-and unchanged archive admission limits.
+the native BREP owners. The [curved-composition increment](evidence/2026-10-16-curved-coplanar/README.md)
+now completes recuts, canonical-empty subtraction/recovery and complementary
+reconstruction on these three original fixtures and six exact similarities.
+Native circular overlap, actual source-preimage transport, equal cone/torus
+charts, full circle coverage and geometric shell-carrier equality own the proofs.
+Continue from its complete fifteen-case diagnostic frontier: quarter/band cuts
+and mixed angular/axial subdivisions still need complete partition/selection/
+shell proofs. Do not infer general closure or STEP support from these successful
+compositions. Preserve full-size regressions, parameter/provenance evidence and
+unchanged archive admission limits; check upstream before any necessary dependency
+fix while the surrounding library is developed independently.
 
 ```rust,ignore
 pub fn read_step(bytes: &[u8], options: &StepReadOptions)

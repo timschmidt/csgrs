@@ -83,3 +83,7 @@ harness = false
 [[bench]]
 name = "seam_cuts"
 harness = false
+
+[[bench]]
+name = "coplanar"
+harness = false

@@ -1,5 +1,7 @@
 //! Certified regularized Booleans for active exact solid families.
 
+mod circle_traces;
+mod coincident;
 mod periodic;
 pub(crate) mod sets;
 use periodic::periodic_face_trace_lifts;
@@ -129,13 +131,15 @@ pub enum FacePairTrim {
     /// Both faces are boundaryless and the complete relation has no more
     /// specific retained point or parameterized-curve evidence.
     CompleteCarrier,
-    /// Straight boundary fragments from coincident planar faces partition
-    /// each face into exact coplanar ownership regions.
-    CoincidentPlanar {
+    /// Exact boundary traces on coincident carriers retain both actual charts.
+    /// Planar straight supports may extend across the target face. Circular
+    /// traces and cone/torus iso-parameter boundaries retain their finite curves;
+    /// the latter require a proof of identical complete parameterizations.
+    CoincidentFaces {
         /// Traces to apply to the first face.
-        first_traces: Vec<Curve3>,
+        first_traces: Vec<SurfaceIntersectionCurve>,
         /// Traces to apply to the second face.
-        second_traces: Vec<Curve3>,
+        second_traces: Vec<SurfaceIntersectionCurve>,
     },
     /// An exact two-dimensional overlap in one face carrier's parameter space.
     SurfaceRegion {
@@ -609,7 +613,7 @@ fn partition_graph_planar_faces(
                     push_unique_planar_trace(traces.entry(face).or_default(), fragment)?;
                 }
             }
-            FacePairTrim::CoincidentPlanar {
+            FacePairTrim::CoincidentFaces {
                 first_traces,
                 second_traces,
             } => {
@@ -618,7 +622,7 @@ fn partition_graph_planar_faces(
                     for fragment in fragments {
                         push_unique_planar_trace(
                             traces.entry(face).or_default(),
-                            fragment.clone(),
+                            fragment.curve().clone(),
                         )?;
                     }
                 }
@@ -746,16 +750,25 @@ fn partition_graph_faces(
                     push_unique_planar_trace(planar_traces.entry(face).or_default(), fragment)?;
                 }
             }
-            FacePairTrim::CoincidentPlanar {
+            FacePairTrim::CoincidentFaces {
                 first_traces,
                 second_traces,
             } => {
                 let fragments = if first { first_traces } else { second_traces };
                 for fragment in fragments {
-                    push_unique_planar_trace(
-                        planar_traces.entry(face).or_default(),
-                        fragment.clone(),
-                    )?;
+                    if surface.kind() == crate::SurfaceKind::Plane
+                        && fragment.curve().kind() == crate::Curve3Kind::Line
+                    {
+                        push_unique_planar_trace(
+                            planar_traces.entry(face).or_default(),
+                            fragment.curve().clone(),
+                        )?;
+                    } else {
+                        surface_traces
+                            .entry(face)
+                            .or_default()
+                            .push(fragment.clone());
+                    }
                 }
             }
             FacePairTrim::Unresolved(reason) => return Err(BooleanError::Unresolved(*reason)),
@@ -1018,7 +1031,11 @@ fn coalesce_closed_circle_traces(
     for group in groups {
         result.extend(coalesce_circle_group(surface, group)?);
     }
-    Ok(result)
+    if surface.kind() == crate::SurfaceKind::Plane {
+        circle_traces::coalesce_planar_images(surface, result)
+    } else {
+        Ok(result)
+    }
 }
 
 fn circle_supports_equal(first: &Curve3, second: &Curve3) -> Result<bool, GeometryError> {
@@ -1034,7 +1051,11 @@ fn circle_supports_equal(first: &Curve3, second: &Curve3) -> Result<bool, Geomet
         && vectors_exactly_equal(&first.x, &second.x)?
         && vectors_exactly_equal(&first.y, &second.y)?
         && exact_order(&first.x_radius, &second.x_radius)? == Ordering::Equal
-        && exact_order(&first.y_radius, &second.y_radius)? == Ordering::Equal)
+        && exact_order(&first.y_radius, &second.y_radius)? == Ordering::Equal
+        && exact_order(
+            &(&first.angle_at_start - &first.domain_start),
+            &(&second.angle_at_start - &second.domain_start),
+        )? == Ordering::Equal)
 }
 
 fn coalesce_circle_group(
@@ -1077,25 +1098,24 @@ fn coalesce_circle_group(
     let start = normalized[0].curve().domain().start().clone();
     let mut end = start.clone();
     for curve in &normalized {
-        if exact_order(curve.curve().domain().start(), &end)? != Ordering::Equal
+        if exact_order(curve.curve().domain().start(), &end)? == Ordering::Greater
             || exact_order(curve.curve().domain().start(), curve.curve().domain().end())?
                 != Ordering::Less
         {
             return Ok(normalized);
         }
-        end = curve.curve().domain().end().clone();
+        end = exact_max(&end, curve.curve().domain().end())?;
     }
     if exact_order(&(&end - &start), &Real::tau())? != Ordering::Equal {
         return Ok(normalized);
     }
-    let closed = Curve3::circle_arc(
-        reference.center,
-        reference.x,
-        reference.y,
-        reference.x_radius,
-        start,
-        end,
-    )?;
+    let closed =
+        Curve3::from_exact_data(Curve3ExactData::EllipseArc(Box::new(EllipseArcExactData {
+            angle_at_start: &reference.angle_at_start + &start - &reference.domain_start,
+            domain_start: start,
+            domain_end: end,
+            ..*reference
+        })))?;
     if surface.kind() == crate::SurfaceKind::Plane {
         return Ok(vec![SurfaceIntersectionCurve::on_plane(closed, surface)?]);
     }
@@ -2787,7 +2807,7 @@ pub fn intersection_graph(
                                 FacePairTrim::Unresolved(_) => unresolved_trim_pairs += 1,
                                 FacePairTrim::NotAvailable
                                 | FacePairTrim::CompleteCarrier
-                                | FacePairTrim::CoincidentPlanar { .. }
+                                | FacePairTrim::CoincidentFaces { .. }
                                 | FacePairTrim::SurfaceRegion { .. }
                                 | FacePairTrim::PointContact(_)
                                 | FacePairTrim::NoContact
@@ -3029,19 +3049,32 @@ fn trim_face_pair_intersection(
         };
     }
     if matches!(intersection, SurfaceSurfaceIntersection::Coincident) {
-        let first_traces =
-            coplanar_boundary_split_traces(second_model, second_face, first_model, first_face)?;
-        let second_traces =
-            coplanar_boundary_split_traces(first_model, first_face, second_model, second_face)?;
+        let first_traces = coplanar_boundary_split_traces(
+            second_model,
+            second_face,
+            first_model,
+            first_face,
+            SurfaceIntersectionOperand::First,
+        )?;
+        let second_traces = coplanar_boundary_split_traces(
+            first_model,
+            first_face,
+            second_model,
+            second_face,
+            SurfaceIntersectionOperand::Second,
+        )?;
         return Ok(match (first_traces, second_traces) {
             (
                 Classification::Decided(Some(first_traces)),
                 Classification::Decided(Some(second_traces)),
-            ) if first_traces.is_empty() && second_traces.is_empty() => {
+            ) if first_traces.is_empty()
+                && second_traces.is_empty()
+                && face_surface(first_model, first_face).kind() == crate::SurfaceKind::Plane =>
+            {
                 let first_witness = planar_face_interior_witness(first_model, first_face)
                     .map_err(boolean_witness_geometry_error)?;
                 match point_in_supported_face_trim(second_model, second_face, &first_witness)? {
-                    Some(Classification::Decided(true)) => FacePairTrim::CoincidentPlanar {
+                    Some(Classification::Decided(true)) => FacePairTrim::CoincidentFaces {
                         first_traces,
                         second_traces,
                     },
@@ -3052,7 +3085,7 @@ fn trim_face_pair_intersection(
             (
                 Classification::Decided(Some(first_traces)),
                 Classification::Decided(Some(second_traces)),
-            ) => FacePairTrim::CoincidentPlanar {
+            ) => FacePairTrim::CoincidentFaces {
                 first_traces,
                 second_traces,
             },
@@ -4107,25 +4140,6 @@ fn model_boundary_contacts(
     let face = model.face(face_id).expect("validated trim face");
     let mut translated = Vec::with_capacity(contacts.len());
     for contact in contacts {
-        let wire_id = match contact.kind() {
-            CurveRegionBoundaryKind2::Material if contact.contour_index() == 0 => {
-                face.outer().ok_or(GeometryError::UnsupportedIntersection)?
-            }
-            CurveRegionBoundaryKind2::Material => {
-                return Err(GeometryError::UnsupportedIntersection);
-            }
-            CurveRegionBoundaryKind2::Hole => *face
-                .inner()
-                .get(contact.contour_index())
-                .ok_or(GeometryError::UnsupportedIntersection)?,
-        };
-        let wire = model
-            .wire(wire_id)
-            .ok_or(GeometryError::UnsupportedIntersection)?;
-        let edge_use_id = *wire
-            .edge_uses()
-            .get(contact.carrier().fragment_index())
-            .ok_or(GeometryError::UnsupportedIntersection)?;
         let Some(pcurve_point) = contact.point().and_then(|point| point.coordinates()) else {
             return Ok(None);
         };
@@ -4139,16 +4153,7 @@ fn model_boundary_contacts(
             canonical_coordinate(pcurve_point.x()),
             canonical_coordinate(pcurve_point.y()),
         );
-        let edge_use = model
-            .edge_use(edge_use_id)
-            .expect("validated boundary edge use");
-        let pcurve = model
-            .pcurve(edge_use.pcurve())
-            .expect("validated boundary pcurve");
-        let pcurve_parameter = pcurve.parameter_at_point(&crate::Point2::new(
-            pcurve_point.x().clone(),
-            pcurve_point.y().clone(),
-        ))?;
+        let point = crate::Point2::new(pcurve_point.x().clone(), pcurve_point.y().clone());
         let surface = model
             .surface(face.surface())
             .expect("validated trim face surface");
@@ -4161,39 +4166,63 @@ fn model_boundary_contacts(
             canonical_coordinate(&spatial_point.y),
             canonical_coordinate(&spatial_point.z),
         );
-        let observed_parameter = model
-            .edge_parameter_at(
-                edge_use_id,
-                &crate::Parameter::from_real(pcurve_parameter.clone()),
-            )
-            .map_err(|error| match error {
-                QueryError::Geometry(error) => error,
-                QueryError::InvalidReference { .. } => GeometryError::UnsupportedIntersection,
-            })?;
-        let edge = model
-            .edge(edge_use.edge())
-            .expect("validated boundary edge");
-        let curve = model
-            .curve(edge.curve())
-            .expect("validated boundary curve")
-            .clone();
-        let observed_parameter = observed_parameter
-            .try_real()
-            .ok_or(GeometryError::UnrepresentableParameter)?
-            .clone();
-        let edge_parameter = match canonical_surface {
-            Some(surface) => {
-                canonical_surface_edge_parameter(surface, &curve, &observed_parameter)?
-                    .unwrap_or(observed_parameter)
-            }
-            None => observed_parameter,
+        // Native region preparation may reverse, subdivide, coalesce or
+        // reorder authored boundaries. Its fragment/contour indices identify
+        // that prepared region, never the original BREP edge-use arena.
+        // Recover every incident source use from exact native preimages;
+        // this also preserves both sides of an authored subdivision vertex.
+        let outer = face.outer();
+        let wires = match contact.kind() {
+            CurveRegionBoundaryKind2::Material => outer.as_slice(),
+            CurveRegionBoundaryKind2::Hole => face.inner(),
         };
-        translated.push(SurfaceIntersectionBoundaryContact::new(
-            curve,
-            edge_parameter,
-            pcurve_point,
-            spatial_point,
-        ));
+        let before = translated.len();
+        for wire_id in wires {
+            let wire = model.wire(*wire_id).expect("validated boundary wire");
+            for &edge_use_id in wire.edge_uses() {
+                let edge_use = model.edge_use(edge_use_id).expect("validated boundary use");
+                let pcurve = model
+                    .pcurve(edge_use.pcurve())
+                    .expect("validated boundary pcurve");
+                for parameter in pcurve.parameters_at_point(&point)? {
+                    let observed_parameter = model
+                        .edge_parameter_at(edge_use_id, &parameter)
+                        .map_err(|error| match error {
+                            QueryError::Geometry(error) => error,
+                            QueryError::InvalidReference { .. } => {
+                                GeometryError::UnsupportedIntersection
+                            }
+                        })?;
+                    let edge = model
+                        .edge(edge_use.edge())
+                        .expect("validated boundary edge");
+                    let curve = model
+                        .curve(edge.curve())
+                        .expect("validated boundary curve")
+                        .clone();
+                    let observed_parameter = observed_parameter
+                        .try_real()
+                        .ok_or(GeometryError::UnrepresentableParameter)?
+                        .clone();
+                    let edge_parameter = match canonical_surface {
+                        Some(surface) => {
+                            canonical_surface_edge_parameter(surface, &curve, &observed_parameter)?
+                                .unwrap_or(observed_parameter)
+                        }
+                        None => observed_parameter,
+                    };
+                    translated.push(SurfaceIntersectionBoundaryContact::new(
+                        curve,
+                        edge_parameter,
+                        pcurve_point.clone(),
+                        spatial_point.clone(),
+                    ));
+                }
+            }
+        }
+        if translated.len() == before {
+            return Err(GeometryError::UnsupportedIntersection);
+        }
     }
     Ok(Some(translated))
 }
@@ -4766,8 +4795,29 @@ fn coplanar_boundary_split_traces(
     source_face: FaceId,
     target_model: &ArenaModel,
     target_face: FaceId,
-) -> Result<Classification<Option<Vec<Curve3>>>, GeometryError> {
+    target_operand: SurfaceIntersectionOperand,
+) -> Result<Classification<Option<Vec<SurfaceIntersectionCurve>>>, GeometryError> {
     let target_surface = face_surface(target_model, target_face);
+    let source_surface = face_surface(source_model, source_face);
+    if source_surface.kind() != crate::SurfaceKind::Plane
+        || target_surface.kind() != crate::SurfaceKind::Plane
+    {
+        return coincident::common_parameter_boundary_traces(
+            source_model,
+            source_face,
+            target_model,
+            target_face,
+            target_operand,
+        );
+    }
+    let retain = |curve| match target_operand {
+        SurfaceIntersectionOperand::First => {
+            SurfaceIntersectionCurve::on_coincident_planes(curve, target_surface, source_surface)
+        }
+        SurfaceIntersectionOperand::Second => {
+            SurfaceIntersectionCurve::on_coincident_planes(curve, source_surface, target_surface)
+        }
+    };
     let target_region = planar_face_region(target_model, target_face)?;
     let source_face = source_model
         .face(source_face)
@@ -4788,12 +4838,49 @@ fn coplanar_boundary_split_traces(
             let edge = source_model
                 .edge(edge_use.edge())
                 .expect("validated coincident source edge");
-            if source_model
+            let source_curve = source_model
                 .curve(edge.curve())
-                .expect("validated coincident source curve")
-                .kind()
-                != crate::Curve3Kind::Line
-            {
+                .expect("validated coincident source curve");
+            if source_curve.kind() == crate::Curve3Kind::CircleArc {
+                let curve = source_curve.subcurve(
+                    edge.domain()
+                        .start()
+                        .try_real()
+                        .ok_or(GeometryError::UnsupportedIntersection)?,
+                    edge.domain()
+                        .end()
+                        .try_real()
+                        .ok_or(GeometryError::UnsupportedIntersection)?,
+                )?;
+                let retained = retain(curve)?;
+                match retained_curve_face_intervals(
+                    target_model,
+                    target_face,
+                    retained.pcurve(target_operand),
+                    retained.curve().domain(),
+                    None,
+                )? {
+                    Classification::Decided(Some(intervals)) => {
+                        for interval in intervals {
+                            traces.push(
+                                retained
+                                    .subcurve(&interval.start, &interval.end)?
+                                    .with_boundary_contacts(
+                                        target_operand,
+                                        interval.start_contacts,
+                                        interval.end_contacts,
+                                    ),
+                            );
+                        }
+                    }
+                    Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                continue;
+            }
+            if source_curve.kind() != crate::Curve3Kind::Line {
                 return Ok(Classification::Decided(None));
             }
             let start = source_model
@@ -4860,7 +4947,7 @@ fn coplanar_boundary_split_traces(
                                 Classification::Decided(RegionPointLocation::Boundary)
                             )
                         ) {
-                            traces.push(fragment);
+                            traces.push(retain(fragment)?);
                         } else {
                             return Ok(Classification::Decided(None));
                         }
@@ -6875,6 +6962,53 @@ mod tests {
 
     fn p(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn prepared_circle_contacts_retain_actual_brep_edges() {
+        let (model, _) = crate::construction::cylinder(Real::from(5), Real::from(6)).unwrap();
+        let mut count = 0;
+        for (face_id, face) in model.faces() {
+            if face_surface(&model, face_id).kind() != crate::SurfaceKind::Plane {
+                continue;
+            }
+            let region = planar_face_region(&model, face_id).unwrap();
+            for &edge_use in model.wire(face.outer().unwrap()).unwrap().edge_uses() {
+                let pcurve = model
+                    .pcurve(model.edge_use(edge_use).unwrap().pcurve())
+                    .unwrap();
+                for fragment in pcurve
+                    .curve()
+                    .trim_inside_region_with_parameters(&region)
+                    .unwrap()
+                {
+                    for contacts in [
+                        fragment.start_boundary_contacts(),
+                        fragment.end_boundary_contacts(),
+                    ] {
+                        let retained = model_boundary_contacts(&model, face_id, contacts, None)
+                            .unwrap()
+                            .unwrap();
+                        assert!(!retained.is_empty());
+                        for contact in retained {
+                            let replay =
+                                contact.curve().evaluate_real(contact.parameter()).unwrap();
+                            assert_eq!(
+                                hyperlimit::point3_equal(
+                                    &replay,
+                                    contact.spatial_point(),
+                                    crate::STRICT_PREDICATES
+                                )
+                                .value(),
+                                Some(true)
+                            );
+                            count += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert!(count >= 8);
     }
 
     fn assert_surface_fragment_replays(
@@ -10536,7 +10670,7 @@ mod tests {
                 | FacePairTrim::CompleteCarrier
                 | FacePairTrim::SurfaceCurveFragments(_)
                 | FacePairTrim::Components { .. }
-                | FacePairTrim::CoincidentPlanar { .. }
+                | FacePairTrim::CoincidentFaces { .. }
                 | FacePairTrim::SurfaceRegion { .. }
                 | FacePairTrim::PointContact(_)
                 | FacePairTrim::NoContact

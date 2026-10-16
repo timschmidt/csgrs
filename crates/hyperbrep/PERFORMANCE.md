@@ -670,3 +670,29 @@ feature baseline for the recorded semantic reason, with the all-cohort timing
 gate open. No total-work, retained-heap, expression-growth or cancellation bound
 is claimed.
 All broader work-package, typed-frontier and delivery gates remain open.
+
+## Repeated curved composition (2026-10-16)
+
+The [source-bound record](docs/evidence/2026-10-16-curved-coplanar/README.md) qualifies native recuts, canonical-empty
+recovery and complementary reconstruction on three original full-size torus/cone
+half cuts, both applicable orders and six exact similarities. All 138 preserved
+cases run in twelve complete corpora, three alternating CPU-0 pairs each, without
+receipt waivers. The largest case-median ratio is 1.117570; 3 rows
+exceed 10%, and 10 rows change allocator observations. Every sample,
+allocator request, process resource and executable size is retained. These are
+shared-host observations, not statistical performance admission.
+
+Eleven new workloads have separate absolute costs from three processes. Exact
+checks and complete archive materialization/revalidation remain inside timing;
+each case has one untimed warmup. The matrix hashes all complete outputs and
+continues through split/reflection/replay. Existing failures cannot serve as a
+speedup baseline. The old NURBS Mobius inverse, archive and cached-arc timing
+exceptions remain open, alongside any current over-budget rows. Retain this
+increment for its exact completion/correctness extension with all costs visible.
+The first complete campaign remains, including six over-budget rows. The native
+line-side exclusion reduces the largest focused native ratio from 1.295617 to
+1.119734; four focused spline rows remain over budget. The final full campaign
+above follows complete requalification and retains every cohort. No total-work,
+retained-heap, cancellation or controlled-host claim is made.
+The five remaining quarter/band diagnostics and all broader work-package,
+resource/provenance and delivery gates remain open.
