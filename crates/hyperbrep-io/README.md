@@ -6,11 +6,12 @@ HyperBRep and exact scalar arithmetic belongs to Hyperreal.
 
 The crate reads and writes bounded Part 21 syntax, imports an explicitly
 selected faceted or supported advanced representation into strictly validated
-native HyperBRep solids, and exports selected planar, straight-edged solids to STEP.
+native HyperBRep solids, and exports selected planar/cylindrical solids with
+line/circle boundaries to STEP.
 Advanced import includes circular edges on planes and cylinders and supplied
 planar/cylindrical pcurves. Coordinates
 and authored unit conversions remain exact. Whole-document/product traversal,
-other analytic/spline mappings, curved export and approximate export remain unfinished.
+other analytic/spline mappings, cavity shells and approximate export remain unfinished.
 
 The syntax layer retains numeric lexemes without binary floating-point conversion, unknown
 entity records, complex instances, forward references, multiple DATA sections,
@@ -118,13 +119,13 @@ exactly from directed boundaries; original pcurves/history require a native arch
 
 ```rust
 use hyperbrep::{builder, OperationContext, Point3, Real, WorkBudget};
-use hyperbrep_io::step::{FacetedBody, StepWriteOptions, write_faceted};
+use hyperbrep_io::step::{StepBody, StepWriteOptions, write_faceted};
 
 // Native exchange coordinates are metres. An eighth is exactly decimal-representable.
 let eighth = (Real::one() / Real::from(8))?;
 let bodies = builder::cuboid(Point3::origin(),
     Point3::new(eighth, Real::one(), Real::one()))?;
-let input = FacetedBody { solid: bodies.bodies().next().unwrap(), name: "Block" };
+let input = StepBody { solid: bodies.bodies().next().unwrap(), name: "Block" };
 let context = OperationContext::strict(WorkBudget { refinements: 0, promotions: 0 });
 let options = StepWriteOptions::new("block.step", "2026-10-15T00:00:00");
 let artifact = write_faceted(&[input], &options, &context).result??;
@@ -133,8 +134,8 @@ assert!(artifact.text().contains("FACETED_BREP"));
 # Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
-The writer rejects `1/3`, irrational coordinates, unmaterialized selected points,
-curved families and cavity shells with typed source-addressable errors. It never
+Both writers reject `1/3`, irrational coordinates, unmaterialized selected points,
+unmapped families and cavity shells with typed source-addressable errors. They never
 rounds, fits, heals or drops unsupported geometry. `StepWriteOptions` makes units,
 metadata and allowances explicit; the caller supplies the timestamp. Exporting
 metres as inches can itself make a coordinate nonrepresentable. The
@@ -148,6 +149,36 @@ The [circular import example](examples/circular_step.rs) imports an exact
 non-cardinal cylinder, splits a circular edge and validates native archive replay.
 It checks the exact volume and deterministic archive replay independently of
 STEP output; the faceted writer rejects its curved carriers.
+
+`step::write_advanced` emits explicit `VERTEX_POINT`/`EDGE_CURVE` identities,
+directed uses, bounds and `ADVANCED_FACE` records on native planes and cylinders.
+It retains straight lines and circular arcs, including closed circular edges,
+shared seams and partial arcs. The borrowed `AdvancedStep` report maps every
+used native entity to its output entity and retains exact output curve parameter
+intervals and native-to-output surface chart maps. Direct spatial curves are
+valid in this selected STEP encoding; native face-local pcurves and history
+remain in the original model/archive.
+
+```rust
+use hyperbrep::{builder, OperationContext, WorkBudget};
+use hyperbrep_io::step::{StepBody, StepWriteOptions, write_advanced};
+let native = builder::cylinder(5.into(), 7.into())?;
+let context = OperationContext::strict(WorkBudget { refinements: 0, promotions: 0 });
+let output = write_advanced(&[StepBody {
+    solid: native.bodies().next().unwrap(), name: "Cylinder",
+}], &StepWriteOptions::new("cylinder.step", "2026-10-16T00:00:00"), &context).result??;
+assert!(output.text().contains("CYLINDRICAL_SURFACE"));
+assert!(output.bodies()[0].edges().iter().any(|e| e.source.curve().circular_geometry().is_some()));
+# Ok::<(), Box<dyn std::error::Error>>(())
+```
+
+The [analytic export example](examples/analytic_step.rs) exercises native/imported
+cylinders, radical frames, edge splitting, reflection, exact export and reimport.
+Native analytic uniform scaling remains an open capability: construct the
+intended physical dimensions directly when selecting output units. No unit
+conversion silently changes the source model. The shared input selection is now
+`StepBody`; the former `FacetedBody` name was removed without an alias. Existing
+faceted encoding and its deterministic output contract remain supported.
 
 ANCHOR, REFERENCE,
 SIGNATURE sections, scoped/value/constant references return explicit blockers.

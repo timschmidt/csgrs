@@ -1,7 +1,7 @@
 use hyperbrep::{Curve3Kind, EntityKind, SurfaceKind};
 use std::fmt;
 
-/// Resource charged by exact faceted STEP writing.
+/// Resource charged by exact selected STEP writing.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WriteResource {
     /// Complete emitted UTF-8/ASCII bytes.
@@ -29,11 +29,11 @@ pub enum WriteErrorKind {
     NonTerminatingDecimal,
     /// A vertex has a retained selected image without materialized coordinates.
     UnmaterializedPoint,
-    /// The source surface is outside this faceted writer's exact mapping.
+    /// The source surface is outside the selected writer's exact mapping.
     UnsupportedSurface(SurfaceKind),
-    /// The spatial edge is outside the finite straight-line mapping.
+    /// The spatial edge is outside the selected writer's exact mapping.
     UnsupportedCurve(Curve3Kind),
-    /// Faceted solids with cavity shells require a separate STEP entity mapping.
+    /// Solids with cavity shells require a separate STEP entity mapping.
     VoidShells,
     /// Invalid selection, unit declaration or boundary invariant.
     Invalid(&'static str),
@@ -50,6 +50,8 @@ pub enum WriteErrorKind {
     Allocation,
     /// Exact scalar arithmetic failed.
     Numeric(hyperreal::Problem),
+    /// Exact native geometry evaluation or a strict predicate was unresolved.
+    Geometry(hyperbrep::GeometryError),
 }
 
 /// Error scoped to the caller's selected body and its native model.

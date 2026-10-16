@@ -2,7 +2,7 @@ use hyperbrep::{OperationContext, Point3, Real, WorkBudget, builder};
 use hyperbrep_io::{
     part21::NumberLimits,
     step::{
-        FacetedBody, StepFile, StepReadOptions, StepWriteOptions, WriteErrorKind, WriteResource,
+        StepBody, StepFile, StepReadOptions, StepWriteOptions, WriteErrorKind, WriteResource,
         write_faceted,
     },
 };
@@ -16,7 +16,7 @@ fn context() -> OperationContext {
 fn output_counts_are_inclusive_and_rejections_can_be_retried() {
     let bodies =
         builder::cuboid(Point3::origin(), Point3::new(1.into(), 1.into(), 1.into())).unwrap();
-    let inputs = [FacetedBody {
+    let inputs = [StepBody {
         solid: bodies.bodies().next().unwrap(),
         name: "unit",
     }];
@@ -86,7 +86,7 @@ fn decimal_significand_exponent_and_integer_storage_have_separate_limits() {
         let mut options = StepWriteOptions::new("numbers.step", "2026-10-15T00:00:00");
         options.limits.number = NumberLimits { digits, exponent };
         let output = write_faceted(
-            &[FacetedBody {
+            &[StepBody {
                 solid: bodies.bodies().next().unwrap(),
                 name: "number",
             }],
@@ -112,7 +112,7 @@ fn decimal_significand_exponent_and_integer_storage_have_separate_limits() {
     options.limits.number_bits = 8;
     assert!(matches!(
         write_faceted(
-            &[FacetedBody {
+            &[StepBody {
                 solid: bodies.bodies().next().unwrap(),
                 name: "binary"
             }],
@@ -134,7 +134,7 @@ fn decimal_significand_exponent_and_integer_storage_have_separate_limits() {
 fn escaped_string_expansion_obeys_the_physical_step_limit() {
     let bodies =
         builder::cuboid(Point3::origin(), Point3::new(1.into(), 1.into(), 1.into())).unwrap();
-    let inputs = [FacetedBody {
+    let inputs = [StepBody {
         solid: bodies.bodies().next().unwrap(),
         name: "unit",
     }];

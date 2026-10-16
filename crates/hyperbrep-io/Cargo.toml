@@ -40,3 +40,7 @@ harness = false
 [[bench]]
 name = "pcurves"
 harness = false
+
+[[bench]]
+name = "analytic_export"
+harness = false

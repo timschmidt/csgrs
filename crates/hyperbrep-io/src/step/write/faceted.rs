@@ -1,5 +1,5 @@
 use super::{
-    FacetedBody, FacetedStep, StepWriteOptions, WriteError, WriteErrorKind, WrittenBody,
+    FacetedStep, StepBody, StepWriteOptions, WriteError, WriteErrorKind, WrittenBody,
     WrittenEdgeUse, WrittenFace, WrittenVertex, WrittenWire,
     error::{Site, push},
     metadata, number,
@@ -12,7 +12,7 @@ use hyperbrep::{
 use std::collections::HashMap;
 
 pub(super) fn write<'a>(
-    sources: &[FacetedBody<'a>],
+    sources: &[StepBody<'a>],
     options: &StepWriteOptions<'_>,
 ) -> Result<FacetedStep<'a>, WriteError> {
     let mut out = Output::new(options.limits);
@@ -21,7 +21,7 @@ pub(super) fn write<'a>(
             .site
             .error(WriteErrorKind::Invalid("empty solid selection")));
     }
-    metadata::header(&mut out, options)?;
+    metadata::header(&mut out, options, metadata::GeometryEncoding::Faceted)?;
     let context = metadata::context(&mut out, options)?;
     let mut bodies = Vec::new();
     let mut items = Vec::new();
@@ -61,7 +61,7 @@ struct Body<'a> {
 }
 fn body<'a>(
     out: &mut Output,
-    source: FacetedBody<'a>,
+    source: StepBody<'a>,
     index: usize,
     scale: &Real,
 ) -> Result<WrittenBody<'a>, WriteError> {

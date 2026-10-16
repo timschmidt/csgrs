@@ -46,13 +46,14 @@ pub use construction::{ConstructionError, LoftSection, RationalBezierSweepFrame,
 pub use context::OperationContext;
 pub use error::{GeometryError, GeometryResult};
 pub use geometry::{
-    Axis, Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation, CurveSurfaceIntersection,
-    CurveSurfacePoint, GeometricPoint3, IntersectionMultiplicity, MaterializedSurfacePcurve,
-    ParameterDomain, Pcurve, Surface, SurfaceBounds, SurfaceDomain, SurfaceIntersectionComponents,
-    SurfaceIntersectionCurve, SurfaceIntersectionLine, SurfaceIntersectionOperand,
-    SurfaceIntersectionParameterRay, SurfaceIntersectionPcurve, SurfaceIntersectionRay,
-    SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePartials,
-    SurfacePcurveCorrespondence, SurfaceSurfaceIntersection,
+    Axis, CircularArcGeometry, Curve3, Curve3Kind, CurveDerivative3, CurveParameterLocation,
+    CurveSurfaceIntersection, CurveSurfacePoint, CylinderGeometry, GeometricPoint3,
+    IntersectionMultiplicity, MaterializedSurfacePcurve, ParameterDomain, Pcurve, Surface,
+    SurfaceBounds, SurfaceDomain, SurfaceIntersectionComponents, SurfaceIntersectionCurve,
+    SurfaceIntersectionLine, SurfaceIntersectionOperand, SurfaceIntersectionParameterRay,
+    SurfaceIntersectionPcurve, SurfaceIntersectionRay, SurfaceIsoAxis, SurfaceKind,
+    SurfaceParameterDomain, SurfacePartials, SurfacePcurveCorrespondence,
+    SurfaceSurfaceIntersection,
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};

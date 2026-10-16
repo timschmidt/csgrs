@@ -1,7 +1,7 @@
 //! Write native-authored, edited and transformed geometry for independent readers.
 //! Run with an output directory; every coordinate is authored in exact metres.
 use hyperbrep::{Matrix4, OperationContext, Point2, Point3, Real, SolidRef, WorkBudget, builder};
-use hyperbrep_io::step::{FacetedBody, StepWriteOptions, WriteLengthUnit, write_faceted};
+use hyperbrep_io::step::{StepBody, StepWriteOptions, WriteLengthUnit, write_faceted};
 use std::{error::Error, path::Path};
 
 fn ratio(n: i32, d: i32) -> Real {
@@ -34,7 +34,7 @@ fn save(
     options.representation_name = name;
     let inputs = solids
         .iter()
-        .map(|&solid| FacetedBody { solid, name })
+        .map(|&solid| StepBody { solid, name })
         .collect::<Vec<_>>();
     let output = write_faceted(&inputs, &options, &context)
         .result

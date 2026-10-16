@@ -21,8 +21,8 @@ Native tests and an executed WASM probe cover deep input, round trips and limits
 Syntax success alone confers no geometry authority. The typed STEP layer now
 adds checked standard headers, decoded text, exact unit graphs, selected
 faceted import, planar straight-edge advanced import with 3D/pcurve source
-parameter maps, direct circular edges on planes/cylinders, and exact faceted
-export of the supported native planar solids. Circular source maps retain
+parameter maps, direct circular edges and supplied analytic pcurves on
+planes/cylinders, and exact faceted or selected analytic export. Circular source maps retain
 independent angle units, sense and phase; full edges and seam uses remain distinct.
 Holes and selected body occurrences are accounted for; unsupported records
 remain in the source exchange. Import uses native strict validation without
@@ -31,11 +31,24 @@ implicit healing or tolerance welding. See the
 [dependency decision](../../hyperbrep-io/docs/PARSER_REVIEW.md) and
 [advanced-import evidence](evidence/2026-10-15-step-advanced/README.md).
 Complete EXPRESS/AP conformance, whole-document/product traversal, assemblies,
-curved surface/seam-curve mapping, other analytic/spline exchange, curved export
+general periodic seams, other analytic/spline exchange, void and remaining analytic export
 and approximate export remain open. The
 [circular import evidence](evidence/2026-10-15-step-circles/README.md) exercises
 native edits, replay and Boolean/empty continuation separately from an
 independent floating-point reader.
+
+`write_advanced` preserves explicit native vertex/edge identity, every directed
+use and face bound, orientation, and selected occurrence for planar/cylindrical
+solids with line/circle edges. Reports retain native sources, exact emitted
+curve parameter intervals and UV chart maps. Native pcurves/history are not
+serialized by this direct-curve exchange encoding. Decimal and homogeneous
+direction representability, unsupported families and limits fail typed.
+The [analytic-export evidence](evidence/2026-10-16-step-analytic-export/README.md)
+includes independent graph checks, oblique/radical frames, split/reflection,
+holes, units, near-coincidence, native replay, Boolean/empty continuation,
+OCCT reading and real WASM execution. Uniform analytic scaling remains an open
+native workflow and currently reports `InvalidSurfaceFrame`; the failure is
+retained separately from successful exact-dimension/unit conversion tests.
 
 ## Operation resources
 

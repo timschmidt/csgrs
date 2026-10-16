@@ -1272,8 +1272,38 @@ exact parameter bounds. The finite-decimal cylinder seam controls are typed
 rejections, not evidence of a successful exact seam import. Decimal values
 near `tau` and familiar unit names cannot supply the missing equality. General
 periodic seam admission, spline/trimmed pcurves, other analytic families,
-operation-wide provenance, explicit healing and curved export remain work for
+operation-wide provenance, explicit healing and remaining analytic export stay work for
 WP14a/WP14b; this increment closes neither package.
+
+The selected analytic export increment adds `write_advanced(&[StepBody], ...)`
+beside the faceted encoding. Borrowed native `circular_geometry` and
+`cylindrical_geometry` views supply exact authored carriers. IO emits explicit
+vertex/edge/use/wire/face topology on `PLANE`/`CYLINDRICAL_SURFACE` with direct
+`LINE`/`CIRCLE` boundaries, preserving shared edges, closed circles, seam uses,
+holes, senses and each selected solid occurrence. Its `WrittenAdvanced*` reports
+retain native identities, emitted curve parameter intervals and exact linear
+native-to-output UV maps. Direct conics avoid inventing a finite-decimal angular
+period. Pcurves, history and unused geometry remain native archive data.
+`StepBody` replaces `FacetedBody` without an alias; `write_faceted` keeps its
+distinct supported encoding and deterministic receipts.
+
+The [mapping contract](../../hyperbrep-io/docs/STEP_MAPPING.md#exact-native-analytic-export)
+and [admission record](evidence/2026-10-16-step-analytic-export/README.md)
+qualify this subset through independent graph/formula checks, native replay,
+continued composition, OCCT interoperability and real WASM execution. Retain
+the measured header-allocation repair and both cost campaigns. Exact decimal
+representability, unmapped carriers, voids and resource exhaustion stay explicit.
+No general AP, scalar-work, heap, binding or release gate closes here.
+
+The unit workflow also reproduces a native transform gap: uniform cylinder
+scaling by `1/1000` or `127/5000` fails with `InvalidSurfaceFrame` before export.
+Retain that full attempted workflow and diagnostic as an open native task.
+Implement analytic similarity transport at the BREP owner, including unit
+frames, radii, axial dimensions, surface charts, pcurves, parameter maps and
+retained solid certificates; then require export/reimport/replay/composition.
+Do not repair it with an IO-specific transform or confuse output-unit conversion
+with changing a model's physical size. Direct exact-dimension construction
+already exercises the writer's unit contract.
 
 ```rust,ignore
 pub fn read_step(bytes: &[u8], options: &StepReadOptions)

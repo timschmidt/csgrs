@@ -1,4 +1,5 @@
-//! Exact faceted STEP output; no implicit decimal rounding or geometry fitting.
+//! Exact selected STEP output; no implicit decimal rounding or geometry fitting.
+mod advanced;
 mod error;
 mod faceted;
 mod metadata;
@@ -7,10 +8,14 @@ mod output;
 mod types;
 
 use crate::part21::NumberLimits;
+pub use advanced::{
+    AdvancedStep, WrittenAdvancedBody, WrittenAdvancedEdge, WrittenAdvancedEdgeUse,
+    WrittenAdvancedFace, WrittenAdvancedVertex, WrittenAdvancedWire, WrittenSurfaceParameters,
+};
 pub use error::{WriteError, WriteErrorKind, WriteResource};
 use hyperbrep::{BudgetOutcome, OperationContext, Real};
 pub use types::{
-    FacetedBody, FacetedStep, WrittenBody, WrittenEdgeUse, WrittenFace, WrittenVertex, WrittenWire,
+    FacetedStep, StepBody, WrittenBody, WrittenEdgeUse, WrittenFace, WrittenVertex, WrittenWire,
 };
 
 /// Output units with an explicit exact scale; the name never overrides the scale.
@@ -48,7 +53,7 @@ impl Default for WriteLimits {
         }
     }
 }
-/// Metadata, units and allowances for the AP214 common faceted subset.
+/// Metadata, units and allowances for the selected AP214 common geometry encodings.
 ///
 /// The timestamp is caller-supplied text; no current time or process identity
 /// enters deterministic output. Calendar validity is not inferred.
@@ -95,9 +100,24 @@ impl<'a> StepWriteOptions<'a> {
 /// original model-bound sources. Cavity shells and curved families remain typed
 /// blockers. No partial artifact escapes an error or exhausted solver scope.
 pub fn write_faceted<'a>(
-    bodies: &[FacetedBody<'a>],
+    bodies: &[StepBody<'a>],
     options: &StepWriteOptions<'_>,
     context: &OperationContext,
 ) -> BudgetOutcome<Result<FacetedStep<'a>, WriteError>> {
     context.evaluate(|| faceted::write(bodies, options))
+}
+
+/// Writes selected planar/cylindrical solids with explicit line/circle topology.
+///
+/// Every emitted scalar is exact. Other carriers, cavity shells and values
+/// without an admitted finite decimal encoding fail with source diagnostics.
+/// Native curve and surface parameters map to the output through the returned
+/// report; face-local pcurves, unused geometry and history remain native data.
+/// No partial artifact escapes a failure or exhausted solver scope.
+pub fn write_advanced<'a>(
+    bodies: &[StepBody<'a>],
+    options: &StepWriteOptions<'_>,
+    context: &OperationContext,
+) -> BudgetOutcome<Result<AdvancedStep<'a>, WriteError>> {
+    context.evaluate(|| advanced::write(bodies, options))
 }

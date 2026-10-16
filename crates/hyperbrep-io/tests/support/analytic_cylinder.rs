@@ -1,7 +1,7 @@
 //! Exact assertions shared by native tests and an actual WASM consumer.
 use hyperbrep::*;
 use hyperbrep_io::step::{
-    Error, ErrorKind, FacetedBody, ImportLimits, ImportedRepresentation, Resource, StepFile,
+    Error, ErrorKind, ImportLimits, ImportedRepresentation, Resource, StepBody, StepFile,
     StepReadOptions, StepWriteOptions, WriteErrorKind, write_faceted,
 };
 use hyperlimit::{PredicateOutcome, compare_reals};
@@ -564,7 +564,7 @@ pub fn composition() {
     check(&replay(boolean::union(&empty, &a).unwrap().model()));
     assert_eq!(model.to_json().unwrap(), original);
     let artifact = write_faceted(
-        &[FacetedBody {
+        &[StepBody {
             solid: model.solids().next().unwrap(),
             name: "curved",
         }],

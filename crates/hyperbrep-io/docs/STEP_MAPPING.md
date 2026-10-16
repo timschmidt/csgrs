@@ -293,7 +293,7 @@ in an actual WASM runtime; this is not an arbitrary-hostile-input safety proof.
 
 ## Exact native faceted export
 
-`FacetedBody` explicitly selects a validated native `SolidRef` and output name.
+`StepBody` explicitly selects a validated native `SolidRef` and output name.
 Native coordinates are interpreted as metres. `StepWriteOptions` supplies a
 positive rational metres-per-output-unit factor, unit name, file/product metadata,
 caller-authored timestamp and `WriteLimits`. The writer emits `AUTOMOTIVE_DESIGN`
@@ -358,9 +358,62 @@ arithmetic, polygon area-vector arithmetic, scalar backend allocations and total
 heap/time are **not** bounded by these allowances. The explicit solver scope
 retains its existing instrumented-work meaning.
 
+## Exact native analytic export
+
+`write_advanced` accepts selected validated outer-shell solids on `Plane` and
+`Cylinder` carriers, with `Line` and `CircleArc` edges. It emits
+`ADVANCED_BREP_SHAPE_REPRESENTATION`, `MANIFOLD_SOLID_BREP`, `CLOSED_SHELL`,
+`ADVANCED_FACE`, explicit bounds/loops/oriented uses, `EDGE_CURVE`,
+`VERTEX_POINT`, `LINE`/`CIRCLE`, and `PLANE`/`CYLINDRICAL_SURFACE`.
+Topology follows model-bound identity: shared edges stay shared, closed circles
+reuse their single vertex, and two seam uses remain separate directed records.
+Coincident coordinates and repeated body occurrences do not weld identities.
+All inner wires and face orientations survive. Cavity shells and unmapped
+carriers fail the whole selection with their source site.
+
+The [advanced-face schema](https://steptools.com/docs/stp_aim/html/t_advanced_face.html)
+permits direct line/conic edge geometry. Its supplied-pcurve requirement applies
+when an edge uses a `SURFACE_CURVE`. This writer emits direct spatial curves;
+it does not serialize a rounded angular period as a seam pcurve. This is a
+selected AP214 encoding, not a complete EXPRESS/AP conformance claim.
+
+The returned `WrittenAdvanced*` records identify every native vertex, edge,
+directed use, wire, face and selected solid occurrence. Each edge reports the
+emitted carrier's parameters at its native trim endpoints; interpolation follows
+the native trim fraction. A line starts at the edge's native start point and
+uses unit speed in output coordinates. A circle keeps its authored frame,
+angular direction and unwrapped endpoint angles. `EDGE_CURVE.same_sense` and
+`ORIENTED_EDGE.orientation` encode independent directions. Reimport may choose a
+different full-period representative of the same angular phase.
+
+Each face reports a linear native-to-output UV map. A plane retains its authored
+origin and orthonormalizes its U/V frame for STEP; the reported map accounts for
+skew, scale and output units. A cylinder keeps its exact origin and frame; U is
+in radians and V is divided by metres-per-output-unit. The native pcurves remain
+queryable through each borrowed source use. They, unused geometry, history and
+unselected document entities are not persisted by geometry export; use native
+archives for those representations.
+
+The scalar layer's exact rational certificate can expose decimal-representable
+values without rounding. Direction ratios can remove a common irrational
+normalization factor by exact positive projective division; their sign is
+retained and the integer encoder applies its existing bit limits. Unsupported
+ratios return `NonRational`; strict unresolved decisions remain typed
+`WriteErrorKind::Geometry`. As for faceted export, rational-only means the
+available certified view, not a proof that another representation is irrational.
+UV-map construction, scalar normalization, coefficient growth and total heap,
+work and cancellation remain outside the writer's cardinality/encoding bounds.
+
+The common input name is now `StepBody`, replacing `FacetedBody` without an alias.
+`write_faceted` remains a distinct encoding with unchanged output contracts.
+The [analytic admission record](../../hyperbrep/docs/evidence/2026-10-16-step-analytic-export/README.md)
+retains exact graph checks, parameter maps, composition, source-bound checks and
+the observed native uniform-scaling gap. That gap occurs before export and is
+not solved by output unit conversion.
+
 ## Remaining exchange work
 
-WP14a still requires simple analytic entities, broad independent exporter fixtures, representation
+WP14a still requires further simple analytic entities, broad independent exporter fixtures, representation
 root selection, and more complete schema/resource admission. WP14b retains
 spline/trim/seam/void exchange, assembly/mapped representation traversal and
 explicit healing/export approximation. Header/text completeness, generic planar

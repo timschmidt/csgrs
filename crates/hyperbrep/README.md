@@ -505,11 +505,15 @@ The [implementation ledger](docs/IMPLEMENTATION_STATUS.json) tracks work
 packages, landed increments, verification and the remaining capability gaps.
 
 The downstream [HyperBRep IO crate](../hyperbrep-io/README.md) provides bounded
-Part 21 syntax and strict, unit-aware import of selected faceted representations
-through the native builder. It preserves holes, multiple bodies and source
-provenance. [Its mapping contract](../hyperbrep-io/docs/STEP_MAPPING.md) records
-the supported entities and validation domain. Analytic/spline exchange, STEP
-geometry writing and whole-document/assembly mapping remain on the plan.
+Part 21 syntax, strict unit-aware faceted/selected analytic import, and exact
+faceted or analytic geometry export. Planar/cylindrical faces with line/circle
+boundaries retain explicit topology and source parameter maps; native borrowed
+circle/cylinder views supply exact carrier data to the writer. Holes, repeated
+body occurrences, edits and reflected models remain explicit.
+[Its mapping contract](../hyperbrep-io/docs/STEP_MAPPING.md) records the admitted
+domain, output representability and loss model. Other analytic/spline families,
+voids, whole-document/assembly mapping and native analytic uniform scaling
+remain open; geometry exchange does not replace native archival replay.
 
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.

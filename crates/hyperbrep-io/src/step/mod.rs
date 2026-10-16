@@ -25,9 +25,11 @@ pub use imported::{
 };
 pub use units::{ContextUnits, Uncertainty, Unit, UnitKind};
 pub use write::{
-    FacetedBody, FacetedStep, StepWriteOptions, WriteError, WriteErrorKind, WriteLengthUnit,
-    WriteLimits, WriteResource, WrittenBody, WrittenEdgeUse, WrittenFace, WrittenVertex,
-    WrittenWire, write_faceted,
+    AdvancedStep, FacetedStep, StepBody, StepWriteOptions, WriteError, WriteErrorKind,
+    WriteLengthUnit, WriteLimits, WriteResource, WrittenAdvancedBody, WrittenAdvancedEdge,
+    WrittenAdvancedEdgeUse, WrittenAdvancedFace, WrittenAdvancedVertex, WrittenAdvancedWire,
+    WrittenBody, WrittenEdgeUse, WrittenFace, WrittenSurfaceParameters, WrittenVertex, WrittenWire,
+    write_advanced, write_faceted,
 };
 
 use crate::part21::{self, Exchange, NumberLimits, ReadLimits};

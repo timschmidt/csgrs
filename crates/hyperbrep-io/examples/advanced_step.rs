@@ -3,7 +3,7 @@
 //! these planar line boundaries retain their geometry without tessellation.
 use hyperbrep::{Matrix4, OperationContext, Real, SolidRef, WorkBudget};
 use hyperbrep_io::step::{
-    FacetedBody, ImportLimits, StepFile, StepReadOptions, StepWriteOptions, WriteLengthUnit,
+    ImportLimits, StepBody, StepFile, StepReadOptions, StepWriteOptions, WriteLengthUnit,
     write_faceted,
 };
 use std::{error::Error, path::Path};
@@ -22,7 +22,7 @@ fn save(directory: &Path, name: &str, solid: SolidRef<'_>) -> Result<(), Box<dyn
         metres_per_unit: (Real::one() / Real::from(1000))?,
     };
     options.representation_name = name;
-    let output = write_faceted(&[FacetedBody { solid, name }], &options, &context())
+    let output = write_faceted(&[StepBody { solid, name }], &options, &context())
         .result
         .map_err(|error| format!("solver budget: {error:?}"))??;
     let file = StepFile::read(output.text().as_bytes(), &StepReadOptions::default())?;

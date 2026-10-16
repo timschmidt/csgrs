@@ -223,3 +223,25 @@ support; they are not an optimization or a whole-stack performance claim.
 include the rejected broad scalar prototype and the separate native/arc repeat.
 Curved supplied pcurves, other analytic/spline/assembly mappings, curved STEP
 export and internal total-work/memory/cancellation admission remain open.
+
+## Selected analytic export (2026-10-16)
+
+The [admission record](../hyperbrep/docs/evidence/2026-10-16-step-analytic-export/README.md)
+and [manifest](../hyperbrep/docs/evidence/2026-10-16-step-analytic-export/manifest.json)
+retain frozen baselines, two complete matched campaigns, all failed/adverse
+observations and three trials of each new workload. All 115 existing case
+receipts and fixture facts survive. The intermediate shared-header implementation
+added allocations; selecting one static prefix restores every measured prior
+allocation request and requested-byte total, including all faceted export cases.
+Final case-median timing ratios range by workload; the largest is 1.079718.
+This shared-host comparison is not a general speedup or complete timing gate.
+
+New export-only medians are 124.763 µs for a native partitioned cylinder,
+58.463 µs for a closed imported cylinder, 95.988 µs for a partially split
+imported cylinder, 148.599 µs for its radical frame, 236.126 µs for a planar
+hole, and 3.743 ms for 32 native body occurrences. Each fully materializes and
+compares output text and topology reports; independent graph/reimport preflight
+is untimed. The separately named three-frame edit/roundtrip matrix is 75.098 ms;
+the unrepresentable-third rejection is 10.825 µs. Outcomes are not interchangeable.
+Raw allocation and process RSS evidence remains available; neither establishes
+a total retained-memory, scalar-work or cancellation bound. All broader gates stay open.

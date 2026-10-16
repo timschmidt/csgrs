@@ -1,7 +1,20 @@
 use super::{StepWriteOptions, WriteError, WriteErrorKind, number, output::Output};
 
-pub(super) fn header(out: &mut Output, options: &StepWriteOptions<'_>) -> Result<(), WriteError> {
-    out.put("ISO-10303-21;\nHEADER;\nFILE_DESCRIPTION(('Exact selected faceted geometry'),'2;1');\nFILE_NAME(")?;
+pub(super) enum GeometryEncoding {
+    Faceted,
+    Advanced,
+}
+
+pub(super) fn header(
+    out: &mut Output,
+    options: &StepWriteOptions<'_>,
+    encoding: GeometryEncoding,
+) -> Result<(), WriteError> {
+    // One fixed-prefix write preserves the existing faceted buffer growth.
+    out.put(match encoding {
+        GeometryEncoding::Faceted => "ISO-10303-21;\nHEADER;\nFILE_DESCRIPTION(('Exact selected faceted geometry'),'2;1');\nFILE_NAME(",
+        GeometryEncoding::Advanced => "ISO-10303-21;\nHEADER;\nFILE_DESCRIPTION(('Exact selected analytic geometry'),'2;1');\nFILE_NAME(",
+    })?;
     out.string(options.file_name)?;
     out.put(",")?;
     out.string(options.timestamp)?;

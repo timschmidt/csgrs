@@ -1,6 +1,6 @@
 use hyperbrep::{OperationContext, Point3, Real, WorkBudget, builder};
 use hyperbrep_io::step::{
-    FacetedBody, ImportLimits, StepFile, StepReadOptions, StepWriteOptions, WriteErrorKind,
+    ImportLimits, StepBody, StepFile, StepReadOptions, StepWriteOptions, WriteErrorKind,
     WriteLengthUnit, WriteLimits, WriteResource, write_faceted,
 };
 
@@ -31,7 +31,7 @@ fn native_faceted_solids_export_every_body_hole_and_source_use_exactly() {
         let inputs = imported
             .bodies()
             .iter()
-            .map(|body| FacetedBody {
+            .map(|body| StepBody {
                 solid: body.solid(),
                 name: body.name(),
             })
@@ -113,7 +113,7 @@ fn strict_writer_diagnoses_nonrepresentable_coordinates_units_and_limits() {
         Point3::new(ratio(1, 3), Real::one(), Real::one()),
     )
     .unwrap();
-    let inputs = [FacetedBody {
+    let inputs = [StepBody {
         solid: models.bodies().next().unwrap(),
         name: "third",
     }];
@@ -130,7 +130,7 @@ fn strict_writer_diagnoses_nonrepresentable_coordinates_units_and_limits() {
         Point3::new(Real::one(), Real::one(), Real::one()),
     )
     .unwrap();
-    let inputs = [FacetedBody {
+    let inputs = [StepBody {
         solid: models.bodies().next().unwrap(),
         name: "unit",
     }];
@@ -200,7 +200,7 @@ fn exact_file_metadata_and_repeated_occurrences_remain_explicit() {
     )
     .unwrap();
     let solid = models.bodies().next().unwrap();
-    let input = FacetedBody {
+    let input = StepBody {
         solid,
         name: "same 'body' \\ Ω🙂\n",
     };

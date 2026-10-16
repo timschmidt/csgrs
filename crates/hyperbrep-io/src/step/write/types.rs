@@ -2,10 +2,10 @@ use hyperbrep::{EdgeUseRef, FaceRef, SolidRef, VertexRef, WireRef};
 
 /// One explicitly selected native solid occurrence, with its output name.
 #[derive(Clone, Copy, Debug)]
-pub struct FacetedBody<'a> {
+pub struct StepBody<'a> {
     /// Source body; coordinates are interpreted as metres.
     pub solid: SolidRef<'a>,
-    /// Name encoded in the output FACETED_BREP entity.
+    /// Name encoded in the selected output solid entity.
     pub name: &'a str,
 }
 /// A native vertex and its exact CARTESIAN_POINT encoding.

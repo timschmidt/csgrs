@@ -1,5 +1,5 @@
 use hyperbrep::{OperationContext, Point2, Point3, Real, WorkBudget, builder};
-use hyperbrep_io::step::{FacetedBody, StepWriteOptions, WriteErrorKind, write_faceted};
+use hyperbrep_io::step::{StepBody, StepWriteOptions, WriteErrorKind, write_faceted};
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::hint::black_box;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -67,7 +67,7 @@ fn digest(bytes: &[u8]) -> u64 {
 }
 fn export(
     name: &str,
-    inputs: &[FacetedBody<'_>],
+    inputs: &[StepBody<'_>],
     expected: (usize, usize, usize, usize),
     iterations: usize,
 ) {
@@ -114,7 +114,7 @@ fn main() {
     .unwrap();
     let solid = box_body.bodies().next().unwrap();
     assert_eq!(solid.volume().unwrap(), ratio(24, 1_000_000_000));
-    let input = FacetedBody { solid, name: "box" };
+    let input = StepBody { solid, name: "box" };
     export("export/box:", &[input], (8, 6, 6, 24), 1000);
     let profile = |points: &[(i32, i32)]| {
         points
@@ -133,7 +133,7 @@ fn main() {
     assert_eq!(solid.volume().unwrap(), ratio(20, 1_000_000_000));
     export(
         "export/hole:",
-        &[FacetedBody {
+        &[StepBody {
             solid,
             name: "hole",
         }],
@@ -150,7 +150,7 @@ fn main() {
     assert_eq!(solid.volume().unwrap(), ratio(10, 1_000_000_000));
     export(
         "export/concave:",
-        &[FacetedBody {
+        &[StepBody {
             solid,
             name: "concave",
         }],
@@ -166,7 +166,7 @@ fn main() {
         .unwrap();
     export(
         "export/split:",
-        &[FacetedBody {
+        &[StepBody {
             solid: split.model().solids().next().unwrap(),
             name: "split",
         }],
@@ -179,7 +179,7 @@ fn main() {
         Point3::new(ratio(1, 3), Real::one(), Real::one()),
     )
     .unwrap();
-    let inputs = [FacetedBody {
+    let inputs = [StepBody {
         solid: third.bodies().next().unwrap(),
         name: "third",
     }];

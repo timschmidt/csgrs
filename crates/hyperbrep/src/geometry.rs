@@ -13,8 +13,10 @@ use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 use crate::Parameter;
 use crate::error::{GeometryError, GeometryResult};
 
+mod analytic;
 mod location;
 mod point;
+pub use analytic::{CircularArcGeometry, CylinderGeometry};
 use location::{
     locate_ellipse_arc_parameters, locate_line_parameter, locate_nurbs_parameters,
     locate_rational_bezier_parameters,

@@ -5,7 +5,7 @@ use hyperbrep::{
 use hyperbrep_io::{
     part21::{NumberLimits, Value, ValueKind},
     step::{
-        FacetedBody, FacetedStep, ImportLimits, StepFile, StepReadOptions, StepWriteOptions,
+        FacetedStep, ImportLimits, StepBody, StepFile, StepReadOptions, StepWriteOptions,
         WriteErrorKind, WriteLengthUnit, write_faceted,
     },
 };
@@ -112,7 +112,7 @@ fn check_graph(output: &FacetedStep<'_>, scale: &Real) {
 }
 fn check_solid(solid: SolidRef<'_>) {
     let output = write_faceted(
-        &[FacetedBody {
+        &[StepBody {
             solid,
             name: "authored",
         }],
@@ -188,11 +188,11 @@ fn exact_output_units_preserve_inch_grid_and_nearby_distinct_bodies() {
     let options = StepWriteOptions::new("gap.step", "2026-10-15T00:00:00");
     let output = write_faceted(
         &[
-            FacetedBody {
+            StepBody {
                 solid: first.bodies().next().unwrap(),
                 name: "a",
             },
-            FacetedBody {
+            StepBody {
                 solid: second.bodies().next().unwrap(),
                 name: "b",
             },
@@ -218,7 +218,7 @@ fn exact_output_units_preserve_inch_grid_and_nearby_distinct_bodies() {
         metres_per_unit: inch.clone(),
     };
     let output = write_faceted(
-        &[FacetedBody {
+        &[StepBody {
             solid: inches.bodies().next().unwrap(),
             name: "inch cube",
         }],
@@ -231,7 +231,7 @@ fn exact_output_units_preserve_inch_grid_and_nearby_distinct_bodies() {
     check_graph(&output, &inch);
     // A one-metre coordinate is 5000/127 inches; choosing inches cannot license rounding.
     let error = write_faceted(
-        &[FacetedBody {
+        &[StepBody {
             solid: first.bodies().next().unwrap(),
             name: "metre cube",
         }],
@@ -259,7 +259,7 @@ fn unsupported_curves_cavities_and_selected_images_fail_with_source_sites() {
     .unwrap();
     for (bodies, expected) in [(&sphere, 0), (&cylinder, 1), (&cavity, 2)] {
         let error = write_faceted(
-            &[FacetedBody {
+            &[StepBody {
                 solid: bodies.bodies().next().unwrap(),
                 name: "unsupported",
             }],
@@ -305,11 +305,11 @@ fn unsupported_curves_cavities_and_selected_images_fail_with_source_sites() {
         .unwrap();
     let error = write_faceted(
         &[
-            FacetedBody {
+            StepBody {
                 solid: source.bodies().next().unwrap(),
                 name: "supported first",
             },
-            FacetedBody {
+            StepBody {
                 solid: split.model().solids().next().unwrap(),
                 name: "selected image",
             },
