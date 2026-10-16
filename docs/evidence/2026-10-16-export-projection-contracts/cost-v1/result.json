@@ -1,0 +1,2041 @@
+{
+  "complete": true,
+  "pairs": 5,
+  "runtime_processes": 90,
+  "sample_rows": 180,
+  "complete_input_and_output_comparisons_equal": true,
+  "library_inputs_unchanged": true,
+  "binaries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "sha256": "8a82baaf6a0f860ad6ae7c00a65644fcee29a2fc996e16f4262ffc2e1bcd504b",
+      "bytes": 8959376
+    },
+    "candidate": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "sha256": "13b70fa9bf231e5de7de4fd293db29a892ffae8df33c08ee239750bf3482a508",
+      "bytes": 8980400
+    }
+  },
+  "summaries": [
+    {
+      "encoding": "binary",
+      "cubes": 0,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 7209,
+          "candidate_median_observed": 7679,
+          "baseline_median_per_iteration": 7209.0,
+          "candidate_median_per_iteration": 7679.0,
+          "median_paired_ratio": 1.1243045387994144,
+          "paired_ratios": [
+            1.1374670550700514,
+            1.1243045387994144,
+            1.100602908145171,
+            0.7302631578947368,
+            1.2355218855218855
+          ],
+          "candidate_greater_count": 4
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 4,
+          "candidate_median_observed": 4,
+          "baseline_median_per_iteration": 4.0,
+          "candidate_median_per_iteration": 4.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 8572,
+          "candidate_median_observed": 8572,
+          "baseline_median_per_iteration": 8572.0,
+          "candidate_median_per_iteration": 8572.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 8276,
+          "candidate_median_observed": 8276,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 380,
+          "candidate_median_observed": 380,
+          "baseline_median_per_iteration": 380.0,
+          "candidate_median_per_iteration": 380.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 84,
+          "candidate_median_observed": 84,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 84,
+          "candidate_median_observed": 84,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "binary",
+      "cubes": 0,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 4479,
+          "candidate_median_observed": 4059,
+          "baseline_median_per_iteration": 69.984375,
+          "candidate_median_per_iteration": 63.421875,
+          "median_paired_ratio": 1.0046885465505693,
+          "paired_ratios": [
+            0.9924205378973106,
+            1.0354591836734695,
+            1.0859220092531394,
+            1.0046885465505693,
+            0.5287958115183246
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 64,
+          "candidate_median_observed": 64,
+          "baseline_median_per_iteration": 1.0,
+          "candidate_median_per_iteration": 1.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 5376,
+          "candidate_median_observed": 5376,
+          "baseline_median_per_iteration": 84.0,
+          "candidate_median_per_iteration": 84.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 5376,
+          "candidate_median_observed": 5376,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 5376,
+          "candidate_median_observed": 5376,
+          "baseline_median_per_iteration": 84.0,
+          "candidate_median_per_iteration": 84.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 84,
+          "candidate_median_observed": 84,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 84,
+          "candidate_median_observed": 84,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "binary",
+      "cubes": 1,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 12309,
+          "candidate_median_observed": 20109,
+          "baseline_median_per_iteration": 12309.0,
+          "candidate_median_per_iteration": 20109.0,
+          "median_paired_ratio": 1.6379038908463903,
+          "paired_ratios": [
+            1.8069008895677958,
+            1.6379038908463903,
+            1.6557735794003938,
+            1.2932000974896418,
+            1.5408382066276802
+          ],
+          "candidate_greater_count": 5
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 7,
+          "candidate_median_observed": 7,
+          "baseline_median_per_iteration": 7.0,
+          "candidate_median_per_iteration": 7.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 11116,
+          "candidate_median_observed": 11116,
+          "baseline_median_per_iteration": 11116.0,
+          "candidate_median_per_iteration": 11116.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 9644,
+          "candidate_median_observed": 9644,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 1580,
+          "candidate_median_observed": 1580,
+          "baseline_median_per_iteration": 1580.0,
+          "candidate_median_per_iteration": 1580.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 684,
+          "candidate_median_observed": 684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 684,
+          "candidate_median_observed": 684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "binary",
+      "cubes": 1,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 26498,
+          "candidate_median_observed": 28888,
+          "baseline_median_per_iteration": 414.03125,
+          "candidate_median_per_iteration": 451.375,
+          "median_paired_ratio": 0.9806504175436215,
+          "paired_ratios": [
+            0.9634608444604836,
+            0.9806504175436215,
+            1.1357581967213115,
+            0.6358593101366141,
+            2.2364410945436672
+          ],
+          "candidate_greater_count": 2
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 64,
+          "candidate_median_observed": 64,
+          "baseline_median_per_iteration": 1.0,
+          "candidate_median_per_iteration": 1.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 43776,
+          "candidate_median_observed": 43776,
+          "baseline_median_per_iteration": 684.0,
+          "candidate_median_per_iteration": 684.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 43776,
+          "candidate_median_observed": 43776,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 43776,
+          "candidate_median_observed": 43776,
+          "baseline_median_per_iteration": 684.0,
+          "candidate_median_per_iteration": 684.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 684,
+          "candidate_median_observed": 684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 684,
+          "candidate_median_observed": 684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "binary",
+      "cubes": 256,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 1005821,
+          "candidate_median_observed": 2547665,
+          "baseline_median_per_iteration": 1005821.0,
+          "candidate_median_per_iteration": 2547665.0,
+          "median_paired_ratio": 2.5479921377660637,
+          "paired_ratios": [
+            2.056994403742961,
+            3.2587807822858053,
+            2.6623685190655384,
+            2.5479921377660637,
+            2.2302511901197737
+          ],
+          "candidate_greater_count": 5
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 20,
+          "candidate_median_observed": 25292,
+          "baseline_median_per_iteration": 20.0,
+          "candidate_median_per_iteration": 25292.0,
+          "median_paired_ratio": 1264.6,
+          "paired_ratios": [
+            1264.6,
+            1264.6,
+            1264.6,
+            1264.6,
+            1264.6
+          ],
+          "candidate_greater_count": 5
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 1071208,
+          "candidate_median_observed": 2284264,
+          "baseline_median_per_iteration": 1071208.0,
+          "candidate_median_per_iteration": 2284264.0,
+          "median_paired_ratio": 2.1324187272686537,
+          "paired_ratios": [
+            2.1324187272686537,
+            2.1324187272686537,
+            2.1324187272686537,
+            2.1324187272686537,
+            2.1324187272686537
+          ],
+          "candidate_greater_count": 5
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 612648,
+          "candidate_median_observed": 612648,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 416040,
+          "candidate_median_observed": 416040,
+          "baseline_median_per_iteration": 416040.0,
+          "candidate_median_per_iteration": 416040.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 153684,
+          "candidate_median_observed": 153684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 262144,
+          "candidate_median_observed": 262144,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "binary",
+      "cubes": 256,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 188597,
+          "candidate_median_observed": 200706,
+          "baseline_median_per_iteration": 47149.25,
+          "candidate_median_per_iteration": 50176.5,
+          "median_paired_ratio": 1.0023860400748685,
+          "paired_ratios": [
+            0.6958065206425875,
+            1.1966517481380863,
+            1.169005446525027,
+            1.0023860400748685,
+            0.95548806032677
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 4,
+          "candidate_median_observed": 4,
+          "baseline_median_per_iteration": 1.0,
+          "candidate_median_per_iteration": 1.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 614736,
+          "candidate_median_observed": 614736,
+          "baseline_median_per_iteration": 153684.0,
+          "candidate_median_per_iteration": 153684.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 614736,
+          "candidate_median_observed": 614736,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 614736,
+          "candidate_median_observed": 614736,
+          "baseline_median_per_iteration": 153684.0,
+          "candidate_median_per_iteration": 153684.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 153684,
+          "candidate_median_observed": 153684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 153684,
+          "candidate_median_observed": 153684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 0,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 1660,
+          "candidate_median_observed": 1600,
+          "baseline_median_per_iteration": 1660.0,
+          "candidate_median_per_iteration": 1600.0,
+          "median_paired_ratio": 1.0573065902578798,
+          "paired_ratios": [
+            2.5765496639283048,
+            0.9216867469879518,
+            1.0573065902578798,
+            1.0810810810810811,
+            0.6706666666666666
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 3,
+          "candidate_median_observed": 3,
+          "baseline_median_per_iteration": 3.0,
+          "candidate_median_per_iteration": 3.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 62,
+          "candidate_median_observed": 62,
+          "baseline_median_per_iteration": 62.0,
+          "candidate_median_per_iteration": 62.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 28,
+          "candidate_median_observed": 28,
+          "baseline_median_per_iteration": 28.0,
+          "candidate_median_per_iteration": 28.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 25,
+          "candidate_median_observed": 25,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 28,
+          "candidate_median_observed": 28,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 0,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 11869,
+          "candidate_median_observed": 11740,
+          "baseline_median_per_iteration": 185.453125,
+          "candidate_median_per_iteration": 183.4375,
+          "median_paired_ratio": 0.9191315530675542,
+          "paired_ratios": [
+            0.8662470495672698,
+            0.863864163363004,
+            1.0556070435588507,
+            1.0830258302583027,
+            0.9191315530675542
+          ],
+          "candidate_greater_count": 2
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 192,
+          "candidate_median_observed": 192,
+          "baseline_median_per_iteration": 3.0,
+          "candidate_median_per_iteration": 3.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 3968,
+          "candidate_median_observed": 3968,
+          "baseline_median_per_iteration": 62.0,
+          "candidate_median_per_iteration": 62.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 1812,
+          "candidate_median_observed": 1812,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 1792,
+          "candidate_median_observed": 1792,
+          "baseline_median_per_iteration": 28.0,
+          "candidate_median_per_iteration": 28.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 25,
+          "candidate_median_observed": 25,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 28,
+          "candidate_median_observed": 28,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 1,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 36838,
+          "candidate_median_observed": 43857,
+          "baseline_median_per_iteration": 36838.0,
+          "candidate_median_per_iteration": 43857.0,
+          "median_paired_ratio": 1.113405424392202,
+          "paired_ratios": [
+            1.4568693124368048,
+            1.113405424392202,
+            0.961968619360443,
+            0.958251971228712,
+            1.3458434344984196
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 153,
+          "candidate_median_observed": 153,
+          "baseline_median_per_iteration": 153.0,
+          "candidate_median_per_iteration": 153.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 22171,
+          "candidate_median_observed": 22171,
+          "baseline_median_per_iteration": 22171.0,
+          "candidate_median_per_iteration": 22171.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 5712,
+          "candidate_median_observed": 5712,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 5568,
+          "candidate_median_observed": 5568,
+          "baseline_median_per_iteration": 5568.0,
+          "candidate_median_per_iteration": 5568.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 4015,
+          "candidate_median_observed": 4015,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 5568,
+          "candidate_median_observed": 5568,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 1,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 1753580,
+          "candidate_median_observed": 1755680,
+          "baseline_median_per_iteration": 27399.6875,
+          "candidate_median_per_iteration": 27432.5,
+          "median_paired_ratio": 1.0505846539019603,
+          "paired_ratios": [
+            1.0505846539019603,
+            1.0998927840516548,
+            1.090251489257216,
+            1.001197550154541,
+            0.9197177037039496
+          ],
+          "candidate_greater_count": 4
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 9792,
+          "candidate_median_observed": 9792,
+          "baseline_median_per_iteration": 153.0,
+          "candidate_median_per_iteration": 153.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 1418944,
+          "candidate_median_observed": 1418944,
+          "baseline_median_per_iteration": 22171.0,
+          "candidate_median_per_iteration": 22171.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 356496,
+          "candidate_median_observed": 356496,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 356352,
+          "candidate_median_observed": 356352,
+          "baseline_median_per_iteration": 5568.0,
+          "candidate_median_per_iteration": 5568.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 4015,
+          "candidate_median_observed": 4015,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 5568,
+          "candidate_median_observed": 5568,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 256,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 7168569,
+          "candidate_median_observed": 7316429,
+          "baseline_median_per_iteration": 7168569.0,
+          "candidate_median_per_iteration": 7316429.0,
+          "median_paired_ratio": 1.1246607846277907,
+          "paired_ratios": [
+            1.1246607846277907,
+            0.87261502260772,
+            1.2366138064712786,
+            1.1629943034671428,
+            0.8275670475756862
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 36881,
+          "candidate_median_observed": 36881,
+          "baseline_median_per_iteration": 36881.0,
+          "candidate_median_per_iteration": 36881.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 5689291,
+          "candidate_median_observed": 5689291,
+          "baseline_median_per_iteration": 5689291.0,
+          "candidate_median_per_iteration": 5689291.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 1425552,
+          "candidate_median_observed": 1425552,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 1425408,
+          "candidate_median_observed": 1425408,
+          "baseline_median_per_iteration": 1425408.0,
+          "candidate_median_per_iteration": 1425408.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 1038565,
+          "candidate_median_observed": 1038565,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 1425408,
+          "candidate_median_observed": 1425408,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 256,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 26023506,
+          "candidate_median_observed": 25194083,
+          "baseline_median_per_iteration": 6505876.5,
+          "candidate_median_per_iteration": 6298520.75,
+          "median_paired_ratio": 1.0006405023256995,
+          "paired_ratios": [
+            1.0492231486878159,
+            0.9681279301874236,
+            1.0006405023256995,
+            1.0430978995225864,
+            0.8755079255400794
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 147524,
+          "candidate_median_observed": 147524,
+          "baseline_median_per_iteration": 36881.0,
+          "candidate_median_per_iteration": 36881.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 22757164,
+          "candidate_median_observed": 22757164,
+          "baseline_median_per_iteration": 5689291.0,
+          "candidate_median_per_iteration": 5689291.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 5701776,
+          "candidate_median_observed": 5701776,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 5701632,
+          "candidate_median_observed": 5701632,
+          "baseline_median_per_iteration": 1425408.0,
+          "candidate_median_per_iteration": 1425408.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 1038565,
+          "candidate_median_observed": 1038565,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 1425408,
+          "candidate_median_observed": 1425408,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 0,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 1329,
+          "candidate_median_observed": 3379,
+          "baseline_median_per_iteration": 1329.0,
+          "candidate_median_per_iteration": 3379.0,
+          "median_paired_ratio": 2.073006134969325,
+          "paired_ratios": [
+            0.968,
+            4.163793103448276,
+            2.073006134969325,
+            0.7243697478991596,
+            2.325056433408578
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 1,
+          "candidate_median_observed": 1,
+          "baseline_median_per_iteration": 1.0,
+          "candidate_median_per_iteration": 1.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": 48.0,
+          "candidate_median_per_iteration": 48.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": 48.0,
+          "candidate_median_per_iteration": 48.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 28,
+          "candidate_median_observed": 28,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 0,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 6489,
+          "candidate_median_observed": 6679,
+          "baseline_median_per_iteration": 101.390625,
+          "candidate_median_per_iteration": 104.359375,
+          "median_paired_ratio": 1.0323029366306027,
+          "paired_ratios": [
+            1.0323029366306027,
+            1.0696509863429438,
+            0.9616273693943597,
+            1.0820067534973468,
+            0.8792357068219138
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 64,
+          "candidate_median_observed": 64,
+          "baseline_median_per_iteration": 1.0,
+          "candidate_median_per_iteration": 1.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": 48.0,
+          "candidate_median_per_iteration": 48.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": 48.0,
+          "candidate_median_per_iteration": 48.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 28,
+          "candidate_median_observed": 28,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 1,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 24639,
+          "candidate_median_observed": 33177,
+          "baseline_median_per_iteration": 24639.0,
+          "candidate_median_per_iteration": 33177.0,
+          "median_paired_ratio": 1.272123986727708,
+          "paired_ratios": [
+            1.695158082714396,
+            1.4106467111696925,
+            0.9922210467359512,
+            1.2210160351922803,
+            1.272123986727708
+          ],
+          "candidate_greater_count": 4
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 172,
+          "candidate_median_observed": 172,
+          "baseline_median_per_iteration": 172.0,
+          "candidate_median_per_iteration": 172.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 12048,
+          "candidate_median_observed": 12048,
+          "baseline_median_per_iteration": 12048.0,
+          "candidate_median_per_iteration": 12048.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 3156,
+          "candidate_median_observed": 3156,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": 3072.0,
+          "candidate_median_per_iteration": 3072.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 2383,
+          "candidate_median_observed": 2383,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 1,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 1146991,
+          "candidate_median_observed": 1270253,
+          "baseline_median_per_iteration": 17921.734375,
+          "candidate_median_per_iteration": 19847.703125,
+          "median_paired_ratio": 1.0653701497841424,
+          "paired_ratios": [
+            1.2435502441467143,
+            1.0771694214876033,
+            1.0653701497841424,
+            0.9972885576259971,
+            1.0433829430188175
+          ],
+          "candidate_greater_count": 4
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 11008,
+          "candidate_median_observed": 11008,
+          "baseline_median_per_iteration": 172.0,
+          "candidate_median_per_iteration": 172.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 771072,
+          "candidate_median_observed": 771072,
+          "baseline_median_per_iteration": 12048.0,
+          "candidate_median_per_iteration": 12048.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 196692,
+          "candidate_median_observed": 196692,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 196608,
+          "candidate_median_observed": 196608,
+          "baseline_median_per_iteration": 3072.0,
+          "candidate_median_per_iteration": 3072.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 2383,
+          "candidate_median_observed": 2383,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 256,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 4616284,
+          "candidate_median_observed": 4589226,
+          "baseline_median_per_iteration": 4616284.0,
+          "candidate_median_per_iteration": 4589226.0,
+          "median_paired_ratio": 0.9941385755295818,
+          "paired_ratios": [
+            1.1429204360868086,
+            0.86861567574874,
+            1.20901394793306,
+            0.896313591983556,
+            0.9941385755295818
+          ],
+          "candidate_greater_count": 2
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 43020,
+          "candidate_median_observed": 43020,
+          "baseline_median_per_iteration": 43020.0,
+          "candidate_median_per_iteration": 43020.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 3231528,
+          "candidate_median_observed": 3231528,
+          "baseline_median_per_iteration": 3231528.0,
+          "candidate_median_per_iteration": 3231528.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 786524,
+          "candidate_median_observed": 786524,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 786432,
+          "candidate_median_observed": 786432,
+          "baseline_median_per_iteration": 786432.0,
+          "candidate_median_per_iteration": 786432.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 639637,
+          "candidate_median_observed": 639637,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 786432,
+          "candidate_median_observed": 786432,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 256,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 17251527,
+          "candidate_median_observed": 17589054,
+          "baseline_median_per_iteration": 4312881.75,
+          "candidate_median_per_iteration": 4397263.5,
+          "median_paired_ratio": 1.0202137309012853,
+          "paired_ratios": [
+            1.0847857221409127,
+            1.105457099536754,
+            1.0200748679406506,
+            1.0202137309012853,
+            0.9701776615879272
+          ],
+          "candidate_greater_count": 4
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 172080,
+          "candidate_median_observed": 172080,
+          "baseline_median_per_iteration": 43020.0,
+          "candidate_median_per_iteration": 43020.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 12926112,
+          "candidate_median_observed": 12926112,
+          "baseline_median_per_iteration": 3231528.0,
+          "candidate_median_per_iteration": 3231528.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 3145820,
+          "candidate_median_observed": 3145820,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 3145728,
+          "candidate_median_observed": 3145728,
+          "baseline_median_per_iteration": 786432.0,
+          "candidate_median_per_iteration": 786432.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 639637,
+          "candidate_median_observed": 639637,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 786432,
+          "candidate_median_observed": 786432,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    }
+  ],
+  "optimization_claimed": false,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false
+}

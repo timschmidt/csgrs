@@ -1,0 +1,17 @@
+{
+  "csgrs": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v2/release/deps/libcsgrs.rlib",
+    "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libcsgrs.rlib",
+    "sha256": "c855ffd5c56d1dc858623ff9bef442c3bcc54e54c12259bb85c39dc1dad0f3a3"
+  },
+  "hypermesh": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v2/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+    "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+    "sha256": "c5c8ac708dd2c9b0fa6b6b4e113fafa4bce8bee81c2f91180cb7ca9a71debf1e"
+  },
+  "hyperlattice": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v2/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib",
+    "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+    "sha256": "8ca44281f35782993a6798ce55a8d87ff8cc784dd5df74d9bef78bb42eb3e45f"
+  }
+}

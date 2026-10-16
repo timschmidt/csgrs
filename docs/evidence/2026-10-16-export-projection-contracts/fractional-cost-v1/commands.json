@@ -1,0 +1,97 @@
+[
+  {
+    "name": "compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "-D",
+      "warnings",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v2/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-export-projection-contracts/fractional_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/compile/fractional-cost"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3833140288479626,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/compile",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0dff37d2af9f6eb6f3d735317e58462b13aa283c184511e83cf572f5539e8e32"
+  },
+  {
+    "name": "repeat-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/compile/fractional-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.014388574287295341,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-0",
+    "stdout_sha256": "da4718167f73296d312137ea7d95b2c0c7c79361e2ee790b5724e1ba806b639f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "46ae804faabe5206b3e066032a3525878851d6db9b4f74df94f71d01d46c0c4a"
+  },
+  {
+    "name": "repeat-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/compile/fractional-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.013974082190543413,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-1",
+    "stdout_sha256": "efd5fb3ee93e71f0ee0f95337429cadf2fbab2987e47d88f735eae594c11bec6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0d91215c06dc4b0ace503e03ae30018b9564378a2fe7b876c55af404fd1b6a22"
+  },
+  {
+    "name": "repeat-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/compile/fractional-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.014137620106339455,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-2",
+    "stdout_sha256": "b36097e7a0ae8c3ef91e18de242ca5bf38f3bdadf84b4306eb6225f5d084f137",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "83fe58bb49fc944948a40894ec9884e6fc7e3646e525000d0e6054a4d4370c23"
+  },
+  {
+    "name": "repeat-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/compile/fractional-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-3"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.014885618817061186,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-3",
+    "stdout_sha256": "8cb6d8eebaf038cbc5ac97a32b4924c317b9390bc23878c200e031bc84cafa1e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d90b690c2e1af0d16de4e83f9351a489d14d1be3f3651849729f66cf4b7a1c4a"
+  },
+  {
+    "name": "repeat-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/compile/fractional-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-4"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.014020138420164585,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-4",
+    "stdout_sha256": "f3a25e80423dfa469ce3dd288cce67071e41a0d7b152c152d034fa6924234ed4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6cf85985d69a0d05972a81e1d12060957237aac1ac007a8bca2a809613065397"
+  }
+]

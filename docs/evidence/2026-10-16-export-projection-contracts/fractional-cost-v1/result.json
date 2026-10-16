@@ -1,0 +1,134 @@
+{
+  "complete": true,
+  "runtime_processes": 5,
+  "sample_rows": 40,
+  "library_inputs_unchanged": true,
+  "all_repeated_complete_outputs_equal": true,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/compile/fractional-cost",
+    "sha256": "cc2b7b0f174ec369792cf4d37005f0bb3ea594f04ef37e0373f5a8428a03d4df",
+    "bytes": 8812976
+  },
+  "outputs": {
+    "obj-fractional-extremes.txt": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-0/obj-fractional-extremes.txt",
+      "sha256": "cafd2592539dc08321db041772eac120e2e5670b6bb794744156f8c24b0d723b",
+      "bytes": 3184
+    },
+    "ascii-fractional.txt": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-0/ascii-fractional.txt",
+      "sha256": "b6ff7cd2a15f3cefc3cce183ee4f6e2b8114c9953dd25241a477d503aba61e79",
+      "bytes": 498
+    },
+    "ascii-minimum-f32.txt": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-0/ascii-minimum-f32.txt",
+      "sha256": "65cf7cda0340516529b41228fc95ff076682320019bf217641b5c779b3f02992",
+      "bytes": 489
+    },
+    "obj-ordinary-cube.txt": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/fractional-cost-v1/repeat-0/obj-ordinary-cube.txt",
+      "sha256": "4c0985b32c7634dd86861122b73b20d7f73730fcdcfe345a443625877cedb68e",
+      "bytes": 1028
+    }
+  },
+  "summaries": [
+    {
+      "fixture": "ascii-fractional",
+      "phase": "first",
+      "observations": 5,
+      "median_ns_per_export": 7490.0,
+      "allocation_calls_per_export": 17.0,
+      "allocated_bytes_per_export": 1944.0,
+      "retained_bytes_per_export": 560.0,
+      "maximum_additional_live_bytes_observed": 692,
+      "output_bytes": 498,
+      "output_capacity": 560
+    },
+    {
+      "fixture": "ascii-fractional",
+      "phase": "warm",
+      "observations": 5,
+      "median_ns_per_export": 3353.21875,
+      "allocation_calls_per_export": 17.0,
+      "allocated_bytes_per_export": 1944.0,
+      "retained_bytes_per_export": 560.0,
+      "maximum_additional_live_bytes_observed": 35972,
+      "output_bytes": 498,
+      "output_capacity": 560
+    },
+    {
+      "fixture": "ascii-minimum-f32",
+      "phase": "first",
+      "observations": 5,
+      "median_ns_per_export": 6669.0,
+      "allocation_calls_per_export": 19.0,
+      "allocated_bytes_per_export": 2504.0,
+      "retained_bytes_per_export": 688.0,
+      "maximum_additional_live_bytes_observed": 944,
+      "output_bytes": 489,
+      "output_capacity": 688
+    },
+    {
+      "fixture": "ascii-minimum-f32",
+      "phase": "warm",
+      "observations": 5,
+      "median_ns_per_export": 3265.5625,
+      "allocation_calls_per_export": 19.0,
+      "allocated_bytes_per_export": 2504.0,
+      "retained_bytes_per_export": 688.0,
+      "maximum_additional_live_bytes_observed": 44288,
+      "output_bytes": 489,
+      "output_capacity": 688
+    },
+    {
+      "fixture": "obj-fractional-extremes",
+      "phase": "first",
+      "observations": 5,
+      "median_ns_per_export": 196897.0,
+      "allocation_calls_per_export": 26.0,
+      "allocated_bytes_per_export": 19831.0,
+      "retained_bytes_per_export": 5010.0,
+      "maximum_additional_live_bytes_observed": 6857,
+      "output_bytes": 3184,
+      "output_capacity": 5010
+    },
+    {
+      "fixture": "obj-fractional-extremes",
+      "phase": "warm",
+      "observations": 5,
+      "median_ns_per_export": 135034.8125,
+      "allocation_calls_per_export": 26.0,
+      "allocated_bytes_per_export": 19831.0,
+      "retained_bytes_per_export": 5010.0,
+      "maximum_additional_live_bytes_observed": 322487,
+      "output_bytes": 3184,
+      "output_capacity": 5010
+    },
+    {
+      "fixture": "obj-ordinary-cube",
+      "phase": "first",
+      "observations": 5,
+      "median_ns_per_export": 15348.0,
+      "allocation_calls_per_export": 52.0,
+      "allocated_bytes_per_export": 5636.0,
+      "retained_bytes_per_export": 1536.0,
+      "maximum_additional_live_bytes_observed": 1756,
+      "output_bytes": 1028,
+      "output_capacity": 1536
+    },
+    {
+      "fixture": "obj-ordinary-cube",
+      "phase": "warm",
+      "observations": 5,
+      "median_ns_per_export": 8995.78125,
+      "allocation_calls_per_export": 52.0,
+      "allocated_bytes_per_export": 5636.0,
+      "retained_bytes_per_export": 1536.0,
+      "maximum_additional_live_bytes_observed": 98524,
+      "output_bytes": 1028,
+      "output_capacity": 1536
+    }
+  ],
+  "matched_baseline_comparison": false,
+  "optimization_claimed": false
+}

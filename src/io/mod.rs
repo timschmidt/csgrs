@@ -75,7 +75,7 @@ pub enum IoError {
         format: &'static str,
         detail: String,
     },
-    /// A modeling constructor failed while importing a format record.
+    /// A native modeling operation or validation failed at a format boundary.
     #[error("{format} construction failed: {source}")]
     Construction {
         format: &'static str,
@@ -300,6 +300,34 @@ pub(crate) fn finite_f64(
             target: "f64",
         },
     )
+}
+
+/// Exact decimal spelling of an already finite binary64 boundary value.
+///
+/// Retain the legacy 17 fractional digits whenever sufficient. A dyadic
+/// significand times 2^e needs at most -e fractional decimal digits after its
+/// trailing binary zeros are removed; binary64 bounds this precision at 1074.
+#[cfg(any(feature = "obj-io", feature = "stl-io"))]
+pub(crate) fn decimal_f64(value: f64) -> impl std::fmt::Display {
+    struct Decimal(f64);
+
+    impl std::fmt::Display for Decimal {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            let bits = self.0.to_bits();
+            let exponent = ((bits >> 52) & 0x7ff) as i32;
+            let significand =
+                (bits & ((1_u64 << 52) - 1)) | if exponent == 0 { 0 } else { 1_u64 << 52 };
+            let fractional_bits = if significand == 0 {
+                0
+            } else {
+                1075 - exponent.max(1) - significand.trailing_zeros() as i32
+            };
+            let precision = fractional_bits.max(17) as usize;
+            write!(f, "{:.precision$}", self.0)
+        }
+    }
+
+    Decimal(value)
 }
 
 #[cfg(any(feature = "stl-io", feature = "dxf-io"))]

@@ -1,0 +1,12 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+    "sha256": "8a82baaf6a0f860ad6ae7c00a65644fcee29a2fc996e16f4262ffc2e1bcd504b",
+    "bytes": 8959376
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+    "sha256": "13b70fa9bf231e5de7de4fd293db29a892ffae8df33c08ee239750bf3482a508",
+    "bytes": 8980400
+  }
+}

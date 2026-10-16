@@ -1,0 +1,1042 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-source-v1/Cargo.toml",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 10.626942468807101,
+    "binaries": {},
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d4ff24cb288e34965290348d0ebc7e8c14e536130b40acad6035d76d67f12ebc"
+  },
+  {
+    "name": "minimal-regression",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "obj-io,stl-io",
+      "--test",
+      "export_projection_contracts",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 149.07755476003513,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/export_projection_contracts-834ea5a053540352": {
+        "sha256": "a9cdcaf0a1379693ee0cd18301530f53ee7aa1f3b9faa00a2894de6bbaf70556",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/a9cdcaf0a1379693ee0cd18301530f53ee7aa1f3b9faa00a2894de6bbaf70556/export_projection_contracts-834ea5a053540352",
+        "bytes": 6875320
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "d76ab6caadf4623b1e59477c2bcdda8e0273b9f7068337041be273fa049372af",
+    "stderr_sha256": "b245c7ef70786d822c7823ff821875236f9fceb4439dd89a01ab46dbb283b07a",
+    "resources_sha256": "5f1bf2669d9dc21adae6a8bf2e388c4d5f4313ab9559c10d113575c70eea9e28"
+  },
+  {
+    "name": "compile-format",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v1/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v1/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v1/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/format-candidate-v1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.6792168440297246,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/format-candidate-v1": {
+        "sha256": "0ddac2ff3a266e513a67a774b7f95981fa87e5f5a3848ca3186b13546ce27095",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/0ddac2ff3a266e513a67a774b7f95981fa87e5f5a3848ca3186b13546ce27095/format-candidate-v1",
+        "bytes": 12931296
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9e192af3470c65f659955b12a1b66281ed331109bdbe49d14aade556785d391a"
+  },
+  {
+    "name": "format-probe",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/format-candidate-v1",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.21123809134587646,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/format-candidate-v1": {
+        "sha256": "0ddac2ff3a266e513a67a774b7f95981fa87e5f5a3848ca3186b13546ce27095",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/0ddac2ff3a266e513a67a774b7f95981fa87e5f5a3848ca3186b13546ce27095/format-candidate-v1",
+        "bytes": 12931296
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "80f3541c367fba26e80c40daee8a6e9e95103d0616cc85df9ca64bca9d93017b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "14c319f0ab8df58401988b96a06943214c5c1690f28d749a1f40b3022263205e"
+  },
+  {
+    "name": "compile-topology",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v1/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v1/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v1/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/stl-topology-v1/probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/topology-candidate-v1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.5548238251358271,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/topology-candidate-v1": {
+        "sha256": "df047054ba403e82119a234b048bc9e16be76e161302c728e23ec08a5cf67edb",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/df047054ba403e82119a234b048bc9e16be76e161302c728e23ec08a5cf67edb/topology-candidate-v1",
+        "bytes": 11165736
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c78b7dae8341948ba81be2dce7f938e47415b602472b97cc342cf9f4c22d4108"
+  },
+  {
+    "name": "topology-probe",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/topology-candidate-v1",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.20896640606224537,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/topology-candidate-v1": {
+        "sha256": "df047054ba403e82119a234b048bc9e16be76e161302c728e23ec08a5cf67edb",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/df047054ba403e82119a234b048bc9e16be76e161302c728e23ec08a5cf67edb/topology-candidate-v1",
+        "bytes": 11165736
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "2b7e1965291ed859b1a8c2c6aaf3c2fedb329b77504af69c58dfbb3498367698",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "673858cda20f01da8a8f2031435d81953866156ed2df20b644c93661170ce7b9"
+  },
+  {
+    "name": "root-all",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 483.43447858281434,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/bounds_failures-65b1d35d217e46d4": {
+        "sha256": "a2e8b1c568cadf86841bc74ee8ee632e85b39ad6c599fe9281ccb76c81fc0a69",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/a2e8b1c568cadf86841bc74ee8ee632e85b39ad6c599fe9281ccb76c81fc0a69/bounds_failures-65b1d35d217e46d4",
+        "bytes": 34137272
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/curve_metaball_failures-d27370f0b0e5f990": {
+        "sha256": "9a8081ed790186be21b15ac8980e83a2c6e516139a58a0ae4b70279bb083ee8b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/9a8081ed790186be21b15ac8980e83a2c6e516139a58a0ae4b70279bb083ee8b/curve_metaball_failures-d27370f0b0e5f990",
+        "bytes": 32969792
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/sampled_profile_failures-1e978d3da16ca610": {
+        "sha256": "cd7a7d3291ae796ede312d0b581f063c4712b279a7d5ff93c7b76aedfb0c6ec6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/cd7a7d3291ae796ede312d0b581f063c4712b279a7d5ff93c7b76aedfb0c6ec6/sampled_profile_failures-1e978d3da16ca610",
+        "bytes": 33351960
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/mesh_boolean_context-914bbfe568471b47": {
+        "sha256": "47f05cc4fbc99a63aa5bb847da4cc72d41b9d7984d0dbc89b7f55989eee89928",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/47f05cc4fbc99a63aa5bb847da4cc72d41b9d7984d0dbc89b7f55989eee89928/mesh_boolean_context-914bbfe568471b47",
+        "bytes": 20737488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/strict_drilled_workflows-84fb41c10d127f23": {
+        "sha256": "c6b81eefe3faf0803ca4e45f96ac09156d09eb5d46ef8b68ffdec6e38912045c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/c6b81eefe3faf0803ca4e45f96ac09156d09eb5d46ef8b68ffdec6e38912045c/strict_drilled_workflows-84fb41c10d127f23",
+        "bytes": 20827224
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/wasm_certainty-4c94a4a83c71928e": {
+        "sha256": "f19d317fac7df9b4d7b8f9b703c6c870883782470c9723dc359672ae40fc155c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/f19d317fac7df9b4d7b8f9b703c6c870883782470c9723dc359672ae40fc155c/wasm_certainty-4c94a4a83c71928e",
+        "bytes": 32056592
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/generated_benchmark_corpus-3c1f1fde5d37996c": {
+        "sha256": "e3bd8d6e69a31eeff88adcd8fa7bc74d26b2ae03c1e81c86ddd6023b47c5c47d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/e3bd8d6e69a31eeff88adcd8fa7bc74d26b2ae03c1e81c86ddd6023b47c5c47d/generated_benchmark_corpus-3c1f1fde5d37996c",
+        "bytes": 19057808
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/text_contracts-84d126534db53fda": {
+        "sha256": "f756c85f07b91692af6f04e4ee89304cbd44e6f8181ce0833ab0cb7e6d74e5ad",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/f756c85f07b91692af6f04e4ee89304cbd44e6f8181ce0833ab0cb7e6d74e5ad/text_contracts-84d126534db53fda",
+        "bytes": 34079448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/competitive-185cd4c877423fbe": {
+        "sha256": "684aa1ab5603543d270cdd47a6434531689c42b06a1b21e3aac77c903b584355",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/684aa1ab5603543d270cdd47a6434531689c42b06a1b21e3aac77c903b584355/competitive-185cd4c877423fbe",
+        "bytes": 21062880
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/batch_common_cells-a927672f36173761": {
+        "sha256": "6ffe7c42056eaabe0bab942cd3e8e1dc5932b4a845555840fb6316bfb39b7f74",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/6ffe7c42056eaabe0bab942cd3e8e1dc5932b4a845555840fb6316bfb39b7f74/batch_common_cells-a927672f36173761",
+        "bytes": 20543328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/adversarial_deep-521173baf42fc07b": {
+        "sha256": "f5c215f013a3125c022cdffe3823c19240f55d4dd5585893eaa028a5eefd005c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/f5c215f013a3125c022cdffe3823c19240f55d4dd5585893eaa028a5eefd005c/adversarial_deep-521173baf42fc07b",
+        "bytes": 33911376
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/slice_projection_contract-b55baaad948b2b8d": {
+        "sha256": "1847fb78c030998c8c52039459acc5c676d21fc2258d4abc7f044ecfd530752b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/1847fb78c030998c8c52039459acc5c676d21fc2258d4abc7f044ecfd530752b/slice_projection_contract-b55baaad948b2b8d",
+        "bytes": 33986968
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/export_projection_contracts-ded2f815cac1de97": {
+        "sha256": "c6d1df5dc76bdde2891369527d6a127e1f62896625fab4d75c2e5868cf835b52",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/c6d1df5dc76bdde2891369527d6a127e1f62896625fab4d75c2e5868cf835b52/export_projection_contracts-ded2f815cac1de97",
+        "bytes": 21085512
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/adversarial_fixtures-eb5cce8eab7e81ab": {
+        "sha256": "989ab95029b1fd88cb449c11b2a5d2fc7c878d9b57f8894adb18a109787663f8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/989ab95029b1fd88cb449c11b2a5d2fc7c878d9b57f8894adb18a109787663f8/adversarial_fixtures-eb5cce8eab7e81ab",
+        "bytes": 1112728
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/metaball_failures-d85a244280836e13": {
+        "sha256": "f4c760db3bb6b55bde9d46774996eace023e70fe27f2d39f147798c4b5142f63",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/f4c760db3bb6b55bde9d46774996eace023e70fe27f2d39f147798c4b5142f63/metaball_failures-d85a244280836e13",
+        "bytes": 20627336
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/rounded_rectangle_fidelity-8f7195511dbb1c27": {
+        "sha256": "0ebf52d96eec5319f4bf861d1c4e64c78f67033a217b61d1f6e0c168013177c3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/0ebf52d96eec5319f4bf861d1c4e64c78f67033a217b61d1f6e0c168013177c3/rounded_rectangle_fidelity-8f7195511dbb1c27",
+        "bytes": 36015920
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/curve_metaball_workloads-66d29e6564cd95ad": {
+        "sha256": "fb8bfd64ec7741215cd0a491c5930ef77455d07e3d9ca688a5d794b204cad252",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/fb8bfd64ec7741215cd0a491c5930ef77455d07e3d9ca688a5d794b204cad252/curve_metaball_workloads-66d29e6564cd95ad",
+        "bytes": 31784584
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/planar_operation_failures-21febc1e6bde631d": {
+        "sha256": "d30c3dc013af3e924ea7d72d69a3a0901ae740616f9e77c34a42cffc02fa861f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/d30c3dc013af3e924ea7d72d69a3a0901ae740616f9e77c34a42cffc02fa861f/planar_operation_failures-21febc1e6bde631d",
+        "bytes": 33125792
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/exact_linear_modeling-5d0a48a07e0f162b": {
+        "sha256": "7dded574022e78b8c145c6b4e91acc4531d576263b9a21f62ecdad10a7372ad2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/7dded574022e78b8c145c6b4e91acc4531d576263b9a21f62ecdad10a7372ad2/exact_linear_modeling-5d0a48a07e0f162b",
+        "bytes": 32315456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/stl_import_contracts-1972ae5b143c3f00": {
+        "sha256": "7111d9d7e6e6ae1a04c73b01a88c8d738fea26c756c17d74d864d19a4fda40f2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/7111d9d7e6e6ae1a04c73b01a88c8d738fea26c756c17d74d864d19a4fda40f2/stl_import_contracts-1972ae5b143c3f00",
+        "bytes": 20588848
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/csgrs-3c5a74bdc7539294": {
+        "sha256": "0590fb1bdab75c32abe26bcf8b2c6f808f42eb57b7fc29ea470dad1bb8659666",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/0590fb1bdab75c32abe26bcf8b2c6f808f42eb57b7fc29ea470dad1bb8659666/csgrs-3c5a74bdc7539294",
+        "bytes": 39773936
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/metaball_workloads-fdfd90c45629d15d": {
+        "sha256": "c9d977ae1365b4beaef186cab7e6de6dc0da369da16c96a83ff5bbcb1cd41e8b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/c9d977ae1365b4beaef186cab7e6de6dc0da369da16c96a83ff5bbcb1cd41e8b/metaball_workloads-fdfd90c45629d15d",
+        "bytes": 19039648
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/readme_render_regression-241ede70811c95bb": {
+        "sha256": "4ac182dc0e589bc62c8257ecaeee3d2ee10dc4ae232919be39b1261009acce4e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/4ac182dc0e589bc62c8257ecaeee3d2ee10dc4ae232919be39b1261009acce4e/readme_render_regression-241ede70811c95bb",
+        "bytes": 1151112
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/distribution_contracts-555e8fcfefd73180": {
+        "sha256": "de517bf3a0a0d01786c92b68e5e2f93cb8afd6051ae1850677afefe33909b172",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/de517bf3a0a0d01786c92b68e5e2f93cb8afd6051ae1850677afefe33909b172/distribution_contracts-555e8fcfefd73180",
+        "bytes": 21055760
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/polyhedral_construction-5ca791f19bc691fe": {
+        "sha256": "8e0fe3ee86f0bece4c6271c9f58e2bb72ef88df10b1e2650dd469a27a063e993",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/8e0fe3ee86f0bece4c6271c9f58e2bb72ef88df10b1e2650dd469a27a063e993/polyhedral_construction-5ca791f19bc691fe",
+        "bytes": 20755328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/curve_constructor_failures-f7cc43e145ac9696": {
+        "sha256": "b42619b6eec8938e20b1f4a0650cae0a4a0267b7d2622633ec46f13a1087d0c2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/b42619b6eec8938e20b1f4a0650cae0a4a0267b7d2622633ec46f13a1087d0c2/curve_constructor_failures-f7cc43e145ac9696",
+        "bytes": 32999456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/adapter_boolean_failures-8867e9a3af41b5b5": {
+        "sha256": "2251f1650cfe0b1f28bc6c4ef926003c160ce1b749d1d8d7e5f1b77b9abe5cdf",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/2251f1650cfe0b1f28bc6c4ef926003c160ce1b749d1d8d7e5f1b77b9abe5cdf/adapter_boolean_failures-8867e9a3af41b5b5",
+        "bytes": 20632384
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/native_queries-b33ec052b7501c8a": {
+        "sha256": "adad83dd2dad063ffacfc3b7d0538cdb6e37abdd745a68bc661ea3906571c8a7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/adad83dd2dad063ffacfc3b7d0538cdb6e37abdd745a68bc661ea3906571c8a7/native_queries-b33ec052b7501c8a",
+        "bytes": 20885008
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/empty_composition-916811c3b9113a9e": {
+        "sha256": "9495301e212340bc80636db81477a74ef4104f445d212481a6fe1180c7ec8ecc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/9495301e212340bc80636db81477a74ef4104f445d212481a6fe1180c7ec8ecc/empty_composition-916811c3b9113a9e",
+        "bytes": 20823912
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/minkowski_contracts-0128f2ac1f93f880": {
+        "sha256": "b206cd16323304a2688826b460ad599da60237223795f1d697b2ee18272a89a5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/b206cd16323304a2688826b460ad599da60237223795f1d697b2ee18272a89a5/minkowski_contracts-0128f2ac1f93f880",
+        "bytes": 21385432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/geometry_context-f3d29f7d6dc94528": {
+        "sha256": "7eb08a44dfc90db0ddabcddb3e3a49453fbc352abeaf61057d331d9788709e7a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/7eb08a44dfc90db0ddabcddb3e3a49453fbc352abeaf61057d331d9788709e7a/geometry_context-f3d29f7d6dc94528",
+        "bytes": 41705984
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/transform_failures-21eb23e9828f9466": {
+        "sha256": "01f6ad93a77f9a4d545da3be5121547e7dedff91c8fdd81ea96921f42f31bb62",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/01f6ad93a77f9a4d545da3be5121547e7dedff91c8fdd81ea96921f42f31bb62/transform_failures-21eb23e9828f9466",
+        "bytes": 20765984
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/sdf_failures-70ac7c65f6b4d210": {
+        "sha256": "b7168f69c1be1f6d1a72c56ab3ee9e39b567f1b3c852e21dc36a96dd28e686f5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/b7168f69c1be1f6d1a72c56ab3ee9e39b567f1b3c852e21dc36a96dd28e686f5/sdf_failures-70ac7c65f6b4d210",
+        "bytes": 21014784
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/adversarial_extrusions-03eb6390b46717d7": {
+        "sha256": "401bfb53be0528cdb79f2cc87f9f20f52ed4b7a292a599f5d8f297cc81a52a5e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/401bfb53be0528cdb79f2cc87f9f20f52ed4b7a292a599f5d8f297cc81a52a5e/adversarial_extrusions-03eb6390b46717d7",
+        "bytes": 32565976
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/metaballs_diagnostics-0ceadacbf3d3f4d1": {
+        "sha256": "14f896ebcb17119f4223de6d44c273044670d738f71237defa47eee87faa1d8e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/14f896ebcb17119f4223de6d44c273044670d738f71237defa47eee87faa1d8e/metaballs_diagnostics-0ceadacbf3d3f4d1",
+        "bytes": 18970280
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/obj_export_failures-cd495c9311a295fd": {
+        "sha256": "2532cbc7b039c71ab9f5b363d77df64b897bc90c4c78d3fd37cfd488861a9d9d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/2532cbc7b039c71ab9f5b363d77df64b897bc90c4c78d3fd37cfd488861a9d9d/obj_export_failures-cd495c9311a295fd",
+        "bytes": 20672416
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/solid_cache-4b39500f97650a56": {
+        "sha256": "74a4e85661e81082d92b422ebdf6480381b14e9b5c486916cc4621a43b9a0cd7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/74a4e85661e81082d92b422ebdf6480381b14e9b5c486916cc4621a43b9a0cd7/solid_cache-4b39500f97650a56",
+        "bytes": 34378016
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/hilbert_trimming-a298c6dfff13a0d9": {
+        "sha256": "0288f5ae8a1a95cdd12943d8401492d82bfc16bb89acfa856f4135a2bee93e5b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/0288f5ae8a1a95cdd12943d8401492d82bfc16bb89acfa856f4135a2bee93e5b/hilbert_trimming-a298c6dfff13a0d9",
+        "bytes": 32855384
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/adversarial_stress-7115bbec9298381e": {
+        "sha256": "3cb274b5d5f95b251d0506957972ae7b92ec45e653c5561b3883bd631a73e3b1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/3cb274b5d5f95b251d0506957972ae7b92ec45e653c5561b3883bd631a73e3b1/adversarial_stress-7115bbec9298381e",
+        "bytes": 33707968
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/adversarial-61fa74ccbd896935": {
+        "sha256": "9d4a551a50a2dd28866335a855349a026b9b3b2390a2e770512c67b3121862fe",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/9d4a551a50a2dd28866335a855349a026b9b3b2390a2e770512c67b3121862fe/adversarial-61fa74ccbd896935",
+        "bytes": 34233856
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/sdf_tpms_diagnostics-24970cc75f8a8512": {
+        "sha256": "c69cd42b092be71db6390324d4b78572c86e0c62a062a7625ab779bdf5126dc5",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/c69cd42b092be71db6390324d4b78572c86e0c62a062a7625ab779bdf5126dc5/sdf_tpms_diagnostics-24970cc75f8a8512",
+        "bytes": 21213368
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/primitive_failures-62bfc794561dcdc3": {
+        "sha256": "3b53b83752af0109f278b75101d910738888e8c523a941009f847e8541e5f4f4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/3b53b83752af0109f278b75101d910738888e8c523a941009f847e8541e5f4f4/primitive_failures-62bfc794561dcdc3",
+        "bytes": 20833840
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/readme-1992b521cbd1aa62": {
+        "sha256": "5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145/readme-1992b521cbd1aa62",
+        "bytes": 1153328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/exact_path_failures-d29490301ca0c150": {
+        "sha256": "c9f0a0ee473f77873c73ae2c9332bc94fe3e1ae360346f0b205c7ef61dc2c492",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/c9f0a0ee473f77873c73ae2c9332bc94fe3e1ae360346f0b205c7ef61dc2c492/exact_path_failures-d29490301ca0c150",
+        "bytes": 32862008
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/gear_airfoil_failures-edc7ec750765891a": {
+        "sha256": "efe3f0b99ca89fe6a69487ecc7ff0e73a4e580553aa0b336378c630d80d7fa1a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/efe3f0b99ca89fe6a69487ecc7ff0e73a4e580553aa0b336378c630d80d7fa1a/gear_airfoil_failures-edc7ec750765891a",
+        "bytes": 33075608
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "0a71ba03604374b3e5023b6f2e63a0467c66c7e66c8ee7cd3d57361cbdb5253c",
+    "stderr_sha256": "98c9fe656030377d866fea32eb715aae719aba998397604c37e9c295844e8b3b",
+    "resources_sha256": "389a0a545707138ac1cb1aeee67f81d948b1972c4c8852ec73362685d5e25402"
+  },
+  {
+    "name": "stl-only",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "stl-io",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 34.08766570407897,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/stl_import_contracts-eded9974f5c9e024": {
+        "sha256": "adf62e2b526d7c34169397674d32b76648eeb4a37cb66cfcd1f49f975bb00ad8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/adf62e2b526d7c34169397674d32b76648eeb4a37cb66cfcd1f49f975bb00ad8/stl_import_contracts-eded9974f5c9e024",
+        "bytes": 6456728
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/curve_metaball_failures-313d4f865cf1f910": {
+        "sha256": "6356ccd17e8933da09aa34fdd2b1032705c3492e563313997a2d32cd14ea6428",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/6356ccd17e8933da09aa34fdd2b1032705c3492e563313997a2d32cd14ea6428/curve_metaball_failures-313d4f865cf1f910",
+        "bytes": 1079480
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/transform_failures-032cc71f0982a385": {
+        "sha256": "dee692cca18f336e35bea590bccd93c1b7ec12c0681d9fda990d8fe4df8396be",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/dee692cca18f336e35bea590bccd93c1b7ec12c0681d9fda990d8fe4df8396be/transform_failures-032cc71f0982a385",
+        "bytes": 6641880
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/sampled_profile_failures-a33878c170c3e930": {
+        "sha256": "721e4de49eb32f9e3b178c3d0592df6a1ad2e7920511e1f492d284c65f24ee78",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/721e4de49eb32f9e3b178c3d0592df6a1ad2e7920511e1f492d284c65f24ee78/sampled_profile_failures-a33878c170c3e930",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/obj_export_failures-4737e19cf4d7af04": {
+        "sha256": "2ad9cab32d32eb0fa6e803d2a80daea595640749db4161d2e56b66dfc3f30416",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/2ad9cab32d32eb0fa6e803d2a80daea595640749db4161d2e56b66dfc3f30416/obj_export_failures-4737e19cf4d7af04",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/hilbert_trimming-1e71ed62c04119a0": {
+        "sha256": "b989b232a4d2c4e82f6a69bf63981b84672d52389f81f773ad27fa3de0bd5dc9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/b989b232a4d2c4e82f6a69bf63981b84672d52389f81f773ad27fa3de0bd5dc9/hilbert_trimming-1e71ed62c04119a0",
+        "bytes": 1079448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/solid_cache-7d648c68d023c7d0": {
+        "sha256": "b2127c95e2b2674915b53bb4d90bad18ec8476e0800979491a117288c0a39b5b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/b2127c95e2b2674915b53bb4d90bad18ec8476e0800979491a117288c0a39b5b/solid_cache-7d648c68d023c7d0",
+        "bytes": 6722048
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/minkowski_contracts-35266234b67d8874": {
+        "sha256": "c9b2f4586f63ebef2210dbe09f7976e9f41c2ce241255bf7331c10ee45a50b08",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/c9b2f4586f63ebef2210dbe09f7976e9f41c2ce241255bf7331c10ee45a50b08/minkowski_contracts-35266234b67d8874",
+        "bytes": 7182472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/gear_airfoil_failures-7f91371a77cec7a0": {
+        "sha256": "59528d106042060c6af769ab148ee4c42643104ba4a8a02ce119d3b59e4ae6bf",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/59528d106042060c6af769ab148ee4c42643104ba4a8a02ce119d3b59e4ae6bf/gear_airfoil_failures-7f91371a77cec7a0",
+        "bytes": 1079472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/native_queries-538b1f2ad6c69d25": {
+        "sha256": "2696e305eb49c089d8b86b3447ed8ce6866281b2224037901d1ea12066da5795",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/2696e305eb49c089d8b86b3447ed8ce6866281b2224037901d1ea12066da5795/native_queries-538b1f2ad6c69d25",
+        "bytes": 6724752
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/adversarial_fixtures-5988710ae4abdb56": {
+        "sha256": "30c00ee4daa7827c6590a54265f832b9c715a23f0a521f5b95990516a925471a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/30c00ee4daa7827c6590a54265f832b9c715a23f0a521f5b95990516a925471a/adversarial_fixtures-5988710ae4abdb56",
+        "bytes": 1112720
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/csgrs-903e8e7c6dd9f825": {
+        "sha256": "056257cee6139ac35f274d4f47c60f44df45585a3cef6e3cb8e594e6b662403c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/056257cee6139ac35f274d4f47c60f44df45585a3cef6e3cb8e594e6b662403c/csgrs-903e8e7c6dd9f825",
+        "bytes": 7528448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/rounded_rectangle_fidelity-71a2b397982cd8e6": {
+        "sha256": "b26156d49338380ad16afa4760c5cac53f0ef0111109619e4584bfab3f080ce9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/b26156d49338380ad16afa4760c5cac53f0ef0111109619e4584bfab3f080ce9/rounded_rectangle_fidelity-71a2b397982cd8e6",
+        "bytes": 1079496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/readme-95bc6d0252426196": {
+        "sha256": "03dea50d78528c8f1bf58628c5ef0d9cc89f1cf82f3895bf2847c08f322f2aeb",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/03dea50d78528c8f1bf58628c5ef0d9cc89f1cf82f3895bf2847c08f322f2aeb/readme-95bc6d0252426196",
+        "bytes": 1153328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/mesh_boolean_context-d8c67a8a23056906": {
+        "sha256": "bf46882df6c578b84be9994223263cf60416e4ff0db8e9c5985b5b19d6714b62",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/bf46882df6c578b84be9994223263cf60416e4ff0db8e9c5985b5b19d6714b62/mesh_boolean_context-d8c67a8a23056906",
+        "bytes": 6594592
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/empty_composition-101c56676aa21d30": {
+        "sha256": "627199d624548f4ff9c605db65e4b079321cb5c8144d046499145f13a2ba27ff",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/627199d624548f4ff9c605db65e4b079321cb5c8144d046499145f13a2ba27ff/empty_composition-101c56676aa21d30",
+        "bytes": 6671064
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/slice_projection_contract-534933246359596d": {
+        "sha256": "1a76ffa2683a7ec41b3da6b987f7bfd783843fd8b1344a729ac4294793c3d3fe",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/1a76ffa2683a7ec41b3da6b987f7bfd783843fd8b1344a729ac4294793c3d3fe/slice_projection_contract-534933246359596d",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/text_contracts-7221f666ca617e55": {
+        "sha256": "d6120b74d0fbd316c17e350996126fea40baefb1f4b866cabdd47114bbf986ee",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/d6120b74d0fbd316c17e350996126fea40baefb1f4b866cabdd47114bbf986ee/text_contracts-7221f666ca617e55",
+        "bytes": 1079432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/sdf_failures-119c6ad72d3423d5": {
+        "sha256": "5b6e4b98f2b9eca5b4c6ecad72e86a70a8403aa0a14cc36aaa842630584795b8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/5b6e4b98f2b9eca5b4c6ecad72e86a70a8403aa0a14cc36aaa842630584795b8/sdf_failures-119c6ad72d3423d5",
+        "bytes": 1079424
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/wasm_certainty-16a3193aa3e9eaec": {
+        "sha256": "41b02a6a27e60c8787efdcdc29417f7968f0ce0c44f69afaa973cc0ad86c3c2b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/41b02a6a27e60c8787efdcdc29417f7968f0ce0c44f69afaa973cc0ad86c3c2b/wasm_certainty-16a3193aa3e9eaec",
+        "bytes": 1079432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/batch_common_cells-bf0599c845fe5b6b": {
+        "sha256": "0f6107810d214aff599ba62ff2b4a4fb092c65c2ccb33ad5a68f891417fcd79c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/0f6107810d214aff599ba62ff2b4a4fb092c65c2ccb33ad5a68f891417fcd79c/batch_common_cells-bf0599c845fe5b6b",
+        "bytes": 6419584
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/adapter_boolean_failures-6f01c82e0a39aad1": {
+        "sha256": "04509561a81e8af0ac98138592b1b11e19dc0c2ac6e2d383a098f53ff456be80",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/04509561a81e8af0ac98138592b1b11e19dc0c2ac6e2d383a098f53ff456be80/adapter_boolean_failures-6f01c82e0a39aad1",
+        "bytes": 6505816
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/strict_drilled_workflows-2246de864b2e3ac1": {
+        "sha256": "ecf933f5bb55cc566cf0bd7ae0ca3a4562a31669235623ef998e256221e183b0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/ecf933f5bb55cc566cf0bd7ae0ca3a4562a31669235623ef998e256221e183b0/strict_drilled_workflows-2246de864b2e3ac1",
+        "bytes": 6653536
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/exact_path_failures-45fbe7619dd8a9e8": {
+        "sha256": "5b12515ca98f9e0aa659a69291df459c9edf127b0d210406510ef10b38b15f99",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/5b12515ca98f9e0aa659a69291df459c9edf127b0d210406510ef10b38b15f99/exact_path_failures-45fbe7619dd8a9e8",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/metaball_workloads-136a87fcf9b211fa": {
+        "sha256": "4190802c63f7fb843dc7027301bc4df95dfb6ad10220cad30fffd3638e5fd844",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/4190802c63f7fb843dc7027301bc4df95dfb6ad10220cad30fffd3638e5fd844/metaball_workloads-136a87fcf9b211fa",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/exact_linear_modeling-cce3d51d051b9e74": {
+        "sha256": "5cf170b754bc84a9a6a657e696b345f1bb87f96872c1c3cdb526780f2fb7847e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/5cf170b754bc84a9a6a657e696b345f1bb87f96872c1c3cdb526780f2fb7847e/exact_linear_modeling-cce3d51d051b9e74",
+        "bytes": 1079472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/geometry_context-062cd2b769dcf111": {
+        "sha256": "5cbaebb427cf8869659d7878247757ee2d3262915dccbcc25bf49f8c3f15446b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/5cbaebb427cf8869659d7878247757ee2d3262915dccbcc25bf49f8c3f15446b/geometry_context-062cd2b769dcf111",
+        "bytes": 7180160
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/export_projection_contracts-ba1f03e8cfdc6c71": {
+        "sha256": "3994545559499b58b182af85634f736b7d1d5bc3e2ee0a5098cd6022da0cc2fc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/3994545559499b58b182af85634f736b7d1d5bc3e2ee0a5098cd6022da0cc2fc/export_projection_contracts-ba1f03e8cfdc6c71",
+        "bytes": 6593640
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/polyhedral_construction-34113d4d7763b5ff": {
+        "sha256": "d2069c5c0e983b05d4fedd770834610d8d3a92d130ef463e3f62302264d5f7f0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/d2069c5c0e983b05d4fedd770834610d8d3a92d130ef463e3f62302264d5f7f0/polyhedral_construction-34113d4d7763b5ff",
+        "bytes": 6805392
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/readme_render_regression-8899097183941bdf": {
+        "sha256": "54ae5cd18bee57e45a4e87736816aaa462bffe35dbaf9f033b8c67bb1b8898b8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/54ae5cd18bee57e45a4e87736816aaa462bffe35dbaf9f033b8c67bb1b8898b8/readme_render_regression-8899097183941bdf",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/curve_metaball_workloads-02fd4a9396f345bd": {
+        "sha256": "37b9856003ce4e3e219c3de706558f2a37f429032fae51733f03feb2df66a3a1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/37b9856003ce4e3e219c3de706558f2a37f429032fae51733f03feb2df66a3a1/curve_metaball_workloads-02fd4a9396f345bd",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/curve_constructor_failures-d7eed7caf56e2d4b": {
+        "sha256": "f98539354530329c75a621cb1204b88a9dbb7def874d403ef11262bfe766e4ec",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/f98539354530329c75a621cb1204b88a9dbb7def874d403ef11262bfe766e4ec/curve_constructor_failures-d7eed7caf56e2d4b",
+        "bytes": 1079496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/bounds_failures-85ce66c1552f3e47": {
+        "sha256": "54f0f042a98aebf695b58c2ee1b1e7695a10dd57291a8c572b3815f03fa6c26a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/54f0f042a98aebf695b58c2ee1b1e7695a10dd57291a8c572b3815f03fa6c26a/bounds_failures-85ce66c1552f3e47",
+        "bytes": 6578088
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/primitive_failures-6e2c5cadef6830be": {
+        "sha256": "e57241a97c861ba3f2e8d77693eace85b1918e0217e01128682f42aec819ca6a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/e57241a97c861ba3f2e8d77693eace85b1918e0217e01128682f42aec819ca6a/primitive_failures-6e2c5cadef6830be",
+        "bytes": 6656800
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/metaball_failures-6a7d5502dc114fe5": {
+        "sha256": "c5d7f2fbcaf6e909268cb8db700bc4b17833c6f4c11331c007d5d7f3cac64336",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/c5d7f2fbcaf6e909268cb8db700bc4b17833c6f4c11331c007d5d7f3cac64336/metaball_failures-6a7d5502dc114fe5",
+        "bytes": 1079448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/planar_operation_failures-e33d228bc3ede06f": {
+        "sha256": "95aa0a6a10c63994b5e1d67e534ffe426aa10d8fb3960d55a7d9612cb50126c3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/95aa0a6a10c63994b5e1d67e534ffe426aa10d8fb3960d55a7d9612cb50126c3/planar_operation_failures-e33d228bc3ede06f",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/distribution_contracts-99e6f8a7a2cae268": {
+        "sha256": "b6f1ac2e93489dbc65821f8a5fca3708267ef459580b5a378295c959d78fb050",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/b6f1ac2e93489dbc65821f8a5fca3708267ef459580b5a378295c959d78fb050/distribution_contracts-99e6f8a7a2cae268",
+        "bytes": 6860992
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "d896c9321e6ccc0f09067f7a6a15ca901f63a32a4ca3ff5c6462da6b932ee14b",
+    "stderr_sha256": "5313123a183c80949e4c46ebdba93ddc22451126d3b99adb04ae38e88d6faf41",
+    "resources_sha256": "f71106de767cf46a630f66762b5b061d172eba9297686c464e04b06f3e0e01ed"
+  },
+  {
+    "name": "obj-only",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "obj-io",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 35.504976314958185,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/gear_airfoil_failures-94017d0b507f701b": {
+        "sha256": "faeaa2817a4601c9fe800845b2bd22da733e037d2c17e72df525d2a45655d9aa",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/faeaa2817a4601c9fe800845b2bd22da733e037d2c17e72df525d2a45655d9aa/gear_airfoil_failures-94017d0b507f701b",
+        "bytes": 1079472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/minkowski_contracts-1ba78ee04771cf59": {
+        "sha256": "cef584441b15868b3233c576a00618814e82e68fd63e86215d675c75f8661a75",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/cef584441b15868b3233c576a00618814e82e68fd63e86215d675c75f8661a75/minkowski_contracts-1ba78ee04771cf59",
+        "bytes": 7176512
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/polyhedral_construction-b11a4ddca7e368e9": {
+        "sha256": "b7cac24dcf26f211c7efe40c4c0d955aedc3df8b8fc01066f58110f82ff2224b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/b7cac24dcf26f211c7efe40c4c0d955aedc3df8b8fc01066f58110f82ff2224b/polyhedral_construction-b11a4ddca7e368e9",
+        "bytes": 6804872
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/adapter_boolean_failures-9eefcfd3ddbd4410": {
+        "sha256": "2656610189cbddb9c9d7598cc4c6edd59c4b0304cc195f561c70ea59e506c643",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/2656610189cbddb9c9d7598cc4c6edd59c4b0304cc195f561c70ea59e506c643/adapter_boolean_failures-9eefcfd3ddbd4410",
+        "bytes": 6498504
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/curve_constructor_failures-22b47f025ff4254a": {
+        "sha256": "3c2a02758a6bc411cc178d0d760820d984ae60015d6e0c662e7301e2486c602c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/3c2a02758a6bc411cc178d0d760820d984ae60015d6e0c662e7301e2486c602c/curve_constructor_failures-22b47f025ff4254a",
+        "bytes": 1079496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/transform_failures-a94d5a22092d9fdd": {
+        "sha256": "dbf37833ce991e3db58711f2a84b62b345e7fd13cd0908c4a7a243fbf0293a8a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/dbf37833ce991e3db58711f2a84b62b345e7fd13cd0908c4a7a243fbf0293a8a/transform_failures-a94d5a22092d9fdd",
+        "bytes": 6634576
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/slice_projection_contract-aeb0fafd22ab1dab": {
+        "sha256": "5e5e86f6ff578fed68fc20645f95025631598e8c966599c1c21fbeee3ba4f76e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/5e5e86f6ff578fed68fc20645f95025631598e8c966599c1c21fbeee3ba4f76e/slice_projection_contract-aeb0fafd22ab1dab",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/exact_linear_modeling-c190866d6296e605": {
+        "sha256": "ba44934fcb3006f562ff5e52e2b464ca4e443e5fc964b50e17d5e5016a6de959",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/ba44934fcb3006f562ff5e52e2b464ca4e443e5fc964b50e17d5e5016a6de959/exact_linear_modeling-c190866d6296e605",
+        "bytes": 1079472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/metaball_workloads-b7d25979bfe0b2d6": {
+        "sha256": "7421fd95207e6b1c1cfd4e486506abee4e26623e24a17991ddf4cf5fe9f7f0f6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/7421fd95207e6b1c1cfd4e486506abee4e26623e24a17991ddf4cf5fe9f7f0f6/metaball_workloads-b7d25979bfe0b2d6",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/competitive-f9a23cb0147d34bc": {
+        "sha256": "e0cc8f90a1d03120b7d685d1bef11dde85abf6f1650173bebdd09353b28c4649",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/e0cc8f90a1d03120b7d685d1bef11dde85abf6f1650173bebdd09353b28c4649/competitive-f9a23cb0147d34bc",
+        "bytes": 7215208
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/geometry_context-056fc8ca3390c8c7": {
+        "sha256": "ea8953c29620957647f117f57834a6d523d222c5ae278eb6ffe395376328bb05",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/ea8953c29620957647f117f57834a6d523d222c5ae278eb6ffe395376328bb05/geometry_context-056fc8ca3390c8c7",
+        "bytes": 7298504
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/rounded_rectangle_fidelity-f7fdb5dee7583371": {
+        "sha256": "461a78268ae48c49a019e1c9ce7a983d95561d6cdff8d28e16b7ca823dcf84c9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/461a78268ae48c49a019e1c9ce7a983d95561d6cdff8d28e16b7ca823dcf84c9/rounded_rectangle_fidelity-f7fdb5dee7583371",
+        "bytes": 1079496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/csgrs-924ca8a3dccfaa1e": {
+        "sha256": "5d376b89835653b4274e40c79d97a9541ac08e4788f8c1cde07b8b38fd6b1f68",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/5d376b89835653b4274e40c79d97a9541ac08e4788f8c1cde07b8b38fd6b1f68/csgrs-924ca8a3dccfaa1e",
+        "bytes": 7472248
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/batch_common_cells-1689607773f38e50": {
+        "sha256": "09223b687a17f5948b66330029896fe2f9dfaf12f81374c20c6db8e513f9869a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/09223b687a17f5948b66330029896fe2f9dfaf12f81374c20c6db8e513f9869a/batch_common_cells-1689607773f38e50",
+        "bytes": 6412752
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/adversarial_fixtures-deee1e803da844c5": {
+        "sha256": "254a51477df87b853eda6d4276449928acde150a7fe7bccc85cd35409a89b8d3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/254a51477df87b853eda6d4276449928acde150a7fe7bccc85cd35409a89b8d3/adversarial_fixtures-deee1e803da844c5",
+        "bytes": 1112720
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/obj_export_failures-9c0b1c4865b40872": {
+        "sha256": "78d57059d9576b6ed3cb931c97bd078fc0f3448b8f2b64919e7ea95af6cee87d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/78d57059d9576b6ed3cb931c97bd078fc0f3448b8f2b64919e7ea95af6cee87d/obj_export_failures-9c0b1c4865b40872",
+        "bytes": 6500600
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/generated_benchmark_corpus-f57d666a53469aeb": {
+        "sha256": "c2988c63230e311ceeaffe2c4295b4545995f40b67e709cf62482866d41032de",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/c2988c63230e311ceeaffe2c4295b4545995f40b67e709cf62482866d41032de/generated_benchmark_corpus-f57d666a53469aeb",
+        "bytes": 5212592
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/metaball_failures-f862a7ce0fdcbf30": {
+        "sha256": "ad0e1d4d8af60458c98a7ec4cc7fd118bc9ea66af1c3b872245c01b94dbb3821",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/ad0e1d4d8af60458c98a7ec4cc7fd118bc9ea66af1c3b872245c01b94dbb3821/metaball_failures-f862a7ce0fdcbf30",
+        "bytes": 1079448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/exact_path_failures-4b212701cec6ad6a": {
+        "sha256": "45857b2bff0fb440483af32924841872e6b994757b5b4170afd03f912a2f0a33",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/45857b2bff0fb440483af32924841872e6b994757b5b4170afd03f912a2f0a33/exact_path_failures-4b212701cec6ad6a",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/solid_cache-4681121d9fb829ea": {
+        "sha256": "d9b0b7148b6485ae1438e573e23054b22a0019c2764913e5ce69b9291dbd5865",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/d9b0b7148b6485ae1438e573e23054b22a0019c2764913e5ce69b9291dbd5865/solid_cache-4681121d9fb829ea",
+        "bytes": 6717160
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/hilbert_trimming-2cb6f76e812f9c43": {
+        "sha256": "deb44c083e32012d310d5fd81ef9426b62c809c86f99c288b60ae43ec0f32b4c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/deb44c083e32012d310d5fd81ef9426b62c809c86f99c288b60ae43ec0f32b4c/hilbert_trimming-2cb6f76e812f9c43",
+        "bytes": 1079448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/empty_composition-707bfb92b2af44db": {
+        "sha256": "5b9c3944f438efdfe73377db58ef9e5e8469ad46ee3c3f2c34272c698aeab19c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/5b9c3944f438efdfe73377db58ef9e5e8469ad46ee3c3f2c34272c698aeab19c/empty_composition-707bfb92b2af44db",
+        "bytes": 6664256
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/primitive_failures-6adea61489098503": {
+        "sha256": "b44dd0d949d41f6ab7443f98c6d21adf4bf517dc68b146127bbf9071c7fa693e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/b44dd0d949d41f6ab7443f98c6d21adf4bf517dc68b146127bbf9071c7fa693e/primitive_failures-6adea61489098503",
+        "bytes": 6651424
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/distribution_contracts-d745ebe0f4825405": {
+        "sha256": "98461c77e26666e22f6fd725433f1f780d0d67fe76ac4e0dc3f34835277026a7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/98461c77e26666e22f6fd725433f1f780d0d67fe76ac4e0dc3f34835277026a7/distribution_contracts-d745ebe0f4825405",
+        "bytes": 6854032
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/wasm_certainty-1c85fa460d5aba9f": {
+        "sha256": "14e0007d0c0a92f92b3b15599d8cb86dea9bdc4c98d37746e624d78538e45450",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/14e0007d0c0a92f92b3b15599d8cb86dea9bdc4c98d37746e624d78538e45450/wasm_certainty-1c85fa460d5aba9f",
+        "bytes": 1079432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/curve_metaball_workloads-12046f1fb2acaf83": {
+        "sha256": "71647060e64b64511a2d0d370823467e5b226f5fec1c76c9316c2a6ecf0ae4c4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/71647060e64b64511a2d0d370823467e5b226f5fec1c76c9316c2a6ecf0ae4c4/curve_metaball_workloads-12046f1fb2acaf83",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/bounds_failures-182c027a3ae05642": {
+        "sha256": "e2168cdde56e46e2884c7b3cd9beef50371a11e9cf85d4511afea5d3dd8848d2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/e2168cdde56e46e2884c7b3cd9beef50371a11e9cf85d4511afea5d3dd8848d2/bounds_failures-182c027a3ae05642",
+        "bytes": 6571032
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/strict_drilled_workflows-21a141f6016b9607": {
+        "sha256": "d6c3b11c547deec2ffa5fc3802b66e327cf7feeb16a23db2d7c3c13f0d479e44",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/d6c3b11c547deec2ffa5fc3802b66e327cf7feeb16a23db2d7c3c13f0d479e44/strict_drilled_workflows-21a141f6016b9607",
+        "bytes": 6646712
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/native_queries-4181766ba3dd41d4": {
+        "sha256": "7d4f222d9448ac5588eb84d29bc3f45b22276c802a2df05db362d0ef15a8a2d9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/7d4f222d9448ac5588eb84d29bc3f45b22276c802a2df05db362d0ef15a8a2d9/native_queries-4181766ba3dd41d4",
+        "bytes": 6719496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/planar_operation_failures-d0bba419ec8a3dc8": {
+        "sha256": "010d8cd7ab80822db1a954b1c41aedbad988d9d3f651c4177d5b0e6a5051223f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/010d8cd7ab80822db1a954b1c41aedbad988d9d3f651c4177d5b0e6a5051223f/planar_operation_failures-d0bba419ec8a3dc8",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/readme-71585bcc08b43c74": {
+        "sha256": "2abfef0d9da16df9c1e11b1ae1e23635e154de0176a0a4c098308bba19581bb3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/2abfef0d9da16df9c1e11b1ae1e23635e154de0176a0a4c098308bba19581bb3/readme-71585bcc08b43c74",
+        "bytes": 1153328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/stl_import_contracts-19843752e1d8b9ae": {
+        "sha256": "20020bc081fbaf2b09eb1338ea828775f4952e1c78a523ec9cba9206cfd72edf",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/20020bc081fbaf2b09eb1338ea828775f4952e1c78a523ec9cba9206cfd72edf/stl_import_contracts-19843752e1d8b9ae",
+        "bytes": 1079464
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/curve_metaball_failures-a4b6b0ec4eefcc19": {
+        "sha256": "0630867349acd0d683234a30d61a59d8c4b007ec4ca23957c41c8e5a24e95036",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/0630867349acd0d683234a30d61a59d8c4b007ec4ca23957c41c8e5a24e95036/curve_metaball_failures-a4b6b0ec4eefcc19",
+        "bytes": 1079480
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/sampled_profile_failures-bbe79945f98666a2": {
+        "sha256": "6497658b1231cc2d3b0679e92bf4e4122eb692bb8b70f9fee968b1617c5a06e4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/6497658b1231cc2d3b0679e92bf4e4122eb692bb8b70f9fee968b1617c5a06e4/sampled_profile_failures-bbe79945f98666a2",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/export_projection_contracts-3ae7b1a5e0f1d92a": {
+        "sha256": "758af13bcf5121355981a4998b62edfcdb088f9890249496252658d1f6184bdb",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/758af13bcf5121355981a4998b62edfcdb088f9890249496252658d1f6184bdb/export_projection_contracts-3ae7b1a5e0f1d92a",
+        "bytes": 5207256
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/readme_render_regression-3c6b98acb2ee7219": {
+        "sha256": "007ca895f000515b0ad91a5bf6c13832d692b50a95d12ed347811b702f787030",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/007ca895f000515b0ad91a5bf6c13832d692b50a95d12ed347811b702f787030/readme_render_regression-3c6b98acb2ee7219",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/mesh_boolean_context-3747497704a08bc0": {
+        "sha256": "297def3c3254c8d67d1a5e6012eb6bf91c5620fbb3c9950572285bcf523d18be",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/297def3c3254c8d67d1a5e6012eb6bf91c5620fbb3c9950572285bcf523d18be/mesh_boolean_context-3747497704a08bc0",
+        "bytes": 6587776
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/sdf_failures-79626221cbd6f55a": {
+        "sha256": "865bf6c5734ea4099bbaf2b739fa3222a8b5155714f352253bc2e9902cde3126",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/865bf6c5734ea4099bbaf2b739fa3222a8b5155714f352253bc2e9902cde3126/sdf_failures-79626221cbd6f55a",
+        "bytes": 1079424
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/deps/text_contracts-6a77f7296adc8a83": {
+        "sha256": "a725bd3143cfd78e22dacff842cf42c67c365df523d92d15606a62e8638e6cde",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/a725bd3143cfd78e22dacff842cf42c67c365df523d92d15606a62e8638e6cde/text_contracts-6a77f7296adc8a83",
+        "bytes": 1079432
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "38e225e8f4d04520d8df6532040ce57cba3e75854bbdbbbc654a004fc9f7d32b",
+    "stderr_sha256": "485c8b0bef15b8c79b8e002f5c23dd437eb0edccb980ed85cbf2a838ce90d94c",
+    "resources_sha256": "b8aeb8d5711b3f01909108d4f5370fd175121f97201b7c55199bdec1587f54fe"
+  },
+  {
+    "name": "basic-shapes",
+    "command": [
+      "cargo",
+      "run",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "curve,stl-io",
+      "--example",
+      "basic_shapes"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 6.740534184966236,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v1/release/examples/basic_shapes": {
+        "sha256": "258c6947d433df9c0c056997fb79432a6f380622dbee7a679d4178f377269749",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-executables-v1/258c6947d433df9c0c056997fb79432a6f380622dbee7a679d4178f377269749/basic_shapes",
+        "bytes": 4915880
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "31509f791da53f919c439df08124636c753879103a94cfaa58ff85fbfe652108",
+    "resources_sha256": "1f0c0eec170213672cc07b8c7323ab44a11a01f78dc287999a2fc5bf13c02e84"
+  },
+  {
+    "name": "strict-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 56.7199734877795,
+    "binaries": {},
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "fe2e97965cdc8be2cc4da71de3afaccdc1223e851560a237217813f8c681f5ec",
+    "resources_sha256": "2bf4aedf6fbe36f31b03069334d106c4437912283f201e76a727c55931f0933b"
+  },
+  {
+    "name": "stl-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "stl-io",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 22.943863578140736,
+    "binaries": {},
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "3a4f1a2cb9f0de73269be111d91717837bd28852c3e402cc1b120f21ea7fdfc0",
+    "resources_sha256": "23c8f3e45cb2d94a6de4002ab06d3a3bcf4ac9161c66accb734fca34ae679eea"
+  },
+  {
+    "name": "basic-shapes-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "curve,stl-io",
+      "--example",
+      "basic_shapes",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 1.6485492610372603,
+    "binaries": {},
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "ae8b353a57760f38993a975f3712b424fcc07f863f93727d03c7f44e08740a93",
+    "resources_sha256": "785a74e9c7170847705060329e3a4ff082e0b89a6ea2f88e7ec628a9d21e61ca"
+  },
+  {
+    "name": "obj-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "obj-io",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 2.4272545063868165,
+    "binaries": {},
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e9beab828f208ae2b836982ef9f061e1f9f3bd2c83b069f80b4115ba3d0f80bd",
+    "resources_sha256": "c971dd69203a86fc9a68bb39c4180c49e820a6a1e3d42d07ba0e9a8fec723142"
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 41.41396276699379,
+    "binaries": {},
+    "sources_unchanged": true,
+    "rustdocflags": "-D warnings",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "0eae3297e36f7176e924328bdd9e0551d07a46623fac29e5763285d6a050c6d0",
+    "resources_sha256": "440a8f8d05d3c9682aa84b4599fc321ce3dc85de996efac1d9d724835b0991d5"
+  }
+]

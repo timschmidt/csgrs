@@ -1,0 +1,24 @@
+{
+  "exit_code": 0,
+  "command": [
+    "cargo",
+    "install",
+    "--locked",
+    "--offline",
+    "--version",
+    "0.2.126",
+    "wasm-bindgen-cli",
+    "--root",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-tools-v1/install",
+    "--target-dir",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-tools-target-v1",
+    "--jobs",
+    "2"
+  ],
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "76b96001cfcda710e613eed5b6bd78faf54a092aef2596a37f58da46cf3e1113",
+  "resources_sha256": "bd8bb9f138f316acaeb62329c331f325fa007177bdc9385f47412acd8af3b6d6",
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-tools-v1/install/bin/wasm-bindgen",
+  "binary_sha256": "83f7eb3b73eaec4757eb245e66ff8a7b0101692024d040a5c5d2438112d8fd90",
+  "version": "wasm-bindgen 0.2.126"
+}

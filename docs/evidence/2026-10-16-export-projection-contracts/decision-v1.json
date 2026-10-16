@@ -1,0 +1,2248 @@
+{
+  "status": "kept: exact decimal spelling of finite binary64 projections and strict validation of binary32 STL faces",
+  "owning_layers": [
+    "CSGRS format quantization and spelling boundary",
+    "Hypermesh/Hyperlimit native triangle certification",
+    "CSGRS WASM public consumer tests"
+  ],
+  "properties": [
+    "P6",
+    "P8",
+    "P9",
+    "P18",
+    "P19",
+    "P24",
+    "P25",
+    "P26",
+    "P27",
+    "P30",
+    "P35",
+    "P36",
+    "P37"
+  ],
+  "base_commit": "c9410688b0c7854fba6c9a90f34cae5b3382318a",
+  "implementation_sha256": {
+    "src/io/mod.rs": "328680f991ae6a29b5274cc48f9dc59bd7f900b2c2f458dc0ef8a04bcc55535c",
+    "src/io/obj.rs": "e6db326c89440be606e4eeed8806a8e8fc464b3d7af174ce04d56a358db21fa7",
+    "src/io/stl.rs": "c0e1f44b9c46689e54d1bae59df82631253cc31a038b5d311b528e7d222bf2cb",
+    "tests/export_projection_contracts.rs": "1a9d30d74559219d3dcba263969b1f50070e3ec332618ef0ae70410346ea9394",
+    "scripts/test-wasm-bindings.sh": "d9163e199acf51df168009e3c4f5c3c639bd954038244d18d86152827c11ed49",
+    "tests/wasm/export_projection.cjs": "0f55257e2dd74294866a5bd75ba8b90fd2daf42c776b0ef326c9e30c7f8dc042"
+  },
+  "baseline": {
+    "original_format_probe": {
+      "passed": 9,
+      "failed": 3
+    },
+    "original_topology_probe": {
+      "passed": 4,
+      "failed": 0
+    },
+    "new_acceptance_probe": {
+      "passed": 3,
+      "failed": 6
+    }
+  },
+  "candidate": {
+    "original_format_probe": {
+      "passed": 12,
+      "failed": 0
+    },
+    "original_topology_probe": {
+      "passed": 4,
+      "failed": 0
+    },
+    "new_acceptance_probe": {
+      "passed": 9,
+      "failed": 0
+    },
+    "cargo_tests": {
+      "root-all": {
+        "passed": 429,
+        "failed": 0,
+        "ignored": 1,
+        "test_binaries_and_doctest_groups": 46
+      },
+      "stl-only": {
+        "passed": 151,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_and_doctest_groups": 38
+      },
+      "obj-only": {
+        "passed": 150,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_and_doctest_groups": 40
+      }
+    },
+    "commands": 15,
+    "unexpected_exits": []
+  },
+  "original_format_diagnostic": {
+    "remaining_failures": [],
+    "source_unchanged": true
+  },
+  "numeric_claim": "OBJ and ASCII STL spell each selected finite binary64 field as its exact terminating decimal. Binary STL certifies nondegeneracy of actual projected binary32 coordinates under the strict native policy before publishing or caching bytes.",
+  "topology_claim": "Binary export preserves open nondegenerate surfaces; it does not assert global closed-PWN or manifold topology. Native reimport/fixture validation establish their own explicit claims.",
+  "fidelity_limit": "The existing finite-float projections remain deliberate lossy boundaries for other native exact values. ASCII STL import still quantizes to binary32. No source analytic intent, original exact geometry or inherited provenance is certified by reimport.",
+  "serialization_migration": "Fixed 17-fractional-place output is retained when exact. Other OBJ/ASCII STL values now use enough fractional places to represent their finite binary64 projection exactly, at most 1074. Corrected text/checksums and lengths intentionally change; for example binary64 1.1 is no longer emitted as the different exact decimal 1.10000000000000009. Regenerate affected golden artifacts deliberately. Previously valid binary outputs and full-resolution basic_shapes outputs remain byte-identical.",
+  "failure_migration": "Binary STL projection collapse now returns IoError::Geometry before publishing bytes, including three distinct collinear projected points. Native predicate failure retains IoError::Construction with its cause. Invalid exports do not populate the byte cache.",
+  "cache_evidence": "Cold, warm, evicted, returned-buffer mutation, source Arc mutation and valid recovery scenarios preserve definite results; the same shared Rust implementation is exercised through actual JS exports.",
+  "wasm": {
+    "commands": 4,
+    "all_passed": true,
+    "typescript": "5.7.3",
+    "wasm_bindgen": "0.2.126",
+    "existing_consumer_preserved": true,
+    "new_consumer": "tests/wasm/export_projection.cjs",
+    "evidence": "wasm-validation-v1/result.json",
+    "scope": "Real generated JS checks independent exact BigInt ratios, projected failure diagnostics, no result on failure, cache buffer ownership, and strict composition of independently decoded tiny STL geometry. Existing certainty and TypeScript consumers also pass. JS has no STL importer; the test decodes binary32 fields and calls public fromArrays.",
+    "typed_io_receipt_remains_open": true,
+    "tooling_warnings": "The pinned wasm-bindgen CLI install reports third-party future-incompatibility warnings for buf_redux 0.8.4 and multipart 0.18.0; retained stderr records them. Affected project Clippy builds pass with -D warnings."
+  },
+  "validation_partition": "Native v2 validates final Rust, tests and all Cargo inputs. WASM v1 validates byte-identical production Rust and Cargo inputs plus final JS/harness. Only its uncompiled native integration test uses the v1 byte-decoder iteration spelling.",
+  "cost_result": "cost-v1/result.json",
+  "cost_comparison": [
+    {
+      "encoding": "binary",
+      "cubes": 0,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 7209,
+          "candidate_median_observed": 7679,
+          "baseline_median_per_iteration": 7209.0,
+          "candidate_median_per_iteration": 7679.0,
+          "median_paired_ratio": 1.1243045387994144,
+          "paired_ratios": [
+            1.1374670550700514,
+            1.1243045387994144,
+            1.100602908145171,
+            0.7302631578947368,
+            1.2355218855218855
+          ],
+          "candidate_greater_count": 4
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 4,
+          "candidate_median_observed": 4,
+          "baseline_median_per_iteration": 4.0,
+          "candidate_median_per_iteration": 4.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 8572,
+          "candidate_median_observed": 8572,
+          "baseline_median_per_iteration": 8572.0,
+          "candidate_median_per_iteration": 8572.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 8276,
+          "candidate_median_observed": 8276,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 380,
+          "candidate_median_observed": 380,
+          "baseline_median_per_iteration": 380.0,
+          "candidate_median_per_iteration": 380.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 84,
+          "candidate_median_observed": 84,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 84,
+          "candidate_median_observed": 84,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "binary",
+      "cubes": 0,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 4479,
+          "candidate_median_observed": 4059,
+          "baseline_median_per_iteration": 69.984375,
+          "candidate_median_per_iteration": 63.421875,
+          "median_paired_ratio": 1.0046885465505693,
+          "paired_ratios": [
+            0.9924205378973106,
+            1.0354591836734695,
+            1.0859220092531394,
+            1.0046885465505693,
+            0.5287958115183246
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 64,
+          "candidate_median_observed": 64,
+          "baseline_median_per_iteration": 1.0,
+          "candidate_median_per_iteration": 1.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 5376,
+          "candidate_median_observed": 5376,
+          "baseline_median_per_iteration": 84.0,
+          "candidate_median_per_iteration": 84.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 5376,
+          "candidate_median_observed": 5376,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 5376,
+          "candidate_median_observed": 5376,
+          "baseline_median_per_iteration": 84.0,
+          "candidate_median_per_iteration": 84.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 84,
+          "candidate_median_observed": 84,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 84,
+          "candidate_median_observed": 84,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "binary",
+      "cubes": 1,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 12309,
+          "candidate_median_observed": 20109,
+          "baseline_median_per_iteration": 12309.0,
+          "candidate_median_per_iteration": 20109.0,
+          "median_paired_ratio": 1.6379038908463903,
+          "paired_ratios": [
+            1.8069008895677958,
+            1.6379038908463903,
+            1.6557735794003938,
+            1.2932000974896418,
+            1.5408382066276802
+          ],
+          "candidate_greater_count": 5
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 7,
+          "candidate_median_observed": 7,
+          "baseline_median_per_iteration": 7.0,
+          "candidate_median_per_iteration": 7.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 11116,
+          "candidate_median_observed": 11116,
+          "baseline_median_per_iteration": 11116.0,
+          "candidate_median_per_iteration": 11116.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 9644,
+          "candidate_median_observed": 9644,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 1580,
+          "candidate_median_observed": 1580,
+          "baseline_median_per_iteration": 1580.0,
+          "candidate_median_per_iteration": 1580.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 684,
+          "candidate_median_observed": 684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 684,
+          "candidate_median_observed": 684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "binary",
+      "cubes": 1,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 26498,
+          "candidate_median_observed": 28888,
+          "baseline_median_per_iteration": 414.03125,
+          "candidate_median_per_iteration": 451.375,
+          "median_paired_ratio": 0.9806504175436215,
+          "paired_ratios": [
+            0.9634608444604836,
+            0.9806504175436215,
+            1.1357581967213115,
+            0.6358593101366141,
+            2.2364410945436672
+          ],
+          "candidate_greater_count": 2
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 64,
+          "candidate_median_observed": 64,
+          "baseline_median_per_iteration": 1.0,
+          "candidate_median_per_iteration": 1.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 43776,
+          "candidate_median_observed": 43776,
+          "baseline_median_per_iteration": 684.0,
+          "candidate_median_per_iteration": 684.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 43776,
+          "candidate_median_observed": 43776,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 43776,
+          "candidate_median_observed": 43776,
+          "baseline_median_per_iteration": 684.0,
+          "candidate_median_per_iteration": 684.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 684,
+          "candidate_median_observed": 684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 684,
+          "candidate_median_observed": 684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "binary",
+      "cubes": 256,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 1005821,
+          "candidate_median_observed": 2547665,
+          "baseline_median_per_iteration": 1005821.0,
+          "candidate_median_per_iteration": 2547665.0,
+          "median_paired_ratio": 2.5479921377660637,
+          "paired_ratios": [
+            2.056994403742961,
+            3.2587807822858053,
+            2.6623685190655384,
+            2.5479921377660637,
+            2.2302511901197737
+          ],
+          "candidate_greater_count": 5
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 20,
+          "candidate_median_observed": 25292,
+          "baseline_median_per_iteration": 20.0,
+          "candidate_median_per_iteration": 25292.0,
+          "median_paired_ratio": 1264.6,
+          "paired_ratios": [
+            1264.6,
+            1264.6,
+            1264.6,
+            1264.6,
+            1264.6
+          ],
+          "candidate_greater_count": 5
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 1071208,
+          "candidate_median_observed": 2284264,
+          "baseline_median_per_iteration": 1071208.0,
+          "candidate_median_per_iteration": 2284264.0,
+          "median_paired_ratio": 2.1324187272686537,
+          "paired_ratios": [
+            2.1324187272686537,
+            2.1324187272686537,
+            2.1324187272686537,
+            2.1324187272686537,
+            2.1324187272686537
+          ],
+          "candidate_greater_count": 5
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 612648,
+          "candidate_median_observed": 612648,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 416040,
+          "candidate_median_observed": 416040,
+          "baseline_median_per_iteration": 416040.0,
+          "candidate_median_per_iteration": 416040.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 153684,
+          "candidate_median_observed": 153684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 262144,
+          "candidate_median_observed": 262144,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "binary",
+      "cubes": 256,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 188597,
+          "candidate_median_observed": 200706,
+          "baseline_median_per_iteration": 47149.25,
+          "candidate_median_per_iteration": 50176.5,
+          "median_paired_ratio": 1.0023860400748685,
+          "paired_ratios": [
+            0.6958065206425875,
+            1.1966517481380863,
+            1.169005446525027,
+            1.0023860400748685,
+            0.95548806032677
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 4,
+          "candidate_median_observed": 4,
+          "baseline_median_per_iteration": 1.0,
+          "candidate_median_per_iteration": 1.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 614736,
+          "candidate_median_observed": 614736,
+          "baseline_median_per_iteration": 153684.0,
+          "candidate_median_per_iteration": 153684.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 614736,
+          "candidate_median_observed": 614736,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 614736,
+          "candidate_median_observed": 614736,
+          "baseline_median_per_iteration": 153684.0,
+          "candidate_median_per_iteration": 153684.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 153684,
+          "candidate_median_observed": 153684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 153684,
+          "candidate_median_observed": 153684,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 0,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 1660,
+          "candidate_median_observed": 1600,
+          "baseline_median_per_iteration": 1660.0,
+          "candidate_median_per_iteration": 1600.0,
+          "median_paired_ratio": 1.0573065902578798,
+          "paired_ratios": [
+            2.5765496639283048,
+            0.9216867469879518,
+            1.0573065902578798,
+            1.0810810810810811,
+            0.6706666666666666
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 3,
+          "candidate_median_observed": 3,
+          "baseline_median_per_iteration": 3.0,
+          "candidate_median_per_iteration": 3.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 62,
+          "candidate_median_observed": 62,
+          "baseline_median_per_iteration": 62.0,
+          "candidate_median_per_iteration": 62.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 28,
+          "candidate_median_observed": 28,
+          "baseline_median_per_iteration": 28.0,
+          "candidate_median_per_iteration": 28.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 25,
+          "candidate_median_observed": 25,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 28,
+          "candidate_median_observed": 28,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 0,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 11869,
+          "candidate_median_observed": 11740,
+          "baseline_median_per_iteration": 185.453125,
+          "candidate_median_per_iteration": 183.4375,
+          "median_paired_ratio": 0.9191315530675542,
+          "paired_ratios": [
+            0.8662470495672698,
+            0.863864163363004,
+            1.0556070435588507,
+            1.0830258302583027,
+            0.9191315530675542
+          ],
+          "candidate_greater_count": 2
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 192,
+          "candidate_median_observed": 192,
+          "baseline_median_per_iteration": 3.0,
+          "candidate_median_per_iteration": 3.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 3968,
+          "candidate_median_observed": 3968,
+          "baseline_median_per_iteration": 62.0,
+          "candidate_median_per_iteration": 62.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 1812,
+          "candidate_median_observed": 1812,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 1792,
+          "candidate_median_observed": 1792,
+          "baseline_median_per_iteration": 28.0,
+          "candidate_median_per_iteration": 28.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 25,
+          "candidate_median_observed": 25,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 28,
+          "candidate_median_observed": 28,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 1,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 36838,
+          "candidate_median_observed": 43857,
+          "baseline_median_per_iteration": 36838.0,
+          "candidate_median_per_iteration": 43857.0,
+          "median_paired_ratio": 1.113405424392202,
+          "paired_ratios": [
+            1.4568693124368048,
+            1.113405424392202,
+            0.961968619360443,
+            0.958251971228712,
+            1.3458434344984196
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 153,
+          "candidate_median_observed": 153,
+          "baseline_median_per_iteration": 153.0,
+          "candidate_median_per_iteration": 153.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 22171,
+          "candidate_median_observed": 22171,
+          "baseline_median_per_iteration": 22171.0,
+          "candidate_median_per_iteration": 22171.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 5712,
+          "candidate_median_observed": 5712,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 5568,
+          "candidate_median_observed": 5568,
+          "baseline_median_per_iteration": 5568.0,
+          "candidate_median_per_iteration": 5568.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 4015,
+          "candidate_median_observed": 4015,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 5568,
+          "candidate_median_observed": 5568,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 1,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 1753580,
+          "candidate_median_observed": 1755680,
+          "baseline_median_per_iteration": 27399.6875,
+          "candidate_median_per_iteration": 27432.5,
+          "median_paired_ratio": 1.0505846539019603,
+          "paired_ratios": [
+            1.0505846539019603,
+            1.0998927840516548,
+            1.090251489257216,
+            1.001197550154541,
+            0.9197177037039496
+          ],
+          "candidate_greater_count": 4
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 9792,
+          "candidate_median_observed": 9792,
+          "baseline_median_per_iteration": 153.0,
+          "candidate_median_per_iteration": 153.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 1418944,
+          "candidate_median_observed": 1418944,
+          "baseline_median_per_iteration": 22171.0,
+          "candidate_median_per_iteration": 22171.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 356496,
+          "candidate_median_observed": 356496,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 356352,
+          "candidate_median_observed": 356352,
+          "baseline_median_per_iteration": 5568.0,
+          "candidate_median_per_iteration": 5568.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 4015,
+          "candidate_median_observed": 4015,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 5568,
+          "candidate_median_observed": 5568,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 256,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 7168569,
+          "candidate_median_observed": 7316429,
+          "baseline_median_per_iteration": 7168569.0,
+          "candidate_median_per_iteration": 7316429.0,
+          "median_paired_ratio": 1.1246607846277907,
+          "paired_ratios": [
+            1.1246607846277907,
+            0.87261502260772,
+            1.2366138064712786,
+            1.1629943034671428,
+            0.8275670475756862
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 36881,
+          "candidate_median_observed": 36881,
+          "baseline_median_per_iteration": 36881.0,
+          "candidate_median_per_iteration": 36881.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 5689291,
+          "candidate_median_observed": 5689291,
+          "baseline_median_per_iteration": 5689291.0,
+          "candidate_median_per_iteration": 5689291.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 1425552,
+          "candidate_median_observed": 1425552,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 1425408,
+          "candidate_median_observed": 1425408,
+          "baseline_median_per_iteration": 1425408.0,
+          "candidate_median_per_iteration": 1425408.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 1038565,
+          "candidate_median_observed": 1038565,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 1425408,
+          "candidate_median_observed": 1425408,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "ascii",
+      "cubes": 256,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 26023506,
+          "candidate_median_observed": 25194083,
+          "baseline_median_per_iteration": 6505876.5,
+          "candidate_median_per_iteration": 6298520.75,
+          "median_paired_ratio": 1.0006405023256995,
+          "paired_ratios": [
+            1.0492231486878159,
+            0.9681279301874236,
+            1.0006405023256995,
+            1.0430978995225864,
+            0.8755079255400794
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 147524,
+          "candidate_median_observed": 147524,
+          "baseline_median_per_iteration": 36881.0,
+          "candidate_median_per_iteration": 36881.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 22757164,
+          "candidate_median_observed": 22757164,
+          "baseline_median_per_iteration": 5689291.0,
+          "candidate_median_per_iteration": 5689291.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 5701776,
+          "candidate_median_observed": 5701776,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 5701632,
+          "candidate_median_observed": 5701632,
+          "baseline_median_per_iteration": 1425408.0,
+          "candidate_median_per_iteration": 1425408.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 1038565,
+          "candidate_median_observed": 1038565,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 1425408,
+          "candidate_median_observed": 1425408,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 0,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 1329,
+          "candidate_median_observed": 3379,
+          "baseline_median_per_iteration": 1329.0,
+          "candidate_median_per_iteration": 3379.0,
+          "median_paired_ratio": 2.073006134969325,
+          "paired_ratios": [
+            0.968,
+            4.163793103448276,
+            2.073006134969325,
+            0.7243697478991596,
+            2.325056433408578
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 1,
+          "candidate_median_observed": 1,
+          "baseline_median_per_iteration": 1.0,
+          "candidate_median_per_iteration": 1.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": 48.0,
+          "candidate_median_per_iteration": 48.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": 48.0,
+          "candidate_median_per_iteration": 48.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 28,
+          "candidate_median_observed": 28,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 0,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 6489,
+          "candidate_median_observed": 6679,
+          "baseline_median_per_iteration": 101.390625,
+          "candidate_median_per_iteration": 104.359375,
+          "median_paired_ratio": 1.0323029366306027,
+          "paired_ratios": [
+            1.0323029366306027,
+            1.0696509863429438,
+            0.9616273693943597,
+            1.0820067534973468,
+            0.8792357068219138
+          ],
+          "candidate_greater_count": 3
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 64,
+          "candidate_median_observed": 64,
+          "baseline_median_per_iteration": 1.0,
+          "candidate_median_per_iteration": 1.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": 48.0,
+          "candidate_median_per_iteration": 48.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": 48.0,
+          "candidate_median_per_iteration": 48.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 28,
+          "candidate_median_observed": 28,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 48,
+          "candidate_median_observed": 48,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 1,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 24639,
+          "candidate_median_observed": 33177,
+          "baseline_median_per_iteration": 24639.0,
+          "candidate_median_per_iteration": 33177.0,
+          "median_paired_ratio": 1.272123986727708,
+          "paired_ratios": [
+            1.695158082714396,
+            1.4106467111696925,
+            0.9922210467359512,
+            1.2210160351922803,
+            1.272123986727708
+          ],
+          "candidate_greater_count": 4
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 172,
+          "candidate_median_observed": 172,
+          "baseline_median_per_iteration": 172.0,
+          "candidate_median_per_iteration": 172.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 12048,
+          "candidate_median_observed": 12048,
+          "baseline_median_per_iteration": 12048.0,
+          "candidate_median_per_iteration": 12048.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 3156,
+          "candidate_median_observed": 3156,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": 3072.0,
+          "candidate_median_per_iteration": 3072.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 2383,
+          "candidate_median_observed": 2383,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 1,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 1146991,
+          "candidate_median_observed": 1270253,
+          "baseline_median_per_iteration": 17921.734375,
+          "candidate_median_per_iteration": 19847.703125,
+          "median_paired_ratio": 1.0653701497841424,
+          "paired_ratios": [
+            1.2435502441467143,
+            1.0771694214876033,
+            1.0653701497841424,
+            0.9972885576259971,
+            1.0433829430188175
+          ],
+          "candidate_greater_count": 4
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 11008,
+          "candidate_median_observed": 11008,
+          "baseline_median_per_iteration": 172.0,
+          "candidate_median_per_iteration": 172.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 771072,
+          "candidate_median_observed": 771072,
+          "baseline_median_per_iteration": 12048.0,
+          "candidate_median_per_iteration": 12048.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 196692,
+          "candidate_median_observed": 196692,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 196608,
+          "candidate_median_observed": 196608,
+          "baseline_median_per_iteration": 3072.0,
+          "candidate_median_per_iteration": 3072.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 2383,
+          "candidate_median_observed": 2383,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 3072,
+          "candidate_median_observed": 3072,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 256,
+      "phase": "first",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 4616284,
+          "candidate_median_observed": 4589226,
+          "baseline_median_per_iteration": 4616284.0,
+          "candidate_median_per_iteration": 4589226.0,
+          "median_paired_ratio": 0.9941385755295818,
+          "paired_ratios": [
+            1.1429204360868086,
+            0.86861567574874,
+            1.20901394793306,
+            0.896313591983556,
+            0.9941385755295818
+          ],
+          "candidate_greater_count": 2
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 43020,
+          "candidate_median_observed": 43020,
+          "baseline_median_per_iteration": 43020.0,
+          "candidate_median_per_iteration": 43020.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 3231528,
+          "candidate_median_observed": 3231528,
+          "baseline_median_per_iteration": 3231528.0,
+          "candidate_median_per_iteration": 3231528.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 786524,
+          "candidate_median_observed": 786524,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 786432,
+          "candidate_median_observed": 786432,
+          "baseline_median_per_iteration": 786432.0,
+          "candidate_median_per_iteration": 786432.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 639637,
+          "candidate_median_observed": 639637,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 786432,
+          "candidate_median_observed": 786432,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    },
+    {
+      "encoding": "obj",
+      "cubes": 256,
+      "phase": "warm",
+      "metrics": {
+        "elapsed_ns": {
+          "baseline_median_observed": 17251527,
+          "candidate_median_observed": 17589054,
+          "baseline_median_per_iteration": 4312881.75,
+          "candidate_median_per_iteration": 4397263.5,
+          "median_paired_ratio": 1.0202137309012853,
+          "paired_ratios": [
+            1.0847857221409127,
+            1.105457099536754,
+            1.0200748679406506,
+            1.0202137309012853,
+            0.9701776615879272
+          ],
+          "candidate_greater_count": 4
+        },
+        "allocation_calls": {
+          "baseline_median_observed": 172080,
+          "candidate_median_observed": 172080,
+          "baseline_median_per_iteration": 43020.0,
+          "candidate_median_per_iteration": 43020.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "allocated_bytes": {
+          "baseline_median_observed": 12926112,
+          "candidate_median_observed": 12926112,
+          "baseline_median_per_iteration": 3231528.0,
+          "candidate_median_per_iteration": 3231528.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "peak_additional_live_bytes": {
+          "baseline_median_observed": 3145820,
+          "candidate_median_observed": 3145820,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "retained_delta_bytes": {
+          "baseline_median_observed": 3145728,
+          "candidate_median_observed": 3145728,
+          "baseline_median_per_iteration": 786432.0,
+          "candidate_median_per_iteration": 786432.0,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_bytes": {
+          "baseline_median_observed": 639637,
+          "candidate_median_observed": 639637,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        },
+        "output_capacity": {
+          "baseline_median_observed": 786432,
+          "candidate_median_observed": 786432,
+          "baseline_median_per_iteration": null,
+          "candidate_median_per_iteration": null,
+          "median_paired_ratio": 1.0,
+          "paired_ratios": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "candidate_greater_count": 0
+        }
+      }
+    }
+  ],
+  "fractional_cost_result": "fractional-cost-v1/result.json",
+  "fractional_cost_observations": [
+    {
+      "fixture": "ascii-fractional",
+      "phase": "first",
+      "observations": 5,
+      "median_ns_per_export": 7490.0,
+      "allocation_calls_per_export": 17.0,
+      "allocated_bytes_per_export": 1944.0,
+      "retained_bytes_per_export": 560.0,
+      "maximum_additional_live_bytes_observed": 692,
+      "output_bytes": 498,
+      "output_capacity": 560
+    },
+    {
+      "fixture": "ascii-fractional",
+      "phase": "warm",
+      "observations": 5,
+      "median_ns_per_export": 3353.21875,
+      "allocation_calls_per_export": 17.0,
+      "allocated_bytes_per_export": 1944.0,
+      "retained_bytes_per_export": 560.0,
+      "maximum_additional_live_bytes_observed": 35972,
+      "output_bytes": 498,
+      "output_capacity": 560
+    },
+    {
+      "fixture": "ascii-minimum-f32",
+      "phase": "first",
+      "observations": 5,
+      "median_ns_per_export": 6669.0,
+      "allocation_calls_per_export": 19.0,
+      "allocated_bytes_per_export": 2504.0,
+      "retained_bytes_per_export": 688.0,
+      "maximum_additional_live_bytes_observed": 944,
+      "output_bytes": 489,
+      "output_capacity": 688
+    },
+    {
+      "fixture": "ascii-minimum-f32",
+      "phase": "warm",
+      "observations": 5,
+      "median_ns_per_export": 3265.5625,
+      "allocation_calls_per_export": 19.0,
+      "allocated_bytes_per_export": 2504.0,
+      "retained_bytes_per_export": 688.0,
+      "maximum_additional_live_bytes_observed": 44288,
+      "output_bytes": 489,
+      "output_capacity": 688
+    },
+    {
+      "fixture": "obj-fractional-extremes",
+      "phase": "first",
+      "observations": 5,
+      "median_ns_per_export": 196897.0,
+      "allocation_calls_per_export": 26.0,
+      "allocated_bytes_per_export": 19831.0,
+      "retained_bytes_per_export": 5010.0,
+      "maximum_additional_live_bytes_observed": 6857,
+      "output_bytes": 3184,
+      "output_capacity": 5010
+    },
+    {
+      "fixture": "obj-fractional-extremes",
+      "phase": "warm",
+      "observations": 5,
+      "median_ns_per_export": 135034.8125,
+      "allocation_calls_per_export": 26.0,
+      "allocated_bytes_per_export": 19831.0,
+      "retained_bytes_per_export": 5010.0,
+      "maximum_additional_live_bytes_observed": 322487,
+      "output_bytes": 3184,
+      "output_capacity": 5010
+    },
+    {
+      "fixture": "obj-ordinary-cube",
+      "phase": "first",
+      "observations": 5,
+      "median_ns_per_export": 15348.0,
+      "allocation_calls_per_export": 52.0,
+      "allocated_bytes_per_export": 5636.0,
+      "retained_bytes_per_export": 1536.0,
+      "maximum_additional_live_bytes_observed": 1756,
+      "output_bytes": 1028,
+      "output_capacity": 1536
+    },
+    {
+      "fixture": "obj-ordinary-cube",
+      "phase": "warm",
+      "observations": 5,
+      "median_ns_per_export": 8995.78125,
+      "allocation_calls_per_export": 52.0,
+      "allocated_bytes_per_export": 5636.0,
+      "retained_bytes_per_export": 1536.0,
+      "maximum_additional_live_bytes_observed": 98524,
+      "output_bytes": 1028,
+      "output_capacity": 1536
+    }
+  ],
+  "fractional_cost_scope": "Five candidate-only processes record absolute complete export costs and output sizes for ordinary and extreme fractional coordinates. No comparison credits the old incorrect spelling as the same successful output.",
+  "cost_limits": "Allocator-instrumented focused comparison of complete exports, empty/unit/256 disconnected integer cubes across all three encodings. Untimed independent semantic and topology checks plus complete-byte comparisons qualify the samples. First binary cache miss is separated from warm calls. Requested allocations are not actual heap usage. No optimization or whole-application performance claim.",
+  "resource_limits": "Per-coordinate decimal precision is bounded at 1074 fractional places. No public total-work, heap-byte or cancellation budget is added. External time/address-space limits contain tests; retained export caches still have entry-count limits only.",
+  "first_candidate_matrix": {
+    "unexpected_exits": [
+      "strict-clippy",
+      "stl-clippy"
+    ],
+    "cause": "New test decoder triggered chunks_exact_to_as_chunks. v2 uses the suggested fixed-size slice iteration with every assertion and fixture unchanged; v1 evidence remains intact."
+  },
+  "export_projection_fix_admitted": true,
+  "optimization_claimed": false,
+  "pending_native_files_unchanged": 35,
+  "native_runtime_admitted": false,
+  "historical_artifact_audit_passed": false,
+  "historical_preservation_complete": false,
+  "published_package_pipeline_executed": false,
+  "full_pre_push_matrix_executed": false,
+  "push_performed": false,
+  "full_plan_complete": false,
+  "next": [
+    "Preserve typed format failures and their claim scope across WASM, where export errors currently flatten into strings.",
+    "Keep the 35 pending native changes unadmitted until their original full-board and copper-neck runtime gates pass.",
+    "Continue the remaining properties, clean external distribution and full pre-push validation."
+  ]
+}

@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s cargo install --locked --offline --version 0.2.126 wasm-bindgen-cli --root /home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-tools-v1/install --target-dir /home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-tools-target-v1 --jobs 2"
+	User time (seconds): 159.68
+	System time (seconds): 13.76
+	Percent of CPU this job got: 198%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:27.46
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 591948
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 3635
+	Minor (reclaiming a frame) page faults: 4941364
+	Voluntary context switches: 39432
+	Involuntary context switches: 6799
+	Swaps: 0
+	File system inputs: 593392
+	File system outputs: 1389656
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

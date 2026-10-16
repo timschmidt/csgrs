@@ -1,0 +1,14 @@
+
+running 9 tests
+test obj_contract::already_exact_fixed_spelling_stays_byte_identical ... ok
+test obj_contract::decimal_text_preserves_the_exact_binary64_projection ... ok
+test stl_contract::ascii_fields_preserve_their_binary64_values_exactly ... ok
+test stl_contract::ascii_normal_does_not_lose_a_small_nonzero_component ... ok
+test stl_contract::binary_cache_cannot_publish_collapsed_geometry ... ok
+test stl_contract::binary_export_uses_no_area_epsilon_on_representable_faces ... ok
+test stl_contract::three_distinct_collinear_projected_vertices_are_rejected ... ok
+test stl_contract::tiny_ascii_cube_reimports_and_composes ... ok
+test stl_contract::valid_binary_triangle_bytes_remain_identical ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

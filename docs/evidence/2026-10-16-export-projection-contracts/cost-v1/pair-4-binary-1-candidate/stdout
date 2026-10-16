@@ -1,0 +1,2 @@
+{"cubes":1,"encoding":"binary","phase":"first","iterations":1,"elapsed_ns":15809,"allocation_calls":7,"allocated_bytes":11116,"peak_additional_live_bytes":9644,"retained_delta_bytes":1580,"output_bytes":684,"output_capacity":684,"completion":"verified_exact_integer_projection"}
+{"cubes":1,"encoding":"binary","phase":"warm","iterations":64,"elapsed_ns":40947,"allocation_calls":64,"allocated_bytes":43776,"peak_additional_live_bytes":43776,"retained_delta_bytes":43776,"output_bytes":684,"output_capacity":684,"completion":"verified_exact_integer_projection"}

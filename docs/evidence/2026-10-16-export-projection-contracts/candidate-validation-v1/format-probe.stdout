@@ -1,0 +1,17 @@
+
+running 12 tests
+test ascii_stl_small_coordinate_projection_survives_text ... ok
+test ascii_stl_small_representable_cube_composes ... ok
+test ascii_stl_unit_control_composes ... ok
+test binary_stl_rejects_faces_collapsed_by_quantization ... ok
+test binary_stl_small_representable_cube_composes ... ok
+test binary_stl_unit_control_composes ... ok
+test canonical_empty_interchange_control ... ok
+test obj_rejects_missing_vertex_index ... ok
+test obj_rejects_overflowing_vertex_index ... ok
+test obj_small_coordinate_projection_survives_text ... ok
+test obj_unit_control_composes ... ok
+test obj_writer_rejects_invalid_input_without_writing ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

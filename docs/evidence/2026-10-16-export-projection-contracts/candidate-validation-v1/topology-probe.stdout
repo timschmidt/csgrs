@@ -1,0 +1,9 @@
+
+running 4 tests
+test ascii_unmatched_duplicate_face_is_rejected ... ok
+test balanced_double_winding_preserves_exact_volume ... ok
+test binary_unmatched_duplicate_face_is_rejected ... ok
+test reversed_face_remains_invalid ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

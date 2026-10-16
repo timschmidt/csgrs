@@ -1,7 +1,7 @@
 //! STL import and export for native Hypermesh triangle geometry.
 
 use crate::io::{
-    IoError, finite_f32, finite_f64, finite_triangle_normal, single_line_metadata,
+    IoError, decimal_f64, finite_f32, finite_f64, finite_triangle_normal, single_line_metadata,
 };
 use hyperlattice::{Point3, Real};
 use hypermesh::{Triangle, TriangleMesh};
@@ -48,6 +48,10 @@ fn validate_binary_triangle_count(count: usize) -> Result<(), IoError> {
 }
 
 /// Serialize native triangle geometry as ASCII STL.
+///
+/// Finite binary64 coordinates and computed normals use exact decimal spelling.
+/// Reimport through [`from_stl`] subsequently quantizes coordinates to binary32;
+/// its proof concerns that parsed geometry, not the original exact model.
 pub fn to_stl_ascii(mesh: &TriangleMesh, name: &str) -> Result<String, IoError> {
     let name = single_line_metadata(name, "STL", "solid name")?;
     let mut output = format!("solid {name}\n");
@@ -55,16 +59,18 @@ pub fn to_stl_ascii(mesh: &TriangleMesh, name: &str) -> Result<String, IoError> 
         let points = triangle_points(mesh, triangle)?;
         let normal = triangle_normal(&points)?;
         output.push_str(&format!(
-            "  facet normal {:.17} {:.17} {:.17}\n",
-            normal[0], normal[1], normal[2],
+            "  facet normal {} {} {}\n",
+            decimal_f64(normal[0]),
+            decimal_f64(normal[1]),
+            decimal_f64(normal[2]),
         ));
         output.push_str("    outer loop\n");
         for point in &points {
             output.push_str(&format!(
-                "      vertex {:.17} {:.17} {:.17}\n",
-                finite_f64(&point.x, "STL", "vertex x")?,
-                finite_f64(&point.y, "STL", "vertex y")?,
-                finite_f64(&point.z, "STL", "vertex z")?,
+                "      vertex {} {} {}\n",
+                decimal_f64(finite_f64(&point.x, "STL", "vertex x")?),
+                decimal_f64(finite_f64(&point.y, "STL", "vertex y")?),
+                decimal_f64(finite_f64(&point.z, "STL", "vertex z")?),
             ));
         }
         output.push_str("    endloop\n  endfacet\n");
@@ -74,6 +80,11 @@ pub fn to_stl_ascii(mesh: &TriangleMesh, name: &str) -> Result<String, IoError> 
 }
 
 /// Serialize native triangle geometry as binary STL.
+///
+/// Coordinates are projected to finite binary32 values. Each encoded triangle
+/// is certified nondegenerate under the strict native policy before complete
+/// bytes are published or cached. Open triangle surfaces remain exportable;
+/// closed topology and fidelity before projection are separate claims.
 pub fn to_stl_binary(mesh: &TriangleMesh, name: &str) -> Result<Vec<u8>, IoError> {
     use stl_io::{Normal, Triangle as StlTriangle, Vertex, write_stl};
 
@@ -103,9 +114,34 @@ pub fn to_stl_binary(mesh: &TriangleMesh, name: &str) -> Result<Vec<u8>, IoError
                     finite_f32(&point.z, "STL", "vertex z")?,
                 ]))
             };
+            let vertices = [point(&points[0])?, point(&points[1])?, point(&points[2])?];
+            let projected = vertices.each_ref().map(|vertex| {
+                Point3::new(
+                    Real::try_from(vertex[0]).expect("finite_f32 established a finite value"),
+                    Real::try_from(vertex[1]).expect("finite_f32 established a finite value"),
+                    Real::try_from(vertex[2]).expect("finite_f32 established a finite value"),
+                )
+            });
+            if !hypermesh::Plane::points_are_nondegenerate(
+                &crate::GeometryContext::STRICT.mesh_context(),
+                &projected[0],
+                &projected[1],
+                &projected[2],
+            )
+            .map_err(|error| IoError::Construction {
+                format: "STL",
+                source: error.into(),
+            })?
+            .value
+            {
+                return Err(IoError::Geometry {
+                    format: "STL",
+                    detail: "degenerate triangle after binary32 projection".into(),
+                });
+            }
             Ok(StlTriangle {
                 normal: Normal::new([normal[0] as f32, normal[1] as f32, normal[2] as f32]),
-                vertices: [point(&points[0])?, point(&points[1])?, point(&points[2])?],
+                vertices,
             })
         })
         .collect::<Result<Vec<_>, IoError>>()?;

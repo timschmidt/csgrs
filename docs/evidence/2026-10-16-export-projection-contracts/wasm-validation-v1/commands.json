@@ -1,0 +1,74 @@
+[
+  {
+    "name": "node-syntax",
+    "command": [
+      "node",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-source-v1/tests/wasm/export_projection.cjs"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3136264020577073,
+    "sources_unchanged": true,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7872d7c40c15fbf1ec036ab23dda9f052a179bd13f3ae2f9e37103e83c47cff6"
+  },
+  {
+    "name": "install-locked-typescript",
+    "command": [
+      "npm",
+      "ci",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund",
+      "--prefix",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-source-v1/tests/wasm",
+      "--cache",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/npm-cache-v1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.9620123249478638,
+    "sources_unchanged": true,
+    "stdout_sha256": "a941066d38162d18c88ea4b096d8cf11d19b0d46b973f6d916e2f9b8794e1f36",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "81a655184d7e61de3199e3c2fac1fc057a77fb0d20af4c6ecd475df0290a2ed8"
+  },
+  {
+    "name": "real-js-and-typescript-consumers",
+    "command": [
+      "bash",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-source-v1/scripts/test-wasm-bindings.sh"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 167.85562062775716,
+    "sources_unchanged": true,
+    "stdout_sha256": "7187d9fed9038d03390fbd5f469a4bbb897e68f2c049269f50c560b1f1a55fc8",
+    "stderr_sha256": "2f44c75c9566ad18b359f1ae416eee79ebd16e956a57f1ed18c3f574ce76491a",
+    "resources_sha256": "cde202fd255ad0fac194acbf7346ed3b7b982e3aced30e791a00755d55696f51"
+  },
+  {
+    "name": "wasm-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--profile",
+      "wasm",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--no-default-features",
+      "--features",
+      "wasm",
+      "--lib",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 28.673514203168452,
+    "sources_unchanged": true,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "6f732e8b24f49f7068f98ea74156bf9406805c5cee97e8075ca0489b8032dd63",
+    "resources_sha256": "38026aa743a95887b31c35faa85ccec94e72b9bae913b7211ae1dba8ce7fa344"
+  }
+]

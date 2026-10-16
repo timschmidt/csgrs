@@ -12257,6 +12257,39 @@
       "Keep the 35 pending native changes unadmitted until the original full-board and copper-neck runtime gates pass.",
       "Continue the remaining properties, clean external distribution and full pre-push validation."
     ]
+  },
+  "export_projection_contracts": {
+    "status": "kept: exact decimal spelling of finite binary64 projections and strict validation of binary32 STL faces",
+    "main_parent_commit": "c9410688b0c7854fba6c9a90f34cae5b3382318a",
+    "contract": "docs/evidence/2026-10-16-export-projection-contracts/contract-v1.md",
+    "progress": "docs/evidence/2026-10-16-export-projection-contracts/progress-v1.md",
+    "decision": "docs/evidence/2026-10-16-export-projection-contracts/decision-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-export-projection-contracts/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-export-projection-contracts/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "src/io/mod.rs": "328680f991ae6a29b5274cc48f9dc59bd7f900b2c2f458dc0ef8a04bcc55535c",
+      "src/io/obj.rs": "e6db326c89440be606e4eeed8806a8e8fc464b3d7af174ce04d56a358db21fa7",
+      "src/io/stl.rs": "c0e1f44b9c46689e54d1bae59df82631253cc31a038b5d311b528e7d222bf2cb",
+      "tests/export_projection_contracts.rs": "1a9d30d74559219d3dcba263969b1f50070e3ec332618ef0ae70410346ea9394",
+      "scripts/test-wasm-bindings.sh": "d9163e199acf51df168009e3c4f5c3c639bd954038244d18d86152827c11ed49",
+      "tests/wasm/export_projection.cjs": "0f55257e2dd74294866a5bd75ba8b90fd2daf42c776b0ef326c9e30c7f8dc042"
+    },
+    "original_format_diagnostic": {
+      "remaining_failures": [],
+      "source_unchanged": true
+    },
+    "cost": "docs/evidence/2026-10-16-export-projection-contracts/cost-v1/result.json",
+    "cost_contract": "docs/evidence/2026-10-16-export-projection-contracts/cost-contract-v1.md",
+    "export_projection_fix_admitted": true,
+    "native_runtime_admitted": false,
+    "pending_native_files_unchanged": 35,
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "next": [
+      "Preserve typed format failures and their claim scope across WASM, where export errors currently flatten into strings.",
+      "Keep the 35 pending native changes unadmitted until their original full-board and copper-neck runtime gates pass.",
+      "Continue the remaining properties, clean external distribution and full pre-push validation."
+    ]
   }
 },
   "status_meanings": {

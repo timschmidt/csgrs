@@ -1,0 +1,33 @@
+{
+  "runner_sha256": "31e469e1af6d538cacef18d6723f4e28ff7034f596071de0552e81f5cf2a9b51",
+  "probe_sha256": "7699a30ecb906f80171fdc7d2cc8a40266d05ed17e9e48299b000dd738892332",
+  "contract_sha256": "7a1403d8c0025762bdc79d6dd61d5f6114c173573de7997c5a51e6d09adae226",
+  "bindings": {
+    "csgrs": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v2/release/deps/libcsgrs.rlib",
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libcsgrs.rlib",
+      "sha256": "c855ffd5c56d1dc858623ff9bef442c3bcc54e54c12259bb85c39dc1dad0f3a3"
+    },
+    "hypermesh": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v2/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "sha256": "c5c8ac708dd2c9b0fa6b6b4e113fafa4bce8bee81c2f91180cb7ca9a71debf1e"
+    },
+    "hyperlattice": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v2/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "sha256": "8ca44281f35782993a6798ce55a8d87ff8cc784dd5df74d9bef78bb42eb3e45f"
+    }
+  },
+  "dependencies": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v2/release/deps",
+  "library_hashes_sha256": "6164d59f9a526c79c47b07dceefb3c27a6403fce229b34fc9a127795fd649575",
+  "preceding_matched_result_sha256": "366fd1024dc37de859ca90aa1444e7d903d2fecfd01e4cc49e02b79c04ac6b57",
+  "hardware": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           48 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  16\nOn-line CPU(s) list:                     0-15\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 7 5800X3D 8-Core Processor\nCPU family:                              25\nModel:                                   33\nThread(s) per core:                      2\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      77%\nCPU max MHz:                             4552.9521\nCPU min MHz:                             575.9760\nBogoMIPS:                                6800.15\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nVirtualization:                          AMD-V\nL1d cache:                               256 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                4 MiB (8 instances)\nL3 cache:                                96 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-15\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; Safe RET\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Mitigation; Clear CPU buffers\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "processes": 5,
+  "elapsed_limit_seconds": 120,
+  "address_space_limit_bytes": 8589934592,
+  "optimization_claimed": false,
+  "matched_baseline_comparison": false,
+  "completed_targets_modified": false
+}

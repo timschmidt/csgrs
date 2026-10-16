@@ -1,0 +1,43 @@
+{
+  "all_commands_passed": true,
+  "command_count": 4,
+  "sources_unchanged": true,
+  "typescript": "5.7.3",
+  "artifacts": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": {
+      "sha256": "debc1c1cd42f7174359df2fc1747006ef6587ba54908f9e97abc13f5b3352abc",
+      "bytes": 12212001
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.d.ts": {
+      "sha256": "b9f64e8d08888b288112314340b9c74d57251758a4951abbf4641934d402120b",
+      "bytes": 12948
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js": {
+      "sha256": "c537a878e597e56824a1bb6da8e191d5e3a31282b506c4ba2d9cfd561c11fe31",
+      "bytes": 78724
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm": {
+      "sha256": "1aa4982528c9aa2a3e1d53a40c678385d6ecbff970300d565932f8a02e23b1eb",
+      "bytes": 11161961
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm.d.ts": {
+      "sha256": "cbe21425b5e6da3881a12302cb75a03b3fe812b4bbda5a3eb71e4975b9f16d64",
+      "bytes": 14645
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/geometry_certainty.ts": {
+      "sha256": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7",
+      "bytes": 3098
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-source-v1/tests/wasm/node_modules/typescript/lib/tsc.js": {
+      "sha256": "2cffde0b8c6760dfb0b5b0382bbb7e00ba6a8b2d981b9205b256a700a481d983",
+      "bytes": 267
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-tools-v1/install/bin/wasm-bindgen": {
+      "sha256": "83f7eb3b73eaec4757eb245e66ff8a7b0101692024d040a5c5d2438112d8fd90",
+      "bytes": 8056488
+    }
+  },
+  "existing_certainty_consumer_preserved": true,
+  "typed_io_failure_receipt_not_claimed": true,
+  "full_distribution_validation_complete": false
+}

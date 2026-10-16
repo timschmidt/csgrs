@@ -1,0 +1,10 @@
+--- a/scripts/test-wasm-bindings.sh
++++ b/scripts/test-wasm-bindings.sh
+@@ -25,6 +25,7 @@
+ "${bindgen_bin}" --target nodejs --out-name csgrs --out-dir "${wasm_bindings_dir}" \
+     "${wasm_target_dir}/wasm32-unknown-unknown/wasm/csgrs.wasm"
+ node tests/wasm/geometry_certainty.cjs "${wasm_bindings_dir}/csgrs.js"
++node tests/wasm/export_projection.cjs "${wasm_bindings_dir}/csgrs.js"
+ cp tests/wasm/geometry_certainty.ts "${wasm_bindings_dir}/geometry_certainty.ts"
+ "${tsc_bin}" --noEmit --strict --target ES2020 --lib ES2020,DOM,ESNext.Disposable \
+     --module Node16 --moduleResolution Node16 \

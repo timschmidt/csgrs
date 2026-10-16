@@ -1,0 +1,143 @@
+[
+  {
+    "name": "format-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "--cfg",
+      "feature=\"stl-io\"",
+      "--cfg",
+      "feature=\"obj-io\"",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/baseline-v1/format-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.48984170611947775,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0ce3311e8ece5cd743efe83348d11909e42276a5c24f279138b09fd688dc30c8",
+    "binary_sha256": "bc96eccd599535721bc7bd9b0ad6ac1e4b02cc74401e0949d82d804bff9d32b2"
+  },
+  {
+    "name": "format-test",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/baseline-v1/format-probe",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.00721114594489336,
+    "stdout_sha256": "be22f6abe8aec26c0520ea183dc149f308e8b75364e18e137f368d64b38351fd",
+    "stderr_sha256": "da24ed59b80a1fadcdf9f4032a67b20f5b9dcba1ed0820918eac27208390a81b",
+    "resources_sha256": "35c58f20b99b97042d41a7f3a6ee86d6bbe08de209e0cb3da8cf9f592ac749dd",
+    "binary_sha256": "bc96eccd599535721bc7bd9b0ad6ac1e4b02cc74401e0949d82d804bff9d32b2"
+  },
+  {
+    "name": "topology-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "--cfg",
+      "feature=\"stl-io\"",
+      "--cfg",
+      "feature=\"obj-io\"",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/stl-topology-v1/probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/baseline-v1/topology-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3417402310296893,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6564778dd401612a79ade1bfa7923486862fe5c4d3a56272ff6218847a9cabb6",
+    "binary_sha256": "ca554751773194a34159905e45c981386f2786b4029c25a3fa225d2088d43486"
+  },
+  {
+    "name": "topology-test",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/baseline-v1/topology-probe",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005632004700601101,
+    "stdout_sha256": "2b7e1965291ed859b1a8c2c6aaf3c2fedb329b77504af69c58dfbb3498367698",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2235426748e6d2b8c01e0dea49be9242017eeb1ae9a552c6a94830223c35529a",
+    "binary_sha256": "ca554751773194a34159905e45c981386f2786b4029c25a3fa225d2088d43486"
+  },
+  {
+    "name": "acceptance-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "--cfg",
+      "feature=\"stl-io\"",
+      "--cfg",
+      "feature=\"obj-io\"",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-export-projection-contracts/export_projection_contracts_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/baseline-v1/acceptance-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6772856460884213,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "bf18856d50c2d5591587645c855c20863310c4d7067ea7cf9a89266ce4c933c8",
+    "binary_sha256": "6b03eccf9dfec839b1a198274082c15864a458ff52c0c86e06ab704851dcc434"
+  },
+  {
+    "name": "acceptance-test",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/baseline-v1/acceptance-probe",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.00978869991376996,
+    "stdout_sha256": "b2d563756042068bbe350c9e2089b4ee337c6ac15e8868afd290405fb6531fb4",
+    "stderr_sha256": "770ceece6f06818aee0ab250d2738430eb39ca6194b25b40faf28142d6cee2fd",
+    "resources_sha256": "c9253a8e42fbffb80e765a4715c5ae37c543ae0b4ec1cde9bcba55129dae1d92",
+    "binary_sha256": "6b03eccf9dfec839b1a198274082c15864a458ff52c0c86e06ab704851dcc434"
+  }
+]

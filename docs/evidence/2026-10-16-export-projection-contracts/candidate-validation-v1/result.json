@@ -1,0 +1,13 @@
+{
+  "complete": true,
+  "commands": 15,
+  "unexpected_exits": [
+    "strict-clippy",
+    "stl-clippy"
+  ],
+  "known_unfixed_format_failures": [],
+  "sources_unchanged": true,
+  "main_sources_modified": false,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false
+}

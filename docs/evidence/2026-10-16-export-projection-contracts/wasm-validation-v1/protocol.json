@@ -1,0 +1,53 @@
+{
+  "runner_sha256": "a92fff44bc04a2d81f472a0260e22d79751c2ebd98b9c9befbdb0367aa8d33ed",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-source-v1",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1",
+  "native_input_hashes_sha256": "27fb8aa31d5702bc4e27b553ced4aa15fbdcd7b73c4613586ae48696681ae30e",
+  "source_hashes_sha256": "7806702edcfaf9e291523f797f3294225bf702b751a835e0df68c3bcbf6364b9",
+  "native_rust_cargo_inputs_unchanged": true,
+  "changed_relative_to_native": [
+    "scripts/test-wasm-bindings.sh",
+    "tests/wasm/export_projection.cjs"
+  ],
+  "target_initially_empty": true,
+  "mount": "/ ext4 rw,relatime,seclabel\n",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "node": "v22.22.2",
+  "npm": "10.9.7",
+  "wasm_bindgen": {
+    "exit_code": 0,
+    "command": [
+      "cargo",
+      "install",
+      "--locked",
+      "--offline",
+      "--version",
+      "0.2.126",
+      "wasm-bindgen-cli",
+      "--root",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-tools-v1/install",
+      "--target-dir",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-tools-target-v1",
+      "--jobs",
+      "2"
+    ],
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "76b96001cfcda710e613eed5b6bd78faf54a092aef2596a37f58da46cf3e1113",
+    "resources_sha256": "bd8bb9f138f316acaeb62329c331f325fa007177bdc9385f47412acd8af3b6d6",
+    "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-tools-v1/install/bin/wasm-bindgen",
+    "binary_sha256": "83f7eb3b73eaec4757eb245e66ff8a7b0101692024d040a5c5d2438112d8fd90",
+    "version": "wasm-bindgen 0.2.126"
+  },
+  "elapsed_limit_seconds_per_command": 1800,
+  "address_space_limit_bytes": 68719476736,
+  "containment_note": "External elapsed and address-space limits; V8 needs large virtual address reservations. This is not an internal heap, work or cancellation contract.",
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_INCREMENTAL": "0",
+    "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-scratch-v1",
+    "WASM_BINDGEN": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-tools-v1/install/bin/wasm-bindgen"
+  }
+}

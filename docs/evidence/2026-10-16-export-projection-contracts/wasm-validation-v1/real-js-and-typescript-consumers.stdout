@@ -1,0 +1,2 @@
+WASM certainty, query status, geometry, and invalid-input checks passed
+WASM export projection, failure, cache and composition contracts passed

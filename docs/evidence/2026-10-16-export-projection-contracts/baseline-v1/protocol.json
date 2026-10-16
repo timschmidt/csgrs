@@ -1,0 +1,43 @@
+{
+  "runner_sha256": "bf74023e97378cccdfb460f93bd1f7a0b7191a1e57aad719782ddc7f0a9fa01c",
+  "head": "c9410688b0c7854fba6c9a90f34cae5b3382318a",
+  "source_hashes_sha256": "66d2735026af046151a3604a51845c8a87db25bc18d45e59a94a4eff55be7800",
+  "bindings": {
+    "csgrs": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps/libcsgrs.rlib",
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libcsgrs.rlib",
+      "sha256": "7d812ed68cb315c5f4f48be2dc1e8ceb33f4bb49b07b62aff5f381a6219b328c"
+    },
+    "hypermesh": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "sha256": "ca05db48e6887409ef480232060d36e15f4c739396680d88bdc8c62712408696"
+    },
+    "hyperlattice": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "sha256": "7d61eb526be38f9926a94e35f151e6b0c46ddd442c516742c1afa81cf19179b0"
+    }
+  },
+  "dependencies": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps",
+  "dependency_hashes_sha256": "e3f1bfd85efcec9dbe1d8ee1da0b82b65f87ddbf7e5de70919b89e0edddef869",
+  "probes": {
+    "format": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs",
+      "sha256": "e11a2adb013478d5f5083e473099b8d26dbf004c0efc586aa6c37bcc98c5c2a0"
+    },
+    "topology": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/stl-topology-v1/probe_v1.rs",
+      "sha256": "4cadb0431794b153971e7e771c658db394d35dde5ccfb1be7d5fa643f205e77c"
+    },
+    "acceptance": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-export-projection-contracts/export_projection_contracts_v1.rs",
+      "sha256": "8ab61e5c9b4340df53ab1895929886817d3e57c15a897296d6c95641ca0c2e46"
+    }
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "elapsed_limit_seconds_per_command": 120,
+  "address_space_limit_bytes_per_process": 8589934592,
+  "target_reused_read_only": true,
+  "completed_targets_modified": false
+}

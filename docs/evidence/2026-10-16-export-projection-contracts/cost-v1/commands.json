@@ -1,0 +1,1408 @@
+[
+  {
+    "name": "compile-baseline",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-export-projection-contracts/export_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.5564037221483886,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d684113408bbe4745faaea7f6b3d5b05d42726a7ce1c681ed58cf81b3238a0fc"
+  },
+  {
+    "name": "compile-candidate",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/candidate-target-v2/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-export-projection-contracts/export_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3780299723148346,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "18f6e932b75360d546a060a9879606bd1fd307a1d9de509f6732769cb69999b4"
+  },
+  {
+    "name": "pair-0-binary-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-0-baseline",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004840617999434471,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-0-baseline",
+    "stdout_sha256": "a79a192ac78ca314e0295d637c7d06608753cee83ba599d208da1e7adce75511",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a1a50ba594202da4a15a7b968d87e1bfa478222c26cd3cc5e04cf42bbc75dbf5"
+  },
+  {
+    "name": "pair-0-binary-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-0-candidate",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004196112044155598,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-0-candidate",
+    "stdout_sha256": "d3ca389966b31fa41bf8cccfc944500bc08612b8d24af039f2a1aa274fb6934d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "00082b17ccd676d5e1e0851cc4c28b4fc229d9a9824f4ad5d9af3d73c39c8e59"
+  },
+  {
+    "name": "pair-0-binary-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-1-baseline",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004199331626296043,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-1-baseline",
+    "stdout_sha256": "90f97318e19a54ec77144d5ec40a67d847781493923e8c109c66e4bfd269ab1c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "573de2f2ce87916b45fb3e31bb4da0e1d92699c720d3ca30c78a0745611ae06c"
+  },
+  {
+    "name": "pair-0-binary-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-1-candidate",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004104638006538153,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-1-candidate",
+    "stdout_sha256": "6c76eef36dc46999b370be5ed888e810f8401c51093e32d3a5e1e227af8dff1a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "274111987034d613860ed6a6447cab9840c8e3125bf2393023cdadf88d4158c9"
+  },
+  {
+    "name": "pair-0-binary-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-256-baseline",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01957174763083458,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-256-baseline",
+    "stdout_sha256": "9c9cc4d52fea0caa2fc85cf150fed416845f1df0c6e8b124a4d0b100d4ee9dab",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0bdf9ba6edf7f07d0eaf25c0a64b4ae0b415a1f1dc9ccd08747afa0747eaa374"
+  },
+  {
+    "name": "pair-0-binary-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-256-candidate",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.019542310386896133,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-binary-256-candidate",
+    "stdout_sha256": "625ffa57115e8391cba399d5354d49fb4fa13e7842601178a41624ccc9dc10df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "028a27059c5b8b97b20776bb1f167e250a0dc7efb17e9e5592e7c3e776560ba4"
+  },
+  {
+    "name": "pair-0-ascii-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-0-baseline",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004203571937978268,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-0-baseline",
+    "stdout_sha256": "83dd7f2f099c4ce97c7635db6ceedda71111f41a9105dc157a74c41f8dca5391",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9f3673ec56ddb6ef6f30da6a4e239c8f38f2da2647872a100b0cc4a511cc856e"
+  },
+  {
+    "name": "pair-0-ascii-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-0-candidate",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004096649121493101,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-0-candidate",
+    "stdout_sha256": "1247c96e90b39ad1f9305bf0de756d3c6552fe403175fc6b059a6e27d17adeb8",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "328ea28b6c1b456323dd2c2145a2af19617c7bb2bd8d9d27a0736fd0b8f4a26b"
+  },
+  {
+    "name": "pair-0-ascii-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-1-baseline",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005799011792987585,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-1-baseline",
+    "stdout_sha256": "b489258100d0d5469d4b851b5b9b93a53cf1099788e898918294067433453336",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5d952887e4ca1aa925c988846a830cefbdd66f61d2b66095799d0bbd6c5510c4"
+  },
+  {
+    "name": "pair-0-ascii-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-1-candidate",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005648182705044746,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-1-candidate",
+    "stdout_sha256": "ba4fb1f905977a864bf16630c2a66dc17523f4ba6d2c8cad43c8c003d0f80cf3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6a5f2e024fca9496524959177d90b2ff519b38fec7d81f0423e640a21d6450db"
+  },
+  {
+    "name": "pair-0-ascii-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-256-baseline",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05309295002371073,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-256-baseline",
+    "stdout_sha256": "8228b07e9c6599d4f64e17cb3d3ad55532fc92412310422d8daab337ff390174",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "70914afdc3d311b4d5b5f19b12460c0809cda5a10be2ffd827e6e5ca50d8a826"
+  },
+  {
+    "name": "pair-0-ascii-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-256-candidate",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05572065990418196,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-ascii-256-candidate",
+    "stdout_sha256": "813230fb96c3c5edacd3614975ed8b033f04cb920365fb13bcc541709345bd54",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "440c169665ae865f34f5b4038475226cbce4ae5b8997824b74e7d834212e8bf4"
+  },
+  {
+    "name": "pair-0-obj-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-0-baseline",
+      "0",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004588466137647629,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-0-baseline",
+    "stdout_sha256": "8f4a4dd369772acf79f56a63248825da4a7a9f7474fcd1c292cd50dc4dde2b55",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b0e6cdf9b2eb3118a8009ed7d736fea9ed82aadfd1ba15ced38a52725ecee59b"
+  },
+  {
+    "name": "pair-0-obj-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-0-candidate",
+      "0",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004190712235867977,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-0-candidate",
+    "stdout_sha256": "7aa7291647664c5568d91a21e7de31c8c803eac58053bc8e43280a4605700c4f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3b2fea8593e0bf286d8ad303927b3e270204a3dc884f6c5afc5be3e89a7afec7"
+  },
+  {
+    "name": "pair-0-obj-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-1-baseline",
+      "1",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0053962599486112595,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-1-baseline",
+    "stdout_sha256": "7888216f8a88cc249cbb3a425f47effe0a95c3a2e69b1add37258436c2bcf5c3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "97d05d5befbf761232872ea36d81a239ae053d91fac4a32fb0d38c113e2cd3b6"
+  },
+  {
+    "name": "pair-0-obj-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-1-candidate",
+      "1",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005578338168561459,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-1-candidate",
+    "stdout_sha256": "f07fe565955dfdef128abbec339a58d61fc79ba4f0a62edab9d0e7ec6e4d49f6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9b8ca989212bdd0957732ceaa6b3296a540dab576459251ef6b5fdbdc4a6d6ea"
+  },
+  {
+    "name": "pair-0-obj-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-256-baseline",
+      "256",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.04944828897714615,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-256-baseline",
+    "stdout_sha256": "a1aabe1f833230ad2deb976a5f716686de877aedfaaceb277d165efe0ddf2492",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "93050c0e4b761cfcdaffb88c3fdfe4c38827ec574eb5df8bd3f620b790b7f2c0"
+  },
+  {
+    "name": "pair-0-obj-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-256-candidate",
+      "256",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05102018220350146,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-0-obj-256-candidate",
+    "stdout_sha256": "2ac4dbfc2eba13e8a0d14a8d482a3cbef33d0a7bc1748518652c8da54a8750f9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "05d115c5b4985282531fdb412227fd79c483d86e9c99f7791b6876580b557b17"
+  },
+  {
+    "name": "pair-1-binary-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-0-candidate",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0042892759665846825,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-0-candidate",
+    "stdout_sha256": "f2211579de346a7fa613ae783abc7ca2cc93a8e85a370aebc7bcf3d50b0fb27a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "03074280fce9bbd7bfe2397376afc571480c68020a8a2862da5447f7846cef7f"
+  },
+  {
+    "name": "pair-1-binary-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-0-baseline",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004346872214227915,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-0-baseline",
+    "stdout_sha256": "04b54f89aa97c5562826d836a690b92e8e997070c76a244d5f4e9900c1587632",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8d843212fd9110341335889f4e729a7ce01ee9a7054185f8076605c2f30a847d"
+  },
+  {
+    "name": "pair-1-binary-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-1-candidate",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0043684798292815685,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-1-candidate",
+    "stdout_sha256": "9b797c688c7bd03e9562436d76f415c17b63c0f2b62d4dea21dfca8fe3f7b004",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9f78dd6bc8ef389ce9a5a4757434f6dad283455a200c89ce48b0f8bd2439f8bb"
+  },
+  {
+    "name": "pair-1-binary-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-1-baseline",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0045694769360125065,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-1-baseline",
+    "stdout_sha256": "44386a11b4213dcafe452171b0c08f1f0542db025acc936d300c5da5ed5db1c6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fdbda711007c1dd1d1054c6853ddfe13c6c9a1ad7df988d131309d1065dee90d"
+  },
+  {
+    "name": "pair-1-binary-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-256-candidate",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.021734660025686026,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-256-candidate",
+    "stdout_sha256": "c19340bcf35ef40ad8b0fc5bef013cb1b0438b947e43a4026eb55f849f86172c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "62afe863bc7a30672c485e22520b71a6887381936e248a1c85fd3f0c6282e8d7"
+  },
+  {
+    "name": "pair-1-binary-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-256-baseline",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.017547166906297207,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-binary-256-baseline",
+    "stdout_sha256": "86bbcb29367945e819fb8fbaec2ce8a2daacb7cbb56f6f8d0498132fa1d67b6a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "03a353b9f7b374ec124b6c6e1d127289aa0d432f6c820fbf8ba4c6f22abe3df7"
+  },
+  {
+    "name": "pair-1-ascii-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-0-candidate",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004264866933226585,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-0-candidate",
+    "stdout_sha256": "53406bb1311d13360a536bc34174c7d633d9e498eec4a49fb88e01d6ca8c5c45",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "cfc79bdf07be423c2fde7217a7d268a5eb835b6a9c0eb6dde7503f919b42e78e"
+  },
+  {
+    "name": "pair-1-ascii-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-0-baseline",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0041641551069915295,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-0-baseline",
+    "stdout_sha256": "dd68d45bffdffe0884ba4e7b6b60eebbc08dda6fe7105bab1c7b3853e56669b8",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4a0ecb7d2d46c7205373c36f6f4d647c1c9cad5387bbe1000eda0d30a64333ac"
+  },
+  {
+    "name": "pair-1-ascii-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-1-candidate",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.006255640648305416,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-1-candidate",
+    "stdout_sha256": "dccb3b61e92595dcca7e7828e0541ea271925702dfdf82380d20a6daf69865d1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "1f7bbaee67463e3b7009cf6758688541445c14c3a305671fd6af36b76df3ab88"
+  },
+  {
+    "name": "pair-1-ascii-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-1-baseline",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.006244371645152569,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-1-baseline",
+    "stdout_sha256": "d39aad70da9fd32c9f762424e4ee894cd6057bcbeddf3a7d220d95bdba6c9095",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "483e71226cb3bdd89db2d1f187b5370d0d209e0b295df8d8d42f342723c03ec5"
+  },
+  {
+    "name": "pair-1-ascii-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-256-candidate",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.054683160968124866,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-256-candidate",
+    "stdout_sha256": "f206a4d5b74f399c5a31289fad5c45231b4e155ed75b5453ad83c09086f8556a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "603e11edb555eef2be9391e4d27f009179bba4ac40486a65236aaba5589de115"
+  },
+  {
+    "name": "pair-1-ascii-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-256-baseline",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05635857582092285,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-ascii-256-baseline",
+    "stdout_sha256": "f9d920ce5b981fa99df18080ed71e1492ccc5a4fb4b3a49e30d39ae24fc7ab9d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "59837fcdbd85889ad27792817a153a500a0006748c7cecb0c2b201c7b3a2a8af"
+  },
+  {
+    "name": "pair-1-obj-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-0-candidate",
+      "0",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00475053396075964,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-0-candidate",
+    "stdout_sha256": "d14f81b110d6525b1e0c55a30f12c4614b79a742d3597a8f02f0a6876f8e83b5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b2cd9576db168dac93c5783a389562eba8274ae5f27cadefa0e284e94b371b40"
+  },
+  {
+    "name": "pair-1-obj-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-0-baseline",
+      "0",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004158045165240765,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-0-baseline",
+    "stdout_sha256": "1e3ed57faf7bdd2fe8e910156badf4dc22d3cc5244b786b06750b1c293747cca",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2e091ae7c36b8f7fa002860bbd5c89a91d28f7154d13d9bf9d3ca79df6f62677"
+  },
+  {
+    "name": "pair-1-obj-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-1-candidate",
+      "1",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005363491829484701,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-1-candidate",
+    "stdout_sha256": "19ce0a0d448979b6235d4916b145b549352ef936aecfc7482a29bcc419e20ab5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "cda5ea92e05a887615f15818a760074b1eee38819f8e12e585af03a3d369c6e3"
+  },
+  {
+    "name": "pair-1-obj-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-1-baseline",
+      "1",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005416208878159523,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-1-baseline",
+    "stdout_sha256": "cbf8b85d490a2ac775dd84abeac34048c5b95e652c3b82d45011b38aca806ce3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "e6e0d2b6814ab964f5e01bd9a949928cce6a4bee85795b07700c0feb8ee1e520"
+  },
+  {
+    "name": "pair-1-obj-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-256-candidate",
+      "256",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05120288906618953,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-256-candidate",
+    "stdout_sha256": "d27a2cb176e7fbd36bdba6c840dbceb96ae587fadc3f7500b0e387858306090c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "73d977ea37ddde959cd77a99ead39eb2a8afe3d1ab9c4153b1702c2736979b37"
+  },
+  {
+    "name": "pair-1-obj-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-256-baseline",
+      "256",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05021142726764083,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-1-obj-256-baseline",
+    "stdout_sha256": "f30e5ebcb70f97501ecc9db2b4f65551d7fdbde416f4ce4cf47d35c5ba7fe9b7",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "99c28d72338b93187f1c38bb025ad3d5116f93bd1dacd8af970e4b2c4790f3b7"
+  },
+  {
+    "name": "pair-2-binary-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-0-baseline",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004428036045283079,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-0-baseline",
+    "stdout_sha256": "55f3538adffc316cdddcb4a9d0f542dfbd3742b45ca61f7b9dd31d59c07aa00f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fa0ba97d871c62d55cb132389f559ab500525def52fbef822273b00656d498ed"
+  },
+  {
+    "name": "pair-2-binary-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-0-candidate",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004258058033883572,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-0-candidate",
+    "stdout_sha256": "05789860241bcb28bfcb491481fee2df18dcb9da1f5505c6aef2805541a17cc7",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5b8bf3cbf28f34a5d6edbb583b2d9230316acc8220f08ab13f6e44eff75a246c"
+  },
+  {
+    "name": "pair-2-binary-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-1-baseline",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004308975301682949,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-1-baseline",
+    "stdout_sha256": "473bae0035e546305105c054abf8f16a748dc0c73b7e33304284e98b329c594a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "313cb58257c21a612dbc8769c41a209c418cd8545271b527e6aae3dd8091ef10"
+  },
+  {
+    "name": "pair-2-binary-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-1-candidate",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004511491395533085,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-1-candidate",
+    "stdout_sha256": "d60ffc1c3e380273fb978920dc3e5d3f65ae4fdbbaf866c2ae3db1b1732cbfa3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a2b548f6180f2611e760de1b2b683b01762c812048e78f92e0e1986061ef5d76"
+  },
+  {
+    "name": "pair-2-binary-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-256-baseline",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01801035599783063,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-256-baseline",
+    "stdout_sha256": "4fe92119157f5636162fc6b95f5821b4d61f5f86ad5537f9b27f01959b54d030",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b43ea8543ba525e8664d6c332244b81513d4f96175e92425f0f9077d33fdd0eb"
+  },
+  {
+    "name": "pair-2-binary-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-256-candidate",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.020567369647324085,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-binary-256-candidate",
+    "stdout_sha256": "853f353d8a14fa1bfc90a892ac7ee0996fa36ec91dc5702520c8c35d0f40fd43",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d9912c50311084e255a1e77c54d59a5c739cd40299404f7f12de142630cd17bf"
+  },
+  {
+    "name": "pair-2-ascii-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-0-baseline",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004285925999283791,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-0-baseline",
+    "stdout_sha256": "ed56fa0e34878a925c2b7f483ae971152fd8ecbdf6af6f852a1280261dee5777",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c1a99b03973b4ef338825c83e9a6a7de89b4b525dbcc0754725909f659abdcf3"
+  },
+  {
+    "name": "pair-2-ascii-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-0-candidate",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004209622275084257,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-0-candidate",
+    "stdout_sha256": "5c18f4b4c66bf0b3c249ed51ccafd2260334113b48f6ed7971f37072db87e474",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "45f38c2d3ed822157cf97cb95aa52802c7abebd53dfca1425d4334cfe1e8240d"
+  },
+  {
+    "name": "pair-2-ascii-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-1-baseline",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.006025827024132013,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-1-baseline",
+    "stdout_sha256": "cc63d5e99ccc58b9c3b27fd0e0db97bdd7f3572029bce15f4dac3b0ea6d3c308",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5093d7ccce81ed1c6a9875e2d8e2170136ca74b42957a6a0551d735ddb168c76"
+  },
+  {
+    "name": "pair-2-ascii-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-1-candidate",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.006242712028324604,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-1-candidate",
+    "stdout_sha256": "8b38f950dfa20579d18057a30a089d1cd489c7b3adf9a04be7740a06c151024d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a6709c86995d7c00e6c9a7fbb5fe15ebb3e6d88310594e06d13619c191c2c9c6"
+  },
+  {
+    "name": "pair-2-ascii-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-256-baseline",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05622956482693553,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-256-baseline",
+    "stdout_sha256": "1be71dc51be0bf8498b1654453f9c2c218a2362710e68a8be45eb81b10ad27ba",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a213637463525245e8988d3a96634f8fe999ef75dbb633218068360e6671df2e"
+  },
+  {
+    "name": "pair-2-ascii-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-256-candidate",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05917716305702925,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-ascii-256-candidate",
+    "stdout_sha256": "e283a933cb94d1d06570f5ffd8aa44669e78c05e99cc29039457ca64a4b44130",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "547a8e00ce61928ff19bcdcdaa6ba8e8470ed8563dab8374d4273ed1236ad6b2"
+  },
+  {
+    "name": "pair-2-obj-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-0-baseline",
+      "0",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00494275102391839,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-0-baseline",
+    "stdout_sha256": "adaf2e7a9b3011db019285ce6478b732c728416945d3525bb530776a86953863",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "eb24e20e73d6167bcf95ffbca94b55bea80f1cf3e27ac188cff16397ceb3ad06"
+  },
+  {
+    "name": "pair-2-obj-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-0-candidate",
+      "0",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0042904457077383995,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-0-candidate",
+    "stdout_sha256": "539e39ff5620ac08a8ac84cd46d6c47d1b62ba7ca4e3f31596e2e70fd726722d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "cb894d233ab6a93c76f1445c47f2e722b53b91f9c831e161684ffc60c2a5377b"
+  },
+  {
+    "name": "pair-2-obj-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-1-baseline",
+      "1",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005531171336770058,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-1-baseline",
+    "stdout_sha256": "d85d7924a24861331fec08d225db82fda4694c5d6b5ddf8e2d91e25764acf93a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "50cf1bf968a79301323b472d50f9895af76f4561174fd4e4217e4501a79d3842"
+  },
+  {
+    "name": "pair-2-obj-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-1-candidate",
+      "1",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00567915104329586,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-1-candidate",
+    "stdout_sha256": "c41958755fd24525443035f70afa7e96e654528a875ab171b4ca36b56c558ff1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "e75f0624fb1a938d7e262b29ab2af940dfe7382772c9fd496c09201eb7135fac"
+  },
+  {
+    "name": "pair-2-obj-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-256-baseline",
+      "256",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.048435278702527285,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-256-baseline",
+    "stdout_sha256": "4e5e4b39b6896d18bc2c11d00ebaff4f37c542e842d3c1dcde85aba969a375a5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "30f615226f4b5d9c10d17432ad08c70bdd6dfc68a97f12d6bc5506918edd0daa"
+  },
+  {
+    "name": "pair-2-obj-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-256-candidate",
+      "256",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05333533324301243,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-2-obj-256-candidate",
+    "stdout_sha256": "352e37b876ef154e51bd6bc7b079ef0283769e6e198160c759920c1095f402cf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "73958dbf27f38c07593b2b7fdddd7447e51ca97a588690704febad16385efa1d"
+  },
+  {
+    "name": "pair-3-binary-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-0-candidate",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00472689513117075,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-0-candidate",
+    "stdout_sha256": "b324a8022bd729149c7dbc51b05663921f8610b7cd29e82f58118c07be3ff5e9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ff7afcfa5ff3a0728a4d456dd413bb477cb4a76f0d8b95d10df2429390864815"
+  },
+  {
+    "name": "pair-3-binary-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-0-baseline",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004361851140856743,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-0-baseline",
+    "stdout_sha256": "a341af7125ce180e3085aa52ec8491892c737193847d6dfcecb2a19411825cb9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "74a83010095f762fef6804b083604d6e0b96ec46dc134022eab8c0cd11fb1c0e"
+  },
+  {
+    "name": "pair-3-binary-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-1-candidate",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004584006033837795,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-1-candidate",
+    "stdout_sha256": "95b9a9ea91cb7250682407f0a6af3947e62f2531a08e75dca4bf13dbaecf87c6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f42e00cd0530d4bea2dd18141c91d02598eebe6ab6f15644b2c540da8125755f"
+  },
+  {
+    "name": "pair-3-binary-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-1-baseline",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004342223051935434,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-1-baseline",
+    "stdout_sha256": "fe862c5c7970a66557788fda35ebdd37e418883ee27600b5bb5412f8354eb66b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9f997a1fb0fb1c1b353835b4a0ca51e42f3e9d7c398b21a7bea40336ed476596"
+  },
+  {
+    "name": "pair-3-binary-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-256-candidate",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.021257032174617052,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-256-candidate",
+    "stdout_sha256": "9414ab9728fea165cfc6595a5f8650fdf8efc8f2c48cd0b6b6ea537414463223",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5ef3270e9b5e79ea7cb2c51831cc21eb7864a7e255dd1967367ae5e684d14511"
+  },
+  {
+    "name": "pair-3-binary-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-256-baseline",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01875928370282054,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-binary-256-baseline",
+    "stdout_sha256": "e0927bf0c788907584aed77db7a170e777470c5ce27481c025e58ae17ac5c811",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "39b49612f142f8a0dd7b8e27a052fab7974824be31954dd69dfd2a61012aa2c4"
+  },
+  {
+    "name": "pair-3-ascii-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-0-candidate",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004083380103111267,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-0-candidate",
+    "stdout_sha256": "799037dad5a5962a48e26430f4e2900901d8ab2e3634cfc75591e02d3cd4d7b3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "28cd1a0d42cd998c3228ac4c9e1aced44e91c89ec1e7df19d980acf7ad505776"
+  },
+  {
+    "name": "pair-3-ascii-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-0-baseline",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004193053115159273,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-0-baseline",
+    "stdout_sha256": "9f7a13cb1b81ecfd17df6db1b8d2df1eff79298a9c48bc86e290a92155e48a4d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b66aa89c2e67145eda502904ab4eddc88718248c11cfd1fa22f500afd8e83004"
+  },
+  {
+    "name": "pair-3-ascii-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-1-candidate",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.006117581389844418,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-1-candidate",
+    "stdout_sha256": "f97524ed0ddb77d67ee275f2a7b15a8761db94514864eaab43020288c09eaaba",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "58ac1e91c62da17705a45a3c0d047d510b38d801e3ac46642be37b9e5b3eaab7"
+  },
+  {
+    "name": "pair-3-ascii-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-1-baseline",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.006255880929529667,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-1-baseline",
+    "stdout_sha256": "ed0d7928b4537db9076a1a5ae2a745d3dac7a1a7099b7bce169ac40e10ab265d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "dd178c3ea041620a8b044f070913c1d2ec273df9a89e7c26a6ff911613948aeb"
+  },
+  {
+    "name": "pair-3-ascii-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-256-candidate",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0604914128780365,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-256-candidate",
+    "stdout_sha256": "3f3e007d71b1bc9a95ba0396af3d912317b041e11d3a1d7f0c5c7ce53c5bc481",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "15c611f853b469a986ef537c3c165c469588772f6e35c2e0ecdbaf52a0209a8e"
+  },
+  {
+    "name": "pair-3-ascii-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-256-baseline",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.059289054945111275,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-ascii-256-baseline",
+    "stdout_sha256": "3700f6d90564eab5e9242d6f63762355b321eb58aac8a6f27bdd4f352e2daa58",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b770cbc045b731bdb890ea5d9fc5ddffaac31614f37fcb3e99a324fc8168e898"
+  },
+  {
+    "name": "pair-3-obj-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-0-candidate",
+      "0",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00485660694539547,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-0-candidate",
+    "stdout_sha256": "20df02deb37ef73ca46bc6ec1532b294ba74c8cb4f60d156963662510f576439",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "963de65b1a3b7394efed5c49b2997f873461ac204ffcafb633e075705a5d551f"
+  },
+  {
+    "name": "pair-3-obj-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-0-baseline",
+      "0",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004336223006248474,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-0-baseline",
+    "stdout_sha256": "b275b0e1d5926a73877e899a75c48f34154e448afd3cd079fed37896e6e49a7e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5bfda1fee37be1d9465463fda5d1a79c08d4f9301bb030ded05255d48a6ae7ab"
+  },
+  {
+    "name": "pair-3-obj-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-1-candidate",
+      "1",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005500533152371645,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-1-candidate",
+    "stdout_sha256": "d28332d1d12de8c7c4646d9f2c31d7ef7b5ecb5bbb47a44ab2fa0bb6e1f3f60d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9949d8f9abf015f3964eebc54864a0117202b607b2208c87b34d6446b0d93390"
+  },
+  {
+    "name": "pair-3-obj-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-1-baseline",
+      "1",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0053985100239515305,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-1-baseline",
+    "stdout_sha256": "4115d955fe84df2717e46b2ba224bed6cde74f4a0c4616e9466a52d6da4c7aee",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b0f90f9cc4568f8b3c2ac9c16c8746c4b5f817b0ac12b5bc4b0bc3088e59a570"
+  },
+  {
+    "name": "pair-3-obj-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-256-candidate",
+      "256",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05012643290683627,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-256-candidate",
+    "stdout_sha256": "8e0cae4f942d84d39f0907590215e89a2dcc5589ab62869af0cc687f4fcda391",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fe5142dda218f14d90b19f19237346227b6b482238be812f56c52084a709e3a7"
+  },
+  {
+    "name": "pair-3-obj-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-256-baseline",
+      "256",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.048967813141644,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-3-obj-256-baseline",
+    "stdout_sha256": "397b8931483fdd854a4823680c761a710b42103225b4043fe77f97311e6d1a43",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6edd3368c98a750c68dd16bbfeb085c64abcbe50e09e464a9101059f751b658c"
+  },
+  {
+    "name": "pair-4-binary-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-0-baseline",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004248938988894224,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-0-baseline",
+    "stdout_sha256": "40f1b0053cc01e6dfb1d65f482bd879a81d744288d2726cf997ead9d7a42676a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "bc844bf9867ee807c7f435306453f0b5f3bb12a7141cc1224c736a7b8abc29e6"
+  },
+  {
+    "name": "pair-4-binary-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-0-candidate",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004193741828203201,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-0-candidate",
+    "stdout_sha256": "8509606480aee005e53b2875f79dbf56155304f423cfc35c65cca1a02a34abc2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "534c20c04ccaddabab1d2e09a136e56a3b650807ed698badcf551de2207eb13d"
+  },
+  {
+    "name": "pair-4-binary-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-1-baseline",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004277696833014488,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-1-baseline",
+    "stdout_sha256": "8d2590fbcab396ae1056a9a7a8a998d825f4b31e4b9ddf6bad885052dff7f5f9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "e1e7da4757ec91f9876b0294b060b0acd9786ad13c54158682edd1543b081075"
+  },
+  {
+    "name": "pair-4-binary-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-1-candidate",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004151074681431055,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-1-candidate",
+    "stdout_sha256": "827e5113c3e6a05f990aab8c35d07f59881c6a41448576d090563b42d14191ed",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3e3999ac91a467aebf9eccb72edc3e2252ca788868c6c2d2b89038c6385f47fe"
+  },
+  {
+    "name": "pair-4-binary-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-256-baseline",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.017982746940106153,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-256-baseline",
+    "stdout_sha256": "7a16e3944db861a91397b74cb8f4b2caa2c8e431fff0fc3759e114b40dae02c3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fab02be7168ed67565ef8c0db1bdf9989f762b19668317563b9a6808ad821413"
+  },
+  {
+    "name": "pair-4-binary-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-256-candidate",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.020643294788897038,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-binary-256-candidate",
+    "stdout_sha256": "9e07d0721c252b5dd04da60d8bd5b1e0e612308d99bd0d55d8dbcfdbd7e4f10e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4a658358ba59e155e46d674e8e6078a43e25f64fa40377515d55999041c4fd95"
+  },
+  {
+    "name": "pair-4-ascii-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-0-baseline",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004291555844247341,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-0-baseline",
+    "stdout_sha256": "81e3541011d43e3d9b5748b4581bc33bcb6b8f2d3579e43e67a59b0254edebb3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "69f43526bb2719408acc37a5057661902aa69e50a8ec59b79bd617b9c37f54d4"
+  },
+  {
+    "name": "pair-4-ascii-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-0-candidate",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004165234975516796,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-0-candidate",
+    "stdout_sha256": "0e9b7adcc543202baaf8aabb17caeda2d598be3e28067efeb2c32df199460099",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "fa08aec87132df4c6493052f244580ca0ff63e9ba934b21c67b0e4ec4e7bb4e3"
+  },
+  {
+    "name": "pair-4-ascii-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-1-baseline",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005986829753965139,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-1-baseline",
+    "stdout_sha256": "75b56f68e93e8e52f87f66a67a583a1600095adf98e3a8f8bfd31c374ad13b18",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d304a126a90d916d8d5fdfbf71f771324646c59460fb3e149cd91b969bc70ba3"
+  },
+  {
+    "name": "pair-4-ascii-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-1-candidate",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005799612030386925,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-1-candidate",
+    "stdout_sha256": "4d4e299806e319d7622b1bf3d0ce42d755112f50704e6d2477da58e8ce9ec027",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "82a85e91c96bb5713ed8c0a50301fc114dad986669865174ef31808e331c2eba"
+  },
+  {
+    "name": "pair-4-ascii-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-256-baseline",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.06052233977243304,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-256-baseline",
+    "stdout_sha256": "61556793ed2fb67987a6d76a9128da2616d8a8065c5f637a9d2ab0e594846ad2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d0f6a49f1034022026453456c751a0fcef6c0110520f326845c62e1199e957fa"
+  },
+  {
+    "name": "pair-4-ascii-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-256-candidate",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05392403295263648,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-ascii-256-candidate",
+    "stdout_sha256": "262e645db306897be88c3fe09f2b1abc7bc984b9577cf150324c9256a48b664b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f78805041c11b0ec8368fd6b54ea53cb073ab13abcffa63ee89b503462d4fea0"
+  },
+  {
+    "name": "pair-4-obj-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-0-baseline",
+      "0",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004406948108226061,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-0-baseline",
+    "stdout_sha256": "8bfcbe2f795384307e1321e65c9f7eaef7225c52e846bf2a78fb2be93c69c588",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d9ea0d04fe39e4b7719e2ed0cbd37451cd4a09e72e82b8435dfd42dd63c71098"
+  },
+  {
+    "name": "pair-4-obj-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-0-candidate",
+      "0",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004167515318840742,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-0-candidate",
+    "stdout_sha256": "b62f5c22490c1619b8058266b7e0754acc4a962066664f815b8ab828eda8c809",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "853c6f5d13d49b3c755927619d396a9581100d33cf46e810fc846b8063223f5a"
+  },
+  {
+    "name": "pair-4-obj-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-1-baseline",
+      "1",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005562989041209221,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-1-baseline",
+    "stdout_sha256": "bbad5bddf1d61d1667f7562f3a5fdf9a5aaddceccc3bac86bb37f65e27161bc4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f064810b102b49bcfc1a22c4384901c8d9cc1331e65b85c9cdc0e86f87124941"
+  },
+  {
+    "name": "pair-4-obj-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-1-candidate",
+      "1",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005526550579816103,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-1-candidate",
+    "stdout_sha256": "cacd9162f642cb7909b0885b8e60d0a1e073ebea2948767566c9c4ae4a33eb37",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d0a8baf601a33c2effb2d3720fd6b3a7205e35fa1e86f589c65be7d705a55526"
+  },
+  {
+    "name": "pair-4-obj-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-baseline/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-256-baseline",
+      "256",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.050415263045579195,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-256-baseline",
+    "stdout_sha256": "4f050883953bc4b95a97735645b4aedecfcfab8f5e52caf7413139699b6da449",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a385bdebe4f81def2e5833f763898b44d453ae7595ad50890b06c79eb5adbe59"
+  },
+  {
+    "name": "pair-4-obj-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/compile-candidate/export-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-256-candidate",
+      "256",
+      "obj"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.050403714179992676,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/cost-v1/pair-4-obj-256-candidate",
+    "stdout_sha256": "463b4125a46ab8c46fdddcbc63507ff718c2db8bc59ccfffbcdc84ab01ae4b81",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "edb14c3d983c6d7578b21c37260faff0f280b0aa7c3dfa5679e38c48dd4d0f16"
+  }
+]
