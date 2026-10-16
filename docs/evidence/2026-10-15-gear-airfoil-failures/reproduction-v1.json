@@ -1,0 +1,35 @@
+[
+  [
+    "mkdir",
+    [
+      "mkdir",
+      "-p",
+      "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1"
+    ]
+  ],
+  [
+    "probe-build",
+    [
+      "rustc",
+      "--edition=2024",
+      "-Copt-level=2",
+      "docs/evidence/2026-10-15-gear-airfoil-failures/baseline_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/libcsgrs.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps/libhypercurve-65c0df1f5cff6824.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/hilbert-trimming/candidate-v2/release/deps",
+      "-o",
+      "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/probe"
+    ]
+  ],
+  [
+    "probe",
+    [
+      "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/probe",
+      "baseline",
+      "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/fixtures"
+    ]
+  ]
+]

@@ -1,0 +1,3 @@
+engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum
+csgrs,cold,feature,mesh_primitives,catalog,0,1,1129688855,13,3848,3848
+csgrs,cold,feature,profile_primitives,catalog,0,1,313628852,21,22,90194313217

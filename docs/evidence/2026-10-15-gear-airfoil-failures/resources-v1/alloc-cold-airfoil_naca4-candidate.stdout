@@ -1,0 +1,2 @@
+case,temperature,allocations,reallocations,allocated_bytes,reallocated_bytes,live_delta_bytes,peak_additional_requested_bytes,retained_delta_bytes,components
+airfoil_naca4,cold,1708801,27025,88123925,3079456,3732968,5326129,3732968,1

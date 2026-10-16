@@ -1,0 +1,98 @@
+{
+  "seeded_build_artifacts": null,
+  "preserved_prior_executables_sha256": {},
+  "base_commit": "f1dab2248996601f9b60b9ab06b494fd50f2f4cb",
+  "runner_sha256": "f3ee76657ed7c1e8792452ded7c2380c1ad03a41abb312d80f9adf68b4dc6f05",
+  "phase": "candidate-v1",
+  "commands": [
+    [
+      "overlay-setup",
+      [
+        "python3",
+        "docs/evidence/2026-10-15-gear-airfoil-failures/setup_overlay_v1.py",
+        "candidate-v1"
+      ]
+    ],
+    [
+      "workspace-fmt",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "gear-airfoil-semantics",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "csgrs",
+        "--no-default-features",
+        "--features",
+        "curve",
+        "--test",
+        "gear_airfoil_failures",
+        "--",
+        "--nocapture",
+        "--test-threads=2"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/candidate-v1",
+    "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/candidate-v1"
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "properties": [
+    "P1",
+    "P5",
+    "P6",
+    "P8",
+    "P9",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P25",
+    "P27",
+    "P35",
+    "P37",
+    "P39"
+  ],
+  "owning_layers": [
+    "CSGRS Sampled gear, rack and airfoil construction and solid composition"
+  ],
+  "domain": "Preserve existing sampled gear/rack/airfoil sets while exposing validation, predicate, scalar and allocation failures and operation-local certainty. See contract-v1.md.",
+  "consumers": [
+    "Public Rust gear/rack/airfoil APIs and gear solid wrappers",
+    "Readme render example",
+    "Profile and feature benchmark callers"
+  ],
+  "missing_acceptance_test": [
+    "Reproduce invalid/undecided empty results and unchecked capacity panics for all five sampled families.",
+    "Preserve typed failures and consumed certainty through all three gear solid wrappers.",
+    "Keep original full-resolution successful source coordinates and independent semantic witnesses."
+  ],
+  "semantic_oracle": "Independent rack area and membership, topology and downstream volume, with exact source-coordinate preservation as a separate check.",
+  "wall_limit_seconds_per_command": 1800,
+  "address_space_exceptions": {
+    "typescript": "Node/V8 virtual reservation; wall containment remains, no heap bound claimed.",
+    "wasm": "Node/V8 and WebAssembly reserve large virtual address ranges. This command retains wall containment but has no RLIMIT_AS; no heap bound is claimed."
+  },
+  "address_space_limit_bytes_per_process": 8589934592,
+  "diagnostic_collection": "All commands are attempted on frozen source; Cargo test --no-fail-fast retains every failed test target. Every nonzero result remains a failure; source or artifact mutation still aborts immediately.",
+  "limitations": "External containment only; no internal full-query work/heap-byte/cancellation bound or end-to-end provenance claim. Inherited 27093 missing artifact paths remain recorded. No full-plan or release admission.",
+  "previous_goal_turn": "Progress: f1dab2248 fixes exact Hilbert clipping. Sampled gear/rack/airfoil constructors still swallow failures; reproduce before editing.",
+  "wrapper_sha256": "e551f4aaf2caf07e25d4b164e79ea694ef91396aefed320a3e32806b1b91daf2",
+  "artifact_preparation": "Candidate setup commands create private copy-on-write targets; overlay.json records the immutable E15 lower build and private /dev/shm upper directories. Standalone phases create a fresh directory and pin their external executables. All retained lower files are audited again at closure."
+}

@@ -159,9 +159,9 @@ Invalid input, undecided predicates, scalar-domain errors and capacity failures
 remain distinct from successful empty results. Native topology failures retain
 their cause. These sampled polygons carry no analytic-fidelity bound.
 
-Gear, text, airfoil and other legacy convenience operations still need their
-own typed-failure migration. End-to-end provenance remains a separate open
-contract from these operation-local certainty receipts.
+Text and other legacy convenience operations still need their own typed-failure
+migration. End-to-end provenance remains a separate open contract from these
+operation-local certainty receipts.
 
 Rendered filled constructors:
 
@@ -191,11 +191,11 @@ Rendered filled constructors:
 | <img src="docs/circle_with_keyway.png" width="144" alt="Circle with a keyway and visible exact curve edges"/> | `curve::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
 | <img src="docs/circle_with_flat.png" width="144" alt="Circle with one flat and visible exact curve edges"/> | `curve::circle_with_flat(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
 | <img src="docs/circle_with_two_flats.png" width="144" alt="Circle with two flats and visible exact curve edges"/> | `curve::circle_with_two_flats(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
-| <img src="docs/involute_gear.png" width="144" alt="Filled involute gear profile with visible edges and vertices"/> | `curve::involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize) -> CurveRegion2` |
-| <img src="docs/cycloidal_gear.png" width="144" alt="Filled cycloidal gear profile with visible edges and vertices"/> | `curve::cycloidal_gear(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize) -> CurveRegion2` |
-| <img src="docs/involute_rack.png" width="144" alt="Filled involute rack profile with visible edges and vertices"/> | `curve::involute_rack(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real) -> CurveRegion2` |
-| <img src="docs/cycloidal_rack.png" width="144" alt="Filled cycloidal rack profile with visible edges and vertices"/> | `curve::cycloidal_rack(module: Real, teeth: usize, clearance: Real, segments_per_flank: usize) -> CurveRegion2` |
-| <img src="docs/airfoil_naca4.png" width="144" alt="Filled NACA four-digit airfoil with visible edges and vertices"/> | `curve::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize) -> CurveRegion2` |
+| <img src="docs/involute_gear.png" width="144" alt="Filled involute gear profile with visible edges and vertices"/> | `curve::involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/cycloidal_gear.png" width="144" alt="Filled cycloidal gear profile with visible edges and vertices"/> | `curve::cycloidal_gear(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/involute_rack.png" width="144" alt="Filled involute rack profile with visible edges and vertices"/> | `curve::involute_rack(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/cycloidal_rack.png" width="144" alt="Filled cycloidal rack profile with visible edges and vertices"/> | `curve::cycloidal_rack(module: Real, teeth: usize, clearance: Real, segments_per_flank: usize) -> Result<CurveRegion2, ValidationError>` |
+| <img src="docs/airfoil_naca4.png" width="144" alt="Filled NACA four-digit airfoil with visible edges and vertices"/> | `curve::airfoil_naca4(max_camber: Real, camber_position: Real, thickness: Real, chord: Real, samples: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/bezier.png" width="144" alt="Filled exact Bezier boundary with visible edge and vertex"/> | `curve::bezier_region(control: &[[Real; 2]], display_segments: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/metaballs_2d.png" width="144" alt="Filled planar metaball contours with visible edges and vertices"/> | `curve::metaballs(balls: &[(Point2, Real)], resolution: (usize, usize), iso_value: Real, padding: Real) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/from_image.png" width="144" alt="Filled raster-traced region with visible edges and vertices"/> | `curve::from_image(image: &GrayImage, threshold: u8) -> Result<CurveRegion2, RasterTraceError>` |
@@ -204,6 +204,29 @@ Rendered filled constructors:
 `curve::empty()` is intentionally image-free because it contains no visible
 geometry. `polygon_points` constructs the same polygon family from native
 Hypercurve `Point2` values.
+
+The five gear/rack/airfoil constructors now return `Result`; propagate `?` or
+handle `ValidationError`. Their `_with_context` forms return `GeometryOutcome`
+and share validation and native ring construction with the strict defaults.
+`solid::spur_gear_involute`, `spur_gear_cycloid`, and `helical_involute_gear`
+propagate construction errors and consumed certainty into extrusion. Invalid
+profiles no longer become successful empty solids, including at zero thickness.
+
+Modules and chord lengths must be positive; clearance and backlash are
+nonnegative. Involute pressure angles lie strictly between 0 and 90 degrees.
+Involute gears need four teeth, cycloidal gears three, and racks one. Gear
+flanks need two segments; cycloidal rack flanks need four. Derived root radii,
+tooth widths, root gaps and first-lobe ordering must satisfy the documented
+constructor inequalities. NACA camber and position are in `[0,10)`, thickness
+in `(0,100)`, and sample count at least ten; positive camber requires positive
+position. Undecided validation remains `Undecided`, count/byte-size overflow is
+`ResourceExhausted`, and native causes remain typed. Checked buffer reservations
+do not bound total native work, coefficient growth, heap bytes or cancellation.
+
+These APIs preserve the existing finite sampled polygons. NACA coefficient
+values remain the represented binary64 constants and retain the existing
+trailing-edge closure. Local numerical certainty and native profile topology
+do not certify fidelity to an intended analytic gear or airfoil surface.
 
 Open constructors retain their native path/string topology:
 
@@ -556,7 +579,7 @@ report. The existing convenience entry points retain their strict default.
 | Projection and slicing | `solid::flatten_with_context`, `slice_z_with_context` |
 | Native Real metaball meshing | `solid::metaballs_with_context`, `metaballs_with_diagnostics_and_context` |
 | Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context`, `sdf_expr_with_diagnostics_and_context` |
-| Curve construction | `curve::polygon_with_context`, `rectangle_with_context`, `square_with_context`, `circle_with_context`, `ellipse_with_context`, `regular_ngon_with_context`, `rounded_rectangle_with_context`, `bezier_path_with_context`, `bezier_region_with_context`, `bspline_path_with_context` |
+| Curve construction | `curve::polygon_with_context`, `rectangle_with_context`, `square_with_context`, `circle_with_context`, `ellipse_with_context`, `regular_ngon_with_context`, `rounded_rectangle_with_context`, `bezier_path_with_context`, `bezier_region_with_context`, `bspline_path_with_context`, `involute_gear_with_context`, `cycloidal_gear_with_context`, `involute_rack_with_context`, `cycloidal_rack_with_context`, `airfoil_naca4_with_context` |
 | Curve transforms and queries | `curve::try_transformed_with_context`, `try_translated_with_context`, `try_rotated_with_context`, `try_scaled_with_context`, `try_bounding_box_with_context`, `contains_xy_with_context`, `hilbert_paths_with_context`, `hilbert_strings_with_context` |
 | Mesh imports | `io::obj::from_obj_with_context`, `from_obj_attributed_with_context`, `io::dxf::from_dxf_with_context`, `io::vrml::from_vrml_with_context` |
 | Gerber conversion | `io::gerber::import_gerber_with_context`, `export_gerber_with_options_and_context` |

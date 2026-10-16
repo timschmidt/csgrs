@@ -1,0 +1,37 @@
+{
+  "commands": [
+    {
+      "name": "overlay-setup",
+      "exit_code": 0,
+      "seconds": 7.055132009088993,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "0e101347e23d3f846d83c073f76876010e83bf89759d4da3402a185a7a43af2e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "b8c95af1e5d4fe44c858030e57f0df5814d8298c4b6fa18a4cc56349b59a6635"
+    },
+    {
+      "name": "workspace-fmt",
+      "exit_code": 0,
+      "seconds": 12.392179256305099,
+      "sources_unchanged": true,
+      "binaries_sha256": {},
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "d6475060e843db1f588412c7af890dbc7b87bf28877bdbff814bb86c75a0a838"
+    },
+    {
+      "name": "gear-airfoil-semantics",
+      "exit_code": 0,
+      "seconds": 10.494940882083029,
+      "sources_unchanged": true,
+      "binaries_sha256": {
+        "target/properties/gear-airfoil-failures/candidate-v1/release/deps/gear_airfoil_failures-c624a0ee021ac8d8": "16f179d0c8306a9de557ddac5bf13457de2301a3d7cfb2e7dd4607dc2c86e630"
+      },
+      "stdout_sha256": "15f0ce822ed06acdf75d473127ca91b4d546162340cc878be88ec1d08ffc0946",
+      "stderr_sha256": "a245d0e9da2ae4031b1317d750bf86b3eba704d31f44ddb1913469e38ca33e6b",
+      "resources_sha256": "233b8d9d3592395a5474c61119915a125f0b82b705779cb827a6b16331795794"
+    }
+  ],
+  "passed": true
+}

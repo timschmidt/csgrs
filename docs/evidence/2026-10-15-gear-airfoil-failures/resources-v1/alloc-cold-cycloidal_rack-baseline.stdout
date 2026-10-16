@@ -1,0 +1,2 @@
+case,temperature,allocations,reallocations,allocated_bytes,reallocated_bytes,live_delta_bytes,peak_additional_requested_bytes,retained_delta_bytes,components
+cycloidal_rack,cold,830867,16404,47976097,4876320,512936,1738609,512936,1

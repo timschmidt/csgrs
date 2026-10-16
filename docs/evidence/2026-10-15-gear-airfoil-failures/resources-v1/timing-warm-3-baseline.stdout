@@ -1,0 +1,6 @@
+engine,temperature,suite,benchmark,case,sample,iterations,elapsed_ns,work_units,output_size,checksum
+csgrs,warm,profile_primitives,constructor,involute_gear,3,8,23735272,8,8,34359738368
+csgrs,warm,profile_primitives,constructor,cycloidal_gear,3,8,19019256,8,8,34359738368
+csgrs,warm,profile_primitives,constructor,involute_rack,3,8,285290,8,8,34359738368
+csgrs,warm,profile_primitives,constructor,cycloidal_rack,3,8,2075047,8,8,34359738368
+csgrs,warm,profile_primitives,constructor,airfoil_naca4,3,8,11505421,8,8,34359738368

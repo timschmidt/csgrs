@@ -1,0 +1,116 @@
+{
+  "passed": true,
+  "rows": [
+    {
+      "fixture": "bench-airfoil.json",
+      "baseline": "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/fixtures/bench-airfoil.json",
+      "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/qualification-v1/fixtures/bench-airfoil.json",
+      "identical": true,
+      "baseline_sha256": "2eafa59c329696de18ba21b34b0991491953e486004695a663da88ee3f52408b",
+      "candidate_sha256": "2eafa59c329696de18ba21b34b0991491953e486004695a663da88ee3f52408b",
+      "baseline_bytes": 209852,
+      "candidate_bytes": 209852,
+      "vertices": 160
+    },
+    {
+      "fixture": "bench-cycloidal-rack.json",
+      "baseline": "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/fixtures/bench-cycloidal-rack.json",
+      "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/qualification-v1/fixtures/bench-cycloidal-rack.json",
+      "identical": true,
+      "baseline_sha256": "31e9496308a403140a1bcc4d9cb0ff47615233e38d5824bb5b9f0e9b8934eb0b",
+      "candidate_sha256": "31e9496308a403140a1bcc4d9cb0ff47615233e38d5824bb5b9f0e9b8934eb0b",
+      "baseline_bytes": 107679,
+      "candidate_bytes": 107679,
+      "vertices": 132
+    },
+    {
+      "fixture": "bench-cycloidal.json",
+      "baseline": "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/fixtures/bench-cycloidal.json",
+      "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/qualification-v1/fixtures/bench-cycloidal.json",
+      "identical": true,
+      "baseline_sha256": "d07c15194660d8aed552ec6abd4afd8ded59f0b3704670dd7f757e83c53cf8df",
+      "candidate_sha256": "d07c15194660d8aed552ec6abd4afd8ded59f0b3704670dd7f757e83c53cf8df",
+      "baseline_bytes": 2810035,
+      "candidate_bytes": 2810035,
+      "vertices": 288
+    },
+    {
+      "fixture": "bench-involute-rack.json",
+      "baseline": "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/fixtures/bench-involute-rack.json",
+      "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/qualification-v1/fixtures/bench-involute-rack.json",
+      "identical": true,
+      "baseline_sha256": "879db005e8413316ca2a3f57bc6071328061c71a7e492f08c213d422ff4bb446",
+      "candidate_sha256": "879db005e8413316ca2a3f57bc6071328061c71a7e492f08c213d422ff4bb446",
+      "baseline_bytes": 13807,
+      "candidate_bytes": 13807,
+      "vertices": 18
+    },
+    {
+      "fixture": "bench-involute.json",
+      "baseline": "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/fixtures/bench-involute.json",
+      "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/qualification-v1/fixtures/bench-involute.json",
+      "identical": true,
+      "baseline_sha256": "7edde9baba4f42a8e6d6079f115686155a1b80a5da8b79e6ba70dd7fa5c2a279",
+      "candidate_sha256": "7edde9baba4f42a8e6d6079f115686155a1b80a5da8b79e6ba70dd7fa5c2a279",
+      "baseline_bytes": 5447063,
+      "candidate_bytes": 5447063,
+      "vertices": 360
+    },
+    {
+      "fixture": "readme-airfoil.json",
+      "baseline": "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/fixtures/readme-airfoil.json",
+      "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/qualification-v1/fixtures/readme-airfoil.json",
+      "identical": true,
+      "baseline_sha256": "de8ba22a2c2146e59c28ef7cf050a7e9b664b1dd9331f954d1c8d296e3e6b6a3",
+      "candidate_sha256": "de8ba22a2c2146e59c28ef7cf050a7e9b664b1dd9331f954d1c8d296e3e6b6a3",
+      "baseline_bytes": 255999,
+      "candidate_bytes": 255999,
+      "vertices": 192
+    },
+    {
+      "fixture": "readme-cycloidal-rack.json",
+      "baseline": "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/fixtures/readme-cycloidal-rack.json",
+      "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/qualification-v1/fixtures/readme-cycloidal-rack.json",
+      "identical": true,
+      "baseline_sha256": "a9a3ec58aaf783dea202d6746f64c6a7f4df9fd27388cb219b9887cdddb7efc3",
+      "candidate_sha256": "a9a3ec58aaf783dea202d6746f64c6a7f4df9fd27388cb219b9887cdddb7efc3",
+      "baseline_bytes": 388261,
+      "candidate_bytes": 388261,
+      "vertices": 340
+    },
+    {
+      "fixture": "readme-cycloidal.json",
+      "baseline": "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/fixtures/readme-cycloidal.json",
+      "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/qualification-v1/fixtures/readme-cycloidal.json",
+      "identical": true,
+      "baseline_sha256": "afd072a08c496ec61980a930523c93e743c134e4abd1599c4376da2ad2c58b78",
+      "candidate_sha256": "afd072a08c496ec61980a930523c93e743c134e4abd1599c4376da2ad2c58b78",
+      "baseline_bytes": 11379686,
+      "candidate_bytes": 11379686,
+      "vertices": 672
+    },
+    {
+      "fixture": "readme-involute-rack.json",
+      "baseline": "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/fixtures/readme-involute-rack.json",
+      "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/qualification-v1/fixtures/readme-involute-rack.json",
+      "identical": true,
+      "baseline_sha256": "a06f2d6603fed9c9f9ca5d5a7f5cf68755c2a42267e2f876b738e1ea5d58f6f6",
+      "candidate_sha256": "a06f2d6603fed9c9f9ca5d5a7f5cf68755c2a42267e2f876b738e1ea5d58f6f6",
+      "baseline_bytes": 34147,
+      "candidate_bytes": 34147,
+      "vertices": 30
+    },
+    {
+      "fixture": "readme-involute.json",
+      "baseline": "/dev/shm/csgrs-gear-airfoil-failures/reproduction-v1/fixtures/readme-involute.json",
+      "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/gear-airfoil-failures/qualification-v1/fixtures/readme-involute.json",
+      "identical": true,
+      "baseline_sha256": "4532a5f9a9ee38d7a722c8fdb77b94cabfbbbba70bdc046088d621e728e42b02",
+      "candidate_sha256": "4532a5f9a9ee38d7a722c8fdb77b94cabfbbbba70bdc046088d621e728e42b02",
+      "baseline_bytes": 6576333,
+      "candidate_bytes": 6576333,
+      "vertices": 308
+    }
+  ],
+  "scope": "Exact serialized coordinate expressions for all ten original README and profile-benchmark inputs. This checks preservation, not independent analytic fidelity."
+}

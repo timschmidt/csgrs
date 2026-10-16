@@ -1,0 +1,44 @@
+involute module zero: success_empty=true
+involute angle ninety: success_empty=true
+involute root negative: success_empty=true
+cycloidal teeth two: success_empty=true
+cycloidal overlapping flanks: success_empty=true
+involute rack no teeth: success_empty=true
+involute rack closed tooth: success_empty=true
+cycloidal rack samples three: success_empty=true
+cycloidal rack closed root: success_empty=true
+airfoil samples nine: success_empty=true
+airfoil missing camber position: success_empty=true
+airfoil thickness one hundred: success_empty=true
+involute undecided module: success_empty=true
+cycloidal undecided module: success_empty=true
+involute rack undecided module: success_empty=true
+cycloidal rack undecided module: success_empty=true
+airfoil undecided chord: success_empty=true
+involute flank capacity 18446744073709551615: panic
+cycloidal flank capacity 18446744073709551615: success_empty=true
+involute rack capacity 18446744073709551615: success_empty=true
+cycloidal rack capacity 18446744073709551615: success_empty=true
+airfoil capacity 18446744073709551615: success_empty=true
+involute flank capacity 9223372036854775807: panic
+cycloidal flank capacity 9223372036854775807: panic
+involute rack capacity 9223372036854775807: success_empty=true
+cycloidal rack capacity 9223372036854775807: panic
+airfoil capacity 9223372036854775807: panic
+spur involute GeometryContext { predicates: PredicatePolicy(0) }: success_empty=true certainty=Certified
+spur cycloidal GeometryContext { predicates: PredicatePolicy(0) }: success_empty=true certainty=Certified
+helical involute GeometryContext { predicates: PredicatePolicy(0) }: success_empty=true certainty=Certified
+spur involute GeometryContext { predicates: PredicatePolicy(1) }: success_empty=true certainty=Certified
+spur cycloidal GeometryContext { predicates: PredicatePolicy(1) }: success_empty=true certainty=Certified
+helical involute GeometryContext { predicates: PredicatePolicy(1) }: success_empty=true certainty=Certified
+fixture readme-involute: one_material=true holes=0 exact_vertices=308
+fixture readme-cycloidal: one_material=true holes=0 exact_vertices=672
+fixture readme-involute-rack: one_material=true holes=0 exact_vertices=30
+fixture readme-cycloidal-rack: one_material=true holes=0 exact_vertices=340
+fixture readme-airfoil: one_material=true holes=0 exact_vertices=192
+fixture bench-involute: one_material=true holes=0 exact_vertices=360
+fixture bench-cycloidal: one_material=true holes=0 exact_vertices=288
+fixture bench-involute-rack: one_material=true holes=0 exact_vertices=18
+fixture bench-cycloidal-rack: one_material=true holes=0 exact_vertices=132
+fixture bench-airfoil: one_material=true holes=0 exact_vertices=160
+independent rack area=15*pi/4+29*sqrt(3)/24 and four membership witnesses passed

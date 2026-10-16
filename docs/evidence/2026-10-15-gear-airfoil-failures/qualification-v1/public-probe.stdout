@@ -1,0 +1,44 @@
+involute module zero: kind=InvalidInput error=module must be positive
+involute angle ninety: kind=InvalidInput error=invalid arguments
+involute root negative: kind=InvalidInput error=root_radius must be positive
+cycloidal teeth two: kind=InvalidInput error=teeth must be at least 3, got 2
+cycloidal overlapping flanks: kind=InvalidInput error=invalid arguments
+involute rack no teeth: kind=InvalidInput error=teeth must be at least 1, got 0
+involute rack closed tooth: kind=InvalidInput error=tooth_thickness must be positive
+cycloidal rack samples three: kind=InvalidInput error=segments_per_flank must be at least 4, got 3
+cycloidal rack closed root: kind=InvalidInput error=invalid arguments
+airfoil samples nine: kind=InvalidInput error=samples must be at least 10, got 9
+airfoil missing camber position: kind=InvalidInput error=camber_position must be positive
+airfoil thickness one hundred: kind=InvalidInput error=invalid arguments
+involute undecided module: kind=Undecided error=module is undecided under PredicatePolicy(0)
+cycloidal undecided module: kind=Undecided error=module is undecided under PredicatePolicy(0)
+involute rack undecided module: kind=Undecided error=module is undecided under PredicatePolicy(0)
+cycloidal rack undecided module: kind=Undecided error=module is undecided under PredicatePolicy(0)
+airfoil undecided chord: kind=Undecided error=chord is undecided under PredicatePolicy(0)
+involute flank capacity 18446744073709551615: kind=ResourceExhausted error=geometry buffer capacity exceeds platform limits
+cycloidal flank capacity 18446744073709551615: kind=ResourceExhausted error=geometry buffer capacity exceeds platform limits
+involute rack capacity 18446744073709551615: kind=ResourceExhausted error=geometry buffer capacity exceeds platform limits
+cycloidal rack capacity 18446744073709551615: kind=ResourceExhausted error=geometry buffer capacity exceeds platform limits
+airfoil capacity 18446744073709551615: kind=ResourceExhausted error=geometry buffer capacity exceeds platform limits
+involute flank capacity 9223372036854775807: kind=ResourceExhausted error=geometry buffer capacity exceeds platform limits
+cycloidal flank capacity 9223372036854775807: kind=ResourceExhausted error=geometry buffer capacity exceeds platform limits
+involute rack capacity 9223372036854775807: kind=ResourceExhausted error=geometry buffer capacity exceeds platform limits
+cycloidal rack capacity 9223372036854775807: kind=ResourceExhausted error=geometry buffer capacity exceeds platform limits
+airfoil capacity 9223372036854775807: kind=ResourceExhausted error=geometry buffer capacity exceeds platform limits
+spur involute GeometryContext { predicates: PredicatePolicy(0) }: kind=InvalidInput
+spur cycloidal GeometryContext { predicates: PredicatePolicy(0) }: kind=InvalidInput
+helical involute GeometryContext { predicates: PredicatePolicy(0) }: kind=InvalidInput
+spur involute GeometryContext { predicates: PredicatePolicy(1) }: kind=InvalidInput
+spur cycloidal GeometryContext { predicates: PredicatePolicy(1) }: kind=InvalidInput
+helical involute GeometryContext { predicates: PredicatePolicy(1) }: kind=InvalidInput
+fixture readme-involute: one_material=true holes=0 exact_vertices=308
+fixture readme-cycloidal: one_material=true holes=0 exact_vertices=672
+fixture readme-involute-rack: one_material=true holes=0 exact_vertices=30
+fixture readme-cycloidal-rack: one_material=true holes=0 exact_vertices=340
+fixture readme-airfoil: one_material=true holes=0 exact_vertices=192
+fixture bench-involute: one_material=true holes=0 exact_vertices=360
+fixture bench-cycloidal: one_material=true holes=0 exact_vertices=288
+fixture bench-involute-rack: one_material=true holes=0 exact_vertices=18
+fixture bench-cycloidal-rack: one_material=true holes=0 exact_vertices=132
+fixture bench-airfoil: one_material=true holes=0 exact_vertices=160
+independent rack area=15*pi/4+29*sqrt(3)/24 and four membership witnesses passed

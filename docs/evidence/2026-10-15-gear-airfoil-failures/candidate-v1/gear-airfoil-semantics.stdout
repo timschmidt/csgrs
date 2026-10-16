@@ -1,0 +1,12 @@
+
+running 7 tests
+test every_sampling_family_rejects_capacity_overflow_before_allocation ... ok
+test independent_gear_and_airfoil_membership_matches_the_sampled_contract ... ok
+test independent_rack_area_membership_and_extrusion_compose ... ok
+test invalid_inputs_and_derived_geometry_fail_through_every_primary_family ... ok
+test approximate_validation_receipts_survive_cache_reuse_and_solid_composition ... ok
+test undecided_parameters_do_not_become_empty_profiles_or_solids ... ok
+test original_full_resolution_readme_and_benchmark_profiles_remain_certified ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.42s
+

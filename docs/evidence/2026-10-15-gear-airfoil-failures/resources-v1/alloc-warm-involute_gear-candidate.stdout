@@ -1,0 +1,2 @@
+case,temperature,allocations,reallocations,allocated_bytes,reallocated_bytes,live_delta_bytes,peak_additional_requested_bytes,retained_delta_bytes,components
+involute_gear,warm,16929,1396,1932376,140672,704,320800,704,1

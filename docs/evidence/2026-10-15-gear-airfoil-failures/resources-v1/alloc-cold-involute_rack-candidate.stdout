@@ -1,0 +1,2 @@
+case,temperature,allocations,reallocations,allocated_bytes,reallocated_bytes,live_delta_bytes,peak_additional_requested_bytes,retained_delta_bytes,components
+involute_rack,cold,59556,464,3855333,149584,93376,196029,93376,1
