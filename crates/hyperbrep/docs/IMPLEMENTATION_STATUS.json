@@ -1328,6 +1328,44 @@
       "cost_evidence": "The full 84-process campaign compares 156 preserved cases in fourteen corpora; every receipt agrees. The largest case-median candidate/baseline ratio is 1.248962; 3 rows exceed 10%, and 37 rows change allocator observations. Every adverse row, raw sample, allocation request, process resource and executable size is retained. Three newly successful torus continuation workloads have separate absolute costs across three processes, with exact checks and full output materialization inside timing. No failed operation serves as a speedup baseline. Shared-host measurements do not close controlled-host/statistical gates or earlier timing exceptions.",
       "migration": "No public API, compatibility shim or archive schema migration. Existing exact receipts and STEP bytes are preserved.",
       "limits": "All 28 work packages remain open. This increment does not establish general oblique Boolean closure, nonlinear coincidence, general curved-shell embedding or operation-wide provenance/certainty delivery. Cone/torus STEP remains typed UnsupportedSurface. Scalar, predicate, curve and mesh implementations are unchanged in this increment; the preceding whole-scalar zero-factor failure remains an inherited failed gate, not a pre-push waiver. Periodic/archive limits and strict predicate policies are unchanged. No total-work, retained-heap, expression-growth or cancellation bound is claimed; watchdogs provide external containment only. WASM uses local workspace paths, not a shipped package/JS consumer. Runtime fuzz/ASan, lexicase, coverage, machine-checked proofs, package/MSRV and C/Python/JS release gates remain open. No complete workspace/pre-push matrix or push was performed."
+    },
+    {
+      "id": "upstream-native-integration-2026-10-16",
+      "work_packages": [
+        "WP00",
+        "WP14a",
+        "WP15",
+        "WP16",
+        "WP17",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P1",
+        "P3",
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "Retain the requested upstream integration with scoped BREP qualification and all inherited/current adverse evidence visible.",
+      "change": "Merge six upstream commits through 73472622d, retain both histories and all non-BREP ledger fields, and requalify unchanged BREP consumers. Carry typed text/distribution, solid Minkowski semantics and explicit font/triangulation migrations into downstream planning.",
+      "evidence": "evidence/2026-10-16-upstream-native-integration/manifest.json",
+      "validation": "Merged-source BREP/IO debug and release each pass 496 all-feature tests; minimal release passes 488, with no ignored cases. Both warning-denied all-target Clippy configurations, rustdoc, six examples, eleven optional independent OCCT checks, fuzz-target compilation and 71 zero-import WASM groups pass. The incoming root-square and eighth-angle regressions pass three tests each; the consumed earcut configuration passes 60 tests and all-target Clippy. All fifteen preceding continuation diagnostics succeed; the full nine-fixture oblique frontier records 56 native results, 7 undecided, 6 unsupported and 12 unavailable dependent steps. Both diagonal-cone reconstruction orders now return native results; their diagnostic counts/replay do not establish independent set equality or broaden semantic admission. All 22 previous STEP artifacts remain byte-identical. Both targeted scalar zero-factor reproductions still fail with the original FACTORS > 0 assertion. They are failed gates, not passing expected-failure tests; no full scalar/workspace qualification is claimed.",
+      "cost_evidence": "The full 90-process campaign preserves all receipts across 159 cases and fifteen corpora. Maximum case-median candidate/baseline latency is 1.148357; 3 rows exceed 10%, and 25 rows change allocation observations. All raw samples, allocation requests, process resources, executable sizes and adverse rows are retained. These shared-host observations do not establish a statistical speedup, total-resource bound or closure of prior performance gates.",
+      "limits": "BREP/IO implementation and tests are unchanged by this merge; incoming production changes retain upstream ownership. The separately pending 35-file native workload is not imported or admitted. All 28 BREP work packages remain open. General oblique closure, curved-shell embedding, cone/torus STEP, operation-wide provenance/certainty and internal work/heap/cancellation contracts remain open. WASM uses workspace paths. Package/MSRV, actual C/Python/JS consumers, coverage, machine-checked proofs, runtime fuzz/ASan, lexicase and full-workspace/pre-push gates are not closed. No push was performed."
     }
   ],
   "work_packages": [
@@ -1510,15 +1548,16 @@
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
     "Complete WP02/G1 beyond planar spline replay, subdivided cuboid and axial-cylinder archive replay. Extend independent solid/void/corner proofs, retained surface/contact images and selected Boolean transfer while preserving every existing exact behavior. Native-to-selected spline composition and five repeated selected cuboid cuts now have regression evidence.",
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
-    "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission. The seam-cut candidate is the new exact-feature baseline; native_nurbs_mobius_inverse_pcurve_partition retains a 1.150828 timing ratio and needs isolated cost investigation with the complete fixture, alongside the earlier archive/cached-arc gates. Four other first-campaign spline regressions are within budget after the representation precheck. The curved-composition increment is now the next exact-feature baseline. Its complete 138-case final campaign and eleven successful new workloads are retained in evidence/2026-10-16-curved-coplanar/manifest.json. Strict native line-side exclusion improves the added source-inverse scheduling cost; isolate any remaining over-budget rows with complete inputs, all receipts, actual source identities and no weaker proof or policy. Preserve prior adverse campaigns and their unresolved causes.",
+    "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission. The seam-cut increment remains a historical exact-feature baseline; native_nurbs_mobius_inverse_pcurve_partition retains a 1.150828 timing ratio and needs isolated cost investigation with the complete fixture, alongside the earlier archive/cached-arc gates. Four other first-campaign spline regressions are within budget after the representation precheck. The curved-composition increment retains its historical exact-feature baseline. Its complete 138-case final campaign and eleven successful new workloads are retained in evidence/2026-10-16-curved-coplanar/manifest.json. Strict native line-side exclusion improves the added source-inverse scheduling cost; isolate any remaining over-budget rows with complete inputs, all receipts, actual source identities and no weaker proof or policy. Preserve prior adverse campaigns and their unresolved causes.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue WP14a from exact selected faceted/analytic import/export and the now-completed native similarity/unit workflow. Preserve LINE/CIRCLE topology on PLANE/CYLINDRICAL_SURFACE, independent graph/interoperability checks, selected scale/edit/inverse replay and Boolean/empty continuation. Add other families and exact periodic seams without inventing tau from decimal data. WP14b retains spline/trim/void/mapped/assembly exchange and explicit healing/approximation. General nonlinear axial pcurves need native exact affine carriers; nonsimilar analytic transforms need deliberate family promotion. Source maps do not establish whole-document/history persistence.",
     "Continue every BREP work package and its cross-stack integration requirements in the plan. Surrounding-crate implementation is concurrent upstream work unless a reproduced dependency failure would make BREP worse; foundational progress does not close broader project gates.",
-    "Treat the sector increment as the next measured exact-feature baseline; preserve all raw prior/current costs, receipt comparisons, necessary migrations and inherited dependency-check failures. Close controlled-host timing, full dependency and shipped-consumer gates with their original fixtures and contracts, not a successful subset. Cone/torus STEP writers remain the explicit exchange frontier.",
-    "Investigate the sector increment\u2019s paired/multi-hole affine-tensor bridge costs (1.389189 and 1.312397 observed ratios). Preserve full wire simplicity/nesting validation and the crossing-hole rejection control; reuse native evidence rather than restoring an unjustified simplicity certificate. Keep the three arc/STEP timing rows and the inherited scalar zero-factor failure visible. Coordinate unrelated scalar repair through upstream."
+    "Use the upstream-native integration as the current measured baseline; preserve the historical sector and oblique baselines; preserve all raw prior/current costs, receipt comparisons, necessary migrations and inherited dependency-check failures. Close controlled-host timing, full dependency and shipped-consumer gates with their original fixtures and contracts, not a successful subset. Cone/torus STEP writers remain the explicit exchange frontier.",
+    "Investigate the sector increment\u2019s paired/multi-hole affine-tensor bridge costs (1.389189 and 1.312397 observed ratios). Preserve full wire simplicity/nesting validation and the crossing-hole rejection control; reuse native evidence rather than restoring an unjustified simplicity certificate. Keep the three arc/STEP timing rows and the inherited scalar zero-factor failure visible. Coordinate unrelated scalar repair through upstream.",
+    "Use the merged-source qualification as the current BREP baseline. Preserve typed text and distribution failures, native outline carriers, parser/finite-projection fidelity and the solid-sum versus explicit Minkowski-hull choice in downstream features. Keep protected-cell triangulation migrations explicit. The separate 35-file native workload remains upstream-owned and unadmitted; its review/profile does not close runtime, cache or release gates. Promote the newly returning diagonal-cone reconstruction diagnostics with independent exact set/topology and composition tests; body counts/replay alone do not admit them."
   ],
   "acceptance_contract": {
-    "upstream_revision": "72cd216cc758d364c9e40b8969fef2df155bec8b",
+    "upstream_revision": "73472622dd4034b8b8777cb2a116c4020f6bb328",
     "properties": "../../../properties.md",
     "protocol": "../../../docs/admission.md",
     "agent_rules": "../../../AGENTS.md",
@@ -1543,7 +1582,7 @@
       "incorrect result"
     ],
     "admission": "Documentation and integration do not establish implementation compliance. Source-specific evidence remains tied to its original revision; requalify after dependency changes.",
-    "latest_integration": "evidence/2026-10-16-upstream-corrections/README.md",
+    "latest_integration": "evidence/2026-10-16-upstream-native-integration/README.md",
     "implementation_ownership": {
       "primary": [
         "hyperbrep",

@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
 Status: implementation blueprint. Updated 2026-10-16 for upstream
-`72cd216cc758d364c9e40b8969fef2df155bec8b` and concurrent development ownership.
+`73472622dd4034b8b8777cb2a116c4020f6bb328` and concurrent development ownership.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,
@@ -92,12 +92,47 @@ geometry-only strings. Padding insets the Hilbert grid bounds; it is not a
 boundary-clearance guarantee. These APIs remain CSGRS/Hypercurve responsibilities;
 BREP consumers compose them without duplicating the curve kernel.
 
-The [latest integration record](evidence/2026-10-16-upstream-corrections/README.md)
-records the two grammar corrections, unchanged BREP/dependency implementations,
-retained executable identities and merged-source qualification. Separately
-pending native work mentioned in upstream evidence is not admitted by a merge
-that does not contain it. The previous parked scalar investigation remains
-preserved and unapplied.
+The [latest integration record](evidence/2026-10-16-upstream-native-integration/README.md)
+qualifies the unchanged BREP implementation against upstream `73472622d`, including
+the scalar root-square/eighth-angle proofs and BREP's earcut configuration. Its
+complete preserved corpus includes the oblique continuation; inherited failures
+and adverse cost observations remain explicit. The [preceding integration record](evidence/2026-10-16-upstream-corrections/README.md) remains historical evidence.
+Both 45-degree cone reconstruction orders now return native results in the
+wider diagnostic. Promote them with independent exact set/topology and
+composition expectations before claiming semantic admission; counts and replay
+alone do not establish that extension.
+
+Downstream sketch, feature and annotation layers must consume the new typed text
+contracts: `curve::truetype_text`, `curve::hershey_strings` and
+`parts::dimension::annotate` return `Result`; the text context forms retain local certainty.
+TrueType now retains native line/quadratic/cubic outlines with exact Real layout
+and 127/360 millimeters per point. The font parser's f32/composite/CFF boundary
+still qualifies source fidelity. Carry that qualification into sketch-to-solid
+work; the existing sampled mesh extrusion and STL quantization have separate
+contracts. Keep native CurveRegion2 profiles through exact BREP construction
+where supported. See the [current text contract](../../../readme.md).
+
+`solid::merge` is checked structural concatenation; assembly/display consumers
+must keep it distinct from Boolean union. `distribute_linear`, `distribute_grid`
+and `distribute_arc` retain typed failures and validate sources even for zero or
+one copy. Copy-count and reservation checks do not establish total-work or heap
+bounds. `solid::minkowski_sum` now operates on represented bounded closed-PWN
+material, including cavities and disconnected components; intentional point-sum
+convexification uses `minkowski_hull`. Preserve that operation choice, local
+certainty and source qualification in feature history. Analytic BREP offsets
+retain their own surface/fidelity contract. These implementations remain in
+CSGRS/Hypermesh; BREP consumers do not duplicate them.
+
+The [triangulation contract](../../hypertri/README.md) adds checked simple-ring
+triangulation with authored winding and documents a protected-cell diagonal/order
+migration. Use the appropriate ring or region carrier and preserve its scope;
+record affected artifact migrations with independent set/topology checks.
+Upstream's separately pending 35-file native workload remains unadmitted: its
+original full-board and copper-neck runtime gates still fail. Its source review
+and profiling are diagnostic evidence, not performance acceptance. The previous
+parked scalar investigation remains preserved and unapplied. Scope the next BREP
+comparison-reuse experiment to one helper call; any new persistent proof cache
+needs separate identity, lifetime, resource and state-matrix admission.
 This ownership direction changes who performs dependency work; it does not
 weaken the shared properties or close any work-package gate.
 

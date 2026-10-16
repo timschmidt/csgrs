@@ -735,3 +735,17 @@ Rows above 10% in this campaign:
 Retain this increment for its exact inverse-query repair and completed Boolean continuation. It makes no aggregate speedup claim. Earlier archive/spline/cached-arc observations remain visible; a favorable later sample does not discharge their gates. No operation-wide resource bound is established.
 
 The new periodic lifting helper repeats certified membership/end-point comparisons. Reusing those comparisons is the next BREP performance experiment. Its contribution to the partial-pcurve allocation/latency changes has not yet been isolated; preserve the full admitted corpus and exact receipts when evaluating it.
+
+## Upstream native integration (2026-10-16)
+
+The [integration evidence](docs/evidence/2026-10-16-upstream-native-integration/README.md) compares the same completed BREP contracts before and after the dependency merge.
+
+The full 90-process campaign preserves all receipts across 159 cases and fifteen corpora. Maximum case-median candidate/baseline latency is 1.148357; 3 rows exceed 10%, and 25 rows change allocation observations. All raw samples, allocation requests, process resources, executable sizes and adverse rows are retained. These shared-host observations do not establish a statistical speedup, total-resource bound or closure of prior performance gates.
+
+Rows above 10% in this campaign:
+
+- `faceted/step/units_2000`: 1.147205.
+- `kernel/boolean_kernel/sphere_planar_conic_trim_graph`: 1.148357.
+- `oblique/oblique/millimetre_reflection`: 1.102298.
+
+Prior pcurve, provenance, archive, spline and cached-arc observations remain visible. Any conic comparison-reuse experiment needs its own source-bound qualification and complete preserved receipts; it introduces no performance claim by being planned.
