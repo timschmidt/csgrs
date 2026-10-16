@@ -1,0 +1,20 @@
+
+thread 'ascii_stl_small_coordinate_projection_survives_text' (3973304) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs:163:5:
+assertion `left == right` failed
+  left: [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+ right: [[0.0, 0.0, 0.0], [0.0, 8.470329472543003e-22, 0.0], [8.470329472543003e-22, 8.470329472543003e-22, 0.0], [0.0, 0.0, 0.0], [8.470329472543003e-22, 8.470329472543003e-22, 0.0], [8.470329472543003e-22, 0.0, 0.0], [0.0, 0.0, 8.470329472543003e-22], [8.470329472543003e-22, 0.0, 8.470329472543003e-22], [8.470329472543003e-22, 8.470329472543003e-22, 8.470329472543003e-22], [0.0, 0.0, 8.470329472543003e-22], [8.470329472543003e-22, 8.470329472543003e-22, 8.470329472543003e-22], [0.0, 8.470329472543003e-22, 8.470329472543003e-22], [0.0, 0.0, 0.0], [8.470329472543003e-22, 0.0, 0.0], [8.470329472543003e-22, 0.0, 8.470329472543003e-22], [0.0, 0.0, 0.0], [8.470329472543003e-22, 0.0, 8.470329472543003e-22], [0.0, 0.0, 8.470329472543003e-22], [0.0, 8.470329472543003e-22, 0.0], [0.0, 8.470329472543003e-22, 8.470329472543003e-22], [8.470329472543003e-22, 8.470329472543003e-22, 8.470329472543003e-22], [0.0, 8.470329472543003e-22, 0.0], [8.470329472543003e-22, 8.470329472543003e-22, 8.470329472543003e-22], [8.470329472543003e-22, 8.470329472543003e-22, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 8.470329472543003e-22], [0.0, 8.470329472543003e-22, 8.470329472543003e-22], [0.0, 0.0, 0.0], [0.0, 8.470329472543003e-22, 8.470329472543003e-22], [0.0, 8.470329472543003e-22, 0.0], [8.470329472543003e-22, 0.0, 0.0], [8.470329472543003e-22, 8.470329472543003e-22, 0.0], [8.470329472543003e-22, 8.470329472543003e-22, 8.470329472543003e-22], [8.470329472543003e-22, 0.0, 0.0], [8.470329472543003e-22, 8.470329472543003e-22, 8.470329472543003e-22], [8.470329472543003e-22, 0.0, 8.470329472543003e-22]]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'ascii_stl_small_representable_cube_composes' (3973305) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs:51:42:
+representable closed cube must reimport: StdIo(Custom { kind: InvalidData, error: "face #0 has a zero-area face" })
+
+thread 'binary_stl_rejects_faces_collapsed_by_quantization' (3973307) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs:176:18:
+binary32 face collapse must fail at export; outcome: Ok((684, Err(StdIo(Custom { kind: InvalidData, error: "face #0 has a zero-area face" }))))
+
+thread 'binary_stl_small_representable_cube_composes' (3973308) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs:51:42:
+representable closed cube must reimport: StdIo(Custom { kind: InvalidData, error: "face #0 has a zero-area face" })
+
+thread 'obj_small_coordinate_projection_survives_text' (3973313) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs:126:9:
+assertion `left == right` failed
+  left: [0.0, 0.0, 0.0]
+ right: [8.470329472543003e-22, 0.0, 0.0]

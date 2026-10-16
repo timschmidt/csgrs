@@ -1,0 +1,16 @@
+
+thread 'ascii_invalid_topology_retains_native_error_chain' (3973416) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/stl_import_contracts_v1.rs:164:9:
+expected typed native construction failure, got StdIo(Custom { kind: InvalidData, error: "did not find facing edge for face #0, edge #v2 -> #v0" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'ascii_scales_reimport_and_compose' (3973417) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/stl_import_contracts_v1.rs:139:58:
+called `Result::unwrap()` on an `Err` value: StdIo(Custom { kind: InvalidData, error: "face #0 has a zero-area face" })
+
+thread 'binary_invalid_topology_retains_native_error_chain' (3973418) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/stl_import_contracts_v1.rs:164:9:
+expected typed native construction failure, got StdIo(Custom { kind: InvalidData, error: "did not find facing edge for face #0, edge #v2 -> #v0" })
+
+thread 'binary_scales_reimport_and_compose' (3973419) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/stl_import_contracts_v1.rs:139:58:
+called `Result::unwrap()` on an `Err` value: StdIo(Custom { kind: InvalidData, error: "face #0 has a zero-area face" })
+
+thread 'closed_pwn_variations_preserve_rows_winding_and_later_operations' (3973421) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/stl_import_contracts_v1.rs:277:66:
+called `Result::unwrap()` on an `Err` value: StdIo(Custom { kind: InvalidData, error: "did not find facing edge for face #0, edge #v0 -> #v1" })

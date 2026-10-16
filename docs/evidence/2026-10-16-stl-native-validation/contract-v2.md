@@ -1,0 +1,9 @@
+# Required-feature correction found during STL validation
+
+Candidate v1 passes the eight new import regressions, the four original topology regressions and all-feature tests. Its STL-only Cargo validation exposes an existing manifest defect: `basic_shapes` calls `solid::torus`, which requires `curve`, while the example declares only `stl-io`. `example_baseline_v1.py` reproduces E0425 against unchanged current-revision libraries with `curve` disabled. Preserve that evidence and all v1 source/target artifacts.
+
+The owning layer is CSGRS package/example feature configuration (P37), with no change to constructor semantics or fixture resolution. Declare both `curve` and `stl-io` for this example. This records the dependency already imposed by its code; it does not create STL-only support for torus. The default documented command continues to work because both features are enabled by default. Explicit minimal-feature use requires `--features curve,stl-io`.
+
+Candidate v2 contains the same STL Rust implementation and eight regressions, plus this one manifest correction. Use a second fresh physical source and empty target; do not reopen v1. Re-run the complete local validation set and execute the unchanged `basic_shapes` example with its declared minimal features, including its original sphere/ellipsoid 32x16 and torus 48x16 fixtures. Keep outputs. Run warning-denied Clippy for that example configuration as well as the full and STL-only matrices. Preserve the failed v1 matrix instead of crediting its blocked commands as successful.
+
+The contract, independent semantic tests, format limitations, resource limitations, paired cost boundaries and open release requirements from v1 remain applicable. Cost measurements use v2 libraries only after its final validation, with baseline unchanged.

@@ -1,0 +1,43 @@
+{
+  "runner_sha256": "e6606e3a5148edbbbce403da7746e47af4eed5f05fa4d01e736841f203e2d6e8",
+  "head": "7a1f0c7e1f4f69499feb3b471f739dfb50f4776c",
+  "source_hashes_sha256": "21e3118f08779e4bfea5189bad7e727d75f25d4e09d7c3e813549ace2b35c391",
+  "bindings": {
+    "csgrs": {
+      "path": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libcsgrs.rlib",
+      "sha256": "865b05f2d43a3109a8105ebecd61ef6bed2d23ada49e646de3253cf14e4c85c5",
+      "retained": "/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libcsgrs.rlib"
+    },
+    "hyperlattice": {
+      "path": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "sha256": "e0aafbe798801a308c7019f4625ffc36274a1d52a540aa8c5204517da7d59dfa",
+      "retained": "/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhyperlattice-4db5ca8c9b2e6831.rlib"
+    },
+    "hypermesh": {
+      "path": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "sha256": "15fed87bf58a98a3081da87f714c95296452ed82960e24702cac32d3f449e548",
+      "retained": "/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhypermesh-8af5c3f4b7b72ce2.rlib"
+    }
+  },
+  "dependencies": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps",
+  "dependency_hashes_sha256": "30d9bd69da66435061e4c8a46df00b4f3bf58dd14678ff830d72448645cf1320",
+  "probes": {
+    "format": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs",
+      "sha256": "e11a2adb013478d5f5083e473099b8d26dbf004c0efc586aa6c37bcc98c5c2a0"
+    },
+    "topology": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/stl-topology-v1/probe_v1.rs",
+      "sha256": "4cadb0431794b153971e7e771c658db394d35dde5ccfb1be7d5fa643f205e77c"
+    },
+    "acceptance": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/stl_import_contracts_v1.rs",
+      "sha256": "05c38114c0252e440d4366b69b5e8b08329bb007c0640b77bcf0e3549f1d783b"
+    }
+  },
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "elapsed_limit_seconds_per_command": 120,
+  "address_space_limit_bytes_per_process": 8589934592,
+  "target_reused_read_only": true,
+  "completed_targets_modified": false
+}

@@ -1,0 +1,17 @@
+{
+  "complete": true,
+  "commands": 11,
+  "unexpected_exits": [
+    "stl-only",
+    "stl-clippy"
+  ],
+  "known_unfixed_format_failures": [
+    "ascii_stl_small_coordinate_projection_survives_text",
+    "binary_stl_rejects_faces_collapsed_by_quantization",
+    "obj_small_coordinate_projection_survives_text"
+  ],
+  "sources_unchanged": true,
+  "main_sources_modified": false,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false
+}

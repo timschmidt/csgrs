@@ -1,0 +1,7 @@
+
+thread 'ascii_unmatched_duplicate_face_is_rejected' (3973361) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/stl-topology-v1/probe_v1.rs:22:5:
+ASCII=true: one face contributes three unmatched directed edges
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'binary_unmatched_duplicate_face_is_rejected' (3973363) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/stl-topology-v1/probe_v1.rs:22:5:
+ASCII=false: one face contributes three unmatched directed edges

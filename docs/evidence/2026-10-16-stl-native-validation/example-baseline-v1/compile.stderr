@@ -1,0 +1,17 @@
+error[E0425]: cannot find function `torus` in module `solid`
+   --> /home/tim/Documents/GitHub/workspace/csgrs/examples/basic_shapes.rs:26:17
+    |
+ 26 |         &solid::torus(r(2.0), r(0.35), 48, 16).expect("valid primitive fixture"),
+    |                 ^^^^^ not found in `solid`
+    |
+note: found an item that was configured out
+   --> src/solid.rs:756:8
+    |
+755 | #[cfg(feature = "curve")]
+    |       ----------------- the item is gated behind the `curve` feature
+756 | pub fn torus(
+    |        ^^^^^
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0425`.

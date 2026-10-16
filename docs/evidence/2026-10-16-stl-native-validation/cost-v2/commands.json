@@ -1,0 +1,103 @@
+[
+  {
+    "name": "compile-baseline",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "-L",
+      "dependency=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps",
+      "--extern",
+      "csgrs=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libcsgrs.rlib",
+      "--extern",
+      "hyperlattice=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "--extern",
+      "hypermesh=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/import_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/compile-baseline/import-cost"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.41101302998140454,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/compile-baseline",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0a42cbfbcc862a91cd4afde1259fc19e49d2eaf88d8f1e9ddea78c7c30660356"
+  },
+  {
+    "name": "compile-candidate",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/import_cost_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/compile-candidate/import-cost"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.40719569101929665,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/compile-candidate",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "dcf091d4a3cfad2d63ad6d4f40025ea893e94a92c7fea8bc4edd7588a063eb8a"
+  },
+  {
+    "name": "pair-0-binary-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/pair-0-binary-0-baseline",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004786482080817223,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/pair-0-binary-0-baseline",
+    "stdout_sha256": "f9ea5269a27f30d202ee2f7ead84c56fdf1d9bba51bb3edd1b221fb56e74735c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a02f623b594f5fd327f63f8ec777f7fec404c704bb46477bd77a225168611b9a"
+  },
+  {
+    "name": "pair-0-binary-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/pair-0-binary-0-candidate",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0043713003396987915,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/pair-0-binary-0-candidate",
+    "stdout_sha256": "67e9918b6744569ac05522ce00655587fd5e7f52ab51a7b822b077d591d0f470",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "58551ffc65e63ba5acac3e919c1971ed1ab6ad160fd0fa0c17d45775c446233b"
+  },
+  {
+    "name": "pair-0-binary-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/pair-0-binary-1-baseline",
+      "1",
+      "binary"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.009633779991418123,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/pair-0-binary-1-baseline",
+    "stdout_sha256": "024a049464b2377689b5dc459b74059d3c78f56f2cb3d82a85116e2925b1c1ea",
+    "stderr_sha256": "661e22b28690cd0744e1dba1402f87b267d5a67e8fd6141fc1a4fac8a76b6ff6",
+    "resources_sha256": "bf8cad882c1f889d14d1d8a864b9f89357eb7f3267cab53a042cbd9ad86d83e3"
+  }
+]

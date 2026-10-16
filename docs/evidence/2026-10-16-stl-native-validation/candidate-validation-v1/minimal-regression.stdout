@@ -1,0 +1,13 @@
+
+running 8 tests
+test ascii_invalid_topology_retains_native_error_chain ... ok
+test ascii_scales_reimport_and_compose ... ok
+test binary_invalid_topology_retains_native_error_chain ... ok
+test binary_scales_reimport_and_compose ... ok
+test canonical_empty_and_parse_failure_remain_distinct ... ok
+test closed_pwn_variations_preserve_rows_winding_and_later_operations ... ok
+test mutation_cannot_reuse_an_import_validation_fact ... ok
+test nonfinite_coordinates_never_become_geometry ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

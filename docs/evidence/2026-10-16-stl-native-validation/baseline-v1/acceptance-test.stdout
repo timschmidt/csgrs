@@ -1,0 +1,22 @@
+
+running 8 tests
+test ascii_invalid_topology_retains_native_error_chain ... FAILED
+test ascii_scales_reimport_and_compose ... FAILED
+test binary_invalid_topology_retains_native_error_chain ... FAILED
+test binary_scales_reimport_and_compose ... FAILED
+test canonical_empty_and_parse_failure_remain_distinct ... ok
+test closed_pwn_variations_preserve_rows_winding_and_later_operations ... FAILED
+test mutation_cannot_reuse_an_import_validation_fact ... ok
+test nonfinite_coordinates_never_become_geometry ... ok
+
+failures:
+
+failures:
+    ascii_invalid_topology_retains_native_error_chain
+    ascii_scales_reimport_and_compose
+    binary_invalid_topology_retains_native_error_chain
+    binary_scales_reimport_and_compose
+    closed_pwn_variations_preserve_rows_winding_and_later_operations
+
+test result: FAILED. 3 passed; 5 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

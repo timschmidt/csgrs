@@ -1,0 +1,50 @@
+--- a/src/io/stl.rs
++++ b/src/io/stl.rs
+@@ -126,11 +126,20 @@
+     Ok(bytes)
+ }
+ 
+-/// Import validated STL triangles into the native Hypermesh carrier.
++/// Import STL triangles with certified closed-PWN topology into Hypermesh.
++///
++/// Both encodings parse coordinates as `f32`, then promote finite values exactly
++/// to native scalars. Strict native validation proves nondegenerate faces and
++/// balanced geometric edge multiplicities, retaining that proof for later
++/// operations. Canonical empty geometry is also accepted. Disconnected, nested,
++/// inverted and multiply wound closed surfaces need not be manifolds.
++///
++/// This certifies the parsed geometry, not fidelity to an earlier exact model
++/// or analytic surface. Invalid topology returns [`IoError::Construction`] with
++/// the native mesh error preserved as its cause; parsing errors remain IO errors.
+ pub fn from_stl(data: &[u8]) -> Result<TriangleMesh, IoError> {
+     let mut cursor = Cursor::new(data);
+     let indexed = stl_io::read_stl(&mut cursor)?;
+-    indexed.validate()?;
+     let positions = indexed
+         .vertices
+         .iter()
+@@ -150,15 +159,21 @@
+         .collect::<Result<Vec<_>, IoError>>()?;
+     let mut triangles = Vec::with_capacity(indexed.faces.len());
+     for face in indexed.faces {
+-        let points = face.vertices.map(|index| positions[index].clone());
+-        triangle_normal(&points)?;
+         triangles.push(Triangle::new(
+             face.vertices[0],
+             face.vertices[1],
+             face.vertices[2],
+         ));
+     }
+-    Ok(TriangleMesh::new(positions, triangles))
++    let mesh = TriangleMesh::new(positions, triangles);
++    if !(mesh.positions.is_empty() && mesh.triangles.is_empty()) {
++        mesh.validate_closed_pwn(&crate::GeometryContext::STRICT.mesh_context())
++            .map_err(|error| IoError::Construction {
++                format: "STL",
++                source: error.into(),
++            })?;
++    }
++    Ok(mesh)
+ }
+ 
+ #[cfg(test)]

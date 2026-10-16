@@ -1,0 +1,17 @@
+{
+  "apply_v3.py": {
+    "source": "apply_v2.py",
+    "source_sha256": "54d5c9ff9d9af14ccae9fd61324abaaa622abc9915ac03ee2a188a64d68b221e",
+    "sha256": "7effbb519357757a5bb5dcf3c59625ebe8fa5e9e1a2262c44e5cea758579401e"
+  },
+  "assess_v3.py": {
+    "source": "assess_v2.py",
+    "source_sha256": "8e99658b3ff27d9b6d6351e9696bc312f09e0b464e6a17367581e009d9acb6f8",
+    "sha256": "784bc355787dce20a0bf2673110e1af71d748cce44e7a246fd4865caf0dddbeb"
+  },
+  "checkpoint_v3.py": {
+    "source": "checkpoint_v2.py",
+    "source_sha256": "ae5f71435e26024bc6ddb09410a5fdf64deffaec2b0692d92bceccefb6d8783c",
+    "sha256": "bb3ae01c9fd454a8f538220720396c445b8d2205ac5badace24d57d8e441d6ae"
+  }
+}

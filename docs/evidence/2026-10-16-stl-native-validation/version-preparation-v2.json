@@ -1,0 +1,22 @@
+{
+  "cost_v2.py": {
+    "unmodified_source": "cost_v1.py",
+    "source_sha256": "7fb3f735226e03dd4db5881e2f6ca5c6afbc80fa935cff93f4aaa4ce16e35c92",
+    "sha256": "5d3bf8bbcccf90d6ddf338d69f7c52ab8119dcc728ee258907dfd2ce32e0a88b"
+  },
+  "apply_v2.py": {
+    "unmodified_source": "apply_v1.py",
+    "source_sha256": "8dedbfc7c5522d8143f967fec6d2fa54b6cbae8d381cbb17036148f0aefa05b1",
+    "sha256": "54d5c9ff9d9af14ccae9fd61324abaaa622abc9915ac03ee2a188a64d68b221e"
+  },
+  "assess_v2.py": {
+    "unmodified_source": "assess_v1.py",
+    "source_sha256": "90d288e3090e628699b68bf0db8dd2b675de2a7c269623eb51b6f9b9bddabc41",
+    "sha256": "8e99658b3ff27d9b6d6351e9696bc312f09e0b464e6a17367581e009d9acb6f8"
+  },
+  "checkpoint_v2.py": {
+    "unmodified_source": "checkpoint_v1.py",
+    "source_sha256": "7d34a2fb97c0c8897282fea925103771d9c89d8aafb67f37fbad8dfafa2ecf53",
+    "sha256": "ae5f71435e26024bc6ddb09410a5fdf64deffaec2b0692d92bceccefb6d8783c"
+  }
+}

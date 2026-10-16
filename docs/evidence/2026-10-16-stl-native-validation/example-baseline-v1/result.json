@@ -1,0 +1,50 @@
+{
+  "runner_sha256": "e5efe9b8fbaa4166b3cf92bcd9359294c03995c8aea900ef77a8a94fe273953e",
+  "head": "7a1f0c7e1f4f69499feb3b471f739dfb50f4776c",
+  "input_hashes": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/Cargo.toml": "90edbcd0325fd8d1f8198c224d9accd2aec3d39d4943e095ff49f1e291ba3e3f",
+    "/home/tim/Documents/GitHub/workspace/csgrs/examples/basic_shapes.rs": "e2e48a0535d43dfac5b1df7a3b3fc9aef162c40401c1ea6fcc3666533850ed44"
+  },
+  "bindings": {
+    "csgrs": {
+      "path": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libcsgrs.rlib",
+      "sha256": "865b05f2d43a3109a8105ebecd61ef6bed2d23ada49e646de3253cf14e4c85c5",
+      "retained": "/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libcsgrs.rlib"
+    },
+    "hyperlattice": {
+      "path": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "sha256": "e0aafbe798801a308c7019f4625ffc36274a1d52a540aa8c5204517da7d59dfa",
+      "retained": "/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhyperlattice-4db5ca8c9b2e6831.rlib"
+    },
+    "hypermesh": {
+      "path": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "sha256": "15fed87bf58a98a3081da87f714c95296452ed82960e24702cac32d3f449e548",
+      "retained": "/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhypermesh-8af5c3f4b7b72ce2.rlib"
+    }
+  },
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-C",
+    "opt-level=3",
+    "-C",
+    "debug-assertions=off",
+    "-L",
+    "dependency=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps",
+    "--extern",
+    "csgrs=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libcsgrs.rlib",
+    "--extern",
+    "hyperlattice=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhyperlattice-4db5ca8c9b2e6831.rlib",
+    "--extern",
+    "hypermesh=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhypermesh-8af5c3f4b7b72ce2.rlib",
+    "/home/tim/Documents/GitHub/workspace/csgrs/examples/basic_shapes.rs",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/example-baseline-v1/basic-shapes"
+  ],
+  "exit_code": 1,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "af324ff70581da4745a523a245b55632106b6440346b407d13c00beb79262128",
+  "reproduced_existing_failure": "basic_shapes requires curve for solid::torus, but Cargo declares only stl-io.",
+  "main_sources_modified": false,
+  "completed_targets_modified": false
+}

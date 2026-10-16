@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=10s 120s rustc --edition=2024 -C opt-level=3 -C debug-assertions=off -L dependency=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps --extern csgrs=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libcsgrs.rlib --extern hyperlattice=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhyperlattice-4db5ca8c9b2e6831.rlib --extern hypermesh=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhypermesh-8af5c3f4b7b72ce2.rlib /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/import_cost_v1.rs -o /home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v2/compile-baseline/import-cost"
+	User time (seconds): 0.56
+	System time (seconds): 0.15
+	Percent of CPU this job got: 176%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.40
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 183724
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 82
+	Minor (reclaiming a frame) page faults: 36460
+	Voluntary context switches: 1863
+	Involuntary context switches: 119
+	Swaps: 0
+	File system inputs: 9800
+	File system outputs: 19736
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

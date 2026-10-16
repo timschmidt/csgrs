@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "commands": 6,
+  "compile_failures": [],
+  "sources_and_all_observed_libraries_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false
+}

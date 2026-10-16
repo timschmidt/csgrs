@@ -1,0 +1,137 @@
+[
+  {
+    "name": "format-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "--cfg",
+      "feature=\"stl-io\"",
+      "-L",
+      "dependency=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps",
+      "--extern",
+      "csgrs=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libcsgrs.rlib",
+      "--extern",
+      "hyperlattice=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "--extern",
+      "hypermesh=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/baseline-v1/format-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.4650203478522599,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "e76cc3784c8a92a7352bfce870a4297c98e3e860cf0bdd8c6fe63e7023ee5cd7",
+    "binary_sha256": "e72e898d35ce0635f4b0c8b729d12e68f881e474d012745bec08936802dabe11"
+  },
+  {
+    "name": "format-test",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/baseline-v1/format-probe",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.006858930457383394,
+    "stdout_sha256": "20a0aa6707331dd13b98a7c2a8f635cd233d1668e38f3673ee5326bada23f483",
+    "stderr_sha256": "c3daec67845f04fa9f0d19fabd8e94179a17267382d9248ccc8f719ba61a0723",
+    "resources_sha256": "763276530656a32388958a7ffd3d33ac75b79f23890beb243da32c4010873bf8",
+    "binary_sha256": "e72e898d35ce0635f4b0c8b729d12e68f881e474d012745bec08936802dabe11"
+  },
+  {
+    "name": "topology-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "--cfg",
+      "feature=\"stl-io\"",
+      "-L",
+      "dependency=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps",
+      "--extern",
+      "csgrs=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libcsgrs.rlib",
+      "--extern",
+      "hyperlattice=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "--extern",
+      "hypermesh=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/stl-topology-v1/probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/baseline-v1/topology-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.33977661514654756,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9abbcec83fce41559581e90a8ab58464bb8121cd3789b6cc06ab188af7fe16cf",
+    "binary_sha256": "6040b31da901b54633315a00e32cf8ff8a3de91205cc700d0e98bb6b162dcda4"
+  },
+  {
+    "name": "topology-test",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/baseline-v1/topology-probe",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.005361913237720728,
+    "stdout_sha256": "83c81eb7b1fb0faa1e0d1b9c68b036a5934a89ecb157aa5085db9bcac7a4ed9b",
+    "stderr_sha256": "2999108840e56fa94ef8aaa3d24676f9adaad1e7ae0476e06b4e4ef802d883c0",
+    "resources_sha256": "2948f7bd692b29c83b1670e82c1dd0549e2e781f91b4227b3ef95123eececd6e",
+    "binary_sha256": "6040b31da901b54633315a00e32cf8ff8a3de91205cc700d0e98bb6b162dcda4"
+  },
+  {
+    "name": "acceptance-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "--cfg",
+      "feature=\"stl-io\"",
+      "-L",
+      "dependency=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps",
+      "--extern",
+      "csgrs=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libcsgrs.rlib",
+      "--extern",
+      "hyperlattice=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "--extern",
+      "hypermesh=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/stl_import_contracts_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/baseline-v1/acceptance-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.5261084800586104,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "80e7308c686583ac113693bdaecfc932312cf228aaef83b3b19d80cd630bc284",
+    "binary_sha256": "23dac59454f4ef738c9bd597e9942d644141cf49eb7eef2fd4d6a1eeb6b33e5b"
+  },
+  {
+    "name": "acceptance-test",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/baseline-v1/acceptance-probe",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.013086152728646994,
+    "stdout_sha256": "8afe73788470757e7bd4fb260300df99482aa8b8cb41756451c92f4948504e68",
+    "stderr_sha256": "b1b9e522304df877763578721f3e4106813e295910674ada059ee506b2fb879e",
+    "resources_sha256": "7ae4f86909cd349dee3b8a00bc9344fc58cf18f85765b598751df3b6ce35d0b0",
+    "binary_sha256": "23dac59454f4ef738c9bd597e9942d644141cf49eb7eef2fd4d6a1eeb6b33e5b"
+  }
+]

@@ -1,0 +1,535 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-source-v1/Cargo.toml",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 10.616377511061728,
+    "binaries": {},
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "582fead259922543f00507bd70ff79845fa7b62fe8cd312a9c087ad0a0da2de3"
+  },
+  {
+    "name": "minimal-regression",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "obj-io,stl-io",
+      "--test",
+      "stl_import_contracts",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 151.28462150599808,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/stl_import_contracts-48afce98eb413f01": {
+        "sha256": "bfa16491cc3a8c88812f009687c829da680ea5c992df3edf686d9f887a7c1a2e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/bfa16491cc3a8c88812f009687c829da680ea5c992df3edf686d9f887a7c1a2e/stl_import_contracts-48afce98eb413f01",
+        "bytes": 6457712
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "56564888d8d522c94cee6848f189c8d04b827119ed8fa9c6f23e450305868f4e",
+    "stderr_sha256": "a0dcff85efab6c807372e61b8d9d3885ab7b8e562e9e8b07fa58017d87d29962",
+    "resources_sha256": "3cdcf44e18e06421cbfaf666215325981b9c7b04a5b5507728bf4e745863af43"
+  },
+  {
+    "name": "compile-format",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v1/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v1/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v1/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/format_probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/format-candidate-v1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.6923050959594548,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/format-candidate-v1": {
+        "sha256": "c520fc85bc8df6361786ac2e8b9e090dc38ee6b1c5196ebbc9601cb2d8ce7b75",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/c520fc85bc8df6361786ac2e8b9e090dc38ee6b1c5196ebbc9601cb2d8ce7b75/format-candidate-v1",
+        "bytes": 12913168
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6f1ebee6cd7664e38ad13c4113a7376b9bf62d753cc38d18568f8bc7248d9a0c"
+  },
+  {
+    "name": "format-probe",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/format-candidate-v1",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 101,
+    "elapsed_seconds": 0.21503863716498017,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/format-candidate-v1": {
+        "sha256": "c520fc85bc8df6361786ac2e8b9e090dc38ee6b1c5196ebbc9601cb2d8ce7b75",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/c520fc85bc8df6361786ac2e8b9e090dc38ee6b1c5196ebbc9601cb2d8ce7b75/format-candidate-v1",
+        "bytes": 12913168
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "be22f6abe8aec26c0520ea183dc149f308e8b75364e18e137f368d64b38351fd",
+    "stderr_sha256": "d2691e065a06727b2195caec5ac1b8bd1741c4b8b33138cd8991cf75e6ac124a",
+    "resources_sha256": "6d29522b799dd47e3a8372545759f3f60eb6ff7f10721ffdef7592bc38c8031d"
+  },
+  {
+    "name": "compile-topology",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v1/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v1/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v1/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-physical-build-requalification/stl-topology-v1/probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/topology-candidate-v1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.5595116098411381,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/topology-candidate-v1": {
+        "sha256": "7d2af4c603953a890a3cefdbbc7b7c2ae2fdd41863591f9281c84435f92c1431",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/7d2af4c603953a890a3cefdbbc7b7c2ae2fdd41863591f9281c84435f92c1431/topology-candidate-v1",
+        "bytes": 11121416
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "875b2f9bfc732f841d0d788986e40082543f0bfb82da047ad3cab7d6cf8c8f38"
+  },
+  {
+    "name": "topology-probe",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/topology-candidate-v1",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.20934289786964655,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/topology-candidate-v1": {
+        "sha256": "7d2af4c603953a890a3cefdbbc7b7c2ae2fdd41863591f9281c84435f92c1431",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/7d2af4c603953a890a3cefdbbc7b7c2ae2fdd41863591f9281c84435f92c1431/topology-candidate-v1",
+        "bytes": 11121416
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "2b7e1965291ed859b1a8c2c6aaf3c2fedb329b77504af69c58dfbb3498367698",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a23a90cda7965093b72ef6fde5c089bb42a5d552c271010b2bfc25e1f06c65d8"
+  },
+  {
+    "name": "root-all",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 490.4034729008563,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/csgrs-3c5a74bdc7539294": {
+        "sha256": "7316ee5d8cc00e65cef0b7f2157f4781c507e1c1458298ed6800dd622e886657",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/7316ee5d8cc00e65cef0b7f2157f4781c507e1c1458298ed6800dd622e886657/csgrs-3c5a74bdc7539294",
+        "bytes": 39759912
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/readme-1992b521cbd1aa62": {
+        "sha256": "5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145/readme-1992b521cbd1aa62",
+        "bytes": 1153328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/slice_projection_contract-b55baaad948b2b8d": {
+        "sha256": "feed3e0d6d58db46a87195b43a929eff6ac4be6dc1b1f32cb9b00f69587c14c9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/feed3e0d6d58db46a87195b43a929eff6ac4be6dc1b1f32cb9b00f69587c14c9/slice_projection_contract-b55baaad948b2b8d",
+        "bytes": 33980680
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/polyhedral_construction-5ca791f19bc691fe": {
+        "sha256": "dbeb4ccc3cfa0fa78646b20db6a2e7de833c9d00b39a6a32a383b5544c142775",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/dbeb4ccc3cfa0fa78646b20db6a2e7de833c9d00b39a6a32a383b5544c142775/polyhedral_construction-5ca791f19bc691fe",
+        "bytes": 20764408
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/competitive-185cd4c877423fbe": {
+        "sha256": "c70b2c0b99e782a0c8e5be70a669a5cd147fec116c4b704a2154e92e38d8941f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/c70b2c0b99e782a0c8e5be70a669a5cd147fec116c4b704a2154e92e38d8941f/competitive-185cd4c877423fbe",
+        "bytes": 21061064
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/gear_airfoil_failures-edc7ec750765891a": {
+        "sha256": "c52d5ee6be0090d0b49eec4f31079bb083eacb156e6c9234de882ffa7041d309",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/c52d5ee6be0090d0b49eec4f31079bb083eacb156e6c9234de882ffa7041d309/gear_airfoil_failures-edc7ec750765891a",
+        "bytes": 33082120
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/metaballs_diagnostics-0ceadacbf3d3f4d1": {
+        "sha256": "ebaba8575dfd6394c74baa39a0add554905f02becb2ab8e48de2c947b5291bb1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/ebaba8575dfd6394c74baa39a0add554905f02becb2ab8e48de2c947b5291bb1/metaballs_diagnostics-0ceadacbf3d3f4d1",
+        "bytes": 18969296
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/adapter_boolean_failures-8867e9a3af41b5b5": {
+        "sha256": "50ef48be5dc4079f872da799c20ea302963fea9aba9021bbf3952956a8729aad",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/50ef48be5dc4079f872da799c20ea302963fea9aba9021bbf3952956a8729aad/adapter_boolean_failures-8867e9a3af41b5b5",
+        "bytes": 20638832
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/solid_cache-4b39500f97650a56": {
+        "sha256": "220b0168b535b1400fb317b98ea52844dc4ceedc6956b401684e73350c39f149",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/220b0168b535b1400fb317b98ea52844dc4ceedc6956b401684e73350c39f149/solid_cache-4b39500f97650a56",
+        "bytes": 34355928
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/planar_operation_failures-21febc1e6bde631d": {
+        "sha256": "abe664b8ef839bcd25aed248d9c77b8f07a65e90b505541c624b351fa1057d82",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/abe664b8ef839bcd25aed248d9c77b8f07a65e90b505541c624b351fa1057d82/planar_operation_failures-21febc1e6bde631d",
+        "bytes": 33129112
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/hilbert_trimming-a298c6dfff13a0d9": {
+        "sha256": "7d595dd294df46f72a6a95fe7023f2d949ff79ea96117ad6b01889deb6bdcc60",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/7d595dd294df46f72a6a95fe7023f2d949ff79ea96117ad6b01889deb6bdcc60/hilbert_trimming-a298c6dfff13a0d9",
+        "bytes": 32854064
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/curve_metaball_failures-d27370f0b0e5f990": {
+        "sha256": "676ef1eb1319ff1a201cfa0152d6beb8b961e8ebf80b0866bb8fe595ae1c3574",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/676ef1eb1319ff1a201cfa0152d6beb8b961e8ebf80b0866bb8fe595ae1c3574/curve_metaball_failures-d27370f0b0e5f990",
+        "bytes": 32982392
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/exact_linear_modeling-5d0a48a07e0f162b": {
+        "sha256": "0572a18764c6c45a790f8e95105910e49e36aa2529bf2033b9e1ccab51f86806",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/0572a18764c6c45a790f8e95105910e49e36aa2529bf2033b9e1ccab51f86806/exact_linear_modeling-5d0a48a07e0f162b",
+        "bytes": 32313640
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/sdf_failures-70ac7c65f6b4d210": {
+        "sha256": "8002f6f0a0c314414fa617b8b4be87f56f6443da3382da3b0ab31d4d7486245b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/8002f6f0a0c314414fa617b8b4be87f56f6443da3382da3b0ab31d4d7486245b/sdf_failures-70ac7c65f6b4d210",
+        "bytes": 21022080
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/curve_constructor_failures-f7cc43e145ac9696": {
+        "sha256": "d451b23925ee642652c9c1adbd7b0a528bd2010bf743bb20410acc97e523e399",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/d451b23925ee642652c9c1adbd7b0a528bd2010bf743bb20410acc97e523e399/curve_constructor_failures-f7cc43e145ac9696",
+        "bytes": 33009360
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/generated_benchmark_corpus-3c1f1fde5d37996c": {
+        "sha256": "8e4ccb2f430b4243e71b7317eb62efe601ff787387d7672c546da1cb066e4e47",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/8e4ccb2f430b4243e71b7317eb62efe601ff787387d7672c546da1cb066e4e47/generated_benchmark_corpus-3c1f1fde5d37996c",
+        "bytes": 19055168
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/batch_common_cells-a927672f36173761": {
+        "sha256": "10e47b6d1fb4dfc27f57e13aa58624e0c9d4b8694836f3e29b13908ab9bfbf6a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/10e47b6d1fb4dfc27f57e13aa58624e0c9d4b8694836f3e29b13908ab9bfbf6a/batch_common_cells-a927672f36173761",
+        "bytes": 20538176
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/distribution_contracts-555e8fcfefd73180": {
+        "sha256": "5b39fcd0ef96a2dbe53c9bc6e733590b5dc8c8a52e2dd5af34b0523a8051323f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/5b39fcd0ef96a2dbe53c9bc6e733590b5dc8c8a52e2dd5af34b0523a8051323f/distribution_contracts-555e8fcfefd73180",
+        "bytes": 21048704
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/empty_composition-916811c3b9113a9e": {
+        "sha256": "d53f0dd4d63be59c7e0898eb5c07e8039645a55b3334fc36ce166c1fb2881096",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/d53f0dd4d63be59c7e0898eb5c07e8039645a55b3334fc36ce166c1fb2881096/empty_composition-916811c3b9113a9e",
+        "bytes": 20819448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/obj_export_failures-cd495c9311a295fd": {
+        "sha256": "cd23adfba376dee5b539ddf131075406eae6e619f20003730b17f582080fa969",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/cd23adfba376dee5b539ddf131075406eae6e619f20003730b17f582080fa969/obj_export_failures-cd495c9311a295fd",
+        "bytes": 20667112
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/adversarial-61fa74ccbd896935": {
+        "sha256": "faedd4c69e3260c49e91e1650285c09bc04c24329b4be4c42a55c90d36b89475",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/faedd4c69e3260c49e91e1650285c09bc04c24329b4be4c42a55c90d36b89475/adversarial-61fa74ccbd896935",
+        "bytes": 34231648
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/rounded_rectangle_fidelity-8f7195511dbb1c27": {
+        "sha256": "da522efb4862bb0fc52af1f183a18691e0eebce1c48f94a38d236a69bd4a9695",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/da522efb4862bb0fc52af1f183a18691e0eebce1c48f94a38d236a69bd4a9695/rounded_rectangle_fidelity-8f7195511dbb1c27",
+        "bytes": 36008752
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/sdf_tpms_diagnostics-24970cc75f8a8512": {
+        "sha256": "44a64a2f70e17f662d53122405e92e617d0ce343e45bb698cdbfda5580f7ea1f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/44a64a2f70e17f662d53122405e92e617d0ce343e45bb698cdbfda5580f7ea1f/sdf_tpms_diagnostics-24970cc75f8a8512",
+        "bytes": 21206376
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/adversarial_deep-521173baf42fc07b": {
+        "sha256": "20f8889525ee4b4221e98d4b491d8380f3a2500b639d86ae111dd43f81c8ee1c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/20f8889525ee4b4221e98d4b491d8380f3a2500b639d86ae111dd43f81c8ee1c/adversarial_deep-521173baf42fc07b",
+        "bytes": 33909184
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/stl_import_contracts-1972ae5b143c3f00": {
+        "sha256": "73c31cc34ad7000f62cebda1fe1a1b1624a0c420261917b42cdcf5afcbdf86f3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/73c31cc34ad7000f62cebda1fe1a1b1624a0c420261917b42cdcf5afcbdf86f3/stl_import_contracts-1972ae5b143c3f00",
+        "bytes": 20597624
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/native_queries-b33ec052b7501c8a": {
+        "sha256": "09d39686a9b6f4bb7c16d063cd17974a489bc97e3ad5685cf18fa9a41cbe65ee",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/09d39686a9b6f4bb7c16d063cd17974a489bc97e3ad5685cf18fa9a41cbe65ee/native_queries-b33ec052b7501c8a",
+        "bytes": 20878936
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/adversarial_extrusions-03eb6390b46717d7": {
+        "sha256": "3f7e567a07d2e550a13da4313321db9b76f532eb77a9ff28ad8dbb010d117bf8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/3f7e567a07d2e550a13da4313321db9b76f532eb77a9ff28ad8dbb010d117bf8/adversarial_extrusions-03eb6390b46717d7",
+        "bytes": 32566488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/strict_drilled_workflows-84fb41c10d127f23": {
+        "sha256": "947f513802d727d9532a100d53a225510f57923f5135a7ea6bde835bc0058c11",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/947f513802d727d9532a100d53a225510f57923f5135a7ea6bde835bc0058c11/strict_drilled_workflows-84fb41c10d127f23",
+        "bytes": 20821344
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/transform_failures-21eb23e9828f9466": {
+        "sha256": "ad3febe881a6c4c6696946086b1a150b6c68408a694403d83d0d8970e7255833",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/ad3febe881a6c4c6696946086b1a150b6c68408a694403d83d0d8970e7255833/transform_failures-21eb23e9828f9466",
+        "bytes": 20772408
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/geometry_context-f3d29f7d6dc94528": {
+        "sha256": "4a6c0ceeb71bb970327f640307dc5bd101ba94aa78ce12742e02958ca0e47d0f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/4a6c0ceeb71bb970327f640307dc5bd101ba94aa78ce12742e02958ca0e47d0f/geometry_context-f3d29f7d6dc94528",
+        "bytes": 41694344
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/exact_path_failures-d29490301ca0c150": {
+        "sha256": "8209a289062e3aea5eeea28000e4e9dfc93eddc593f42dc08124c3bb8da7c56c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/8209a289062e3aea5eeea28000e4e9dfc93eddc593f42dc08124c3bb8da7c56c/exact_path_failures-d29490301ca0c150",
+        "bytes": 32871032
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/sampled_profile_failures-1e978d3da16ca610": {
+        "sha256": "0817bb3acf15b5e303bce61fcee035e5c645e1b1f0ccd80b10f5c7bf467a0046",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/0817bb3acf15b5e303bce61fcee035e5c645e1b1f0ccd80b10f5c7bf467a0046/sampled_profile_failures-1e978d3da16ca610",
+        "bytes": 33349528
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/minkowski_contracts-0128f2ac1f93f880": {
+        "sha256": "d187b5421c0f70d4f624f49b8fc8b33217be8e4b7e733f998117834ba43bf40e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/d187b5421c0f70d4f624f49b8fc8b33217be8e4b7e733f998117834ba43bf40e/minkowski_contracts-0128f2ac1f93f880",
+        "bytes": 21389176
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/wasm_certainty-4c94a4a83c71928e": {
+        "sha256": "eb60556922608bd2b92407ba3071edea61706ebbb6a9955b18670dfe08b53077",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/eb60556922608bd2b92407ba3071edea61706ebbb6a9955b18670dfe08b53077/wasm_certainty-4c94a4a83c71928e",
+        "bytes": 32050872
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/adversarial_stress-7115bbec9298381e": {
+        "sha256": "540c8335e47f8a72b9efd33aab67ca429c6fd817a58495ba058f23d0919f7a44",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/540c8335e47f8a72b9efd33aab67ca429c6fd817a58495ba058f23d0919f7a44/adversarial_stress-7115bbec9298381e",
+        "bytes": 33705752
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/adversarial_fixtures-eb5cce8eab7e81ab": {
+        "sha256": "72e465a0a93430821cdba6e17be21a7c61e1a9d7326de5c64f1fc2908a1d37fc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/72e465a0a93430821cdba6e17be21a7c61e1a9d7326de5c64f1fc2908a1d37fc/adversarial_fixtures-eb5cce8eab7e81ab",
+        "bytes": 1112712
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/metaball_workloads-fdfd90c45629d15d": {
+        "sha256": "8c634f7b05b2e6b9fe52758ba100b8782ade6ab8b68ad177659cedabe36a86fd",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/8c634f7b05b2e6b9fe52758ba100b8782ade6ab8b68ad177659cedabe36a86fd/metaball_workloads-fdfd90c45629d15d",
+        "bytes": 19038648
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/primitive_failures-62bfc794561dcdc3": {
+        "sha256": "83d0f04d2350cd16ac30ee716899194ce4971ff9890d80edaf54dcfbe237c9d9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/83d0f04d2350cd16ac30ee716899194ce4971ff9890d80edaf54dcfbe237c9d9/primitive_failures-62bfc794561dcdc3",
+        "bytes": 20817584
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/readme_render_regression-241ede70811c95bb": {
+        "sha256": "130105032fd7d622164b0ca8bb96d66eb60830a9c8e087f0fd1d549b52dcf901",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/130105032fd7d622164b0ca8bb96d66eb60830a9c8e087f0fd1d549b52dcf901/readme_render_regression-241ede70811c95bb",
+        "bytes": 1151128
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/curve_metaball_workloads-66d29e6564cd95ad": {
+        "sha256": "7691912e71e66e8bea9e9ee00388bd5e4f26695076da7bc6e385e9f5625ff923",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/7691912e71e66e8bea9e9ee00388bd5e4f26695076da7bc6e385e9f5625ff923/curve_metaball_workloads-66d29e6564cd95ad",
+        "bytes": 31785152
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/mesh_boolean_context-914bbfe568471b47": {
+        "sha256": "c7ca1ca5ca2d6c5e971896edea03e8e5b0c457c6b55948dba0ebee4c71d03760",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/c7ca1ca5ca2d6c5e971896edea03e8e5b0c457c6b55948dba0ebee4c71d03760/mesh_boolean_context-914bbfe568471b47",
+        "bytes": 20731592
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/metaball_failures-d85a244280836e13": {
+        "sha256": "cea1c01754332d546ee76cf838e834b421d718d2c1e3e14793d291d60e194f41",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/cea1c01754332d546ee76cf838e834b421d718d2c1e3e14793d291d60e194f41/metaball_failures-d85a244280836e13",
+        "bytes": 20637256
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/bounds_failures-65b1d35d217e46d4": {
+        "sha256": "597ad9948accb8c4dee468b65c8095c42ea18281bfa07506339ebd30b928a6e9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/597ad9948accb8c4dee468b65c8095c42ea18281bfa07506339ebd30b928a6e9/bounds_failures-65b1d35d217e46d4",
+        "bytes": 34141280
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v1/release/deps/text_contracts-84d126534db53fda": {
+        "sha256": "babb7b475603921d5616ed977fcaad7897e2b373ef5a5e5a0dd94d70caafebd0",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-executables-v1/babb7b475603921d5616ed977fcaad7897e2b373ef5a5e5a0dd94d70caafebd0/text_contracts-84d126534db53fda",
+        "bytes": 34039736
+      }
+    },
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "929cfb3233e7be520e24fa85ad24362565d95d78d140229dcc58955f7d9a7db7",
+    "stderr_sha256": "142f0c4ba56870f70a251fb479b0f58a55153cb07923372065bedbfeda91ec9a",
+    "resources_sha256": "21da30cbea7199da03d01f47c8e8deee75f22ed51b74a917dd3f913034765942"
+  },
+  {
+    "name": "stl-only",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "stl-io",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 12.343214252963662,
+    "binaries": {},
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "fefcf11a396e3d80914602822e54364ae44f517adebf78382998036a2fa42909",
+    "resources_sha256": "bb2941cb8d68bd6dd5a596ae98eb22640036f27ffa2bd496ab0db9524c3ec535"
+  },
+  {
+    "name": "strict-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 55.00462928786874,
+    "binaries": {},
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f95b04eeeb14b97e4ef028a40a2e1398d4bc59592b7b533611fa320c93fe8441",
+    "resources_sha256": "0eac74d350d52de05f952d1d75db8bcfc5533f36133d0f84338988e8b9001f1f"
+  },
+  {
+    "name": "stl-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "stl-io",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 21.94174964306876,
+    "binaries": {},
+    "sources_unchanged": true,
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "bc99611d94889edb72a5836b477240bf22a0859133afb5692df1a6062a4e9077",
+    "resources_sha256": "b5b29e56c20a023ef25deacff22ae8c91157b9e18cbcafd1efd67fa816326d32"
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 36.79809363512322,
+    "binaries": {},
+    "sources_unchanged": true,
+    "rustdocflags": "-D warnings",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f439223f79f70829176267db0b0b779276bee1bd2bd697d243ad8260b0b0897b",
+    "resources_sha256": "f7b2638f15655eaeaaf2a1111132c5a3ea005c588da4b1b73e1b182d5ad92431"
+  }
+]

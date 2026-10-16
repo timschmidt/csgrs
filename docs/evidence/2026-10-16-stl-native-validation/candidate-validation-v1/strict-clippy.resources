@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s cargo clippy --manifest-path /home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-source-v1/Cargo.toml --locked --release -p csgrs --all-features --all-targets -- -D warnings"
+	User time (seconds): 87.72
+	System time (seconds): 16.67
+	Percent of CPU this job got: 190%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:54.78
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1393980
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1274
+	Minor (reclaiming a frame) page faults: 5781233
+	Voluntary context switches: 12362
+	Involuntary context switches: 3522
+	Swaps: 0
+	File system inputs: 349288
+	File system outputs: 440792
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

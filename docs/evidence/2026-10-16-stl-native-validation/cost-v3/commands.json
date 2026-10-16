@@ -1,0 +1,958 @@
+[
+  {
+    "name": "compile-baseline",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "-L",
+      "dependency=/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps",
+      "--extern",
+      "csgrs=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libcsgrs.rlib",
+      "--extern",
+      "hyperlattice=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "--extern",
+      "hypermesh=/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/import_cost_v2.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3704806179739535,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ac711e4e4b7f3ddbf19259456fc07a5bf3f9e04d38005f51301c0d2c370e581c"
+  },
+  {
+    "name": "compile-candidate",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "debug-assertions=off",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/import_cost_v2.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3843543673865497,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "69a6e174bed600f28eabd0f9c73e2208fa6cf1050dccb416c9747de8120d9328"
+  },
+  {
+    "name": "pair-0-binary-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-0-baseline",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004717167001217604,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-0-baseline",
+    "stdout_sha256": "e0355b5b22f66e5327bf8a8b2ec1989538e36c2ab0466f5f36eccec80160e6d1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0e35f78aefbc452382ba16c6499909618781f20b48e29190fa37fd6ca8a646ee"
+  },
+  {
+    "name": "pair-0-binary-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-0-candidate",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004223289899528027,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-0-candidate",
+    "stdout_sha256": "1815bbb215af57ab070d83b412cb4e3bfc538c27ab487cea063d1c6c11b64b08",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2f70f0a8654130363b430ecb428fb2b6d1494a28da72f39b73f99e6bec4a7e8c"
+  },
+  {
+    "name": "pair-0-binary-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-1-baseline",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.010645180940628052,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-1-baseline",
+    "stdout_sha256": "b84fc0dac2915e4c8a752ca26de03d8b31d58ce4f56c8a51e1403493e93ac166",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "55394e2a3aca49e4100375766113f9f1cc895974e1e602926e96abaff74f8a2e"
+  },
+  {
+    "name": "pair-0-binary-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-1-candidate",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.009297512006014585,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-1-candidate",
+    "stdout_sha256": "476838b086f0b3c2c320acd86d4df69a1da359b63a360fd637df00ecde924441",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5ee15ce69c4aec63251438972eb2199ee6fcce5ccb4b8373c1e8246bf6df0d4d"
+  },
+  {
+    "name": "pair-0-binary-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-256-baseline",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.10733504686504602,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-256-baseline",
+    "stdout_sha256": "bd9f394cfdbbc2ae8f2600fb45140026966cf6022fc1097d5aae6f37ecd7a76c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "e33facdbeca66e0a4d0e4a66ad6da168997cb6544764f4a1364fae206bae18f4"
+  },
+  {
+    "name": "pair-0-binary-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-256-candidate",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1081725088879466,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-binary-256-candidate",
+    "stdout_sha256": "5a0d36460c4ba21ad05098bfebbc1d20bfd02b3ecbac1d37abd0ea3e2baac0fe",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a184152a6f42ace86a52772a215b2766756bf1f70e6ede8ae542c4408c149041"
+  },
+  {
+    "name": "pair-0-ascii-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-0-baseline",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004630752839148045,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-0-baseline",
+    "stdout_sha256": "571635fd93730bdb10c107e85833c124f3c8fac00aaa2efdb831e09a0c15129d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "cae55dea0231f3c2710a974b92e0a9b79f8d06ce79a852e46ef62a3c806ac696"
+  },
+  {
+    "name": "pair-0-ascii-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-0-candidate",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004445366095751524,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-0-candidate",
+    "stdout_sha256": "17de32bb2ffd653b3573d0484b3bac3652ebab182b6c210c710a83456f01c21c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "1b7bb124d608cd7d3971efee8e3e6fafdcbe9f08193e87ae4b7c4b34dbe2100f"
+  },
+  {
+    "name": "pair-0-ascii-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-1-baseline",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.010100068058818579,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-1-baseline",
+    "stdout_sha256": "d294e3421ff62b9462cd91dc071e18f8b2ce704c1b37e64d52de50cc706c26ee",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "49e4b3083d79bbc31ecfdfcd4bf149ec2543b8ac945bd74e27e2b5af6d6887ff"
+  },
+  {
+    "name": "pair-0-ascii-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-1-candidate",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.009507508017122746,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-1-candidate",
+    "stdout_sha256": "3e4996fb826cf1609d65843c1b027e2e1af483be24eb6dbba6cc546a0c60ba07",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "39ebfa94d2a0b7d2e9e85cf3df61e0ebb57067e74e8ffbde5e86eb0da8c01a6b"
+  },
+  {
+    "name": "pair-0-ascii-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-256-baseline",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12948863813653588,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-256-baseline",
+    "stdout_sha256": "d1c79cfc30291e165c9e37c729bf87286d5c8c803286bf4fd6e999e0a54721c3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "804d72282cab4f3eef35198f98d9b1e3c003a223124b9cf5215ff00ddcad2f38"
+  },
+  {
+    "name": "pair-0-ascii-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-256-candidate",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.11827588686719537,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-0-ascii-256-candidate",
+    "stdout_sha256": "7ea52ab5ebd1cbdc4d313c2e8e02021265bdf75c5f98574414c8dbd7eb73422c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8916730a4104fd62c40e04cd5da29aca4c01b7d2e382f0647e9cb11e6c6d2b52"
+  },
+  {
+    "name": "pair-1-binary-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-0-candidate",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004568247124552727,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-0-candidate",
+    "stdout_sha256": "334c05515fd03f103c763b51a62d0e67fa6172b816299e201f168f8fba456cde",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "94705e9849c9d122a4d9a23e136aadb946e50185c41076aa106e4a7fe339300d"
+  },
+  {
+    "name": "pair-1-binary-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-0-baseline",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004115898162126541,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-0-baseline",
+    "stdout_sha256": "f25ca8fcfdd07e5375506d430a454a6b04f1223dac12102be841897be84cee41",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0d03fddf20b52065c6517ebaed8301dc68b05b66e33be0ed9bee42be8093502b"
+  },
+  {
+    "name": "pair-1-binary-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-1-candidate",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.009078957606106997,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-1-candidate",
+    "stdout_sha256": "7aa98d2d23aab9cde35fe39ed0c231b785694deed6e52a07edb3bffe2cc38a81",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "dac0d22ffcba4c79fd28b1a7e1c23170623c20d0419a27309ee4065569216287"
+  },
+  {
+    "name": "pair-1-binary-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-1-baseline",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.010081288870424032,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-1-baseline",
+    "stdout_sha256": "230c196c0b3c236b962f397165f4a4f3085856a22d05ada319c983c0fe2ad857",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "22466e65561e43a7af01ddd0a2b525728f9f26bf369be6e0a1ad5cec4e43ab94"
+  },
+  {
+    "name": "pair-1-binary-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-256-candidate",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1005300129763782,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-256-candidate",
+    "stdout_sha256": "1fc7236214e0656ad458b358faca9465512e192a0b43230a12d56ae9127f525a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "dd115864e286da83bb30e114869e8d4f06286fb0988729654f66990f2e2f93bb"
+  },
+  {
+    "name": "pair-1-binary-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-256-baseline",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.10780197475105524,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-binary-256-baseline",
+    "stdout_sha256": "f7e60c6962ba446d4b340cb22813d9c32392458a29c5799b6db0561ef8d977d9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0147511ed607df9a7a625d7803e00a12e8bb89c48633da830fe376f19bd2264f"
+  },
+  {
+    "name": "pair-1-ascii-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-0-candidate",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00438281986862421,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-0-candidate",
+    "stdout_sha256": "9caab49ce30b605872517c5c98b639e44d17daf15beb536ac3074865f05bcd2f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "aae63b33c4b41c99165045246e167dfdc30d6ff7ce9efd1f3d4dfb5555630b80"
+  },
+  {
+    "name": "pair-1-ascii-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-0-baseline",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004244029056280851,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-0-baseline",
+    "stdout_sha256": "86bfa6da0b3c27c4986f5831b59735ac62e00649f2635af75df82d0c0c1dc43d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3d04d05ac7364ab3c23b312476cf7bf8d1cf66f25e1b1bfd88b56c5d80b1e372"
+  },
+  {
+    "name": "pair-1-ascii-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-1-candidate",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.009838805999606848,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-1-candidate",
+    "stdout_sha256": "0361ce579874e0c4bfb5f10a2aaac858c5bf2b11d7e69a220b7f5a6eeb4a6c4c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "12762a8fbf2a7706cbe2a32fe051f3a732524281910f4f7114e0f399450bf3f7"
+  },
+  {
+    "name": "pair-1-ascii-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-1-baseline",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.010104117915034294,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-1-baseline",
+    "stdout_sha256": "d321c76ecc33dda7173a52e32a7edbcbf6e2b5a699ad92cb9d8b9a04b7bc1a74",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "bc58e229d7e0e6fae4b8740483fcc4392b023e56f3ebe5cc35138113b8d9b317"
+  },
+  {
+    "name": "pair-1-ascii-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-256-candidate",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.11854523792862892,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-256-candidate",
+    "stdout_sha256": "d7cb2891b9e98ebb98dd68e062a45c1f16f8ce6f63f7366450ec33f25cecbd52",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4f32901f40b28765bb1474d12bdedcd8108459755e1139715f53d048bf9a5f51"
+  },
+  {
+    "name": "pair-1-ascii-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-256-baseline",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12432664213702083,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-1-ascii-256-baseline",
+    "stdout_sha256": "63b32a548f5f624ea524eb36330bb8ea7fd0ddaef0c4e48896daa097e553010b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6484631330ea49f9f2652f96ccfb1c0059ac6ffc43e4fe971c69bc3166cc33b1"
+  },
+  {
+    "name": "pair-2-binary-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-0-baseline",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0046290927566587925,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-0-baseline",
+    "stdout_sha256": "67b44bf2b63b763320348bbc50a5246d7e7a3cc207032e3e38d55827329b20a4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "895633f40c0f59385256bbee737d0ee609d0826627d3b43879f6d1f597d7e0b3"
+  },
+  {
+    "name": "pair-2-binary-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-0-candidate",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004173124209046364,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-0-candidate",
+    "stdout_sha256": "7f2e16de2fdee76c75fc1140b5892fcee6454086dbbabfad0a70e4943886a338",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "20d50a8b72712d090cdf542b53d0308e6925e66323184fb45c21829e19519d14"
+  },
+  {
+    "name": "pair-2-binary-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-1-baseline",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00914508430287242,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-1-baseline",
+    "stdout_sha256": "846da515656c4d55b2fd572b88de1a1788afb36a18d0ec07f574dbd817529088",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "18a66d360995a15d596b119bed652993be390b416320cad86fade09acb10534b"
+  },
+  {
+    "name": "pair-2-binary-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-1-candidate",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.008763939142227173,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-1-candidate",
+    "stdout_sha256": "104a9dac9fd04e08f473f4c37e7d8e1dfe7d060746fb5ffc93ca00fa4ca6ef38",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7c0e72f35604a26c40cfbf12a8a2776f013efe769e672743a28b5a66bc2db240"
+  },
+  {
+    "name": "pair-2-binary-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-256-baseline",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1079975301399827,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-256-baseline",
+    "stdout_sha256": "53615b1f7e6a4ce992a8d14ea3d7ffe147c13f7c11ff098e79b24ddfc361ca6d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "23720b15e7769b75181c057fed15c8a8f248c76b0d691d3e49714dc7298bfe1e"
+  },
+  {
+    "name": "pair-2-binary-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-256-candidate",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.10160252917557955,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-binary-256-candidate",
+    "stdout_sha256": "1c7003cca66329432ba4c08c80a6ad6f936297e40fae6fd771adaf7ed61045d2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a0a53b652498f0b892b7946fb3274d5e8e007969d83b865c72d5189c4c4b6107"
+  },
+  {
+    "name": "pair-2-ascii-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-0-baseline",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004378439858555794,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-0-baseline",
+    "stdout_sha256": "1e1966ae3e0e037d29f1d87eaae5b809e4fa45ffe27cd6261cbf5ec3514fdfbe",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "554de5e8609756289c219e5483ffb212ef924e1eeee38465514dc683af9703c7"
+  },
+  {
+    "name": "pair-2-ascii-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-0-candidate",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004216181114315987,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-0-candidate",
+    "stdout_sha256": "47fff29e1b43eea74b34cb5cc0d32945d95f4dfc104f26555cd5d31113469061",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4e5763ac88dbb8b09db0d4d7cd8f495d737cbb9c345dbbff2a5a401bdd8707cd"
+  },
+  {
+    "name": "pair-2-ascii-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-1-baseline",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.010875594802200794,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-1-baseline",
+    "stdout_sha256": "7706fd0b77b7b674345e240022e70cedc15cb483efab58867e8c0f581e2dac98",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "af0898019b677f84888b4100579238e15e6a41957470883efea899a3d5d79945"
+  },
+  {
+    "name": "pair-2-ascii-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-1-candidate",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.010196901857852936,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-1-candidate",
+    "stdout_sha256": "a19f7f77225f429cf3e0c8bbb5b7f7f2fa9539216f3d517ebe27175a45e24d1e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "e95b484d08132220000aaf413c4b9607262dd4cbc667fc4237ac9fee604d4019"
+  },
+  {
+    "name": "pair-2-ascii-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-256-baseline",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12266344577074051,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-256-baseline",
+    "stdout_sha256": "c96b52885ca141cab84b053d245c68e7366ce988921683001257524be4aa792a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ec8fa56e886749d03a6c26642c2799b3d7f14e3362f9c15511adbc90f1257388"
+  },
+  {
+    "name": "pair-2-ascii-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-256-candidate",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12243297090753913,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-2-ascii-256-candidate",
+    "stdout_sha256": "7d8cc9d6071cee5fbe7cf08ccb4d99fed9fb73f51fd840b90b7b9f648d3d9299",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "726e6b18ce8314fdf0183d9d8c828b0b8ea12caff32143ce7820a166501824d7"
+  },
+  {
+    "name": "pair-3-binary-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-0-candidate",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0045290798880159855,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-0-candidate",
+    "stdout_sha256": "6aa621b1e83ba0f235ebe1d3f6e7d686e843837a402e2e9335c137ffd31337e4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7cef15f813c95414e94ea51ac573a61ca5b18d049e17d582afc35416a7484bc0"
+  },
+  {
+    "name": "pair-3-binary-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-0-baseline",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004360471852123737,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-0-baseline",
+    "stdout_sha256": "a9ca63542bdc4ccbc49faa00f1801443867b8bc8f447219d95b40da416946006",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "18a96d7814e371f3eee073032b65ed926f57bdff8ae9f65f8da0b307f13c5f95"
+  },
+  {
+    "name": "pair-3-binary-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-1-candidate",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00872220192104578,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-1-candidate",
+    "stdout_sha256": "8e980b0263e3d3f383d29bc865db7a00aa0d53d9e7f486037ac384bc41215cf4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4a79d5ade55bdbcadfab7a37cbc3d32c2feedb90acbb35f021de0a63aa07f892"
+  },
+  {
+    "name": "pair-3-binary-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-1-baseline",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.009441583883017302,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-1-baseline",
+    "stdout_sha256": "3278016a7b9d701f712c90ec3f2669f1a80399c9ff471e2def189bed27cf5ff4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7ef2555e59996b6c727f909910b329b35a959c252623b8bc92955dbe9146200f"
+  },
+  {
+    "name": "pair-3-binary-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-256-candidate",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.09991861414164305,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-256-candidate",
+    "stdout_sha256": "1fbe4b2cb3340801e2473b4d70122bcc83721e5d3899f9ec9998c3bc7a443e23",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d747d3587ea34f652da30f09cee136b685def64609b0f6acc2091e300113bb00"
+  },
+  {
+    "name": "pair-3-binary-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-256-baseline",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1072691511362791,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-binary-256-baseline",
+    "stdout_sha256": "9a6ca24866c13445b792f2b1990df93f0244114c626e4fe87ab8c1a47a12d15a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4c8e191f4c5e7b0e4006174958434cc5145d7793ca4a953e56195da447725530"
+  },
+  {
+    "name": "pair-3-ascii-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-0-candidate",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004473783075809479,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-0-candidate",
+    "stdout_sha256": "ab6e161c05dcb66fe7464e3174cb993137347fdf1b3b842c8198eb2d997aae2b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f2ed5939e92ed6acf2924f1c3a00c35577be512848020fed396d28473b7542c5"
+  },
+  {
+    "name": "pair-3-ascii-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-0-baseline",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004188183229416609,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-0-baseline",
+    "stdout_sha256": "8ddbd966569600a89f628a8a148992185c33e75c636e528b44767d302062eaac",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "28d5dec8d35ee16f3313c50f1072c4b6f62ceb110484d8e6b2a7ce10dbfbc3b5"
+  },
+  {
+    "name": "pair-3-ascii-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-1-candidate",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.010490332264453173,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-1-candidate",
+    "stdout_sha256": "2ae174248765f6853c0dc605b4858291345962b4e6b1839d4cbb7a1b9ef4c447",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6f57f704341f0e5dd01e9cec3d7d8912a4520dc0b2048558b5fc20049f210946"
+  },
+  {
+    "name": "pair-3-ascii-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-1-baseline",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.011087140068411827,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-1-baseline",
+    "stdout_sha256": "464f3e03f1d5d410b1da29e238185b80cdf8f0f3d6756920d93968fe4735bd6d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ae9ebd46fda0909ae1a9e4d3b04ee7126742b92dbb5448437656011347420e87"
+  },
+  {
+    "name": "pair-3-ascii-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-256-candidate",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.11977434391155839,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-256-candidate",
+    "stdout_sha256": "0d9b40e4f8ab7cc6caddf2ac4e102dd9b23b618f6931622cd0048b1284b6007f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6d98dee1c7c289557911d2560492f07f5d61c2ea34a55d7ed6361d086fccf9be"
+  },
+  {
+    "name": "pair-3-ascii-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-256-baseline",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.13156934641301632,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-3-ascii-256-baseline",
+    "stdout_sha256": "2e0251f85040007c920639859b38ddbac9c7e441f6c89ddf5115c621a9c34985",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6f32becd1aa8be3b3227ac5a54922a60820bf807af32cf1a12838e10bce7d3e1"
+  },
+  {
+    "name": "pair-4-binary-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-0-baseline",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004811340942978859,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-0-baseline",
+    "stdout_sha256": "f7a1bd23454f8faf5834563920fcb8b326db9e2d0e11988dd37e350b0a35ff7e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b14b1cfd3f2290e530fc5247edd4316a38ae2a1aaca8b26bb044184df53b1182"
+  },
+  {
+    "name": "pair-4-binary-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-0-candidate",
+      "0",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004415777046233416,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-0-candidate",
+    "stdout_sha256": "b76eb29f04f50a28b73189e08af606657224aa10154709af15ca6bd28131d12f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0870b997549784b7f6c177b5487e064385d8065a24280b28b945b5cc9405c494"
+  },
+  {
+    "name": "pair-4-binary-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-1-baseline",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.009919831063598394,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-1-baseline",
+    "stdout_sha256": "a8c99b9210ed14ccd9e86c658ae284dad94e4a15a5a66f36e3a62b38d1b7c211",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "717e535d950e0c20b04503feddadb38bbcef38c09c7d0b4ee01784c99f2bbbad"
+  },
+  {
+    "name": "pair-4-binary-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-1-candidate",
+      "1",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.009043120313435793,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-1-candidate",
+    "stdout_sha256": "526b13171db3b1f96a3e3f6597d4fa60ead02f8d84d446e3d6a23bf950cb5816",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2a837825059e038915890454fc7b83a8945de17b21ff4c10ab1b74c5581293d2"
+  },
+  {
+    "name": "pair-4-binary-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-256-baseline",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.11617745039984584,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-256-baseline",
+    "stdout_sha256": "c63287f39ccde8d5d9c4ec0f0eead687a527c5ce7285f42bab9e1cce2990c8a7",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5d48ac938f80fa7dffdedc2d1d00faeb9372e28dcedf3095b85eaad358fa3d33"
+  },
+  {
+    "name": "pair-4-binary-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-256-candidate",
+      "256",
+      "binary"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.10400051390752196,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-binary-256-candidate",
+    "stdout_sha256": "85f7cea3a45c953577faef645c41fb87f5d5e3d0f7e88e2f9293271837d5b3f2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "a7467514fb53e0285744a9cc08c56215a1aa4694985d462258261ca649d6eeb2"
+  },
+  {
+    "name": "pair-4-ascii-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-0-baseline",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004886474926024675,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-0-baseline",
+    "stdout_sha256": "0ae85c99ebeaab2b4dca859ca2fc96ed3ab8dcaeb8c76d6eaa9c0fa2a93bc3da",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "006b2dd53917bf2210a4c52441e6b4af4f624319263884ba1ab92bcfa478f4fb"
+  },
+  {
+    "name": "pair-4-ascii-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-0-candidate",
+      "0",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.004378930199891329,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-0-candidate",
+    "stdout_sha256": "e07fce017b88e054509f4c501f068b0f8e0c8b48407b3251b89d829c35e0d236",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9ff4cb76ddebacacc99baf69bd8254283c795a90b451255b7c0c176fc05c0e85"
+  },
+  {
+    "name": "pair-4-ascii-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-1-baseline",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00970550486817956,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-1-baseline",
+    "stdout_sha256": "bcae11827732bf8733e14031488755686a9dbaddcf004226dfd18d57315a4b31",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "aa18482efe8952e6818330c2dc179e7b541d4894a355e0cf73a77c86e5ee91f4"
+  },
+  {
+    "name": "pair-4-ascii-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-1-candidate",
+      "1",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.010005214717239141,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-1-candidate",
+    "stdout_sha256": "9fb55e9b025e5f00b4e47d64fc47d8047eee14ca2e8752cb3279d0751097cd74",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "893d5138fe669eb69fca74f078a2e870c7604625c27934b9fbb34f97ef686321"
+  },
+  {
+    "name": "pair-4-ascii-256-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-256-baseline",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12457151478156447,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-256-baseline",
+    "stdout_sha256": "d95c4472ebffaec88e28d32f9dfbb405569e46fa5ac9bb0fd95a5e03ce8959ac",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4378fb1844018dffc9349730fe2407a03ae43022e8ce1a82a36bfe264a8360a5"
+  },
+  {
+    "name": "pair-4-ascii-256-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-256-candidate",
+      "256",
+      "ascii"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1189550100825727,
+    "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/pair-4-ascii-256-candidate",
+    "stdout_sha256": "de6da7d5bb0d6e3c508fffa859e79b128582d1b1d3af4565dbf3571bd64d3e5b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "350dae2b07202ecff0c2ba219677dd4869b5992dddee1bba935ef9ae97e71689"
+  }
+]

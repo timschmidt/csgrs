@@ -1,0 +1,17 @@
+{
+  "csgrs": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps/libcsgrs.rlib",
+    "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libcsgrs.rlib",
+    "sha256": "7d812ed68cb315c5f4f48be2dc1e8ceb33f4bb49b07b62aff5f381a6219b328c"
+  },
+  "hypermesh": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+    "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+    "sha256": "ca05db48e6887409ef480232060d36e15f4c739396680d88bdc8c62712408696"
+  },
+  "hyperlattice": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib",
+    "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+    "sha256": "7d61eb526be38f9926a94e35f151e6b0c46ddd442c516742c1afa81cf19179b0"
+  }
+}

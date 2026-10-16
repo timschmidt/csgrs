@@ -1,0 +1,12 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-baseline/import-cost",
+    "sha256": "2e423a7b9a4c40c6a83a2fd71ba8f82dfeb2d4b1a83e9c4457676dbb4c42dd3b",
+    "bytes": 9766544
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/cost-v3/compile-candidate/import-cost",
+    "sha256": "404803f28dd0943e28ed6bd8dc870c9c95b09d3a8ff6d701c389890ea0a58f13",
+    "bytes": 9747880
+  }
+}

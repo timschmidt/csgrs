@@ -1,0 +1,32 @@
+{
+  "runner_sha256": "41e61d1bf62474615dcc49c6d5e04ca4d366c3693efd95e8424cdac18cf2eb57",
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/example-replay-v1/basic-shapes",
+  "binary_sha256": "103816b0bceece4038e9d52ede5e2b78fd15fad960838c2338796286158067d1",
+  "binary_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/examples/basic_shapes",
+  "exit_code": 0,
+  "complete_output_bytes_equal": true,
+  "outputs": {
+    "cube.stl": {
+      "sha256": "1aedfda86eaf3aee6d8f6b6d8feb558cd9132da4844af2250d91f5681a777c30",
+      "bytes": 684
+    },
+    "cylinder.stl": {
+      "sha256": "d8814b8217874bce45afe8421d38a1a559a270266e9addc9ef388bfb69d15a68",
+      "bytes": 6484
+    },
+    "ellipsoid.stl": {
+      "sha256": "8680d237f3c892046ddead3dbdae5b7efc1204a3fccf8e00cfbbfe2ed203f8af",
+      "bytes": 48084
+    },
+    "sphere.stl": {
+      "sha256": "3c08aba8c56771519291af3666331d825befd065e51862aa24882a88f87f0d1b",
+      "bytes": 48084
+    },
+    "torus.stl": {
+      "sha256": "f92e37cbf6c36c1f3fa1368471c4b8398ef6df1506a0277cd4473a151da80442",
+      "bytes": 76884
+    }
+  },
+  "completed_target_modified": false,
+  "scope": "Cargo run logs use backticks, outside the initial test-executable parser. This fresh replay binds the retained executable and all five complete outputs without claiming a hash recorded at the earlier execution."
+}

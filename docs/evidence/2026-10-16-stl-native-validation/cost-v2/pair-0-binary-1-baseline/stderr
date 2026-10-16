@@ -1,0 +1,6 @@
+
+thread 'main' (4013767) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-stl-native-validation/import_cost_v1.rs:142:17:
+assertion `left == right` failed
+  left: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: F64(Some(1.0)) }
+ right: Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: F64(Some(0.0)) }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

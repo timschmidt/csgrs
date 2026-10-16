@@ -1,0 +1,11 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -321,7 +321,7 @@
+ 
+ [[example]]
+ name = "basic_shapes"
+-required-features = ["stl-io"]
++required-features = ["curve", "stl-io"]
+ 
+ [[example]]
+ name = "boolean_operations"

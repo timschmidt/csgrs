@@ -1,0 +1,2 @@
+{"cubes":1,"ascii":true,"phase":"first","iterations":1,"elapsed_ns":254173,"import_ns":80675,"allocation_calls":630,"allocated_bytes":83706,"peak_additional_live_bytes":25820,"retained_delta_bytes":4536,"completion":"certified"}
+{"cubes":1,"ascii":true,"phase":"warm","iterations":64,"elapsed_ns":4942522,"import_ns":1340110,"allocation_calls":37568,"allocated_bytes":5167744,"peak_additional_live_bytes":124748,"retained_delta_bytes":100864,"completion":"certified"}

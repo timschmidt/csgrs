@@ -1,0 +1,71 @@
+{
+  "runner_sha256": "fa9bcbb9fb0a8c5913f1b43a633fce7ad8f5803b5a35b92cda12c1277442b22e",
+  "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/storage-v1",
+  "mount": "TARGET FSTYPE OPTIONS\n/      ext4   rw,relatime,seclabel\n",
+  "reads": [
+    {
+      "order": "root-first",
+      "repeat": 0,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/storage-v1/root-first/root",
+      "expected_sha256": "ca023c0917f78efa759b3d2f4e6dd4531e0c02b1ec7d2c3c9ea90e03279290fe",
+      "sha256": "ca023c0917f78efa759b3d2f4e6dd4531e0c02b1ec7d2c3c9ea90e03279290fe"
+    },
+    {
+      "order": "root-first",
+      "repeat": 0,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/storage-v1/root-first/deps",
+      "expected_sha256": "b20217afe7e8e3ea972add5e07b249abee44ef03411ac3dd64091cb2ff5346fd",
+      "sha256": "b20217afe7e8e3ea972add5e07b249abee44ef03411ac3dd64091cb2ff5346fd"
+    },
+    {
+      "order": "root-first",
+      "repeat": 1,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/storage-v1/root-first/root",
+      "expected_sha256": "ca023c0917f78efa759b3d2f4e6dd4531e0c02b1ec7d2c3c9ea90e03279290fe",
+      "sha256": "ca023c0917f78efa759b3d2f4e6dd4531e0c02b1ec7d2c3c9ea90e03279290fe"
+    },
+    {
+      "order": "root-first",
+      "repeat": 1,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/storage-v1/root-first/deps",
+      "expected_sha256": "b20217afe7e8e3ea972add5e07b249abee44ef03411ac3dd64091cb2ff5346fd",
+      "sha256": "b20217afe7e8e3ea972add5e07b249abee44ef03411ac3dd64091cb2ff5346fd"
+    },
+    {
+      "order": "deps-first",
+      "repeat": 0,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/storage-v1/deps-first/deps",
+      "expected_sha256": "b20217afe7e8e3ea972add5e07b249abee44ef03411ac3dd64091cb2ff5346fd",
+      "sha256": "b20217afe7e8e3ea972add5e07b249abee44ef03411ac3dd64091cb2ff5346fd"
+    },
+    {
+      "order": "deps-first",
+      "repeat": 0,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/storage-v1/deps-first/root",
+      "expected_sha256": "ca023c0917f78efa759b3d2f4e6dd4531e0c02b1ec7d2c3c9ea90e03279290fe",
+      "sha256": "ca023c0917f78efa759b3d2f4e6dd4531e0c02b1ec7d2c3c9ea90e03279290fe"
+    },
+    {
+      "order": "deps-first",
+      "repeat": 1,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/storage-v1/deps-first/deps",
+      "expected_sha256": "b20217afe7e8e3ea972add5e07b249abee44ef03411ac3dd64091cb2ff5346fd",
+      "sha256": "b20217afe7e8e3ea972add5e07b249abee44ef03411ac3dd64091cb2ff5346fd"
+    },
+    {
+      "order": "deps-first",
+      "repeat": 1,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/storage-v1/deps-first/root",
+      "expected_sha256": "ca023c0917f78efa759b3d2f4e6dd4531e0c02b1ec7d2c3c9ea90e03279290fe",
+      "sha256": "ca023c0917f78efa759b3d2f4e6dd4531e0c02b1ec7d2c3c9ea90e03279290fe"
+    }
+  ],
+  "all_eight_identity_reads_passed": true,
+  "hard_link_replacement_and_truncation_passed": true,
+  "executable_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/storage-v1/copied-true",
+  "executable_sha256": "3f35679a96fea74f08742c8dff77edce0e52a48ea347107dfa3405fdf26ce510",
+  "executable_exit_code": 0,
+  "new_target_strategy": "Direct physical ext4 directory; no overlay or inherited build artifacts.",
+  "runtime_admitted": false,
+  "full_plan_complete": false
+}

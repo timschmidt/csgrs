@@ -1,0 +1,86 @@
+solid cost
+facet normal 0 0 0
+outer loop
+vertex 0e0 0e0 0e0
+vertex 1e0 1e0 0e0
+vertex 1e0 0e0 0e0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0e0 0e0 0e0
+vertex 0e0 1e0 0e0
+vertex 1e0 1e0 0e0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0e0 0e0 1e0
+vertex 1e0 0e0 1e0
+vertex 1e0 1e0 1e0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0e0 0e0 1e0
+vertex 1e0 1e0 1e0
+vertex 0e0 1e0 1e0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0e0 0e0 0e0
+vertex 0e0 0e0 1e0
+vertex 0e0 1e0 1e0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0e0 0e0 0e0
+vertex 0e0 1e0 1e0
+vertex 0e0 1e0 0e0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 1e0 0e0 0e0
+vertex 1e0 1e0 0e0
+vertex 1e0 1e0 1e0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 1e0 0e0 0e0
+vertex 1e0 1e0 1e0
+vertex 1e0 0e0 1e0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0e0 0e0 0e0
+vertex 1e0 0e0 0e0
+vertex 1e0 0e0 1e0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0e0 0e0 0e0
+vertex 1e0 0e0 1e0
+vertex 0e0 0e0 1e0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0e0 1e0 0e0
+vertex 0e0 1e0 1e0
+vertex 1e0 1e0 1e0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0e0 1e0 0e0
+vertex 1e0 1e0 1e0
+vertex 1e0 1e0 0e0
+endloop
+endfacet
+endsolid cost

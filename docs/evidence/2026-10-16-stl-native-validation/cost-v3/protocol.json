@@ -1,0 +1,61 @@
+{
+  "runner_sha256": "108b58f929e73ef01aca2d498529b5b2c65528fd3be8a1c07ba3fa461905b682",
+  "probe_sha256": "ffc2940fc4e718a431e88bff1aa547043fed2040ca80a41888df19f16d5cb9f1",
+  "contract_sha256": "30ff2d024a2450425494db042e0f819c66dd3f78233618cd6ae2b6e38f113762",
+  "bindings": {
+    "baseline": {
+      "csgrs": {
+        "path": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libcsgrs.rlib",
+        "sha256": "865b05f2d43a3109a8105ebecd61ef6bed2d23ada49e646de3253cf14e4c85c5",
+        "retained": "/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libcsgrs.rlib"
+      },
+      "hyperlattice": {
+        "path": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib",
+        "sha256": "e0aafbe798801a308c7019f4625ffc36274a1d52a540aa8c5204517da7d59dfa",
+        "retained": "/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhyperlattice-4db5ca8c9b2e6831.rlib"
+      },
+      "hypermesh": {
+        "path": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+        "sha256": "15fed87bf58a98a3081da87f714c95296452ed82960e24702cac32d3f449e548",
+        "retained": "/dev/shm/csgrs-obj-index-contracts/probe-libraries-v1/candidate/libhypermesh-8af5c3f4b7b72ce2.rlib"
+      }
+    },
+    "candidate": {
+      "csgrs": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps/libcsgrs.rlib",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libcsgrs.rlib",
+        "sha256": "7d812ed68cb315c5f4f48be2dc1e8ceb33f4bb49b07b62aff5f381a6219b328c"
+      },
+      "hypermesh": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps/libhypermesh-8af5c3f4b7b72ce2.rlib",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhypermesh-8af5c3f4b7b72ce2.rlib",
+        "sha256": "ca05db48e6887409ef480232060d36e15f4c739396680d88bdc8c62712408696"
+      },
+      "hyperlattice": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps/libhyperlattice-4db5ca8c9b2e6831.rlib",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/probe-libraries-v2/libhyperlattice-4db5ca8c9b2e6831.rlib",
+        "sha256": "7d61eb526be38f9926a94e35f151e6b0c46ddd442c516742c1afa81cf19179b0"
+      }
+    }
+  },
+  "dependencies": {
+    "baseline": "/dev/shm/csgrs-obj-index-contracts/candidate-target-v1/release/deps",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/stl-native-validation/candidate-target-v2/release/deps"
+  },
+  "library_hashes_sha256": "ae07cf7ee9a555a0f999f43d0c013a221ad94ca8fb5bd73dce36a94e70b51120",
+  "validation_result_sha256": "818994d27c2f01a472439dbbe6c953eb1231ac9021e0704893ac856461c5e2a5",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "hardware": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           48 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  16\nOn-line CPU(s) list:                     0-15\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 7 5800X3D 8-Core Processor\nCPU family:                              25\nModel:                                   33\nThread(s) per core:                      2\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      77%\nCPU max MHz:                             4552.9521\nCPU min MHz:                             575.9760\nBogoMIPS:                                6800.15\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nVirtualization:                          AMD-V\nL1d cache:                               256 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                4 MiB (8 instances)\nL3 cache:                                96 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-15\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; Safe RET\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Mitigation; Clear CPU buffers\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "uname": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "pairs": 5,
+  "elapsed_limit_seconds_per_process": 120,
+  "address_space_limit_bytes_per_process": 8589934592,
+  "completed_targets_modified": false,
+  "optimization_claimed": false
+}
