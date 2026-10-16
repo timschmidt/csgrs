@@ -53,7 +53,7 @@ fn complete_circular_cone_cap_trim_replays_native_parameters() {
             ] {
                 let region = planar_face_region(model, face).unwrap();
                 for carrier in pcurve.clipping_carriers().unwrap().unwrap() {
-                    let clipped = carrier.curve.trim_inside_region_with_parameters(&region);
+                    let clipped = carrier.curve().trim_inside_region_with_parameters(&region);
                     assert!(clipped.is_ok(), "{name} {face:?}: {clipped:?}");
                     count += 1;
                 }
@@ -121,7 +121,7 @@ fn complete_planar_circle_trace_union_handles_reflected_and_redundant_charts() {
         )
         .unwrap(),
     );
-    let result = coalesce_closed_circle_traces(&plane, traces).unwrap();
+    let result = coalesce_circle_traces(&plane, traces).unwrap();
     assert_eq!(result.len(), 1);
     assert_eq!(
         compare_reals(
@@ -135,13 +135,80 @@ fn complete_planar_circle_trace_union_handles_reflected_and_redundant_charts() {
 }
 
 #[test]
+fn mixed_planar_trace_union_joins_complete_semicircles_without_filling_gaps() {
+    let plane = Surface::plane(p(0, 0, 0), Vector3::x(), Vector3::y()).unwrap();
+    let retain = |curve| SurfaceIntersectionCurve::on_plane(curve, &plane).unwrap();
+    let quarter = (Real::pi() / Real::from(2)).unwrap();
+    let first = circle(Vector3::x(), Vector3::y(), Real::zero(), quarter.clone());
+    let second = circle(Vector3::x(), Vector3::y(), quarter.clone(), Real::pi());
+    let line = Curve3::line(p(-20, 0, 0), p(20, 0, 0)).unwrap();
+    let result = coalesce_circle_traces(
+        &plane,
+        vec![
+            retain(first.clone()),
+            retain(line.clone()),
+            retain(second),
+            retain(first.clone()),
+        ],
+    )
+    .unwrap();
+    assert_eq!(result.len(), 2);
+    let arc = result
+        .iter()
+        .find(|trace| trace.curve().kind() == crate::Curve3Kind::CircleArc)
+        .unwrap();
+    assert!(
+        exact_edge_curve_equal(
+            arc.curve(),
+            &circle(Vector3::x(), Vector3::y(), Real::zero(), Real::pi()),
+            false,
+        )
+        .unwrap()
+    );
+    let last = circle(
+        Vector3::x(),
+        Vector3::y(),
+        &quarter * Real::from(3),
+        Real::tau(),
+    );
+    let wrapped = coalesce_circle_traces(
+        &plane,
+        vec![retain(first.clone()), retain(line.clone()), retain(last)],
+    )
+    .unwrap();
+    assert_eq!(wrapped.len(), 2);
+    let arc = wrapped
+        .iter()
+        .find(|trace| trace.curve().kind() == crate::Curve3Kind::CircleArc)
+        .unwrap();
+    assert!(
+        exact_edge_curve_equal(
+            arc.curve(),
+            &circle(
+                Vector3::x(),
+                Vector3::y(),
+                &quarter * Real::from(3),
+                &quarter * Real::from(5)
+            ),
+            false,
+        )
+        .unwrap()
+    );
+    let delta = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
+    let gap = circle(Vector3::x(), Vector3::y(), &quarter + delta, Real::pi());
+    let result =
+        coalesce_circle_traces(&plane, vec![retain(first), retain(line), retain(gap)]).unwrap();
+    assert_eq!(result.len(), 3);
+}
+
+#[test]
 fn native_circle_trace_union_requires_complete_coverage_in_actual_charts() {
     let plane = Surface::plane(p(0, 0, 0), Vector3::x(), Vector3::y()).unwrap();
     let retain = |curve| SurfaceIntersectionCurve::on_plane(curve, &plane).unwrap();
     let upper = circle(Vector3::x(), Vector3::y(), Real::zero(), Real::pi());
     let lower = circle(Vector3::x(), -Vector3::y(), Real::zero(), Real::pi());
     let result =
-        coalesce_closed_circle_traces(&plane, vec![retain(upper.clone()), retain(lower)]).unwrap();
+        coalesce_circle_traces(&plane, vec![retain(upper.clone()), retain(lower)]).unwrap();
     assert_eq!(result.len(), 1);
     assert_eq!(
         compare_reals(
@@ -155,8 +222,7 @@ fn native_circle_trace_union_requires_complete_coverage_in_actual_charts() {
     let quarter = (Real::pi() / Real::from(2)).unwrap();
     let lower_quarter = circle(Vector3::x(), -Vector3::y(), Real::zero(), quarter);
     let result =
-        coalesce_closed_circle_traces(&plane, vec![retain(upper.clone()), retain(lower_quarter)])
-            .unwrap();
+        coalesce_circle_traces(&plane, vec![retain(upper.clone()), retain(lower_quarter)]).unwrap();
     assert_eq!(result.len(), 2);
     // Adjacent numerical domains describe the SAME upper semicircle here.
     // Discarding the retained angle offset would invent the missing lower half.
@@ -166,8 +232,7 @@ fn native_circle_trace_union_requires_complete_coverage_in_actual_charts() {
     duplicate.domain_start = Real::pi();
     duplicate.domain_end = Real::tau();
     let duplicate = Curve3::from_exact_data(Curve3ExactData::EllipseArc(duplicate)).unwrap();
-    let result =
-        coalesce_closed_circle_traces(&plane, vec![retain(upper), retain(duplicate)]).unwrap();
+    let result = coalesce_circle_traces(&plane, vec![retain(upper), retain(duplicate)]).unwrap();
     assert_eq!(result.len(), 2);
 }
 

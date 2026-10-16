@@ -1,5 +1,6 @@
 //! Validated construction: validation cone.
 
+use super::sector::certified_sector_coverage;
 use crate::topology::*;
 
 impl ArenaModelBuilder {
@@ -99,8 +100,8 @@ impl ArenaModelBuilder {
             face_coordinates.push((u_min, u_max, v_min, v_max));
         }
         let cap_groups = self.planar_face_groups(faces)?;
-        if !matches!(cap_groups.len(), 2 | 3)
-            || face_coordinates.len() < 2
+        if !matches!(cap_groups.len(), 2..=4)
+            || face_coordinates.is_empty()
             || u_values.len() < 2
             || v_values.len() < 2
         {
@@ -146,7 +147,34 @@ impl ArenaModelBuilder {
             }
         }
 
-        let region = if cap_groups.len() == 3 {
+        let region = if cap_groups.len() == 4 {
+            let cosine = semi_angle.clone().cos();
+            let height_min = &v_min * &cosine;
+            let height_max = &v_max * cosine;
+            let Some(bounds) = self.certified_sector_plane_bounds(
+                faces,
+                &cap_groups,
+                &apex,
+                &axis,
+                (&height_min, &height_max),
+                true,
+            )?
+            else {
+                return Ok(None);
+            };
+            let Some(sector) = certified_sector_coverage(
+                &u_values,
+                &vec![true; v_values.len() - 1],
+                &cells,
+                &x,
+                &y,
+                bounds.normals,
+            )?
+            else {
+                return Ok(None);
+            };
+            CertifiedConeFrustumRegion::Sector(sector)
+        } else if cap_groups.len() == 3 {
             let Some(interior_normal) = self.certified_cone_longitudinal_cap_groups(
                 faces,
                 &cap_groups,

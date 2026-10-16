@@ -1332,12 +1332,17 @@ now completes recuts, canonical-empty subtraction/recovery and complementary
 reconstruction on these three original fixtures and six exact similarities.
 Native circular overlap, actual source-preimage transport, equal cone/torus
 charts, full circle coverage and geometric shell-carrier equality own the proofs.
-Continue from its complete fifteen-case diagnostic frontier: quarter/band cuts
-and mixed angular/axial subdivisions still need complete partition/selection/
-shell proofs. Do not infer general closure or STEP support from these successful
-compositions. Preserve full-size regressions, parameter/provenance evidence and
-unchanged archive admission limits; check upstream before any necessary dependency
-fix while the surrounding library is developed independently.
+The [sector/band increment](evidence/2026-10-16-sector-cuts/README.md)
+continues the five remaining quarter/band cases through native annular partition,
+mixed circular traces, exact clipping correspondence and complete convex-sector
+coverage. Its five original and thirty transformed configurations independently
+check measures, point classification, manifold incidence, repeated composition
+and replay. Preserve the complete fifteen-case diagnostic separately from those
+independent semantic oracles. General nonlinear subdivision and curved-shell
+embedding still need their own proofs; STEP support does not follow from a
+successful Boolean. Preserve full-size regressions, parameter/provenance evidence
+and unchanged archive admission limits. Check upstream before any necessary
+dependency fix while the surrounding library is developed independently.
 
 ```rust,ignore
 pub fn read_step(bytes: &[u8], options: &StepReadOptions)
@@ -2069,11 +2074,24 @@ release boundary for each admitted path (WP17/WP18/WP23). A dependency's own
 candidate status, unresolved tests or missing cost admission remains visible
 when inherited; merging it does not prove whole-stack acceptance.
 
-Preserve unfinished closed-edge work and its original evidence, then migrate
-its Boolean callers to BodySet and rebase qualification and costs on the
-integrated source before retention. Its
-tests establish only their declared native domain, not general Boolean closure
-or curved STEP exchange. Existing archive cost regressions remain open.
+Preserve the admitted closed-edge, pcurve, analytic-transform, repeated-cut
+and [sector/band corpora](evidence/2026-10-16-sector-cuts/README.md), including
+their original failures, exact expectations and adverse cost observations.
+The original fifteen-case continuation diagnostic now has native results for
+every case; independently checked coverage is stated separately in the evidence.
+Extend the ordinary workflow matrix through non-seam and arbitrary-angle cuts,
+disconnected/nested combinations and reusable selected contacts, with explicit
+unsupported and resource outcomes. Cone/torus STEP exchange and a clean packaged
+consumer must accompany their own supported-domain proofs. Do not credit
+source-path WASM or an optional floating-point oracle as shipped release coverage.
+
+Surrounding crates remain owned by the concurrent upstream thread. The sector
+increment needed one reproduced scalar certificate, `acos(±1/2)`, after checking
+upstream. Its full dependency-check outcomes remain visible in the evidence;
+passing BREP checks do not close an inherited whole-scalar or release gate.
+Do not repair unrelated dependency findings in this branch merely to turn a
+broader dashboard green. Existing archive and spline timing exceptions remain
+open until their original contracts are requalified.
 
 ### Foundation dependency sequence
 

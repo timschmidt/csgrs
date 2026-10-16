@@ -87,3 +87,7 @@ harness = false
 [[bench]]
 name = "coplanar"
 harness = false
+
+[[bench]]
+name = "sectors"
+harness = false

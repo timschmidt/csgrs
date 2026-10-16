@@ -684,7 +684,10 @@ impl ArenaModelBuilder {
                 || !point_equal(arc.center(), first_arc.center())?
                 || !real_values_equal(arc.radius_squared_ref(), first_arc.radius_squared_ref())?
             {
-                return Ok(Some(false));
+                // Different supports or traversal directions are outside this
+                // one-disk proof, not evidence of self-intersection (an annular
+                // sector has both). The complete path validator owns them.
+                return Ok(None);
             }
             let sweep = match crate::error::classified(arc.directed_sweep_angle())
                 .map_err(GeometryError::from)?
@@ -711,15 +714,12 @@ impl ArenaModelBuilder {
         };
         let allowed_shared_endpoint =
             |first: usize, second: usize, point: &CurvePoint2| -> Result<bool, BuildError> {
-                if first + 1 == second {
-                    point_equal(point, &endpoints[first].1)
-                } else if second + 1 == first || (first == 0 && second + 1 == endpoints.len()) {
-                    point_equal(point, &endpoints[first].0)
-                } else if second == 0 && first + 1 == endpoints.len() {
-                    point_equal(point, &endpoints[first].1)
-                } else {
-                    Ok(false)
-                }
+                // A two-edge wire is adjacent at both ends. The two cyclic
+                // incidence tests must be independent for an arc and chord.
+                Ok(((first + 1) % endpoints.len() == second
+                    && point_equal(point, &endpoints[first].1)?)
+                    || ((second + 1) % endpoints.len() == first
+                        && point_equal(point, &endpoints[first].0)?))
             };
 
         for (arc_index, arc) in &arcs {
@@ -757,7 +757,9 @@ impl ArenaModelBuilder {
                     crate::STRICT_PREDICATES,
                 ))? == std::cmp::Ordering::Greater
                 {
-                    return Ok(Some(false));
+                    // An exterior chord can avoid the retained circular arc.
+                    // Only the full curve relation can decide that case.
+                    return Ok(None);
                 }
             }
         }

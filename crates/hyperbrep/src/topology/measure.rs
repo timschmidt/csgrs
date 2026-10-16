@@ -247,9 +247,14 @@ impl ArenaModel {
                     _ => Err(GeometryError::UnsupportedMeasurement.into()),
                 };
             }
-            let mut parameter_area = self.signed_model_wire_double_area(outer)?.abs();
+            if let SurfaceExactData::Plane { origin, u, v } = surface.exact_data()
+                && let Some(area) = self.analytic_planar_face_area(face, &origin, &u, &v)?
+            {
+                return Ok(area);
+            }
+            let mut parameter_area = area_magnitude(self.signed_model_wire_double_area(outer)?);
             for inner in face.inner() {
-                parameter_area -= self.signed_model_wire_double_area(*inner)?.abs();
+                parameter_area -= area_magnitude(self.signed_model_wire_double_area(*inner)?);
             }
             let surface_scale = match surface.exact_data() {
                 SurfaceExactData::Plane { u, v, .. } => u
@@ -367,6 +372,83 @@ impl ArenaModel {
             v_values.remove(0),
             v_values.remove(0),
         )))
+    }
+
+    fn analytic_planar_face_area(
+        &self,
+        face: &Face,
+        origin: &Point3,
+        u: &Vector3,
+        v: &Vector3,
+    ) -> Result<Option<Real>, GeometryError> {
+        let wires = || face.outer().into_iter().chain(face.inner().iter().copied());
+        let mut has_arc = false;
+        for wire in wires() {
+            for use_id in &self.wire(wire).expect("validated wire").edge_uses {
+                let edge_use = self.edge_use(*use_id).expect("validated use");
+                let edge = self.edge(edge_use.edge).expect("validated edge");
+                if edge.domain.start().try_real().is_none()
+                    || edge.domain.end().try_real().is_none()
+                {
+                    return Ok(None);
+                }
+                match self.curve(edge.curve).expect("validated curve").kind() {
+                    Curve3Kind::Line => {}
+                    Curve3Kind::CircleArc | Curve3Kind::EllipseArc => has_arc = true,
+                    _ => return Ok(None),
+                }
+            }
+        }
+        // Pure polygons keep the existing native exact product-sum path.
+        if !has_arc {
+            return Ok(None);
+        }
+        let normal = u.cross(v).normalize().map_err(GeometryError::Numeric)?;
+        let mut area = Real::zero();
+        for (index, wire) in wires().enumerate() {
+            let edge_uses = &self.wire(wire).expect("validated wire").edge_uses;
+            // A closed line integral is translation invariant. Centering it
+            // on a retained conic avoids introducing large translated endpoint
+            // terms that must cancel again after subdivision and replay.
+            let origin = edge_uses
+                .iter()
+                .find_map(|use_id| {
+                    let edge_use = self.edge_use(*use_id).expect("validated use");
+                    let edge = self.edge(edge_use.edge).expect("validated edge");
+                    self.curve(edge.curve)
+                        .expect("validated curve")
+                        .analytic_area_origin()
+                })
+                .unwrap_or(origin);
+            let mut doubled = Real::zero();
+            for use_id in edge_uses {
+                let edge_use = self.edge_use(*use_id).expect("validated use");
+                let edge = self.edge(edge_use.edge).expect("validated edge");
+                let contribution = self
+                    .curve(edge.curve)
+                    .expect("validated curve")
+                    .analytic_area_vector(
+                        edge.domain.represented_start()?,
+                        edge.domain.represented_end()?,
+                        origin,
+                    )?
+                    .ok_or(GeometryError::UnsupportedMeasurement)?
+                    .dot(&normal);
+                match edge_use.direction {
+                    Direction::Forward => doubled += contribution,
+                    Direction::Reversed => doubled -= contribution,
+                }
+            }
+            let magnitude = area_magnitude(doubled);
+            if index == 0 {
+                area += magnitude;
+            } else {
+                area -= magnitude;
+            }
+        }
+        Ok(Some(
+            (area / Real::from(2)).map_err(GeometryError::Numeric)?,
+        ))
     }
 
     pub(in crate::topology) fn signed_model_wire_double_area(
@@ -509,7 +591,8 @@ impl ArenaModel {
                         * &torus.major_radius
                         * &torus.minor_radius
                         * &torus.minor_radius),
-                    CertifiedTorusRegion::Axial { min, max } => {
+                    CertifiedTorusRegion::Axial { min, max }
+                    | CertifiedTorusRegion::SectorBand { min, max, .. } => {
                         let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
                             // Normalize before taking the square root. The
                             // dimensionless disk segment is invariant under a
@@ -531,7 +614,14 @@ impl ArenaModel {
                                 * &torus.minor_radius
                                 * (normalized * radial + angle))
                         };
-                        Ok(antiderivative(max)? - antiderivative(min)?)
+                        let volume = antiderivative(max)? - antiderivative(min)?;
+                        if let CertifiedTorusRegion::SectorBand { angular, .. } = &torus.region {
+                            (volume * &angular.sweep / Real::tau())
+                                .map_err(GeometryError::Numeric)
+                                .map_err(QueryError::from)
+                        } else {
+                            Ok(volume)
+                        }
                     }
                     CertifiedTorusRegion::LongitudinalHalf { .. } => Ok(Real::pi()
                         * Real::pi()
@@ -559,6 +649,10 @@ impl ArenaModel {
                     CertifiedConeFrustumRegion::LongitudinalHalf { .. } => (volume / Real::from(2))
                         .map_err(GeometryError::Numeric)
                         .map_err(QueryError::from),
+                    CertifiedConeFrustumRegion::Sector(angular) => (volume * &angular.sweep
+                        / Real::tau())
+                    .map_err(GeometryError::Numeric)
+                    .map_err(QueryError::from),
                 };
             }
             if let Some(revolution) = &self.data.certified_revolutions[id.index()] {

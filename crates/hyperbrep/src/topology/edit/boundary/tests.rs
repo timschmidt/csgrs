@@ -65,6 +65,103 @@ fn circle_path(radius: i32, clockwise: bool) -> CurvePath2 {
 }
 
 #[test]
+fn bridge_partition_rejects_traces_crossing_a_hole() {
+    let (model, face) = fixture();
+    let original = model.to_json().unwrap();
+    // Both traces attach to the outer wire and the hole. The upper trace
+    // reaches the far side of the hole by passing through its interior.
+    let curves = vec![
+        Curve3::line(p(8, 3, 0), p(2, 3, 0)).unwrap(),
+        Curve3::line(p(0, 2, 0), p(2, 2, 0)).unwrap(),
+    ];
+    for curves in [
+        curves.clone(),
+        curves.iter().rev().map(|c| c.reversed().unwrap()).collect(),
+    ] {
+        let result = model.split_face_by_curves(face, &curves);
+        assert!(
+            matches!(&result, Err(TopologyEditError::Validation(report))
+            if report.errors().iter().any(|error| matches!(error, BuildError::SelfIntersectingWire(_)))),
+            "crossing a source hole must fail with a topology diagnostic: {result:?}"
+        );
+        let retained = curves
+            .iter()
+            .map(|curve| {
+                SurfaceIntersectionCurve::on_plane(
+                    curve.clone(),
+                    model.surface(model.face(face).unwrap().surface()).unwrap(),
+                )
+                .unwrap()
+            })
+            .collect::<Vec<_>>();
+        let result =
+            model.split_face_by_surface_curves(face, &retained, SurfaceIntersectionOperand::First);
+        assert!(
+            matches!(&result, Err(TopologyEditError::Validation(report))
+            if report.errors().iter().any(|error| matches!(error, BuildError::SelfIntersectingWire(_)))),
+            "retained trace entry point must enforce the same contract: {result:?}"
+        );
+    }
+    assert_eq!(model.to_json().unwrap(), original);
+}
+
+#[test]
+fn planar_line_partition_consumes_complete_annular_bridge_cycles() {
+    let (model, face) = crate::construction::planar_face(
+        &circle_path(5, false),
+        &[circle_path(2, true)],
+        p(0, 0, 0),
+        Vector3::x(),
+        Vector3::y(),
+    )
+    .unwrap();
+    let original = model.to_json().unwrap();
+    let curves = vec![
+        Curve3::line(p(-5, 0, 0), p(-2, 0, 0)).unwrap(),
+        Curve3::line(p(2, 0, 0), p(5, 0, 0)).unwrap(),
+    ];
+    for curves in [
+        curves.clone(),
+        curves.iter().rev().map(|c| c.reversed().unwrap()).collect(),
+    ] {
+        let (partitioned, partition) = model.split_face_by_curves(face, &curves).unwrap();
+        assert_eq!(partition.faces.len(), 2);
+        for &face in &partition.faces {
+            assert_eq!(
+                compare_reals(
+                    &partitioned.face_area(face).unwrap(),
+                    &((Real::from(21) * Real::pi()) / Real::from(2)).unwrap(),
+                    crate::STRICT_PREDICATES,
+                )
+                .value(),
+                Some(std::cmp::Ordering::Equal)
+            );
+        }
+        assert_eq!(partition.traces.len(), 2);
+        assert!(
+            partition
+                .traces
+                .iter()
+                .all(|trace| !trace.splits.is_empty())
+        );
+        let encoded = partitioned.to_json().unwrap();
+        assert_eq!(
+            crate::persistence::ImportedModel::from_json(
+                &encoded,
+                &crate::ArchiveLimits::default()
+            )
+            .unwrap()
+            .validate()
+            .unwrap()
+            .to_json()
+            .unwrap(),
+            encoded
+        );
+    }
+    assert_eq!(model.to_json().unwrap(), original);
+}
+
+#[test]
 fn complete_circular_boundary_coverage_replays_native_charts_and_holes() {
     let (source, face) = crate::construction::planar_face(
         &circle_path(5, false),

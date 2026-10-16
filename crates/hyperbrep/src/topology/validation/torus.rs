@@ -1,5 +1,6 @@
 //! Validated construction: validation torus.
 
+use super::sector::certified_sector_coverage;
 use crate::topology::*;
 
 impl ArenaModelBuilder {
@@ -25,7 +26,7 @@ impl ArenaModelBuilder {
             return Ok(None);
         }
         let cap_groups = self.planar_face_groups(faces)?;
-        if cap_groups.len() > 2 {
+        if cap_groups.len() > 4 {
             return Ok(None);
         }
 
@@ -236,7 +237,80 @@ impl ArenaModelBuilder {
             }));
         }
 
-        if u_values.len() < 5
+        let mut has_longitudinal_cap = false;
+        for group in &cap_groups {
+            let surface = self.surface_ref(self.face_ref(faces[group[0]])?.surface)?;
+            let (u, v) = surface.plane_directions().expect("planar group");
+            if real_values_equal(&u.cross(v).dot(&axis), &Real::zero())? {
+                has_longitudinal_cap = true;
+                break;
+            }
+        }
+        if has_longitudinal_cap {
+            let lower = -minor_radius.clone();
+            let Some(bounds) = self.certified_sector_plane_bounds(
+                faces,
+                &cap_groups,
+                &center,
+                &axis,
+                (&lower, &minor_radius),
+                false,
+            )?
+            else {
+                return Ok(None);
+            };
+            let mut active_v = Vec::with_capacity(v_values.len() - 1);
+            for range in v_values.windows(2) {
+                // Quarter-period cuts make sin monotone in every cell.
+                let (low, high) = exact_real_min_max(&[
+                    &minor_radius * range[0].clone().sin(),
+                    &minor_radius * range[1].clone().sin(),
+                ])?;
+                for limit in [&bounds.min, &bounds.max] {
+                    if decided_model_order(compare_reals(&low, limit, crate::STRICT_PREDICATES))?
+                        == std::cmp::Ordering::Less
+                        && decided_model_order(compare_reals(
+                            &high,
+                            limit,
+                            crate::STRICT_PREDICATES,
+                        ))? == std::cmp::Ordering::Greater
+                    {
+                        return Ok(None);
+                    }
+                }
+                active_v.push(
+                    decided_model_order(compare_reals(
+                        &low,
+                        &bounds.min,
+                        crate::STRICT_PREDICATES,
+                    ))? != std::cmp::Ordering::Less
+                        && decided_model_order(compare_reals(
+                            &high,
+                            &bounds.max,
+                            crate::STRICT_PREDICATES,
+                        ))? != std::cmp::Ordering::Greater,
+                );
+            }
+            let Some(angular) =
+                certified_sector_coverage(&u_values, &active_v, &cells, &x, &y, bounds.normals)?
+            else {
+                return Ok(None);
+            };
+            return Ok(Some(CertifiedTorusShell {
+                center,
+                axis,
+                major_radius,
+                minor_radius,
+                region: CertifiedTorusRegion::SectorBand {
+                    angular,
+                    min: bounds.min,
+                    max: bounds.max,
+                },
+            }));
+        }
+
+        if cap_groups.len() > 2
+            || u_values.len() < 5
             || !real_values_equal(
                 &(u_values.last().expect("torus u grid") - &u_values[0]),
                 &Real::tau(),

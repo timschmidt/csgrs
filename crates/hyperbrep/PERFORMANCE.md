@@ -696,3 +696,26 @@ above follows complete requalification and retains every cohort. No total-work,
 retained-heap, cancellation or controlled-host claim is made.
 The five remaining quarter/band diagnostics and all broader work-package,
 resource/provenance and delivery gates remain open.
+
+## Analytic sector and band continuation (2026-10-16)
+
+The [source-bound record](docs/evidence/2026-10-16-sector-cuts/README.md) retains the complete preserved corpus, new successful workflows and affected scalar costs.
+
+The complete 78-process campaign compares all 149 preserved cases across thirteen corpora, with no receipt waiver. The largest case-median candidate/baseline ratio is 1.3891891098983489; 5 rows exceed 10%, and 51 rows change allocator observations. Every timing sample, allocator request, process resource and executable size is retained. Seven new successful workflows have separate absolute costs across three processes, including full materialization, exact checks, replay and the thirty-configuration matrix. The affected inverse-trigonometric corpus has 33 cases and 12 alternating baseline/candidate processes with raw Criterion samples. Scalar costs retain their original construction/approximation boundaries; they are not topology receipts. No failed operation is used as a speedup baseline. Shared-host observations do not close controlled-host or statistical performance admission. Prior spline, archive and cached-arc timing exceptions remain open.
+
+No public compatibility shim or archive schema change is added. A private clipping carrier is replaced by the existing materialized correspondence. Iso coefficients and area expressions consume existing exact scalar proofs; one necessary scalar certificate preserves acos(±1/2) as exact multiples of pi. The complete old benchmark receipts and all 22 STEP artifacts remain unchanged. Rejected split-parameter, reflection and boundary-contact compaction trials are removed and their failures retained.
+
+These observations qualify their named contracts only. All 28 work-package gates remain open; prior timing exceptions and the explicit dependency/release limitations in the manifest remain. Previously failed geometry is not a speedup baseline.
+
+
+The two largest timing ratios are `holed_affine_tensor_paired_bridge_partition`
+(1.389189) and `multi_hole_affine_tensor_bridge_cycle_partition` (1.312397).
+Complete wire validation is retained because the original crossing-hole control
+was incorrectly accepted. These observations do not isolate its contribution to
+either slowdown. Future work should reuse native validation evidence while
+preserving the complete original fixtures and rejection controls; reinstating
+an unjustified simplicity flag would invalidate the repair. The other rows above
+10% are `arc_structural_facts_replay` (1.127722),
+`arc_large_cached_native_promotion_256_arcs` (1.137500), and `step/units_2000`
+(1.135400). Scalar case medians remain within 10% in this shared-host campaign;
+that observation is not a controlled-host performance gate.

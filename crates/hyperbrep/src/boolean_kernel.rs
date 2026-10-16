@@ -879,7 +879,7 @@ fn partition_graph_faces(
             surface.kind(),
             crate::SurfaceKind::Plane | crate::SurfaceKind::Sphere
         ) {
-            curves = coalesce_closed_circle_traces(surface, curves)?;
+            curves = coalesce_circle_traces(surface, curves)?;
         }
         let (next, partition) = staged.split_face_by_surface_curves(face, &curves, operand)?;
         staged = next;
@@ -990,20 +990,27 @@ fn surface_region_contained_traces(
     )
 }
 
-fn coalesce_closed_circle_traces(
+fn coalesce_circle_traces(
     surface: &Surface,
     curves: Vec<SurfaceIntersectionCurve>,
 ) -> Result<Vec<SurfaceIntersectionCurve>, BooleanError> {
-    if curves.len() < 2
-        || curves
-            .iter()
-            .any(|curve| curve.curve().kind() != crate::Curve3Kind::CircleArc)
+    if curves
+        .iter()
+        .filter(|trace| trace.curve().kind() == crate::Curve3Kind::CircleArc)
+        .take(2)
+        .count()
+        < 2
     {
         return Ok(curves);
     }
 
     let mut normalized = Vec::with_capacity(curves.len());
+    let mut result = Vec::new();
     for curve in curves {
+        if curve.curve().kind() != crate::Curve3Kind::CircleArc {
+            result.push(curve);
+            continue;
+        }
         let Curve3ExactData::EllipseArc(data) = curve.curve().exact_data() else {
             unreachable!("circle kind carries ellipse-arc exact data");
         };
@@ -1027,7 +1034,6 @@ fn coalesce_closed_circle_traces(
             None => groups.push(vec![curve]),
         }
     }
-    let mut result = Vec::new();
     for group in groups {
         result.extend(coalesce_circle_group(surface, group)?);
     }
@@ -1097,19 +1103,54 @@ fn coalesce_circle_group(
     let normalized = ordered;
     let start = normalized[0].curve().domain().start().clone();
     let mut end = start.clone();
+    let mut ranges = Vec::<(Real, Real)>::new();
     for curve in &normalized {
-        if exact_order(curve.curve().domain().start(), &end)? == Ordering::Greater
-            || exact_order(curve.curve().domain().start(), curve.curve().domain().end())?
-                != Ordering::Less
-        {
+        let domain = curve.curve().domain();
+        if exact_order(domain.start(), domain.end())? != Ordering::Less {
             return Ok(normalized);
         }
-        end = exact_max(&end, curve.curve().domain().end())?;
+        if ranges.is_empty() || exact_order(domain.start(), &end)? == Ordering::Greater {
+            ranges.push((domain.start().clone(), domain.end().clone()));
+        } else {
+            ranges.last_mut().expect("a preceding interval").1 = exact_max(&end, domain.end())?;
+        }
+        end = exact_max(&end, domain.end())?;
     }
-    if exact_order(&(&end - &start), &Real::tau())? != Ordering::Equal {
+    let span_order = exact_order(&(&end - &start), &Real::tau())?;
+    if ranges.len() > 1 {
+        if surface.kind() != crate::SurfaceKind::Plane || span_order != Ordering::Equal {
+            return Ok(normalized);
+        }
+        // The first and last connected intervals meet at the periodic seam.
+        // Lift only the first interval by one complete period. Other gaps
+        // remain separate components of the exact trace union.
+        let first = ranges.remove(0);
+        ranges.last_mut().expect("at least two intervals").1 = first.1 + Real::tau();
+        return ranges
+            .into_iter()
+            .map(|(start, end)| {
+                let joined = Curve3::from_exact_data(Curve3ExactData::EllipseArc(Box::new(
+                    EllipseArcExactData {
+                        angle_at_start: &reference.angle_at_start + &start
+                            - &reference.domain_start,
+                        domain_start: start,
+                        domain_end: end,
+                        ..(*reference).clone()
+                    },
+                )))?;
+                Ok(SurfaceIntersectionCurve::on_plane(joined, surface)?)
+            })
+            .collect();
+    }
+    if span_order == Ordering::Greater
+        || (surface.kind() != crate::SurfaceKind::Plane && span_order != Ordering::Equal)
+    {
         return Ok(normalized);
     }
-    let closed =
+    // The sorted intervals prove the entire union, including its interior.
+    // A partial circle is useful when a preceding line trace creates the two
+    // boundary attachments. Endpoint agreement alone never joins a gap.
+    let joined =
         Curve3::from_exact_data(Curve3ExactData::EllipseArc(Box::new(EllipseArcExactData {
             angle_at_start: &reference.angle_at_start + &start - &reference.domain_start,
             domain_start: start,
@@ -1117,13 +1158,13 @@ fn coalesce_circle_group(
             ..*reference
         })))?;
     if surface.kind() == crate::SurfaceKind::Plane {
-        return Ok(vec![SurfaceIntersectionCurve::on_plane(closed, surface)?]);
+        return Ok(vec![SurfaceIntersectionCurve::on_plane(joined, surface)?]);
     }
     let Some((first_constant, second_constant)) = iso_v_constants(&normalized)? else {
         return Ok(normalized);
     };
     Ok(vec![SurfaceIntersectionCurve::from_iso_v_pcurves(
-        closed,
+        joined,
         first_constant,
         second_constant,
     )])
@@ -4077,7 +4118,7 @@ fn retained_curve_face_intervals(
     let region = planar_face_region(model, face)?;
     let mut intervals = Vec::new();
     for carrier in carriers {
-        let trimmed = match carrier.curve.trim_inside_region_with_parameters(&region) {
+        let trimmed = match carrier.curve().trim_inside_region_with_parameters(&region) {
             Ok(fragments) => fragments,
             Err(ExactCurveError::Blocked(blocker)) => {
                 return Ok(Classification::Uncertain(blocker.reason()));
@@ -4092,8 +4133,8 @@ fn retained_curve_face_intervals(
             // interval, including positive-length boundary overlaps. A trace
             // already on this face's boundary can still partition the other
             // operand; discarding it here would remove the closing cap.
-            let mut start = &carrier.spatial_scale * pcurve_start + &carrier.spatial_offset;
-            let mut end = &carrier.spatial_scale * pcurve_end + &carrier.spatial_offset;
+            let mut start = carrier.spatial_parameter_at(&pcurve_start)?;
+            let mut end = carrier.spatial_parameter_at(&pcurve_end)?;
             let Some(mut start_contacts) = model_boundary_contacts(
                 model,
                 face,

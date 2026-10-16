@@ -67,6 +67,23 @@ fn native_full_circle_union(
     surface: &Surface,
     group: &[SurfaceIntersectionCurve],
 ) -> Result<Option<SurfaceIntersectionCurve>, GeometryError> {
+    let mut start = group[0].curve().domain().start().clone();
+    let mut end = group[0].curve().domain().end().clone();
+    let mut common_chart = true;
+    for trace in &group[1..] {
+        if !circle_supports_equal(group[0].curve(), trace.curve())? {
+            common_chart = false;
+            break;
+        }
+        start = exact_min(&start, trace.curve().domain().start())?;
+        end = exact_max(&end, trace.curve().domain().end())?;
+    }
+    // A common angular chart spanning less than a period cannot cover the
+    // whole circle. This exact exclusion also preserves arbitrarily small
+    // gaps without asking a more expensive native intersection to rediscover it.
+    if common_chart && exact_order(&(end - start), &Real::tau())? == Ordering::Less {
+        return Ok(None);
+    }
     let Curve3ExactData::EllipseArc(reference) = group[0].curve().exact_data() else {
         return Ok(None);
     };

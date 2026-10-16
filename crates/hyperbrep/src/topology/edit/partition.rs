@@ -332,7 +332,9 @@ impl ArenaModel {
     /// order. Every later trace is subdivided at exact crossings with earlier
     /// traces, then every arranged segment must attach to exactly one current
     /// descendant face. Duplicates, positive-length overlaps, and ambiguous
-    /// descendant attachment are typed errors.
+    /// descendant attachment are typed errors. Traces incident on a hole use
+    /// the retained-surface arrangement, including complete bridge cycles
+    /// between boundary wires.
     pub fn split_face_by_curves(
         &self,
         face_id: FaceId,
@@ -402,6 +404,45 @@ impl ArenaModel {
                     });
                 }
                 traces.insert(insertion, trace);
+            }
+
+            if traces.len() >= 2 && !face.inner().is_empty() {
+                let mut touches_inner = false;
+                'traces: for trace in &traces {
+                    for (endpoint, point) in [
+                        (Endpoint::Start, &trace.lower),
+                        (Endpoint::End, &trace.upper),
+                    ] {
+                        match self.locate_face_boundary_split_endpoint(face_id, endpoint, point) {
+                            Ok((wire, _)) if face.inner().contains(&wire) => {
+                                touches_inner = true;
+                                break 'traces;
+                            }
+                            Ok(_)
+                            | Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary {
+                                ..
+                            }) => {}
+                            Err(error) => return Err(error),
+                        }
+                    }
+                }
+                if touches_inner {
+                    let retained = traces
+                        .iter()
+                        .map(|trace| {
+                            SurfaceIntersectionCurve::on_plane(trace.curve.clone(), surface)
+                        })
+                        .collect::<Result<Vec<_>, _>>()?;
+                    let (model, mut partition) = self.split_face_by_surface_curves(
+                        face_id,
+                        &retained,
+                        SurfaceIntersectionOperand::First,
+                    )?;
+                    for trace in &mut partition.traces {
+                        trace.source_index = traces[trace.source_index].source_index;
+                    }
+                    return Ok((model, partition));
+                }
             }
 
             let mut staged = self.clone();
@@ -856,8 +897,12 @@ impl ArenaModel {
         let (second_path, second_face_bridge_uses) = build_path(!first_from_start)?;
 
         data.wires[outer.index()].edge_uses = first_path;
-        data.wires[outer.index()].simplicity_certificate = true;
+        // Endpoint attachment and a cycle in the wire-incidence graph do not
+        // prove geometric simplicity. A bridge can cross the source boundary
+        // or pass through a hole. Revalidate both changed paths and nesting.
+        data.wires[outer.index()].simplicity_certificate = false;
         data.wires[target_inner.index()].edge_uses = second_path;
+        data.wires[target_inner.index()].simplicity_certificate = false;
         data.faces[face_id.index()] = Face {
             surface: face.surface,
             orientation: face.orientation,
@@ -949,9 +994,13 @@ impl ArenaModel {
         let second_wire = wire_remap[target_inner.index()]
             .expect("the selected second wire survives bridge-cycle compaction");
         reset_model_caches(data);
-        let staged = staged
+        let mut staged = staged
             .revalidated()
             .map_err(TopologyEditError::Validation)?;
+        // The full validation above now justifies reuse by later operations.
+        let data = Arc::make_mut(&mut staged.data);
+        data.wires[first_wire.index()].simplicity_certificate = true;
+        data.wires[second_wire.index()].simplicity_certificate = true;
 
         let split = ArenaBoundaryBridgeFaceSplit {
             edges: bridge_edges,

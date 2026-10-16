@@ -1223,6 +1223,62 @@
       "cost_evidence": "The complete 72-process campaign compares all 138 preserved cases across twelve corpora with no receipt waiver. Largest case-median candidate/baseline ratio 1.117570234341788; 3 rows exceed 10%, and 10 rows change allocator observations. Three separate processes measure eleven new complete workloads, with exact checks and full materialization/replay inside timing. The first full campaign, its six over-budget rows and all original new-domain costs remain. A complete focused 64-case native probe preserves every receipt and reduces the largest ratio from 1.295617 to 1.119734 after strict native line-side exclusion, with four spline rows still above 10%. Full final qualification and both complete cost campaigns are repeated. All trials, allocations, process resources and executable sizes remain. Previously failed work is not a speedup baseline. The old native NURBS Mobius inverse, archive and cached-arc timing exceptions remain open; current observations neither isolate their cause nor close controlled-host/statistical admission. No internal total-resource bound is claimed.",
       "migration": "Intentional greenfield API break: FacePairTrim::CoincidentPlanar with spatial-only traces becomes CoincidentFaces with retained SurfaceIntersectionCurve traces. BoundaryTraceOverlapRef gains native_overlap. No compatibility alias or archive schema migration is introduced. The complete preserved receipt comparison has no byte/hash waiver.",
       "limits": "All 28 work-package gates remain open. This is a bounded-domain completeness extension, not general Boolean closure. The original fifteen-case diagnostic retains five typed blockers in quarter/band cuts. Different cone/torus charts, general nonlinear coincidence and arbitrary curved-shell embedding still require their own proofs. Contact mapping retains native preimages, but the existing surface-contact boundary still requires represented Real values. Unsupported selected-root views remain typed blockers; no general selected-surface-image admission is claimed. The graph and boundary no-op views retain local source/contact/overlap evidence; complete operation receipts and downstream certainty/provenance delivery remain open. Existing bounded periodic chart lifting and archive admission limits remain unchanged. There is no new cache or claim of general scalar/geometry total-work, retained-byte, cancellation or expression-growth bounds. External timeouts contain checks. Torus/cone STEP export remains typed UnsupportedSurface with body/entity identity and same-context recovery tested. All 22 prior generated STEP artifacts remain byte-identical; independent OCCT is a floating-point topology/mass oracle, not an exactness proof. WASM executes source-path dependencies, not a shipped JS/package consumer. Runtime fuzz/ASan, lexicase, instrumented coverage, formal production proofs, package/MSRV and actual C/Python/JS release gates remain open. Shared-host observations retain every trial, allocator request, process resource and executable size. No speedup against failures, total-memory bound, statistical timing admission or controlled-host claim. Prior timing exceptions remain open; current over-budget rows are listed without omission. No full-workspace/pre-push validation campaign and no push. Surrounding production code is unchanged; only the BREP-owned shared-ledger entry is updated."
+    },
+    {
+      "id": "native-analytic-sector-band-continuation",
+      "work_packages": [
+        "WP03",
+        "WP06",
+        "WP07",
+        "WP08",
+        "WP17",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Complete native annular bridge partitions, connected circular trace unions, actual clipping correspondences and complete convex cone/torus sector/band certificates. Preserve usable analytic area integrals and compact exact iso coefficients before interpolation. One seven-line scalar acos-half certificate repairs a reproduced BREP blocker; no unrelated dependency repair.",
+      "source": "../src/topology/validation/sector.rs",
+      "source_files": [
+        "../src/geometry.rs",
+        "../src/boolean_kernel.rs",
+        "../src/boolean_kernel/circle_traces.rs",
+        "../src/topology/edit/partition.rs",
+        "../src/topology/measure.rs",
+        "../src/topology/mod.rs",
+        "../src/topology/query.rs",
+        "../src/topology/transform.rs",
+        "../src/topology/validation/sector.rs",
+        "../src/topology/validation/cone.rs",
+        "../src/topology/validation/torus.rs",
+        "../src/topology/validation/wire.rs",
+        "../tests/support/sectors.rs",
+        "../benches/sectors.rs",
+        "../../hyperbrep-io/tests/support/sector_export.rs",
+        "../../hyperreal/src/computable/node/roots_inverse_hyperbolic.rs",
+        "../../hyperreal/src/computable/node/tests.rs"
+      ],
+      "evidence": "evidence/2026-10-16-sector-cuts/manifest.json",
+      "validation": "BREP/IO all-feature debug and release each pass 491 tests; minimal release passes 483, with no ignored cases. Both strict all-target Clippy configurations, scalar Clippy, warning-denied docs, six examples, eleven independent OCCT topology/floating-point mass checks, fuzz-target compilation and 66 zero-import WASM groups pass. Predicate tests pass 365; curve tests pass 2,475 with 33 existing ignored cases. Complete scalar runs use --no-fail-fast: default passes 958 with one failure, all features passes 1,072 with that same failure. The zero-factor assertion is independently reproduced on untouched baseline source in both configurations. It remains a failed whole-scalar gate and is not repaired here. All tested production sources, tests, manifests, READMEs and probes match final source; three post-check controller-only differences are listed rather than hidden. Five original and thirty exact similarity configurations exercise 175 nonempty outputs and 35 canonical empty results, with independently derived exact measures and point tables including 1e-12 offsets, opposite paired uses, deterministic replay, shared-edge subdivision, reflected rescaling, both applicable operand orders and complementary reconstruction. Annular partitions preserve source trace/model identity; cross-hole bridges, invalid angular cells and near gaps have negative controls. Ten new torus/cone STEP attempts preserve typed family/body/entity blockers followed by supported same-context recovery. All fifteen original continuation diagnostics now return native results; their counts are distinct from independent set proofs. All 22 preceding STEP artifacts remain byte-identical.",
+      "cost_evidence": "The complete 78-process campaign compares all 149 preserved cases across thirteen corpora, with no receipt waiver. The largest case-median candidate/baseline ratio is 1.3891891098983489; 5 rows exceed 10%, and 51 rows change allocator observations. Every timing sample, allocator request, process resource and executable size is retained. Seven new successful workflows have separate absolute costs across three processes, including full materialization, exact checks, replay and the thirty-configuration matrix. The affected inverse-trigonometric corpus has 33 cases and 12 alternating baseline/candidate processes with raw Criterion samples. Scalar costs retain their original construction/approximation boundaries; they are not topology receipts. No failed operation is used as a speedup baseline. Shared-host observations do not close controlled-host or statistical performance admission. Prior spline, archive and cached-arc timing exceptions remain open.",
+      "migration": "No public compatibility shim or archive schema change is added. A private clipping carrier is replaced by the existing materialized correspondence. Iso coefficients and area expressions consume existing exact scalar proofs; one necessary scalar certificate preserves acos(\u00b11/2) as exact multiples of pi. The complete old benchmark receipts and all 22 STEP artifacts remain unchanged. Rejected split-parameter, reflection and boundary-contact compaction trials are removed and their failures retained.",
+      "limits": "All 28 work-package gates remain open. This finite convex-sector/native-grid domain does not establish general Boolean closure, arbitrary-angle completion, nonlinear coincidence or general curved-shell embedding. Complete operation receipts and downstream provenance/certainty delivery remain open. Torus/cone STEP export remains typed UnsupportedSurface. The scalar zero-factor gate remains failed; pre-push verification is not waived. Existing periodic and archive limits are unchanged. No total-work, retained-heap, expression-growth or cancellation bound is claimed; external watchdogs contain checks. WASM uses workspace paths, not a shipped JS/package consumer. Runtime fuzz/ASan, lexicase, instrumented coverage, machine-checked proofs, package/MSRV and actual C/Python/JS release gates remain open. OCCT is an optional floating-point interoperability oracle, never exact authority or a production dependency. No full-workspace/pre-push matrix or push. Surrounding source changes are limited to the seven-line acos-half certificate and its focused regression; only BREP is updated in the shared property ledger."
     }
   ],
   "work_packages": [
@@ -1396,9 +1452,9 @@
     }
   ],
   "next_actions": [
-    "Preserve and broaden the BodySet empty/multi-body/overlapping-selection composition corpus. Add shared arrangements across expression roots, durable boundary provenance and certainty receipts, complete work/memory/cancellation bounds, and mixed analytic/spline closure without losing the newly certified finite composition path (WP01/WP08, P6/P17-P20).",
+    "Preserve all fifteen original continuation diagnostics and the independently checked sector corpus: five original plus thirty exact similarity configurations, 175 nonempty outputs and 35 empty results, independent exact measures/classification, opposite incidence, subdivision/reflection/replay and complementary reconstruction. Extend non-seam/arbitrary-angle, disconnected/nested and selected-contact workflows through the native owners, with full fixtures and explicit typed outcomes. The finite sector proof does not establish general curved-shell embedding. Only change a dependency for a reproduced BREP blocker after checking concurrent upstream corrections. See evidence/2026-10-16-sector-cuts/manifest.json (WP03/WP06/WP07/WP08, P17-P20/P35/P39).",
     "Preserve and extend named BREP strict workflows with independent set, topology and source-fidelity checks. Observe upstream drilled-body and dependency corrections during integration; unrelated repairs remain upstream work. Record all seven outcome categories and the concrete failing BREP stage (WP00/WP21, P39).",
-    "Extend the completed recut/clear/reconstruct workflows using evidence/2026-10-16-curved-coplanar/continuation-frontier.json. Preserve all fifteen original diagnostic inputs, the nine exact targeted configurations and 54 transformed variants, full-size geometry, near samples, split/reflection/replay, source parameters and public overlap provenance. Five quarter/band attempts retain typed blockers in mixed angular/axial shell validation or native partition/predicate work. Repair BREP owners without identity shortcuts, weaker validation or accepting a new Unknown; only change a dependency for a reproduced BREP blocker after checking concurrent upstream corrections. Verify repeated set identities independently (WP03/WP06/WP07/WP08, P17-P20/P35/P39).",
+    "Preserve the completed half-case recut/clear/reconstruct workflows in evidence/2026-10-16-curved-coplanar/manifest.json alongside the sector extension: nine original exact configurations and 54 transformed variants, full-size geometry, near samples, split/reflection/replay, source parameters and public overlap provenance. The five formerly blocked quarter/band diagnostics now complete in evidence/2026-10-16-sector-cuts/continuation-frontier.json. Further composition extensions must retain these successes and independently verify represented-set identities (WP03/WP06/WP07/WP08, P17-P20/P35/P39).",
     "Complete the documented-package pipeline in clean external consumers and actual affected bindings; verify features, dependency versions, MSRV, certainty and format-specific round trips. Local paths, source builds and WASM probes do not close delivery gates (WP17/WP18/WP23, P37).",
     "Continue WP03 beyond native single-vertex circle/ellipse edges: add regular closed-spline and singular-chart certificates, complete periodic chart gluing, and general ellipse/plane pcurve-image proofs. Keep the new closed-edge/BodySet/empty composition corpus. The verified stash remains a historical backup; its selectively recovered candidate is requalified on integrated dependencies.",
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
@@ -1407,7 +1463,9 @@
     "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission. The seam-cut candidate is the new exact-feature baseline; native_nurbs_mobius_inverse_pcurve_partition retains a 1.150828 timing ratio and needs isolated cost investigation with the complete fixture, alongside the earlier archive/cached-arc gates. Four other first-campaign spline regressions are within budget after the representation precheck. The curved-composition increment is now the next exact-feature baseline. Its complete 138-case final campaign and eleven successful new workloads are retained in evidence/2026-10-16-curved-coplanar/manifest.json. Strict native line-side exclusion improves the added source-inverse scheduling cost; isolate any remaining over-budget rows with complete inputs, all receipts, actual source identities and no weaker proof or policy. Preserve prior adverse campaigns and their unresolved causes.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue WP14a from exact selected faceted/analytic import/export and the now-completed native similarity/unit workflow. Preserve LINE/CIRCLE topology on PLANE/CYLINDRICAL_SURFACE, independent graph/interoperability checks, selected scale/edit/inverse replay and Boolean/empty continuation. Add other families and exact periodic seams without inventing tau from decimal data. WP14b retains spline/trim/void/mapped/assembly exchange and explicit healing/approximation. General nonlinear axial pcurves need native exact affine carriers; nonsimilar analytic transforms need deliberate family promotion. Source maps do not establish whole-document/history persistence.",
-    "Continue every BREP work package and its cross-stack integration requirements in the plan. Surrounding-crate implementation is concurrent upstream work unless a reproduced dependency failure would make BREP worse; foundational progress does not close broader project gates."
+    "Continue every BREP work package and its cross-stack integration requirements in the plan. Surrounding-crate implementation is concurrent upstream work unless a reproduced dependency failure would make BREP worse; foundational progress does not close broader project gates.",
+    "Treat the sector increment as the next measured exact-feature baseline; preserve all raw prior/current costs, receipt comparisons, necessary migrations and inherited dependency-check failures. Close controlled-host timing, full dependency and shipped-consumer gates with their original fixtures and contracts, not a successful subset. Cone/torus STEP writers remain the explicit exchange frontier.",
+    "Investigate the sector increment\u2019s paired/multi-hole affine-tensor bridge costs (1.389189 and 1.312397 observed ratios). Preserve full wire simplicity/nesting validation and the crossing-hole rejection control; reuse native evidence rather than restoring an unjustified simplicity certificate. Keep the three arc/STEP timing rows and the inherited scalar zero-factor failure visible. Coordinate unrelated scalar repair through upstream."
   ],
   "acceptance_contract": {
     "upstream_revision": "72cd216cc758d364c9e40b8969fef2df155bec8b",

@@ -5,6 +5,40 @@ mod tests {
     use num::bigint::BigUint;
     use std::mem::size_of;
 
+    #[test]
+    fn acos_rational_halves_preserve_exact_pi_composition() {
+        for (numerator, third_multiple) in [(1, 1), (-1, 2)] {
+            let argument = Rational::fraction(numerator, 2).unwrap();
+            let expected = pi_times(Rational::fraction(third_multiple, 3).unwrap());
+            for warm in [false, true] {
+                let source = Computable::rational(argument.clone());
+                if warm {
+                    let _ = source.approx(-64);
+                }
+                let actual = source.acos();
+                for precision in [-16, -128, -16] {
+                    if warm {
+                        let _ = actual.approx(precision);
+                    }
+                    assert_eq!(
+                        actual.clone().add(expected.clone().negate()).exact_rational(),
+                        Some(Rational::zero()),
+                    );
+                }
+                // BREP's plane/circle contact parameter must compose with the
+                // retained angular endpoint without refinement.
+                let contact = Computable::pi().shift_right(1).add(actual.negate());
+                let endpoint = pi_times(
+                    Rational::fraction(if numerator > 0 { 1 } else { -1 }, 6).unwrap(),
+                );
+                assert_eq!(
+                    contact.add(endpoint.negate()).exact_rational(),
+                    Some(Rational::zero()),
+                );
+            }
+        }
+    }
+
     fn check_inverse_series_wide_coefficients(asin: bool, generic: bool) {
         use rug::{Float, Integer, Rational as Q, float::Round};
         crate::mpfr_test::cleanup_on_thread_exit();

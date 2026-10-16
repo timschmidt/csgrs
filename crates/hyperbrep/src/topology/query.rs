@@ -2,6 +2,28 @@
 
 use super::*;
 
+impl CertifiedAngularSector {
+    fn classify_offset(&self, offset: &Vector3) -> Result<SolidPointLocation, QueryError> {
+        let mut boundary = false;
+        for normal in &self.interior_normals {
+            match decided_model_order(compare_reals(
+                &offset.dot(normal),
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? {
+                std::cmp::Ordering::Less => return Ok(SolidPointLocation::Outside),
+                std::cmp::Ordering::Equal => boundary = true,
+                std::cmp::Ordering::Greater => {}
+            }
+        }
+        Ok(if boundary {
+            SolidPointLocation::Boundary
+        } else {
+            SolidPointLocation::Inside
+        })
+    }
+}
+
 impl ArenaModel {
     /// Classifies a point against a validated planar line-bounded solid.
     ///
@@ -623,7 +645,8 @@ impl ArenaModel {
         let axial = offset.dot(&torus.axis);
         let region_boundary = match &torus.region {
             CertifiedTorusRegion::Whole => false,
-            CertifiedTorusRegion::Axial { min, max } => {
+            CertifiedTorusRegion::Axial { min, max }
+            | CertifiedTorusRegion::SectorBand { min, max, .. } => {
                 let min_order =
                     decided_model_order(compare_reals(&axial, min, crate::STRICT_PREDICATES))?;
                 let max_order =
@@ -632,7 +655,19 @@ impl ArenaModel {
                 {
                     return Ok(SolidPointLocation::Outside);
                 }
-                min_order == std::cmp::Ordering::Equal || max_order == std::cmp::Ordering::Equal
+                let angular_boundary =
+                    if let CertifiedTorusRegion::SectorBand { angular, .. } = &torus.region {
+                        match angular.classify_offset(&offset)? {
+                            SolidPointLocation::Outside => return Ok(SolidPointLocation::Outside),
+                            SolidPointLocation::Inside => false,
+                            SolidPointLocation::Boundary => true,
+                        }
+                    } else {
+                        false
+                    };
+                angular_boundary
+                    || min_order == std::cmp::Ordering::Equal
+                    || max_order == std::cmp::Ordering::Equal
             }
             CertifiedTorusRegion::LongitudinalHalf { interior_normal } => {
                 match decided_model_order(compare_reals(
@@ -927,6 +962,13 @@ impl ArenaModel {
         }
         let region_boundary = match &frustum.region {
             CertifiedConeFrustumRegion::Whole => false,
+            CertifiedConeFrustumRegion::Sector(angular) => {
+                match angular.classify_offset(&offset)? {
+                    SolidPointLocation::Outside => return Ok(SolidPointLocation::Outside),
+                    SolidPointLocation::Inside => false,
+                    SolidPointLocation::Boundary => true,
+                }
+            }
             CertifiedConeFrustumRegion::LongitudinalHalf { interior_normal } => {
                 match decided_model_order(compare_reals(
                     &offset.dot(interior_normal),

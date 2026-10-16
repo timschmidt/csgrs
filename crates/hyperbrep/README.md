@@ -536,6 +536,15 @@ no-ops expose native overlap evidence through
 `BoundaryTraceOverlapRef::native_overlap()`. See the
 [repeated-composition contract](docs/ARCHITECTURE.md#repeated-curved-composition)
 and [evidence](docs/evidence/2026-10-16-curved-coplanar/README.md).
+Quarter and band continuations now have a focused acceptance corpus: torus
+axial/longitudinal quarters, cone-frustum longitudinal quarters, and axial bands
+of longitudinal torus/cone halves. Five original and 30 exact similarity
+configurations check intersection in both orders, subtraction, complementary
+reconstruction, canonical empty results, independent measures and classification,
+subdivision and untrusted replay. Public annular face partitions retain the
+source trace indices and model revisions. The
+[sector contract](docs/ARCHITECTURE.md#analytic-sector-and-band-continuation)
+and [evidence](docs/evidence/2026-10-16-sector-cuts/README.md) state the coverage.
 General Boolean closure and torus/cone STEP encoding remain open.
 
 Enable the optional derived-output adapter with `--features tessellation`.

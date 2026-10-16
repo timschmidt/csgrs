@@ -771,5 +771,31 @@ for these three fixtures, in both applicable orders and six exact similarities.
 Native circular overlap receipts retain actual public parameters and source
 revisions. Coincident cone/torus charts require exact full parameterization
 equality, including when shell faces reference different equal carrier records.
-General quarter/band cuts, nonlinear periodic gluing, torus/cone STEP exchange,
-full provenance/resource admission and work-package gates remain open.
+Selected quarter/band workflows are extended below. Nonlinear periodic gluing,
+torus/cone STEP exchange, full provenance/resource admission and work-package
+gates remain open.
+
+## Convex analytic sectors and axial bands
+
+The [sector increment](evidence/2026-10-16-sector-cuts/README.md) completes five
+original quarter/band cases and thirty exact similarity configurations. The
+corpus checks 175 nonempty Boolean continuation outputs and 35 canonical empty
+results, including both applicable operand orders, complementary reconstruction,
+exact independent volume/area and point tables, opposite paired edge uses,
+untrusted replay, subdivision and reflected rescaling. It retains the original
+40-unit cutters and includes 1e-12 classification offsets.
+
+Native annular line partitions preserve input trace identities and model
+revisions; a bridge that crosses a hole is rejected. Mixed straight/circular
+traces coalesce only with complete connected-interval evidence. Clipping retains
+the native spatial/UV correspondence, including nonlinear angular charts and
+distinct endpoint identities at a periodic seam.
+
+The admitted cone/torus shell proof requires a complete multiplicity-one native
+UV grid inside at most two axis-containing planes and two axial bounds. It
+proves the entire angular and axial occupancy, with planar completion justified
+by that restricted arrangement. See [the architecture](ARCHITECTURE.md#analytic-sector-and-band-continuation).
+This finite corpus does not establish arbitrary-angle or general Boolean
+closure. STEP attempts for these cone/torus outputs still return typed
+`UnsupportedSurface` with body/entity identity; same-context supported-cylinder
+recovery is tested. Broader release and resource gates remain open.

@@ -301,6 +301,14 @@ struct CertifiedConeFrustumShell {
 enum CertifiedConeFrustumRegion {
     Whole,
     LongitudinalHalf { interior_normal: Vector3 },
+    Sector(CertifiedAngularSector),
+}
+
+/// A convex angular sector, certified from complete periodic surface coverage.
+#[derive(Clone, Debug)]
+struct CertifiedAngularSector {
+    interior_normals: Vec<Vector3>,
+    sweep: Real,
 }
 
 #[derive(Clone, Debug)]
@@ -315,8 +323,18 @@ struct CertifiedTorusShell {
 #[derive(Clone, Debug)]
 enum CertifiedTorusRegion {
     Whole,
-    Axial { min: Real, max: Real },
-    LongitudinalHalf { interior_normal: Vector3 },
+    Axial {
+        min: Real,
+        max: Real,
+    },
+    LongitudinalHalf {
+        interior_normal: Vector3,
+    },
+    SectorBand {
+        angular: CertifiedAngularSector,
+        min: Real,
+        max: Real,
+    },
 }
 
 #[derive(Clone, Debug)]

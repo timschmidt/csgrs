@@ -393,6 +393,20 @@ impl ArenaModel {
                                                 .unit_direction(interior_normal)?,
                                         }
                                     }
+                                    CertifiedTorusRegion::SectorBand { angular, min, max } => {
+                                        CertifiedTorusRegion::SectorBand {
+                                            angular: CertifiedAngularSector {
+                                                interior_normals: angular
+                                                    .interior_normals
+                                                    .iter()
+                                                    .map(|normal| metric.unit_direction(normal))
+                                                    .collect::<Result<Vec<_>, GeometryError>>()?,
+                                                sweep: angular.sweep.clone(),
+                                            },
+                                            min: metric.length(min)?,
+                                            max: metric.length(max)?,
+                                        }
+                                    }
                                 },
                             })
                         })
@@ -496,6 +510,16 @@ impl ArenaModel {
                                     } => CertifiedConeFrustumRegion::LongitudinalHalf {
                                         interior_normal: metric.unit_direction(interior_normal)?,
                                     },
+                                    CertifiedConeFrustumRegion::Sector(angular) => {
+                                        CertifiedConeFrustumRegion::Sector(CertifiedAngularSector {
+                                            interior_normals: angular
+                                                .interior_normals
+                                                .iter()
+                                                .map(|normal| metric.unit_direction(normal))
+                                                .collect::<Result<Vec<_>, GeometryError>>()?,
+                                            sweep: angular.sweep.clone(),
+                                        })
+                                    }
                                 },
                             })
                         })

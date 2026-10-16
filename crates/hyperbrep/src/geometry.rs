@@ -1020,6 +1020,44 @@ impl Curve3 {
         }
     }
 
+    /// A native center suitable as the common origin of a closed area integral.
+    pub(crate) fn analytic_area_origin(&self) -> Option<&Point3> {
+        match &self.data.geometry {
+            CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => Some(&arc.center),
+            _ => None,
+        }
+    }
+
+    /// Integrates `(position - origin) × d(position)` over a native analytic
+    /// span. Half its component along a plane's unit normal is the signed area
+    /// contribution. Keeping the spatial angular interval avoids reconstructing
+    /// inverse trigonometric expressions from a projected or split pcurve.
+    pub(crate) fn analytic_area_vector(
+        &self,
+        start: &Real,
+        end: &Real,
+        origin: &Point3,
+    ) -> GeometryResult<Option<Vector3>> {
+        match &self.data.geometry {
+            CurveGeometry3::Line(_) => {
+                let start = self.evaluate_real(start)? - origin;
+                let end = self.evaluate_real(end)? - origin;
+                Ok(Some(start.cross(&end)))
+            }
+            CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
+                let displacement = self.evaluate_real(end)? - self.evaluate_real(start)?;
+                let angle = Real::from(arc.direction) * (end - start);
+                // For r = c + a cos(t) + b sin(t), integration gives
+                // (c - origin) × (r(end) - r(start)) + (a × b) Δt.
+                Ok(Some(
+                    (&arc.center - origin).cross(&displacement)
+                        + arc.x.cross(&arc.y) * (&arc.x_radius * &arc.y_radius * angle),
+                ))
+            }
+            CurveGeometry3::RationalBezier(_) | CurveGeometry3::Nurbs(_) => Ok(None),
+        }
+    }
+
     pub(crate) fn exact_data(&self) -> Curve3ExactData {
         match &self.data.geometry {
             CurveGeometry3::Line(line) => Curve3ExactData::Line(Box::new(Line3ExactData {
@@ -1866,13 +1904,6 @@ enum TensorAxis {
     V,
 }
 
-#[derive(Clone, Debug)]
-pub(crate) struct SurfacePcurveClipCarrier {
-    pub(crate) curve: Curve2,
-    pub(crate) spatial_scale: Real,
-    pub(crate) spatial_offset: Real,
-}
-
 impl SurfaceIntersectionCurve {
     /// Moves one iso pcurve into an equivalent periodic surface chart. The
     /// caller proves that each nonzero displacement is a whole surface period.
@@ -2429,10 +2460,10 @@ impl SurfaceIntersectionPcurve {
 
     /// Materializes this retained mapping as one exact Hypercurve carrier.
     ///
-    /// The returned affine coefficients map
-    /// `spatial_parameter = scale * pcurve_parameter + offset`. A mapping
-    /// that requires more than one Hypercurve carrier remains explicitly
-    /// unsupported.
+    /// The returned correspondence maps native pcurve parameters to spatial
+    /// parameters, including angular sweep correspondence for circular arcs.
+    /// A mapping that cannot be represented by one Hypercurve carrier remains
+    /// explicitly unsupported.
     pub fn materialize(&self) -> GeometryResult<MaterializedSurfacePcurve> {
         crate::context::strict(|| {
             let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
@@ -2458,6 +2489,12 @@ impl SurfaceIntersectionPcurve {
                     Ok(curve)
                 }
             };
+            // Materialized iso coordinates become boundary coefficients and
+            // are interpolated by later edits. Preserve scalar-proven compact
+            // angular forms before that expansion; no recognition limit or
+            // spatial parameter correspondence changes.
+            let compact =
+                |value: &Real| value.compact_pi_laurent().unwrap_or_else(|| value.clone());
             match &self.mapping {
                 SurfaceIntersectionPcurveMapping::Unsupported => {
                     Err(GeometryError::UnsupportedIntersection)
@@ -2515,116 +2552,42 @@ impl SurfaceIntersectionPcurve {
                         materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
                     }
                 }
-                SurfaceIntersectionPcurveMapping::LinearPlaneSection {
-                    profile,
-                    plane_origin,
-                    plane_normal,
-                    denominator,
-                    profile_axis,
-                    coefficient_scale,
-                    coefficient_offset,
-                } => {
-                    let carriers = linear_section_pcurve_carriers(
-                        profile,
-                        plane_origin,
-                        plane_normal,
-                        denominator,
-                        *profile_axis,
-                        coefficient_scale,
-                        coefficient_offset,
-                    )?
-                    .ok_or(GeometryError::UnsupportedIntersection)?;
-                    let mut curves = Vec::new();
-                    let mut boundaries = Vec::new();
+                SurfaceIntersectionPcurveMapping::LinearPlaneSection { .. } => {
+                    let mut carriers = self
+                        .clipping_carriers()?
+                        .ok_or(GeometryError::UnsupportedIntersection)?;
+                    if carriers.len() == 1 {
+                        return Ok(carriers.remove(0));
+                    }
+                    let mut curves = Vec::with_capacity(carriers.len());
+                    let mut boundaries = Vec::with_capacity(carriers.len() + 1);
                     for carrier in carriers {
-                        let carrier_start = carrier.spatial_offset.clone();
-                        let carrier_end = &carrier.spatial_offset + &carrier.spatial_scale;
-                        let overlap_start = if decided_order(compare_reals(
-                            ordered_source_start,
-                            &carrier_start,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Greater
-                        {
-                            ordered_source_start.clone()
-                        } else {
-                            carrier_start
-                        };
-                        let overlap_end = if decided_order(compare_reals(
-                            ordered_source_end,
-                            &carrier_end,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Less
-                        {
-                            ordered_source_end.clone()
-                        } else {
-                            carrier_end
-                        };
-                        if decided_order(compare_reals(
-                            &overlap_start,
-                            &overlap_end,
-                            crate::STRICT_PREDICATES,
-                        ))? != Ordering::Less
-                        {
-                            continue;
-                        }
-                        let start = ((&overlap_start - &carrier.spatial_offset)
-                            / &carrier.spatial_scale)
-                            .map_err(GeometryError::Numeric)?;
-                        let end = ((&overlap_end - &carrier.spatial_offset)
-                            / &carrier.spatial_scale)
-                            .map_err(GeometryError::Numeric)?;
                         let domain = carrier.curve.parameter_domain();
-                        let curve = if decided_order(compare_reals(
-                            &start,
-                            (domain.start())
-                                .scalar()
-                                .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                            crate::STRICT_PREDICATES,
-                        ))? == Ordering::Equal
-                            && decided_order(compare_reals(
-                                &end,
-                                (domain.end())
-                                    .scalar()
-                                    .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                                crate::STRICT_PREDICATES,
-                            ))? == Ordering::Equal
-                        {
-                            carrier.curve
-                        } else {
-                            carrier.curve.subcurve(start.into(), end.into())?
-                        };
+                        let (start, end) = domain
+                            .scalar_endpoints()
+                            .ok_or(GeometryError::UnsupportedPcurveContour)?;
                         if boundaries.is_empty() {
-                            boundaries.push(overlap_start);
+                            boundaries.push(carrier.spatial_parameter_at(start)?);
                         }
-                        boundaries.push(overlap_end);
-                        curves.push(curve);
+                        boundaries.push(carrier.spatial_parameter_at(end)?);
+                        curves.push(carrier.curve);
                     }
-                    match curves.as_slice() {
-                        [] => Err(GeometryError::UnsupportedIntersection),
-                        [curve] => materialized_surface_pcurve_from_matching_domains(
-                            orient_curve(curve.clone())?,
-                            &self.domain,
-                        ),
-                        _ => materialized_surface_pcurve_from_matching_domains(
-                            orient_curve(concatenate_rational_bezier_spans_as_nurbs(
-                                &curves,
-                                &boundaries,
-                            )?)?,
-                            &self.domain,
-                        ),
-                    }
+                    materialized_surface_pcurve_from_matching_domains(
+                        concatenate_rational_bezier_spans_as_nurbs(&curves, &boundaries)?,
+                        &self.domain,
+                    )
                 }
                 SurfaceIntersectionPcurveMapping::TensorIsoV { constant } => {
                     let curve = orient_curve(Curve2::from(LineSeg2::try_new(
-                        CurvePoint2::new(ordered_source_start.clone(), constant.clone()),
-                        CurvePoint2::new(ordered_source_end.clone(), constant.clone()),
+                        CurvePoint2::new(compact(ordered_source_start), compact(constant)),
+                        CurvePoint2::new(compact(ordered_source_end), compact(constant)),
                     )?))?;
                     materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
                 }
                 SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
                     let curve = orient_curve(Curve2::from(LineSeg2::try_new(
-                        CurvePoint2::new(constant.clone(), ordered_source_start.clone()),
-                        CurvePoint2::new(constant.clone(), ordered_source_end.clone()),
+                        CurvePoint2::new(compact(constant), compact(ordered_source_start)),
+                        CurvePoint2::new(compact(constant), compact(ordered_source_end)),
                     )?))?;
                     materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
                 }
@@ -2657,101 +2620,119 @@ impl SurfaceIntersectionPcurve {
 
     pub(crate) fn clipping_carriers(
         &self,
-    ) -> GeometryResult<Option<Vec<SurfacePcurveClipCarrier>>> {
-        let identity = |curve| SurfacePcurveClipCarrier {
-            curve,
-            spatial_scale: Real::one(),
-            spatial_offset: Real::zero(),
+    ) -> GeometryResult<Option<Vec<MaterializedSurfacePcurve>>> {
+        let SurfaceIntersectionPcurveMapping::LinearPlaneSection {
+            profile,
+            plane_origin,
+            plane_normal,
+            denominator,
+            profile_axis,
+            coefficient_scale,
+            coefficient_offset,
+        } = &self.mapping
+        else {
+            return match self.materialize() {
+                Ok(carrier) => Ok(Some(vec![carrier])),
+                Err(GeometryError::UnsupportedIntersection) => Ok(None),
+                Err(error) => Err(error),
+            };
         };
-        match &self.mapping {
-            SurfaceIntersectionPcurveMapping::Unsupported => Ok(None),
-            SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
-                Ok(Some(vec![identity(curve.clone())]))
+        // Keep the native rational spans available to the trimming kernel.
+        // Restriction and reversal must transport both their geometry and
+        // parameters; the source profile's domain need not equal this trace's.
+        let Some(carriers) = linear_section_pcurve_carriers(
+            profile,
+            plane_origin,
+            plane_normal,
+            denominator,
+            *profile_axis,
+            coefficient_scale,
+            coefficient_offset,
+        )?
+        else {
+            return Ok(None);
+        };
+        let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
+        let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
+        let descending = decided_order(compare_reals(
+            &source_start,
+            &source_end,
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Greater;
+        let (source_start, source_end) = if descending {
+            (source_end, source_start)
+        } else {
+            (source_start, source_end)
+        };
+        let mut result = Vec::with_capacity(carriers.len());
+        for carrier in carriers {
+            let (scale, offset) = carrier
+                .correspondence
+                .affine_coefficients()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?;
+            let domain = carrier.curve.parameter_domain();
+            let (local_start, local_end) = domain
+                .scalar_endpoints()
+                .ok_or(GeometryError::UnsupportedPcurveContour)?;
+            let carrier_start = scale * local_start + offset;
+            let carrier_end = scale * local_end + offset;
+            let overlap_start = if decided_order(compare_reals(
+                &source_start,
+                &carrier_start,
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Greater
+            {
+                source_start.clone()
+            } else {
+                carrier_start
+            };
+            let overlap_end = if decided_order(compare_reals(
+                &source_end,
+                &carrier_end,
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Less
+            {
+                source_end.clone()
+            } else {
+                carrier_end
+            };
+            if decided_order(compare_reals(
+                &overlap_start,
+                &overlap_end,
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Less
+            {
+                continue;
             }
-            SurfaceIntersectionPcurveMapping::PlaneProjection {
-                spatial,
-                origin,
-                u,
-                v,
-            } => {
-                let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
-                let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
-                let descending = decided_order(compare_reals(
-                    &source_start,
-                    &source_end,
-                    crate::STRICT_PREDICATES,
-                ))? == Ordering::Greater;
-                let source_curve = if descending {
-                    spatial.subcurve(&source_end, &source_start)?
+            let start = ((&overlap_start - offset) / scale).map_err(GeometryError::Numeric)?;
+            let end = ((&overlap_end - offset) / scale).map_err(GeometryError::Numeric)?;
+            let mut curve =
+                if decided_order(compare_reals(&start, local_start, crate::STRICT_PREDICATES))?
+                    == Ordering::Equal
+                    && decided_order(compare_reals(&end, local_end, crate::STRICT_PREDICATES))?
+                        == Ordering::Equal
+                {
+                    carrier.curve
                 } else {
-                    spatial.subcurve(&source_start, &source_end)?
+                    carrier.curve.subcurve(start.into(), end.into())?
                 };
-                let Some(mut curve) = project_curve_to_plane_frame(&source_curve, origin, u, v)?
-                else {
-                    return Ok(None);
-                };
-                if descending {
-                    curve = curve.reversed()?;
-                }
-                let curve_domain = curve.parameter_domain();
-                let (curve_domain_start, curve_domain_end) = curve_domain
-                    .scalar_endpoints()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
-                let curve_span = curve_domain_end - curve_domain_start;
-                let spatial_span = self.domain.end() - self.domain.start();
-                let spatial_scale =
-                    (&spatial_span / &curve_span).map_err(GeometryError::Numeric)?;
-                let spatial_offset = self.domain.start() - &spatial_scale * curve_domain_start;
-                Ok(Some(vec![SurfacePcurveClipCarrier {
-                    curve,
-                    spatial_scale,
-                    spatial_offset,
-                }]))
+            let mut spatial_start = ((overlap_start - &self.source_offset) / &self.source_scale)
+                .map_err(GeometryError::Numeric)?;
+            let mut spatial_end = ((overlap_end - &self.source_offset) / &self.source_scale)
+                .map_err(GeometryError::Numeric)?;
+            if descending {
+                curve = curve.reversed()?;
+                std::mem::swap(&mut spatial_start, &mut spatial_end);
             }
-            SurfaceIntersectionPcurveMapping::LinearPlaneSection {
-                profile,
-                plane_origin,
-                plane_normal,
-                denominator,
-                profile_axis,
-                coefficient_scale,
-                coefficient_offset,
-            } => linear_section_pcurve_carriers(
-                profile,
-                plane_origin,
-                plane_normal,
-                denominator,
-                *profile_axis,
-                coefficient_scale,
-                coefficient_offset,
-            ),
-            SurfaceIntersectionPcurveMapping::TensorIsoV { constant } => {
-                let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
-                let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
-                let span = self.domain.end() - self.domain.start();
-                Ok(Some(vec![SurfacePcurveClipCarrier {
-                    curve: Curve2::from(LineSeg2::try_new(
-                        CurvePoint2::new(source_start, constant.clone()),
-                        CurvePoint2::new(source_end, constant.clone()),
-                    )?),
-                    spatial_scale: span,
-                    spatial_offset: self.domain.start().clone(),
-                }]))
-            }
-            SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
-                let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
-                let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
-                let span = self.domain.end() - self.domain.start();
-                Ok(Some(vec![SurfacePcurveClipCarrier {
-                    curve: Curve2::from(LineSeg2::try_new(
-                        CurvePoint2::new(constant.clone(), source_start),
-                        CurvePoint2::new(constant.clone(), source_end),
-                    )?),
-                    spatial_scale: span,
-                    spatial_offset: self.domain.start().clone(),
-                }]))
-            }
+            result.push(materialized_surface_pcurve_from_matching_domains(
+                curve,
+                &ParameterDomain::new(spatial_start, spatial_end)?,
+            )?);
         }
+        if descending {
+            result.reverse();
+        }
+        Ok(Some(result))
     }
 }
 
@@ -2774,6 +2755,23 @@ impl MaterializedSurfacePcurve {
                 spatial_start,
                 spatial_end,
             } => {
+                // A periodic seam has two parameter identities even though
+                // its endpoint coordinates agree. Preserve the selected end
+                // before recovering an angle from the point's position.
+                let domain = self.curve.parameter_domain();
+                let (start, end) = domain
+                    .scalar_endpoints()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
+                if decided_order(compare_reals(parameter, start, crate::STRICT_PREDICATES))?
+                    == Ordering::Equal
+                {
+                    return Ok(spatial_start.clone());
+                }
+                if decided_order(compare_reals(parameter, end, crate::STRICT_PREDICATES))?
+                    == Ordering::Equal
+                {
+                    return Ok(spatial_end.clone());
+                }
                 let Some(CurveGeometry2::CircularArc(arc)) = self.curve.geometry() else {
                     return Err(GeometryError::UnsupportedPcurveContour);
                 };
@@ -5557,7 +5555,7 @@ fn linear_section_pcurve_carriers(
     profile_axis: TensorAxis,
     coefficient_scale: &Real,
     coefficient_offset: &Real,
-) -> GeometryResult<Option<Vec<SurfacePcurveClipCarrier>>> {
+) -> GeometryResult<Option<Vec<MaterializedSurfacePcurve>>> {
     let coefficient = |point: &Point3| {
         let normalized = (plane_normal.dot(&(plane_origin - point)) / denominator)
             .map_err(GeometryError::Numeric)?;
@@ -5565,7 +5563,7 @@ fn linear_section_pcurve_carriers(
     };
     let span = profile.domain().end() - profile.domain().start();
     match &profile.data.geometry {
-        CurveGeometry3::Line(line) => Ok(Some(vec![SurfacePcurveClipCarrier {
+        CurveGeometry3::Line(line) => Ok(Some(vec![MaterializedSurfacePcurve {
             curve: Curve2::from(LineSeg2::try_new(
                 section_parameter_point(
                     profile.domain().start().clone(),
@@ -5578,8 +5576,10 @@ fn linear_section_pcurve_carriers(
                     profile_axis,
                 ),
             )?),
-            spatial_scale: span,
-            spatial_offset: profile.domain().start().clone(),
+            correspondence: SurfacePcurveCorrespondence::Affine {
+                scale: span,
+                offset: profile.domain().start().clone(),
+            },
         }])),
         CurveGeometry3::RationalBezier(curve) => Ok(Some(vec![rational_linear_section_carrier(
             curve,
@@ -5749,7 +5749,7 @@ fn rational_linear_section_carrier(
     parameter_span: &Real,
     coefficient: &impl Fn(&Point3) -> GeometryResult<Real>,
     profile_axis: TensorAxis,
-) -> GeometryResult<SurfacePcurveClipCarrier> {
+) -> GeometryResult<MaterializedSurfacePcurve> {
     let degree_plus_one = curve.weights.len();
     let denominator_degree =
         Real::from(i64::try_from(degree_plus_one).map_err(|_| GeometryError::InvalidDegree)?);
@@ -5797,10 +5797,12 @@ fn rational_linear_section_carrier(
         ));
         elevated_weights.push(elevated_weight);
     }
-    Ok(SurfacePcurveClipCarrier {
+    Ok(MaterializedSurfacePcurve {
         curve: Curve2::from(RationalBezier2::try_new(elevated_points, elevated_weights)?),
-        spatial_scale: parameter_span.clone(),
-        spatial_offset: parameter_start.clone(),
+        correspondence: SurfacePcurveCorrespondence::Affine {
+            scale: parameter_span.clone(),
+            offset: parameter_start.clone(),
+        },
     })
 }
 
@@ -10902,6 +10904,269 @@ mod tests {
     }
 
     #[test]
+    fn analytic_area_vectors_preserve_native_domains_and_orientation() {
+        for (a, b) in [(r(2), r(2)), (r(2), r(3))] {
+            let curve = if a == b {
+                Curve3::circle_arc(
+                    p(7, -4, 2),
+                    Vector3::x(),
+                    Vector3::y(),
+                    a.clone(),
+                    r(0),
+                    Real::tau(),
+                )
+            } else {
+                Curve3::ellipse_arc(
+                    p(7, -4, 2),
+                    Vector3::x(),
+                    Vector3::y(),
+                    a.clone(),
+                    b.clone(),
+                    r(0),
+                    Real::tau(),
+                )
+            }
+            .unwrap();
+            for (start, end) in [
+                (r(0), Real::tau()),
+                (Real::pi() * q(1, 6), Real::pi() * q(1, 3)),
+            ] {
+                let expected = Vector3::z() * (&a * &b * (&end - &start));
+                let area = curve
+                    .analytic_area_vector(&start, &end, &p(7, -4, 2))
+                    .unwrap()
+                    .unwrap();
+                assert_eq!(
+                    point3_equal(
+                        &Point3::from(area),
+                        &Point3::from(expected.clone()),
+                        crate::STRICT_PREDICATES
+                    )
+                    .value(),
+                    Some(true)
+                );
+                let reversed = curve
+                    .analytic_area_vector(&end, &start, &p(7, -4, 2))
+                    .unwrap()
+                    .unwrap();
+                assert_eq!(
+                    point3_equal(
+                        &Point3::from(reversed),
+                        &Point3::from(-expected),
+                        crate::STRICT_PREDICATES
+                    )
+                    .value(),
+                    Some(true)
+                );
+            }
+            assert_eq!(
+                curve
+                    .analytic_area_vector(&r(-1), &r(0), &p(0, 0, 0))
+                    .unwrap_err(),
+                GeometryError::ParameterOutsideDomain
+            );
+        }
+        let line = Curve3::line(p(1, 0, 0), p(0, 2, 0)).unwrap();
+        assert_eq!(
+            point3_equal(
+                &Point3::from(
+                    line.analytic_area_vector(&q(1, 4), &q(3, 4), &p(0, 0, 0))
+                        .unwrap()
+                        .unwrap()
+                ),
+                &p(0, 0, 1),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn circular_clipping_preserves_angular_parameter_correspondence() {
+        let plane =
+            Surface::plane(p(0, -20, -20), Vector3::y() * r(40), Vector3::z() * r(40)).unwrap();
+        let spatial = Curve3::circle_arc(
+            p(0, 5, 0),
+            Vector3::y(),
+            Vector3::z(),
+            r(2),
+            Real::zero(),
+            Real::pi() * q(1, 2),
+        )
+        .unwrap();
+        let trace = SurfaceIntersectionCurve::on_plane(spatial, &plane).unwrap();
+        let uv = Point2::new((r(25) + r(3).sqrt().unwrap()) * q(1, 40), q(21, 40));
+        for (trace, expected) in [
+            (trace.clone(), Real::pi() * q(1, 6)),
+            (trace.reversed().unwrap(), Real::pi() * q(1, 3)),
+        ] {
+            let carrier = trace
+                .first_pcurve()
+                .clipping_carriers()
+                .unwrap()
+                .unwrap()
+                .pop()
+                .unwrap();
+            assert_eq!(carrier.curve.family(), CurveFamily2::CircularArc);
+            let local = Pcurve::new(carrier.curve.clone())
+                .parameters_at_point(&uv)
+                .unwrap();
+            assert_eq!(local.len(), 1);
+            let spatial_parameter = carrier
+                .spatial_parameter_at(local[0].try_real().unwrap())
+                .unwrap();
+            assert_eq!(
+                hyperlimit::compare_reals(&spatial_parameter, &expected, crate::STRICT_PREDICATES)
+                    .value(),
+                Some(Ordering::Equal),
+            );
+            assert_eq!(
+                hyperlimit::point2_equal(
+                    &trace.first_pcurve().point_at(&spatial_parameter).unwrap(),
+                    &uv,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
+                Some(true),
+            );
+        }
+    }
+
+    #[test]
+    fn circular_clipping_preserves_distinct_periodic_endpoint_parameters() {
+        let plane = Surface::plane(p(0, 0, 0), Vector3::x(), Vector3::y()).unwrap();
+        let trace = SurfaceIntersectionCurve::on_plane(
+            Curve3::circle_arc(
+                p(0, 0, 0),
+                Vector3::x(),
+                Vector3::y(),
+                r(2),
+                Real::zero(),
+                Real::tau(),
+            )
+            .unwrap(),
+            &plane,
+        )
+        .unwrap();
+        for trace in [trace.clone(), trace.reversed().unwrap()] {
+            let carrier = trace
+                .first_pcurve()
+                .clipping_carriers()
+                .unwrap()
+                .unwrap()
+                .pop()
+                .unwrap();
+            for (local, expected) in [(Real::zero(), Real::zero()), (Real::one(), Real::tau())] {
+                assert_eq!(
+                    hyperlimit::compare_reals(
+                        &carrier.spatial_parameter_at(&local).unwrap(),
+                        &expected,
+                        crate::STRICT_PREDICATES
+                    )
+                    .value(),
+                    Some(Ordering::Equal)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn retained_clipping_preserves_restricted_reversed_domain() {
+        let source = SurfaceIntersectionPcurve::retained_curve(Curve2::from(
+            LineSeg2::try_new(CurvePoint2::new(r(0), r(0)), CurvePoint2::new(r(4), r(0))).unwrap(),
+        ))
+        .unwrap();
+        let restricted = source
+            .subcurve(&q(1, 4), &q(3, 4))
+            .unwrap()
+            .reversed()
+            .unwrap();
+        let carrier = restricted
+            .clipping_carriers()
+            .unwrap()
+            .unwrap()
+            .pop()
+            .unwrap();
+        for (local, expected_parameter, expected_x) in
+            [(r(0), q(1, 4), r(3)), (r(1), q(3, 4), r(1))]
+        {
+            let spatial_parameter = carrier.spatial_parameter_at(&local).unwrap();
+            assert_eq!(
+                hyperlimit::compare_reals(
+                    &spatial_parameter,
+                    &expected_parameter,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+            let point = carrier.curve.point_at(&local.into()).unwrap();
+            assert_eq!(
+                hyperlimit::compare_reals(
+                    point.coordinates().unwrap().x(),
+                    &expected_x,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+        }
+    }
+
+    #[test]
+    fn linear_section_clipping_preserves_restricted_reversed_domain() {
+        let profile = Curve3::line(p(0, 0, 0), p(4, 0, 0)).unwrap();
+        let plane = Surface::plane(p(0, 0, 1), Vector3::x(), Vector3::y()).unwrap();
+        let SurfaceGeometry::Plane(plane) = &plane.data.geometry else {
+            unreachable!()
+        };
+        let source = SurfaceIntersectionPcurve::linear_plane_section(
+            profile,
+            plane,
+            r(1),
+            TensorAxis::U,
+            r(1),
+            r(0),
+        );
+        let restricted = source
+            .subcurve(&q(1, 4), &q(3, 4))
+            .unwrap()
+            .reversed()
+            .unwrap();
+        let carrier = restricted
+            .clipping_carriers()
+            .unwrap()
+            .unwrap()
+            .pop()
+            .unwrap();
+        for (local, expected_parameter, expected_x) in
+            [(r(0), q(1, 4), q(3, 4)), (r(1), q(3, 4), q(1, 4))]
+        {
+            let spatial_parameter = carrier.spatial_parameter_at(&local).unwrap();
+            assert_eq!(
+                hyperlimit::compare_reals(
+                    &spatial_parameter,
+                    &expected_parameter,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+            let point = carrier.curve.point_at(&local.into()).unwrap();
+            assert_eq!(
+                hyperlimit::compare_reals(
+                    point.coordinates().unwrap().x(),
+                    &expected_x,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+        }
+    }
+
+    #[test]
     fn circular_pcurve_contact_parameter_replays_exact_point() {
         let point = Point2::new(r(3), r(4));
         let curve = Pcurve::new(Curve2::from(
@@ -14620,7 +14885,7 @@ mod tests {
         assert_eq!(carriers.len(), 2);
         for carrier in &carriers {
             for local in [Real::zero(), Real::one()] {
-                let spatial_parameter = &carrier.spatial_scale * &local + &carrier.spatial_offset;
+                let spatial_parameter = carrier.spatial_parameter_at(&local).unwrap();
                 let materialized = carrier
                     .curve
                     .point_at(&local.clone().into())
@@ -14674,8 +14939,8 @@ mod tests {
                     .represented_parameter_range()
                     .expect("linear region contacts have represented parameters");
                 retained_ranges.push((
-                    &carrier.spatial_scale * local_start + &carrier.spatial_offset,
-                    &carrier.spatial_scale * local_end + &carrier.spatial_offset,
+                    carrier.spatial_parameter_at(&local_start).unwrap(),
+                    carrier.spatial_parameter_at(&local_end).unwrap(),
                 ));
             }
         }

@@ -1112,8 +1112,85 @@ paired edge uses, deterministic untrusted replay, subdivision and reflected
 rescaling accompany every nonempty result. The
 [evidence](evidence/2026-10-16-curved-coplanar/README.md) preserves the complete
 fifteen-case diagnostic frontier, failed candidates and cost observations.
-Quarter/band cuts, differently parameterized coincident surfaces, general curved
-shells, complete operation receipts and resource/release gates remain open.
+The sector extension below continues the five quarter/band cases. Differently
+parameterized coincident surfaces, general curved shells, complete operation
+receipts and resource/release gates remain open.
+
+## Analytic sector and band continuation
+
+Native line partitions incident on an inner wire share the retained-surface
+bridge arrangement. A complete bridge cycle must pass full wire simplicity,
+orientation and nesting validation before its new wires acquire reusable
+simplicity certificates. Endpoint attachment alone cannot justify them; a bridge
+crossing a hole is rejected. The public partition retains original trace indices,
+source/output model revisions, canonical ordering and exact segments.
+
+Planar circular traces share exact connected-interval union even when other
+traces are straight. Only a proved complete period joins the first and last
+components across a seam; all other gaps remain. Full-circle tests for different
+frames remain in force. The sphere path still requires complete circular coverage.
+
+Clipping uses `MaterializedSurfacePcurve` and its actual correspondence. Native
+circular charts use their nonlinear rational-to-angular map; a fraction of the
+rational domain is not an angular fraction. Restriction and reversal transport
+both source intervals and span order. A periodic seam retains distinct start/end
+parameter identities even when coordinates agree. No additional approximate
+carrier or tolerance is introduced.
+
+Materializing an iso curve reduces scalar-proven Laurent coordinates before
+those values become line coefficients. This preserves exact angular endpoints
+through repeated interpolation and untrusted replay after irrational reflection.
+The source parameter correspondence and every unrecognized exact expression are
+retained. The failed full cone-band fixture remains in the evidence record.
+
+The cone/torus shell validators admit complete convex angular sectors and axial
+bands only on the supported native rectangular UV grids. Curved cells have
+multiplicity one. Every selected angular column has exactly the same admitted
+axial mask, lies wholly in each longitudinal halfspace, and the sum of its
+interval widths equals the independently derived halfspace-intersection angle.
+Intervals are ordered inside one period; intervals wider than pi, gaps, wrong
+sides and partial columns fail this proof. Strict endpoint and midpoint signs on
+an interval of width at most pi prove its sinusoid remains in the halfspace.
+
+There are at most two planes containing the axis and two perpendicular to it.
+Cone caps coincide with the carrier limits; torus axial caps are strictly between
+its natural extrema. Every planar face has the required support and outward
+orientation, with validated images, wires and oppositely paired shell edge uses.
+These planes have no bounded three-dimensional arrangement cell. A compact closed
+oriented boundary with the certified curved part therefore has a unique planar
+completion: the difference of two completions would be a closed planar chain
+with nonzero winding in an unbounded cell. This argument depends on the entire
+restricted arrangement and carrier coverage. It is a mathematical justification,
+not a machine-checked proof of the Rust implementation, and does not admit
+arbitrary clipping planes or general curved shells.
+
+Planar line/conic area integrates `(r-origin) cross dr` using authoritative spatial
+angular intervals. Choosing a retained conic center as the common wire origin
+preserves the closed integral while avoiding translated endpoint terms that would
+otherwise cancel after subdivision. The existing scalar Laurent reducer and
+strict sign proof retain a usable signed magnitude. Unrecognized forms retain
+the original exact absolute value. Pure polygon paths and general spline
+measurement contracts remain distinct. The ordinary wire validator handles
+multiple circle supports and exterior chords outside the one-disk specialization;
+a valid two-edge arc/chord wire may share both cyclic endpoints.
+
+One reproduced BREP blocker required a Hyperreal correction after checking
+upstream: `Computable::acos` now preserves `acos(1/2)=pi/3` and
+`acos(-1/2)=2pi/3`, including values discovered by its existing rational normal
+form. This lets a retained `pi/2-acos(1/2)` contact compare exactly with `pi/6`.
+No BREP-specific scalar identity or larger recognition budget was added.
+
+The [acceptance corpus](../tests/support/sectors.rs) keeps the original full-size
+cutters and strict policies. Five original and 30 exact similarity configurations
+exercise 175 nonempty continuation outputs and 35 canonical empty results.
+Each nonempty output has independent exact volume/area, analytic point tables
+including 1e-12 offsets, paired opposite edge uses, deterministic raw replay,
+subdivision, reflected rescaling and further replay. This finite corpus does not
+establish arbitrary-angle or general Boolean closure. Ten new torus/cone STEP
+attempts preserve their typed unsupported-family/body/entity diagnostics, followed
+by supported cylinder export in the same context. See the
+[evidence record](evidence/2026-10-16-sector-cuts/README.md) for executed commands,
+failed candidates, costs and remaining gates.
 
 ## Performance contract
 
