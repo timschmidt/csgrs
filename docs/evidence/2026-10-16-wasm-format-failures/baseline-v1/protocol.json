@@ -1,0 +1,22 @@
+{
+  "runner_sha256": "5463a2163fd06792fd2e92575f6fea78f307e432e767be92d7d64dbae59f1d0b",
+  "head": "3d335db43eac00d003bc2fb0ed1beb2a9c19d79b",
+  "source_hashes_sha256": "9604b5423aeedcf2f5f08e449346c6949ed0ebbe981fedb8a0940765a35444f1",
+  "baseline_artifact_hashes_sha256": "31207168d16522ef708adcd75f485e962bcbb2220cc50021e615990120c1e63c",
+  "module": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+  "probes": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs": "0eb12ed3a8f6fe08efa4576a897fe667a9323407484d45a86dc7e6fffb1dee23",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/baseline-v1/typescript/csgrs.d.ts": "b9f64e8d08888b288112314340b9c74d57251758a4951abbf4641934d402120b",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/baseline-v1/typescript/io_contracts.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/tests/wasm/export_projection.cjs": "0f55257e2dd74294866a5bd75ba8b90fd2daf42c776b0ef326c9e30c7f8dc042",
+    "/home/tim/Documents/GitHub/workspace/csgrs/tests/wasm/geometry_certainty.cjs": "20b92c13ae1bca3a708c2442d8fe38edb66ba3651429e117d6333fb833266507"
+  },
+  "typescript_version": "5.7.3",
+  "node": "v22.22.2",
+  "elapsed_limit_seconds_per_command": 120,
+  "address_space_limit_bytes_per_process": 68719476736,
+  "completed_targets_modified": false,
+  "native_changes_admitted": false,
+  "full_plan_complete": false
+}

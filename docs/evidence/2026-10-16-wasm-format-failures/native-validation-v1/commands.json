@@ -1,0 +1,594 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/Cargo.toml",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 10.900971886701882,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d2c515af853104c3971c5bb023a0b2bc5785a70d2056c5fb980b489c636cbcb5"
+  },
+  {
+    "name": "root-all",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 519.1607940699905,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adapter_boolean_failures-8867e9a3af41b5b5": {
+        "sha256": "88a5f1e685760f2a683c0207f8eb93342dfa55717b8b08d2aa221d8b7669697a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/88a5f1e685760f2a683c0207f8eb93342dfa55717b8b08d2aa221d8b7669697a/adapter_boolean_failures-8867e9a3af41b5b5",
+        "bytes": 20639536
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/solid_cache-4b39500f97650a56": {
+        "sha256": "6f40c6910968c754bf31625111e752d4f3ec43ad696afe85d85cc4b0b873d20e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/6f40c6910968c754bf31625111e752d4f3ec43ad696afe85d85cc4b0b873d20e/solid_cache-4b39500f97650a56",
+        "bytes": 34359712
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/strict_drilled_workflows-84fb41c10d127f23": {
+        "sha256": "e66c6a9c5f61b002a8e4a9006fcb6881a22b05115bd9fb215bb18a1bd40fd856",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/e66c6a9c5f61b002a8e4a9006fcb6881a22b05115bd9fb215bb18a1bd40fd856/strict_drilled_workflows-84fb41c10d127f23",
+        "bytes": 20823600
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/batch_common_cells-a927672f36173761": {
+        "sha256": "bc11678c0a5a42977a3889e908909bc9b330b8baae22c7761320ec4d089060b7",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/bc11678c0a5a42977a3889e908909bc9b330b8baae22c7761320ec4d089060b7/batch_common_cells-a927672f36173761",
+        "bytes": 20538824
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/planar_operation_failures-21febc1e6bde631d": {
+        "sha256": "42e98be1dab523d34775dfa320f243c0516da50eca7667e37420cb3a5a7b6800",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/42e98be1dab523d34775dfa320f243c0516da50eca7667e37420cb3a5a7b6800/planar_operation_failures-21febc1e6bde631d",
+        "bytes": 33130088
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/polyhedral_construction-5ca791f19bc691fe": {
+        "sha256": "4ed6c9ac52b4870bf4cc3a8f56ed4b1f72192664392628fc4756b425524f4445",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/4ed6c9ac52b4870bf4cc3a8f56ed4b1f72192664392628fc4756b425524f4445/polyhedral_construction-5ca791f19bc691fe",
+        "bytes": 20765144
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/gear_airfoil_failures-edc7ec750765891a": {
+        "sha256": "18febf05546e5073835fea5ef9028addc8b768f3b3778d9cfafdab454054de36",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/18febf05546e5073835fea5ef9028addc8b768f3b3778d9cfafdab454054de36/gear_airfoil_failures-edc7ec750765891a",
+        "bytes": 33081480
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/transform_failures-21eb23e9828f9466": {
+        "sha256": "03aa88989e8cbae743fcd7ad02cea5db78e9a802d3768362ef680efe00928882",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/03aa88989e8cbae743fcd7ad02cea5db78e9a802d3768362ef680efe00928882/transform_failures-21eb23e9828f9466",
+        "bytes": 20773192
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adversarial_deep-521173baf42fc07b": {
+        "sha256": "5052a88d8dd949b18d15b50fc282275d97cd63c879f485bae207f9bc1cbfca18",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/5052a88d8dd949b18d15b50fc282275d97cd63c879f485bae207f9bc1cbfca18/adversarial_deep-521173baf42fc07b",
+        "bytes": 33909856
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/native_queries-b33ec052b7501c8a": {
+        "sha256": "d2632c63426a599ef3ff16e6d5b3c77dfff878f7f454b628233947b79fb34d92",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/d2632c63426a599ef3ff16e6d5b3c77dfff878f7f454b628233947b79fb34d92/native_queries-b33ec052b7501c8a",
+        "bytes": 20879592
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/minkowski_contracts-0128f2ac1f93f880": {
+        "sha256": "41241a5a286f0e36d930dfde2dbf7d3abbb6a59c360bccc2a23386ad8505fc47",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/41241a5a286f0e36d930dfde2dbf7d3abbb6a59c360bccc2a23386ad8505fc47/minkowski_contracts-0128f2ac1f93f880",
+        "bytes": 21391416
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/exact_linear_modeling-5d0a48a07e0f162b": {
+        "sha256": "563a0e50aef61e084d35361540bb10634f25f7b28068d5d104c14951bb82b6d9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/563a0e50aef61e084d35361540bb10634f25f7b28068d5d104c14951bb82b6d9/exact_linear_modeling-5d0a48a07e0f162b",
+        "bytes": 32314392
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/rounded_rectangle_fidelity-8f7195511dbb1c27": {
+        "sha256": "12fd91e3a0a050edb4bfb26a932db2d0a823ec057a739d6f546a7a188ebcba07",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/12fd91e3a0a050edb4bfb26a932db2d0a823ec057a739d6f546a7a188ebcba07/rounded_rectangle_fidelity-8f7195511dbb1c27",
+        "bytes": 36007360
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/sampled_profile_failures-1e978d3da16ca610": {
+        "sha256": "ef1f71bc017979b23370a758ead792ee4dacbf2828724c041863aab2f7c75b47",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/ef1f71bc017979b23370a758ead792ee4dacbf2828724c041863aab2f7c75b47/sampled_profile_failures-1e978d3da16ca610",
+        "bytes": 33351352
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/metaball_failures-d85a244280836e13": {
+        "sha256": "40a770954815daba219d6eca1fdf485405ae91b89ad65bb2cf8373253534ee0c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/40a770954815daba219d6eca1fdf485405ae91b89ad65bb2cf8373253534ee0c/metaball_failures-d85a244280836e13",
+        "bytes": 20638152
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/export_projection_contracts-ded2f815cac1de97": {
+        "sha256": "5c9cfe51a7f3b423221db0caefe94d2c5235cc43356b75493478223e2a657897",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/5c9cfe51a7f3b423221db0caefe94d2c5235cc43356b75493478223e2a657897/export_projection_contracts-ded2f815cac1de97",
+        "bytes": 21081760
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/empty_composition-916811c3b9113a9e": {
+        "sha256": "57f742d45366a2c5b0e4920f16d0d0653ac595b1f4ebafabe80db98d0f6b7894",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/57f742d45366a2c5b0e4920f16d0d0653ac595b1f4ebafabe80db98d0f6b7894/empty_composition-916811c3b9113a9e",
+        "bytes": 20820152
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/obj_export_failures-cd495c9311a295fd": {
+        "sha256": "14205eea367fa2156c2a6feda8e83f2c0e9ff8d16647e8776f0a25b64308355c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/14205eea367fa2156c2a6feda8e83f2c0e9ff8d16647e8776f0a25b64308355c/obj_export_failures-cd495c9311a295fd",
+        "bytes": 20668696
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adversarial_extrusions-03eb6390b46717d7": {
+        "sha256": "66ffaab59c0cf76381441a417d95097e408f259e34c2f59976f3db51f25ea3d6",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/66ffaab59c0cf76381441a417d95097e408f259e34c2f59976f3db51f25ea3d6/adversarial_extrusions-03eb6390b46717d7",
+        "bytes": 32565720
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/hilbert_trimming-a298c6dfff13a0d9": {
+        "sha256": "59dd82bc159230ba999d216d63445d29c48eab93dfc2a2b9ea38e8fd5015c70b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/59dd82bc159230ba999d216d63445d29c48eab93dfc2a2b9ea38e8fd5015c70b/hilbert_trimming-a298c6dfff13a0d9",
+        "bytes": 32854944
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adversarial-61fa74ccbd896935": {
+        "sha256": "e454c617f071b85692eb96f7ad85c089303e056d17367a4aa15f4e1c7ab6472b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/e454c617f071b85692eb96f7ad85c089303e056d17367a4aa15f4e1c7ab6472b/adversarial-61fa74ccbd896935",
+        "bytes": 34232344
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adversarial_fixtures-eb5cce8eab7e81ab": {
+        "sha256": "4c547a0e18cdf2e268c771ebde5d16c66be0d14d4896a0f374d420d5117195a3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/4c547a0e18cdf2e268c771ebde5d16c66be0d14d4896a0f374d420d5117195a3/adversarial_fixtures-eb5cce8eab7e81ab",
+        "bytes": 1112712
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/curve_metaball_failures-d27370f0b0e5f990": {
+        "sha256": "e886e16e8d5fe7d2c0f032f9b05422ff0ab63345b7d0b63334f2c7ad7f24100b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/e886e16e8d5fe7d2c0f032f9b05422ff0ab63345b7d0b63334f2c7ad7f24100b/curve_metaball_failures-d27370f0b0e5f990",
+        "bytes": 32980672
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adversarial_stress-7115bbec9298381e": {
+        "sha256": "2854f630f66a7d0d16fb4b8d7c9c13141829e69e17b33d970a7bb61fbafe2cdb",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/2854f630f66a7d0d16fb4b8d7c9c13141829e69e17b33d970a7bb61fbafe2cdb/adversarial_stress-7115bbec9298381e",
+        "bytes": 33706440
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/curve_constructor_failures-f7cc43e145ac9696": {
+        "sha256": "5a68b10d03bddc26eac1e9d9ab6884fa252a9dc1174d8b7f502711691f70e9df",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/5a68b10d03bddc26eac1e9d9ab6884fa252a9dc1174d8b7f502711691f70e9df/curve_constructor_failures-f7cc43e145ac9696",
+        "bytes": 33010360
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/geometry_context-f3d29f7d6dc94528": {
+        "sha256": "8e0c21f9f1620546faf62395d9231eafdb7fbb467a999a8cebd33419f28976db",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/8e0c21f9f1620546faf62395d9231eafdb7fbb467a999a8cebd33419f28976db/geometry_context-f3d29f7d6dc94528",
+        "bytes": 41696544
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/primitive_failures-62bfc794561dcdc3": {
+        "sha256": "4985ed6f8ee825c98396bbed574edabd8978f6f7c3577c166ef13876aa348a47",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/4985ed6f8ee825c98396bbed574edabd8978f6f7c3577c166ef13876aa348a47/primitive_failures-62bfc794561dcdc3",
+        "bytes": 20821424
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/sdf_tpms_diagnostics-24970cc75f8a8512": {
+        "sha256": "7503610a8d8b27941395d7cbb8afe0be030b3930b7bae80951563fde10c02f7a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/7503610a8d8b27941395d7cbb8afe0be030b3930b7bae80951563fde10c02f7a/sdf_tpms_diagnostics-24970cc75f8a8512",
+        "bytes": 21208904
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/text_contracts-84d126534db53fda": {
+        "sha256": "de00ef0e2d27787a3c3c19ad87352f25aa6b71de4931f420f422cf83d341b59c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/de00ef0e2d27787a3c3c19ad87352f25aa6b71de4931f420f422cf83d341b59c/text_contracts-84d126534db53fda",
+        "bytes": 34080368
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/distribution_contracts-555e8fcfefd73180": {
+        "sha256": "cc84ffd7b6267767c86f7a838d64182e62adee98d03450a8946a5afbdd6cc6b2",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/cc84ffd7b6267767c86f7a838d64182e62adee98d03450a8946a5afbdd6cc6b2/distribution_contracts-555e8fcfefd73180",
+        "bytes": 21054200
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/curve_metaball_workloads-66d29e6564cd95ad": {
+        "sha256": "5927e905d50bb862507838d3ce6969cc7f933d89a07110a7907ac0c435d338f8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/5927e905d50bb862507838d3ce6969cc7f933d89a07110a7907ac0c435d338f8/curve_metaball_workloads-66d29e6564cd95ad",
+        "bytes": 31784352
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/mesh_boolean_context-914bbfe568471b47": {
+        "sha256": "25f7ea45d7c6a56a3330c4d952aac24154c654c9ef2fa52f272bb5433389b66a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/25f7ea45d7c6a56a3330c4d952aac24154c654c9ef2fa52f272bb5433389b66a/mesh_boolean_context-914bbfe568471b47",
+        "bytes": 20733848
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/competitive-185cd4c877423fbe": {
+        "sha256": "9c85e8ce6bb9d95dc202dedc304d752d04948d80c4e955cfff40c0e55a415adf",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/9c85e8ce6bb9d95dc202dedc304d752d04948d80c4e955cfff40c0e55a415adf/competitive-185cd4c877423fbe",
+        "bytes": 21061808
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/bounds_failures-65b1d35d217e46d4": {
+        "sha256": "1b2127c79cb2f38ee02ccab8929d1d564b532fa23b1a9ac0040ae438d3db5524",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/1b2127c79cb2f38ee02ccab8929d1d564b532fa23b1a9ac0040ae438d3db5524/bounds_failures-65b1d35d217e46d4",
+        "bytes": 34143904
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/metaball_workloads-fdfd90c45629d15d": {
+        "sha256": "43e8c6741d4671318c476ff619a75465db314b722528173316b83c08a5a209fe",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/43e8c6741d4671318c476ff619a75465db314b722528173316b83c08a5a209fe/metaball_workloads-fdfd90c45629d15d",
+        "bytes": 19039448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/wasm_certainty-4c94a4a83c71928e": {
+        "sha256": "ec651c31200cdf7f5de722a5d3830fc911c64e8dac1b4a35df4fe766c2759986",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/ec651c31200cdf7f5de722a5d3830fc911c64e8dac1b4a35df4fe766c2759986/wasm_certainty-4c94a4a83c71928e",
+        "bytes": 32051504
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/readme-1992b521cbd1aa62": {
+        "sha256": "5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/5e4c7432555c86c3a86d508f36a0a2b56e53101269455a62de4f266d52d15145/readme-1992b521cbd1aa62",
+        "bytes": 1153328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/generated_benchmark_corpus-3c1f1fde5d37996c": {
+        "sha256": "5c0a3c0deb6b11a6ff48d01ce4f077958ece21b3d99eeb4e2691e59573c14d2e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/5c0a3c0deb6b11a6ff48d01ce4f077958ece21b3d99eeb4e2691e59573c14d2e/generated_benchmark_corpus-3c1f1fde5d37996c",
+        "bytes": 19056840
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/exact_path_failures-d29490301ca0c150": {
+        "sha256": "73b9467ed36fbe2839429100a33445999f84f720bc5bc48a79e4851e1fd34e00",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/73b9467ed36fbe2839429100a33445999f84f720bc5bc48a79e4851e1fd34e00/exact_path_failures-d29490301ca0c150",
+        "bytes": 32872008
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/metaballs_diagnostics-0ceadacbf3d3f4d1": {
+        "sha256": "e7277ea0cec90cbe5e8411a3759a4f3dcc9349a66e1cda0b96465b624253c2a8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/e7277ea0cec90cbe5e8411a3759a4f3dcc9349a66e1cda0b96465b624253c2a8/metaballs_diagnostics-0ceadacbf3d3f4d1",
+        "bytes": 18970088
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/stl_import_contracts-1972ae5b143c3f00": {
+        "sha256": "96e77747deaf5d4516e01c0b917d1398c12ca116cee8e0e5823ef4f6c85acbf1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/96e77747deaf5d4516e01c0b917d1398c12ca116cee8e0e5823ef4f6c85acbf1/stl_import_contracts-1972ae5b143c3f00",
+        "bytes": 20597688
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/sdf_failures-70ac7c65f6b4d210": {
+        "sha256": "742039169effc2a3d8707d78af43291bbae83bb8d0065a626b1e711d1e33ee43",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/742039169effc2a3d8707d78af43291bbae83bb8d0065a626b1e711d1e33ee43/sdf_failures-70ac7c65f6b4d210",
+        "bytes": 21022792
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/readme_render_regression-241ede70811c95bb": {
+        "sha256": "3d178ead69d865b6a660d660d14b95f7dceb38fcf39db7b5088dda9fb43f7454",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/3d178ead69d865b6a660d660d14b95f7dceb38fcf39db7b5088dda9fb43f7454/readme_render_regression-241ede70811c95bb",
+        "bytes": 1151128
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/csgrs-3c5a74bdc7539294": {
+        "sha256": "1fbfe8148a81ddab90084c07123cb08903473f605c48b68f8c87c3d161e1f6bf",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/1fbfe8148a81ddab90084c07123cb08903473f605c48b68f8c87c3d161e1f6bf/csgrs-3c5a74bdc7539294",
+        "bytes": 39773888
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/slice_projection_contract-b55baaad948b2b8d": {
+        "sha256": "aadbf4c38362b5bf08072ef7a736621137731ba26e6e15b50bffe8ce48a611ba",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/aadbf4c38362b5bf08072ef7a736621137731ba26e6e15b50bffe8ce48a611ba/slice_projection_contract-b55baaad948b2b8d",
+        "bytes": 33984120
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "cc32e7ea9aebd32eb9f861cbdfa4d8d3cf85c6e986a10c32ff1aa1001795db78",
+    "stderr_sha256": "832530dc61547caf7eb3958ccdb607373cadab82422577dcbba5e273107f1ba5",
+    "resources_sha256": "5ddc72aeec6b17e59d45d69eb382feb2024ac1f765d2d34fe5fc6b62d2e69989"
+  },
+  {
+    "name": "wasm-feature",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "wasm",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 190.99343814328313,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/metaball_workloads-fea53d736c6b0dc0": {
+        "sha256": "c3fa2b314e3c5827648f3f861def1c138fc34e571ec67582e1e6938df1b3509d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/c3fa2b314e3c5827648f3f861def1c138fc34e571ec67582e1e6938df1b3509d/metaball_workloads-fea53d736c6b0dc0",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/csgrs-d0d43f80faf911a4": {
+        "sha256": "2131ba3738d709f45d57e453f67d67814d7dd0c1d78036cace56b323bd945821",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/2131ba3738d709f45d57e453f67d67814d7dd0c1d78036cace56b323bd945821/csgrs-d0d43f80faf911a4",
+        "bytes": 21743016
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/geometry_context-e23044aa9d46d3ec": {
+        "sha256": "4da978db41d1e588fe3126756fd21c49b809a5e182e9b0256995206768090616",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/4da978db41d1e588fe3126756fd21c49b809a5e182e9b0256995206768090616/geometry_context-e23044aa9d46d3ec",
+        "bytes": 20650360
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/native_queries-2a0db0dfc691e0c9": {
+        "sha256": "556fdf62d8d251651b700b82dd5312a3c786bc9947b4653ae29fe17c693385aa",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/556fdf62d8d251651b700b82dd5312a3c786bc9947b4653ae29fe17c693385aa/native_queries-2a0db0dfc691e0c9",
+        "bytes": 7183816
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/sdf_failures-6795cc5855e3aa2a": {
+        "sha256": "59e2b9359bd01eff0c735ee44f5044f86a28aac3ed5a0f60249c7c3abd1bbe3c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/59e2b9359bd01eff0c735ee44f5044f86a28aac3ed5a0f60249c7c3abd1bbe3c/sdf_failures-6795cc5855e3aa2a",
+        "bytes": 7310528
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/metaball_failures-bd9ec03d2ae0bfa2": {
+        "sha256": "2dfa1019cc2b6049974a475a64d5a4ef867642611713674a8c8db209368f8329",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/2dfa1019cc2b6049974a475a64d5a4ef867642611713674a8c8db209368f8329/metaball_failures-bd9ec03d2ae0bfa2",
+        "bytes": 1079448
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adapter_boolean_failures-647d5e027e7a4a2d": {
+        "sha256": "0e58b271e067d3f7ae72eaa4c3086c12d76c9494597f5091a1f5ba82187de3aa",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/0e58b271e067d3f7ae72eaa4c3086c12d76c9494597f5091a1f5ba82187de3aa/adapter_boolean_failures-647d5e027e7a4a2d",
+        "bytes": 6966992
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/readme_render_regression-2158006818443dd7": {
+        "sha256": "0b5df14d3fdc3156ee860c35f4e5bf4960c0b398bba35a76a317525478242f12",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/0b5df14d3fdc3156ee860c35f4e5bf4960c0b398bba35a76a317525478242f12/readme_render_regression-2158006818443dd7",
+        "bytes": 1079480
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/slice_projection_contract-87c07f3fb1dca218": {
+        "sha256": "ad05239a476a781bbd0580dd9bf46bd7f620b29051ea4e2d6fb5109096f077ec",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/ad05239a476a781bbd0580dd9bf46bd7f620b29051ea4e2d6fb5109096f077ec/slice_projection_contract-87c07f3fb1dca218",
+        "bytes": 20024776
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/solid_cache-0ee2e9a51e91c667": {
+        "sha256": "365b11c4e434c0f928949bde632f14af29c4a7b001293790811f95598ffd4018",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/365b11c4e434c0f928949bde632f14af29c4a7b001293790811f95598ffd4018/solid_cache-0ee2e9a51e91c667",
+        "bytes": 20344128
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/readme-eb013b3c12ad87f9": {
+        "sha256": "cd60d74dc4d0a7c91ee23556d99f28683888fb5a56d17734969a968ff651d6b4",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/cd60d74dc4d0a7c91ee23556d99f28683888fb5a56d17734969a968ff651d6b4/readme-eb013b3c12ad87f9",
+        "bytes": 1153328
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/exact_linear_modeling-67ad064894a705cc": {
+        "sha256": "b236618e66161788fbc8d62fd034520ac051710dbb21c0bac6b829c8169d9b12",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/b236618e66161788fbc8d62fd034520ac051710dbb21c0bac6b829c8169d9b12/exact_linear_modeling-67ad064894a705cc",
+        "bytes": 18434864
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/stl_import_contracts-cc881cdff64466e7": {
+        "sha256": "7d549e97ec9e2a30720feed082593367bc112496ebc980ce76105d10c1905c06",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/7d549e97ec9e2a30720feed082593367bc112496ebc980ce76105d10c1905c06/stl_import_contracts-cc881cdff64466e7",
+        "bytes": 6918536
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/polyhedral_construction-74b5264bc92676a0": {
+        "sha256": "93411c8063a910a6f60a47e1f8d6383d8fddb47701d7f81a22a98adfd828a2cd",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/93411c8063a910a6f60a47e1f8d6383d8fddb47701d7f81a22a98adfd828a2cd/polyhedral_construction-74b5264bc92676a0",
+        "bytes": 7066728
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/batch_common_cells-3b03208d206e7d15": {
+        "sha256": "83f00b6241abc423f9126433c74e9d3de25d2fab1b1b046cfcd95098a2ebc7fc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/83f00b6241abc423f9126433c74e9d3de25d2fab1b1b046cfcd95098a2ebc7fc/batch_common_cells-3b03208d206e7d15",
+        "bytes": 6876360
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adversarial_fixtures-7cac16853d188e47": {
+        "sha256": "e8dfc336654d20de370452de9fa0062838019eec3242000d932c0f16e3a93d26",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/e8dfc336654d20de370452de9fa0062838019eec3242000d932c0f16e3a93d26/adversarial_fixtures-7cac16853d188e47",
+        "bytes": 1112712
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/export_projection_contracts-3fc6d2c90b0da557": {
+        "sha256": "9d8510109c99b3d3a7f929f7d22f4b499e0f660e287a239f8f585e7399c4d041",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/9d8510109c99b3d3a7f929f7d22f4b499e0f660e287a239f8f585e7399c4d041/export_projection_contracts-3fc6d2c90b0da557",
+        "bytes": 7054816
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/transform_failures-91472f9c88eb3e31": {
+        "sha256": "01b0906df4d0839048c510a812337b993497c0898e429b580a75394e61ad837a",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/01b0906df4d0839048c510a812337b993497c0898e429b580a75394e61ad837a/transform_failures-91472f9c88eb3e31",
+        "bytes": 7101920
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/wasm_certainty-f6e886386f60b159": {
+        "sha256": "567c5281271090754a4e7f03f1252549b40cd74aaa364a6861e16de5b455d428",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/567c5281271090754a4e7f03f1252549b40cd74aaa364a6861e16de5b455d428/wasm_certainty-f6e886386f60b159",
+        "bytes": 18185152
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/curve_metaball_workloads-0e29e16aebf1df6d": {
+        "sha256": "4cdaf6c415369192f50d855ca84ae09c16684c7a07ed2e2e5550e1f61f5adebe",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/4cdaf6c415369192f50d855ca84ae09c16684c7a07ed2e2e5550e1f61f5adebe/curve_metaball_workloads-0e29e16aebf1df6d",
+        "bytes": 1079488
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/obj_export_failures-ce4dacace2decea5": {
+        "sha256": "dc7384e206f6015a4cdbb7c80edb08c59bf9a0afb043e1db02d335b8f0636bfc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/dc7384e206f6015a4cdbb7c80edb08c59bf9a0afb043e1db02d335b8f0636bfc/obj_export_failures-ce4dacace2decea5",
+        "bytes": 1079456
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/planar_operation_failures-a1120b62f3fd45a6": {
+        "sha256": "c1eed52f86575dfc23a0de29f73e6238ede2fab4c99da70b22c48b838a859d8c",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/c1eed52f86575dfc23a0de29f73e6238ede2fab4c99da70b22c48b838a859d8c/planar_operation_failures-a1120b62f3fd45a6",
+        "bytes": 19203600
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adversarial_extrusions-508ff9a2e9f64450": {
+        "sha256": "9f5b82c976aa676e62acac98a383fcb0e7e68e57699742b10dcacd2ca03aa7c1",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/9f5b82c976aa676e62acac98a383fcb0e7e68e57699742b10dcacd2ca03aa7c1/adversarial_extrusions-508ff9a2e9f64450",
+        "bytes": 18614968
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adversarial-6df8e535dba0b183": {
+        "sha256": "fc46bb778ad0c2a876526193a02189705e63c19745db0c289cd2aab0b56bd81d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/fc46bb778ad0c2a876526193a02189705e63c19745db0c289cd2aab0b56bd81d/adversarial-6df8e535dba0b183",
+        "bytes": 19787816
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/primitive_failures-742a86dd1e2f3f89": {
+        "sha256": "b248b36eafa3fb84a99a8a8abc76ef9c9389996cb2bcbf14f022e0a158372ed9",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/b248b36eafa3fb84a99a8a8abc76ef9c9389996cb2bcbf14f022e0a158372ed9/primitive_failures-742a86dd1e2f3f89",
+        "bytes": 7130736
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/rounded_rectangle_fidelity-74c20ef186895b47": {
+        "sha256": "3e241b98ad24f3ab78afa3905ceac108ecdcf07b1f27d20356ea2bdd526fa070",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/3e241b98ad24f3ab78afa3905ceac108ecdcf07b1f27d20356ea2bdd526fa070/rounded_rectangle_fidelity-74c20ef186895b47",
+        "bytes": 18702352
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/exact_path_failures-e5956cab5d647df0": {
+        "sha256": "36ca96d26f2691a6147071b18ee290f697517712931b019469e5087d66972d84",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/36ca96d26f2691a6147071b18ee290f697517712931b019469e5087d66972d84/exact_path_failures-e5956cab5d647df0",
+        "bytes": 19047880
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/bounds_failures-668a4ecc8ac04053": {
+        "sha256": "4a29e9d603c2e8a6998f300b489a82c139b38820fd143fe76b28ac0dd05ed2e3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/4a29e9d603c2e8a6998f300b489a82c139b38820fd143fe76b28ac0dd05ed2e3/bounds_failures-668a4ecc8ac04053",
+        "bytes": 20123472
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/sampled_profile_failures-436ca17e73bcefcd": {
+        "sha256": "7e44c66d2eb6a6a86c1fc751da4365e2302edaa92dc33579e3965df1da05a5e3",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/7e44c66d2eb6a6a86c1fc751da4365e2302edaa92dc33579e3965df1da05a5e3/sampled_profile_failures-436ca17e73bcefcd",
+        "bytes": 19124496
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/sdf_tpms_diagnostics-483d76f2764c04b0": {
+        "sha256": "4a04711b9cfc385e804d50df63a06cf4f194bb9c319d74eb0f08e68d08493c9b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/4a04711b9cfc385e804d50df63a06cf4f194bb9c319d74eb0f08e68d08493c9b/sdf_tpms_diagnostics-483d76f2764c04b0",
+        "bytes": 7486096
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/curve_constructor_failures-99de8c934081766f": {
+        "sha256": "a9374c98de63fcd85bf5994cd5a005528a1aa3ebed8c6bb5f72f6e1037d41eeb",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/a9374c98de63fcd85bf5994cd5a005528a1aa3ebed8c6bb5f72f6e1037d41eeb/curve_constructor_failures-99de8c934081766f",
+        "bytes": 19092856
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/curve_metaball_failures-f5710828f679dbcb": {
+        "sha256": "3c6e52eeddee98bdf20608d7864fae88b97b6cbe70bccfcb8b9d37d4dfaa0e3b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/3c6e52eeddee98bdf20608d7864fae88b97b6cbe70bccfcb8b9d37d4dfaa0e3b/curve_metaball_failures-f5710828f679dbcb",
+        "bytes": 1079480
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/empty_composition-d5bb89963c520cba": {
+        "sha256": "e14d023d57109aebd676702a27dfe7ef3525c7076fed5202dc37acd0bd70e190",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/e14d023d57109aebd676702a27dfe7ef3525c7076fed5202dc37acd0bd70e190/empty_composition-d5bb89963c520cba",
+        "bytes": 7135136
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/text_contracts-ab4d89f1c4d9c906": {
+        "sha256": "752ad49147c5279f0e71d12b10c8db49359219c3fd698cf3144e6f9b7dab499b",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/752ad49147c5279f0e71d12b10c8db49359219c3fd698cf3144e6f9b7dab499b/text_contracts-ab4d89f1c4d9c906",
+        "bytes": 1079432
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adversarial_deep-300d3afdf5a33406": {
+        "sha256": "7c1fe701f1e80e24780d35d2e06cb062b13e402ade4fdee15a6a1d4bfc48c006",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/7c1fe701f1e80e24780d35d2e06cb062b13e402ade4fdee15a6a1d4bfc48c006/adversarial_deep-300d3afdf5a33406",
+        "bytes": 19885072
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/hilbert_trimming-ae82e6e3e573a477": {
+        "sha256": "66265ba005e6403f0650b3b01cb21c9d9643106770265fdde2b30529ec26a83e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/66265ba005e6403f0650b3b01cb21c9d9643106770265fdde2b30529ec26a83e/hilbert_trimming-ae82e6e3e573a477",
+        "bytes": 19018192
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/adversarial_stress-ab3958f475a650fa": {
+        "sha256": "01dcdb541037d9ec30808876351b87137aac9f493470aa620b1b6d1ccaf2b8dc",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/01dcdb541037d9ec30808876351b87137aac9f493470aa620b1b6d1ccaf2b8dc/adversarial_stress-ab3958f475a650fa",
+        "bytes": 19688800
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/minkowski_contracts-d6001fb6ebbaff2e": {
+        "sha256": "b1bac7ab6bd048c0b744f22d92e3f194d14400f10e9bc642a7511c555c12b42d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/b1bac7ab6bd048c0b744f22d92e3f194d14400f10e9bc642a7511c555c12b42d/minkowski_contracts-d6001fb6ebbaff2e",
+        "bytes": 7641600
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/gear_airfoil_failures-8388289238d164fa": {
+        "sha256": "6f834e71f965b1ac216b7cc36f223fd7a104d4e7e2f897e8161c969a74b44d12",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/6f834e71f965b1ac216b7cc36f223fd7a104d4e7e2f897e8161c969a74b44d12/gear_airfoil_failures-8388289238d164fa",
+        "bytes": 19174008
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/strict_drilled_workflows-adcfe1ef49e50433": {
+        "sha256": "69b72f75f7515530da8609e35c32df2b94a58462cc964283fccdf50c45729367",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/69b72f75f7515530da8609e35c32df2b94a58462cc964283fccdf50c45729367/strict_drilled_workflows-adcfe1ef49e50433",
+        "bytes": 7113872
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/distribution_contracts-e918cea2e35e2006": {
+        "sha256": "d80973bf6e1a3036d8fef15703dc5c4dd43826d7db29f35a3089a84d9cd76bc8",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/d80973bf6e1a3036d8fef15703dc5c4dd43826d7db29f35a3089a84d9cd76bc8/distribution_contracts-e918cea2e35e2006",
+        "bytes": 7328984
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-target-v1/release/deps/mesh_boolean_context-9c366bed9194cace": {
+        "sha256": "16089fb7fd4e17b0aa460deed5894dd3a71135e34fc61780ff57a8940a5a273d",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/native-executables-v1/16089fb7fd4e17b0aa460deed5894dd3a71135e34fc61780ff57a8940a5a273d/mesh_boolean_context-9c366bed9194cace",
+        "bytes": 7055304
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "f039ddb74ca6bf316badc7ff732d278f28f408b76605af63ea40db0829ea2e2e",
+    "stderr_sha256": "994540d2a58d62910d27672eec6f426c8376cceac8af6f5fb01f464c6fdb700d",
+    "resources_sha256": "62d80f6cb3dec72eced4bfe0a4eabb6c2ce5b7fbdf1faf83cd3f892114a341bb"
+  },
+  {
+    "name": "strict-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 58.07102400390431,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "cb4052dc84cf5b8d7aa8fa0bc59aec9f376409c62ff9f882210605d8ef61c551",
+    "resources_sha256": "5c9dca36a3b95083758395b53a8a86fa986aceb56e093e65a899af5002afe74b"
+  },
+  {
+    "name": "wasm-feature-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--features",
+      "wasm",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 23.568152555264533,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "18e256aa590b0f7b0d0ebfd063be4a07624d1eff1792eec7b9e1e1ebd6968fcd",
+    "resources_sha256": "4eb788420db2998b5d60e36fd11aa3413063a60256c420e348c765ab1c779019"
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/Cargo.toml",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--all-features",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 37.09987677214667,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": "-D warnings",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "19c92ab8b7ae2b3590e4f7aab80f0d9aed7c892ae58d82f7f55c395115298f97",
+    "resources_sha256": "c376af5205d12a99648ae7f9d552b5b614bdd411ed4114f32a47a58679644ac6"
+  }
+]

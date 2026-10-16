@@ -1,0 +1,20 @@
+{
+  "complete": true,
+  "processes": 95,
+  "rows": 190,
+  "all_exit_codes_zero": true,
+  "matched_export_processes": 60,
+  "candidate_pipeline_processes": 30,
+  "candidate_error_processes": 5,
+  "complete_inputs_and_outputs_byte_equal": true,
+  "independent_integer_oracle_passed": true,
+  "strict_parsed_geometry_pipeline_receipts_preserved": true,
+  "typed_failures_never_returned_models": true,
+  "artifacts_and_probes_unchanged": true,
+  "optimization_claimed": false,
+  "rust_allocator_instrumented": false,
+  "global_resource_bounds_claimed": false,
+  "summary_sha256": "2ee973735c0074a45dbcaa498e31ba68be718feb108f856c63745b2f0d308df7",
+  "commands_sha256": "abb8cc419391fdaa1af09a79ad1f92c6281fef13da2fb0e65544f40c319fb9e7",
+  "rows_sha256": "269b493ff9d9166c2e5e574cdf2f42089d4dc9f4210ddb90a9c50a8d6479042f"
+}

@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s cargo doc --manifest-path /home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/Cargo.toml --locked --release -p csgrs --all-features --no-deps"
+	User time (seconds): 53.99
+	System time (seconds): 6.83
+	Percent of CPU this job got: 166%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:36.48
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1403784
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 2479
+	Minor (reclaiming a frame) page faults: 2597258
+	Voluntary context switches: 10443
+	Involuntary context switches: 2007
+	Swaps: 0
+	File system inputs: 585688
+	File system outputs: 324136
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

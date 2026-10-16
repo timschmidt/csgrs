@@ -1,0 +1,13 @@
+{
+  "complete": true,
+  "all_expected_exits": true,
+  "public_tests": {
+    "passed": 1,
+    "failed": 11,
+    "total": 12
+  },
+  "existing_consumers_passed": true,
+  "typescript_missing_api_and_types_reproduced": true,
+  "sources_and_artifacts_unchanged": true,
+  "completed_targets_modified": false
+}

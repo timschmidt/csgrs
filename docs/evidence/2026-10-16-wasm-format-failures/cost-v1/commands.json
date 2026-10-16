@@ -1,0 +1,3807 @@
+[
+  {
+    "name": "export-binary-0-0-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-0-0-baseline",
+      "export",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1362299071624875,
+    "loadavg_before": "1.17 2.13 2.24 1/3528 4102902",
+    "loadavg_after": "1.17 2.13 2.24 4/3528 4102911",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "0b964f88a9bca00b6ff9861940a0f33dddadcbd48d8530c73a7eb31f90926b66",
+        "bytes": 1155
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "29098aa0646003c7702850746c1bb3af5d4d39e22d4d14926bff6a372a3c3e87",
+        "bytes": 1206
+      }
+    }
+  },
+  {
+    "name": "export-binary-0-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-0-0-candidate",
+      "export",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12608096282929182,
+    "loadavg_before": "1.17 2.13 2.24 3/3528 4102911",
+    "loadavg_after": "1.17 2.13 2.24 3/3528 4102920",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "908ed99df73e3890e797e680d34b0aec72cfd76cf276524ca3aca4552d9936ec",
+        "bytes": 1147
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "7ccf0d6fc8719521d3055e4060fe558ac29b7f7797520b182be957a5dab6d284",
+        "bytes": 1206
+      }
+    }
+  },
+  {
+    "name": "export-binary-0-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-0-1-candidate",
+      "export",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12113506300374866,
+    "loadavg_before": "1.17 2.13 2.24 2/3528 4102920",
+    "loadavg_after": "1.17 2.13 2.24 1/3528 4102929",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "f527716fc4ae087f0a1134171d079926a7b83b5298bee10c1e6e845cddb58fc5",
+        "bytes": 1147
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "425a1bdbf3d26184d773dd93a6d2a6288433dbe8d5e643830ae79a5691ac6ef6",
+        "bytes": 1206
+      }
+    }
+  },
+  {
+    "name": "export-binary-0-1-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-0-1-baseline",
+      "export",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12216360121965408,
+    "loadavg_before": "1.17 2.13 2.24 2/3528 4102929",
+    "loadavg_after": "1.17 2.13 2.24 1/3528 4102938",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "77346b5a7ee9ea2267647b1636a1db4eec94533f55e7b6bb2d095ce096ffd5cd",
+        "bytes": 1152
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "92d4d735fa9906ffef70736ee8b81b68b61f2c977d8d9ee97a98c45a5fa8aaca",
+        "bytes": 1205
+      }
+    }
+  },
+  {
+    "name": "export-binary-0-2-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-0-2-baseline",
+      "export",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12539906008169055,
+    "loadavg_before": "1.17 2.13 2.24 1/3528 4102938",
+    "loadavg_after": "1.17 2.13 2.24 2/3495 4102947",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "2a812fdbcb49ec1fa5016d45d5da27bc0f68ae4679fb0480f5f3fad85a4eed9d",
+        "bytes": 1153
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "1fedf4e90da761f831e43a0492071fb07d147200f4c3a559d7d872dc99eff4ea",
+        "bytes": 1206
+      }
+    }
+  },
+  {
+    "name": "export-binary-0-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-0-2-candidate",
+      "export",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12793441582471132,
+    "loadavg_before": "1.17 2.13 2.24 2/3495 4102947",
+    "loadavg_after": "1.17 2.13 2.24 3/3495 4102956",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "ed799431a699c78d6ca7b0bc7efa4b52de03151caf21b5ff1e4866a297925fcb",
+        "bytes": 1147
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "e52e0a9b330e6fbbe46b5ab238d717dcbbb7c096458d01d784eb9aef22184ae3",
+        "bytes": 1206
+      }
+    }
+  },
+  {
+    "name": "export-binary-0-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-0-3-candidate",
+      "export",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12589959474280477,
+    "loadavg_before": "1.17 2.13 2.24 3/3495 4102956",
+    "loadavg_after": "1.17 2.13 2.24 1/3496 4102966",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "6d2375071923750b9a733fc5476354544fb15fc523ce3072a0bfd5c6b7062acc",
+        "bytes": 1147
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "99f88b7b8e862ff1b50ceb4e4b7678f5ba5d3a262497504288fd5e1213817d46",
+        "bytes": 1205
+      }
+    }
+  },
+  {
+    "name": "export-binary-0-3-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-0-3-baseline",
+      "export",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12325672712177038,
+    "loadavg_before": "1.17 2.13 2.24 1/3496 4102966",
+    "loadavg_after": "1.17 2.13 2.24 2/3526 4103008",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "adf7c94effd59f41cba01f91d669c2098614bda39b1be1acc2b77785bf378dbe",
+        "bytes": 1153
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "4b199cf4f4d72d90b215d6c72c9ff8803f5c99a8cc6e704a2ecba4822febb5ef",
+        "bytes": 1206
+      }
+    }
+  },
+  {
+    "name": "export-binary-0-4-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-0-4-baseline",
+      "export",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12246824102476239,
+    "loadavg_before": "1.17 2.13 2.24 4/3526 4103008",
+    "loadavg_after": "1.17 2.13 2.24 1/3526 4103017",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "8b254cfbff40f5d959948d2d7aaa36bb8d77c4db4db41056c4fa0a4fa6f94ef9",
+        "bytes": 1152
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "e704bd5e7cb69d45ad7b1352a9e00c3084c2474ec0a6cc2bb19282025dc3fca2",
+        "bytes": 1206
+      }
+    }
+  },
+  {
+    "name": "export-binary-0-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-0-4-candidate",
+      "export",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12410705769434571,
+    "loadavg_before": "1.17 2.13 2.24 1/3526 4103017",
+    "loadavg_after": "1.17 2.13 2.24 2/3526 4103026",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "66eb9815935bb6da77dbcba301a693980225c3cd9c0b8790d15c6b72e17c49d9",
+        "bytes": 1147
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "09c1b26c01c82776175fa5b524feb5a6ee820283db2a5be1e350a3c4e6fc7d55",
+        "bytes": 1204
+      }
+    }
+  },
+  {
+    "name": "export-binary-1-0-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-1-0-baseline",
+      "export",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.13098647724837065,
+    "loadavg_before": "1.17 2.13 2.24 2/3526 4103026",
+    "loadavg_after": "1.17 2.13 2.24 3/3526 4103035",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "be468234c73cea112f5ddc61177d148f6033cec1435989cd3becdd45f9924552",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "5c9cdba3e2e65fd093a4a3483c2b43df03d9bc013373b3c42d2c269c42d0290a",
+        "bytes": 1155
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "178b339865d809a0dfb2e022fb5dbee782fbdd15ed31c21029fc8a62098954f4",
+        "bytes": 1208
+      }
+    }
+  },
+  {
+    "name": "export-binary-1-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-1-0-candidate",
+      "export",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.13245396595448256,
+    "loadavg_before": "1.17 2.13 2.24 4/3526 4103035",
+    "loadavg_after": "1.17 2.13 2.24 1/3526 4103044",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "be468234c73cea112f5ddc61177d148f6033cec1435989cd3becdd45f9924552",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "72e4c68c1476c6e1be9f9b74891430bee92964314a2dcc8b753427754b6269e2",
+        "bytes": 1147
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "846b475064355f7b93782d26013fc4918708b0a9e6c52025ab4aca511864901f",
+        "bytes": 1208
+      }
+    }
+  },
+  {
+    "name": "export-binary-1-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-1-1-candidate",
+      "export",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.131110108923167,
+    "loadavg_before": "1.17 2.13 2.24 1/3526 4103044",
+    "loadavg_after": "1.17 2.13 2.24 3/3526 4103053",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "be468234c73cea112f5ddc61177d148f6033cec1435989cd3becdd45f9924552",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "19dda0374b33a7d8b0a1687590ab911ed0bb48480363fe64e936c797882c205f",
+        "bytes": 1147
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "10e18b6211899e04d9f08cba26c094ed431855a545930935d91c7a94bf11a0fe",
+        "bytes": 1208
+      }
+    }
+  },
+  {
+    "name": "export-binary-1-1-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-1-1-baseline",
+      "export",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12883411487564445,
+    "loadavg_before": "1.17 2.13 2.24 5/3526 4103053",
+    "loadavg_after": "1.17 2.13 2.24 3/3525 4103062",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "be468234c73cea112f5ddc61177d148f6033cec1435989cd3becdd45f9924552",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "66ec857e8e6735e94a39b49eafe2a1dcf86eec1c48d0dc2e0ae9aa9979e4a56c",
+        "bytes": 1153
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "25692fbf88cd7fe3a8a406d76b0d494c99928b7d0e1a1a4d136bad09fb3ef65a",
+        "bytes": 1208
+      }
+    }
+  },
+  {
+    "name": "export-binary-1-2-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-1-2-baseline",
+      "export",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.13242783723399043,
+    "loadavg_before": "1.17 2.13 2.24 3/3525 4103062",
+    "loadavg_after": "1.17 2.13 2.24 1/3525 4103071",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "be468234c73cea112f5ddc61177d148f6033cec1435989cd3becdd45f9924552",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "ac211a2a647c067fe3069157987855b085b4ca4d2d73d402ca054722e96f2777",
+        "bytes": 1153
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "df0180ebfcbdd240010fd58c9895c58816cc67fa3e223cc09303d4a7d2a1cec8",
+        "bytes": 1208
+      }
+    }
+  },
+  {
+    "name": "export-binary-1-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-1-2-candidate",
+      "export",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.13018502201884985,
+    "loadavg_before": "1.17 2.13 2.24 1/3525 4103071",
+    "loadavg_after": "1.17 2.13 2.24 1/3525 4103080",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "be468234c73cea112f5ddc61177d148f6033cec1435989cd3becdd45f9924552",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "d9f0e55f2d056868ac80a6e8593ce384b54c26c310a5b085e1ea1026fa7aa663",
+        "bytes": 1146
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "ceb40faaeeca3485d4361bd6ec3456edf199b6baac45b01a185fd22d44b34fc3",
+        "bytes": 1208
+      }
+    }
+  },
+  {
+    "name": "export-binary-1-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-1-3-candidate",
+      "export",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1296905349008739,
+    "loadavg_before": "1.17 2.13 2.24 1/3525 4103080",
+    "loadavg_after": "1.17 2.13 2.24 1/3525 4103089",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "be468234c73cea112f5ddc61177d148f6033cec1435989cd3becdd45f9924552",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "a36bf5f8a316daf3ffe26c08f750db6b1ef01262c7e1989cf15b771ebbe2e678",
+        "bytes": 1147
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "9d4c01ae3c09b7506c5cdcc7fe7e9f3a89ace0918dcdfc81928027ae3e264fcc",
+        "bytes": 1208
+      }
+    }
+  },
+  {
+    "name": "export-binary-1-3-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-1-3-baseline",
+      "export",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.13096914812922478,
+    "loadavg_before": "1.17 2.13 2.24 1/3525 4103089",
+    "loadavg_after": "1.17 2.13 2.24 3/3525 4103098",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "be468234c73cea112f5ddc61177d148f6033cec1435989cd3becdd45f9924552",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "4cca69be8d1cfa954f55b48f082889ecd1f475a0885099218616bcfb48613865",
+        "bytes": 1153
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "f2a18d1a79532cbe800f08c8b767a6ade053b769f7703c677d847a90f6d4ec72",
+        "bytes": 1208
+      }
+    }
+  },
+  {
+    "name": "export-binary-1-4-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-1-4-baseline",
+      "export",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12645523715764284,
+    "loadavg_before": "1.17 2.13 2.24 3/3525 4103098",
+    "loadavg_after": "1.17 2.13 2.24 1/3523 4103107",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "be468234c73cea112f5ddc61177d148f6033cec1435989cd3becdd45f9924552",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "94b3628de0d93d3371923a5225cbfa5aea6601b6aad5f66fb296e056ca58c996",
+        "bytes": 1153
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "830f045b345151e0d71c764f86c89d9624cf7d9fb3f6efc368ff97decf7eebad",
+        "bytes": 1208
+      }
+    }
+  },
+  {
+    "name": "export-binary-1-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-1-4-candidate",
+      "export",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12467127991840243,
+    "loadavg_before": "1.17 2.13 2.24 1/3523 4103107",
+    "loadavg_after": "1.17 2.13 2.24 1/3523 4103116",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "be468234c73cea112f5ddc61177d148f6033cec1435989cd3becdd45f9924552",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "c197859afd4a862c84d0139f7158513f6e7ba15283ce34e949679e19195044ac",
+        "bytes": 1147
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "683bdd1eb30a3eea6f9870c7e186eb2e378e12f1b9b6b5b732a9cfd40d7e0486",
+        "bytes": 1208
+      }
+    }
+  },
+  {
+    "name": "export-binary-256-0-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-256-0-baseline",
+      "export",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17538074171170592,
+    "loadavg_before": "1.17 2.13 2.24 1/3523 4103116",
+    "loadavg_after": "1.32 2.14 2.24 1/3525 4103127",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "e5e7644803b5895b295b56cc43354d50995bbfe3f480eb2f6c5eba3bbb53b056",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "2ee6204097aad491cac9edc2daa477471a8a7e5b5d6cfbdb39e311e6ace35259",
+        "bytes": 1163
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "e0e2b7bad755ee7bd7d4056cf82a467c4ea4112b8a3ee2dfc2ade484cdc7174e",
+        "bytes": 1223
+      }
+    }
+  },
+  {
+    "name": "export-binary-256-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-256-0-candidate",
+      "export",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16945593804121017,
+    "loadavg_before": "1.32 2.14 2.24 4/3525 4103127",
+    "loadavg_after": "1.32 2.14 2.24 3/3524 4103137",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "e5e7644803b5895b295b56cc43354d50995bbfe3f480eb2f6c5eba3bbb53b056",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "74448980e227ac81613aef4ed1618019d0af91f802f01840d1f1ccab2c153be4",
+        "bytes": 1152
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "54d4825567350e514824427e5bbe57af40638f56d32a4eb4c95cd40c35ec2329",
+        "bytes": 1223
+      }
+    }
+  },
+  {
+    "name": "export-binary-256-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-256-1-candidate",
+      "export",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16575424186885357,
+    "loadavg_before": "1.32 2.14 2.24 1/3524 4103137",
+    "loadavg_after": "1.32 2.14 2.24 3/3525 4103147",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "e5e7644803b5895b295b56cc43354d50995bbfe3f480eb2f6c5eba3bbb53b056",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "84d30446f5d04754d8be43441e2d67d16e4d29f97f340f0836a59638861735cb",
+        "bytes": 1152
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "3fbb48a9d05bcf8e9333ceca7b483b8b8fdec2a6e4ad1ad3d5fca125e6ad05b7",
+        "bytes": 1223
+      }
+    }
+  },
+  {
+    "name": "export-binary-256-1-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-256-1-baseline",
+      "export",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1748816859908402,
+    "loadavg_before": "1.32 2.14 2.24 2/3525 4103147",
+    "loadavg_after": "1.32 2.14 2.24 2/3526 4103157",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "e5e7644803b5895b295b56cc43354d50995bbfe3f480eb2f6c5eba3bbb53b056",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "8c80d82b3f6e671659299988b0d5df4d7c545d54a6babbb13aac52e468a44915",
+        "bytes": 1158
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "8b848138d6952d65b20539a9abd35196cc7abd5ab786300c3feb56c5268244c7",
+        "bytes": 1223
+      }
+    }
+  },
+  {
+    "name": "export-binary-256-2-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-256-2-baseline",
+      "export",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.167848848272115,
+    "loadavg_before": "1.32 2.14 2.24 2/3526 4103157",
+    "loadavg_after": "1.32 2.14 2.24 2/3524 4103166",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "e5e7644803b5895b295b56cc43354d50995bbfe3f480eb2f6c5eba3bbb53b056",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "1961a884826f5da884dfd17be554836d0312d52e3124c6ad5b94f4904d07577a",
+        "bytes": 1158
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "f5b7de1744c12c4d0416e2a552bb9ac313a0ae6f3b49e1e75fb9e6a778fc85d6",
+        "bytes": 1225
+      }
+    }
+  },
+  {
+    "name": "export-binary-256-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-256-2-candidate",
+      "export",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16340776393190026,
+    "loadavg_before": "1.32 2.14 2.24 4/3524 4103166",
+    "loadavg_after": "1.32 2.14 2.24 1/3524 4103175",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "e5e7644803b5895b295b56cc43354d50995bbfe3f480eb2f6c5eba3bbb53b056",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "b281b32b4c81d635ba1019935a4d06c3edf04345c28c11ca0a8ce805d1babf51",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "099856a1f753a53d76ec65bc086367b4b6a2a6b38099a3d4757f8b2d789f37be",
+        "bytes": 1223
+      }
+    }
+  },
+  {
+    "name": "export-binary-256-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-256-3-candidate",
+      "export",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16303305933251977,
+    "loadavg_before": "1.32 2.14 2.24 1/3524 4103175",
+    "loadavg_after": "1.32 2.14 2.24 2/3524 4103185",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "e5e7644803b5895b295b56cc43354d50995bbfe3f480eb2f6c5eba3bbb53b056",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "7c90a5a90ccea4169d630d7225311b34b2e6475cc74521c4533913eafb765ca5",
+        "bytes": 1152
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "7a333440effd479f7e0c202fd0f027b0904a2328bca7a6146a83c210875b4c12",
+        "bytes": 1225
+      }
+    }
+  },
+  {
+    "name": "export-binary-256-3-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-256-3-baseline",
+      "export",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16513070510700345,
+    "loadavg_before": "1.32 2.14 2.24 5/3524 4103185",
+    "loadavg_after": "1.32 2.14 2.24 2/3524 4103194",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "e5e7644803b5895b295b56cc43354d50995bbfe3f480eb2f6c5eba3bbb53b056",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "e142b9e96b9cc04320463c862df3f1690533e390bbfe9b0667f4b9447493dd8e",
+        "bytes": 1158
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "6cd9f0f50e5da7fedf7a3e72b9e88a4179622f689b34d20afc565c20101950cd",
+        "bytes": 1223
+      }
+    }
+  },
+  {
+    "name": "export-binary-256-4-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-256-4-baseline",
+      "export",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17101823072880507,
+    "loadavg_before": "1.32 2.14 2.24 3/3524 4103194",
+    "loadavg_after": "1.32 2.14 2.24 7/3525 4103204",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "e5e7644803b5895b295b56cc43354d50995bbfe3f480eb2f6c5eba3bbb53b056",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "5f1d101346fba3d17dfcaa559f452513c3eb02dca212595fcf27e339a84f8779",
+        "bytes": 1158
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "455f749d6aa9ae30919bfcea64a0ef00c01a827100f0af4c1df4143d62056abe",
+        "bytes": 1225
+      }
+    }
+  },
+  {
+    "name": "export-binary-256-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-binary-256-4-candidate",
+      "export",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17384286830201745,
+    "loadavg_before": "1.32 2.14 2.24 4/3525 4103204",
+    "loadavg_after": "1.32 2.14 2.24 4/3524 4103213",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "e5e7644803b5895b295b56cc43354d50995bbfe3f480eb2f6c5eba3bbb53b056",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "fd49d9bcd9c06505740aac6a961627865b6a643808a959f8e9eabbe1cb234998",
+        "bytes": 1152
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "c7e73964a18463def54112361d0a1d91cb0d95f4920968f6c402372fbebc96d2",
+        "bytes": 1225
+      }
+    }
+  },
+  {
+    "name": "export-ascii-0-0-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-0-0-baseline",
+      "export",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1262858989648521,
+    "loadavg_before": "1.32 2.14 2.24 2/3524 4103213",
+    "loadavg_after": "1.32 2.14 2.24 1/3525 4103223",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "1295a8356b28baa459743c4ca6675cac8463249a07b8d5cd2b3c0c014d5bfe59",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "0846a4d398638a23c11425e14f8d5c834c20ddbef568925c241498ae94c382a1",
+        "bytes": 1204
+      }
+    }
+  },
+  {
+    "name": "export-ascii-0-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-0-0-candidate",
+      "export",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12170641403645277,
+    "loadavg_before": "1.32 2.14 2.24 2/3525 4103223",
+    "loadavg_after": "1.32 2.14 2.24 1/3525 4103232",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "36eaa69b191426caa5056c110681d916ddfed6d54a12bbb1b15055298b78b249",
+        "bytes": 1145
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "a6cd5764a7e9e5f9de8927e1a72fd22c224bd01b01da511f4d1a00ecd3a00df7",
+        "bytes": 1204
+      }
+    }
+  },
+  {
+    "name": "export-ascii-0-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-0-1-candidate",
+      "export",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12779600638896227,
+    "loadavg_before": "1.32 2.14 2.24 1/3525 4103232",
+    "loadavg_after": "1.32 2.14 2.24 3/3524 4103241",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "1bed6d76bf6dc58ec593512aa183b418c5789dd4363d8bfb150a5971c9e455e1",
+        "bytes": 1145
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "c2d63c5fcf95dbbccd5246c6f4d4bef0995edc93b1ff3d6eed0af5c07dbd453d",
+        "bytes": 1205
+      }
+    }
+  },
+  {
+    "name": "export-ascii-0-1-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-0-1-baseline",
+      "export",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12653008196502924,
+    "loadavg_before": "1.32 2.14 2.24 2/3524 4103241",
+    "loadavg_after": "1.32 2.14 2.24 1/3524 4103250",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "fb2f231bc947e3173d0bf4d92444e48252a91dc6bc25039ed72587ec376de8ae",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "70fc9ed4dd1ae4778be9d540bec11d35535f03b800d98b874c1a2aefe08335c6",
+        "bytes": 1204
+      }
+    }
+  },
+  {
+    "name": "export-ascii-0-2-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-0-2-baseline",
+      "export",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12605400616303086,
+    "loadavg_before": "1.32 2.14 2.24 1/3524 4103250",
+    "loadavg_after": "1.32 2.14 2.24 3/3524 4103259",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "3048ca6b6a599421fd14b55bea3c3fe1056528add6f20f23877f7864ea993aa8",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "12074bb5346653c2289fbbe2b2c5cf8b043f76ede6ec61f7f9f14a99fddf306f",
+        "bytes": 1205
+      }
+    }
+  },
+  {
+    "name": "export-ascii-0-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-0-2-candidate",
+      "export",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12995948689058423,
+    "loadavg_before": "1.32 2.14 2.24 5/3524 4103259",
+    "loadavg_after": "1.32 2.14 2.24 2/3524 4103268",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "c8b53af2b9cd37061d53547467f8b0a7256b6c941e4e86da70ebe597152ade38",
+        "bytes": 1145
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "96697cea28575cb1c00b3efdff5197174890043655b6a62ed2164a202ad5920c",
+        "bytes": 1205
+      }
+    }
+  },
+  {
+    "name": "export-ascii-0-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-0-3-candidate",
+      "export",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12572963815182447,
+    "loadavg_before": "1.32 2.14 2.24 6/3524 4103268",
+    "loadavg_after": "1.32 2.14 2.24 1/3524 4103278",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "d831914a8f6fb8e6c22756331eb4736ffcc5af3ecab941b1322e942522af687c",
+        "bytes": 1145
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "303d9ae525de72eef0bfb98aec95d2f1bd75b64955a1d91096594db069e1c650",
+        "bytes": 1205
+      }
+    }
+  },
+  {
+    "name": "export-ascii-0-3-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-0-3-baseline",
+      "export",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12293543899431825,
+    "loadavg_before": "1.32 2.14 2.24 1/3524 4103278",
+    "loadavg_after": "1.32 2.14 2.24 2/3525 4103288",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "d829bd96cc581ecf5fb9313d647d9da78a50460255545e53aa5f32222002a8ec",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "1370637cf423d8c975a059fde97c821e10cfc304357600b118d0ca8d29548c63",
+        "bytes": 1204
+      }
+    }
+  },
+  {
+    "name": "export-ascii-0-4-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-0-4-baseline",
+      "export",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12514738691970706,
+    "loadavg_before": "1.32 2.14 2.24 1/3525 4103288",
+    "loadavg_after": "1.32 2.14 2.24 3/3526 4103298",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "690ddfc00bdfdb135cc401f5d836871f62015d4f22fa342dd8f3932f092bdb9a",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "328051ee1457fa38901746bc0cbe2f7975dfcdaebb81989ec2a7c6c0a0f85087",
+        "bytes": 1205
+      }
+    }
+  },
+  {
+    "name": "export-ascii-0-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-0-4-candidate",
+      "export",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12839410407468677,
+    "loadavg_before": "1.32 2.14 2.24 2/3526 4103298",
+    "loadavg_after": "1.32 2.14 2.24 2/3526 4103307",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "bd07b8cd92ddd33326e9f13ad60792916e5a0b1d000a12d95cd33cff31175e8d",
+        "bytes": 1145
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "42f73160b14f600699d5e9ee6af8f965eee4043825ad19669e33acc6a25fcae3",
+        "bytes": 1205
+      }
+    }
+  },
+  {
+    "name": "export-ascii-1-0-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-1-0-baseline",
+      "export",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.13535751681774855,
+    "loadavg_before": "1.32 2.14 2.24 2/3526 4103307",
+    "loadavg_after": "1.32 2.14 2.24 1/3527 4103318",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "38603fd9d23758084b55d1922639a01fc8c15c380eecadea2371ce502d54c647",
+        "bytes": 4015
+      },
+      "resources": {
+        "sha256": "96bd6e640499716951bb02f6932b99242878ccd4d790fcd923cf82352e1834ec",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "2cd76bc6e16703d106e6d5b8f9a93f854f40de26eb1cb3ca6ac98a63f0a34836",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "export-ascii-1-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-1-0-candidate",
+      "export",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.13503301003947854,
+    "loadavg_before": "1.32 2.14 2.24 3/3527 4103318",
+    "loadavg_after": "1.32 2.14 2.24 2/3531 4103331",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "38603fd9d23758084b55d1922639a01fc8c15c380eecadea2371ce502d54c647",
+        "bytes": 4015
+      },
+      "resources": {
+        "sha256": "a38b3923ffaecbc61787086b3cc47ef9785eb98e300d1b7d21fecf0943c8c8bb",
+        "bytes": 1145
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "672f56c07298092eb3f2db55cf6dea6fcff782c2f121b369e7b6e69e68cb59ed",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "export-ascii-1-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-1-1-candidate",
+      "export",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12983759492635727,
+    "loadavg_before": "1.32 2.14 2.24 1/3531 4103331",
+    "loadavg_after": "1.32 2.14 2.24 4/3531 4103340",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "38603fd9d23758084b55d1922639a01fc8c15c380eecadea2371ce502d54c647",
+        "bytes": 4015
+      },
+      "resources": {
+        "sha256": "511ca0dfe9a82381052d83e32b4f9ebff007f975e337c86ef8b4e38ff06688b8",
+        "bytes": 1145
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "25f87c17d680855b7afd63445d649379653c3496f15c7c983be52a0a4dd86678",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "export-ascii-1-1-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-1-1-baseline",
+      "export",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1410191087052226,
+    "loadavg_before": "1.32 2.14 2.24 3/3531 4103340",
+    "loadavg_after": "1.32 2.14 2.24 2/3533 4103351",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "38603fd9d23758084b55d1922639a01fc8c15c380eecadea2371ce502d54c647",
+        "bytes": 4015
+      },
+      "resources": {
+        "sha256": "eb3c8bafcef16154b911fd42643b56151363edaa36e6f5946984ffa22d152dac",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "89adf0dc09c7548317472202ffdc56f5d01f335d50a4bfe0ce077010a4088641",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "export-ascii-1-2-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-1-2-baseline",
+      "export",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1304048071615398,
+    "loadavg_before": "1.32 2.14 2.24 3/3533 4103351",
+    "loadavg_after": "1.32 2.14 2.24 2/3532 4103361",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "38603fd9d23758084b55d1922639a01fc8c15c380eecadea2371ce502d54c647",
+        "bytes": 4015
+      },
+      "resources": {
+        "sha256": "5172d1229b27e0bfe240996c00a38fe293c09201dcea74a8142422ab36020208",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "75574e7242ac1d04da271dacd8a3a0dae08ea48d3c266f94004912572eff0685",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "export-ascii-1-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-1-2-candidate",
+      "export",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12980180932208896,
+    "loadavg_before": "1.32 2.14 2.24 1/3532 4103361",
+    "loadavg_after": "1.32 2.14 2.24 1/3532 4103370",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "38603fd9d23758084b55d1922639a01fc8c15c380eecadea2371ce502d54c647",
+        "bytes": 4015
+      },
+      "resources": {
+        "sha256": "d0b5fdb5dc30bcd63a8bcb797f23dd5419acd676f7e45e8e5497f5f8487d2a17",
+        "bytes": 1144
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "a527c02e484363bfd1b2bd156cc070b9cc9adf267523b60c69aa76ace7a1f346",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "export-ascii-1-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-1-3-candidate",
+      "export",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12665943382307887,
+    "loadavg_before": "1.32 2.14 2.24 5/3532 4103370",
+    "loadavg_after": "1.32 2.14 2.24 1/3532 4103379",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "38603fd9d23758084b55d1922639a01fc8c15c380eecadea2371ce502d54c647",
+        "bytes": 4015
+      },
+      "resources": {
+        "sha256": "ab4a06216688d5ab827c89e56a83e39770c0a8edb4b5717641d95f2424077eb9",
+        "bytes": 1144
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "31ecd905af77c8132c5ce9ea6e40e96edc77ecd7fb64da657e718507b447e82c",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "export-ascii-1-3-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-1-3-baseline",
+      "export",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12732298811897635,
+    "loadavg_before": "1.32 2.14 2.24 2/3532 4103379",
+    "loadavg_after": "1.32 2.14 2.24 1/3532 4103388",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "38603fd9d23758084b55d1922639a01fc8c15c380eecadea2371ce502d54c647",
+        "bytes": 4015
+      },
+      "resources": {
+        "sha256": "99f81c0c2ed7b2bc86eccd119198010d47a8689023df1e54b5bb30cabeb784c5",
+        "bytes": 1150
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "220c87cf366c481cd074aa271fe55cfd58326094e49a5eea35e02ea7b413612f",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "export-ascii-1-4-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-1-4-baseline",
+      "export",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1307602128945291,
+    "loadavg_before": "1.32 2.14 2.24 1/3532 4103388",
+    "loadavg_after": "1.32 2.14 2.24 6/3532 4103397",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "38603fd9d23758084b55d1922639a01fc8c15c380eecadea2371ce502d54c647",
+        "bytes": 4015
+      },
+      "resources": {
+        "sha256": "2eb8be7402bb346d11bb186bd69d0987f4fc9a8d9e052991f32248a98c3dd6cb",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "5926c7aff1af5ce64dfc62b09925c127701e95517e561f521bf64778389f2149",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "export-ascii-1-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-1-4-candidate",
+      "export",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.13522490579634905,
+    "loadavg_before": "1.32 2.14 2.24 1/3532 4103397",
+    "loadavg_after": "1.32 2.14 2.24 2/3532 4103406",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "output.data": {
+        "sha256": "38603fd9d23758084b55d1922639a01fc8c15c380eecadea2371ce502d54c647",
+        "bytes": 4015
+      },
+      "resources": {
+        "sha256": "bd92a7d8dbfd2c4a06b9951a40f57bdad27bf329f86e15d1efaea624a61d460d",
+        "bytes": 1145
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "c0f6a68d7e1227c3d3cea2fdb8966588c2c7563382c747e255df3e26db2a4e60",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "export-ascii-256-0-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-256-0-baseline",
+      "export",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.23812919901683927,
+    "loadavg_before": "1.32 2.14 2.24 1/3532 4103406",
+    "loadavg_after": "1.32 2.14 2.24 2/3531 4103415",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "569e30025ae160247c74f5931e1027df3db721528085a5e0f196d9c970742f50",
+        "bytes": 1038565
+      },
+      "resources": {
+        "sha256": "9ea7250c52e0053cad0768d345a3eaaf9d21758cde1aada8631b8edc52de5881",
+        "bytes": 1160
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "f9265b6d08dac95971f434803be23bde3caeefa11a0376dcabf8638bacfc62c2",
+        "bytes": 1224
+      }
+    }
+  },
+  {
+    "name": "export-ascii-256-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-256-0-candidate",
+      "export",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.22287469496950507,
+    "loadavg_before": "1.32 2.14 2.24 2/3531 4103415",
+    "loadavg_after": "1.32 2.14 2.24 1/3531 4103424",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "569e30025ae160247c74f5931e1027df3db721528085a5e0f196d9c970742f50",
+        "bytes": 1038565
+      },
+      "resources": {
+        "sha256": "1218c5c3933942e97a22db4ca59170eb08295cc8b1b087115ab33358e7694b92",
+        "bytes": 1152
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "c277612d6209c9924eec92fd141920d100e6deabb5cd685e40601e631c615d71",
+        "bytes": 1224
+      }
+    }
+  },
+  {
+    "name": "export-ascii-256-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-256-1-candidate",
+      "export",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.22282178793102503,
+    "loadavg_before": "1.32 2.14 2.24 1/3531 4103424",
+    "loadavg_after": "1.69 2.21 2.26 2/3532 4103434",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "569e30025ae160247c74f5931e1027df3db721528085a5e0f196d9c970742f50",
+        "bytes": 1038565
+      },
+      "resources": {
+        "sha256": "96234e8e7e8855374413ddd6f21d52b13e780a4ad43a525aaa944177d36e5b8c",
+        "bytes": 1152
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "59dbf679a6c6370bd87a4b9326fc59b7cd7a02df2778811e207e5af2ae3ec9ca",
+        "bytes": 1224
+      }
+    }
+  },
+  {
+    "name": "export-ascii-256-1-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-256-1-baseline",
+      "export",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2366064633242786,
+    "loadavg_before": "1.69 2.21 2.26 3/3532 4103434",
+    "loadavg_after": "1.69 2.21 2.26 2/3530 4103444",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "569e30025ae160247c74f5931e1027df3db721528085a5e0f196d9c970742f50",
+        "bytes": 1038565
+      },
+      "resources": {
+        "sha256": "fae8979ae1a2a83f9f31824c62fae1b66cf25a695accfa4381f26cec3d3abaf8",
+        "bytes": 1158
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "7ecbb864dd56ca7282c1a675bdbf2329faafd33c86cdd7a2c6fe6f0fa7be705a",
+        "bytes": 1225
+      }
+    }
+  },
+  {
+    "name": "export-ascii-256-2-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-256-2-baseline",
+      "export",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.22632011864334345,
+    "loadavg_before": "1.69 2.21 2.26 1/3530 4103444",
+    "loadavg_after": "1.69 2.21 2.26 1/3529 4103465",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "569e30025ae160247c74f5931e1027df3db721528085a5e0f196d9c970742f50",
+        "bytes": 1038565
+      },
+      "resources": {
+        "sha256": "b2928204f363e95be9e378a9d41e6825b59796bd658bd8e495d1bb079e07c8eb",
+        "bytes": 1158
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "36d950b968dcd41f030158a3866ad8442a72679ea1693d4e8de5b5cdd1f3b7c8",
+        "bytes": 1224
+      }
+    }
+  },
+  {
+    "name": "export-ascii-256-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-256-2-candidate",
+      "export",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.22163052996620536,
+    "loadavg_before": "1.69 2.21 2.26 2/3529 4103465",
+    "loadavg_after": "1.69 2.21 2.26 1/3531 4103478",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "569e30025ae160247c74f5931e1027df3db721528085a5e0f196d9c970742f50",
+        "bytes": 1038565
+      },
+      "resources": {
+        "sha256": "da890596e952f0f4a387336417ce28cbe3476fcbb97fe3c7cfed82b77cae49a6",
+        "bytes": 1152
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "9efc9ca8b6ec04604019fdb5230c378ec0695513ce7e2b29d518d2d377a00e9e",
+        "bytes": 1224
+      }
+    }
+  },
+  {
+    "name": "export-ascii-256-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-256-3-candidate",
+      "export",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2295413981191814,
+    "loadavg_before": "1.69 2.21 2.26 1/3531 4103478",
+    "loadavg_after": "1.69 2.21 2.26 3/3531 4103487",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "569e30025ae160247c74f5931e1027df3db721528085a5e0f196d9c970742f50",
+        "bytes": 1038565
+      },
+      "resources": {
+        "sha256": "e7ab2da6d47036f8f761d62ed42f804ccf821df7851570163240a59dcffba518",
+        "bytes": 1152
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "0316ed0d496495de4b2dd4597b99e1207a3cac911a55c40cb23c2ee85b6e2f24",
+        "bytes": 1225
+      }
+    }
+  },
+  {
+    "name": "export-ascii-256-3-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-256-3-baseline",
+      "export",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2352715451270342,
+    "loadavg_before": "1.69 2.21 2.26 1/3531 4103487",
+    "loadavg_after": "1.69 2.21 2.26 1/3531 4103496",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "569e30025ae160247c74f5931e1027df3db721528085a5e0f196d9c970742f50",
+        "bytes": 1038565
+      },
+      "resources": {
+        "sha256": "acaae73c59e0d7874b94d24c16735eb8d9866b85c29567e758decc9d53f5ad39",
+        "bytes": 1158
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "5c9b45782803ea0476a14b099d1a91a8c365265c12a22f29ba65e2861664875d",
+        "bytes": 1225
+      }
+    }
+  },
+  {
+    "name": "export-ascii-256-4-baseline",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-256-4-baseline",
+      "export",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.22709796577692032,
+    "loadavg_before": "1.69 2.21 2.26 1/3531 4103496",
+    "loadavg_after": "1.69 2.21 2.26 2/3531 4103505",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "569e30025ae160247c74f5931e1027df3db721528085a5e0f196d9c970742f50",
+        "bytes": 1038565
+      },
+      "resources": {
+        "sha256": "82e6368175a7e018678f93c4ba710044af3ccf3ba9573554f01d7cd7b75101f6",
+        "bytes": 1158
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "550d712dbd625789d78933350e459bbae2c665d46e16ee196b10417e5000e52c",
+        "bytes": 1224
+      }
+    }
+  },
+  {
+    "name": "export-ascii-256-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/export-ascii-256-4-candidate",
+      "export",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2215791940689087,
+    "loadavg_before": "1.69 2.21 2.26 1/3531 4103505",
+    "loadavg_after": "1.69 2.21 2.26 2/3532 4103515",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "output.data": {
+        "sha256": "569e30025ae160247c74f5931e1027df3db721528085a5e0f196d9c970742f50",
+        "bytes": 1038565
+      },
+      "resources": {
+        "sha256": "dd4c657468662e2490b44cd15e3cf61d6b8e761d278d6deb117b39e360ad19d5",
+        "bytes": 1152
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "d561276d39e8c06e73bcad2e9b6bb63a7e4980a1797253776cb7002c089d9b4a",
+        "bytes": 1224
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-0-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-0-0-candidate",
+      "pipeline",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12705768598243594,
+    "loadavg_before": "1.69 2.21 2.26 1/3532 4103515",
+    "loadavg_after": "1.69 2.21 2.26 1/3532 4103524",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "input.stl": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "a99929c564027505dcd5e93e4a4fb24bc695dfc56a0115a33f5192c42ad15ab4",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "ac15767be970ff74bf5c27f848e65415aa028fe966767b9338d3c98ac64cb287",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-0-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-0-1-candidate",
+      "pipeline",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12651151372119784,
+    "loadavg_before": "1.69 2.21 2.26 3/3532 4103524",
+    "loadavg_after": "1.69 2.21 2.26 1/3532 4103533",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "input.stl": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "b2a2728585c8c379f789238dc7b6e9faa238d762fb3435b43b64934abffcdfc8",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "2e8af09886b93ea7fb72faf743322f1a38df7749a25d03cfb24e30d53d9ad330",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-0-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-0-2-candidate",
+      "pipeline",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12312206579372287,
+    "loadavg_before": "1.69 2.21 2.26 2/3532 4103533",
+    "loadavg_after": "1.69 2.21 2.26 3/3532 4103542",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "input.stl": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "dcf97e7916b638e30717bf7720ef412cdfb22ccf9394c9072143289c2fdace43",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "6bde98dfd0bce7e8c5ac22120c0e93385098c9f79b9c820b8bb40b5f3e69e252",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-0-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-0-3-candidate",
+      "pipeline",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12771387211978436,
+    "loadavg_before": "1.69 2.21 2.26 1/3532 4103542",
+    "loadavg_after": "1.69 2.21 2.26 2/3532 4103551",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "input.stl": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "696d38bc1254b06684eace6cfe9569d45e2e70838e84b37750e6cdd40fe3a0e5",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "695a27b79402a66434e20ac2b0b16263796addca9b7461d95496888b05fe17f9",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-0-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-0-4-candidate",
+      "pipeline",
+      "binary",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12734347581863403,
+    "loadavg_before": "1.69 2.21 2.26 2/3532 4103551",
+    "loadavg_after": "1.69 2.21 2.26 1/3532 4103560",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "input.stl": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "output.data": {
+        "sha256": "4fea5e6a3ec5f5474a26d858bc77b6d7bd3ab864ea02d988683fdc648602b248",
+        "bytes": 84
+      },
+      "resources": {
+        "sha256": "390b5f9003086070e6f9d17d8f971aff28286d1c28fe7428506513727f1507f4",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "bc3daf81faf5a871fd6db0cff79d2d01c27d0fcba068428015d21b0e7166ee74",
+        "bytes": 1210
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-1-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-1-0-candidate",
+      "pipeline",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16884157992899418,
+    "loadavg_before": "1.69 2.21 2.26 3/3532 4103560",
+    "loadavg_after": "1.69 2.21 2.26 3/3532 4103569",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "input.stl": {
+        "sha256": "ab0adf8d74145999a4cd65a2326b5934b91950dd349944b45a723f80e1f5e5f8",
+        "bytes": 684
+      },
+      "output.data": {
+        "sha256": "7e37bff6ffff6767e57c8d6f781e296523f185dfe3f7ee00263afcbab23dccd4",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "f30e601a93491df06f0e6ad444b8045cfd8bee0e0b3c26de8131715c8eeae59b",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "49997b7c0fd3b2b6fc3db378d3a61e2d79cebf17f7ed8bc97b51c50b1633758e",
+        "bytes": 1215
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-1-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-1-1-candidate",
+      "pipeline",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16951157478615642,
+    "loadavg_before": "1.69 2.21 2.26 4/3532 4103569",
+    "loadavg_after": "1.69 2.21 2.26 1/3532 4103578",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "input.stl": {
+        "sha256": "ab0adf8d74145999a4cd65a2326b5934b91950dd349944b45a723f80e1f5e5f8",
+        "bytes": 684
+      },
+      "output.data": {
+        "sha256": "7e37bff6ffff6767e57c8d6f781e296523f185dfe3f7ee00263afcbab23dccd4",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "0baf5d8b05fa509544cac98a207ab4fcd5759d2a941b201f22da499f90449eff",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "1aa3dbba85e62d89e1406e2315bece1f606b410e608a8041f5a0acb7869c6ad8",
+        "bytes": 1215
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-1-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-1-2-candidate",
+      "pipeline",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17026911256834865,
+    "loadavg_before": "1.69 2.21 2.26 1/3532 4103578",
+    "loadavg_after": "1.69 2.21 2.26 1/3532 4103587",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "input.stl": {
+        "sha256": "ab0adf8d74145999a4cd65a2326b5934b91950dd349944b45a723f80e1f5e5f8",
+        "bytes": 684
+      },
+      "output.data": {
+        "sha256": "7e37bff6ffff6767e57c8d6f781e296523f185dfe3f7ee00263afcbab23dccd4",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "88165b6842b0df8d946a67b941325c71c564bca799ea63f12deaf28e11ade22f",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "1b92cde24ae0242eec55f7fdfe91b9c7c0cf8920d8653d41ac8034c77382c1d9",
+        "bytes": 1215
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-1-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-1-3-candidate",
+      "pipeline",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1690764049999416,
+    "loadavg_before": "1.69 2.21 2.26 2/3532 4103587",
+    "loadavg_after": "1.69 2.21 2.26 2/3531 4103596",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "input.stl": {
+        "sha256": "ab0adf8d74145999a4cd65a2326b5934b91950dd349944b45a723f80e1f5e5f8",
+        "bytes": 684
+      },
+      "output.data": {
+        "sha256": "7e37bff6ffff6767e57c8d6f781e296523f185dfe3f7ee00263afcbab23dccd4",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "5bbf0b5a56226df925bc7697648f667c1d395d5fe44f865e98e5b27e5a0a2045",
+        "bytes": 1150
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "b8c919f6ceefd592856ed07f4003d33281a86821cf54b049837b29d4e083b5d6",
+        "bytes": 1215
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-1-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-1-4-candidate",
+      "pipeline",
+      "binary",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17134672915562987,
+    "loadavg_before": "1.69 2.21 2.26 2/3531 4103596",
+    "loadavg_after": "1.69 2.21 2.26 3/3531 4103605",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "input.stl": {
+        "sha256": "ab0adf8d74145999a4cd65a2326b5934b91950dd349944b45a723f80e1f5e5f8",
+        "bytes": 684
+      },
+      "output.data": {
+        "sha256": "7e37bff6ffff6767e57c8d6f781e296523f185dfe3f7ee00263afcbab23dccd4",
+        "bytes": 684
+      },
+      "resources": {
+        "sha256": "7aad5b3cc569611bdada90e0dc3446927b9e10edccca9e5b539ab2df9d1f1d98",
+        "bytes": 1151
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "de49bdf21723c0de85cc90be68618a481d4d4813375e8ada2599381f39b8f9eb",
+        "bytes": 1215
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-256-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-256-0-candidate",
+      "pipeline",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.34275296377018094,
+    "loadavg_before": "1.69 2.21 2.26 2/3531 4103605",
+    "loadavg_after": "1.69 2.21 2.26 1/3531 4103614",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "input.stl": {
+        "sha256": "4477b17b6f9a5c4caee3fa57525c948b928dec4d875a238a617214b36d2b154b",
+        "bytes": 153684
+      },
+      "output.data": {
+        "sha256": "5056f5c9242812a46ebf18dd2dffc59b215a7c69da8df533795378733cce9443",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "64f9e60caad483b66305684b88a03aa13d8bc6d95940baea3a9d135c5b86abe0",
+        "bytes": 1157
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "ebbf120699fa92acc59bae6b58213007419510ce3e38ad739af595561a493d86",
+        "bytes": 1243
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-256-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-256-1-candidate",
+      "pipeline",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3320643766783178,
+    "loadavg_before": "1.69 2.21 2.26 2/3531 4103614",
+    "loadavg_after": "1.69 2.21 2.26 1/3532 4103624",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "input.stl": {
+        "sha256": "4477b17b6f9a5c4caee3fa57525c948b928dec4d875a238a617214b36d2b154b",
+        "bytes": 153684
+      },
+      "output.data": {
+        "sha256": "5056f5c9242812a46ebf18dd2dffc59b215a7c69da8df533795378733cce9443",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "71353ea03b528fa6ba65cff7506f06d4b9145fd65fceb19339615707d1f8538e",
+        "bytes": 1157
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "c478d32a46e9c8260a51f4fe7ed8e038cfe2262fb1988c1dfbca83c5b61ae59e",
+        "bytes": 1243
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-256-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-256-2-candidate",
+      "pipeline",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3407629900611937,
+    "loadavg_before": "1.69 2.21 2.26 1/3532 4103624",
+    "loadavg_after": "1.69 2.21 2.26 4/3531 4103633",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "input.stl": {
+        "sha256": "4477b17b6f9a5c4caee3fa57525c948b928dec4d875a238a617214b36d2b154b",
+        "bytes": 153684
+      },
+      "output.data": {
+        "sha256": "5056f5c9242812a46ebf18dd2dffc59b215a7c69da8df533795378733cce9443",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "2ac839e5c6b74f16921b4b40b8f7cba85951b6af62ef5dd61cd58e476bd701b7",
+        "bytes": 1157
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "f59ee1a788d9f0ec2bbab2aae012a00ecb203a967f5fb8c4555825e08c4b3d72",
+        "bytes": 1243
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-256-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-256-3-candidate",
+      "pipeline",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3353483509272337,
+    "loadavg_before": "1.69 2.21 2.26 4/3531 4103633",
+    "loadavg_after": "1.69 2.21 2.26 5/3531 4103642",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "input.stl": {
+        "sha256": "4477b17b6f9a5c4caee3fa57525c948b928dec4d875a238a617214b36d2b154b",
+        "bytes": 153684
+      },
+      "output.data": {
+        "sha256": "5056f5c9242812a46ebf18dd2dffc59b215a7c69da8df533795378733cce9443",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "4b191450d32b0291c8fad532cd686e35adf32e134f913eac8334ecd23150dec8",
+        "bytes": 1157
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "e7239ccc326bff7e2a6dbc4c509190a0d0ea633863afcf4e3798478c6318a5f6",
+        "bytes": 1243
+      }
+    }
+  },
+  {
+    "name": "pipeline-binary-256-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-binary-256-4-candidate",
+      "pipeline",
+      "binary",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3421710031107068,
+    "loadavg_before": "1.69 2.21 2.26 3/3531 4103642",
+    "loadavg_after": "1.69 2.21 2.26 1/3531 4103651",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "input.stl": {
+        "sha256": "4477b17b6f9a5c4caee3fa57525c948b928dec4d875a238a617214b36d2b154b",
+        "bytes": 153684
+      },
+      "output.data": {
+        "sha256": "5056f5c9242812a46ebf18dd2dffc59b215a7c69da8df533795378733cce9443",
+        "bytes": 153684
+      },
+      "resources": {
+        "sha256": "7bda77eea1310f3fb960c4faa89f9d512ad02c6d05bd363b853815eb4e464af8",
+        "bytes": 1157
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "742eead4d963717a0b6341714f2e07d569ab4511a8fbe52477c62882874e3cd7",
+        "bytes": 1243
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-0-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-0-0-candidate",
+      "pipeline",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12832951871678233,
+    "loadavg_before": "1.69 2.21 2.26 3/3531 4103651",
+    "loadavg_after": "1.88 2.24 2.27 1/3533 4103662",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "input.stl": {
+        "sha256": "72d9e7631a41fb1f4d17c1f868b68fc2cbc522ea53e7e79ce38356206512956e",
+        "bytes": 31
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "4a79d89aba86a791f7c0e0cbdc0efe4fb1392a131112d60d5514c73770eec859",
+        "bytes": 1149
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "a1e6fa016185ab08029ea9a2c9ff33cf5cd8f1825853516d9c3f70a7f3e01f8f",
+        "bytes": 1209
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-0-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-0-1-candidate",
+      "pipeline",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1314055579714477,
+    "loadavg_before": "1.88 2.24 2.27 1/3533 4103662",
+    "loadavg_after": "1.88 2.24 2.27 3/3534 4103673",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "input.stl": {
+        "sha256": "72d9e7631a41fb1f4d17c1f868b68fc2cbc522ea53e7e79ce38356206512956e",
+        "bytes": 31
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "36a812a8a66f0618da49fe1bfc969ee22d5c2be6dcfb4a5d99870684701f51af",
+        "bytes": 1149
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "b578531e9acb9f24b65596591a2796866c1e44478da17c1c4a127ea1dbb47939",
+        "bytes": 1209
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-0-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-0-2-candidate",
+      "pipeline",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12591250473633409,
+    "loadavg_before": "1.88 2.24 2.27 2/3534 4103673",
+    "loadavg_after": "1.88 2.24 2.27 3/3534 4103682",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "input.stl": {
+        "sha256": "72d9e7631a41fb1f4d17c1f868b68fc2cbc522ea53e7e79ce38356206512956e",
+        "bytes": 31
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "111ecaa18196c429682a88401fda71ab4440ef0022124cb58f05140888c0bb81",
+        "bytes": 1149
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "9d2d8b0860bea706e514bd3d12dab29e036a25e8f2936c5242bbdcdcb4122bca",
+        "bytes": 1209
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-0-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-0-3-candidate",
+      "pipeline",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1258174809627235,
+    "loadavg_before": "1.88 2.24 2.27 1/3534 4103682",
+    "loadavg_after": "1.88 2.24 2.27 3/3534 4103691",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "input.stl": {
+        "sha256": "72d9e7631a41fb1f4d17c1f868b68fc2cbc522ea53e7e79ce38356206512956e",
+        "bytes": 31
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "5b63d56319ee76ef46502fd8054b0ab791853ff16d18040c7e585847c4891dc5",
+        "bytes": 1149
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "56eafa6e9c435b4252b6a9e7f4cdd71c1f32fee87e3f3ed8b3ce8d2b7226c0d5",
+        "bytes": 1209
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-0-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-0-4-candidate",
+      "pipeline",
+      "ascii",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.12128826091066003,
+    "loadavg_before": "1.88 2.24 2.27 1/3534 4103691",
+    "loadavg_after": "1.88 2.24 2.27 4/3533 4103700",
+    "files": {
+      "input.json": {
+        "sha256": "65586f4359b1ccf98859b43e9345ade04e72b94f4976bda7c0a752680d86b504",
+        "bytes": 40
+      },
+      "input.stl": {
+        "sha256": "72d9e7631a41fb1f4d17c1f868b68fc2cbc522ea53e7e79ce38356206512956e",
+        "bytes": 31
+      },
+      "output.data": {
+        "sha256": "8cf82493505701b7b1792155292c3573363b2401e29516bd112205277240777a",
+        "bytes": 25
+      },
+      "resources": {
+        "sha256": "9b9d5d51c2425f94d80c247d9655f62251688d72f053919912182a8b36e5a82c",
+        "bytes": 1148
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "26a1dfe3c2ddf8ede2f4577b7370cfb40b8373f108293bdba5db1f0e7789e7de",
+        "bytes": 1209
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-1-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-1-0-candidate",
+      "pipeline",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17631704825907946,
+    "loadavg_before": "1.88 2.24 2.27 3/3533 4103700",
+    "loadavg_after": "1.88 2.24 2.27 1/3532 4103709",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "input.stl": {
+        "sha256": "7029906ab259bb42b146ecd2c9bdc652af1f29bf13258336570d9255cec50054",
+        "bytes": 1063
+      },
+      "output.data": {
+        "sha256": "37895889caa61697ba019aa4f1fb8c91c593859e3677bc5c1b16d0bb1865e763",
+        "bytes": 4017
+      },
+      "resources": {
+        "sha256": "c4c18bfc11f055283dc45adf8ce2e1e38741c1502297327a90a9787ee7e0ed77",
+        "bytes": 1149
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "974ecb247bfee40477f1b031460479c40c44f71280ac96d4a748389418eabd12",
+        "bytes": 1216
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-1-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-1-1-candidate",
+      "pipeline",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16606831131502986,
+    "loadavg_before": "1.88 2.24 2.27 1/3532 4103709",
+    "loadavg_after": "1.88 2.24 2.27 1/3533 4103719",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "input.stl": {
+        "sha256": "7029906ab259bb42b146ecd2c9bdc652af1f29bf13258336570d9255cec50054",
+        "bytes": 1063
+      },
+      "output.data": {
+        "sha256": "37895889caa61697ba019aa4f1fb8c91c593859e3677bc5c1b16d0bb1865e763",
+        "bytes": 4017
+      },
+      "resources": {
+        "sha256": "1bd4364a67d9fe63617783f89a4ed9e66ea67f368310714a90d5a6234d777bdd",
+        "bytes": 1149
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "3b2c7fde15e516c767e82fa243abf4b7544eae4e1a8ce4eb6ad05b3532301377",
+        "bytes": 1216
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-1-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-1-2-candidate",
+      "pipeline",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16644866485148668,
+    "loadavg_before": "1.88 2.24 2.27 1/3533 4103719",
+    "loadavg_after": "1.88 2.24 2.27 1/3533 4103728",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "input.stl": {
+        "sha256": "7029906ab259bb42b146ecd2c9bdc652af1f29bf13258336570d9255cec50054",
+        "bytes": 1063
+      },
+      "output.data": {
+        "sha256": "37895889caa61697ba019aa4f1fb8c91c593859e3677bc5c1b16d0bb1865e763",
+        "bytes": 4017
+      },
+      "resources": {
+        "sha256": "a9d423f85dd56461854d51aa5dde9f1df25117fce2d017a48432144a28d1a56d",
+        "bytes": 1149
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "c1cc7c60e22a563cfbfa209dfc1311aab8f33ba0709f95b7959641b2d8c53aad",
+        "bytes": 1216
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-1-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-1-3-candidate",
+      "pipeline",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1722232890315354,
+    "loadavg_before": "1.88 2.24 2.27 2/3533 4103728",
+    "loadavg_after": "1.88 2.24 2.27 4/3533 4103737",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "input.stl": {
+        "sha256": "7029906ab259bb42b146ecd2c9bdc652af1f29bf13258336570d9255cec50054",
+        "bytes": 1063
+      },
+      "output.data": {
+        "sha256": "37895889caa61697ba019aa4f1fb8c91c593859e3677bc5c1b16d0bb1865e763",
+        "bytes": 4017
+      },
+      "resources": {
+        "sha256": "4fd45bb444ae90a194656bdbad575a12868daa3c9c44489c569d2b6b9daeb626",
+        "bytes": 1149
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "d6014a3a941d0a171f4684b67d64d8d485162c13833740fc33399d0e682c3e8a",
+        "bytes": 1216
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-1-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-1-4-candidate",
+      "pipeline",
+      "ascii",
+      "1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1670985408127308,
+    "loadavg_before": "1.88 2.24 2.27 1/3533 4103737",
+    "loadavg_after": "1.88 2.24 2.27 1/3533 4103746",
+    "files": {
+      "input.json": {
+        "sha256": "a09a8f3b248a74edd74f8230f42e7ed1105b8565034990bc79cc580bbd1e819c",
+        "bytes": 469
+      },
+      "input.stl": {
+        "sha256": "7029906ab259bb42b146ecd2c9bdc652af1f29bf13258336570d9255cec50054",
+        "bytes": 1063
+      },
+      "output.data": {
+        "sha256": "37895889caa61697ba019aa4f1fb8c91c593859e3677bc5c1b16d0bb1865e763",
+        "bytes": 4017
+      },
+      "resources": {
+        "sha256": "da8b37d5cfe5e4b6103746aa031dd6a3ad67d265e5951e335e6c0e1e570b95ce",
+        "bytes": 1149
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "57bc953267c153e23553ec2ebc0d3c69066f3612b6030089de2aedbc8f0b896b",
+        "bytes": 1216
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-256-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-256-0-candidate",
+      "pipeline",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.3946993206627667,
+    "loadavg_before": "1.88 2.24 2.27 1/3533 4103746",
+    "loadavg_after": "1.88 2.24 2.27 1/3532 4103755",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "input.stl": {
+        "sha256": "913c54e6ca707223c93abc29acb116df0332f0163995502cc36f48ca7898a621",
+        "bytes": 281323
+      },
+      "output.data": {
+        "sha256": "a17b53867819c4b8c22367af295b5d02f296b29ae252aa69c69d72b4580882b3",
+        "bytes": 1039077
+      },
+      "resources": {
+        "sha256": "8cc4c691e430762c31e63f6125613cd5edb9c3f51cd6cb15a214cf39615f41e5",
+        "bytes": 1156
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "79cb23e9005bb83d1a42613336979587de9cebfe963191e9ac31f1a87d8c604b",
+        "bytes": 1243
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-256-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-256-1-candidate",
+      "pipeline",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.4001189391128719,
+    "loadavg_before": "1.88 2.24 2.27 1/3532 4103755",
+    "loadavg_after": "1.88 2.24 2.27 1/3532 4103764",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "input.stl": {
+        "sha256": "913c54e6ca707223c93abc29acb116df0332f0163995502cc36f48ca7898a621",
+        "bytes": 281323
+      },
+      "output.data": {
+        "sha256": "a17b53867819c4b8c22367af295b5d02f296b29ae252aa69c69d72b4580882b3",
+        "bytes": 1039077
+      },
+      "resources": {
+        "sha256": "669813eff7b77ad2d8d1d3bd7a7e9ee95a0619d09a2ea5408d3119884c775a5a",
+        "bytes": 1156
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "2bdfc6224ecbcbc84753a1c294980ad92b5ec1a77558eae835db22fa59a904ff",
+        "bytes": 1243
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-256-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-256-2-candidate",
+      "pipeline",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.4102041278965771,
+    "loadavg_before": "1.88 2.24 2.27 1/3532 4103764",
+    "loadavg_after": "1.88 2.24 2.27 1/3532 4103773",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "input.stl": {
+        "sha256": "913c54e6ca707223c93abc29acb116df0332f0163995502cc36f48ca7898a621",
+        "bytes": 281323
+      },
+      "output.data": {
+        "sha256": "a17b53867819c4b8c22367af295b5d02f296b29ae252aa69c69d72b4580882b3",
+        "bytes": 1039077
+      },
+      "resources": {
+        "sha256": "0d8cac5955c90befb72a62cfb16f5234dabede4121d172beac7ec03ce0b9d57a",
+        "bytes": 1156
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "89715a60bf71e4a7aa9c0d6b27cff47c3798e01917058c302d7e3f5d283ba94a",
+        "bytes": 1243
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-256-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-256-3-candidate",
+      "pipeline",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.40791698498651385,
+    "loadavg_before": "1.88 2.24 2.27 2/3532 4103773",
+    "loadavg_after": "1.88 2.24 2.27 1/3533 4103783",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "input.stl": {
+        "sha256": "913c54e6ca707223c93abc29acb116df0332f0163995502cc36f48ca7898a621",
+        "bytes": 281323
+      },
+      "output.data": {
+        "sha256": "a17b53867819c4b8c22367af295b5d02f296b29ae252aa69c69d72b4580882b3",
+        "bytes": 1039077
+      },
+      "resources": {
+        "sha256": "5ec2b100ffd185c3c94cc39642931f29df2bc96a143dfb5531854bcecd26c425",
+        "bytes": 1156
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "c0e9c0440d0cae8468768c6ab27ff4758c20da7362688437fd3c2511f243e0ac",
+        "bytes": 1243
+      }
+    }
+  },
+  {
+    "name": "pipeline-ascii-256-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/pipeline-ascii-256-4-candidate",
+      "pipeline",
+      "ascii",
+      "256"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.40332079911604524,
+    "loadavg_before": "1.88 2.24 2.27 1/3533 4103783",
+    "loadavg_after": "1.88 2.24 2.27 1/3533 4103792",
+    "files": {
+      "input.json": {
+        "sha256": "a45839ea516b675cd5c31f16f5fbecaba9b4ebc805d1bf207026f0d6035a4338",
+        "bytes": 154181
+      },
+      "input.stl": {
+        "sha256": "913c54e6ca707223c93abc29acb116df0332f0163995502cc36f48ca7898a621",
+        "bytes": 281323
+      },
+      "output.data": {
+        "sha256": "a17b53867819c4b8c22367af295b5d02f296b29ae252aa69c69d72b4580882b3",
+        "bytes": 1039077
+      },
+      "resources": {
+        "sha256": "76a781701f1dc889bde0c08a15ce8d480a78f170d7a07b0955afff6ab6e7a3b4",
+        "bytes": 1156
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "dae4b1819dbb52e4b7b0eeb44aff5b3a60e78e03f7909201434d6d2cb9233f47",
+        "bytes": 1243
+      }
+    }
+  },
+  {
+    "name": "errors-none-0-0-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/errors-none-0-0-candidate",
+      "errors",
+      "none",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.14020832488313317,
+    "loadavg_before": "1.88 2.24 2.27 1/3533 4103792",
+    "loadavg_after": "1.88 2.24 2.27 1/3533 4103801",
+    "files": {
+      "errors.json": {
+        "sha256": "497d44b52a106e744b7826d0492118119e4f395990bfb728973f69d665431cd4",
+        "bytes": 16066
+      },
+      "resources": {
+        "sha256": "0491d455c9beaf65575abee1fa422d90a552edb8f049c3d786381f87d166889c",
+        "bytes": 1144
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "208353ad79828565f93d74bb23cbb29f77676ee1b93fa52fa0c3fac64fd5a811",
+        "bytes": 1196
+      }
+    }
+  },
+  {
+    "name": "errors-none-0-1-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/errors-none-0-1-candidate",
+      "errors",
+      "none",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.14433274185284972,
+    "loadavg_before": "1.88 2.24 2.27 1/3533 4103801",
+    "loadavg_after": "1.88 2.24 2.27 2/3531 4103810",
+    "files": {
+      "errors.json": {
+        "sha256": "497d44b52a106e744b7826d0492118119e4f395990bfb728973f69d665431cd4",
+        "bytes": 16066
+      },
+      "resources": {
+        "sha256": "1c21ad71d92a598611c2aec2c427d0ded394d2c1f7a372a57b2c1055edd63380",
+        "bytes": 1143
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "aa7e1ad43daec141c9d154b89bb8c39d717afa591fb7e7522920f96560a2384a",
+        "bytes": 1196
+      }
+    }
+  },
+  {
+    "name": "errors-none-0-2-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/errors-none-0-2-candidate",
+      "errors",
+      "none",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.14556819712743163,
+    "loadavg_before": "1.88 2.24 2.27 1/3531 4103810",
+    "loadavg_after": "1.88 2.24 2.27 1/3531 4103819",
+    "files": {
+      "errors.json": {
+        "sha256": "497d44b52a106e744b7826d0492118119e4f395990bfb728973f69d665431cd4",
+        "bytes": 16066
+      },
+      "resources": {
+        "sha256": "0a05107a55c56d438a2986a854174ea779377586eec60df2684fa7609d16dbe1",
+        "bytes": 1143
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "bc4e04b303589d1dd29575466ecdac86ebe006fbd07a01f5238bc6ed45862da8",
+        "bytes": 1196
+      }
+    }
+  },
+  {
+    "name": "errors-none-0-3-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/errors-none-0-3-candidate",
+      "errors",
+      "none",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.14603456435725093,
+    "loadavg_before": "1.88 2.24 2.27 1/3531 4103819",
+    "loadavg_after": "1.88 2.24 2.27 2/3531 4103828",
+    "files": {
+      "errors.json": {
+        "sha256": "497d44b52a106e744b7826d0492118119e4f395990bfb728973f69d665431cd4",
+        "bytes": 16066
+      },
+      "resources": {
+        "sha256": "e63d8d881dd9f0cbc5e076d40ef4ce334a429cd95200eeba79f999ff0f84c4b6",
+        "bytes": 1143
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "9bce1ffa494f2da55e7e4228ee8e9d8eab8c4a878325df082eb2f33d1dc68949",
+        "bytes": 1197
+      }
+    }
+  },
+  {
+    "name": "errors-none-0-4-candidate",
+    "command": [
+      "node",
+      "--expose-gc",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/cost_probe_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/wasm-target-v1/wasm-bindings-node/csgrs.js",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/cost-v1/errors-none-0-4-candidate",
+      "errors",
+      "none",
+      "0"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.14646039623767138,
+    "loadavg_before": "1.88 2.24 2.27 1/3531 4103828",
+    "loadavg_after": "1.88 2.24 2.27 1/3531 4103837",
+    "files": {
+      "errors.json": {
+        "sha256": "497d44b52a106e744b7826d0492118119e4f395990bfb728973f69d665431cd4",
+        "bytes": 16066
+      },
+      "resources": {
+        "sha256": "42d3af44a2c722c77863c8c53ed92b4357b1e9bc7961bd365cf3e23c4cae6bbb",
+        "bytes": 1143
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stdout": {
+        "sha256": "6f5d07a7e66a6794305df20d0e94d3e9f025535937de0ff37a71eeb3c7f220ea",
+        "bytes": 1196
+      }
+    }
+  }
+]

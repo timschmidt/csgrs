@@ -1,0 +1,41 @@
+    Checking num-rational v0.4.2
+    Checking libc v0.2.186
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/crates/hyperreal)
+    Checking once_cell v1.21.4
+    Checking getrandom v0.3.4
+    Checking arrayvec v0.7.6
+    Checking polycool v0.4.0
+    Checking rand_core v0.9.5
+    Checking linux-raw-sys v0.12.1
+    Checking smallvec v1.15.1
+    Checking slab v0.4.12
+    Checking futures-core v0.3.32
+    Checking bitflags v2.11.1
+    Checking rustix v1.1.4
+    Checking futures-util v0.3.32
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/crates/hyperlattice)
+    Checking kurbo v0.13.1
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/crates/hyperlimit)
+    Checking getrandom v0.4.2
+    Checking wasm-bindgen v0.2.126
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/crates/hypersolve)
+    Checking svgtypes v0.16.1
+    Checking tempfile v3.27.0
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/crates/hypermesh)
+    Checking js-sys v0.3.103
+    Checking wait-timeout v0.2.1
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/crates/hypercurve)
+    Checking serde-wasm-bindgen v0.6.5
+    Checking rusty-fork v0.3.1
+    Checking rand_chacha v0.9.0
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/crates/hyperphysics)
+    Checking hypersdf v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1/crates/hypersdf)
+    Checking rand v0.9.4
+    Checking rand_xorshift v0.4.0
+    Checking glam v0.30.10
+    Checking proptest v1.11.0
+    Checking boolmesh v0.1.9
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1)
+    Finished `release` profile [optimized] target(s) in 23.12s

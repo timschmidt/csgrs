@@ -5,6 +5,7 @@ use crate::wasm::{
     context_js::{GeometryBoolResultJs, GeometryBoundsResultJs, GeometryQueryStatusJs},
     curve_js::GeometryMeshResultJs,
     geometry_context,
+    io_error_js::io_error,
 };
 use crate::wasm::{
     matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js, real_from_js, real_to_js,
@@ -82,11 +83,16 @@ impl MeshJs {
         solid::empty().into()
     }
 
+    /// Import finite coordinate triples and in-range index triples.
+    ///
+    /// Invalid buffers throw `GeometryError` with code `invalid_input` before
+    /// constructing a native mesh. Topology is validated by consuming operations.
     #[wasm_bindgen(js_name = fromArrays)]
     pub fn from_arrays(positions: Vec<f64>, indices: Vec<u32>) -> Result<Self, JsValue> {
         if !positions.len().is_multiple_of(3) || !indices.len().is_multiple_of(3) {
-            return Err(JsValue::from_str(
+            return Err(geometry_exception(
                 "positions and indices must contain complete triples",
+                crate::errors::ValidationErrorKind::InvalidInput,
             ));
         }
         let positions = positions
@@ -101,7 +107,12 @@ impl MeshJs {
                 ))
             })
             .collect::<Option<Vec<_>>>()
-            .ok_or_else(|| JsValue::from_str("positions must be finite"))?;
+            .ok_or_else(|| {
+                geometry_exception(
+                    "positions must be finite",
+                    crate::errors::ValidationErrorKind::InvalidInput,
+                )
+            })?;
         let triangles = indices
             .as_chunks::<3>()
             .0
@@ -116,7 +127,12 @@ impl MeshJs {
                     .then(|| Triangle::new(a, b, c))
             })
             .collect::<Option<Vec<_>>>()
-            .ok_or_else(|| JsValue::from_str("an index is outside the position array"))?;
+            .ok_or_else(|| {
+                geometry_exception(
+                    "an index is outside the position array",
+                    crate::errors::ValidationErrorKind::InvalidInput,
+                )
+            })?;
         Ok(TriangleMesh::new(positions, triangles).into())
     }
 
@@ -606,14 +622,39 @@ impl MeshJs {
         Ok(object.into())
     }
 
-    #[wasm_bindgen(js_name = toSTLBinary)]
-    pub fn to_stl_binary(&self) -> Result<Vec<u8>, JsValue> {
-        crate::io::stl::to_stl_binary(&self.inner, "mesh").map_err(js_error)
+    /// Import binary or ASCII STL through strict native closed-PWN validation.
+    ///
+    /// Canonical empty geometry is accepted. Coordinates parse as binary32 and
+    /// are promoted exactly; validation certifies that parsed geometry, not the
+    /// original exact construction or analytic source. Manifoldness is a separate
+    /// claim. Failure throws `GeometryIoError`; native validation remains in its
+    /// typed `cause`, and no mesh is returned. The byte buffer is not retained.
+    #[wasm_bindgen(js_name = fromSTL)]
+    pub fn from_stl(data: &[u8]) -> Result<Self, JsValue> {
+        crate::io::stl::from_stl(data)
+            .map(Into::into)
+            .map_err(|error| io_error(error, "STL"))
     }
 
+    /// Serialize binary32 STL, rejecting collapsed projected triangles.
+    ///
+    /// Failure throws an ordinary `GeometryIoError` object with a native `code`,
+    /// `format`, and variant fields. This replaces the former string exception;
+    /// inspect `message` for text and `code` for the machine-readable variant.
+    #[wasm_bindgen(js_name = toSTLBinary)]
+    pub fn to_stl_binary(&self) -> Result<Vec<u8>, JsValue> {
+        crate::io::stl::to_stl_binary(&self.inner, "mesh")
+            .map_err(|error| io_error(error, "STL"))
+    }
+
+    /// Serialize exact decimal spellings of the finite binary64 projection.
+    ///
+    /// Failure throws `GeometryIoError` with queryable native fields rather than
+    /// a string. Reimport subsequently quantizes coordinates to binary32.
     #[wasm_bindgen(js_name = toSTLASCII)]
     pub fn to_stl_ascii(&self) -> Result<String, JsValue> {
-        crate::io::stl::to_stl_ascii(&self.inner, "mesh").map_err(js_error)
+        crate::io::stl::to_stl_ascii(&self.inner, "mesh")
+            .map_err(|error| io_error(error, "STL"))
     }
 
     pub fn subdivide(&self, levels: u32) -> Result<Self, JsValue> {

@@ -1,0 +1,312 @@
+TAP version 13
+# Subtest: array length failures retain the invalid-input category
+not ok 1 - array length failures retain the invalid-input category
+  ---
+  duration_ms: 13.614676
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:9:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    geometryError (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:33:10)
+    /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:95:5
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:19:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: array nonfinite failures retain the invalid-input category
+not ok 2 - array nonfinite failures retain the invalid-input category
+  ---
+  duration_ms: 0.629877
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:9:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    geometryError (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:33:10)
+    /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:101:5
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:19:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: array index failures retain the invalid-input category
+not ok 3 - array index failures retain the invalid-input category
+  ---
+  duration_ms: 0.402782
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:9:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    geometryError (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:33:10)
+    /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:107:5
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:19:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: binary projection collapse retains typed format detail
+not ok 4 - binary projection collapse retains typed format detail
+  ---
+  duration_ms: 4.009905
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:9:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    ioError (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:40:10)
+    /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:117:5
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:19:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: binary overflow retains coordinate field and target
+not ok 5 - binary overflow retains coordinate field and target
+  ---
+  duration_ms: 0.306379
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:9:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    ioError (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:40:10)
+    /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:125:3
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:19:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: ASCII export failure retains typed format detail
+not ok 6 - ASCII export failure retains typed format detail
+  ---
+  duration_ms: 0.470858
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:9:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    ioError (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:40:10)
+    /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:133:3
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:19:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: successful exports and recovery remain unchanged
+ok 7 - successful exports and recovery remain unchanged
+  ---
+  duration_ms: 4.536159
+  type: 'test'
+  ...
+# Subtest: canonical empty native imports compose
+not ok 8 - canonical empty native imports compose
+  ---
+  duration_ms: 0.261982
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:9:3'
+  failureType: 'testCodeFailure'
+  error: 'MeshJs.fromSTL is not a function'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:152:31
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:19:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: both native STL encodings reimport and compose at ordinary and tiny scales
+not ok 9 - both native STL encodings reimport and compose at ordinary and tiny scales
+  ---
+  duration_ms: 0.907368
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:9:3'
+  failureType: 'testCodeFailure'
+  error: 'MeshJs.fromSTL is not a function'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TypeError'
+  stack: |-
+    /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:168:36
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:19:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: malformed bytes retain the parser IO category
+not ok 10 - malformed bytes retain the parser IO category
+  ---
+  duration_ms: 1.502997
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:9:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'TypeError'
+    - 'GeometryIoError'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'GeometryIoError'
+  actual: 'TypeError'
+  operator: 'strictEqual'
+  stack: |-
+    ioError (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:41:10)
+    /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:191:3
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:19:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: nonfinite STL coordinates remain malformed input
+not ok 11 - nonfinite STL coordinates remain malformed input
+  ---
+  duration_ms: 0.529623
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:9:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'TypeError'
+    - 'GeometryIoError'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'GeometryIoError'
+  actual: 'TypeError'
+  operator: 'strictEqual'
+  stack: |-
+    ioError (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:41:10)
+    /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:203:5
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:19:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: invalid STL topology retains its validation cause after disposal
+not ok 12 - invalid STL topology retains its validation cause after disposal
+  ---
+  duration_ms: 0.594169
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:9:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'TypeError'
+    - 'GeometryIoError'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'GeometryIoError'
+  actual: 'TypeError'
+  operator: 'strictEqual'
+  stack: |-
+    ioError (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:41:10)
+    /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:219:5
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs:19:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 1
+# fail 11
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 56.780796

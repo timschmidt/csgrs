@@ -1,0 +1,1465 @@
+{
+  "status": "kept: native STL imports and typed format/array failures through real WASM consumers",
+  "base_commit": "3d335db43eac00d003bc2fb0ed1beb2a9c19d79b",
+  "owning_layers": [
+    "CSGRS WASM exception structure and array ingress",
+    "unchanged CSGRS STL parser and Hypermesh strict closed-PWN validation"
+  ],
+  "properties": [
+    "P6",
+    "P9",
+    "P18",
+    "P19",
+    "P25",
+    "P26",
+    "P28",
+    "P30",
+    "P35",
+    "P36",
+    "P37"
+  ],
+  "implementation_sha256": {
+    "src/wasm/mod.rs": "6f8a4101e44488865fe1be4be1713562eb410424449daa75f8e23c772adf0773",
+    "src/wasm/mesh_js.rs": "66067bc2eee3b3bbd4cc2e84cf2161298532a83fdf666a9635b676938d29bbe7",
+    "scripts/test-wasm-bindings.sh": "4ca3d896a5f5d2c7e2b6f55ad380e42281361c103dbc2d0bef319fdec0b887e1",
+    "tests/wasm/export_projection.cjs": "b578001c4f39882273514d29720b9dad29734090a290ede603305e8ab52ca3f1",
+    "src/wasm/io_error_js.rs": "152dcabf062fbcf87b3fb4db29407e9ef61c160022493655580573039265189d",
+    "tests/wasm/io_contracts.cjs": "0eb12ed3a8f6fe08efa4576a897fe667a9323407484d45a86dc7e6fffb1dee23",
+    "tests/wasm/io_contracts.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e"
+  },
+  "baseline": {
+    "complete": true,
+    "all_expected_exits": true,
+    "public_tests": {
+      "passed": 1,
+      "failed": 11,
+      "total": 12
+    },
+    "existing_consumers_passed": true,
+    "typescript_missing_api_and_types_reproduced": true,
+    "sources_and_artifacts_unchanged": true,
+    "completed_targets_modified": false
+  },
+  "candidate": {
+    "public_tests": {
+      "passed": 12,
+      "failed": 0
+    },
+    "cargo_tests": {
+      "root-all": {
+        "passed": 429,
+        "failed": 0,
+        "ignored": 1,
+        "test_binaries_and_doctest_groups": 46
+      },
+      "wasm-feature": {
+        "passed": 346,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries_and_doctest_groups": 43
+      }
+    },
+    "native_commands": 6,
+    "wasm_commands": 3,
+    "typescript_compiled_and_executed": true,
+    "existing_js_and_typescript_consumers_preserved": true
+  },
+  "native_delegation": "MeshJs.fromSTL calls unchanged crate::io::stl::from_stl. Exports retain their existing native implementations. No adapter geometry kernel or duplicated validation is introduced.",
+  "numeric_claim": "Finite binary32 coordinates parsed from either STL encoding are promoted exactly. Strict import and subsequent strict operations establish claims about this parsed mesh.",
+  "topology_claim": "Canonical empty or native certified closed-PWN input, including disconnected components, holes, inversion and winding multiplicity. This is not a manifoldness assertion. fromArrays retains its raw-buffer domain and defers topology to consuming operations.",
+  "fidelity_limit": "ASCII import quantizes to binary32 too. A reimported mesh and its strict receipt do not certify preservation of exact source coordinates, analytic intent or inherited construction provenance. No new end-to-end provenance carrier is introduced.",
+  "exception_migration": "fromArrays now throws ordinary GeometryError/invalid_input objects; STL exports and the new importer throw GeometryIoError objects instead of strings. Catch error.message for text, discriminate error.code for native variant data, and inspect construction error.cause.code for the retained validation category. Error objects are owned by JavaScript and require no Wasm free call.",
+  "typed_error_scope": "The generated TypeScript union describes all twelve native IO variants under all features. Actual public STL tests exercise geometry, unrepresentable_coordinate, std_io, malformed_input and construction, plus GeometryError/invalid_input array ingress. All-feature native compilation checks other match arms; no runtime coverage of unreachable format variants or OS-specific errors is claimed.",
+  "diagnostic_scope": "Nested construction causes reuse existing ValidationErrorKind categories and native display text. They do not serialize every native proof witness or underlying Rust cause field.",
+  "ownership_evidence": "Input-byte mutation after import does not alter parsed geometry. Consuming GeometryOutcome wrappers transfer mesh ownership once. Host errors and causes remain readable after mesh disposal, and failures return no MeshJs.",
+  "resource_observations": [
+    {
+      "fixture": "maximum-declared-count-with-no-records",
+      "bytes": 84,
+      "repeats": 128,
+      "elapsed_ms": 9.550174999999996,
+      "result": "typed UnexpectedEof; no model"
+    },
+    {
+      "fixture": "binary32-extreme-cube",
+      "side": 1.401298464324817e-45,
+      "result": "certified import and composition",
+      "triangles": 12
+    },
+    {
+      "fixture": "binary32-extreme-cube",
+      "side": 1.1754943508222875e-38,
+      "result": "certified import and composition",
+      "triangles": 12
+    },
+    {
+      "fixture": "binary32-extreme-cube",
+      "side": 3.4028234663852886e+38,
+      "result": "certified import and composition",
+      "triangles": 12
+    },
+    {
+      "fixture": "disconnected",
+      "result": "native closed-PWN representation preserved",
+      "triangles": 24,
+      "six_volume": 12
+    },
+    {
+      "fixture": "nested-hole",
+      "result": "native closed-PWN representation preserved",
+      "triangles": 24,
+      "six_volume": 156
+    },
+    {
+      "fixture": "inverted",
+      "result": "native closed-PWN representation preserved",
+      "triangles": 12,
+      "six_volume": -6
+    },
+    {
+      "fixture": "double-winding",
+      "result": "native closed-PWN representation preserved",
+      "triangles": 24,
+      "six_volume": 12
+    }
+  ],
+  "hostile_header_scope": "128 imports of an 84-byte header declaring 4294967295 triangles fail as typed UnexpectedEof. Pinned stl_io 0.8.6 source deliberately avoids reserve(size_hint) and stops at read failure. This is a focused probe, not a global parser resource proof.",
+  "validation_partition": "One frozen source snapshot qualifies both native and WASM targets; every final production/test/harness byte and Cargo input is shared.",
+  "source_inputs": 2830,
+  "cost_result": "cost-v1/result.json",
+  "cost_summary": "cost-v1/summary.json",
+  "cost_groups": [
+    {
+      "mode": "errors",
+      "encoding": "none",
+      "cubes": 0,
+      "phase": "first",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 512647.375,
+          "ns_per_operation_min": 506197.75,
+          "ns_per_operation_max": 552493.375,
+          "peak_rss_kib_median": 76400,
+          "peak_rss_kib_max": 76672,
+          "retained_memory_medians": {
+            "rss": 67559424,
+            "heapTotal": 9191424,
+            "heapUsed": 3850888,
+            "external": 2989513,
+            "arrayBuffers": 10631,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 67686400,
+            "heapTotal": 9453568,
+            "heapUsed": 3882448,
+            "external": 14219618,
+            "arrayBuffers": 10631,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": null,
+          "output_count": 8
+        }
+      }
+    },
+    {
+      "mode": "errors",
+      "encoding": "none",
+      "cubes": 0,
+      "phase": "warm",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 18809.724609375,
+          "ns_per_operation_min": 18048.236328125,
+          "ns_per_operation_max": 20970.708984375,
+          "peak_rss_kib_median": 76400,
+          "peak_rss_kib_max": 76672,
+          "retained_memory_medians": {
+            "rss": 74973184,
+            "heapTotal": 9453568,
+            "heapUsed": 4470560,
+            "external": 2989513,
+            "arrayBuffers": 10631,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 75120640,
+            "heapTotal": 9453568,
+            "heapUsed": 5590120,
+            "external": 2989513,
+            "arrayBuffers": 10631,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": null,
+          "output_count": 520
+        }
+      }
+    },
+    {
+      "mode": "export",
+      "encoding": "ascii",
+      "cubes": 0,
+      "phase": "first",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 923537.0,
+          "ns_per_operation_min": 776586.0,
+          "ns_per_operation_max": 1385045.0,
+          "peak_rss_kib_median": 75772,
+          "peak_rss_kib_max": 76040,
+          "retained_memory_medians": {
+            "rss": 66641920,
+            "heapTotal": 9191424,
+            "heapUsed": 3817520,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66768896,
+            "heapTotal": 9191424,
+            "heapUsed": 3827400,
+            "external": 14151330,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 25,
+          "output_count": 1
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 1162850.0,
+          "ns_per_operation_min": 990342.0,
+          "ns_per_operation_max": 1263364.0,
+          "peak_rss_kib_median": 75872,
+          "peak_rss_kib_max": 76088,
+          "retained_memory_medians": {
+            "rss": 66531328,
+            "heapTotal": 9191424,
+            "heapUsed": 3824216,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66736128,
+            "heapTotal": 9453568,
+            "heapUsed": 3834072,
+            "external": 14219258,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 25,
+          "output_count": 1
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        1.0831968867203265,
+        1.2591265969852858,
+        0.8872923129296599,
+        1.5098649731002105,
+        0.9121465367551235
+      ],
+      "paired_ratio_median": 1.0831968867203265
+    },
+    {
+      "mode": "export",
+      "encoding": "ascii",
+      "cubes": 0,
+      "phase": "warm",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 3226.96875,
+          "ns_per_operation_min": 2956.359375,
+          "ns_per_operation_max": 4327.046875,
+          "peak_rss_kib_median": 75772,
+          "peak_rss_kib_max": 76040,
+          "retained_memory_medians": {
+            "rss": 66641920,
+            "heapTotal": 9191424,
+            "heapUsed": 3848856,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66768896,
+            "heapTotal": 9453568,
+            "heapUsed": 3861856,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 25,
+          "output_count": 65
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 3110.5625,
+          "ns_per_operation_min": 3048.546875,
+          "ns_per_operation_max": 3947.6875,
+          "peak_rss_kib_median": 75872,
+          "peak_rss_kib_max": 76088,
+          "retained_memory_medians": {
+            "rss": 66654208,
+            "heapTotal": 9191424,
+            "heapUsed": 3855552,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66736128,
+            "heapTotal": 9191424,
+            "heapUsed": 3868592,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 25,
+          "output_count": 65
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        1.0357734707111463,
+        1.0523483447460056,
+        0.950708385384891,
+        1.0521598038127553,
+        0.704532898086527
+      ],
+      "paired_ratio_median": 1.0357734707111463
+    },
+    {
+      "mode": "export",
+      "encoding": "ascii",
+      "cubes": 1,
+      "phase": "first",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 1816295.0,
+          "ns_per_operation_min": 1693634.0,
+          "ns_per_operation_max": 2032200.0,
+          "peak_rss_kib_median": 76012,
+          "peak_rss_kib_max": 76328,
+          "retained_memory_medians": {
+            "rss": 66838528,
+            "heapTotal": 9191424,
+            "heapUsed": 3826624,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 67104768,
+            "heapTotal": 9191424,
+            "heapUsed": 3836568,
+            "external": 14151666,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 4015,
+          "output_count": 1
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 1640908.0,
+          "ns_per_operation_min": 1364937.0,
+          "ns_per_operation_max": 2058559.0,
+          "peak_rss_kib_median": 76216,
+          "peak_rss_kib_max": 76316,
+          "retained_memory_medians": {
+            "rss": 66805760,
+            "heapTotal": 9191424,
+            "heapUsed": 3833392,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 67063808,
+            "heapTotal": 9453568,
+            "heapUsed": 3843184,
+            "external": 14219594,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 4015,
+          "output_count": 1
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        1.215468631357188,
+        0.8972579356600742,
+        0.8836704591412783,
+        0.6716548568054326,
+        0.9886318026532034
+      ],
+      "paired_ratio_median": 0.8972579356600742
+    },
+    {
+      "mode": "export",
+      "encoding": "ascii",
+      "cubes": 1,
+      "phase": "warm",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 53137.921875,
+          "ns_per_operation_min": 51393.671875,
+          "ns_per_operation_max": 62402.125,
+          "peak_rss_kib_median": 76012,
+          "peak_rss_kib_max": 76328,
+          "retained_memory_medians": {
+            "rss": 70545408,
+            "heapTotal": 9715712,
+            "heapUsed": 4113224,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 69922816,
+            "heapTotal": 9453568,
+            "heapUsed": 4129424,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 4015,
+          "output_count": 65
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 52185.640625,
+          "ns_per_operation_min": 51744.109375,
+          "ns_per_operation_max": 70523.765625,
+          "peak_rss_kib_median": 76216,
+          "peak_rss_kib_max": 76316,
+          "retained_memory_medians": {
+            "rss": 71020544,
+            "heapTotal": 9715712,
+            "heapUsed": 4119992,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 70422528,
+            "heapTotal": 9191424,
+            "heapUsed": 4136120,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 4015,
+          "output_count": 65
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        0.8614388253505151,
+        1.0068186896793896,
+        1.273982764165664,
+        0.9820790648862762,
+        1.1301500650017928
+      ],
+      "paired_ratio_median": 1.0068186896793896
+    },
+    {
+      "mode": "export",
+      "encoding": "ascii",
+      "cubes": 256,
+      "phase": "first",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 13110461.0,
+          "ns_per_operation_min": 13024547.0,
+          "ns_per_operation_max": 13722728.0,
+          "peak_rss_kib_median": 111244,
+          "peak_rss_kib_max": 111676,
+          "retained_memory_medians": {
+            "rss": 82264064,
+            "heapTotal": 15478784,
+            "heapUsed": 5937400,
+            "external": 6528313,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 5046272
+          },
+          "after_memory_maxima": {
+            "rss": 82132992,
+            "heapTotal": 11284480,
+            "heapUsed": 5947456,
+            "external": 6528313,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 5046272
+          },
+          "output_bytes": 1038565,
+          "output_count": 1
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 12859658.0,
+          "ns_per_operation_min": 12766754.0,
+          "ns_per_operation_max": 13482836.0,
+          "peak_rss_kib_median": 111252,
+          "peak_rss_kib_max": 111964,
+          "retained_memory_medians": {
+            "rss": 82460672,
+            "heapTotal": 15478784,
+            "heapUsed": 5944168,
+            "external": 6528313,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 5046272
+          },
+          "after_memory_maxima": {
+            "rss": 82399232,
+            "heapTotal": 11284480,
+            "heapUsed": 5954224,
+            "external": 6528313,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 5046272
+          },
+          "output_bytes": 1038565,
+          "output_count": 1
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        1.0336169151246297,
+        0.9303364462226461,
+        0.979571885382215,
+        0.9911388856748722,
+        0.9745579795951232
+      ],
+      "paired_ratio_median": 0.979571885382215
+    },
+    {
+      "mode": "export",
+      "encoding": "ascii",
+      "cubes": 256,
+      "phase": "warm",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 8810510.75,
+          "ns_per_operation_min": 8696153.75,
+          "ns_per_operation_max": 9182100.25,
+          "peak_rss_kib_median": 111244,
+          "peak_rss_kib_max": 111676,
+          "retained_memory_medians": {
+            "rss": 87375872,
+            "heapTotal": 19656704,
+            "heapUsed": 10110744,
+            "external": 6528313,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 5046272
+          },
+          "after_memory_maxima": {
+            "rss": 87486464,
+            "heapTotal": 19656704,
+            "heapUsed": 10112048,
+            "external": 7566878,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 5046272
+          },
+          "output_bytes": 1038565,
+          "output_count": 5
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 8686634.25,
+          "ns_per_operation_min": 8567295.0,
+          "ns_per_operation_max": 9295900.0,
+          "peak_rss_kib_median": 111252,
+          "peak_rss_kib_max": 111964,
+          "retained_memory_medians": {
+            "rss": 87310336,
+            "heapTotal": 19656704,
+            "heapUsed": 10117512,
+            "external": 6528313,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 5046272
+          },
+          "after_memory_maxima": {
+            "rss": 87707648,
+            "heapTotal": 19656704,
+            "heapUsed": 10118952,
+            "external": 7566878,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 5046272
+          },
+          "output_bytes": 1038565,
+          "output_count": 5
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        0.9787781609621302,
+        1.0165538701520773,
+        0.9723948183140234,
+        1.066435603133698,
+        0.9460400141024381
+      ],
+      "paired_ratio_median": 0.9787781609621302
+    },
+    {
+      "mode": "export",
+      "encoding": "binary",
+      "cubes": 0,
+      "phase": "first",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 1190038.0,
+          "ns_per_operation_min": 1126193.0,
+          "ns_per_operation_max": 1237285.0,
+          "peak_rss_kib_median": 75560,
+          "peak_rss_kib_max": 75836,
+          "retained_memory_medians": {
+            "rss": 66207744,
+            "heapTotal": 9191424,
+            "heapUsed": 3817392,
+            "external": 2989453,
+            "arrayBuffers": 10571,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66494464,
+            "heapTotal": 9191424,
+            "heapUsed": 3827096,
+            "external": 2989453,
+            "arrayBuffers": 10571,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 84,
+          "output_count": 1
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 1007401.0,
+          "ns_per_operation_min": 826583.0,
+          "ns_per_operation_max": 1529745.0,
+          "peak_rss_kib_median": 75664,
+          "peak_rss_kib_max": 75836,
+          "retained_memory_medians": {
+            "rss": 66351104,
+            "heapTotal": 9191424,
+            "heapUsed": 3824144,
+            "external": 2989453,
+            "arrayBuffers": 10571,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66465792,
+            "heapTotal": 9453568,
+            "heapUsed": 3833936,
+            "external": 2989453,
+            "arrayBuffers": 10571,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 84,
+          "output_count": 1
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        0.9390015743305099,
+        0.8564740069663898,
+        1.236372379847812,
+        0.6783132253283723,
+        0.8150613677882556
+      ],
+      "paired_ratio_median": 0.8564740069663898
+    },
+    {
+      "mode": "export",
+      "encoding": "binary",
+      "cubes": 0,
+      "phase": "warm",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 1842.375,
+          "ns_per_operation_min": 1384.4375,
+          "ns_per_operation_max": 2349.0625,
+          "peak_rss_kib_median": 75560,
+          "peak_rss_kib_max": 75836,
+          "retained_memory_medians": {
+            "rss": 66248704,
+            "heapTotal": 9191424,
+            "heapUsed": 3849456,
+            "external": 2994829,
+            "arrayBuffers": 15947,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66494464,
+            "heapTotal": 9453568,
+            "heapUsed": 3861944,
+            "external": 2994829,
+            "arrayBuffers": 15947,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 84,
+          "output_count": 65
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 1816.90625,
+          "ns_per_operation_min": 1410.53125,
+          "ns_per_operation_max": 1933.453125,
+          "peak_rss_kib_median": 75664,
+          "peak_rss_kib_max": 75836,
+          "retained_memory_medians": {
+            "rss": 66351104,
+            "heapTotal": 9191424,
+            "heapUsed": 3856208,
+            "external": 2994829,
+            "arrayBuffers": 15947,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66465792,
+            "heapTotal": 9453568,
+            "heapUsed": 3868672,
+            "external": 2994829,
+            "arrayBuffers": 15947,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 84,
+          "output_count": 65
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        1.0834769807031113,
+        1.2254751478488555,
+        0.9941481783024628,
+        0.9859762073608975,
+        0.6004656112810962
+      ],
+      "paired_ratio_median": 0.9941481783024628
+    },
+    {
+      "mode": "export",
+      "encoding": "binary",
+      "cubes": 1,
+      "phase": "first",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 2227277.0,
+          "ns_per_operation_min": 1956926.0,
+          "ns_per_operation_max": 2672237.0,
+          "peak_rss_kib_median": 75316,
+          "peak_rss_kib_max": 75660,
+          "retained_memory_medians": {
+            "rss": 66416640,
+            "heapTotal": 9191424,
+            "heapUsed": 3822496,
+            "external": 2990053,
+            "arrayBuffers": 11171,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66580480,
+            "heapTotal": 9453568,
+            "heapUsed": 3832272,
+            "external": 2990053,
+            "arrayBuffers": 11171,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 684,
+          "output_count": 1
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 1844564.0,
+          "ns_per_operation_min": 1639968.0,
+          "ns_per_operation_max": 2117975.0,
+          "peak_rss_kib_median": 75488,
+          "peak_rss_kib_max": 75600,
+          "retained_memory_medians": {
+            "rss": 66494464,
+            "heapTotal": 9453568,
+            "heapUsed": 3829408,
+            "external": 2990053,
+            "arrayBuffers": 11171,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66494464,
+            "heapTotal": 9453568,
+            "heapUsed": 3839400,
+            "external": 2990053,
+            "arrayBuffers": 11171,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 684,
+          "output_count": 1
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        0.8380327104857312,
+        0.8734957519097454,
+        0.9509257267955445,
+        0.7577442721326978,
+        0.6997365877352945
+      ],
+      "paired_ratio_median": 0.8380327104857312
+    },
+    {
+      "mode": "export",
+      "encoding": "binary",
+      "cubes": 1,
+      "phase": "warm",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 2592.953125,
+          "ns_per_operation_min": 2427.328125,
+          "ns_per_operation_max": 3911.140625,
+          "peak_rss_kib_median": 75316,
+          "peak_rss_kib_max": 75660,
+          "retained_memory_medians": {
+            "rss": 66416640,
+            "heapTotal": 9453568,
+            "heapUsed": 3862576,
+            "external": 3033829,
+            "arrayBuffers": 54947,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66711552,
+            "heapTotal": 9453568,
+            "heapUsed": 3874992,
+            "external": 3033829,
+            "arrayBuffers": 54947,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 684,
+          "output_count": 65
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 2722.78125,
+          "ns_per_operation_min": 2538.734375,
+          "ns_per_operation_max": 2963.390625,
+          "peak_rss_kib_median": 75488,
+          "peak_rss_kib_max": 75600,
+          "retained_memory_medians": {
+            "rss": 66494464,
+            "heapTotal": 9453568,
+            "heapUsed": 3869488,
+            "external": 3033829,
+            "arrayBuffers": 54947,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66707456,
+            "heapTotal": 9453568,
+            "heapUsed": 3882168,
+            "external": 3033829,
+            "arrayBuffers": 54947,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 684,
+          "output_count": 65
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        1.0677704383632152,
+        0.7576793854094673,
+        1.019885627512067,
+        1.129057798891528,
+        0.9717120489925781
+      ],
+      "paired_ratio_median": 1.019885627512067
+    },
+    {
+      "mode": "export",
+      "encoding": "binary",
+      "cubes": 256,
+      "phase": "first",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 5062913.0,
+          "ns_per_operation_min": 5022236.0,
+          "ns_per_operation_max": 6519923.0,
+          "peak_rss_kib_median": 90344,
+          "peak_rss_kib_max": 90632,
+          "retained_memory_medians": {
+            "rss": 79765504,
+            "heapTotal": 14434304,
+            "heapUsed": 4898696,
+            "external": 4519309,
+            "arrayBuffers": 164171,
+            "wasm_linear_bytes": 2883584
+          },
+          "after_memory_maxima": {
+            "rss": 79192064,
+            "heapTotal": 10240000,
+            "heapUsed": 4909704,
+            "external": 4519309,
+            "arrayBuffers": 164171,
+            "wasm_linear_bytes": 2883584
+          },
+          "output_bytes": 153684,
+          "output_count": 1
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 5416128.0,
+          "ns_per_operation_min": 5011347.0,
+          "ns_per_operation_max": 6462667.0,
+          "peak_rss_kib_median": 90412,
+          "peak_rss_kib_max": 91104,
+          "retained_memory_medians": {
+            "rss": 79749120,
+            "heapTotal": 14434304,
+            "heapUsed": 4905536,
+            "external": 4519309,
+            "arrayBuffers": 164171,
+            "wasm_linear_bytes": 2883584
+          },
+          "after_memory_maxima": {
+            "rss": 79429632,
+            "heapTotal": 10240000,
+            "heapUsed": 4915296,
+            "external": 4519309,
+            "arrayBuffers": 164171,
+            "wasm_linear_bytes": 2883584
+          },
+          "output_bytes": 153684,
+          "output_count": 1
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        1.0141409573211866,
+        1.2540418924836354,
+        0.9988244911811068,
+        1.0784296078479785,
+        0.7686205803350745
+      ],
+      "paired_ratio_median": 1.0141409573211866
+    },
+    {
+      "mode": "export",
+      "encoding": "binary",
+      "cubes": 256,
+      "phase": "warm",
+      "variants": {
+        "baseline": {
+          "samples": 5,
+          "ns_per_operation_median": 68917.75,
+          "ns_per_operation_min": 65863.0,
+          "ns_per_operation_max": 82684.25,
+          "peak_rss_kib_median": 90344,
+          "peak_rss_kib_max": 90632,
+          "retained_memory_medians": {
+            "rss": 81862656,
+            "heapTotal": 14434304,
+            "heapUsed": 4918208,
+            "external": 5134045,
+            "arrayBuffers": 778907,
+            "wasm_linear_bytes": 2883584
+          },
+          "after_memory_maxima": {
+            "rss": 81813504,
+            "heapTotal": 14434304,
+            "heapUsed": 4919528,
+            "external": 5134045,
+            "arrayBuffers": 778907,
+            "wasm_linear_bytes": 2883584
+          },
+          "output_bytes": 153684,
+          "output_count": 5
+        },
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 68122.75,
+          "ns_per_operation_min": 61813.25,
+          "ns_per_operation_max": 71815.0,
+          "peak_rss_kib_median": 90412,
+          "peak_rss_kib_max": 91104,
+          "retained_memory_medians": {
+            "rss": 81657856,
+            "heapTotal": 14434304,
+            "heapUsed": 4925048,
+            "external": 5134045,
+            "arrayBuffers": 778907,
+            "wasm_linear_bytes": 2883584
+          },
+          "after_memory_maxima": {
+            "rss": 82059264,
+            "heapTotal": 14696448,
+            "heapUsed": 4926368,
+            "external": 5134045,
+            "arrayBuffers": 778907,
+            "wasm_linear_bytes": 2883584
+          },
+          "output_bytes": 153684,
+          "output_count": 5
+        }
+      },
+      "paired_candidate_over_baseline_ratios": [
+        0.853406535587445,
+        0.9385125184094256,
+        0.9189396380281534,
+        1.0030471105049135,
+        0.8685450977665033
+      ],
+      "paired_ratio_median": 0.9189396380281534
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "ascii",
+      "cubes": 0,
+      "phase": "first",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 2300392.0,
+          "ns_per_operation_min": 2033851.0,
+          "ns_per_operation_max": 2380517.0,
+          "peak_rss_kib_median": 76120,
+          "peak_rss_kib_max": 76364,
+          "retained_memory_medians": {
+            "rss": 66969600,
+            "heapTotal": 9191424,
+            "heapUsed": 3830840,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 67076096,
+            "heapTotal": 9453568,
+            "heapUsed": 3842760,
+            "external": 14219258,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 25,
+          "output_count": 1
+        }
+      }
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "ascii",
+      "cubes": 0,
+      "phase": "warm",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 9504.34375,
+          "ns_per_operation_min": 9200.765625,
+          "ns_per_operation_max": 11506.40625,
+          "peak_rss_kib_median": 76120,
+          "peak_rss_kib_max": 76364,
+          "retained_memory_medians": {
+            "rss": 67076096,
+            "heapTotal": 9191424,
+            "heapUsed": 3886432,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 67153920,
+            "heapTotal": 9453568,
+            "heapUsed": 3934024,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 25,
+          "output_count": 65
+        }
+      }
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "ascii",
+      "cubes": 1,
+      "phase": "first",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 14869681.0,
+          "ns_per_operation_min": 14400522.0,
+          "ns_per_operation_max": 16289913.0,
+          "peak_rss_kib_median": 90272,
+          "peak_rss_kib_max": 90420,
+          "retained_memory_medians": {
+            "rss": 68722688,
+            "heapTotal": 9191424,
+            "heapUsed": 3848840,
+            "external": 2989369,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 69021696,
+            "heapTotal": 9191424,
+            "heapUsed": 3860720,
+            "external": 14219258,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 4017,
+          "output_count": 1
+        }
+      }
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "ascii",
+      "cubes": 1,
+      "phase": "warm",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 299990.84375,
+          "ns_per_operation_min": 295935.328125,
+          "ns_per_operation_max": 335381.0625,
+          "peak_rss_kib_median": 90272,
+          "peak_rss_kib_max": 90420,
+          "retained_memory_medians": {
+            "rss": 87740416,
+            "heapTotal": 9715712,
+            "heapUsed": 4153944,
+            "external": 3054905,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1572864
+          },
+          "after_memory_maxima": {
+            "rss": 87150592,
+            "heapTotal": 9453568,
+            "heapUsed": 4205424,
+            "external": 3054905,
+            "arrayBuffers": 10487,
+            "wasm_linear_bytes": 1572864
+          },
+          "output_bytes": 4017,
+          "output_count": 65
+        }
+      }
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "ascii",
+      "cubes": 256,
+      "phase": "first",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 74814239.0,
+          "ns_per_operation_min": 73422905.0,
+          "ns_per_operation_max": 77765887.0,
+          "peak_rss_kib_median": 133764,
+          "peak_rss_kib_max": 135264,
+          "retained_memory_medians": {
+            "rss": 107114496,
+            "heapTotal": 16003072,
+            "heapUsed": 5957680,
+            "external": 8906788,
+            "arrayBuffers": 291810,
+            "wasm_linear_bytes": 7143424
+          },
+          "after_memory_maxima": {
+            "rss": 108335104,
+            "heapTotal": 16003072,
+            "heapUsed": 5971688,
+            "external": 8906788,
+            "arrayBuffers": 291810,
+            "wasm_linear_bytes": 7143424
+          },
+          "output_bytes": 1039077,
+          "output_count": 1
+        }
+      }
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "ascii",
+      "cubes": 256,
+      "phase": "warm",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 36616811.25,
+          "ns_per_operation_min": 35672728.5,
+          "ns_per_operation_max": 37721545.5,
+          "peak_rss_kib_median": 133764,
+          "peak_rss_kib_max": 135264,
+          "retained_memory_medians": {
+            "rss": 113655808,
+            "heapTotal": 19656704,
+            "heapUsed": 10131376,
+            "external": 11659300,
+            "arrayBuffers": 291810,
+            "wasm_linear_bytes": 9895936
+          },
+          "after_memory_maxima": {
+            "rss": 115146752,
+            "heapTotal": 19918848,
+            "heapUsed": 10136112,
+            "external": 11659300,
+            "arrayBuffers": 291810,
+            "wasm_linear_bytes": 9895936
+          },
+          "output_bytes": 1039077,
+          "output_count": 5
+        }
+      }
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "binary",
+      "cubes": 0,
+      "phase": "first",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 2418074.0,
+          "ns_per_operation_min": 1946276.0,
+          "ns_per_operation_max": 2617070.0,
+          "peak_rss_kib_median": 75792,
+          "peak_rss_kib_max": 76152,
+          "retained_memory_medians": {
+            "rss": 66572288,
+            "heapTotal": 9191424,
+            "heapUsed": 3830504,
+            "external": 2989537,
+            "arrayBuffers": 10655,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 66822144,
+            "heapTotal": 9453568,
+            "heapUsed": 3842368,
+            "external": 2989537,
+            "arrayBuffers": 10655,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 84,
+          "output_count": 1
+        }
+      }
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "binary",
+      "cubes": 0,
+      "phase": "warm",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 8259.28125,
+          "ns_per_operation_min": 8156.15625,
+          "ns_per_operation_max": 8846.734375,
+          "peak_rss_kib_median": 75792,
+          "peak_rss_kib_max": 76152,
+          "retained_memory_medians": {
+            "rss": 66572288,
+            "heapTotal": 9453568,
+            "heapUsed": 3888968,
+            "external": 2994913,
+            "arrayBuffers": 16031,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 67084288,
+            "heapTotal": 9453568,
+            "heapUsed": 3935992,
+            "external": 2994913,
+            "arrayBuffers": 16031,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 84,
+          "output_count": 65
+        }
+      }
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "binary",
+      "cubes": 1,
+      "phase": "first",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 14916977.0,
+          "ns_per_operation_min": 14389983.0,
+          "ns_per_operation_max": 16458271.0,
+          "peak_rss_kib_median": 93512,
+          "peak_rss_kib_max": 93700,
+          "retained_memory_medians": {
+            "rss": 68894720,
+            "heapTotal": 9191424,
+            "heapUsed": 3836976,
+            "external": 2990737,
+            "arrayBuffers": 11855,
+            "wasm_linear_bytes": 1507328
+          },
+          "after_memory_maxima": {
+            "rss": 69132288,
+            "heapTotal": 9191424,
+            "heapUsed": 3848776,
+            "external": 2990737,
+            "arrayBuffers": 11855,
+            "wasm_linear_bytes": 1507328
+          },
+          "output_bytes": 684,
+          "output_count": 1
+        }
+      }
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "binary",
+      "cubes": 1,
+      "phase": "warm",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 222108.671875,
+          "ns_per_operation_min": 219473.703125,
+          "ns_per_operation_max": 255867.765625,
+          "peak_rss_kib_median": 93512,
+          "peak_rss_kib_max": 93700,
+          "retained_memory_medians": {
+            "rss": 84590592,
+            "heapTotal": 9453568,
+            "heapUsed": 3896416,
+            "external": 3100049,
+            "arrayBuffers": 55631,
+            "wasm_linear_bytes": 1572864
+          },
+          "after_memory_maxima": {
+            "rss": 85008384,
+            "heapTotal": 9453568,
+            "heapUsed": 3943600,
+            "external": 3100049,
+            "arrayBuffers": 55631,
+            "wasm_linear_bytes": 1572864
+          },
+          "output_bytes": 684,
+          "output_count": 65
+        }
+      }
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "binary",
+      "cubes": 256,
+      "phase": "first",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 60521220.0,
+          "ns_per_operation_min": 59418715.0,
+          "ns_per_operation_max": 62022386.0,
+          "peak_rss_kib_median": 114600,
+          "peak_rss_kib_max": 115236,
+          "retained_memory_medians": {
+            "rss": 105840640,
+            "heapTotal": 14696448,
+            "heapUsed": 4916920,
+            "external": 9063905,
+            "arrayBuffers": 317855,
+            "wasm_linear_bytes": 7274496
+          },
+          "after_memory_maxima": {
+            "rss": 106946560,
+            "heapTotal": 14696448,
+            "heapUsed": 4933816,
+            "external": 9063905,
+            "arrayBuffers": 317855,
+            "wasm_linear_bytes": 7274496
+          },
+          "output_bytes": 153684,
+          "output_count": 1
+        }
+      }
+    },
+    {
+      "mode": "pipeline",
+      "encoding": "binary",
+      "cubes": 256,
+      "phase": "warm",
+      "variants": {
+        "candidate": {
+          "samples": 5,
+          "ns_per_operation_median": 26800692.0,
+          "ns_per_operation_min": 26381188.25,
+          "ns_per_operation_max": 28118891.5,
+          "peak_rss_kib_median": 114600,
+          "peak_rss_kib_max": 115236,
+          "retained_memory_medians": {
+            "rss": 111452160,
+            "heapTotal": 14696448,
+            "heapUsed": 4935624,
+            "external": 12431153,
+            "arrayBuffers": 932591,
+            "wasm_linear_bytes": 10027008
+          },
+          "after_memory_maxima": {
+            "rss": 112320512,
+            "heapTotal": 14696448,
+            "heapUsed": 4940224,
+            "external": 12431153,
+            "arrayBuffers": 932591,
+            "wasm_linear_bytes": 10027008
+          },
+          "output_bytes": 153684,
+          "output_count": 5
+        }
+      }
+    }
+  ],
+  "artifact_size_changes": {
+    "csgrs.js": {
+      "baseline_bytes": 78724,
+      "candidate_bytes": 80582,
+      "delta_bytes": 1858
+    },
+    "csgrs.d.ts": {
+      "baseline_bytes": 12948,
+      "candidate_bytes": 15809,
+      "delta_bytes": 2861
+    },
+    "csgrs_bg.wasm": {
+      "baseline_bytes": 11161961,
+      "candidate_bytes": 11229889,
+      "delta_bytes": 67928
+    },
+    "csgrs_bg.wasm.d.ts": {
+      "baseline_bytes": 14645,
+      "candidate_bytes": 14726,
+      "delta_bytes": 81
+    }
+  },
+  "cost_scope": "60 matched successful export processes, 30 candidate-only complete import/strict-compose/export processes and five candidate-only typed-error processes. All 190 first/warm rows and complete output bytes are retained. First-call timings include runtime lazy compilation; module loading and fixture construction are excluded. Host load is not controlled. No timer-scale speedup or supported-corpus optimization claim.",
+  "memory_scope": "Observed Node process memory, Wasm linear-memory high-water and external peak RSS; not Rust allocation counts or live-heap bounds. Complete outputs and pipeline meshes/error receipts remain retained at observation. Module size and generated JS/declaration sizes are recorded.",
+  "resource_limits": "No public total-work, heap-byte or cancellation budget is added. External elapsed/address-space limits contain probes. Existing caches still have entry-count limits only.",
+  "wasm_format_contracts_admitted": true,
+  "optimization_claimed": false,
+  "pending_native_files_unchanged": 35,
+  "native_runtime_admitted": false,
+  "historical_artifact_audit_passed": false,
+  "historical_preservation_complete": false,
+  "published_package_pipeline_executed": false,
+  "full_pre_push_matrix_executed": false,
+  "push_performed": false,
+  "full_plan_complete": false,
+  "next": [
+    "Continue typed failures and claim scope across remaining legacy WASM boundaries; full P30 and inherited provenance remain open.",
+    "Keep the 35 pending native changes unadmitted until their original full-board and copper-neck runtime gates pass.",
+    "Continue ordinary strict completion, clean external distribution, remaining properties and complete pre-push validation."
+  ]
+}

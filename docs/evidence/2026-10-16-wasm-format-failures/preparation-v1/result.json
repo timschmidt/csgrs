@@ -1,0 +1,23 @@
+{
+  "complete": true,
+  "runner_sha256": "91a1d110a9aec91ee3c0782b9d9871ad0608ace4d8a3b56f557b6acd15e06cb2",
+  "base_commit": "3d335db43eac00d003bc2fb0ed1beb2a9c19d79b",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/candidate-source-v1",
+  "source_hashes_sha256": "9ba989b81b811adf3ec3e571ca438cb341f2ad342c4c87bc8eec531358d79f8c",
+  "implementation_paths": [
+    "src/wasm/mod.rs",
+    "src/wasm/mesh_js.rs",
+    "scripts/test-wasm-bindings.sh",
+    "tests/wasm/export_projection.cjs",
+    "src/wasm/io_error_js.rs",
+    "tests/wasm/io_contracts.cjs",
+    "tests/wasm/io_contracts.ts"
+  ],
+  "prototype_sha256": {
+    "io_error_js_v1.rs": "152dcabf062fbcf87b3fb4db29407e9ef61c160022493655580573039265189d",
+    "io_contracts_v1.cjs": "0eb12ed3a8f6fe08efa4576a897fe667a9323407484d45a86dc7e6fffb1dee23",
+    "io_contracts_v1.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e"
+  },
+  "main_sources_unchanged": true,
+  "native_parser_and_validation_unchanged": true
+}

@@ -1,0 +1,6 @@
+target/properties/wasm-format-failures/baseline-v1/typescript/io_contracts.ts(3,15): error TS2305: Module '"./csgrs"' has no exported member 'GeometryIoError'.
+target/properties/wasm-format-failures/baseline-v1/typescript/io_contracts.ts(3,32): error TS2305: Module '"./csgrs"' has no exported member 'GeometryValidationError'.
+target/properties/wasm-format-failures/baseline-v1/typescript/io_contracts.ts(49,26): error TS2345: Argument of type 'GeometryIoError' is not assignable to parameter of type 'never'.
+target/properties/wasm-format-failures/baseline-v1/typescript/io_contracts.ts(87,40): error TS2339: Property 'fromSTL' does not exist on type 'typeof MeshJs'.
+target/properties/wasm-format-failures/baseline-v1/typescript/io_contracts.ts(94,41): error TS2339: Property 'fromSTL' does not exist on type 'typeof MeshJs'.
+target/properties/wasm-format-failures/baseline-v1/typescript/io_contracts.ts(100,42): error TS2339: Property 'fromSTL' does not exist on type 'typeof MeshJs'.

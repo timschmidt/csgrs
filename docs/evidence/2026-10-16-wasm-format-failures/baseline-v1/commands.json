@@ -1,0 +1,68 @@
+[
+  {
+    "name": "existing-certainty",
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/tests/wasm/geometry_certainty.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 1.7127285581082106,
+    "stdout_sha256": "70870ab9accd685edf7fc42949a7fa04f2536afa268ad1cf0bf230fbbd0a13fe",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5670255c7b524bb7fc21e7a53482420415aefb9c6cc4f2246ec2d4fc2614f70f"
+  },
+  {
+    "name": "existing-export",
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/tests/wasm/export_projection.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.14276658976450562,
+    "stdout_sha256": "77fe28c9074ec5d6d9f75d13e9d1bea89472b9ffde2f54f0cbbbbcd04f9e1c31",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "56c7df8fc3f9ca143312a657209fcda5ec99c9d52546592a64d8e843e7f37f1b"
+  },
+  {
+    "name": "new-io-contracts",
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-16-wasm-format-failures/io_contracts_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "elapsed_seconds": 0.1914173448458314,
+    "stdout_sha256": "679b043a30b2e34de84f5e2ef0eda1ad4467d36e177ab03d5ca3711b881bf19e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4a22ebffa0743bf3a350d4b6d5dadf9d2cc206550a2d0cbf1e2d1498b620c860"
+  },
+  {
+    "name": "new-typescript",
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-source-v1/tests/wasm/node_modules/typescript/lib/tsc.js",
+      "--noEmit",
+      "--strict",
+      "--target",
+      "ES2020",
+      "--lib",
+      "ES2020,DOM,ESNext.Disposable",
+      "--module",
+      "Node16",
+      "--moduleResolution",
+      "Node16",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-format-failures/baseline-v1/typescript/io_contracts.ts"
+    ],
+    "exit_code": 2,
+    "expected_exit_code": 2,
+    "elapsed_seconds": 0.9894673922099173,
+    "stdout_sha256": "08aff2dbf35a5cfec9be39a42fdef54692e1281f57084c03db0118a88e0532ff",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "edcb74163dd0ab46f0b0d75579becc4c2d6e5dc7ca86a772e48a6a73d9f0d98f"
+  }
+]
