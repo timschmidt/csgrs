@@ -226,6 +226,9 @@ impl Builder {
         if entity.is_complex() {
             return Err(geometry_site.error(ErrorKind::Unsupported("complex edge geometry")));
         }
+        if record.name() == "CIRCLE" {
+            return self.circular_edge(resolver, id, geometry, start, end, same_sense, scale);
+        }
         let mut parameters = Vec::new();
         let master;
         if record.name() == "SURFACE_CURVE" {
@@ -318,6 +321,7 @@ impl Builder {
             key: key.clone(),
             start,
             end,
+            circle: None,
         };
         cache(&mut self.by_edge, id, edge.clone(), site)?;
         push(

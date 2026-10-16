@@ -79,15 +79,18 @@ pub(super) struct UseSource {
     pub(super) source: EdgeUseSource,
     pub(super) key: EdgeUseKey,
 }
-/// Exact affine map from the imported edge's canonical parameter `s` in `[0,1]`
-/// to a source curve parameter: `start + (end - start) * s`.
+/// Exact affine map from the directed edge fraction `s` in `[0,1]` to a source
+/// curve parameter: `start + (end - start) * s`. For native parameter `t`,
+/// `s = (t - edge.domain.start) / (edge.domain.end - edge.domain.start)`.
+/// Native lines use `[0,1]`; native circles use an increasing angular interval.
 #[derive(Clone, Debug)]
 pub struct SourceCurveParameters {
-    /// Source LINE, PCURVE or SURFACE_CURVE ID.
+    /// Source LINE, CIRCLE, PCURVE or SURFACE_CURVE ID.
     pub curve: u64,
-    /// Parameter at the original EDGE_CURVE start vertex.
+    /// Parameter at the original EDGE_CURVE start vertex, in source units.
     pub start: Real,
     /// Parameter at the original EDGE_CURVE end vertex; may be less than start.
+    /// A closed circle retains a distinct endpoint one exact source period away.
     pub end: Real,
 }
 /// An explicit source EDGE_CURVE and its independently checked representations.

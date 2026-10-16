@@ -6,9 +6,10 @@ HyperBRep and exact scalar arithmetic belongs to Hyperreal.
 
 The crate reads and writes bounded Part 21 syntax, imports an explicitly
 selected faceted or supported advanced representation into strictly validated
-native HyperBRep solids, and exports selected planar, straight-edged solids to STEP. Coordinates and
-authored unit conversions remain exact. Whole-document/product traversal,
-curved analytic/spline exchange and approximate export remain unfinished.
+native HyperBRep solids, and exports selected planar, straight-edged solids to STEP.
+Advanced import includes direct circular edges on planes and cylinders. Coordinates
+and authored unit conversions remain exact. Whole-document/product traversal,
+other analytic/spline mappings, curved export and approximate export remain unfinished.
 
 The syntax layer retains numeric lexemes without binary floating-point conversion, unknown
 entity records, complex instances, forward references, multiple DATA sections,
@@ -70,6 +71,13 @@ orientation and edge sense remain distinct; winding identifies finite outer
 bounds even when the file only contains `FACE_BOUND` records. `VertexSource` and
 `EdgeUseSource` distinguish implicit polygons from explicit topology.
 
+Direct `CIRCLE` edges retain the source angular frame, traversal and parameter
+map, including a closed edge with one vertex and distinct seam uses. Cylinder
+charts use native radians and metres; source angle units are converted exactly
+and independently of length units. Native validation proves the complete
+edge/pcurve image. Supplied curved `SURFACE_CURVE` and `SEAM_CURVE` records remain
+unsupported until every representation can be checked.
+
 ```rust
 use hyperbrep::{OperationContext, WorkBudget};
 use hyperbrep_io::step::{ImportLimits, StepFile, StepReadOptions};
@@ -130,6 +138,10 @@ construction recipes for independent readers. The
 STEP bodies, splits and reflects a holed solid, exports faceted STEP, and
 checks exact native reimport. This changes the exchange encoding while retaining
 the planar line geometry; it is not curved-face tessellation.
+The [circular import example](examples/circular_step.rs) imports an exact
+non-cardinal cylinder, splits a circular edge and validates native archive replay.
+It checks the exact volume and deterministic archive replay independently of
+STEP output; the faceted writer rejects its curved carriers.
 
 ANCHOR, REFERENCE,
 SIGNATURE sections, scoped/value/constant references return explicit blockers.

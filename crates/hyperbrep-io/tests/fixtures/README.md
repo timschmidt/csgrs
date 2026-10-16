@@ -45,3 +45,33 @@ timestamps, entity order and whitespace. Exact native tests derive expected
 geometry from these dimensional recipes. Mutations operate on copies and test
 master/alternate parameterizations, topology identity, orientation, units and
 strict incidence. Native healing is never inferred from OCCT's tolerance policy.
+
+## Exact analytic cylinders
+
+These original fixtures are distributed under HyperBRep IO's Apache-2.0 license.
+They declare metres and radians, with representation #10 selected by native tests.
+Every cylinder has two vertices, three edges (two full circles and one seam used
+twice), three faces and one solid. Expected geometry comes from these recipes:
+
+| File | Construction | Exact volume, m³ | Exact area, m² |
+| --- | --- | --- | --- |
+| [exact-cylinder.step](exact-cylinder.step) | Radius 5, height 7, seam at `(3,4)` | `175*pi` | `120*pi` |
+| [negative-circle-axes.step](negative-circle-axes.step) | Reverse both circle axes and edge senses | `175*pi` | `120*pi` |
+| [negative-cylinder-axis.step](negative-cylinder-axis.step) | Reverse the cylindrical surface axis | `175*pi` | `120*pi` |
+| [negative-cap-axes.step](negative-cap-axes.step) | Reverse cap axes and face senses | `175*pi` | `120*pi` |
+| [oblique-cylinder.step](oblique-cylinder.step) | Rotate by `(x,y,z) -> (x,(3*y-4*z)/5,(4*y+3*z)/5)` | `175*pi` | `120*pi` |
+| [radical-frame-cylinder.step](radical-frame-cylinder.step) | Radius 5, axis `(0,1,1)`, reference `(1,1,0)`, height `7*sqrt(2)`; rational source coordinates require irrational normalized frames | `175*sqrt(2)*pi` | `(50+70*sqrt(2))*pi` |
+
+The [variant generator and independent OCCT reader](../../../hyperbrep/docs/evidence/2026-10-15-step-circles/axis_variants.py)
+retain the complete source recipes and floating-point interoperability checks.
+Their outputs are byte-identical to the corresponding native fixtures. The
+[shared acceptance tests](../support/analytic_cylinder.rs) also construct partial
+circular edges, independent frame/sense changes, unit conversions and invalid
+near-incidence variants. None modifies the original files.
+
+[occt-cylinder-off-carrier.step](occt-cylinder-off-carrier.step) is a byte-identical
+copy of the original OCP 7.9.3.1 `BRepPrimAPI_MakeCylinder(2,4)` export retained in
+the [periodic-cylinder research](../../../hyperbrep/docs/evidence/2026-10-15-periodic-cylinder/research/occt-cylinder.step).
+It declares millimetres. Its tiny nonzero decimal seam coordinate is not exactly
+on the declared circle, so native import must reject it. It remains an independent
+exporter input and exact-fidelity rejection, never a healed success fixture.

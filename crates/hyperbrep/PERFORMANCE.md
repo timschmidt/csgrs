@@ -1,5 +1,46 @@
 # HyperBREP Performance Contract
 
+## 2026-10-15: direct circular STEP composition and scalar certificates
+
+The [source-bound evidence](docs/evidence/2026-10-15-step-circles/README.md)
+qualifies exact direct circle/cylinder import through native splitting, archive
+replay, reflection, disconnected Boolean composition and empty continuation.
+Hyperreal owns the added quarter-turn/reconstructed-angle proof; topology uses
+ordinary native validation. This is a completeness extension, not an optimization.
+
+The initial three alternating CPU-0 pairs preserve all receipts but exceed the
+10% gate in 53 of 64 native rows, with median/max ratios 1.256921/1.340681.
+Raw processes show a common timing shift in both binaries. One predefined
+complete replication has median/max 0.992343/1.036984; pooling all six pairs
+has 0.997557/1.053811. No observation is dropped and no cause or significance is
+inferred. The default-feature native corpus omits the same two optional
+tessellation rows on both sides.
+
+The complete 12-row default arc corpus retains 256-arc inputs and unchanged
+iteration counts. Initial/repeat/pooled median ratios are
+0.997553/1.011208/0.998373. The pooled cached 256-arc query costs 39.2 to
+43.25 ns (**1.103316**), exceeding the default budget. The repeat's cold row
+also exceeds the budget (1.104945); its pooled ratio is 0.991284. Keep these
+failures explicit. Retain the new exact domain as a feature baseline under the
+contract's semantic exception; controlled-host and all-cohort timing admission
+remain open, including the older archive and closed-edge observations.
+
+All five closed-edge rows retain their exact measures, source/topology facts,
+complete JSON bytes and allocator requests across six pairs. Their pooled
+median/max ratios are 0.984569/1.046618. Native/arc/closed-edge executables grow
+5,424/18,016/5,408 bytes. Process peak RSS spans 21,680–22,168 / 21,524–21,968 KiB
+for native baseline/candidate, 29,256–29,976 / 29,448–29,796 for arc, and
+9,592–9,912 / 9,516–9,844 for closed edges. RSS is separate from Rust allocation
+requests and is not an internal retention bound.
+
+The broader scalar fallback is rejected with its source and raw evidence:
+frustum replay cost 1.384127 times baseline and retained arc-witness replay
+1.653519. The narrower shared recognizer preserves all 64/12/5 native receipts,
+all 6/7 existing advanced/faceted receipts, and the focused 134/124 scalar probes.
+New circular import costs and full materialization boundaries are documented in
+[HyperBRep IO](../hyperbrep-io/PERFORMANCE.md#direct-analytic-circles-and-cylinders--2026-10-15).
+All work-package, complete resource, release, formal and coverage gates remain open.
+
 ## 2026-10-15: native closed circles and ellipses
 
 Kept for exact closed-edge and full-circle contour completeness. The

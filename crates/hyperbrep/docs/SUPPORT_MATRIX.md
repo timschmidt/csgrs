@@ -21,7 +21,9 @@ Native tests and an executed WASM probe cover deep input, round trips and limits
 Syntax success alone confers no geometry authority. The typed STEP layer now
 adds checked standard headers, decoded text, exact unit graphs, selected
 faceted import, planar straight-edge advanced import with 3D/pcurve source
-parameter maps, and exact faceted export of the supported native solids.
+parameter maps, direct circular edges on planes/cylinders, and exact faceted
+export of the supported native planar solids. Circular source maps retain
+independent angle units, sense and phase; full edges and seam uses remain distinct.
 Holes and selected body occurrences are accounted for; unsupported records
 remain in the source exchange. Import uses native strict validation without
 implicit healing or tolerance welding. See the
@@ -29,7 +31,11 @@ implicit healing or tolerance welding. See the
 [dependency decision](../../hyperbrep-io/docs/PARSER_REVIEW.md) and
 [advanced-import evidence](evidence/2026-10-15-step-advanced/README.md).
 Complete EXPRESS/AP conformance, whole-document/product traversal, assemblies,
-curved analytic/spline exchange and approximate export remain open.
+curved surface/seam-curve mapping, other analytic/spline exchange, curved export
+and approximate export remain open. The
+[circular import evidence](evidence/2026-10-15-step-circles/README.md) exercises
+native edits, replay and Boolean/empty continuation separately from an
+independent floating-point reader.
 
 ## Operation resources
 

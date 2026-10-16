@@ -66,8 +66,7 @@ pub(super) fn import(
                 push(&mut bodies, body).map_err(|kind| site.error(kind))?;
             }
             "MANIFOLD_SOLID_BREP" if advanced => {
-                let body =
-                    super::advanced::body(&mut resolver, item_id, &units.length.scale_to_si)?;
+                let body = super::advanced::body(&mut resolver, item_id, &units)?;
                 push(&mut bodies, body).map_err(|kind| site.error(kind))?;
             }
             "AXIS2_PLACEMENT_3D" => {

@@ -12,7 +12,7 @@ impl Builder {
         let site = args.site;
         resolver.text(args.next()?, site)?;
         let bounds = args.list()?;
-        let plane = self.plane(resolver, args.reference()?, scale)?;
+        let surface = self.surface(resolver, args.reference()?, scale)?;
         let forward = args.boolean()?;
         args.finish()?;
         let orientation = if forward {
@@ -40,17 +40,11 @@ impl Builder {
             let loop_id = args.reference()?;
             let bound_forward = args.boolean()?;
             args.finish()?;
-            let (wire, area) = self.edge_loop(
-                resolver,
-                bound_id,
-                loop_id,
-                bound_forward,
-                &plane.geometry,
-                scale,
-            )?;
+            let (wire, area) =
+                self.edge_loop(resolver, bound_id, loop_id, bound_forward, &surface, scale)?;
             let sign = order(bound_site, &area, &Real::zero())?;
             if sign == Ordering::Equal {
-                return Err(bound_site.invalid("zero-area planar bound"));
+                return Err(bound_site.invalid("zero-area parameter-space bound"));
             }
             let is_outer = sign
                 == if forward {
@@ -71,10 +65,13 @@ impl Builder {
                 push(&mut holes, wire).map_err(|kind| site.error(kind))?;
             }
         }
-        let outer = outer
-            .ok_or_else(|| site.error(ErrorKind::Expected("one finite planar outer bound")))?;
+        let outer = outer.ok_or_else(|| {
+            site.error(ErrorKind::Expected(
+                "one finite parameter-space outer bound",
+            ))
+        })?;
         self.model
-            .face(&plane.key, orientation, &outer, &holes)
+            .face(&surface.key, orientation, &outer, &holes)
             .map_err(|e| site.error(ErrorKind::Build(e)))
     }
     fn edge_loop(
@@ -83,7 +80,7 @@ impl Builder {
         bound: u64,
         id: u64,
         forward: bool,
-        plane: &Plane,
+        surface: &FaceSurface,
         scale: &Real,
     ) -> Result<(WireKey, Real), Error> {
         let mut args = resolver.simple(id, "EDGE_LOOP")?;
@@ -117,6 +114,8 @@ impl Builder {
         }
         let mut uses = Vec::new();
         let mut segments = Vec::new();
+        let mut previous_vertex = None;
+        let mut previous_parameter = None;
         for (oriented, edge_id, forward) in ordered {
             let edge = self.edge(resolver, edge_id, scale)?;
             let (from, to) = if forward {
@@ -124,25 +123,31 @@ impl Builder {
             } else {
                 (edge.end, edge.start)
             };
-            let uv = |id| {
-                let point = &self.by_vertex[&id].point;
-                let delta = point - &plane.origin;
-                Point2::new(delta.dot(&plane.x), delta.dot(&plane.y))
+            if previous_vertex.is_some_and(|id| id != from) {
+                return Err(site.invalid("edge loop has disconnected vertex identities"));
+            }
+            let (segment, correspondence) = surface.boundary_segment(
+                &edge,
+                &self.by_vertex[&from].point,
+                &self.by_vertex[&to].point,
+                forward,
+                previous_parameter.as_ref(),
+                site,
+            )?;
+            previous_vertex = Some(to);
+            previous_parameter = Some(segment.end().clone());
+            let curve = match &segment {
+                Segment2::Line(line) => Curve2::from(line.clone()),
+                Segment2::Arc(arc) => Curve2::from(arc.clone()),
             };
-            let line = LineSeg2::try_new(uv(from), uv(to))
-                .map_err(|e| site.error(ErrorKind::Geometry(e.into())))?;
             let pcurve = self
                 .model
-                .pcurve(Pcurve::new(Curve2::from(line.clone())))
+                .pcurve(Pcurve::new(curve))
                 .map_err(|e| site.error(ErrorKind::Build(e)))?;
-            let (direction, correspondence) = if forward {
-                (Direction::Forward, ParameterCorrespondence::identity())
+            let direction = if forward {
+                Direction::Forward
             } else {
-                (
-                    Direction::Reversed,
-                    ParameterCorrespondence::affine(-Real::one(), Real::one())
-                        .map_err(|e| site.error(ErrorKind::Build(e)))?,
-                )
+                Direction::Reversed
             };
             let key = self
                 .model
@@ -164,7 +169,7 @@ impl Builder {
             )
             .map_err(|kind| site.error(kind))?;
             push(&mut uses, key).map_err(|kind| site.error(kind))?;
-            push(&mut segments, Segment2::Line(line)).map_err(|kind| site.error(kind))?;
+            push(&mut segments, segment).map_err(|kind| site.error(kind))?;
         }
         let wire = self
             .model

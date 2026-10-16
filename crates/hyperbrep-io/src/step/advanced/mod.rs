@@ -1,9 +1,11 @@
 //! Explicit STEP topology, with exact curve evidence admitted before publication.
+mod circles;
 mod curves;
 mod faces;
+mod surfaces;
 
 use super::{
-    Error, ErrorKind,
+    ContextUnits, Error, ErrorKind,
     decode::{Args, Resolver, Site, reference},
     error::{insert, push},
     geometry::Plane,
@@ -60,17 +62,20 @@ struct Edge {
     key: EdgeKey,
     start: u64,
     end: u64,
+    circle: Option<circles::CircleEdge>,
 }
 #[derive(Clone)]
-struct FacePlane {
+struct FaceSurface {
     geometry: Plane,
     key: SurfaceKey,
+    cylinder: Option<surfaces::Cylinder>,
 }
 struct Builder {
     model: ModelBuilder,
     by_vertex: HashMap<u64, Vertex>,
     by_edge: HashMap<u64, Edge>,
-    by_plane: HashMap<u64, FacePlane>,
+    by_surface: HashMap<u64, FaceSurface>,
+    angle_scale: Option<Real>,
     vertices: Vec<(VertexSource, VertexKey)>,
     edges: Vec<EdgeSource>,
     faces: Vec<(u64, FaceKey)>,
@@ -80,8 +85,9 @@ struct Builder {
 pub(super) fn body(
     resolver: &mut Resolver<'_, '_, '_>,
     id: u64,
-    scale: &Real,
+    units: &ContextUnits,
 ) -> Result<ImportedBody, Error> {
+    let scale = &units.length.scale_to_si;
     let mut args = resolver.simple(id, "MANIFOLD_SOLID_BREP")?;
     let body_site = args.site;
     let name = resolver.text(args.next()?, body_site)?;
@@ -96,7 +102,11 @@ pub(super) fn body(
         model: ModelBuilder::new(),
         by_vertex: HashMap::new(),
         by_edge: HashMap::new(),
-        by_plane: HashMap::new(),
+        by_surface: HashMap::new(),
+        angle_scale: units
+            .plane_angle
+            .as_ref()
+            .map(|unit| unit.scale_to_si.clone()),
         vertices: Vec::new(),
         edges: Vec::new(),
         faces: Vec::new(),
@@ -179,33 +189,5 @@ impl Builder {
         )
         .map_err(|kind| site.error(kind))?;
         Ok(vertex)
-    }
-    fn plane(
-        &mut self,
-        resolver: &mut Resolver<'_, '_, '_>,
-        id: u64,
-        scale: &Real,
-    ) -> Result<FacePlane, Error> {
-        let entity = resolver.entity(id)?;
-        let site = Site::entity(entity);
-        let record = entity.components().next().expect("syntax component");
-        if entity.is_complex() || record.name() != "PLANE" {
-            return Err(site.error(ErrorKind::Unsupported("advanced support surface")));
-        }
-        if let Some(plane) = self.by_plane.get(&id) {
-            return Ok(plane.clone());
-        }
-        let mut args = Args::new(record, site);
-        resolver.text(args.next()?, site)?;
-        let placement = args.reference()?;
-        args.finish()?;
-        let geometry = resolver.placement(placement, scale)?;
-        let key = self
-            .model
-            .surface(geometry.surface.clone())
-            .map_err(|e| site.error(ErrorKind::Build(e)))?;
-        let plane = FacePlane { geometry, key };
-        cache(&mut self.by_plane, id, plane.clone(), site)?;
-        Ok(plane)
     }
 }

@@ -3693,18 +3693,20 @@ fn inverse_atan_linear_sign_includes_the_argument_sign() {
         );
         let atan = argument.clone().atan();
         let angle = atan.negate().add(Computable::pi());
-        let (_, _, retained) = angle
-            .integer_pi_plus_or_minus_atan_argument()
+        let (swap, _, _, retained) = angle
+            .quarter_turn_plus_or_minus_atan_argument()
             .expect("pi minus atan must retain its inverse-trig argument");
+        assert!(!swap);
         assert!(Computable::internal_structural_eq(&retained, &argument));
 
         let half_pi = Computable::pi().shift_right(1);
         let reduced = angle
             .add(half_pi.clone().negate())
             .add(half_pi.negate());
-        let (_, _, retained) = reduced
-            .integer_pi_plus_or_minus_atan_argument()
+        let (swap, _, _, retained) = reduced
+            .quarter_turn_plus_or_minus_atan_argument()
             .expect("nested half-pi cancellation must retain its inverse-trig argument");
+        assert!(!swap);
         assert!(Computable::internal_structural_eq(&retained, &argument));
         assert!(Computable::internal_structural_eq(
             &reduced.clone().sin(),

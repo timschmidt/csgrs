@@ -807,6 +807,57 @@
       "cost_evidence": "Three alternating CPU-0 pairs preserve all 64 default-feature BREP and 12 default arc receipts, including 256-arc workloads. Median case ratios are 1.020399/1.003615; maxima are 1.041137/1.118080. The largest arc row increases from 6.462 to 7.225 ns, exceeding the default 10% budget; retain the native completeness extension as a new feature baseline without claiming an optimization or universal timing pass. Five new 100-completion rows have 174.660\u2013503.273 microsecond medians, with exact semantic checks, counts, full JSON equality and allocation requests inside timing. Binary and child peak-RSS data, adverse rows and the superseded whole-model fallback remain available. General resource bounds and controlled-host performance qualification remain open.",
       "limits": "All 28 work-package gates remain open. Closed splines, general ellipse/plane pcurve admission, singular charts, analytic STEP mapping, complete operation provenance/receipts, internal total-work/retained-byte/cancellation bounds and release/binding/MSRV gates remain open. Native closed edges do not heal the independent OCCT cylinder radial residual. A complete pre-push matrix and new runtime fuzz/ASan/lexicase/coverage/formal campaigns are not claimed.",
       "future_feasibility": "A separate native edge probe completes 24 non-cardinal rational seam/frame/period construction and replay cases using existing Real::try_atan2 and frame APIs; two exact off-carrier cases fail typed. This does not implement STEP unit/source-parameter/pcurve mapping, and its archive sizes are not a same-contract optimization comparison."
+    },
+    {
+      "id": "step-direct-circles",
+      "work_packages": [
+        "WP00",
+        "WP03",
+        "WP08",
+        "WP14a",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P3",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "kept for exact source mapping and supported composition; new feature baseline with the pooled 1.103316 cached-arc timing exception retained; all work-package gates remain open",
+      "change": "Map selected direct CIRCLE/LINE edges on PLANE/CYLINDRICAL_SURFACE into existing native carriers, retaining exact source frames, phase, traversal, independent angle/length units, single-vertex closed edges, explicit topology identity and distinct seam uses. Keep supplied curved encodings typed unsupported. Hyperreal extends its shared atan certificate to integer quarter turns and uses one bounded Laurent projection after cheap trigonometric recognition fails to prove reconstructed periodic interpolation; general linear recognition and leaf exact_rational remain unchanged. Exact import outputs split, replay, reflect, compose as disconnected BodySets, subtract to empty and resume composition. Repair the allocation example's deprecated atomic update with existing compare/exchange primitives.",
+      "source": "../../hyperbrep-io/src/step/advanced/circles.rs",
+      "source_files": [
+        "../../hyperbrep-io/src/step/advanced/surfaces.rs",
+        "../../hyperbrep-io/src/step/advanced/faces.rs",
+        "../../hyperbrep-io/src/step/advanced/mod.rs",
+        "../../hyperbrep-io/src/step/imported.rs",
+        "../../hyperreal/src/computable/node/algebra.rs",
+        "../../hyperreal/src/computable/node/exp_trig.rs",
+        "../../hyperreal/src/real/arithmetic/elementary_functions.rs",
+        "../../hyperlimit/examples/allocation_profile.rs"
+      ],
+      "evidence": "evidence/2026-10-15-step-circles/manifest.json",
+      "validation": "399 combined native/IO passes in debug and release; 391 minimal-feature passes. Scalar all/minimal configurations pass 1050/937; predicates 365/352; the unchanged complete curve suite passes 2441 with 28 existing ignores, and solver passes 974. Counts overlap. Eight exact native groups execute in zero-import Wasmtime, including partial arcs, reversed normals and oblique/quadratic frames. Independent OCCT reads the six original exact fixtures; the byte-identical original off-carrier OCCT cylinder remains a typed rejection. Scoped strict Clippy/docs, examples, fuzz-target compilation, fmt and diff checks pass. Root acceptance retains 141 passes and the same two strict 16/32 drill failures. Every attempt and source difference is recorded.",
+      "cost_evidence": "Complete preserved 6/7 advanced/faceted, 64 native, 12 arc and 5 closed-edge corpora retain receipts. Initial native median/max ratios 1.256921/1.340681 remain recorded; one predefined complete geometry repeat gives 0.992343/1.036984, and all six pairs pooled give 0.997557/1.053811. Pooled arc median/max are 0.998373/1.103316, with cached 256-arc queries increasing 39.2 to 43.25 ns; this timing gate remains open. Pooled closed-edge median/max are 0.984569/1.046618. Existing import allocation-call counts are unchanged, with advanced requested bytes increasing about 1-2%. Selected 134/124 scalar probes have maxima 1.082050/1.073026. New circular import/reused syntax cost 0.982/0.875 ms; full edit/replay/composition costs 10.176 ms and requests 52617.88 allocations/4674464.28 bytes per completion. These are descriptive costs, not a speedup or resource-bound claim. The broad scalar fallback and anchored-frame prototype are rejected with retained evidence.",
+      "limits": "All 28 work packages remain open. Curved supplied SURFACE_CURVE/SEAM_CURVE, other analytic/spline/void/assembly mappings, exact curved STEP export, explicit healing/approximation and general shell completeness remain open. Detailed operation provenance/receipts, total-work/retained-byte/cancellation bounds, published-package/MSRV and real C/Python/JS consumers are not qualified. No new runtime fuzz/ASan/lexicase/coverage/formal campaign or complete pre-push matrix is claimed. Initial, repeat and pooled timing failures and earlier archive/closed-edge observations remain visible; no push is performed."
     }
   ],
   "work_packages": [
@@ -989,7 +1040,7 @@
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
     "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
-    "Continue WP14a from selected exact faceted exchange and planar advanced import: use the native closed-circle edge prerequisite for curved analytic mapping; prove exact source vertex incidence, complete source parameter maps, distinct seam endpoints and all 3D/UV curve representations. Keep angular and length unit scales separate; preserve declared decimal conversion factors, source master semantics and every alternate representation. Prototype the recorded seam-frame/source-phase experiment before choosing new carriers, and diagnose the unchanged off-carrier decimal cylinder. Then WP14b adds general spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. Native tests do not establish whole-document or curved STEP exchange.",
+    "Continue WP14a from selected exact faceted exchange, planar advanced import and direct circular edges on planes/cylinders. Preserve the new strict split/replay/reflection/BodySet/empty workflow and exact source angle/frame/sense maps. Add all supplied curved SURFACE_CURVE/SEAM_CURVE representations with basis-aware units and complete 3D/UV correspondence proofs, then other analytic families and exact curved export. WP14b adds spline/trim/seam/void/mapped/assembly exchange and explicit healing/export approximation. Keep the unchanged off-carrier decimal cylinder as a typed rejection; no implicit repair or whole-document exchange claim.",
     "Continue every remaining work package and cross-stack requirement in the development plan; foundational progress does not narrow that scope."
   ],
   "acceptance_contract": {

@@ -2321,12 +2321,12 @@ impl Real {
         })
     }
 
-    fn retained_integer_pi_plus_or_minus_atan_argument(
+    fn retained_quarter_turn_plus_or_minus_atan_argument(
         &self,
-    ) -> Option<(Sign, Sign, Real)> {
-        let (sine_sign, cosine_sign, argument) = self
+    ) -> Option<(bool, Sign, Sign, Real)> {
+        let (swap, sine_sign, cosine_sign, argument) = self
             .fold_ref()
-            .integer_pi_plus_or_minus_atan_argument()?;
+            .quarter_turn_plus_or_minus_atan_argument()?;
         let argument = if let Some(rational) = argument.exact_rational() {
             Self::new(rational)
         } else if let Some((scale, radicand)) = argument.exact_pure_quadratic_surd() {
@@ -2337,7 +2337,7 @@ impl Real {
         } else {
             Self::irrational_from_computable(argument)
         };
-        Some((sine_sign, cosine_sign, argument))
+        Some((swap, sine_sign, cosine_sign, argument))
     }
 
     fn retained_signed_half_pi_minus_atan_argument(&self) -> Option<(Sign, Real)> {
@@ -2388,14 +2388,15 @@ impl Real {
             return (&argument / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
         }
-        if let Some((sine_sign, _, argument)) =
-            self.retained_integer_pi_plus_or_minus_atan_argument()
+        if let Some((swap, sine_sign, _, argument)) =
+            self.retained_quarter_turn_plus_or_minus_atan_argument()
         {
-            crate::trace_dispatch!("real", "sin", "integer-pi-atan-rewrite");
+            crate::trace_dispatch!("real", "sin", "quarter-turn-atan-rewrite");
             let denominator = (Self::one() + &argument * &argument)
                 .sqrt()
                 .expect("one plus an exact atan argument square is positive");
-            let value = (&argument / denominator)
+            let numerator = if swap { Self::one() } else { argument };
+            let value = (numerator / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
             return if sine_sign == Sign::Minus {
                 -value
@@ -2486,14 +2487,15 @@ impl Real {
             return (Self::one() / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
         }
-        if let Some((_, cosine_sign, argument)) =
-            self.retained_integer_pi_plus_or_minus_atan_argument()
+        if let Some((swap, _, cosine_sign, argument)) =
+            self.retained_quarter_turn_plus_or_minus_atan_argument()
         {
-            crate::trace_dispatch!("real", "cos", "integer-pi-atan-rewrite");
+            crate::trace_dispatch!("real", "cos", "quarter-turn-atan-rewrite");
             let denominator = (Self::one() + &argument * &argument)
                 .sqrt()
                 .expect("one plus an exact atan argument square is positive");
-            let value = (Self::one() / denominator)
+            let numerator = if swap { argument } else { Self::one() };
+            let value = (numerator / denominator)
                 .expect("positive inverse-trig normalization is nonzero");
             return if cosine_sign == Sign::Minus {
                 -value
@@ -2736,11 +2738,11 @@ impl Real {
             crate::trace_dispatch!("real", "cot", "half-pi-minus-atan-rewrite");
             return Ok(argument);
         }
-        if let Some((sine_sign, cosine_sign, argument)) =
-            self.retained_integer_pi_plus_or_minus_atan_argument()
+        if let Some((swap, sine_sign, cosine_sign, argument)) =
+            self.retained_quarter_turn_plus_or_minus_atan_argument()
         {
-            crate::trace_dispatch!("real", "cot", "integer-pi-atan-rewrite");
-            let inverse = argument.inverse()?;
+            crate::trace_dispatch!("real", "cot", "quarter-turn-atan-rewrite");
+            let inverse = if swap { argument } else { argument.inverse()? };
             return Ok(if sine_sign == cosine_sign {
                 inverse
             } else {

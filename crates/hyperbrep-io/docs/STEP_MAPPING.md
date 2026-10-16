@@ -18,7 +18,7 @@ completeness and performance retain that priority order under
 | `ImportedRepresentation::bodies()` | Owned native `Model` values, in representation item order, with model-bound solid/face/vertex/wire/edge-use views. |
 | `interpreted_entities()` / `retained_entities()` | Sorted distinct interpreted IDs and source-order raw-retained IDs; disjoint and together covering every DATA instance. |
 | `ImportedBody::edge_uses()` | Bound/loop IDs, typed polygon-segment or oriented-edge source, directed source endpoint identities and native edge-use reference. |
-| `ImportedBody::explicit_edges()` | Explicit EDGE_CURVE identity, source geometry/master IDs, exact parameter maps for every representation and native edge reference. |
+| `ImportedBody::explicit_edges()` | Explicit EDGE_CURVE identity, source geometry/master IDs, exact directed parameter maps for every supplied supported representation and native edge reference. |
 | `write_faceted(bodies, options, context)` | All explicitly selected supported native solid occurrences as one AP214 common faceted representation/product, or a typed failure. |
 | `FacetedStep::bodies()` | Borrowed model-bound source-to-output mappings for every vertex, face, wire and directed edge use. |
 
@@ -96,8 +96,9 @@ authored vector magnitude and parameter. Length conversion scales both origin
 and velocity. Each endpoint must lie exactly on that support. The parameter
 order must agree with `EDGE_CURVE.same_sense`. Native edges use their authored
 topological start/end with canonical unit parameterization; `SourceCurveParameters`
-reports `source_parameter = start + (end - start) * native_parameter`, including
-negative maps. `ORIENTED_EDGE.orientation` and `FACE_BOUND.orientation` act
+reports `source_parameter = start + (end - start) * s`, where `s` is the
+normalized directed edge fraction (the native parameter for unit-domain lines),
+including negative maps. `ORIENTED_EDGE.orientation` and `FACE_BOUND.orientation` act
 independently; reversing a bound reverses order and every edge use.
 
 Each associated `PCURVE` has a plane basis and a one-item
@@ -123,9 +124,55 @@ domain. General unbounded or disconnected planar face domains remain unsupported
 The API is now `import_representation`; direct callers use the typed source enums.
 There is no legacy import alias or parallel geometry carrier. Full EXPRESS/AP
 conformance, native arbitrary-shell completeness, global arithmetic/work/heap
-admission and curved/periodic STEP exchange remain unfinished. Independent OCCT
+admission and general curved/periodic STEP exchange remain unfinished. Independent OCCT
 inputs and the exact/rejection/composition evidence are recorded in the
 [advanced mapping qualification](../../hyperbrep/docs/evidence/2026-10-15-step-advanced/README.md).
+
+## Direct circular edges and cylindrical faces
+
+Advanced bodies additionally accept direct spatial `CIRCLE` curves and
+`CYLINDRICAL_SURFACE` supports through the same explicit topology and native
+builder. A circle's placement and positive radius define its exact support;
+native point location must certify both endpoints. A full circular edge uses
+the same explicit vertex at both endpoints and traverses exactly one period.
+Different vertex IDs at equal positions remain distinct and are rejected for
+this closed-circle encoding. There is no welding, synthetic seam vertex or
+implicit repair. Partial arcs retain both authored vertex IDs.
+
+The source parameter interval starts at the first endpoint's native canonical
+angle in `[0, tau]`, with the native locator selecting the first seam parameter.
+Its end is unwrapped in the direction of `EDGE_CURVE.same_sense`; a full edge's
+directed span is `+tau` or `-tau`. Both endpoints are divided by the context's
+exact radians-per-angle-unit scale. Thus the numeric source period need not be
+`tau`. Native circles retain their source frame and an increasing radian domain;
+native reversal supplies negative traversal. For native parameter `t`, the map
+fraction is `s = (t-domain.start)/(domain.end-domain.start)`. The source/master ID
+is the direct `CIRCLE` ID. Maps refer to the immutable imported revision.
+
+Plane faces use native circular pcurves and angular-sweep correspondence.
+Cylinder faces use continuous local UV charts in radians and metres, with a
+separate use for each side of the periodic seam. The first point uses native
+circle parameter location; subsequent segments continue the preceding lift only
+after explicit vertex continuity is checked. Native whole-image validation
+certifies every generated pcurve and its affine edge correspondence. The
+currently admitted cylindrical boundaries are constant-height circles and axial
+lines, within the existing native face/shell validation domain. This mapping
+does not add arbitrary cylinder trimming or general shell validation.
+
+Angular mapping requires a declared plane-angle unit, even when no angular
+number appears in the spatial circle record. Length and angle scales remain
+independent. A conversion named `degree` uses its authored exact decimal factor;
+it never substitutes symbolic `pi/180`. Uncertainty metadata cannot make an
+off-carrier decimal vertex incident.
+
+Curved `SURFACE_CURVE`, `SEAM_CURVE`, ellipses, other analytic surfaces and spline
+exchange remain typed unsupported. The planar line/supplied-pcurve mapping above
+is unchanged. Every selected body must finish admission before any result is
+published; all source entities remain interpreted or raw-retained. The exact
+faceted writer rejects these curved models. Native archive replay is a separate
+lossless operation, not a curved STEP round trip. See the
+[circular mapping evidence](../../hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
+and [runnable example](../examples/circular_step.rs).
 
 ## Units and text
 

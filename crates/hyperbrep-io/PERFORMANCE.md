@@ -182,3 +182,44 @@ include six deliberate implementation faults and three receipt-reader controls.
 No further optimization experiment was retained or rejected in this increment.
 Global scalar/work/heap limits and the historical archive-admission timing gate
 remain open.
+
+## Direct analytic circles and cylinders — 2026-10-15
+
+The exact direct `CIRCLE`/`LINE` import adds a new successful domain. These are
+absolute costs over three CPU-0 processes, not speedups over the old unsupported
+result. Each import checks independent exact area, volume and membership,
+carrier/topology counts, source parameter maps and full native JSON equality.
+The edit workflow additionally decodes/revalidates archives, splits both circular
+and seam edges, reflects, forms a disconnected union, subtracts to empty and
+resumes composition. Preparation and one reference result precede timing;
+shared constants are warm, and every native model is freshly constructed.
+
+| Operation | Iterations/process | Median per iteration | Allocation calls/iteration | Requested bytes/iteration |
+| --- | ---: | ---: | ---: | ---: |
+| Closed circles, fresh document | 100 | 981.635 µs | 3,891.01 | 414,558.76 |
+| Closed circles, reused syntax | 100 | 874.617 µs | 3,835 | 342,305 |
+| Partial arcs, fresh document | 100 | 2.693032 ms | 11,696 | 990,505 |
+| Partial arcs, reused syntax | 100 | 2.642819 ms | 11,640 | 918,253 |
+| Edits, replay and Boolean/empty continuation | 25 | 10.175523 ms | 52,617.88 | 4,674,464.28 |
+| Exact off-circle rejection | 1,000 | 72.082 µs | 137 | 85,612 |
+
+Native archives are 15,091 and 37,857 bytes for the closed and partitioned
+cylinders. Complete bytes, fingerprints and allocation totals agree across all
+three processes. Requested allocator bytes include repeated allocation and
+reallocation; they are not peak retained heap. The benchmark executable is
+25,805,992 bytes. Raw individual timings vary and remain in the evidence.
+
+The unchanged six-case advanced and seven-case faceted corpora preserve every
+receipt in three alternating pairs against frozen `6ca4b6531` executables.
+Median case ratios are 1.020417 and 1.000277; maxima are 1.045933 and 1.003196.
+Allocation-call counts are unchanged. Inline circular cache data adds 14,016
+requested bytes per advanced box/reparameterized box, 28,032 per two-body import,
+30,400 per holed body and 3,648 per rejected alternate-sense input (about 1–2%).
+Faceted allocator requests are unchanged. The advanced/faceted executables grow
+by 63,920/64,032 bytes. These observations retain the cost of new representation
+support; they are not an optimization or a whole-stack performance claim.
+
+[Admission, final sources, independent readers and all raw observations](../hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
+include the rejected broad scalar prototype and the separate native/arc repeat.
+Curved supplied pcurves, other analytic/spline/assembly mappings, curved STEP
+export and internal total-work/memory/cancellation admission remain open.

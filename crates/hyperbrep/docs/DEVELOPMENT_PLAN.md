@@ -1203,6 +1203,19 @@ not authorize replacing an approximate decimal factor with an exact symbolic
 one. Add explicit disagreement fixtures before admitting these mappings; see
 the [closed-edge and angle-unit research](ALGORITHM_RESEARCH.md#native-closed-edges-before-analytic-step-mapping-2026-10-15).
 
+The direct-circle increment implements `CIRCLE`/`LINE` boundaries on
+`PLANE`/`CYLINDRICAL_SURFACE` through ordinary native validation. It retains exact
+source angle maps, full circular edge identity and distinct periodic seam uses;
+native splitting, replay and empty-result composition consume the imported
+model. Shared scalar quarter-turn and rational-coefficient certificates own the
+required inverse-trigonometric identities. The
+[mapping contract](../../hyperbrep-io/docs/STEP_MAPPING.md#direct-circular-edges-and-cylindrical-faces)
+and [admission evidence](evidence/2026-10-15-step-circles/README.md) define this
+subset. Curved `SURFACE_CURVE`/`SEAM_CURVE` evidence must be admitted in a future
+increment; it must not be ignored to accept the spatial representation. WP14a
+and WP14b remain open, including independent exporter corpora, other analytic
+families, exact curved export and the resource/delivery gates.
+
 ```rust,ignore
 pub fn read_step(bytes: &[u8], options: &StepReadOptions)
     -> Result<RawCadDocument, ExchangeError>;

@@ -1014,7 +1014,8 @@ conversion factors exactly; recognizing a familiar unit name must not silently
 replace its factor with a symbolic value. Test non-radian contexts, periodic
 seam maps and inconsistent supplied representations explicitly.
 
-The complete analytic-mapping experiment is **unimplemented**. For a closed circle,
+Before the direct-circle follow-up below, the complete analytic-mapping
+experiment was **unimplemented**. The proposed experiment was: for a closed circle,
 first prove exact vertex incidence, then consider anchoring the native radial
 frame at that vertex. With positive radius `r`, center `c`, seam point `p` and
 oriented unit normal `n`, use `x = (p-c)/r` and `y = n cross x`. The admitted
@@ -1055,3 +1056,40 @@ In particular, the anchored probe does not serialize a source-parameter map;
 its smaller archive sizes cannot be credited as an optimization of the same
 interchange contract. Complete those missing proofs before selecting a mapping
 or claiming an import workflow.
+
+## Direct circular STEP mapping and shared scalar closure (2026-10-15)
+
+The [follow-up implementation](evidence/2026-10-15-step-circles/README.md) admits
+selected direct `CIRCLE`/`LINE` edges on planes and cylinders through ordinary
+native validation. It preserves source frames and directed source parameter
+maps, converts angle and length units independently, and retains distinct seam
+uses. The anchored-frame experiment above is rejected: it did not resolve native
+split/archive replay and introduced an unnecessary parameter-frame conversion.
+The original OCCT decimal cylinder remains byte-identical and fails exact radial
+incidence; no tolerance or uncertainty metadata changes that outcome.
+
+Two reproduced scalar gaps owned the missing composition. First, an angle
+`atan(x)+k*pi/2` needs the integer quarter-turn rotation of
+`(cos(atan(x)),sin(atan(x)))=(1,x)/sqrt(1+x*x)`. Second, native periodic splitting
+and replay can reconstruct `a*(1+q)-(a-2*pi)*q`, with `a=atan(4/3)` and
+`q=(pi-2*pi)/(2*pi)=-1/2`. Leaf rational recognition alone does not see that
+coefficient. Both belong in Hyperreal's shared exact recognizer, not STEP or
+native topology special cases. The admitted extension uses existing carriers
+and bounded Laurent normalization to certify the complete linear form after
+cheap recognition fails. It adds no cache, approximation or serialization tag.
+
+A broader fallback at every scalar multiply is rejected after matched frustum
+and retained arc-witness replay regressions. The narrower implementation passes
+the full native/predicate/curve/solver qualification and the added rational,
+quadratic, reversed-normal and oblique-frame matrices, including actual WASM
+execution. Complete source-bound cost records retain the initial unfavorable
+geometry series and one predefined replication. The pooled cached-arc query
+still exceeds the default 10% timing budget; the exact domain extension is a
+new feature baseline, not an optimization or universal performance admission.
+
+Curved supplied `SURFACE_CURVE`/`SEAM_CURVE` representations are the next exchange
+proof boundary: every spatial/UV representation and its basis-dependent units
+must agree before publication. Other analytic/spline/void/assembly mappings,
+curved STEP export, explicit healing, general chart gluing and complete resource
+and delivery contracts remain open. Native archive replay and an independent
+floating-point reader do not establish a curved STEP round trip or AP conformance.

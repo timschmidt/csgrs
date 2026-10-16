@@ -2984,3 +2984,40 @@ records the resulting worktree, including its still-unadmitted native prototype.
 The original native performance failure, existing formatting-trait stalls,
 underlying total-work limits and the wider property plan remain open. No complete
 workspace/pre-push matrix or native admission is claimed.
+
+## Exact atan quarter turns and periodic replay — 2026-10-15
+
+Extend the existing integer-pi certificate to integer quarter turns. The exact
+rotation swaps signed sine/cosine numerators; retained rational and quadratic
+arguments remain in their native scalar forms. A single bounded Laurent
+projection, attempted after cheap trigonometric recognition fails, proves
+reconstructed periodic interpolation such as
+`a*(1+q) - (a-2*pi)*q = a-pi`, where `a=atan(4/3)` and
+`q=(pi-2*pi)/(2*pi)`. This closes native circular STEP split/archive replay;
+it does not add a scalar carrier, serialized tag or persistent cache.
+The leaf-only `exact_rational` contract and general linear recognizer are unchanged.
+
+The broader prototype that searched Laurent coefficients at every multiply in
+general inverse-trig recognition is **rejected**. Its complete matched corpus
+retained output receipts but measured 1.384127 times baseline frustum replay and
+1.653519 times retained arc-witness replay. Its patch, new files and raw trials
+remain available. An unrelated full scalar catalogue was interrupted during a
+baseline million-bit GCD workload; that partial run earns no comparison credit.
+
+The narrower implementation has three alternating CPU-0 pairs for 134 selected
+`scalar_micro` cases and 124 selected `numerical_micro` cases. Median case ratios
+are 0.997985 and 1.001211; maxima are 1.082050 and 1.073026. The largest rows are
+negative structural-sign queries (18.526 to 20.046 ns) and cached asin at 96 bits
+(34.292 to 36.796 ns). Criterion uses ten samples, 10 ms warmup and 30 ms requested
+measurement per case; exact selection regex, raw samples and estimates are saved.
+These are short affected-group probes, not full-catalogue or controlled-host
+speedup claims. Executable sizes change by -520/+4,464 bytes respectively.
+
+The [source-bound admission](../hyperbrep/docs/evidence/2026-10-15-step-circles/README.md)
+retains full native/curve/import comparisons, including the initial unfavorable
+geometry series and its one predefined complete replication. Exact semantic,
+replay and negative controls, 1,050 all-feature and 937 minimal-feature scalar
+results, full predicate/curve/solver downstream suites and actual WASM execution
+qualify the new domain. Root strict-drill 16/32 failures remain open. The bounded
+recognizer does not establish operation-wide time, coefficient-size, retained
+memory or cancellation limits, and no release/formal/coverage gate closes here.

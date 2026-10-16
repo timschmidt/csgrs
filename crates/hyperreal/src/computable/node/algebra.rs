@@ -7,6 +7,154 @@ struct PiAtanLinearForm {
 }
 
 #[cfg(test)]
+mod quarter_turn_atan_tests {
+    use super::*;
+
+    fn raw(approximation: Approximation) -> Computable {
+        Computable {
+            internal: Arc::new(Node::new(
+                approximation,
+                BoundCache::Invalid,
+                ExactSignCache::Unknown,
+            )),
+            signal: None,
+        }
+    }
+
+    #[test]
+    fn reconstructed_periodic_interpolation_retains_exact_trigonometry() {
+        // Splitting and replaying a periodic pcurve retains this expression:
+        // q = (pi - 2*pi)/(2*pi), a*(1+q) - (a-2*pi)*q = a-pi.
+        // Build its uncached representation, without constructor reduction.
+        let a = Computable::rational(Rational::fraction(4, 3).unwrap()).atan();
+        let pi = Computable::pi();
+        let q = raw(Approximation::Multiply(
+            raw(Approximation::Add(
+                pi.clone(),
+                pi.clone().shift_left(1).negate(),
+            )),
+            Computable::pi_inverse_constant().shift_right(1),
+        ));
+        assert!(q.exact_rational().is_none());
+        let angle = raw(Approximation::Add(
+            raw(Approximation::Multiply(
+                a.clone(),
+                raw(Approximation::Add(Computable::one(), q.clone())),
+            )),
+            raw(Approximation::Multiply(
+                raw(Approximation::Add(a, pi.shift_left(1).negate())),
+                q.clone(),
+            ))
+            .negate(),
+        ));
+        assert!(angle.cached().is_none());
+        assert_eq!(
+            angle.clone().sin().exact_rational(),
+            Some(Rational::fraction(-4, 5).unwrap())
+        );
+        assert_eq!(
+            angle.clone().cos().exact_rational(),
+            Some(Rational::fraction(-3, 5).unwrap())
+        );
+        assert!(angle.cached().is_none());
+        assert!(q.cached().is_none());
+        #[cfg(feature = "serde")]
+        {
+            let serialized = serde_json::to_string(&angle).unwrap();
+            let replay: Computable = serde_json::from_str(&serialized).unwrap();
+            assert_eq!(
+                replay.clone().sin().exact_rational(),
+                Some(Rational::fraction(-4, 5).unwrap())
+            );
+            assert_eq!(
+                replay.clone().cos().exact_rational(),
+                Some(Rational::fraction(-3, 5).unwrap())
+            );
+            assert!(replay.cached().is_none());
+        }
+    }
+
+    #[test]
+    fn direct_computable_quarter_turns_keep_exact_rational_coordinates() {
+        for numerator in [-4, 4] {
+            let argument = Computable::rational(Rational::fraction(numerator, 3).unwrap());
+            for turns in -9_i64..=9 {
+                let angle = argument.clone().atan().add(
+                    Computable::pi().multiply_rational(Rational::fraction(turns, 2).unwrap()),
+                );
+                let s = Rational::fraction(numerator, 5).unwrap();
+                let c = Rational::fraction(3, 5).unwrap();
+                let (s, c) = match turns.rem_euclid(4) {
+                    0 => (s, c),
+                    1 => (c, -s),
+                    2 => (-s, -c),
+                    _ => (-c, s),
+                };
+                assert!(angle.cached().is_none());
+                assert_eq!(angle.clone().sin().exact_rational(), Some(s));
+                assert_eq!(angle.clone().cos().exact_rational(), Some(c));
+                assert!(angle.cached().is_none());
+            }
+        }
+    }
+
+    #[test]
+    fn quarter_turn_recognizer_does_not_admit_other_angles_or_discard_offsets() {
+        let atan = Computable::rational(Rational::fraction(4, 3).unwrap()).atan();
+        let quarter = atan.clone().add(Computable::pi().shift_right(1));
+        for value in [
+            atan.clone()
+                .add(Computable::pi().multiply_rational(Rational::fraction(1, 3).unwrap())),
+            quarter.clone().add(Computable::rational(
+                Rational::fraction(1, 1_000_000_000_000).unwrap(),
+            )),
+            quarter.shift_left(1),
+            raw(Approximation::Multiply(
+                atan.clone(),
+                Computable::sqrt_rational(Rational::new(2)),
+            )),
+            atan.add(Computable::rational(Rational::fraction(5, 12).unwrap()).atan()),
+        ] {
+            assert!(value.cached().is_none());
+            assert!(value.quarter_turn_plus_or_minus_atan_argument().is_none());
+            assert!(value.cached().is_none());
+        }
+    }
+
+    #[test]
+    fn unrecognized_or_exhausted_coefficients_do_not_invent_quarter_turns() {
+        let atan = Computable::rational(Rational::fraction(4, 3).unwrap()).atan();
+        let ratio = raw(Approximation::Multiply(
+            Computable::pi(),
+            Computable::pi_inverse_constant().shift_right(1),
+        ));
+        let tiny = Computable::rational(Rational::fraction(1, 1_000_000_000_000).unwrap());
+        let off_quarter = raw(Approximation::Add(
+            atan.clone(),
+            raw(Approximation::Multiply(
+                raw(Approximation::Add(ratio.clone(), tiny)),
+                Computable::pi(),
+            )),
+        ));
+        assert!(
+            off_quarter
+                .quarter_turn_plus_or_minus_atan_argument()
+                .is_none()
+        );
+        assert!(off_quarter.cached().is_none());
+        let quarter = raw(Approximation::Add(
+            atan,
+            raw(Approximation::Multiply(ratio, Computable::pi())),
+        ));
+        assert!(quarter.pi_atan_linear_form(0).is_none());
+        assert!(quarter.pi_atan_linear_form(1).is_none());
+        // A smaller unsuccessful search must not poison the later certificate.
+        assert!(quarter.quarter_turn_plus_or_minus_atan_argument().is_some());
+        assert!(quarter.cached().is_none());
+    }
+}
+
+#[cfg(test)]
 mod pi_laurent_compaction_node_tests {
     use super::*;
 
@@ -714,16 +862,36 @@ impl Computable {
         (argument.exact_sign()? == orientation).then_some((orientation, argument))
     }
 
-    pub(crate) fn integer_pi_plus_or_minus_atan_argument(
+    pub(crate) fn quarter_turn_plus_or_minus_atan_argument(
         &self,
-    ) -> Option<(Sign, Sign, Computable)> {
-        let form = self.pi_atan_linear_form(64)?;
+    ) -> Option<(bool, Sign, Sign, Computable)> {
+        let form = self.pi_atan_linear_form(64)
+            .or_else(|| self.pi_atan_laurent_form(64))?;
         if form.constant.sign() != Sign::NoSign
             || (!form.atan.is_one() && !form.atan.is_minus_one())
         {
             return None;
         }
-        let multiple = form.pi.integer_magnitude()?;
+        // Keep the integer-pi path free of a new rational scaling step. Odd multiples
+        // of pi/2 exchange the sine and cosine numerators; their signs follow
+        // the exact quarter-turn rotation, without refining either angle.
+        let Some(multiple) = form.pi.integer_magnitude() else {
+            let doubled = &form.pi * Rational::new(2);
+            let quarter_turns = doubled.integer_magnitude()?;
+            let sine_sign = if quarter_turns.bit(1) ^ (form.pi.sign() == Sign::Minus) {
+                Sign::Minus
+            } else {
+                Sign::Plus
+            };
+            let cosine_sign = if form.atan.is_minus_one() {
+                sine_sign
+            } else if sine_sign == Sign::Plus {
+                Sign::Minus
+            } else {
+                Sign::Plus
+            };
+            return Some((true, sine_sign, cosine_sign, form.argument?));
+        };
         let cosine_sign = if multiple.bit(0) {
             Sign::Minus
         } else {
@@ -738,7 +906,45 @@ impl Computable {
         } else {
             cosine_sign
         };
-        Some((sine_sign, cosine_sign, form.argument?))
+        Some((false, sine_sign, cosine_sign, form.argument?))
+    }
+
+    fn pi_atan_laurent_form(&self, budget: usize) -> Option<PiAtanLinearForm> {
+        if !self.internal.contains_inverse_trig_or_pi() {
+            return None;
+        }
+        // Reconstructed angular interpolation can retain rational scales such
+        // as (pi-2*pi)/(2*pi). Normalize the complete angle once, only after
+        // the cheap trigonometric recognizer fails. Reuse the existing bounded
+        // Laurent certificate instead of searching at each scalar addition.
+        let polynomial = self.pi_laurent_polynomial(budget)?;
+        let mut form = PiAtanLinearForm {
+            constant: Rational::zero(),
+            pi: Rational::zero(),
+            atan: Rational::zero(),
+            argument: None,
+        };
+        for (power, coefficient) in polynomial.terms {
+            if !coefficient.radicals.is_empty() {
+                return None;
+            }
+            match power {
+                0 => {
+                    form.constant = form.constant + coefficient.rational;
+                    for (atom, scale) in coefficient.atoms {
+                        form = form.add(PiAtanLinearForm {
+                            constant: Rational::zero(),
+                            pi: Rational::zero(),
+                            atan: scale,
+                            argument: Some(atom.atan_argument()?),
+                        })?;
+                    }
+                }
+                1 if coefficient.atoms.is_empty() => form.pi = form.pi + coefficient.rational,
+                _ => return None,
+            }
+        }
+        Some(form)
     }
 
     fn pi_acos_linear_form(&self, budget: usize) -> Option<PiAcosLinearForm> {
