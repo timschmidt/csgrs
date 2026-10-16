@@ -309,16 +309,13 @@ impl ArenaModel {
                     Direction::Forward => (edge.start(), edge.end()),
                     Direction::Reversed => (edge.end(), edge.start()),
                 };
-                let (Some(start), Some(end)) = (
-                    self.vertex(start)
-                        .expect("validated vertex")
-                        .point()
-                        .try_coordinates(),
-                    self.vertex(end)
-                        .expect("validated vertex")
-                        .point()
-                        .try_coordinates(),
-                ) else {
+                // Project the coordinates actually emitted above. Analytic
+                // endpoint canonicalization may replace equal runtime
+                // expressions; mixing both representations changes the next
+                // archive and can obstruct independent incidence replay.
+                let (RawVertex::Coordinates(start), RawVertex::Coordinates(end)) =
+                    (&vertices[start.index()], &vertices[end.index()])
+                else {
                     continue;
                 };
                 let start = project_raw_plane_point(start, origin, u, v)?;
@@ -372,17 +369,12 @@ impl ArenaModel {
                 else {
                     continue;
                 };
-                let start = self
-                    .vertex(edge.start())
-                    .expect("trusted edge references a validated start vertex");
-                let end = self
-                    .vertex(edge.end())
-                    .expect("trusted edge references a validated end vertex");
-                control_points[0] = point_array(start.represented_point()?);
+                control_points[0] =
+                    raw_vertex_coordinates(&vertices[edge.start().index()])?.clone();
                 *control_points
                     .last_mut()
                     .expect("validated rational Bezier has controls") =
-                    point_array(end.represented_point()?);
+                    raw_vertex_coordinates(&vertices[edge.end().index()])?.clone();
             }
             // Extrusion surfaces clone their profile curve rather than referring
             // to the edge arena. Canonicalize a full-profile rational carrier to
@@ -446,18 +438,12 @@ impl ArenaModel {
                 } else {
                     (directed_end, directed_start)
                 };
-                control_points[0] = point_array(
-                    self.vertex(profile_start)
-                        .expect("trusted edge references a validated start vertex")
-                        .represented_point()?,
-                );
+                control_points[0] =
+                    raw_vertex_coordinates(&vertices[profile_start.index()])?.clone();
                 *control_points
                     .last_mut()
-                    .expect("validated rational Bezier profile has controls") = point_array(
-                    self.vertex(profile_end)
-                        .expect("trusted edge references a validated end vertex")
-                        .represented_point()?,
-                );
+                    .expect("validated rational Bezier profile has controls") =
+                    raw_vertex_coordinates(&vertices[profile_end.index()])?.clone();
             }
             let edge_uses = self
                 .edge_uses()
@@ -655,12 +641,16 @@ fn set_raw_pcurve_end(curve: &mut RawPcurve, end: [Real; 2]) {
 }
 
 fn project_raw_plane_point(
-    point: &Point3,
+    point: &[Real; 3],
     origin: &Point3,
     u: &Vector3,
     v: &Vector3,
 ) -> Result<[Real; 2], PersistenceError> {
-    let displacement = point - origin;
+    let displacement = Vector3::new([
+        &point[0] - &origin.x,
+        &point[1] - &origin.y,
+        &point[2] - &origin.z,
+    ]);
     let uu = u.dot(u);
     let uv = u.dot(v);
     let vv = v.dot(v);
@@ -1135,6 +1125,13 @@ fn surface3(surface: RawSurface) -> Result<Surface, GeometryError> {
         },
     };
     Surface::from_exact_data(data)
+}
+
+fn raw_vertex_coordinates(vertex: &RawVertex) -> Result<&[Real; 3], GeometryError> {
+    match vertex {
+        RawVertex::Coordinates(coordinates) => Ok(coordinates),
+        _ => Err(GeometryError::UnrepresentablePoint),
+    }
 }
 
 fn point_array(point: &Point3) -> [Real; 3] {

@@ -246,9 +246,10 @@ The clean-break implementation currently provides:
   with retained two-surface pcurves when their authored frames align or mirror,
   with retained multiplicity, overlaps, coincidence, tangent points, lines,
   circles, exact ellipse curves, and typed mixed-dimensional component sets;
-- topology-safe exact family-preserving transforms, including rigid
-  cylindrical/conical/toroidal/revolution translations and reflections,
-  arbitrary affine line prisms, and rigidly reoriented curved prisms;
+- topology-safe exact family-preserving transforms, including certified
+  analytic similarities and reflections with scaled lengths, axial charts,
+  selected parameters and solid certificates; arbitrary affine line prisms
+  retain their existing domain;
 - copy-on-write stable-ID geometry/topology replacement transactions with
   complete validation on commit;
 - exact canonical edge splitting with incident pcurve subdivision, native
@@ -512,8 +513,12 @@ circle/cylinder views supply exact carrier data to the writer. Holes, repeated
 body occurrences, edits and reflected models remain explicit.
 [Its mapping contract](../hyperbrep-io/docs/STEP_MAPPING.md) records the admitted
 domain, output representability and loss model. Other analytic/spline families,
-voids, whole-document/assembly mapping and native analytic uniform scaling
-remain open; geometry exchange does not replace native archival replay.
+voids and whole-document/assembly mapping remain open. Native analytic
+similarities now support exact physical scaling before export, including
+millimetre/inch workflows; output unit selection remains a separate operation.
+See the [similarity contract](docs/ARCHITECTURE.md#analytic-similarity-transport)
+for chart restrictions and [evidence](docs/evidence/2026-10-16-analytic-similarity/README.md).
+Geometry exchange does not replace native archival replay.
 
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.

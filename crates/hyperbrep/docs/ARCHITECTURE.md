@@ -954,6 +954,53 @@ retains an exact parameter beside every exact surface evaluation and exposes
 invented Hausdorff or normal-error certificate. It owns no mutable source
 state and cannot replace the BREP.
 
+## Analytic similarity transport
+
+`Model::transformed` first certifies an invertible affine map. A per-operation
+`TransformMetric` lazily proves `AᵀA = s²I`, `s > 0`, once and shares the positive
+scale across analytic carriers and shell certificates. Unit directions become
+`A*d/s`; points follow the affine map. Radii, axial bounds and void dimensions
+scale by `s`, while angles, selected curve parameters and dimensionless profile
+parameters retain their meanings. Polynomial carriers keep general affine
+transport. Circular/elliptical curves also retain their previously supported
+plane-isometry case when the unused normal is transformed differently.
+
+Cylinder/cone charts map `(u,v)` to `(u,s*v)`. For straight source pcurves,
+Hypercurve's exact similarity restricted to that line implements this map and
+retains selected-source lineage. Nonlinear axial pcurves require future exact
+affine carriers and fail typed. A pcurve shared by distinct face chart maps is
+separated into records; the first variant keeps its original slot. Reflection
+also reverses wires, directed uses and parameter correspondences. An extrusion
+reverses its transformed profile and reflects `u` about the profile domain
+endpoint sum; its affine extrusion vector and `v` coefficient remain paired.
+This repairs the old mismatch between reflected `u` and a negated `v` vector.
+Independent replay certifies complete forward or reversed profile equality and
+the matching parameter map. Reflected subcurves may have translated parameter
+origins; only the comparison chart is shifted, with equal-span and full carrier
+proofs retained. Matching endpoints alone are insufficient. Elliptic
+revolution meridians use the same existing complete-parameterization proof.
+No metric
+proof is cached across operations or mutable inputs; transformed query caches
+start empty.
+
+All analytic shell certificates transport physical dimensions and directions,
+including sphere/cylinder voids, clipped bodies, paired spheres, tori and cones.
+Revolution certificates scale their complete 2D contour/path profiles through
+Hypercurve. Prism, loft and sweep affine bases retain their own dimensionless
+coefficients. A torus axial-band integral normalizes height by minor radius and
+uses Hyperreal's existing exact quadratic-tower reduction before `sqrt`/`asin`;
+this preserves recognizable special angles after radical similarities.
+
+Persistence projects planar pcurves and writes full-domain rational edge/profile
+endpoints from the actual emitted vertex coordinates rather than runtime vertices
+replaced by curve-derived canonical coordinates.
+This keeps radical scale/inverse replay deterministic. It does not reconstruct
+selected coordinate images or change their authority. The
+[admission evidence](evidence/2026-10-16-analytic-similarity/README.md) records
+original failures, exact expectations, composition, archive effects and cost.
+The source/work/heap/cancellation limits of the existing kernel still apply;
+this transform extension does not establish global resource admission.
+
 ## Performance contract
 
 Correctness does not vary by execution route. Retained adjacency, structural

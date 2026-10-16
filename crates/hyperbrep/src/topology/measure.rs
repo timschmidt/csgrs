@@ -511,19 +511,25 @@ impl ArenaModel {
                         * &torus.minor_radius),
                     CertifiedTorusRegion::Axial { min, max } => {
                         let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
-                            let radial = (&torus.minor_radius * &torus.minor_radius
-                                - height * height)
+                            // Normalize before taking the square root. The
+                            // dimensionless disk segment is invariant under a
+                            // similarity, avoiding newly mixed radicals in a
+                            // scaled body's exact volume certificate.
+                            let normalized =
+                                (height / &torus.minor_radius).map_err(GeometryError::Numeric)?;
+                            let normalized =
+                                normalized.compact_quadratic_tower().unwrap_or(normalized);
+                            let radial = (Real::one() - &normalized * &normalized)
                                 .sqrt()
                                 .map_err(GeometryError::Numeric)?;
-                            let angle = (height / &torus.minor_radius)
-                                .map_err(GeometryError::Numeric)?
-                                .asin()
-                                .map_err(GeometryError::Numeric)?;
+                            let angle =
+                                normalized.clone().asin().map_err(GeometryError::Numeric)?;
                             Ok(Real::from(2)
                                 * Real::pi()
                                 * &torus.major_radius
-                                * (height * radial
-                                    + &torus.minor_radius * &torus.minor_radius * angle))
+                                * &torus.minor_radius
+                                * &torus.minor_radius
+                                * (normalized * radial + angle))
                         };
                         Ok(antiderivative(max)? - antiderivative(min)?)
                     }

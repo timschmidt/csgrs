@@ -293,7 +293,7 @@ impl ArenaModelBuilder {
                 ParameterCorrespondence::Affine { .. },
             )
             | (
-                Curve3Kind::RationalBezier,
+                Curve3Kind::EllipseArc | Curve3Kind::RationalBezier,
                 CurveFamily2::Line,
                 SurfaceKind::Revolution,
                 ParameterCorrespondence::Affine { .. },

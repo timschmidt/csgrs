@@ -245,3 +245,25 @@ is untimed. The separately named three-frame edit/roundtrip matrix is 75.098 ms;
 the unrepresentable-third rejection is 10.825 µs. Outcomes are not interchangeable.
 Raw allocation and process RSS evidence remains available; neither establishes
 a total retained-memory, scalar-work or cancellation bound. All broader gates stay open.
+
+## Native analytic similarities (2026-10-16)
+
+The [source-bound admission record](../hyperbrep/docs/evidence/2026-10-16-analytic-similarity/README.md) retains the exact metric/chart,
+profile-reflection, archive and torus-measurement changes. No surrounding
+implementation was changed. All 123 prior case receipts and fixture facts agree
+across 60 alternating processes; seven previous STEP files are byte-identical.
+The largest case-median candidate/baseline timing ratio is 1.063686;
+3 rows have changed allocator observations. Per-case costs,
+all unfavorable samples, allocation requests, requested bytes, executable sizes
+and process resources remain in the manifest. These are descriptive shared-host
+observations, not a statistical performance gate or a general speedup.
+
+Nine separately named new workloads include exact checks and complete archive
+materialization/revalidation. Three processes measure rational, reflected and
+radical cylinder replay, primitive/clipped/void/profile matrices, repeated
+selected subdivision/inverse cycles, periodic near-offsets and rejection/recovery.
+A previously failing scale operation is not their performance baseline. Integer
+matrix receipts count completed workflows; each operation also asserts exact
+formulas, images, provenance or deterministic archive contracts as appropriate.
+No total scalar-work, heap, expression-growth or cancellation bound is established.
+The source-path WASM consumer and optional OCCT reader do not close release gates.

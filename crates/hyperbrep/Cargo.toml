@@ -75,3 +75,7 @@ harness = false
 [[bench]]
 name = "edge_images"
 harness = false
+
+[[bench]]
+name = "analytic_similarity"
+harness = false

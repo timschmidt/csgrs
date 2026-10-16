@@ -493,8 +493,7 @@ pub fn units_and_occurrences() {
     use hyperbrep_io::step::WriteLengthUnit;
     let native = builder::cylinder(5.into(), 7.into()).unwrap();
     for scale in [Real::one(), ratio(1, 1000), ratio(127, 5000)] {
-        // Construct exact physical dimensions: analytic similarity transforms
-        // are an existing open native capability (retained in this admission record).
+        // Direct dimension construction remains a separate exact unit workflow.
         let scaled = builder::cylinder(Real::from(5) * &scale, Real::from(7) * &scale).unwrap();
         let input = StepBody {
             solid: scaled.bodies().next().unwrap(),
@@ -541,6 +540,59 @@ pub fn units_and_occurrences() {
             body.solid().classify_point(&probe).unwrap(),
             SolidPointLocation::Outside
         );
+    }
+}
+
+pub fn scaled_units() {
+    use hyperbrep_io::step::WriteLengthUnit;
+    let native = builder::cylinder(5.into(), 7.into()).unwrap();
+    for scale in [ratio(1, 1000), ratio(127, 5000)] {
+        for reflected in [false, true] {
+            let scaled = native
+                .transformed(&Matrix4::affine_nonuniform_scale([
+                    if reflected {
+                        -scale.clone()
+                    } else {
+                        scale.clone()
+                    },
+                    scale.clone(),
+                    scale.clone(),
+                ]))
+                .unwrap();
+            let mut options = StepWriteOptions::new("scaled.step", "2026-10-16T00:00:00");
+            options.length_unit = WriteLengthUnit {
+                name: "exact unit",
+                metres_per_unit: scale.clone(),
+            };
+            let output = export(
+                &[StepBody {
+                    solid: scaled.bodies().next().unwrap(),
+                    name: "scaled",
+                }],
+                &options,
+            );
+            let imported = reimport(&output);
+            equal(
+                &imported.bodies()[0].solid().volume().unwrap(),
+                &(Real::from(175) * Real::pi() * &scale * &scale * &scale),
+            );
+            let replay = RawModel::from_json(
+                &imported.bodies()[0].model().to_json().unwrap(),
+                &ArchiveLimits::default(),
+            )
+            .unwrap()
+            .validate()
+            .unwrap();
+            let recovered = replay
+                .transformed(&Matrix4::affine_nonuniform_scale([
+                    (Real::one() / &scale).unwrap(),
+                    (Real::one() / &scale).unwrap(),
+                    (Real::one() / &scale).unwrap(),
+                ]))
+                .unwrap();
+            let result = BodySet::from_solid(recovered.solids().next().unwrap());
+            assert!(boolean::difference(&result, &native).unwrap().is_empty());
+        }
     }
 }
 

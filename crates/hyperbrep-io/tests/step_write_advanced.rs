@@ -7,21 +7,9 @@ use hyperbrep_io::step::{
 #[path = "support/analytic_export.rs"]
 mod analytic;
 
-// A frontier observation, not a claim that valid analytic scaling is supported.
-// The full attempted scaling/export workflow is retained in this increment's evidence.
 #[test]
-fn native_analytic_scaling_frontier_is_still_explicit() {
-    let native = builder::cylinder(5.into(), 7.into()).unwrap();
-    for scale in [analytic::ratio(1, 1000), analytic::ratio(127, 5000)] {
-        assert!(matches!(
-            native.transformed(&hyperbrep::Matrix4::affine_nonuniform_scale([
-                scale.clone(),
-                scale.clone(),
-                scale,
-            ])),
-            Err(hyperbrep::GeometryError::InvalidSurfaceFrame)
-        ));
-    }
+fn native_analytic_scaling_exports_and_reimports_in_exact_units() {
+    analytic::scaled_units();
 }
 
 #[test]

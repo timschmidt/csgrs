@@ -1309,15 +1309,21 @@ the measured header-allocation repair and both cost campaigns. Exact decimal
 representability, unmapped carriers, voids and resource exhaustion stay explicit.
 No general AP, scalar-work, heap, binding or release gate closes here.
 
-The unit workflow also reproduces a native transform gap: uniform cylinder
-scaling by `1/1000` or `127/5000` fails with `InvalidSurfaceFrame` before export.
-Retain that full attempted workflow and diagnostic as an open native task.
-Implement analytic similarity transport at the BREP owner, including unit
-frames, radii, axial dimensions, surface charts, pcurves, parameter maps and
-retained solid certificates; then require export/reimport/replay/composition.
-Do not repair it with an IO-specific transform or confuse output-unit conversion
-with changing a model's physical size. Direct exact-dimension construction
-already exercises the writer's unit contract.
+The original unit workflow failed at native frame transport for scales
+`1/1000` and `127/5000`. The
+[similarity increment](evidence/2026-10-16-analytic-similarity/README.md) retains
+that failure and implements the metric proof, unit frames, radii, axial chart
+coordinates, pcurve maps and solid certificates at the BREP owner. Its completed
+workflows include export/reimport/replay/composition, selected axial subdivisions
+and reflected physical units. Output unit conversion remains independent of
+changing a model's physical size.
+
+Continue from this domain without weakening its exact tests: general curved
+axial pcurves require an exact affine image carrier, and nonuniform analytic
+transforms need explicit family promotion. Preserve the separately reproduced
+seam-aligned torus/cone cut failures in
+[the cut frontier](evidence/2026-10-16-analytic-similarity/cut-frontier.md);
+already supported oblique cuts are not evidence that those failures are fixed.
 
 ```rust,ignore
 pub fn read_step(bytes: &[u8], options: &StepReadOptions)

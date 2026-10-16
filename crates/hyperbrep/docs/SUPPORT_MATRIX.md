@@ -46,9 +46,11 @@ direction representability, unsupported families and limits fail typed.
 The [analytic-export evidence](evidence/2026-10-16-step-analytic-export/README.md)
 includes independent graph checks, oblique/radical frames, split/reflection,
 holes, units, near-coincidence, native replay, Boolean/empty continuation,
-OCCT reading and real WASM execution. Uniform analytic scaling remains an open
-native workflow and currently reports `InvalidSurfaceFrame`; the failure is
-retained separately from successful exact-dimension/unit conversion tests.
+OCCT reading and real WASM execution. The subsequent
+[native similarity evidence](evidence/2026-10-16-analytic-similarity/README.md)
+retains the original frame failure and completes physical cylinder scaling,
+reflection, exact unit export/reimport, native replay and Boolean continuation.
+Unit selection itself does not transform the source geometry.
 
 ## Operation resources
 
@@ -108,12 +110,12 @@ and [evidence](evidence/2026-10-15-closed-edges/README.md).
 | Family | Domain / evaluation / partials | Bounds | Supported topology image proof | Transform | Persistence |
 | --- | --- | --- | --- | --- | --- |
 | Plane | Exact | Unbounded | Line and native circular boundary | Affine | Exact |
-| Cylinder | Periodic `u`, unbounded `v` | Unbounded | Axial line and constant-`v` circle | Rigid / reflection | Exact |
-| Sphere | Periodic longitude, closed latitude | Exact cube | Complete closed-surface face without seam/pole edges | Rigid / reflection | Exact |
-| Cone | Periodic `u`, lower-bounded `v` | Unbounded | Generator and constant-`v` circle away from apex | Rigid / reflection | Exact |
-| Ring torus | Periodic `u` and `v` | Exact cube | Both constant-parameter circle families | Rigid / reflection | Exact |
+| Cylinder | Periodic `u`, unbounded `v` | Unbounded | Axial line and constant-`v` circle | Certified similarity / reflection | Exact |
+| Sphere | Periodic longitude, closed latitude | Exact cube | Complete closed-surface face without seam/pole edges | Certified similarity / reflection | Exact |
+| Cone | Periodic `u`, lower-bounded `v` | Unbounded | Generator and constant-`v` circle away from apex | Certified similarity / reflection | Exact |
+| Ring torus | Periodic `u` and `v` | Exact cube | Both constant-parameter circle families | Certified similarity / reflection | Exact |
 | Linear extrusion | Profile domain × unbounded | Unbounded | Line/circle/ellipse/rational Bézier/NURBS profile and extrusion direction | Family-preserving | Exact |
-| Revolution | Periodic × profile domain | Conservative exact | Exact line meridians and latitude circles | Rigid / reflection | Exact |
+| Revolution | Periodic × profile domain | Conservative exact | Line/circle/ellipse/rational Bézier/NURBS meridians and latitude circles | Certified similarity / reflection | Exact |
 | Tensor rational Bézier | Closed × closed | Control hull | Exact iso-boundary rational Bézier curves and subintervals | Affine | Exact |
 | Tensor NURBS | Active closed domains | Control hull | Exact iso-boundary NURBS curves and subintervals | Affine | Exact |
 
@@ -126,6 +128,14 @@ also remain native inside a certified prism shell. A derived canonical plane
 is used only as shell evidence; coplanarity without the complete affine
 control-lattice proof is not accepted.
 
+Analytic similarities certify `AᵀA = s²I`, `s > 0`, and transport lengths
+separately from angular/profile parameters. Cylinder/cone axial pcurves require
+straight native source support (including retained selected restrictions);
+nonlinear axial images return `UnsupportedTransform`. Shared face charts may
+require separate pcurve records. Plane and spline carriers retain their affine
+domain. General nonuniform analytic promotion remains open. See the
+[metric/chart contract](ARCHITECTURE.md#analytic-similarity-transport).
+
 ## Standard builders and solid queries
 
 | Builder | Native topology | Exact face area | Exact volume | Exact point classification | Supported transform / persistence |
@@ -135,21 +145,21 @@ control-lattice proof is not accepted.
 | `extrude_with_voids` | Nested inward line-prism shells | Yes | Yes | Yes | Affine / exact |
 | `extrude_contour(_regions)` | Native line/arc caps and extrusion sides | Yes | Yes | Yes | Family-preserving / exact |
 | `extrude_path(_region(s))` | Native `CurvePath2` caps and one exact extrusion side per persistent path curve; through-holes share one genus shell | Exact for line, normal-circle, and certified transverse-monotone planar rational Bézier/NURBS sides; other variable-speed sides unsupported | Exact Hypercurve outer-minus-hole area × height | Exact height interval and `CurvePath2` material-region test | Family-preserving / exact |
-| `cylinder` | Circular caps and one cylinder carrier | Yes | `pi*r²*h` | Analytic | Rigid / exact |
-| `sphere` | One boundaryless closed-surface face | `4*pi*r²` | `4*pi*r³/3` | Analytic radial test | Rigid / exact |
-| `sphere_with_voids` | Complete outer and inward spherical faces | Yes | Exact sphere subtraction | Analytic radial test | Rigid / exact |
-| `cone_frustum` | Circular caps and one cone carrier | Yes | Truncated-cone formula | Analytic | Rigid / exact |
-| `torus` | 4×4 periodic native-circle grid | Yes | `2*pi²*R*r²` | Analytic implicit test | Rigid / exact |
-| `revolve` / `revolve_region` | Four periodic cells per off-axis polygon edge; inward cavity shells | Exact line-profile integral | Exact first-moment theorem with hole subtraction | Exact radial/profile test | Rigid / exact |
-| `revolve_contour` / `revolve_contour_region` | Four periodic cells per native line/arc profile segment; inward line/arc cavity shells | Exact line/circular-arc profile integral | Exact contour x-first-moment theorem with hole subtraction | Exact radial/line-arc profile test | Rigid / exact |
-| `revolve_path` / `revolve_path_region` | Four periodic cells per exact `CurvePath2` carrier; retained Bézier/B-spline/NURBS meridians, exact clamped knot-span partition of single periodic spline carriers, and curved cavity shells | Line/arc and certified monotone rational line-image faces exact; general curved spline faces explicitly unsupported | Exact for polynomial-equivalent, rational-quadratic, exact degree-elevated conic, arbitrary-degree at-most-quadratic-weight, and nonuniform rational line-image moments; cubic-or-higher weight-degree rational moments explicitly unsupported | Exact radial/curved-path test | Rigid / exact |
+| `cylinder` | Circular caps and one cylinder carrier | Yes | `pi*r²*h` | Analytic | Certified similarity / exact |
+| `sphere` | One boundaryless closed-surface face | `4*pi*r²` | `4*pi*r³/3` | Analytic radial test | Certified similarity / exact |
+| `sphere_with_voids` | Complete outer and inward spherical faces | Yes | Exact sphere subtraction | Analytic radial test | Certified similarity / exact |
+| `cone_frustum` | Circular caps and one cone carrier | Yes | Truncated-cone formula | Analytic | Certified similarity / exact |
+| `torus` | 4×4 periodic native-circle grid | Yes | `2*pi²*R*r²` | Analytic implicit test | Certified similarity / exact |
+| `revolve` / `revolve_region` | Four periodic cells per off-axis polygon edge; inward cavity shells | Exact line-profile integral | Exact first-moment theorem with hole subtraction | Exact radial/profile test | Certified similarity / exact |
+| `revolve_contour` / `revolve_contour_region` | Four periodic cells per native line/arc profile segment; inward line/arc cavity shells | Exact line/circular-arc profile integral | Exact contour x-first-moment theorem with hole subtraction | Exact radial/line-arc profile test | Certified similarity / exact |
+| `revolve_path` / `revolve_path_region` | Four periodic cells per exact `CurvePath2` carrier; retained Bézier/B-spline/NURBS meridians, exact clamped knot-span partition of single periodic spline carriers, and curved cavity shells | Line/arc and certified monotone rational line-image faces exact; general curved spline faces explicitly unsupported | Exact for polynomial-equivalent, rational-quadratic, exact degree-elevated conic, arbitrary-degree at-most-quadratic-weight, and nonuniform rational line-image moments; cubic-or-higher weight-degree rational moments explicitly unsupported | Exact radial/curved-path test | Certified similarity / exact |
 | `sweep` / `sweep_region` | Exact affine image of a polygonal linear-path sweep | Yes | Exact determinant-scaled prism volume | Exact inverse-frame profile test | Affine / exact |
 | `sweep_curve` / `sweep_curve_region` | Fixed-frame polygon or through-hole region swept along an affine-progress rational Bézier path / native tensor translation sides and inner cap wires | Caps only | Exact material-region area × signed plane progress | Exact progress inversion and outer-minus-hole profile test | Affine / exact |
 | `sweep_moving_frame` / `sweep_moving_frame_region` | Explicit shared-weight rational Bézier origin/axis frame / native tensor sides and inner cap wires | Caps only | Exact material-region area × signed plane progress × integrated frame-area law | Exact moving inverse-frame profile test | Affine / exact |
 | `loft` | Two or more corresponding sections; each span positive homothetic or exact convex interpolation / planar or bilinear tensor sides with explicit C⁰ rings | Homothetic sides only | Exact piecewise-integrated quadratic section area | Exact span/section test | Affine / exact |
 | `planar_face` | One exact `CurvePath2` outer loop plus disjoint holes in an authored plane / open shell | Exact Hypercurve signed region area × plane-frame Jacobian | N/A | N/A | Affine / exact |
 | `extrusion_patch` | One finite rectangular exact extrusion face / open shell | Line, normal-circle, and transverse-monotone planar rational Bézier/NURBS profiles exact; other variable-speed profiles unsupported | N/A | N/A | Family-preserving / exact |
-| `revolution_patch` | One sub-period, completely axis-clear rectangular revolution face / open shell | Line, circular-arc, and certified monotone rational Bézier/NURBS line-image profiles exact; other curved spline profiles unsupported | N/A | N/A | Rigid / exact |
+| `revolution_patch` | One sub-period, completely axis-clear rectangular revolution face / open shell | Line, circular-arc, and certified monotone rational Bézier/NURBS line-image profiles exact; other curved spline profiles unsupported | N/A | N/A | Certified similarity / exact |
 | `rational_bezier_patch` | One trimmed exact tensor patch / open shell | Exact for a constant-weight affine Bernstein lattice under any validated trim, or the complete affine image under separable positive weights; general curved patches unsupported | N/A | N/A | Affine / exact |
 | `nurbs_patch` | One trimmed exact tensor patch / open shell | Exact for a constant-weight affine Greville lattice under any validated trim, or the complete native-domain affine image under separable positive weights; general curved patches unsupported | N/A | N/A | Affine / exact |
 | `tensor_patch_shell` | Multiple exact rational Bézier/NURBS patches; projectively identical boundaries identity-stitched | Per-face exact for the same affine tensor families | N/A | N/A | Affine / exact |

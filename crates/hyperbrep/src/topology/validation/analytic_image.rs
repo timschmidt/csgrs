@@ -2,6 +2,42 @@
 
 use crate::topology::*;
 
+/// Compare complete profiles in charts differing only by parameter origin.
+/// A reflected trimmed profile has the same span as its edge but can occupy
+/// the opposite end of the parent domain. Preserve every carrier coefficient
+/// and move only its parameter chart before using the existing full proof.
+fn profile_parameterizations_equal(actual: &Curve3, expected: &Curve3) -> Result<bool, BuildError> {
+    if curve_parameterizations_equal(actual, expected)? {
+        return Ok(true);
+    }
+    let shift = actual.domain().start() - expected.domain().start();
+    if shift.zero_status() == hyperreal::ZeroKnowledge::Zero
+        || !real_values_equal(actual.domain().end(), &(expected.domain().end() + &shift))?
+    {
+        return Ok(false);
+    }
+    let data = match expected.exact_data() {
+        Curve3ExactData::EllipseArc(mut arc) => {
+            arc.domain_start = actual.domain().start().clone();
+            arc.domain_end = actual.domain().end().clone();
+            Curve3ExactData::EllipseArc(arc)
+        }
+        Curve3ExactData::Nurbs {
+            degree,
+            control_points,
+            weights,
+            knots,
+        } => Curve3ExactData::Nurbs {
+            degree,
+            control_points,
+            weights,
+            knots: knots.into_iter().map(|knot| knot + &shift).collect(),
+        },
+        _ => return Ok(false),
+    };
+    curve_parameterizations_equal(actual, &Curve3::from_exact_data(data)?)
+}
+
 impl ArenaModelBuilder {
     pub(in crate::topology) fn validate_planar_circle_image(
         &self,
@@ -471,9 +507,13 @@ impl ArenaModelBuilder {
             edge.domain.represented_start()?,
             edge.domain.represented_end()?,
         )?;
-        if !curve_parameterizations_equal(&actual, &expected)? {
+        let reversed = if profile_parameterizations_equal(&actual, &expected)? {
+            false
+        } else if profile_parameterizations_equal(&actual, &expected.reversed()?)? {
+            true
+        } else {
             return Err(BuildError::EdgeUseSupportMismatch);
-        }
+        };
 
         let edge_domain_span = edge.domain.represented_end()? - edge.domain.represented_start()?;
         let actual_span = actual.domain().end() - actual.domain().start();
@@ -497,9 +537,14 @@ impl ArenaModelBuilder {
                     * &actual_span
                     / &edge_domain_span)
                     .map_err(GeometryError::Numeric)?;
-            let expected_parameter = expected.domain().start()
-                + ((surface_parameter - profile_start) * &expected_span / &profile_span)
-                    .map_err(GeometryError::Numeric)?;
+            let offset = ((surface_parameter - profile_start) * &expected_span / &profile_span)
+                .map_err(GeometryError::Numeric)?;
+            let expected_parameter = actual.domain().start()
+                + if reversed {
+                    &expected_span - offset
+                } else {
+                    offset
+                };
             require_real_equal(
                 &actual_parameter,
                 &expected_parameter,

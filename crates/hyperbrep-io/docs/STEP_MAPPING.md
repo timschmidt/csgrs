@@ -408,8 +408,11 @@ The common input name is now `StepBody`, replacing `FacetedBody` without an alia
 `write_faceted` remains a distinct encoding with unchanged output contracts.
 The [analytic admission record](../../hyperbrep/docs/evidence/2026-10-16-step-analytic-export/README.md)
 retains exact graph checks, parameter maps, composition, source-bound checks and
-the observed native uniform-scaling gap. That gap occurs before export and is
-not solved by output unit conversion.
+the original native uniform-scaling failure. The subsequent
+[native similarity increment](../../hyperbrep/docs/evidence/2026-10-16-analytic-similarity/README.md)
+adds exact physical scaling, reflected chart transport, native replay and
+unit-aware export/reimport. Physical scaling occurs in HyperBRep; output unit
+selection remains an independent exchange operation.
 
 ## Remaining exchange work
 

@@ -174,9 +174,10 @@ assert!(output.bodies()[0].edges().iter().any(|e| e.source.curve().circular_geom
 
 The [analytic export example](examples/analytic_step.rs) exercises native/imported
 cylinders, radical frames, edge splitting, reflection, exact export and reimport.
-Native analytic uniform scaling remains an open capability: construct the
-intended physical dimensions directly when selecting output units. No unit
-conversion silently changes the source model. The shared input selection is now
+The [native similarity example](examples/analytic_similarity.rs) scales a
+cylinder exactly, including reflection, before exporting in millimetres or
+inches. Native physical scaling and output unit selection are separate operations;
+unit selection does not change the source model. The shared input selection is now
 `StepBody`; the former `FacetedBody` name was removed without an alias. Existing
 faceted encoding and its deterministic output contract remain supported.
 

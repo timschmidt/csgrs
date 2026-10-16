@@ -16,12 +16,14 @@ use crate::error::{GeometryError, GeometryResult};
 mod analytic;
 mod location;
 mod point;
+mod transform;
 pub use analytic::{CircularArcGeometry, CylinderGeometry};
 use location::{
     locate_ellipse_arc_parameters, locate_line_parameter, locate_nurbs_parameters,
     locate_rational_bezier_parameters,
 };
 pub use point::{Axis, GeometricPoint3};
+pub(crate) use transform::TransformMetric;
 
 pub(crate) fn resolve_planar_classification<T>(
     classification: Classification<T>,
@@ -1274,6 +1276,14 @@ impl Curve3 {
     }
 
     pub(crate) fn transformed(&self, transform: &Matrix4) -> GeometryResult<Self> {
+        self.transformed_with_metric(&TransformMetric::new(transform))
+    }
+
+    pub(crate) fn transformed_with_metric(
+        &self,
+        metric: &TransformMetric<'_>,
+    ) -> GeometryResult<Self> {
+        let transform = metric.matrix();
         match &self.data.geometry {
             CurveGeometry3::Line(line) => Self::line(
                 transform_point(transform, &line.start)?,
@@ -1290,13 +1300,14 @@ impl Curve3 {
                 curve.knots.clone(),
             ),
             CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
+                let (x, y, scale) = metric.arc_frame(&arc.x, &arc.y)?;
                 let transformed = EllipseArcExactData {
                     circle: matches!(self.data.geometry, CurveGeometry3::CircleArc(_)),
                     center: transform_point(transform, &arc.center)?,
-                    x: transform.transform_direction3(&arc.x),
-                    y: transform.transform_direction3(&arc.y),
-                    x_radius: arc.x_radius.clone(),
-                    y_radius: arc.y_radius.clone(),
+                    x,
+                    y,
+                    x_radius: &arc.x_radius * &scale,
+                    y_radius: &arc.y_radius * &scale,
                     domain_start: self.domain().start().clone(),
                     domain_end: self.domain().end().clone(),
                     angle_at_start: arc.angle_at_start.clone(),
@@ -4330,9 +4341,10 @@ impl Surface {
 
     pub(crate) fn transformed(
         &self,
-        transform: &Matrix4,
+        metric: &TransformMetric<'_>,
         reflect_parameters: bool,
     ) -> GeometryResult<Self> {
+        let transform = metric.matrix();
         match &self.data.geometry {
             SurfaceGeometry::Plane(plane) => {
                 let mut u = transform.transform_direction3(&plane.u);
@@ -4346,8 +4358,8 @@ impl Surface {
                 )
             }
             SurfaceGeometry::Cylinder(surface) => {
-                let x = transform.transform_direction3(&surface.frame.x);
-                let mut y = transform.transform_direction3(&surface.frame.y);
+                let x = metric.unit_direction(&surface.frame.x)?;
+                let mut y = metric.unit_direction(&surface.frame.y)?;
                 if reflect_parameters {
                     y = -y;
                 }
@@ -4355,13 +4367,13 @@ impl Surface {
                     transform_point(transform, &surface.origin)?,
                     x,
                     y,
-                    transform.transform_direction3(&surface.frame.z),
-                    surface.radius.clone(),
+                    metric.unit_direction(&surface.frame.z)?,
+                    metric.length(&surface.radius)?,
                 )
             }
             SurfaceGeometry::Torus(surface) => {
-                let x = transform.transform_direction3(&surface.frame.x);
-                let mut y = transform.transform_direction3(&surface.frame.y);
+                let x = metric.unit_direction(&surface.frame.x)?;
+                let mut y = metric.unit_direction(&surface.frame.y)?;
                 if reflect_parameters {
                     y = -y;
                 }
@@ -4369,14 +4381,14 @@ impl Surface {
                     transform_point(transform, &surface.center)?,
                     x,
                     y,
-                    transform.transform_direction3(&surface.frame.z),
-                    surface.major_radius.clone(),
-                    surface.minor_radius.clone(),
+                    metric.unit_direction(&surface.frame.z)?,
+                    metric.length(&surface.major_radius)?,
+                    metric.length(&surface.minor_radius)?,
                 )
             }
             SurfaceGeometry::Cone(surface) => {
-                let x = transform.transform_direction3(&surface.frame.x);
-                let mut y = transform.transform_direction3(&surface.frame.y);
+                let x = metric.unit_direction(&surface.frame.x)?;
+                let mut y = metric.unit_direction(&surface.frame.y)?;
                 if reflect_parameters {
                     y = -y;
                 }
@@ -4384,13 +4396,13 @@ impl Surface {
                     transform_point(transform, &surface.apex)?,
                     x,
                     y,
-                    transform.transform_direction3(&surface.frame.z),
+                    metric.unit_direction(&surface.frame.z)?,
                     surface.semi_angle.clone(),
                 )
             }
             SurfaceGeometry::Sphere(surface) => {
-                let x = transform.transform_direction3(&surface.frame.x);
-                let mut y = transform.transform_direction3(&surface.frame.y);
+                let x = metric.unit_direction(&surface.frame.x)?;
+                let mut y = metric.unit_direction(&surface.frame.y)?;
                 if reflect_parameters {
                     y = -y;
                 }
@@ -4398,21 +4410,26 @@ impl Surface {
                     transform_point(transform, &surface.center)?,
                     x,
                     y,
-                    transform.transform_direction3(&surface.frame.z),
-                    surface.radius.clone(),
+                    metric.unit_direction(&surface.frame.z)?,
+                    metric.length(&surface.radius)?,
                 )
             }
             SurfaceGeometry::Revolution(surface) => Self::revolution(
-                surface.profile.transformed(transform)?,
+                surface.profile.transformed_with_metric(metric)?,
                 transform_point(transform, &surface.axis_origin)?,
-                transform.transform_direction3(&surface.axis),
+                metric.unit_direction(&surface.axis)?,
             ),
             SurfaceGeometry::Extrusion(surface) => {
-                let mut direction = transform.transform_direction3(&surface.direction);
-                if reflect_parameters {
-                    direction = -direction;
-                }
-                Self::extrusion(surface.profile.transformed(transform)?, direction)
+                let profile = surface.profile.transformed_with_metric(metric)?;
+                // Topology reflects u and reverses wire orientation. Here u is
+                // the profile parameter, so reverse its exact parameterization;
+                // v remains the coefficient of the transformed direction.
+                let profile = if reflect_parameters {
+                    profile.reversed()?
+                } else {
+                    profile
+                };
+                Self::extrusion(profile, transform.transform_direction3(&surface.direction))
             }
             SurfaceGeometry::RationalBezier(surface) => {
                 let mut control_points =
@@ -11652,7 +11669,10 @@ mod tests {
         )
         .unwrap();
         let translated = surface
-            .transformed(&Matrix4::affine_translation([r(3), r(-2), r(5)]), false)
+            .transformed(
+                &TransformMetric::new(&Matrix4::affine_translation([r(3), r(-2), r(5)])),
+                false,
+            )
             .unwrap();
         let parameter = Point2::new(q(1, 4), q(3, 4));
         let expected = surface.point_at(&parameter).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
@@ -11660,7 +11680,7 @@ mod tests {
 
         let reflected = surface
             .transformed(
-                &Matrix4::from_row_major([
+                &TransformMetric::new(&Matrix4::from_row_major([
                     r(-1),
                     r(0),
                     r(0),
@@ -11677,7 +11697,7 @@ mod tests {
                     r(0),
                     r(0),
                     r(1),
-                ]),
+                ])),
                 true,
             )
             .unwrap();
@@ -12903,8 +12923,12 @@ mod tests {
         );
 
         let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
-        let translated_surface = surface.transformed(&translation, false).unwrap();
-        let translated_plane = section_plane.transformed(&translation, false).unwrap();
+        let translated_surface = surface
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
+        let translated_plane = section_plane
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
         let SurfaceSurfaceIntersection::Curve(translated) = translated_surface
             .intersect_surface(&translated_plane)
             .unwrap()
@@ -13203,8 +13227,12 @@ mod tests {
         );
 
         let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
-        let translated_surface = surface.transformed(&translation, false).unwrap();
-        let translated_plane = section_plane.transformed(&translation, false).unwrap();
+        let translated_surface = surface
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
+        let translated_plane = section_plane
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
         let SurfaceSurfaceIntersection::Curve(translated) = translated_surface
             .intersect_surface(&translated_plane)
             .unwrap()
@@ -13586,9 +13614,13 @@ mod tests {
         let containment_translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
         assert!(matches!(
             plane
-                .transformed(&containment_translation, false)
+                .transformed(&TransformMetric::new(&containment_translation), false)
                 .unwrap()
-                .intersect_surface(&planar.transformed(&containment_translation, false).unwrap())
+                .intersect_surface(
+                    &planar
+                        .transformed(&TransformMetric::new(&containment_translation), false)
+                        .unwrap()
+                )
                 .unwrap(),
             SurfaceSurfaceIntersection::ContainedSurface(SurfaceIntersectionOperand::Second)
         ));
@@ -13797,8 +13829,12 @@ mod tests {
         assert!(matches!(excluded.trim(), crate::FacePairTrim::NoContact));
 
         let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
-        let translated_surface = surface.transformed(&translation, false).unwrap();
-        let translated_plane = plane.transformed(&translation, false).unwrap();
+        let translated_surface = surface
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
+        let translated_plane = plane
+            .transformed(&TransformMetric::new(&translation), false)
+            .unwrap();
         let SurfaceSurfaceIntersection::Curves(translated) = translated_surface
             .intersect_surface(&translated_plane)
             .unwrap()
