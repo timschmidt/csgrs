@@ -5,6 +5,7 @@ use hyperlattice::{Matrix4, Point3, Real, Vector3};
 
 pub mod context_js;
 pub mod curve_js;
+mod io_error_js;
 pub mod matrix_js;
 pub mod mesh_js;
 pub mod plane_js;

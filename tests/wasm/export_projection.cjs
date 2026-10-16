@@ -87,8 +87,8 @@ try {
       else exactDecimal(field, 1n, 1n << 70n);
     }
   }
-  // The JS API has no STL importer. Decode the format independently with its
-  // binary32 coordinate quantization, then use the public mesh constructor.
+  // Keep an independent decoder as an oracle alongside native import tests.
+  // Apply binary32 quantization, then use the public mesh constructor.
   const restored = keep(MeshJs.fromArrays(
     Float64Array.from(tinyRows.flat().map((field) => Math.fround(Number(field)))),
     Uint32Array.from({ length: tinyRows.length }, (_, index) => index),

@@ -12290,6 +12290,36 @@
       "Keep the 35 pending native changes unadmitted until their original full-board and copper-neck runtime gates pass.",
       "Continue the remaining properties, clean external distribution and full pre-push validation."
     ]
+  },
+  "wasm_format_contracts": {
+    "status": "kept: native STL imports and typed format/array failures through real WASM consumers",
+    "main_parent_commit": "3d335db43eac00d003bc2fb0ed1beb2a9c19d79b",
+    "contract": "docs/evidence/2026-10-16-wasm-format-failures/contract-v1.md",
+    "progress": "docs/evidence/2026-10-16-wasm-format-failures/progress-v1.md",
+    "decision": "docs/evidence/2026-10-16-wasm-format-failures/decision-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-wasm-format-failures/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-wasm-format-failures/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "src/wasm/mod.rs": "6f8a4101e44488865fe1be4be1713562eb410424449daa75f8e23c772adf0773",
+      "src/wasm/mesh_js.rs": "66067bc2eee3b3bbd4cc2e84cf2161298532a83fdf666a9635b676938d29bbe7",
+      "scripts/test-wasm-bindings.sh": "4ca3d896a5f5d2c7e2b6f55ad380e42281361c103dbc2d0bef319fdec0b887e1",
+      "tests/wasm/export_projection.cjs": "b578001c4f39882273514d29720b9dad29734090a290ede603305e8ab52ca3f1",
+      "src/wasm/io_error_js.rs": "152dcabf062fbcf87b3fb4db29407e9ef61c160022493655580573039265189d",
+      "tests/wasm/io_contracts.cjs": "0eb12ed3a8f6fe08efa4576a897fe667a9323407484d45a86dc7e6fffb1dee23",
+      "tests/wasm/io_contracts.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e"
+    },
+    "cost": "docs/evidence/2026-10-16-wasm-format-failures/cost-v1/result.json",
+    "cost_contract": "docs/evidence/2026-10-16-wasm-format-failures/cost-contract-v1.md",
+    "wasm_format_contracts_admitted": true,
+    "native_runtime_admitted": false,
+    "pending_native_files_unchanged": 35,
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "next": [
+      "Continue typed failures and claim scope across remaining legacy WASM boundaries; full P30 and inherited provenance remain open.",
+      "Keep the 35 pending native changes unadmitted until their original full-board and copper-neck runtime gates pass.",
+      "Continue ordinary strict completion, clean external distribution, remaining properties and complete pre-push validation."
+    ]
   }
 },
   "status_meanings": {
