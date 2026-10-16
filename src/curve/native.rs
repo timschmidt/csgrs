@@ -24,13 +24,6 @@ thread_local! {
         const { RefCell::new(Vec::new()) };
 }
 
-fn region_from_ring(points: &[[Real; 2]]) -> CurveRegion2 {
-    // Remaining legacy sampled shape constructors still have an infallible
-    // API. Their migration is separate; even that path must not cache failure
-    // or allow an ambient approximate scope to create a strict cache entry.
-    polygon(points).unwrap_or_else(|_| empty())
-}
-
 fn positive_with(
     value: &Real,
     name: &'static str,
@@ -168,24 +161,6 @@ fn translate_with(
     })?)
 }
 
-fn positive_real(value: &Real) -> bool {
-    matches!(
-        crate::hyper_math::hreal_sign(value),
-        Some(hyperreal::RealSign::Positive)
-    )
-}
-
-fn nonnegative_real(value: &Real) -> bool {
-    matches!(
-        crate::hyper_math::hreal_sign(value),
-        Some(hyperreal::RealSign::Positive | hyperreal::RealSign::Zero)
-    )
-}
-
-fn real_cmp(left: &Real, right: &Real) -> Option<Ordering> {
-    crate::hyper_math::hreal_try_cmp(left, right)
-}
-
 fn contour_ring_sign(
     ring: &Contour2,
     decisions: &GeometryDecisions,
@@ -203,8 +178,11 @@ fn contour_ring_sign(
     )
 }
 
-fn exact_ratio(numerator: usize, denominator: usize) -> Option<Real> {
-    (Real::from(numerator as u64) / Real::from(denominator as u64)).ok()
+fn exact_ratio(numerator: usize, denominator: usize) -> Result<Real, ValidationError> {
+    let numerator = u64::try_from(numerator).map_err(|_| ValidationError::CapacityOverflow)?;
+    let denominator =
+        u64::try_from(denominator).map_err(|_| ValidationError::CapacityOverflow)?;
+    Ok((Real::from(numerator) / Real::from(denominator))?)
 }
 
 fn exact_polar(radius: &Real, angle: Real) -> [Real; 2] {
@@ -217,9 +195,9 @@ fn exact_polar(radius: &Real, angle: Real) -> [Real; 2] {
 fn repeat_exact_rotational_pattern(
     local_points: &[[Real; 2]],
     copies: usize,
-) -> Option<Vec<[Real; 2]>> {
-    let capacity = copies.checked_mul(local_points.len())?;
-    let mut points = Vec::with_capacity(capacity);
+) -> Result<Vec<[Real; 2]>, ValidationError> {
+    let capacity = solid::capacity::<[Real; 2]>(copies.checked_mul(local_points.len()))?;
+    let mut points = solid::reserved(capacity)?;
     for copy in 0..copies {
         let angle = Real::tau() * exact_ratio(copy, copies)?;
         let sine = angle.clone().sin();
@@ -231,7 +209,7 @@ fn repeat_exact_rotational_pattern(
             ]
         }));
     }
-    Some(points)
+    Ok(points)
 }
 
 /// Empty filled curve topology.
@@ -1202,7 +1180,12 @@ pub fn circle_with_two_flats(
     Ok(decisions.finish(region))
 }
 
-/// Involute gear region.
+/// Sampled involute gear region with typed validation and construction failures.
+///
+/// Requires a positive module, at least four teeth, at least two flank segments,
+/// pressure angle in `(0, 90)` degrees and nonnegative clearance/backlash.
+/// Derived root radius and tooth widths must remain positive. The result is
+/// the finite sampled polygon, without an analytic-fidelity error bound.
 pub fn involute_gear(
     module: Real,
     teeth: usize,
@@ -1210,76 +1193,146 @@ pub fn involute_gear(
     clearance: Real,
     backlash: Real,
     segments_per_flank: usize,
-) -> CurveRegion2 {
-    if teeth < 4
-        || segments_per_flank < 2
-        || !positive_real(&module)
-        || !nonnegative_real(&clearance)
-        || !nonnegative_real(&backlash)
-        || !positive_real(&pressure_angle_degrees)
-        || real_cmp(&pressure_angle_degrees, &Real::from(90_u8)) != Some(Ordering::Less)
+) -> Result<CurveRegion2, ValidationError> {
+    involute_gear_with_context(
+        module,
+        teeth,
+        pressure_angle_degrees,
+        clearance,
+        backlash,
+        segments_per_flank,
+        &GeometryContext::STRICT,
+    )
+    .map(GeometryOutcome::into_value)
+}
+
+/// [`involute_gear`] with explicit predicate policy and local certainty.
+pub fn involute_gear_with_context(
+    module: Real,
+    teeth: usize,
+    pressure_angle_degrees: Real,
+    clearance: Real,
+    backlash: Real,
+    segments_per_flank: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    solid::sample_minimum(teeth, 4, "teeth")?;
+    solid::sample_minimum(segments_per_flank, 2, "segments_per_flank")?;
+    positive_with(&module, "module", &decisions)?;
+    nonnegative_with(&clearance, "clearance", &decisions)?;
+    nonnegative_with(&backlash, "backlash", &decisions)?;
+    positive_with(&pressure_angle_degrees, "pressure_angle_degrees", &decisions)?;
+    if compare_with(&pressure_angle_degrees, &Real::from(90_u8), &decisions)? != Ordering::Less
     {
-        return empty();
+        return Err(ValidationError::InvalidArguments);
     }
-    sampled_involute_gear(
+    let region = sampled_involute_gear(
         &module,
         teeth,
         &pressure_angle_degrees,
         &clearance,
         &backlash,
         segments_per_flank,
-    )
+        &decisions,
+    )?;
+    Ok(decisions.finish(region))
 }
 
-/// Cycloidal gear region.
+/// Sampled cycloidal gear region with typed validation and construction failures.
 ///
-/// Returns an empty region when the requested first-lobe flanks would meet or
-/// cross before reaching the addendum circle or the neighboring root gap.
+/// Requires positive module/generating radius, at least three teeth, at least
+/// two flank segments and nonnegative clearance. Rejects first-lobe flanks
+/// that meet or cross before the addendum circle or neighboring root gap.
+/// The finite sampled polygon has no analytic-fidelity error bound.
 pub fn cycloidal_gear(
     module: Real,
     teeth: usize,
     generating_radius: Real,
     clearance: Real,
     segments_per_flank: usize,
-) -> CurveRegion2 {
-    if teeth < 3
-        || !positive_real(&generating_radius)
-        || segments_per_flank < 2
-        || !positive_real(&module)
-        || !nonnegative_real(&clearance)
-    {
-        return empty();
-    }
-    sampled_cycloidal_gear(
+) -> Result<CurveRegion2, ValidationError> {
+    cycloidal_gear_with_context(
+        module,
+        teeth,
+        generating_radius,
+        clearance,
+        segments_per_flank,
+        &GeometryContext::STRICT,
+    )
+    .map(GeometryOutcome::into_value)
+}
+
+/// [`cycloidal_gear`] with explicit predicate policy and local certainty.
+pub fn cycloidal_gear_with_context(
+    module: Real,
+    teeth: usize,
+    generating_radius: Real,
+    clearance: Real,
+    segments_per_flank: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    solid::sample_minimum(teeth, 3, "teeth")?;
+    solid::sample_minimum(segments_per_flank, 2, "segments_per_flank")?;
+    positive_with(&generating_radius, "generating_radius", &decisions)?;
+    positive_with(&module, "module", &decisions)?;
+    nonnegative_with(&clearance, "clearance", &decisions)?;
+    let region = sampled_cycloidal_gear(
         &module,
         teeth,
         &generating_radius,
         &clearance,
         segments_per_flank,
-    )
+        &decisions,
+    )?;
+    Ok(decisions.finish(region))
 }
 
-/// Linear involute rack region.
+/// Linear involute rack region, with at least one tooth and positive module.
+///
+/// Pressure angle must be in `(0, 90)` degrees, clearance and backlash
+/// nonnegative, and the resulting tooth widths and root gaps positive.
 pub fn involute_rack(
     module: Real,
     teeth: usize,
     pressure_angle_degrees: Real,
     clearance: Real,
     backlash: Real,
-) -> CurveRegion2 {
-    if teeth == 0
-        || !positive_real(&module)
-        || !positive_real(&pressure_angle_degrees)
-        || real_cmp(&pressure_angle_degrees, &Real::from(90_u8)) != Some(Ordering::Less)
-        || !nonnegative_real(&clearance)
-        || !nonnegative_real(&backlash)
+) -> Result<CurveRegion2, ValidationError> {
+    involute_rack_with_context(
+        module,
+        teeth,
+        pressure_angle_degrees,
+        clearance,
+        backlash,
+        &GeometryContext::STRICT,
+    )
+    .map(GeometryOutcome::into_value)
+}
+
+/// [`involute_rack`] with explicit predicate policy and local certainty.
+pub fn involute_rack_with_context(
+    module: Real,
+    teeth: usize,
+    pressure_angle_degrees: Real,
+    clearance: Real,
+    backlash: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    solid::sample_minimum(teeth, 1, "teeth")?;
+    positive_with(&module, "module", &decisions)?;
+    positive_with(&pressure_angle_degrees, "pressure_angle_degrees", &decisions)?;
+    nonnegative_with(&clearance, "clearance", &decisions)?;
+    nonnegative_with(&backlash, "backlash", &decisions)?;
+    if compare_with(&pressure_angle_degrees, &Real::from(90_u8), &decisions)? != Ordering::Less
     {
-        return empty();
+        return Err(ValidationError::InvalidArguments);
     }
-    let Some(point_capacity) = teeth.checked_mul(6).and_then(|count| count.checked_add(2))
-    else {
-        return empty();
-    };
+    let point_capacity = solid::capacity::<[Real; 2]>(
+        teeth.checked_mul(6).and_then(|count| count.checked_add(2)),
+    )?;
     let pressure_angle = (pressure_angle_degrees * Real::pi() / Real::from(180_u16))
         .expect("degrees denominator is nonzero");
     let pitch = Real::pi() * module.clone();
@@ -1287,27 +1340,20 @@ pub fn involute_rack(
         * (Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero")
         + clearance;
     let root = -dedendum.clone();
-    let Ok(half_pitch) = pitch.clone() / Real::from(2_u8) else {
-        return empty();
-    };
+    let half_pitch = (pitch.clone() / Real::from(2_u8))?;
     let tooth_thickness = half_pitch - backlash;
     let half_thickness = (tooth_thickness.clone() / Real::from(2_u8)).expect("two is nonzero");
-    let Some(tangent) = (pressure_angle.clone().sin() / pressure_angle.cos()).ok() else {
-        return empty();
-    };
+    let tangent = (pressure_angle.clone().sin() / pressure_angle.cos())?;
     let root_slant = dedendum * tangent.clone();
     let tip_slant = module.clone() * tangent;
     let tip_width = tooth_thickness.clone() - Real::from(2_u8) * tip_slant.clone();
     let root_space =
         pitch.clone() - tooth_thickness.clone() - Real::from(2_u8) * root_slant.clone();
-    if !positive_real(&tooth_thickness)
-        || !positive_real(&tip_width)
-        || !positive_real(&root_space)
-    {
-        return empty();
-    }
+    positive_with(&tooth_thickness, "tooth_thickness", &decisions)?;
+    positive_with(&tip_width, "tip_width", &decisions)?;
+    positive_with(&root_space, "root_space", &decisions)?;
     let first_x = -half_thickness.clone() - root_slant.clone();
-    let mut points = Vec::with_capacity(point_capacity);
+    let mut points = solid::reserved(point_capacity)?;
     points.push([first_x, root.clone()]);
     for tooth in 0..teeth {
         let center = Real::from(tooth as u64) * pitch.clone();
@@ -1331,7 +1377,7 @@ pub fn involute_rack(
     let backing = root - module;
     points.push([right, backing.clone()]);
     points.push([left, backing]);
-    region_from_ring(&points)
+    Ok(decisions.finish(ring_with(&points, &decisions)?))
 }
 
 /// Linear cycloidal rack region.
@@ -1341,21 +1387,50 @@ pub fn involute_rack(
 /// corresponding standard height, so every sampled flank spans one sixth turn
 /// and meets a horizontal tip or root land.
 ///
-/// Returns an empty region when the requested clearance would close the root
-/// land between neighboring teeth.
+/// Requires a positive module, at least one tooth, at least four flank
+/// segments and nonnegative clearance. A closed root land is a typed error.
+/// The finite sampled polygon has no analytic-fidelity error bound.
 pub fn cycloidal_rack(
     module: Real,
     teeth: usize,
     clearance: Real,
     segments_per_flank: usize,
-) -> CurveRegion2 {
-    if teeth == 0
-        || segments_per_flank < 4
-        || !positive_real(&module)
-        || !nonnegative_real(&clearance)
-    {
-        return empty();
-    }
+) -> Result<CurveRegion2, ValidationError> {
+    cycloidal_rack_with_context(
+        module,
+        teeth,
+        clearance,
+        segments_per_flank,
+        &GeometryContext::STRICT,
+    )
+    .map(GeometryOutcome::into_value)
+}
+
+/// [`cycloidal_rack`] with explicit predicate policy and local certainty.
+pub fn cycloidal_rack_with_context(
+    module: Real,
+    teeth: usize,
+    clearance: Real,
+    segments_per_flank: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    solid::sample_minimum(teeth, 1, "teeth")?;
+    solid::sample_minimum(segments_per_flank, 4, "segments_per_flank")?;
+    positive_with(&module, "module", &decisions)?;
+    nonnegative_with(&clearance, "clearance", &decisions)?;
+    let sample_capacity = solid::capacity::<[Real; 2]>(segments_per_flank.checked_add(1))?;
+    let tooth_capacity = solid::capacity::<[Real; 2]>(
+        segments_per_flank
+            .checked_mul(4)
+            .and_then(|count| count.checked_add(4)),
+    )?;
+    let top_capacity = solid::capacity::<[Real; 2]>(
+        teeth
+            .checked_mul(tooth_capacity - 1)
+            .and_then(|count| count.checked_add(1)),
+    )?;
+    let point_capacity = solid::capacity::<[Real; 2]>(top_capacity.checked_add(2))?;
     let two = Real::from(2_u8);
     let three = Real::from(3_u8);
     let four = Real::from(4_u8);
@@ -1369,20 +1444,15 @@ pub fn cycloidal_rack(
     let run_factor = two.clone() * (flank_sweep.clone() - flank_sweep.clone().sin());
     let face_run = module.clone() * run_factor.clone();
     let root_run = dedendum.clone() * run_factor;
-    if real_cmp(&face_run, &quarter_pitch) != Some(Ordering::Less)
-        || real_cmp(&root_run, &quarter_pitch) != Some(Ordering::Less)
+    if compare_with(&face_run, &quarter_pitch, &decisions)? != Ordering::Less
+        || compare_with(&root_run, &quarter_pitch, &decisions)? != Ordering::Less
     {
-        return empty();
+        return Err(ValidationError::InvalidArguments);
     }
 
-    let Some(sample_capacity) = segments_per_flank.checked_add(1) else {
-        return empty();
-    };
-    let mut unit_flank = Vec::with_capacity(sample_capacity);
+    let mut unit_flank = solid::reserved(sample_capacity)?;
     for sample in 0..=segments_per_flank {
-        let Some(fraction) = exact_ratio(sample, segments_per_flank) else {
-            return empty();
-        };
+        let fraction = exact_ratio(sample, segments_per_flank)?;
         let theta = flank_sweep.clone() * fraction;
         unit_flank.push([
             two.clone() * (theta.clone() - theta.clone().sin()),
@@ -1390,13 +1460,7 @@ pub fn cycloidal_rack(
         ]);
     }
 
-    let Some(tooth_capacity) = segments_per_flank
-        .checked_mul(4)
-        .and_then(|count| count.checked_add(4))
-    else {
-        return empty();
-    };
-    let mut tooth_points = Vec::with_capacity(tooth_capacity);
+    let mut tooth_points = solid::reserved(tooth_capacity)?;
     tooth_points.push([-half_pitch.clone(), root.clone()]);
     tooth_points.extend(unit_flank.iter().rev().map(|[run, rise]| {
         [
@@ -1430,13 +1494,7 @@ pub fn cycloidal_rack(
     }));
     tooth_points.push([half_pitch.clone(), root.clone()]);
 
-    let Some(top_capacity) = teeth
-        .checked_mul(tooth_points.len().saturating_sub(1))
-        .and_then(|count| count.checked_add(1))
-    else {
-        return empty();
-    };
-    let mut top = Vec::with_capacity(top_capacity);
+    let mut top = solid::reserved(top_capacity)?;
     for tooth in 0..teeth {
         let offset = Real::from(tooth as u64) * pitch.clone();
         for (point_index, point) in tooth_points.iter().enumerate() {
@@ -1447,65 +1505,80 @@ pub fn cycloidal_rack(
         }
     }
 
-    let Some(point_capacity) = top.len().checked_add(2) else {
-        return empty();
-    };
-    let mut points = Vec::with_capacity(point_capacity);
+    let mut points = solid::reserved(point_capacity)?;
     let backing = root.clone() - module;
     let left = top.first().expect("validated rack has a left root")[0].clone();
     let right = top.last().expect("validated rack has a right root")[0].clone();
     points.push([left, backing.clone()]);
     points.push([right, backing]);
     points.extend(top.into_iter().rev());
-    region_from_ring(&points)
+    Ok(decisions.finish(ring_with(&points, &decisions)?))
 }
 
-/// NACA four-digit airfoil region.
+/// Sampled NACA four-digit airfoil region with typed failures.
+///
+/// Camber and camber-position digits are in `[0, 10)`, thickness in `(0, 100)`,
+/// chord positive, and `samples >= 10`. Positive camber requires a positive
+/// camber position. This preserves the existing sampled ring, including its
+/// represented binary64 coefficient values and trailing-edge closure; it does
+/// not certify an analytic-fidelity error bound.
 pub fn airfoil_naca4(
     max_camber: Real,
     camber_position: Real,
     thickness: Real,
     chord: Real,
     samples: usize,
-) -> CurveRegion2 {
-    if samples < 10
-        || !nonnegative_real(&max_camber)
-        || real_cmp(&max_camber, &Real::from(10_u8)) != Some(Ordering::Less)
-        || !nonnegative_real(&camber_position)
-        || real_cmp(&camber_position, &Real::from(10_u8)) != Some(Ordering::Less)
-        || !positive_real(&thickness)
-        || real_cmp(&thickness, &Real::from(100_u8)) != Some(Ordering::Less)
-        || !positive_real(&chord)
+) -> Result<CurveRegion2, ValidationError> {
+    airfoil_naca4_with_context(
+        max_camber,
+        camber_position,
+        thickness,
+        chord,
+        samples,
+        &GeometryContext::STRICT,
+    )
+    .map(GeometryOutcome::into_value)
+}
+
+/// [`airfoil_naca4`] with explicit predicate policy and local certainty.
+pub fn airfoil_naca4_with_context(
+    max_camber: Real,
+    camber_position: Real,
+    thickness: Real,
+    chord: Real,
+    samples: usize,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    solid::sample_minimum(samples, 10, "samples")?;
+    let cambered = nonnegative_with(&max_camber, "max_camber", &decisions)?
+        == hyperreal::RealSign::Positive;
+    nonnegative_with(&camber_position, "camber_position", &decisions)?;
+    positive_with(&thickness, "thickness", &decisions)?;
+    positive_with(&chord, "chord", &decisions)?;
+    if compare_with(&max_camber, &Real::from(10_u8), &decisions)? != Ordering::Less
+        || compare_with(&camber_position, &Real::from(10_u8), &decisions)? != Ordering::Less
+        || compare_with(&thickness, &Real::from(100_u8), &decisions)? != Ordering::Less
     {
-        return empty();
+        return Err(ValidationError::InvalidArguments);
     }
-    let (Some(m), Some(p), Some(t)) = (
-        (max_camber / Real::from(100_u8)).ok(),
-        (camber_position / Real::from(10_u8)).ok(),
-        (thickness / Real::from(100_u8)).ok(),
-    ) else {
-        return empty();
-    };
-    let cambered = positive_real(&m);
-    if cambered && (!positive_real(&p) || real_cmp(&p, &Real::one()) != Some(Ordering::Less)) {
-        return empty();
+    let m = (max_camber / Real::from(100_u8))?;
+    let p = (camber_position / Real::from(10_u8))?;
+    let t = (thickness / Real::from(100_u8))?;
+    if cambered {
+        positive_with(&p, "camber_position", &decisions)?;
     }
     let coefficient = |value: f64| Real::try_from(value).expect("finite NACA coefficient");
-    let Some(sample_capacity) = samples.checked_add(1) else {
-        return empty();
-    };
-    let mut upper = Vec::with_capacity(sample_capacity);
-    let mut lower = Vec::with_capacity(sample_capacity);
+    let sample_capacity = solid::capacity::<[Real; 2]>(samples.checked_add(1))?;
+    let point_capacity = solid::capacity::<[Real; 2]>(samples.checked_mul(2))?;
+    let mut upper = solid::reserved(point_capacity)?;
+    let mut lower = solid::reserved(sample_capacity)?;
     for index in 0..=samples {
-        let Some(x) = (Real::from(index as u64) / Real::from(samples as u64)).ok() else {
-            return empty();
-        };
+        let x = exact_ratio(index, samples)?;
         let x2 = x.clone() * x.clone();
         let x3 = x2.clone() * x.clone();
         let x4 = x3.clone() * x.clone();
-        let Some(root_x) = x.clone().sqrt().ok() else {
-            return empty();
-        };
+        let root_x = x.clone().sqrt()?;
         let yt = Real::from(5_u8)
             * t.clone()
             * (coefficient(0.2969) * root_x
@@ -1514,17 +1587,11 @@ pub fn airfoil_naca4(
                 + coefficient(0.2843) * x3
                 - coefficient(0.1015) * x4);
         let (yc, dy) = if cambered {
-            let Some(x_ordering) = real_cmp(&x, &p) else {
-                return empty();
-            };
+            let x_ordering = compare_with(&x, &p, &decisions)?;
             if x_ordering == Ordering::Less {
                 let p2 = p.clone() * p.clone();
-                let (Some(y_factor), Some(slope_factor)) = (
-                    (m.clone() / p2.clone()).ok(),
-                    (Real::from(2_u8) * m.clone() / p2).ok(),
-                ) else {
-                    return empty();
-                };
+                let y_factor = (m.clone() / p2.clone())?;
+                let slope_factor = (Real::from(2_u8) * m.clone() / p2)?;
                 (
                     y_factor * (Real::from(2_u8) * p.clone() * x.clone() - x2.clone()),
                     slope_factor * (p.clone() - x.clone()),
@@ -1532,12 +1599,8 @@ pub fn airfoil_naca4(
             } else {
                 let q = Real::one() - p.clone();
                 let denominator = q.clone() * q;
-                let (Some(y_factor), Some(slope_factor)) = (
-                    (m.clone() / denominator.clone()).ok(),
-                    (Real::from(2_u8) * m.clone() / denominator).ok(),
-                ) else {
-                    return empty();
-                };
+                let y_factor = (m.clone() / denominator.clone())?;
+                let slope_factor = (Real::from(2_u8) * m.clone() / denominator)?;
                 (
                     y_factor
                         * (Real::one() - Real::from(2_u8) * p.clone()
@@ -1549,9 +1612,7 @@ pub fn airfoil_naca4(
         } else {
             (Real::zero(), Real::zero())
         };
-        let Some(theta) = dy.atan().ok() else {
-            return empty();
-        };
+        let theta = dy.atan()?;
         let sin_theta = theta.clone().sin();
         let cos_theta = theta.cos();
         upper.push([
@@ -1564,7 +1625,7 @@ pub fn airfoil_naca4(
         ]);
     }
     upper.extend(lower.into_iter().rev().skip(1).take(samples - 1));
-    region_from_ring(&upper)
+    Ok(decisions.finish(ring_with(&upper, &decisions)?))
 }
 
 fn sampled_involute_gear(
@@ -1574,98 +1635,98 @@ fn sampled_involute_gear(
     clearance: &Real,
     backlash: &Real,
     segments_per_flank: usize,
-) -> CurveRegion2 {
-    let points = (|| -> Option<Vec<[Real; 2]>> {
-        let two = Real::from(2_u8);
-        let four = Real::from(4_u8);
-        let tooth_count = Real::from(teeth as u64);
-        let pressure_angle =
-            (pressure_angle_degrees.clone() * Real::pi() / Real::from(180_u16)).ok()?;
-        let pitch_radius = (module.clone() * tooth_count.clone() / two.clone()).ok()?;
-        let base_radius = pitch_radius.clone() * pressure_angle.cos();
-        let outer_radius = pitch_radius.clone() + module.clone();
-        let root_radius = pitch_radius.clone()
-            - (module.clone() * Real::from(5_u8) / four.clone()).ok()?
-            - clearance.clone();
-        let angular_pitch = (Real::tau() / tooth_count).ok()?;
-        let backlash_angle = (backlash.clone() / pitch_radius.clone()).ok()?;
-        let half_tooth_angle =
-            (((angular_pitch.clone() / two.clone()).ok()? - backlash_angle) / two).ok()?;
-        if !positive_real(&base_radius)
-            || !positive_real(&root_radius)
-            || !positive_real(&half_tooth_angle)
-        {
-            return None;
-        }
-        let involute_angle = |radius: &Real| -> Option<Real> {
-            let ratio = (radius.clone() / base_radius.clone()).ok()?;
-            let parameter = (ratio.clone() * ratio - Real::one()).sqrt().ok()?;
-            Some(parameter.clone() - parameter.atan().ok()?)
+    decisions: &GeometryDecisions,
+) -> Result<CurveRegion2, ValidationError> {
+    let tooth_capacity = solid::capacity::<[Real; 2]>(
+        segments_per_flank
+            .checked_mul(4)
+            .and_then(|count| count.checked_add(3)),
+    )?;
+    solid::capacity::<[Real; 2]>(teeth.checked_mul(tooth_capacity))?;
+    let two = Real::from(2_u8);
+    let four = Real::from(4_u8);
+    let tooth_count = Real::from(teeth as u64);
+    let pressure_angle = (pressure_angle_degrees.clone() * Real::pi() / Real::from(180_u16))?;
+    let pitch_radius = (module.clone() * tooth_count.clone() / two.clone())?;
+    let base_radius = pitch_radius.clone() * pressure_angle.cos();
+    let outer_radius = pitch_radius.clone() + module.clone();
+    let root_radius = pitch_radius.clone()
+        - (module.clone() * Real::from(5_u8) / four.clone())?
+        - clearance.clone();
+    let angular_pitch = (Real::tau() / tooth_count)?;
+    let backlash_angle = (backlash.clone() / pitch_radius.clone())?;
+    let half_tooth_angle = (((angular_pitch.clone() / two.clone())? - backlash_angle) / two)?;
+    positive_with(&base_radius, "base_radius", decisions)?;
+    positive_with(&root_radius, "root_radius", decisions)?;
+    positive_with(&half_tooth_angle, "half_tooth_angle", decisions)?;
+    let involute_angle = |radius: &Real| -> Result<Real, ValidationError> {
+        let ratio = (radius.clone() / base_radius.clone())?;
+        let parameter = (ratio.clone() * ratio - Real::one()).sqrt()?;
+        Ok(parameter.clone() - parameter.atan()?)
+    };
+    let (flank_start_radius, has_root_transition) =
+        match compare_with(&root_radius, &base_radius, decisions)? {
+            Ordering::Less => (base_radius.clone(), true),
+            Ordering::Equal | Ordering::Greater => (root_radius.clone(), false),
         };
-        let (flank_start_radius, has_root_transition) =
-            match real_cmp(&root_radius, &base_radius)? {
-                Ordering::Less => (base_radius.clone(), true),
-                Ordering::Equal | Ordering::Greater => (root_radius.clone(), false),
-            };
-        let pitch_involute = involute_angle(&pitch_radius)?;
-        let start_involute = involute_angle(&flank_start_radius)?;
-        let outer_involute = involute_angle(&outer_radius)?;
-        let offset = half_tooth_angle + pitch_involute;
-        let right_start = start_involute.clone() - offset.clone();
-        let left_start = offset.clone() - start_involute.clone();
-        let right_tip = outer_involute.clone() - offset.clone();
-        let left_tip = offset.clone() - outer_involute.clone();
-        if real_cmp(&right_start, &left_start)? != Ordering::Less
-            || real_cmp(&right_tip, &left_tip)? != Ordering::Less
-        {
-            return None;
-        }
+    let pitch_involute = involute_angle(&pitch_radius)?;
+    let start_involute = involute_angle(&flank_start_radius)?;
+    let outer_involute = involute_angle(&outer_radius)?;
+    let offset = half_tooth_angle + pitch_involute;
+    let right_start = start_involute.clone() - offset.clone();
+    let left_start = offset.clone() - start_involute.clone();
+    let right_tip = outer_involute.clone() - offset.clone();
+    let left_tip = offset.clone() - outer_involute.clone();
+    if compare_with(&right_start, &left_start, decisions)? != Ordering::Less
+        || compare_with(&right_tip, &left_tip, decisions)? != Ordering::Less
+    {
+        return Err(ValidationError::InvalidArguments);
+    }
 
-        let mut flank_samples = Vec::with_capacity(segments_per_flank);
-        for sample in 1..segments_per_flank {
-            let fraction = exact_ratio(sample, segments_per_flank)?;
-            let radius = flank_start_radius.clone()
-                + fraction * (outer_radius.clone() - flank_start_radius.clone());
-            flank_samples.push((radius.clone(), involute_angle(&radius)?));
-        }
-        flank_samples.push((outer_radius.clone(), outer_involute));
+    let mut flank_samples = solid::reserved(segments_per_flank)?;
+    for sample in 1..segments_per_flank {
+        let fraction = exact_ratio(sample, segments_per_flank)?;
+        let radius = flank_start_radius.clone()
+            + fraction * (outer_radius.clone() - flank_start_radius.clone());
+        flank_samples.push((radius.clone(), involute_angle(&radius)?));
+    }
+    flank_samples.push((outer_radius.clone(), outer_involute));
 
-        let mut tooth = Vec::with_capacity(segments_per_flank.checked_mul(4)?.checked_add(3)?);
-        tooth.push(exact_polar(&root_radius, right_start.clone()));
-        if has_root_transition {
-            tooth.push(exact_polar(&flank_start_radius, right_start.clone()));
-        }
-        for (radius, angle) in &flank_samples {
-            tooth.push(exact_polar(radius, angle.clone() - offset.clone()));
-        }
-        for sample in 1..=segments_per_flank {
-            let fraction = exact_ratio(sample, segments_per_flank)?;
-            tooth.push(exact_polar(
-                &outer_radius,
-                right_tip.clone() + fraction * (left_tip.clone() - right_tip.clone()),
-            ));
-        }
-        for (radius, angle) in flank_samples[..flank_samples.len() - 1].iter().rev() {
-            tooth.push(exact_polar(radius, offset.clone() - angle.clone()));
-        }
+    let mut tooth = solid::reserved(tooth_capacity)?;
+    tooth.push(exact_polar(&root_radius, right_start.clone()));
+    if has_root_transition {
+        tooth.push(exact_polar(&flank_start_radius, right_start.clone()));
+    }
+    for (radius, angle) in &flank_samples {
+        tooth.push(exact_polar(radius, angle.clone() - offset.clone()));
+    }
+    for sample in 1..=segments_per_flank {
+        let fraction = exact_ratio(sample, segments_per_flank)?;
         tooth.push(exact_polar(
-            &flank_start_radius,
-            offset.clone() - start_involute,
+            &outer_radius,
+            right_tip.clone() + fraction * (left_tip.clone() - right_tip.clone()),
         ));
-        if has_root_transition {
-            tooth.push(exact_polar(&root_radius, left_start.clone()));
-        }
-        let next_right = angular_pitch + right_start;
-        for sample in 1..segments_per_flank {
-            let fraction = exact_ratio(sample, segments_per_flank)?;
-            tooth.push(exact_polar(
-                &root_radius,
-                left_start.clone() + fraction * (next_right.clone() - left_start.clone()),
-            ));
-        }
-        repeat_exact_rotational_pattern(&tooth, teeth)
-    })();
-    points.map_or_else(empty, |points| region_from_ring(&points))
+    }
+    for (radius, angle) in flank_samples[..flank_samples.len() - 1].iter().rev() {
+        tooth.push(exact_polar(radius, offset.clone() - angle.clone()));
+    }
+    tooth.push(exact_polar(
+        &flank_start_radius,
+        offset.clone() - start_involute,
+    ));
+    if has_root_transition {
+        tooth.push(exact_polar(&root_radius, left_start.clone()));
+    }
+    let next_right = angular_pitch + right_start;
+    for sample in 1..segments_per_flank {
+        let fraction = exact_ratio(sample, segments_per_flank)?;
+        tooth.push(exact_polar(
+            &root_radius,
+            left_start.clone() + fraction * (next_right.clone() - left_start.clone()),
+        ));
+    }
+    let points = repeat_exact_rotational_pattern(&tooth, teeth)?;
+    ring_with(&points, decisions)
 }
 
 fn sampled_cycloidal_gear(
@@ -1674,162 +1735,167 @@ fn sampled_cycloidal_gear(
     generating_radius: &Real,
     clearance: &Real,
     segments_per_flank: usize,
-) -> CurveRegion2 {
-    let points = (|| -> Option<Vec<[Real; 2]>> {
-        let two = Real::from(2_u8);
-        let pitch_radius = (module.clone() * Real::from(teeth as u64) / two.clone()).ok()?;
-        let outer_radius = pitch_radius.clone() + module.clone();
-        let root_radius = pitch_radius.clone()
-            - (module.clone() * Real::from(5_u8) / Real::from(4_u8)).ok()?
-            - clearance.clone();
-        let twice_generator = two.clone() * generating_radius.clone();
-        if !positive_real(&root_radius)
-            || real_cmp(&twice_generator, &pitch_radius)? != Ordering::Less
-        {
-            return None;
-        }
-        let epicycle_radius = pitch_radius.clone() + generating_radius.clone();
-        let hypocycle_radius = pitch_radius.clone() - generating_radius.clone();
-        if real_cmp(
-            &outer_radius,
-            &(pitch_radius.clone() + twice_generator.clone()),
-        )? == Ordering::Greater
-        {
-            return None;
-        }
-        let generated_root_radius = pitch_radius.clone() - twice_generator;
-        let flank_root_radius = match real_cmp(&root_radius, &generated_root_radius)? {
+    decisions: &GeometryDecisions,
+) -> Result<CurveRegion2, ValidationError> {
+    let tooth_capacity = solid::capacity::<[Real; 2]>(
+        segments_per_flank
+            .checked_mul(6)
+            .and_then(|count| count.checked_add(2)),
+    )?;
+    solid::capacity::<[Real; 2]>(teeth.checked_mul(tooth_capacity))?;
+    let two = Real::from(2_u8);
+    let pitch_radius = (module.clone() * Real::from(teeth as u64) / two.clone())?;
+    let outer_radius = pitch_radius.clone() + module.clone();
+    let root_radius = pitch_radius.clone()
+        - (module.clone() * Real::from(5_u8) / Real::from(4_u8))?
+        - clearance.clone();
+    let twice_generator = two.clone() * generating_radius.clone();
+    positive_with(&root_radius, "root_radius", decisions)?;
+    if compare_with(&twice_generator, &pitch_radius, decisions)? != Ordering::Less {
+        return Err(ValidationError::InvalidArguments);
+    }
+    let epicycle_radius = pitch_radius.clone() + generating_radius.clone();
+    let hypocycle_radius = pitch_radius.clone() - generating_radius.clone();
+    if compare_with(
+        &outer_radius,
+        &(pitch_radius.clone() + twice_generator.clone()),
+        decisions,
+    )? == Ordering::Greater
+    {
+        return Err(ValidationError::InvalidArguments);
+    }
+    let generated_root_radius = pitch_radius.clone() - twice_generator;
+    let flank_root_radius =
+        match compare_with(&root_radius, &generated_root_radius, decisions)? {
             Ordering::Less => generated_root_radius,
             Ordering::Equal | Ordering::Greater => root_radius.clone(),
         };
-        let square = |value: &Real| value.clone() * value.clone();
-        let tip_phase = ((square(&epicycle_radius) + square(generating_radius)
-            - square(&outer_radius))
-            / (two.clone() * generating_radius.clone() * epicycle_radius.clone()))
-        .ok()?
-        .acos()
-        .ok()?;
-        let tip_parameter =
-            (tip_phase.clone() * generating_radius.clone() / pitch_radius.clone()).ok()?;
-        let root_phase = ((square(&flank_root_radius)
-            - square(&hypocycle_radius)
-            - square(generating_radius))
-            / (two.clone() * generating_radius.clone() * hypocycle_radius.clone()))
-        .ok()?
-        .acos()
-        .ok()?;
-        let root_parameter =
-            (root_phase.clone() * generating_radius.clone() / pitch_radius.clone()).ok()?;
-        let epicycle_ratio = (epicycle_radius.clone() / generating_radius.clone()).ok()?;
-        let hypocycle_ratio = (hypocycle_radius.clone() / generating_radius.clone()).ok()?;
-        let angular_pitch = (Real::tau() / Real::from(teeth as u64)).ok()?;
-        let pitch_half_thickness = (angular_pitch.clone() / Real::from(4_u8)).ok()?;
-        let epicycloid = |parameter: Real| {
-            let carrier = parameter.clone();
-            let rolling = epicycle_ratio.clone() * parameter;
-            [
-                epicycle_radius.clone() * carrier.clone().cos()
-                    - generating_radius.clone() * rolling.clone().cos(),
-                epicycle_radius.clone() * carrier.sin()
-                    - generating_radius.clone() * rolling.sin(),
-            ]
-        };
-        let hypocycloid = |parameter: Real| {
-            let carrier = parameter.clone();
-            let rolling = hypocycle_ratio.clone() * parameter;
-            [
-                hypocycle_radius.clone() * carrier.clone().cos()
-                    + generating_radius.clone() * rolling.clone().cos(),
-                hypocycle_radius.clone() * carrier.sin()
-                    - generating_radius.clone() * rolling.sin(),
-            ]
-        };
-        let sample_capacity = segments_per_flank.checked_add(1)?;
-        let mut epi = Vec::with_capacity(sample_capacity);
-        let mut hypo = Vec::with_capacity(sample_capacity);
-        for sample in 0..=segments_per_flank {
-            let fraction = exact_ratio(sample, segments_per_flank)?;
-            epi.push(epicycloid(tip_parameter.clone() * fraction.clone()));
-            hypo.push(hypocycloid(-(root_parameter.clone() * fraction)));
-        }
+    let square = |value: &Real| value.clone() * value.clone();
+    let tip_phase = ((square(&epicycle_radius) + square(generating_radius)
+        - square(&outer_radius))
+        / (two.clone() * generating_radius.clone() * epicycle_radius.clone()))?
+    .acos()?;
+    let tip_parameter =
+        (tip_phase.clone() * generating_radius.clone() / pitch_radius.clone())?;
+    let root_phase = ((square(&flank_root_radius)
+        - square(&hypocycle_radius)
+        - square(generating_radius))
+        / (two.clone() * generating_radius.clone() * hypocycle_radius.clone()))?
+    .acos()?;
+    let root_parameter =
+        (root_phase.clone() * generating_radius.clone() / pitch_radius.clone())?;
+    let epicycle_ratio = (epicycle_radius.clone() / generating_radius.clone())?;
+    let hypocycle_ratio = (hypocycle_radius.clone() / generating_radius.clone())?;
+    let angular_pitch = (Real::tau() / Real::from(teeth as u64))?;
+    let pitch_half_thickness = (angular_pitch.clone() / Real::from(4_u8))?;
+    let epicycloid = |parameter: Real| {
+        let carrier = parameter.clone();
+        let rolling = epicycle_ratio.clone() * parameter;
+        [
+            epicycle_radius.clone() * carrier.clone().cos()
+                - generating_radius.clone() * rolling.clone().cos(),
+            epicycle_radius.clone() * carrier.sin()
+                - generating_radius.clone() * rolling.sin(),
+        ]
+    };
+    let hypocycloid = |parameter: Real| {
+        let carrier = parameter.clone();
+        let rolling = hypocycle_ratio.clone() * parameter;
+        [
+            hypocycle_radius.clone() * carrier.clone().cos()
+                + generating_radius.clone() * rolling.clone().cos(),
+            hypocycle_radius.clone() * carrier.sin()
+                - generating_radius.clone() * rolling.sin(),
+        ]
+    };
+    let sample_capacity = solid::capacity::<[Real; 2]>(segments_per_flank.checked_add(1))?;
+    let mut epi = solid::reserved(sample_capacity)?;
+    let mut hypo = solid::reserved(sample_capacity)?;
+    for sample in 0..=segments_per_flank {
+        let fraction = exact_ratio(sample, segments_per_flank)?;
+        epi.push(epicycloid(tip_parameter.clone() * fraction.clone()));
+        hypo.push(hypocycloid(-(root_parameter.clone() * fraction)));
+    }
 
-        let limit_sine = pitch_half_thickness.clone().sin();
-        let limit_cosine = pitch_half_thickness.clone().cos();
-        let precedes_tooth_bisector = |[x, y]: &[Real; 2]| {
-            real_cmp(
-                &(y.clone() * limit_cosine.clone() - x.clone() * limit_sine.clone()),
-                &Real::zero(),
-            ) == Some(Ordering::Less)
-        };
-        let negative_root_endpoint = hypo.last()?;
-        let positive_root_endpoint = [
-            negative_root_endpoint[0].clone(),
-            -negative_root_endpoint[1].clone(),
-        ];
-        if !precedes_tooth_bisector(epi.last()?)
-            || !precedes_tooth_bisector(&positive_root_endpoint)
-        {
-            return None;
-        }
+    let limit_sine = pitch_half_thickness.clone().sin();
+    let limit_cosine = pitch_half_thickness.clone().cos();
+    let precedes_tooth_bisector = |[x, y]: &[Real; 2]| -> Result<bool, ValidationError> {
+        Ok(compare_with(
+            &(y.clone() * limit_cosine.clone() - x.clone() * limit_sine.clone()),
+            &Real::zero(),
+            decisions,
+        )? == Ordering::Less)
+    };
+    let negative_root_endpoint = hypo.last().expect("validated flank has an endpoint");
+    let positive_root_endpoint = [
+        negative_root_endpoint[0].clone(),
+        -negative_root_endpoint[1].clone(),
+    ];
+    if !precedes_tooth_bisector(epi.last().expect("validated flank has an endpoint"))?
+        || !precedes_tooth_bisector(&positive_root_endpoint)?
+    {
+        return Err(ValidationError::InvalidArguments);
+    }
 
-        let flank_rotation = -pitch_half_thickness;
-        let flank_sine = flank_rotation.clone().sin();
-        let flank_cosine = flank_rotation.cos();
-        let rotate = |[x, y]: &[Real; 2]| {
-            [
-                x.clone() * flank_cosine.clone() - y.clone() * flank_sine.clone(),
-                x.clone() * flank_sine.clone() + y.clone() * flank_cosine.clone(),
-            ]
-        };
-        let right_epi = epi.iter().map(rotate).collect::<Vec<_>>();
-        let right_hypo = hypo.iter().map(rotate).collect::<Vec<_>>();
-        let right_tip_point = right_epi.last()?;
-        let right_root_point = right_hypo.last()?;
-        let right_tip = right_tip_point[1].clone().atan2(right_tip_point[0].clone());
-        let right_root = right_root_point[1].clone().atan2(right_root_point[0].clone());
-        let left_tip = -right_tip.clone();
-        let left_root = -right_root.clone();
-        let next_right_root = angular_pitch.clone() + right_root.clone();
-        let mut tooth = Vec::with_capacity(segments_per_flank.checked_mul(6)?.checked_add(2)?);
-        let has_root_transition =
-            real_cmp(&flank_root_radius, &root_radius)? == Ordering::Greater;
-        if has_root_transition {
-            tooth.push(exact_polar(&root_radius, right_root.clone()));
-        }
-        tooth.extend(right_hypo.iter().rev().cloned());
-        tooth.extend(right_epi.iter().skip(1).cloned());
-        for sample in 1..=segments_per_flank {
-            let fraction = exact_ratio(sample, segments_per_flank)?;
-            tooth.push(exact_polar(
-                &outer_radius,
-                right_tip.clone() + fraction * (left_tip.clone() - right_tip.clone()),
-            ));
-        }
-        tooth.extend(
-            right_epi[..segments_per_flank]
-                .iter()
-                .rev()
-                .map(|[x, y]| [x.clone(), -y.clone()]),
-        );
-        tooth.extend(
-            right_hypo
-                .iter()
-                .skip(1)
-                .map(|[x, y]| [x.clone(), -y.clone()]),
-        );
-        if has_root_transition {
-            tooth.push(exact_polar(&root_radius, left_root.clone()));
-        }
-        for sample in 1..segments_per_flank {
-            let fraction = exact_ratio(sample, segments_per_flank)?;
-            tooth.push(exact_polar(
-                &root_radius,
-                left_root.clone() + fraction * (next_right_root.clone() - left_root.clone()),
-            ));
-        }
-        repeat_exact_rotational_pattern(&tooth, teeth)
-    })();
-    points.map_or_else(empty, |points| region_from_ring(&points))
+    let flank_rotation = -pitch_half_thickness;
+    let flank_sine = flank_rotation.clone().sin();
+    let flank_cosine = flank_rotation.cos();
+    let rotate = |[x, y]: &[Real; 2]| {
+        [
+            x.clone() * flank_cosine.clone() - y.clone() * flank_sine.clone(),
+            x.clone() * flank_sine.clone() + y.clone() * flank_cosine.clone(),
+        ]
+    };
+    let mut right_epi = solid::reserved(sample_capacity)?;
+    right_epi.extend(epi.iter().map(rotate));
+    let mut right_hypo = solid::reserved(sample_capacity)?;
+    right_hypo.extend(hypo.iter().map(rotate));
+    let right_tip_point = right_epi.last().expect("validated flank has an endpoint");
+    let right_root_point = right_hypo.last().expect("validated flank has an endpoint");
+    let right_tip = right_tip_point[1].clone().atan2(right_tip_point[0].clone());
+    let right_root = right_root_point[1].clone().atan2(right_root_point[0].clone());
+    let left_tip = -right_tip.clone();
+    let left_root = -right_root.clone();
+    let next_right_root = angular_pitch.clone() + right_root.clone();
+    let mut tooth = solid::reserved(tooth_capacity)?;
+    let has_root_transition =
+        compare_with(&flank_root_radius, &root_radius, decisions)? == Ordering::Greater;
+    if has_root_transition {
+        tooth.push(exact_polar(&root_radius, right_root.clone()));
+    }
+    tooth.extend(right_hypo.iter().rev().cloned());
+    tooth.extend(right_epi.iter().skip(1).cloned());
+    for sample in 1..=segments_per_flank {
+        let fraction = exact_ratio(sample, segments_per_flank)?;
+        tooth.push(exact_polar(
+            &outer_radius,
+            right_tip.clone() + fraction * (left_tip.clone() - right_tip.clone()),
+        ));
+    }
+    tooth.extend(
+        right_epi[..segments_per_flank]
+            .iter()
+            .rev()
+            .map(|[x, y]| [x.clone(), -y.clone()]),
+    );
+    tooth.extend(
+        right_hypo
+            .iter()
+            .skip(1)
+            .map(|[x, y]| [x.clone(), -y.clone()]),
+    );
+    if has_root_transition {
+        tooth.push(exact_polar(&root_radius, left_root.clone()));
+    }
+    for sample in 1..segments_per_flank {
+        let fraction = exact_ratio(sample, segments_per_flank)?;
+        tooth.push(exact_polar(
+            &root_radius,
+            left_root.clone() + fraction * (next_right_root.clone() - left_root.clone()),
+        ));
+    }
+    let points = repeat_exact_rotational_pattern(&tooth, teeth)?;
+    ring_with(&points, decisions)
 }
 
 /// Exact arbitrary-degree Bezier path.
@@ -3461,12 +3527,13 @@ mod tests {
         assert_exact_solid_boundary(&swept, "sweep");
         assert!(signed_volume(&swept) > 0.0);
 
-        let radial = region_from_ring(&[
+        let radial = polygon(&[
             [Real::one(), -Real::one()],
             [Real::from(2_u8), -Real::one()],
             [Real::from(2_u8), Real::one()],
             [Real::one(), Real::one()],
-        ]);
+        ])
+        .expect("valid radial profile fixture");
         let revolved = revolve(&radial, Real::from(360_u16), 16, &GeometryContext::STRICT)
             .expect("valid revolution")
             .into_value();
@@ -3625,7 +3692,7 @@ mod tests {
                 Real::one(),
                 20,
             )
-            .is_empty()
+            .is_err()
         );
         assert!(
             airfoil_naca4(
@@ -3635,7 +3702,7 @@ mod tests {
                 Real::one(),
                 20,
             )
-            .is_empty()
+            .is_err()
         );
         assert!(
             airfoil_naca4(
@@ -3645,7 +3712,7 @@ mod tests {
                 Real::one(),
                 20,
             )
-            .is_empty()
+            .is_err()
         );
         assert!(star(usize::MAX, Real::from(2_u8), Real::one()).is_err());
         assert!(invalid_compound(reuleaux(
@@ -3663,9 +3730,9 @@ mod tests {
                 Real::zero(),
                 Real::zero(),
             )
-            .is_empty()
+            .is_err()
         );
-        assert!(cycloidal_rack(Real::one(), 1, Real::zero(), usize::MAX).is_empty());
+        assert!(cycloidal_rack(Real::one(), 1, Real::zero(), usize::MAX).is_err());
         assert!(
             cycloidal_gear(
                 Real::one(),
@@ -3674,7 +3741,7 @@ mod tests {
                 Real::zero(),
                 usize::MAX,
             )
-            .is_empty()
+            .is_err()
         );
         assert!(
             airfoil_naca4(
@@ -3684,7 +3751,7 @@ mod tests {
                 Real::one(),
                 usize::MAX,
             )
-            .is_empty()
+            .is_err()
         );
         assert!(bspline_path(&[], usize::MAX, 1).is_err());
     }
@@ -3731,7 +3798,8 @@ mod tests {
             Real::zero(),
             Real::zero(),
             4,
-        );
+        )
+        .expect("valid sampled mechanical fixture");
         let involute_25 = involute_gear(
             Real::one(),
             16,
@@ -3739,44 +3807,53 @@ mod tests {
             Real::zero(),
             Real::zero(),
             4,
-        );
+        )
+        .expect("valid sampled mechanical fixture");
         assert!(!involute_20.is_empty());
         assert!(!involute_25.is_empty());
         assert_ne!(involute_20, involute_25);
 
-        let cycloidal_a = cycloidal_gear(Real::one(), 16, Real::one(), Real::zero(), 4);
+        let cycloidal_a = cycloidal_gear(Real::one(), 16, Real::one(), Real::zero(), 4)
+            .expect("valid sampled mechanical fixture");
         let cycloidal_b = cycloidal_gear(
             Real::one(),
             16,
             (Real::from(5_u8) / Real::from(4_u8)).unwrap(),
             Real::zero(),
             4,
-        );
+        )
+        .expect("valid sampled mechanical fixture");
         assert!(!cycloidal_a.is_empty());
         assert!(!cycloidal_b.is_empty());
         assert_ne!(cycloidal_a, cycloidal_b);
 
         let rack_20 =
-            involute_rack(Real::one(), 4, Real::from(20_u8), Real::zero(), Real::zero());
+            involute_rack(Real::one(), 4, Real::from(20_u8), Real::zero(), Real::zero())
+                .expect("valid sampled mechanical fixture");
         let rack_25 =
-            involute_rack(Real::one(), 4, Real::from(25_u8), Real::zero(), Real::zero());
+            involute_rack(Real::one(), 4, Real::from(25_u8), Real::zero(), Real::zero())
+                .expect("valid sampled mechanical fixture");
         assert!(!rack_20.is_empty());
         assert!(!rack_25.is_empty());
         assert_ne!(rack_20, rack_25);
         assert_ne!(
-            cycloidal_rack(Real::one(), 4, Real::zero(), 4),
+            cycloidal_rack(Real::one(), 4, Real::zero(), 4)
+                .expect("valid sampled mechanical fixture"),
             cycloidal_rack(Real::one(), 4, Real::zero(), 8)
+                .expect("valid sampled mechanical fixture")
         );
 
         let symmetric =
-            airfoil_naca4(Real::zero(), Real::zero(), Real::from(12_u8), Real::one(), 20);
+            airfoil_naca4(Real::zero(), Real::zero(), Real::from(12_u8), Real::one(), 20)
+                .expect("valid sampled mechanical fixture");
         let cambered = airfoil_naca4(
             Real::from(2_u8),
             Real::from(4_u8),
             Real::from(12_u8),
             Real::one(),
             20,
-        );
+        )
+        .expect("valid sampled mechanical fixture");
         assert!(!symmetric.is_empty());
         assert!(!cambered.is_empty());
         assert_ne!(symmetric, cambered);
@@ -3788,7 +3865,8 @@ mod tests {
         let tip = Real::one();
         let pitch_line = Real::zero();
         let root = -(Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero");
-        let rack = cycloidal_rack(Real::one(), teeth, Real::zero(), 8);
+        let rack = cycloidal_rack(Real::one(), teeth, Real::zero(), 8)
+            .expect("valid sampled mechanical fixture");
         let paths = rack.boundary_paths().expect("cycloidal rack exact boundary");
         let paths = paths;
         assert_eq!(paths.len(), 1, "rack must have one closed boundary");
@@ -3871,17 +3949,21 @@ mod tests {
             (Real::from(5_u8) / Real::from(4_u8)).unwrap(),
             Real::zero(),
             8,
-        );
+        )
+        .expect("valid sampled mechanical fixture");
         let involute =
-            involute_rack(Real::one(), 6, Real::from(20_u8), Real::zero(), Real::zero());
-        let cycloidal_rack_profile = cycloidal_rack(Real::one(), 6, Real::zero(), 12);
+            involute_rack(Real::one(), 6, Real::from(20_u8), Real::zero(), Real::zero())
+                .expect("valid sampled mechanical fixture");
+        let cycloidal_rack_profile = cycloidal_rack(Real::one(), 6, Real::zero(), 12)
+            .expect("valid sampled mechanical fixture");
         let readme_cycloidal = cycloidal_gear(
             Real::try_from(0.22).unwrap(),
             14,
             Real::try_from(0.275).unwrap(),
             Real::try_from(0.02).unwrap(),
             8,
-        );
+        )
+        .expect("valid sampled mechanical fixture");
         assert!(
             cycloidal_gear(
                 Real::one(),
@@ -3890,7 +3972,7 @@ mod tests {
                 Real::zero(),
                 8,
             )
-            .is_empty(),
+            .is_err(),
             "overlapping neighboring cycloidal root flanks must be rejected"
         );
         let projection =
@@ -3928,11 +4010,13 @@ mod tests {
         for (name, rack) in [
             (
                 "involute rack",
-                involute_rack(Real::one(), 6, Real::from(20_u8), Real::zero(), Real::zero()),
+                involute_rack(Real::one(), 6, Real::from(20_u8), Real::zero(), Real::zero())
+                    .expect("valid sampled mechanical fixture"),
             ),
             (
                 "cycloidal rack",
-                cycloidal_rack(Real::one(), 6, Real::zero(), 12),
+                cycloidal_rack(Real::one(), 6, Real::zero(), 12)
+                    .expect("valid sampled mechanical fixture"),
             ),
         ] {
             let bounds = try_bounding_box(&rack)
@@ -4102,11 +4186,16 @@ mod tests {
                 Real::zero(),
                 Real::zero(),
                 4,
-            ),
-            cycloidal_gear(one.clone(), 16, one.clone(), Real::zero(), 4),
-            involute_rack(one.clone(), 4, Real::from(20_u8), Real::zero(), Real::zero()),
-            cycloidal_rack(one.clone(), 4, Real::zero(), 8),
-            airfoil_naca4(Real::from(2_u8), Real::from(4_u8), Real::from(12_u8), one, 20),
+            )
+            .expect("valid sampled mechanical fixture"),
+            cycloidal_gear(one.clone(), 16, one.clone(), Real::zero(), 4)
+                .expect("valid sampled mechanical fixture"),
+            involute_rack(one.clone(), 4, Real::from(20_u8), Real::zero(), Real::zero())
+                .expect("valid sampled mechanical fixture"),
+            cycloidal_rack(one.clone(), 4, Real::zero(), 8)
+                .expect("valid sampled mechanical fixture"),
+            airfoil_naca4(Real::from(2_u8), Real::from(4_u8), Real::from(12_u8), one, 20)
+                .expect("valid sampled mechanical fixture"),
         ];
         for (index, shape) in shapes.into_iter().enumerate() {
             assert!(!shape.is_empty(), "planar catalog entry {index}");

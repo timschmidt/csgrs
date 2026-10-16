@@ -846,18 +846,19 @@ pub fn spur_gear_involute(
     thickness: Real,
     context: &crate::GeometryContext,
 ) -> Result<crate::GeometryOutcome<TriangleMesh>, ValidationError> {
-    crate::curve::try_extrude(
-        &crate::curve::involute_gear(
-            module,
-            teeth,
-            pressure_angle_degrees,
-            clearance,
-            backlash,
-            segments_per_flank,
-        ),
-        thickness,
+    let decisions = GeometryDecisions::new(context);
+    let profile = decisions.consume_geometry(crate::curve::involute_gear_with_context(
+        module,
+        teeth,
+        pressure_angle_degrees,
+        clearance,
+        backlash,
+        segments_per_flank,
         context,
-    )
+    )?);
+    let mesh =
+        decisions.consume_geometry(crate::curve::try_extrude(&profile, thickness, context)?);
+    Ok(decisions.finish(mesh))
 }
 
 /// Extruded cycloidal spur gear.
@@ -871,17 +872,18 @@ pub fn spur_gear_cycloid(
     thickness: Real,
     context: &crate::GeometryContext,
 ) -> Result<crate::GeometryOutcome<TriangleMesh>, ValidationError> {
-    crate::curve::try_extrude(
-        &crate::curve::cycloidal_gear(
-            module,
-            teeth,
-            generating_radius,
-            clearance,
-            segments_per_flank,
-        ),
-        thickness,
+    let decisions = GeometryDecisions::new(context);
+    let profile = decisions.consume_geometry(crate::curve::cycloidal_gear_with_context(
+        module,
+        teeth,
+        generating_radius,
+        clearance,
+        segments_per_flank,
         context,
-    )
+    )?);
+    let mesh =
+        decisions.consume_geometry(crate::curve::try_extrude(&profile, thickness, context)?);
+    Ok(decisions.finish(mesh))
 }
 
 /// Twisted extrusion of an involute gear region.
@@ -899,22 +901,25 @@ pub fn helical_involute_gear(
     slices: usize,
     context: &crate::GeometryContext,
 ) -> Result<crate::GeometryOutcome<TriangleMesh>, ValidationError> {
-    let region = crate::curve::involute_gear(
+    let decisions = GeometryDecisions::new(context);
+    let region = decisions.consume_geometry(crate::curve::involute_gear_with_context(
         module,
         teeth,
         pressure_angle_degrees,
         clearance,
         backlash,
         segments_per_flank,
-    );
-    crate::curve::extrude_twisted(
+        context,
+    )?);
+    let mesh = decisions.consume_geometry(crate::curve::extrude_twisted(
         &region,
         thickness,
         helix_angle_degrees,
         [Real::one(), Real::one()],
         slices,
         context,
-    )
+    )?);
+    Ok(decisions.finish(mesh))
 }
 
 /// Builds native triangle geometry from polygon index rows.

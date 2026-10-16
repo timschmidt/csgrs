@@ -123,14 +123,16 @@ fn main() {
                     Real::zero(),
                     Real::zero(),
                     4,
-                ),
+                )
+                .expect("valid sampled mechanical fixture"),
                 Real::from(2),
                 &GeometryContext::STRICT,
             )
             .expect("involute extrusion")
             .into_value(),
             curve::try_extrude(
-                &curve::cycloidal_gear(Real::from(2), 12, Real::from(2), Real::zero(), 4),
+                &curve::cycloidal_gear(Real::from(2), 12, Real::from(2), Real::zero(), 4)
+                    .expect("valid sampled mechanical fixture"),
                 Real::from(2),
                 &GeometryContext::STRICT,
             )
@@ -202,14 +204,16 @@ fn main() {
                 Real::zero(),
                 Real::zero(),
                 4,
-            ),
+            )
+            .expect("valid sampled mechanical fixture"),
             curve::airfoil_naca4(
                 Real::from(2),
                 Real::from(4),
                 Real::from(12),
                 Real::from(20),
                 80,
-            ),
+            )
+            .expect("valid sampled mechanical fixture"),
         ];
         let path = curve::bezier_path(
             &[

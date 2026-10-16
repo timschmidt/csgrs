@@ -9764,6 +9764,279 @@
       "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
       "remaining": "Legacy sampled gear/airfoil and text construction failures; remaining adapters; broader resources/provenance, external package/release, formal/fuzz/coverage and full properties obligations. The 35 pending native files remain separately unadmitted.",
       "full_plan_complete": false
+    },
+    "gear_airfoil_failure_work": {
+      "status": "typed sampled gear/rack/airfoil failures and composed certainty; affected semantic and downstream checks passed",
+      "baseline_commit": "f1dab2248",
+      "properties": [
+        "P1",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P27",
+        "P35",
+        "P37",
+        "P39"
+      ],
+      "contract": "docs/evidence/2026-10-15-gear-airfoil-failures/contract-v1.md",
+      "baseline": "docs/evidence/2026-10-15-gear-airfoil-failures/baseline-findings-v1.md",
+      "progress": "docs/evidence/2026-10-15-gear-airfoil-failures/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-gear-airfoil-failures/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-gear-airfoil-failures/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-gear-airfoil-failures/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "benchmarks/rust/feature_pipeline.rs": "cd0a4dd737901838ce1bbde3e4d881b7e94fc5935780ffbbcd646cfe212106d2",
+        "benchmarks/rust/profile_primitives.rs": "cb3f023bb03a6b399641c60012e669e934efbd5b2db3162966d78a43de0fbef4",
+        "examples/readme_renders.rs": "ffaf74a62b2d7f9ad8762e1e73324962f88e35ad7eff5b8b2cacde3a2cbd3248",
+        "readme.md": "59375b904a42e7f5f1ec2468c3acbe940b4a25569b23118027039b147a787e5a",
+        "src/curve/native.rs": "1ae798af6e932d62634fdbad47bd2a1ba46f1e6c1d8fef2e3857aa1ab5448a4d",
+        "src/solid.rs": "07426020dace0152fdaafc128149d243388999d1b5d9d249095c19c69335e004",
+        "tests/gear_airfoil_failures.rs": "4aa5778b01e620dc31185ee3a239932353d264673fc28f7d3fa988d8c55f8e43"
+      },
+      "test_totals": {
+        "gear-airfoil-semantics": {
+          "passed": 7,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 260,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 367,
+          "ignored": 1
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        }
+      },
+      "migration": "The five gear/rack/airfoil constructors now return Result, with policy-explicit GeometryOutcome forms. All three solid gear wrappers propagate validation failures and consumed certainty. Existing sampled sets, full original resolutions and represented NACA constants/closure are preserved; analytic fidelity is not certified.",
+      "semantics": "Independent rack area and membership, translation/empty Boolean/extrusion composition, closed-manifold topology and independent volume, represented NACA ordinate and membership, gear radial witnesses. Source-coordinate and harness checksum agreement are separate preservation checks.",
+      "certainty": "Ten full original README/benchmark profiles certify under both policies. Actual approximate validation remains Approximate512Consumed through cached rings and all three solid wrappers; strict/approximate/strict diagnostics remain distinct.",
+      "baseline_failures": {
+        "empty_profiles": 22,
+        "capacity_panics": 5,
+        "certified_empty_solids": 6
+      },
+      "candidate_diagnostics": {
+        "invalid_input": 18,
+        "undecided": 5,
+        "resource_exhausted": 10
+      },
+      "exact_original_coordinate_fixtures": 10,
+      "cost": {
+        "involute_gear": {
+          "cold": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.0338385208345116,
+              0.9481370627652979,
+              1.0299915521382512,
+              0.9970961647548812,
+              1.0204520659118124
+            ],
+            "median_latency_ratio": 1.0204520659118124,
+            "allocation_candidate_minus_baseline": {
+              "allocations": -4,
+              "reallocations": -2,
+              "allocated_bytes": -448,
+              "reallocated_bytes": -1024,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 2208,
+              "retained_delta_bytes": 0
+            }
+          },
+          "warm": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.0419060672675233,
+              0.8760184515498863,
+              0.8188367445009798,
+              0.8080469859372161,
+              0.9717860446160679
+            ],
+            "median_latency_ratio": 0.8760184515498863,
+            "allocation_candidate_minus_baseline": {
+              "allocations": -4,
+              "reallocations": -2,
+              "allocated_bytes": -448,
+              "reallocated_bytes": -1024,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 1792,
+              "retained_delta_bytes": 0
+            }
+          }
+        },
+        "cycloidal_gear": {
+          "cold": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.014148422373886,
+              1.1215006255373214,
+              1.0864618114760634,
+              0.9801126746773748,
+              0.9821773918208646
+            ],
+            "median_latency_ratio": 1.014148422373886,
+            "allocation_candidate_minus_baseline": {
+              "allocations": -4,
+              "reallocations": 0,
+              "allocated_bytes": -224,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 5616,
+              "retained_delta_bytes": 0
+            }
+          },
+          "warm": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              0.9954054927346518,
+              0.9455686951594544,
+              0.9947352165293221,
+              0.9938003358280681,
+              1.0269088674190598
+            ],
+            "median_latency_ratio": 0.9947352165293221,
+            "allocation_candidate_minus_baseline": {
+              "allocations": -4,
+              "reallocations": 0,
+              "allocated_bytes": -224,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 1920,
+              "retained_delta_bytes": 0
+            }
+          }
+        },
+        "involute_rack": {
+          "cold": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.0205151965934751,
+              0.9815774532163523,
+              1.0677911118001353,
+              0.9146929915787605,
+              1.0119301656093456
+            ],
+            "median_latency_ratio": 1.0119301656093456,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": 0,
+              "allocated_bytes": 0,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 0,
+              "retained_delta_bytes": 0
+            }
+          },
+          "warm": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              0.9041750296790386,
+              0.9141220564316527,
+              1.022852767853,
+              1.166101160222931,
+              0.7824247779041902
+            ],
+            "median_latency_ratio": 0.9141220564316527,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": 0,
+              "allocated_bytes": 0,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 0,
+              "retained_delta_bytes": 0
+            }
+          }
+        },
+        "cycloidal_rack": {
+          "cold": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.064652091222192,
+              1.0882726537890604,
+              1.0669145622007847,
+              1.016827674877289,
+              0.9392162776061449
+            ],
+            "median_latency_ratio": 1.064652091222192,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": 0,
+              "allocated_bytes": 0,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 0,
+              "retained_delta_bytes": 0
+            }
+          },
+          "warm": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.5359748651039915,
+              0.9103566510583836,
+              0.9652343626908381,
+              0.9729524198728993,
+              0.8037035916341861
+            ],
+            "median_latency_ratio": 0.9652343626908381,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": 0,
+              "allocated_bytes": 0,
+              "reallocated_bytes": 0,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 0,
+              "retained_delta_bytes": 0
+            }
+          }
+        },
+        "airfoil_naca4": {
+          "cold": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.0198190914780254,
+              0.9961811069826243,
+              1.0348597352085838,
+              1.0230840554164051,
+              0.9750858745523041
+            ],
+            "median_latency_ratio": 1.0198190914780254,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": -1,
+              "allocated_bytes": 7584,
+              "reallocated_bytes": -15552,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": -192,
+              "retained_delta_bytes": 0
+            }
+          },
+          "warm": {
+            "paired_candidate_over_baseline_latency_ratios": [
+              1.0032861118040761,
+              0.974689849406096,
+              0.978690071363367,
+              1.0080077904146227,
+              1.0123595088222581
+            ],
+            "median_latency_ratio": 1.0032861118040761,
+            "allocation_candidate_minus_baseline": {
+              "allocations": 0,
+              "reallocations": -1,
+              "allocated_bytes": 7584,
+              "reallocated_bytes": -15552,
+              "live_delta_bytes": 0,
+              "peak_additional_requested_bytes": 1296,
+              "retained_delta_bytes": 0
+            }
+          }
+        }
+      },
+      "resources": "All 100 timing, 20 allocation and 4 catalog completion rows retained. No optimization claim. Checked reservations/capacities do not bound all native work, coefficients, heap bytes or cancellation. Requested allocation bytes exclude allocator overhead. External 1800-second/8-GiB containment only; private /dev/shm uppers preserve the E15 baseline.",
+      "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
+      "remaining": "Legacy text construction failures and remaining adapters; broader resources/provenance, external package/release, formal/fuzz/coverage and full properties obligations. The 35 pending native files remain separately unadmitted and their failed cost gates are not discharged by these root suites.",
+      "full_plan_complete": false
     }
   },
   "status_meanings": {
