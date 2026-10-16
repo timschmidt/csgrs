@@ -130,6 +130,11 @@ impl Pcurve {
         };
         let dx = line.end().x() - line.start().x();
         let dy = line.end().y() - line.start().y();
+        // Equal iso coordinates can arrive as different exact expressions
+        // after replay. Compact before squaring or dividing those differences;
+        // a proven zero then stays zero in the transported line's chart map.
+        let dx = dx.compact_pi_laurent().unwrap_or(dx);
+        let dy = dy.compact_pi_laurent().unwrap_or(dy);
         let norm = &dx * &dx + &dy * &dy;
         let a = ((&dx * &dx + scale * &dy * &dy) / &norm).map_err(GeometryError::Numeric)?;
         let b = ((Real::one() - scale) * &dx * &dy / &norm).map_err(GeometryError::Numeric)?;

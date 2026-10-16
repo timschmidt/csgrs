@@ -1321,9 +1321,17 @@ changing a model's physical size.
 Continue from this domain without weakening its exact tests: general curved
 axial pcurves require an exact affine image carrier, and nonuniform analytic
 transforms need explicit family promotion. Preserve the separately reproduced
-seam-aligned torus/cone cut failures in
-[the cut frontier](evidence/2026-10-16-analytic-similarity/cut-frontier.md);
-already supported oblique cuts are not evidence that those failures are fixed.
+original seam-aligned torus/cone cut failures in
+[the cut frontier](evidence/2026-10-16-analytic-similarity/cut-frontier.md).
+The [seam-cut increment](evidence/2026-10-16-seam-cuts/README.md) now completes
+those inputs, both intersection orders, directed subtraction, rational/radical
+similarities and split/transform/archive continuation. It retains boundary
+coverage and source revisions, periodic chart lifts and full circle matching at
+the native BREP owners. Continue from the newly recorded repeated-Boolean
+frontier: coincident curved planar caps and mixed angular/axial subdivisions
+still need complete partition/selection/shell proofs. Do not infer closure or
+STEP support from these successful cuts, and retain the full-size regressions
+and unchanged archive admission limits.
 
 ```rust,ignore
 pub fn read_step(bytes: &[u8], options: &StepReadOptions)

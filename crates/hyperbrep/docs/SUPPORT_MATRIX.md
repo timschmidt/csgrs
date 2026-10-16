@@ -749,3 +749,20 @@ demoting their authoritative carriers. A whole sphere receives only an
 artifact-local longitude seam and shared pole vertices; its authoritative
 BREP remains seam-free. Other whole periodic faces without explicit finite
 trimming, and surface-error-tolerance requests, remain rejected.
+
+## Seam-aligned analytic cut workflows
+
+Strict intersection (both operand orders) and source-minus-cutter complete for
+the original radius-5/minor-radius-2 torus axial and longitudinal halves and
+radii-5/2, height-6 cone-frustum longitudinal half, using the original 40-unit
+cutters. The matrix includes scales 1/1000, 127/5000 and sqrt(2), rotations,
+translations and reflections, then shared-edge splitting, reflected rescaling,
+exact measurements/classification and independent archive validation.
+`FaceTracePartitionRef::boundary()` retains complete line-pcurve boundary
+coverage instead of producing a zero-area face. Periodic iso traces and full
+circular image matching preserve the authored charts and traversal.
+
+See the [native contract](ARCHITECTURE.md#seam-aligned-analytic-cuts) and
+[admission evidence](evidence/2026-10-16-seam-cuts/README.md). This does not close
+general coincident-cap or repeated Boolean composition, nonlinear periodic
+trace gluing, torus/cone STEP exchange, or the work-package gates.

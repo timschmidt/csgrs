@@ -616,6 +616,7 @@ pub struct FacePartition {
     source: Model,
     data: ArenaFacePartition,
     trace_models: Vec<Vec<(Model, Model)>>,
+    boundary_models: Vec<Option<Model>>,
 }
 
 impl FacePartition {
@@ -639,11 +640,22 @@ impl FacePartition {
                     .collect()
             })
             .collect();
+        let boundary_models = data
+            .traces
+            .iter()
+            .map(|trace| {
+                trace
+                    .boundary
+                    .as_ref()
+                    .map(|boundary| Model::from_arena(boundary.source.clone()))
+            })
+            .collect();
         Self {
             model: Model::from_arena(model),
             source: source.clone(),
             data,
             trace_models,
+            boundary_models,
         }
     }
     /// Borrows the resulting immutable revision.
@@ -661,6 +673,7 @@ impl FacePartition {
             source: &self.source,
             data: &self.data,
             trace_models: &self.trace_models,
+            boundary_models: &self.boundary_models,
         }
     }
     /// Consumes the operation result and returns the resulting model.
@@ -676,6 +689,7 @@ pub struct FacePartitionRef<'a> {
     source: &'a Model,
     data: &'a ArenaFacePartition,
     trace_models: &'a [Vec<(Model, Model)>],
+    boundary_models: &'a [Option<Model>],
 }
 impl<'a> FacePartitionRef<'a> {
     /// Returns the resulting revision.
@@ -707,12 +721,16 @@ impl<'a> FacePartitionRef<'a> {
             .traces
             .iter()
             .zip(self.trace_models)
-            .map(move |(data, snapshots)| FaceTracePartitionRef {
-                model: self.model,
-                source: self.source,
-                data,
-                snapshots,
-            })
+            .zip(self.boundary_models)
+            .map(
+                move |((data, snapshots), boundary_source)| FaceTracePartitionRef {
+                    model: self.model,
+                    source: self.source,
+                    data,
+                    snapshots,
+                    boundary_source: boundary_source.as_ref(),
+                },
+            )
     }
 }
 
@@ -723,6 +741,7 @@ pub struct FaceTracePartitionRef<'a> {
     source: &'a Model,
     data: &'a ArenaFaceTracePartition,
     snapshots: &'a [(Model, Model)],
+    boundary_source: Option<&'a Model>,
 }
 impl<'a> FaceTracePartitionRef<'a> {
     /// Returns the resulting revision.
@@ -742,7 +761,19 @@ impl<'a> FaceTracePartitionRef<'a> {
     pub fn segments(self) -> &'a [Curve3] {
         &self.data.segments
     }
-    /// Iterates over the retained split evidence for each segment.
+    /// Returns complete source-boundary coverage when this trace needs no split.
+    pub fn boundary(self) -> Option<BoundarySurfaceTraceRef<'a>> {
+        self.data
+            .boundary
+            .as_ref()
+            .map(|data| BoundarySurfaceTraceRef {
+                source: self
+                    .boundary_source
+                    .expect("boundary proof retains its source revision"),
+                data,
+            })
+    }
+    /// Iterates over interior split evidence; boundary traces have no splits.
     pub fn splits(self) -> impl ExactSizeIterator<Item = SurfaceCurveFaceSplitRef<'a>> {
         self.data
             .splits
@@ -753,6 +784,69 @@ impl<'a> FaceTracePartitionRef<'a> {
                 source,
                 data,
             })
+    }
+}
+
+/// A retained surface trace already covered by its source face's boundary.
+#[derive(Clone, Copy, Debug)]
+pub struct BoundarySurfaceTraceRef<'a> {
+    source: &'a Model,
+    data: &'a crate::topology::ArenaBoundarySurfaceTrace,
+}
+
+impl<'a> BoundarySurfaceTraceRef<'a> {
+    /// Returns the immutable revision whose boundary was proved to cover the trace.
+    /// Earlier partitions may have split shared edges in this revision.
+    pub fn source_model(self) -> &'a Model {
+        self.source
+    }
+
+    /// Borrows the full spatial trace and both original surface pcurves.
+    pub fn intersection(self) -> &'a SurfaceIntersectionCurve {
+        &self.data.intersection
+    }
+
+    /// Returns which retained pcurve belongs to this source face.
+    pub fn operand(self) -> SurfaceIntersectionOperand {
+        self.data.operand
+    }
+
+    /// Iterates over native overlaps covering the complete trace parameter interval.
+    pub fn overlaps(self) -> impl ExactSizeIterator<Item = BoundaryTraceOverlapRef<'a>> {
+        self.data
+            .overlaps
+            .iter()
+            .map(move |data| BoundaryTraceOverlapRef {
+                source: self.source,
+                data,
+            })
+    }
+}
+
+/// Complete native line-pcurve overlap tied to an existing source edge use.
+#[derive(Clone, Copy, Debug)]
+pub struct BoundaryTraceOverlapRef<'a> {
+    source: &'a Model,
+    data: &'a crate::topology::ArenaBoundaryTraceOverlap,
+}
+
+impl<'a> BoundaryTraceOverlapRef<'a> {
+    /// Returns the original boundary use, bound to the unchanged source revision.
+    pub fn edge_use(self) -> EdgeUseRef<'a> {
+        EdgeUseRef {
+            model: self.source,
+            id: self.data.edge_use,
+        }
+    }
+
+    /// Returns the covered interval in the materialized trace's normalized line chart.
+    pub fn trace_range(self) -> &'a hypercurve::ParamRange {
+        &self.data.trace_range
+    }
+
+    /// Returns the paired interval in the boundary pcurve's normalized line chart.
+    pub fn boundary_range(self) -> &'a hypercurve::ParamRange {
+        &self.data.boundary_range
     }
 }
 

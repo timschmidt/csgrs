@@ -28,6 +28,12 @@ impl ArenaModel {
                     kind: EntityKind::Face,
                     index: face_id.index(),
                 })?;
+            if self
+                .retained_surface_trace_on_boundary(face_id, intersection, operand)?
+                .is_some()
+            {
+                return Err(TopologyEditError::DegenerateFaceSplit);
+            }
             let start = curve.start()?;
             let end = curve.end()?;
             if self.retained_surface_curve_endpoints_equal(

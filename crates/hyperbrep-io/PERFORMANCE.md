@@ -267,3 +267,30 @@ matrix receipts count completed workflows; each operation also asserts exact
 formulas, images, provenance or deterministic archive contracts as appropriate.
 No total scalar-work, heap, expression-growth or cancellation bound is established.
 The source-path WASM consumer and optional OCCT reader do not close release gates.
+
+## Seam-aligned analytic cuts (2026-10-16)
+
+The [source-bound record](../hyperbrep/docs/evidence/2026-10-16-seam-cuts/README.md) qualifies the original full-size seam cuts
+and their replay dependencies. The complete final 66-process campaign preserves
+131 of 132 prior receipts. One radical-cylinder archive has an explicit exact
+expression migration: all 32 changed scalar values prove equal, every non-scalar
+field agrees, and both full archives validate. No other receipt is waived.
+The largest final case-median timing ratio is 1.150828; 1 rows
+exceed 10%, and 5 rows change allocator observations. All raw
+timing, allocation, requested-byte, executable-size and process-resource records
+remain. These are shared-host observations, not statistical performance admission.
+
+The first campaign remains intact, including its failed byte comparison and
+five spline timing ratios of 1.135–1.241. The optional boundary proof now checks
+its native line representation before reconstructing nonlinear pcurves; complete
+correctness and all corpora were repeated. Six new workloads have separate
+absolute costs over three processes, including exact checks, complete archive
+materialization and validation. Previously failing cuts are not a speedup
+baseline. The original 70 MB swapped cone archive failure and the 46,077-byte
+completed result both remain; the 16 MiB default admission cap is unchanged.
+The remaining native NURBS Mobius inverse pcurve partition row has ratio
+1.150828; its cause is not isolated. Retain the exact extension as the next
+feature baseline for the recorded semantic reason, with the all-cohort timing
+gate open. No total-work, retained-heap, expression-growth or cancellation bound
+is claimed.
+All broader work-package, typed-frontier and delivery gates remain open.

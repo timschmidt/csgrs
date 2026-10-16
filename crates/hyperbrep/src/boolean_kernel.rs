@@ -1,6 +1,11 @@
 //! Certified regularized Booleans for active exact solid families.
 
+mod periodic;
 pub(crate) mod sets;
+use periodic::periodic_face_trace_lifts;
+
+#[cfg(test)]
+mod seam_tests;
 
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -205,7 +210,7 @@ impl ArenaFacePairIntersection {
 /// Supported exact carrier intersections retain face-trim evidence, including
 /// spatial line and planar-clipped conic fragments. This object is the stable
 /// input to intersection-driven splitting: it distinguishes certified AABB
-/// rejection, exact carrier disjointness, retained intersections/coincidence,
+/// rejection, exact carrier/finite-face disjointness, retained intersections/coincidence,
 /// unsupported carrier pairs, and unresolved trim decisions.
 #[derive(Clone, Debug)]
 pub struct ArenaSolidIntersectionGraph {
@@ -234,7 +239,8 @@ impl ArenaSolidIntersectionGraph {
         self.broad_phase_rejections
     }
 
-    /// Returns the number of surviving pairs proved carrier-disjoint.
+    /// Returns surviving pairs proved disjoint by their carriers or by strict
+    /// plane separation of a finite face bound.
     pub const fn exact_disjoint_pairs(&self) -> usize {
         self.exact_disjoint_pairs
     }
@@ -1043,6 +1049,19 @@ fn coalesce_circle_group(
     };
     let mut ordered: Vec<SurfaceIntersectionCurve> = Vec::with_capacity(normalized.len());
     for curve in normalized {
+        // Two incident source faces can report the same existing seam. The
+        // graph retains both incidences; the target face needs one copy of the
+        // complete trace. Support or endpoint equality alone is insufficient.
+        if ordered.iter().any(|existing| {
+            curve_domains_certify_same_parameterization(
+                curve.curve(),
+                curve.curve().domain(),
+                existing.curve(),
+                existing.curve().domain(),
+            )
+        }) {
+            continue;
+        }
         let mut insertion = ordered.len();
         while insertion > 0
             && exact_order(
@@ -2582,12 +2601,14 @@ fn copy_or_match_selected_edge(
                 && points_certifiably_equal(end, &candidate.end);
             let reversed = points_certifiably_equal(start, &candidate.end)
                 && points_certifiably_equal(end, &candidate.start);
-            if (same || reversed)
-                && exact_edge_curve_equal(&restricted_curve, &candidate.curve, reversed)?
-            {
-                let mapped = (candidate.id, reversed, candidate.domain.clone());
-                source_edges.insert((is_first, source_edge_id), mapped.clone());
-                return Ok(mapped);
+            for reverse in [false, true] {
+                if (if reverse { reversed } else { same })
+                    && exact_edge_curve_equal(&restricted_curve, &candidate.curve, reverse)?
+                {
+                    let mapped = (candidate.id, reverse, candidate.domain.clone());
+                    source_edges.insert((is_first, source_edge_id), mapped.clone());
+                    return Ok(mapped);
+                }
             }
         }
     }
@@ -2659,12 +2680,36 @@ fn exact_edge_curve_equal(
     if candidate.kind() == crate::Curve3Kind::Line && existing.kind() == crate::Curve3Kind::Line {
         return Ok(true);
     }
-    Ok(
-        crate::topology::compare_curve3_exact_data(
-            &candidate.exact_data(),
-            &existing.exact_data(),
-        )? == Ordering::Equal,
-    )
+    if crate::topology::compare_curve3_exact_data(&candidate.exact_data(), &existing.exact_data())?
+        == Ordering::Equal
+    {
+        return Ok(true);
+    }
+    let (Curve3ExactData::EllipseArc(actual), Curve3ExactData::EllipseArc(mut expected)) =
+        (candidate.exact_data(), existing.exact_data())
+    else {
+        return Ok(false);
+    };
+    if !actual.circle
+        || !expected.circle
+        || exact_order(
+            &(&actual.domain_end - &actual.domain_start),
+            &(&expected.domain_end - &expected.domain_start),
+        )? != Ordering::Equal
+    {
+        return Ok(false);
+    }
+    // The edge remap translates equal-length angular charts. The native image
+    // validator proves center, radii, start radial vector and signed tangent;
+    // that proves every parameter, including reflected/rotated circle frames.
+    expected.domain_start = actual.domain_start.clone();
+    expected.domain_end = actual.domain_end.clone();
+    crate::topology::circle_data_parameterizations_equal(&actual, &expected).map_err(|error| {
+        match error {
+            crate::BuildError::Geometry(error) => error,
+            _ => unreachable!("complete circle comparison only compares exact geometry"),
+        }
+    })
 }
 
 fn copy_or_match_vertex(
@@ -2894,14 +2939,60 @@ fn intersect_face_carriers(
                 trim,
             }))
         }
-        Err(GeometryError::UnsupportedIntersection) => Ok(Some(ArenaFacePairIntersection {
-            first_face,
-            second_face,
-            relation: FacePairRelation::Unsupported,
-            trim: FacePairTrim::NotAvailable,
-        })),
+        Err(GeometryError::UnsupportedIntersection) => {
+            // Infinite supports may have an unrepresented intersection far
+            // outside these finite faces. A strict plane/bounds separation
+            // proves that the unsupported carrier work is unnecessary.
+            if plane_separates_finite_face(first_surface, second_model, second_face)?
+                || plane_separates_finite_face(second_surface, first_model, first_face)?
+            {
+                return Ok(None);
+            }
+            Ok(Some(ArenaFacePairIntersection {
+                first_face,
+                second_face,
+                relation: FacePairRelation::Unsupported,
+                trim: FacePairTrim::NotAvailable,
+            }))
+        }
         Err(error) => Err(error.into()),
     }
+}
+
+fn plane_separates_finite_face(
+    plane: &Surface,
+    model: &ArenaModel,
+    face: FaceId,
+) -> Result<bool, GeometryError> {
+    let Some(origin) = plane.plane_origin() else {
+        return Ok(false);
+    };
+    let Some(bounds) = certified_face_bounds(model, face)? else {
+        return Ok(false);
+    };
+    let (u, v) = plane.plane_directions().expect("plane carries directions");
+    let normal = u.cross(v);
+    let offset = -normal.dot(&(origin - &Point3::new(Real::zero(), Real::zero(), Real::zero())));
+    let plane = hyperlimit::Plane3::new(
+        Point3::new(
+            normal.0[0].clone(),
+            normal.0[1].clone(),
+            normal.0[2].clone(),
+        ),
+        offset,
+    );
+    Ok(matches!(
+        hyperlimit::classify_plane_aabb3(
+            &plane,
+            &bounds.mins,
+            &bounds.maxs,
+            crate::STRICT_PREDICATES
+        ),
+        PredicateOutcome::Decided {
+            value: hyperlimit::PlaneAabbRelation::Below | hyperlimit::PlaneAabbRelation::Above,
+            ..
+        }
+    ))
 }
 
 fn trim_face_pair_intersection(
@@ -3804,6 +3895,46 @@ fn trim_retained_surface_curve(
     second_face: FaceId,
     intersection: &SurfaceIntersectionCurve,
 ) -> Result<FacePairTrim, GeometryError> {
+    let mut fragments = Vec::new();
+    for first in periodic_face_trace_lifts(
+        first_model,
+        first_face,
+        intersection,
+        SurfaceIntersectionOperand::First,
+    )? {
+        for both in periodic_face_trace_lifts(
+            second_model,
+            second_face,
+            &first,
+            SurfaceIntersectionOperand::Second,
+        )? {
+            match trim_surface_curve_in_authored_charts(
+                first_model,
+                first_face,
+                second_model,
+                second_face,
+                &both,
+            )? {
+                FacePairTrim::SurfaceCurveFragments(parts) => fragments.extend(parts),
+                FacePairTrim::NoCurveInterior | FacePairTrim::NoContact => {}
+                other => return Ok(other),
+            }
+        }
+    }
+    Ok(if fragments.is_empty() {
+        FacePairTrim::NoCurveInterior
+    } else {
+        FacePairTrim::SurfaceCurveFragments(fragments)
+    })
+}
+
+fn trim_surface_curve_in_authored_charts(
+    first_model: &ArenaModel,
+    first_face: FaceId,
+    second_model: &ArenaModel,
+    second_face: FaceId,
+    intersection: &SurfaceIntersectionCurve,
+) -> Result<FacePairTrim, GeometryError> {
     let first = match retained_curve_face_intervals(
         first_model,
         first_face,
@@ -3924,26 +4055,10 @@ fn retained_curve_face_intervals(
             let Some((pcurve_start, pcurve_end)) = fragment.represented_parameter_range() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let middle = ((&pcurve_start + &pcurve_end) / Real::from(2_u8))
-                .expect("division by the nonzero integer two");
-            let representative = match carrier.curve.point_at(&middle.into()) {
-                Ok(point) => point,
-                Err(ExactCurveError::Blocked(blocker)) => {
-                    return Ok(Classification::Uncertain(blocker.reason()));
-                }
-                Err(error) => return Err(GeometryError::from(error)),
-            };
-            match crate::error::classified(region.classify_point(&representative))
-                .map_err(GeometryError::from)?
-            {
-                Classification::Decided(RegionPointLocation::Inside) => {}
-                Classification::Decided(
-                    RegionPointLocation::Outside | RegionPointLocation::Boundary,
-                ) => continue,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            // Hypercurve's closed-set trim proves the complete retained
+            // interval, including positive-length boundary overlaps. A trace
+            // already on this face's boundary can still partition the other
+            // operand; discarding it here would remove the closing cap.
             let mut start = &carrier.spatial_scale * pcurve_start + &carrier.spatial_offset;
             let mut end = &carrier.spatial_scale * pcurve_end + &carrier.spatial_offset;
             let Some(mut start_contacts) = model_boundary_contacts(
@@ -14212,6 +14327,54 @@ mod tests {
         );
     }
 
+    fn assert_coaxial_cap_boundary_traces(
+        graph: &ArenaSolidIntersectionGraph,
+        cylinder: &ArenaModel,
+        cone: &ArenaModel,
+    ) {
+        let mut counts = [0; 2];
+        for pair in graph.intersections() {
+            let kinds = (
+                face_surface(cylinder, pair.first_face()).kind(),
+                face_surface(cone, pair.second_face()).kind(),
+            );
+            let (index, radius, z) = match kinds {
+                (crate::SurfaceKind::Cylinder, crate::SurfaceKind::Plane) => (0, 3, 0),
+                (crate::SurfaceKind::Plane, crate::SurfaceKind::Cone) => (1, 2, 2),
+                _ => continue,
+            };
+            let FacePairTrim::SurfaceCurveFragments(fragments) = pair.trim() else {
+                continue;
+            };
+            assert_eq!(fragments.len(), 1);
+            let Curve3ExactData::EllipseArc(arc) = fragments[0].curve().exact_data() else {
+                panic!("cap boundary must retain an exact circle");
+            };
+            assert!(arc.circle);
+            assert!(points_exactly_equal(&arc.center, &p(0, 0, z)).unwrap());
+            assert_eq!(
+                exact_order(&arc.x_radius, &Real::from(radius)).unwrap(),
+                Ordering::Equal
+            );
+            assert_eq!(
+                exact_order(
+                    &(&arc.domain_end - &arc.domain_start),
+                    &(Real::pi() / Real::from(2)).unwrap()
+                )
+                .unwrap(),
+                Ordering::Equal
+            );
+            assert!(fragments[0].first_pcurve().materialize().is_ok());
+            assert!(fragments[0].second_pcurve().materialize().is_ok());
+            counts[index] += 1;
+        }
+        assert_eq!(
+            counts,
+            [4, 4],
+            "complete new cap incidences accompany the four preserved interior traces"
+        );
+    }
+
     #[test]
     fn coaxial_cylinder_cone_graph_retains_quarter_circle_pcurves() {
         let (frustum, frustum_solid) =
@@ -14233,15 +14396,23 @@ mod tests {
         let retained = graph
             .intersections()
             .iter()
-            .filter_map(|pair| match (pair.relation(), pair.trim()) {
-                (
-                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Curve(curve)),
-                    FacePairTrim::SurfaceCurveFragments(fragments),
-                ) => Some((curve, fragments)),
-                _ => None,
+            .filter_map(|pair| {
+                if face_surface(&cylinder, pair.first_face()).kind() != crate::SurfaceKind::Cylinder
+                    || face_surface(&frustum, pair.second_face()).kind() != crate::SurfaceKind::Cone
+                {
+                    return None;
+                }
+                match (pair.relation(), pair.trim()) {
+                    (
+                        FacePairRelation::Exact(SurfaceSurfaceIntersection::Curve(curve)),
+                        FacePairTrim::SurfaceCurveFragments(fragments),
+                    ) => Some((curve, fragments)),
+                    _ => None,
+                }
             })
             .collect::<Vec<_>>();
         assert_eq!(retained.len(), 4);
+        assert_coaxial_cap_boundary_traces(&graph, &cylinder, &frustum);
         for (curve, fragments) in retained {
             assert_eq!(fragments.len(), 1);
             assert!(curve.first_pcurve().materialize().is_ok());
@@ -14312,15 +14483,23 @@ mod tests {
         let cylinder_relations = cylinder_graph
             .intersections()
             .iter()
-            .filter_map(|pair| match (pair.relation(), pair.trim()) {
-                (
-                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Curve(curve)),
-                    FacePairTrim::SurfaceCurveFragments(fragments),
-                ) => Some((curve, fragments)),
-                _ => None,
+            .filter_map(|pair| {
+                if face_surface(&cylinder, pair.first_face()).kind() != crate::SurfaceKind::Cylinder
+                    || face_surface(&frustum, pair.second_face()).kind() != crate::SurfaceKind::Cone
+                {
+                    return None;
+                }
+                match (pair.relation(), pair.trim()) {
+                    (
+                        FacePairRelation::Exact(SurfaceSurfaceIntersection::Curve(curve)),
+                        FacePairTrim::SurfaceCurveFragments(fragments),
+                    ) => Some((curve, fragments)),
+                    _ => None,
+                }
             })
             .collect::<Vec<_>>();
         assert_eq!(cylinder_relations.len(), 4);
+        assert_coaxial_cap_boundary_traces(&cylinder_graph, &cylinder, &frustum);
         for (curve, fragments) in cylinder_relations {
             let cylinder_pcurve = curve.first_pcurve().materialize().unwrap();
             assert_eq!(

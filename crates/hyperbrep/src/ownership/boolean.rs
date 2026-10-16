@@ -321,7 +321,8 @@ impl SolidIntersectionGraph {
     pub fn broad_phase_rejections(&self) -> usize {
         self.inner.broad_phase_rejections()
     }
-    /// Returns surviving pairs certified carrier-disjoint.
+    /// Returns surviving pairs certified disjoint by their carriers or by
+    /// strict plane separation of a finite face bound.
     pub fn exact_disjoint_pairs(&self) -> usize {
         self.inner.exact_disjoint_pairs()
     }

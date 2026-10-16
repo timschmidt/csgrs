@@ -520,6 +520,14 @@ See the [similarity contract](docs/ARCHITECTURE.md#analytic-similarity-transport
 for chart restrictions and [evidence](docs/evidence/2026-10-16-analytic-similarity/README.md).
 Geometry exchange does not replace native archival replay.
 
+Seam-aligned axial and longitudinal torus halves and longitudinal cone-frustum
+halves now complete through strict Booleans, exact similarities, edge splitting,
+and untrusted archive replay. Existing boundary traces retain complete overlap
+and source-revision evidence through `FaceTracePartitionRef::boundary()`.
+The [seam-cut contract](docs/ARCHITECTURE.md#seam-aligned-analytic-cuts) and
+[evidence](docs/evidence/2026-10-16-seam-cuts/README.md) delimit this domain;
+further Boolean closure and torus/cone STEP encoding remain open.
+
 Enable the optional derived-output adapter with `--features tessellation`.
 HyperTRI remains outside the default core dependency graph.
 

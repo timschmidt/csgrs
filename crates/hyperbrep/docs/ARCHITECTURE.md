@@ -1001,6 +1001,64 @@ original failures, exact expectations, composition, archive effects and cost.
 The source/work/heap/cancellation limits of the existing kernel still apply;
 this transform extension does not establish global resource admission.
 
+## Seam-aligned analytic cuts
+
+Closed-set curve/region clipping retains positive-length boundary overlaps as
+well as interior intervals. Hypercurve owns that incidence proof. BREP must not
+discard an overlap by subsequently classifying its midpoint as boundary. Native
+iso pcurves are lifted by whole surface periods into the actual authored trim
+chart before clipping; spatial parameters and contact records remain paired.
+Each periodic axis admits at most three intersecting copies, independent of
+how many periods separate the chart origins. Wider chart spans remain typed
+unsupported. This bounds copy enumeration, not total scalar work or memory.
+
+`topology/edit/boundary.rs` proves complete coverage of a materialized line
+pcurve by existing outer/inner boundary line uses. It checks the retained
+mapping's native representation before materializing; nonlinear families
+continue through ordinary partitioning without constructing this line-only
+probe. Exact paired overlap ranges
+must cover its entire normalized interval without gaps. It then invokes the
+native complete spatial-curve/pcurve/surface image validator on the actual face,
+without accepting the trace's inherited proof flag. Covered traces leave the
+face unchanged in a multi-trace partition; a single-face split reports
+`DegenerateFaceSplit`. Partial overlaps, endpoint agreement and uncertain
+incidence are not coverage proofs. Nonlinear boundary pcurve coverage remains
+outside this path.
+
+`FaceTracePartitionRef::boundary()` exposes `BoundarySurfaceTraceRef`, its full
+intersection, selected operand, actual `source_model()` and overlap records.
+Each `BoundaryTraceOverlapRef` borrows its source edge use and paired normalized
+trace/boundary ranges, including reversed parameter orientation. Earlier face
+partitions may have subdivided shared edges, so the proof owns that staged
+revision. Interior split records precede boundary records; every record retains
+its caller `source_index`. A covered trace has one original spatial segment and
+no splits. These records do not yet constitute complete operation provenance.
+
+Planar cap assembly coalesces duplicated seam reports only after a complete
+parameterization proof. Selected circular edges with different chart origins or
+reflected frames reuse topology's existing full center/radius, angular-span,
+start-radial-vector and signed-tangent proof. Closed edges require both traversal
+trials even when both endpoint tests match. Same endpoints or common support
+alone never certify the selected arc. Unsupported infinite carrier intersections
+can be excluded when Hyperlimit certifies strict separation between a plane and
+the other finite face's bounds; touching and Unknown remain unrejected.
+
+Native line construction and plane-point projection compact exact coordinates
+through Hyperreal's bounded `compact_pi_laurent` API before later construction
+multiplies the expressions. Persistence now shares that plane projection instead
+of maintaining a duplicate formula. Axial chart transport likewise compacts
+line-direction differences before computing its restricted similarity. Torus and
+cone area magnitudes consume strict signs before introducing an unnecessary
+square root of a squared area. Unrecognized forms retain the original exact
+values; no recognition budget, predicate policy or archive limit is increased.
+Canonical expression bytes can change under the existing archive schema.
+
+The [evidence record](evidence/2026-10-16-seam-cuts/README.md) retains the original
+full-size seam failures and the subsequent repeated-use failures, including the
+70 MB swapped-cone line archive. General coincident curved caps, arbitrary
+periodic traces, further cut/reunion closure, STEP torus/cone encoding and the
+project-wide resource/provenance/delivery gates remain open.
+
 ## Performance contract
 
 Correctness does not vary by execution route. Retained adjacency, structural

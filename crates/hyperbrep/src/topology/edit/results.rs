@@ -169,7 +169,7 @@ pub struct ArenaFacePartition {
     pub source_face: FaceId,
     /// Final descendant faces in deterministic split order.
     pub faces: Vec<FaceId>,
-    /// Per-trace arrangement and edit records in canonical processing order.
+    /// Canonical interior edit records followed by boundary records in input order.
     pub traces: Vec<ArenaFaceTracePartition>,
 }
 
@@ -178,10 +178,29 @@ pub struct ArenaFacePartition {
 pub struct ArenaFaceTracePartition {
     /// Index in the caller's trace slice.
     pub source_index: usize,
-    /// Canonically directed trace segments after exact crossing subdivision.
+    /// Arranged spatial segments, or the original unsplit boundary trace.
     pub segments: Vec<Curve3>,
-    /// Identity-stitched face split corresponding to every segment.
+    /// Identity-stitched splits for interior segments; empty for boundary traces.
     pub splits: Vec<ArenaSurfaceCurveFaceSplit>,
+    /// Complete overlap proof when the trace already belongs to the source boundary.
+    pub boundary: Option<ArenaBoundarySurfaceTrace>,
     /// Input and output revision for each retained split step.
     pub(crate) snapshots: Vec<(ArenaModel, ArenaModel)>,
+}
+
+/// An unchanged source boundary covering one complete retained surface trace.
+#[derive(Clone, Debug)]
+pub struct ArenaBoundarySurfaceTrace {
+    pub source: ArenaModel,
+    pub intersection: SurfaceIntersectionCurve,
+    pub operand: SurfaceIntersectionOperand,
+    pub overlaps: Vec<ArenaBoundaryTraceOverlap>,
+}
+
+/// Native line-pcurve overlap, with both original normalized parameter charts.
+#[derive(Clone, Debug)]
+pub struct ArenaBoundaryTraceOverlap {
+    pub edge_use: EdgeUseId,
+    pub trace_range: hypercurve::ParamRange,
+    pub boundary_range: hypercurve::ParamRange,
 }

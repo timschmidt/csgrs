@@ -430,6 +430,18 @@ impl Curve3 {
     /// Constructs a finite exact line segment.
     pub fn line(start: Point3, end: Point3) -> GeometryResult<Self> {
         crate::context::strict(|| {
+            // Line restrictions repeatedly consume these exact coordinates.
+            // Compact derived algebraic endpoints before another affine image
+            // expands them, without changing their values or parameterization.
+            let compact = |point: Point3| {
+                Point3::new(
+                    point.x.compact_pi_laurent().unwrap_or(point.x),
+                    point.y.compact_pi_laurent().unwrap_or(point.y),
+                    point.z.compact_pi_laurent().unwrap_or(point.z),
+                )
+            };
+            let start = compact(start);
+            let end = compact(end);
             match point3_equal(&start, &end, crate::STRICT_PREDICATES) {
                 PredicateOutcome::Decided { value: true, .. } => {
                     return Err(GeometryError::DegenerateLine);
@@ -1832,6 +1844,33 @@ pub(crate) struct SurfacePcurveClipCarrier {
 }
 
 impl SurfaceIntersectionCurve {
+    /// Moves one iso pcurve into an equivalent periodic surface chart. The
+    /// caller proves that each nonzero displacement is a whole surface period.
+    pub(crate) fn translated_iso_pcurve(
+        &self,
+        operand: SurfaceIntersectionOperand,
+        u: &Real,
+        v: &Real,
+    ) -> GeometryResult<Self> {
+        let mut result = self.clone();
+        let pcurve = match operand {
+            SurfaceIntersectionOperand::First => &mut result.first_pcurve,
+            SurfaceIntersectionOperand::Second => &mut result.second_pcurve,
+        };
+        match &mut pcurve.mapping {
+            SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
+                *constant += u;
+                pcurve.source_offset += v;
+            }
+            SurfaceIntersectionPcurveMapping::TensorIsoV { constant } => {
+                *constant += v;
+                pcurve.source_offset += u;
+            }
+            _ => return Err(GeometryError::UnsupportedIntersection),
+        }
+        Ok(result)
+    }
+
     pub(crate) fn new(
         curve: Curve3,
         first_pcurve: SurfaceIntersectionPcurve,
@@ -2071,6 +2110,34 @@ impl SurfaceIntersectionCurve {
 }
 
 impl SurfaceIntersectionPcurve {
+    /// Whether materialization uses a native line carrier. This describes the
+    /// retained representation, not a geometric straightness classification:
+    /// rational/spline mappings retain their families even when collinear.
+    pub(crate) fn materializes_native_line(&self) -> bool {
+        match &self.mapping {
+            SurfaceIntersectionPcurveMapping::TensorIsoU { .. }
+            | SurfaceIntersectionPcurveMapping::TensorIsoV { .. } => true,
+            SurfaceIntersectionPcurveMapping::PlaneProjection { spatial, .. } => {
+                spatial.kind() == Curve3Kind::Line
+            }
+            SurfaceIntersectionPcurveMapping::LinearPlaneSection { profile, .. } => {
+                profile.kind() == Curve3Kind::Line
+            }
+            SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
+                matches!(curve.geometry(), Some(CurveGeometry2::Line(_)))
+            }
+            SurfaceIntersectionPcurveMapping::Unsupported => false,
+        }
+    }
+
+    pub(crate) fn is_iso_parameter_line(&self) -> bool {
+        matches!(
+            self.mapping,
+            SurfaceIntersectionPcurveMapping::TensorIsoU { .. }
+                | SurfaceIntersectionPcurveMapping::TensorIsoV { .. }
+        )
+    }
+
     fn unsupported(domain: ParameterDomain) -> Self {
         Self {
             domain,
@@ -5104,7 +5171,7 @@ fn swapped_curve_intersection(
     }
 }
 
-fn project_point_to_plane_frame(
+pub(crate) fn project_point_to_plane_frame(
     origin: &Point3,
     u: &Vector3,
     v: &Vector3,
@@ -5117,9 +5184,14 @@ fn project_point_to_plane_frame(
     let du = displacement.dot(u);
     let dv = displacement.dot(v);
     let determinant = &uu * &vv - &uv * &uv;
+    let x = ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?;
+    let y = ((&dv * &uu - &du * &uv) / determinant).map_err(GeometryError::Numeric)?;
+    // Replayed endpoints feed native circle-radius and area proofs. Keep each
+    // coordinate compact before those consumers multiply repeated projection
+    // expressions, using only the scalar-owned bounded exact normal form.
     Ok(Point2::new(
-        ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?,
-        ((&dv * &uu - &du * &uv) / determinant).map_err(GeometryError::Numeric)?,
+        x.compact_pi_laurent().unwrap_or(x),
+        y.compact_pi_laurent().unwrap_or(y),
     ))
 }
 

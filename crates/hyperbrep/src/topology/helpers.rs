@@ -1532,7 +1532,7 @@ pub(super) fn circle_parameterizations_equal(
     circle_data_parameterizations_equal(&actual, &expected)
 }
 
-pub(super) fn circle_data_parameterizations_equal(
+pub(crate) fn circle_data_parameterizations_equal(
     actual: &EllipseArcExactData,
     expected: &EllipseArcExactData,
 ) -> Result<bool, BuildError> {

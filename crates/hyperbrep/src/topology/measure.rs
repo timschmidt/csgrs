@@ -103,20 +103,20 @@ impl ArenaModel {
                 ..
             } = surface.exact_data()
             {
-                let mut area = self
-                    .signed_torus_wire_area(outer, &major_radius, &minor_radius)?
-                    .abs();
+                let magnitude = |wire| -> Result<Real, GeometryError> {
+                    let signed = self.signed_torus_wire_area(wire, &major_radius, &minor_radius)?;
+                    Ok(area_magnitude(signed))
+                };
+                let mut area = magnitude(outer)?;
                 for inner in face.inner() {
-                    area -= self
-                        .signed_torus_wire_area(*inner, &major_radius, &minor_radius)?
-                        .abs();
+                    area -= magnitude(*inner)?;
                 }
                 return Ok(area);
             }
             if let SurfaceExactData::Cone { semi_angle, .. } = surface.exact_data() {
-                let mut area = self.signed_cone_wire_area(outer, &semi_angle)?.abs();
+                let mut area = area_magnitude(self.signed_cone_wire_area(outer, &semi_angle)?);
                 for inner in face.inner() {
-                    area -= self.signed_cone_wire_area(*inner, &semi_angle)?.abs();
+                    area -= area_magnitude(self.signed_cone_wire_area(*inner, &semi_angle)?);
                 }
                 return Ok(area);
             }
@@ -747,5 +747,28 @@ impl ArenaModel {
             }
         }
         Ok(sum)
+    }
+}
+
+/// Consume a strict sign before introducing sqrt(area^2), which can obscure
+/// cancellation between small analytic patches. Compact only through the
+/// native scalar recognizer. An unavailable proof preserves the original
+/// exact absolute value; it never selects an orientation by approximation.
+fn area_magnitude(signed: Real) -> Real {
+    let signed = signed.compact_pi_laurent().unwrap_or(signed);
+    match compare_reals(&signed, &Real::zero(), crate::STRICT_PREDICATES) {
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Less,
+            ..
+        } => -signed,
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Equal,
+            ..
+        } => Real::zero(),
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Greater,
+            ..
+        } => signed,
+        PredicateOutcome::Unknown { .. } => signed.abs(),
     }
 }

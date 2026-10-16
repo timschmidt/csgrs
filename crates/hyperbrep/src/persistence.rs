@@ -646,20 +646,9 @@ fn project_raw_plane_point(
     u: &Vector3,
     v: &Vector3,
 ) -> Result<[Real; 2], PersistenceError> {
-    let displacement = Vector3::new([
-        &point[0] - &origin.x,
-        &point[1] - &origin.y,
-        &point[2] - &origin.z,
-    ]);
-    let uu = u.dot(u);
-    let uv = u.dot(v);
-    let vv = v.dot(v);
-    let du = displacement.dot(u);
-    let dv = displacement.dot(v);
-    let determinant = &uu * &vv - &uv * &uv;
-    let first = ((&du * &vv - &dv * &uv) / &determinant).map_err(GeometryError::Numeric)?;
-    let second = ((dv * uu - du * uv) / determinant).map_err(GeometryError::Numeric)?;
-    Ok([first, second])
+    let point = Point3::new(point[0].clone(), point[1].clone(), point[2].clone());
+    let projected = crate::geometry::project_point_to_plane_frame(origin, u, v, &point)?;
+    Ok([projected.x, projected.y])
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

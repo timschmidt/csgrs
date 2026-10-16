@@ -1113,6 +1113,61 @@
       "cost_evidence": "Sixty alternating processes preserve required outputs and fixture facts for all 123 prior BREP/STEP/arc cases. Largest case-median candidate/baseline ratio: 1.063685633167223; 3 rows have changed allocator observations. All raw timing, allocation, process-resource and binary-size data remain, including adverse cases. Three additional processes measure nine complete new workflows with exact checks, output materialization and replay included. These are shared-host observations, not a speedup over the previously failing scale path or statistical release-performance admission.",
       "migration": "No public signature or archive schema/version change and no compatibility adapter. Version-9 canonical expression bytes can change where the old serializer mixed runtime and emitted coordinates; exact represented values/topology stay unchanged and independent validation remains mandatory. All 123 retained benchmark observations and seven existing STEP outputs are checked separately. Extrusion reflection now yields a replayable model; the prior inconsistent chart is repaired.",
       "limits": "All 28 work-package gates remain open. Nonlinear axial pcurves, general nonsimilar analytic promotion, three reproduced seam-aligned torus/cone cuts, broader CAD/STEP families/voids/assemblies, complete provenance/resource/cancellation and shipped package/MSRV/binding gates remain open. The three cuts fail on the final source and are not replaced by passing oblique examples. No runtime fuzz/ASan/lexicase, coverage, formal proof, full workspace/pre-push campaign or push claim. Surrounding implementation remains concurrent upstream work."
+    },
+    {
+      "id": "seam-aligned-analytic-cuts",
+      "work_packages": [
+        "WP00",
+        "WP01",
+        "WP03",
+        "WP06",
+        "WP07",
+        "WP08",
+        "WP12",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Retain native closed-set trace intervals, prove complete boundary overlap with full edge-image validation, expose source-bound no-op provenance, deduplicate complete seam traces, lift periodic iso pcurves, and stitch equivalent circles using the native full-parameterization proof. Reuse strict plane/AABB separation for unsupported infinite carriers outside finite faces. Repair repeated replay using native scalar compaction at shared planar projection, axial line direction, analytic signed-area magnitude and line construction. Skip the optional line-boundary proof before nonlinear materialization. No surrounding implementation changes.",
+      "source": "../src/boolean_kernel.rs",
+      "source_files": [
+        "../src/boolean_kernel/periodic.rs",
+        "../src/topology/edit/boundary.rs",
+        "../src/topology/edit/partition.rs",
+        "../src/ownership/changes.rs",
+        "../src/geometry.rs",
+        "../src/geometry/transform.rs",
+        "../src/persistence.rs",
+        "../src/topology/measure.rs"
+      ],
+      "evidence": "evidence/2026-10-16-seam-cuts/manifest.json",
+      "validation": "BREP/IO all-feature debug and release each pass 444 tests, minimal release 436; both strict all-target Clippy configurations, warning-denied docs, six examples, fuzz-target compilation, formatting and 44 zero-import WASM groups pass. Sixty-three full-size seam-cut workflows check independent exact volume/area, nine inside/outside/boundary/near-offset samples, manifold incidence, deterministic untrusted replay, subdivision and reflected rescaling. Sixteen boundary-provenance cases plus both closed-boundary directions retain original source identity and paired parameters; wrong spatial interiors, partial/gapped/near overlaps and uncertain exclusions remain controlled. Eleven STEP files pass independent OCCT topology/floating-point mass checks and every retained generated STEP artifact is byte-identical. Torus/cone export remains typed unsupported with recovery checked. All 26 final commands match the final source snapshot; earlier qualifications, failures and cost campaigns remain.",
+      "cost_evidence": "The final 66-process campaign compares all 132 prior cases: 131 receipts unchanged, with one explicit radical-cylinder canonical-expression migration independently proving equality of all 32 changed scalar values and every non-scalar field. Both full archives validate; bytes change from 75603 to 57195. Largest final case-median candidate/baseline ratio 1.1508283310209866; 1 rows exceed 10%, and 5 rows change allocator observations. The first campaign and its failed byte comparison remain, including five spline ratios of 1.135\u20131.241 before the native-line representation precheck. Three separate processes measure six new complete workloads with exact checks and full materialization/replay inside timing. All adverse samples, allocations, process resources and executable sizes remain. No speedup against failed cuts, internal resource bound or statistical release-performance admission.",
+      "migration": "Public face partitions now expose complete boundary no-op records through FaceTracePartitionRef::boundary, retaining the source revision and paired normalized trace/boundary ranges. Interior traces retain canonical ordering; boundary records follow in input order with original source indices. Graphs retain previously omitted positive-length boundary incidences; exact_disjoint_pairs also includes finite plane/bound separation. Exact line/projection canonical expression bytes may change, but archive schema version 9, represented values, strict validation, and resource limits remain unchanged. No compatibility adapters. All prior benchmark receipts and STEP bytes are compared separately. The radical-cylinder receipt changes from 12388334409500861793 to 16708383019185231957: all 32 changed pcurve endpoint scalars prove equal, every non-scalar field is identical and both complete archives validate. Only this named receipt pair has an explicit migration.",
+      "limits": "All 28 work-package gates remain open. The fifteen repeated-Boolean diagnostic attempts retain twelve typed blockers: coincident curved-cap partition, general angular/axial shell validation, and unresolved classification/line-intersection work. They are not silently converted to empties or claimed complete. General periodic gluing, nonlinear axial pcurves, nonsimilar analytic promotion, general CAD/STEP/spline/void/assembly coverage, full operation provenance and resource/cancellation contracts remain open. Torus/cone STEP export is still typed UnsupportedSurface with recovery checked; native success does not invent an exchange mapping. No runtime fuzz/ASan/lexicase, instrumented coverage or formal proof; fuzz targets compile. WASM uses source paths, not a shipped JS/package consumer. Package/MSRV and actual C/Python/JS release gates remain open. The native NURBS Mobius inverse pcurve partition timing row remains above the default 10% budget; retain the exact extension as a new feature baseline under the recorded semantic exception, with performance admission open. No full workspace/pre-push campaign and no push. Shared-host observations do not close statistical or controlled-host performance admission."
     }
   ],
   "work_packages": [
@@ -1136,7 +1191,7 @@
     },
     {
       "id": "WP03",
-      "status": "open",
+      "status": "in-progress",
       "deliverable": "Chart atlas, periodic trim gluing, pole/apex strata and full-interval correspondence",
       "gate": "Full sphere, torus holes across seams, cone apex and repeated seam uses validate and survive subdivision without changing material"
     },
@@ -1178,7 +1233,7 @@
     },
     {
       "id": "WP08",
-      "status": "open",
+      "status": "in-progress",
       "deliverable": "Common Boolean pipeline, all four operations, shared arrangements across expression roots, imprint/section/split",
       "gate": "Empty/single/multi-body outputs are valid operands; all empty identities, complete subtraction, reconstruction and ordinary strict workflows pass independent set/topology checks; mixed analytic/spline outputs compose and edit; unbounded/nonmanifold outcomes remain typed; extra roots reuse intersections"
     },
@@ -1288,13 +1343,13 @@
   "next_actions": [
     "Preserve and broaden the BodySet empty/multi-body/overlapping-selection composition corpus. Add shared arrangements across expression roots, durable boundary provenance and certainty receipts, complete work/memory/cancellation bounds, and mixed analytic/spline closure without losing the newly certified finite composition path (WP01/WP08, P6/P17-P20).",
     "Preserve and extend named BREP strict workflows with independent set, topology and source-fidelity checks. Observe upstream drilled-body and dependency corrections during integration; unrelated repairs remain upstream work. Record all seven outcome categories and the concrete failing BREP stage (WP00/WP21, P39).",
-    "Resolve the three full-size seam-aligned cut workflows retained in evidence/2026-10-16-analytic-similarity/cut-frontier.md: torus axial/longitudinal halves fail one-use-edge manifold validation, and cone longitudinal half lacks an interior witness. Preserve both baseline/final diagnostics and passing oblique/clipped workflows; repair the native graph/topology owner without sampling, relaxing validation or substituting easier geometry (WP08/P17-P20/P35/P39).",
+    "Extend the completed 63 seam-cut workflows through repeated Booleans using evidence/2026-10-16-seam-cuts/continuation-frontier.json. Preserve all original full-size inputs, exact measurements, near samples, split/reflection/replay and public boundary provenance. The fifteen diagnostic attempts retain twelve typed blockers in coincident curved planar caps, mixed angular/axial shell validation and unresolved classification/line predicates. Repair native partition/embedding owners without seam perturbation, fixture-specific identity shortcuts, weaker validation or accepting a new Unknown; verify repeated set identities independently (WP03/WP06/WP07/WP08, P17-P20/P35/P39).",
     "Complete the documented-package pipeline in clean external consumers and actual affected bindings; verify features, dependency versions, MSRV, certainty and format-specific round trips. Local paths, source builds and WASM probes do not close delivery gates (WP17/WP18/WP23, P37).",
     "Continue WP03 beyond native single-vertex circle/ellipse edges: add regular closed-spline and singular-chart certificates, complete periodic chart gluing, and general ellipse/plane pcurve-image proofs. Keep the new closed-edge/BodySet/empty composition corpus. The verified stash remains a historical backup; its selectively recovered candidate is requalified on integrated dependencies.",
     "Complete explicit operation contexts, shared budget propagation, numeric-domain/allocation auditing, required certainty receipts and composed boundary provenance in WP01; native model-bound references and scoped construction keys are now implemented.",
     "Complete WP02/G1 beyond planar spline replay, subdivided cuboid and axial-cylinder archive replay. Extend independent solid/void/corner proofs, retained surface/contact images and selected Boolean transfer while preserving every existing exact behavior. Native-to-selected spline composition and five repeated selected cuboid cuts now have regression evidence.",
     "Continue WP13 beyond explicit syntax and structural admission: add scalar-work/allocation limits, iterative WASM-safe coefficient/record decoding, independently versioned coefficient/certificate envelopes, semantic provenance, non-authored support graphs and optional serialization features.",
-    "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission.",
+    "Requalify archive-admission native timings on a controlled host and investigate any stable over-budget cases. All raw samples and the failed pooled timing gate are retained; the diagnostic paired statistic does not establish release performance admission. The seam-cut candidate is the new exact-feature baseline; native_nurbs_mobius_inverse_pcurve_partition retains a 1.150828 timing ratio and needs isolated cost investigation with the complete fixture, alongside the earlier archive/cached-arc gates. Four other first-campaign spline regressions are within budget after the representation precheck.",
     "Expand the capability and verification ledgers by carrier pair, coefficient tier, degeneracy and composition; preserve all currently certified behavior.",
     "Continue WP14a from exact selected faceted/analytic import/export and the now-completed native similarity/unit workflow. Preserve LINE/CIRCLE topology on PLANE/CYLINDRICAL_SURFACE, independent graph/interoperability checks, selected scale/edit/inverse replay and Boolean/empty continuation. Add other families and exact periodic seams without inventing tau from decimal data. WP14b retains spline/trim/void/mapped/assembly exchange and explicit healing/approximation. General nonlinear axial pcurves need native exact affine carriers; nonsimilar analytic transforms need deliberate family promotion. Source maps do not establish whole-document/history persistence.",
     "Continue every BREP work package and its cross-stack integration requirements in the plan. Surrounding-crate implementation is concurrent upstream work unless a reproduced dependency failure would make BREP worse; foundational progress does not close broader project gates."

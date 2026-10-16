@@ -79,3 +79,7 @@ harness = false
 [[bench]]
 name = "analytic_similarity"
 harness = false
+
+[[bench]]
+name = "seam_cuts"
+harness = false

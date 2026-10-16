@@ -25,8 +25,21 @@ impl ArenaModel {
                     kind: EntityKind::Face,
                     index: face_id.index(),
                 })?;
+            let mut boundary_traces = Vec::new();
             let mut ordered = Vec::with_capacity(curves.len());
             for (source_index, intersection) in curves.iter().enumerate() {
+                if let Some(boundary) =
+                    self.retained_surface_trace_on_boundary(face_id, intersection, operand)?
+                {
+                    boundary_traces.push(ArenaFaceTracePartition {
+                        source_index,
+                        segments: vec![intersection.curve().clone()],
+                        splits: Vec::new(),
+                        boundary: Some(boundary),
+                        snapshots: Vec::new(),
+                    });
+                    continue;
+                }
                 let reversed = intersection.reversed()?;
                 let intersection = match compare_curve3_exact_data(
                     &intersection.curve().exact_data(),
@@ -137,10 +150,11 @@ impl ArenaModel {
                     .iter()
                     .map(|trace| (trace.source_index, &trace.intersection))
                     .collect::<Vec<_>>();
-                if let Some(result) =
+                if let Some((model, mut partition)) =
                     self.split_face_by_surface_bridge_cycle(face_id, &bridges, operand)?
                 {
-                    return Ok(result);
+                    partition.traces.extend(boundary_traces);
+                    return Ok((model, partition));
                 }
             }
             let mut staged = self.clone();
@@ -295,9 +309,11 @@ impl ArenaModel {
                         .map(|segment| segment.curve().clone())
                         .collect(),
                     splits,
+                    boundary: None,
                     snapshots,
                 });
             }
+            traces.extend(boundary_traces);
             Ok((
                 staged,
                 ArenaFacePartition {
@@ -452,6 +468,7 @@ impl ArenaModel {
                     source_index: trace.source_index,
                     segments,
                     splits: trace_splits,
+                    boundary: None,
                     snapshots,
                 });
             }
@@ -963,6 +980,7 @@ impl ArenaModel {
                         face: split.clone(),
                     },
                 )],
+                boundary: None,
                 snapshots: vec![(self.clone(), staged.clone())],
             })
             .collect();
