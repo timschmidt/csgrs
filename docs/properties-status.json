@@ -9567,6 +9567,59 @@
       "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
       "remaining": "Other text-only adapter paths, wider workload/provenance/resource contracts, clean external package and release validation. The 35 pending native files remain unchanged and separately unadmitted.",
       "full_plan_complete": false
+    },
+    "exact_path_failure_work": {
+      "status": "typed exact-path and closed-Bezier construction; focused semantics, downstream suites and real caller checks passed",
+      "baseline_commit": "958d2fa76",
+      "properties": [
+        "P6",
+        "P8",
+        "P9",
+        "P16",
+        "P18",
+        "P25",
+        "P30",
+        "P35",
+        "P37"
+      ],
+      "contract": "docs/evidence/2026-10-15-exact-path-failures/contract-v1.md",
+      "baseline": "docs/evidence/2026-10-15-exact-path-failures/baseline-findings-v1.md",
+      "progress": "docs/evidence/2026-10-15-exact-path-failures/progress-v1.md",
+      "validation": "docs/evidence/2026-10-15-exact-path-failures/qualification-summary-v1.json",
+      "checkpoint": "docs/evidence/2026-10-15-exact-path-failures/checkpoint-v1.json",
+      "artifact_audit": "docs/evidence/2026-10-15-exact-path-failures/artifact-audit-v1.json.gz",
+      "implementation_sha256": {
+        "benchmarks/rust/feature_pipeline.rs": "6196a2fd26f85761a3d2cf62d9dc54e3f3694920a200a71021cdfd63ec255d5e",
+        "benchmarks/rust/profile_primitives.rs": "1992f83c0484ac96c1a02148c97e174b863682bfd5895cccc1a031d187a76888",
+        "examples/readme_renders.rs": "83de127ee39e0cc5e0ac54ea7f4959eff01768af116c07da935899e8199afcd1",
+        "readme.md": "8e1e3d0199a9c2d60157448e988bc873ee5693517b9cc385424b157ee98e6c24",
+        "src/curve/native.rs": "c0b3dd7039dada3ab8bbdeb0fb1e065f6cf7da6c09671cc282ac672cc4dc62ec",
+        "tests/exact_path_failures.rs": "e467bc25d2ae129bfefcd12c8ddbb0b8f2709278fbc8a67eb7b5da5ebf856fbb"
+      },
+      "test_totals": {
+        "exact-paths": {
+          "passed": 6,
+          "ignored": 0
+        },
+        "root-curve": {
+          "passed": 245,
+          "ignored": 0
+        },
+        "root-all-features": {
+          "passed": 352,
+          "ignored": 1
+        },
+        "root-doctests": {
+          "passed": 1,
+          "ignored": 0
+        }
+      },
+      "migration": "bezier_path/bspline_path now return Result rather than Option; bezier_region returns Result rather than empty-on-error. The new Bezier path context implementation is shared with closed-region construction. Native Curve/ExactCurve causes and invalid/undecided categories survive. Existing examples, benchmark callers and docs propagate the new result.",
+      "semantics": "Preserved exact midpoint values for four Bezier families and matching polynomial splines at all original display counts; native family tags, reversal and local certainty pass. Cubic area 27/20, independent membership, union with empty and affine area 81/10 pass. A retraced quadratic remains successful Certified empty and composes. The unresolved cubic remains typed Undecided in strict/approximate/strict.",
+      "resources": "Private copy-on-write target over the unchanged E13 lower build; all lower hashes rechecked. External 1800-second/8-GiB per-process containment only. Original workload fixtures run once as completion checks, without performance claims. The /tmp quota remains full; historical targets and failed copies are retained.",
+      "historical_preservation": "27093 inherited missing paths retain expected hashes; no new missing artifacts or mismatches.",
+      "remaining": "Hilbert midpoint-only clipping and lossy wrapper; legacy sampled gear/airfoil and text construction failures; remaining adapters; wider resources/provenance, external package/release, formal/fuzz/coverage and full properties obligations. The 35 pending native files remain separately unadmitted.",
+      "full_plan_complete": false
     }
   },
   "status_meanings": {
