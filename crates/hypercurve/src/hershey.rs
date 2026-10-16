@@ -9,7 +9,7 @@ use std::fmt;
 
 use hyperreal::Real;
 
-use crate::CurveString2;
+use crate::{CurveError, CurveString2};
 
 /// Required acknowledgement distributed with the compiled Hershey font data.
 pub const FONT_DATA_NOTICE: &str = "\
@@ -152,6 +152,10 @@ pub enum HersheyError {
     NoSuchGlyphIndex(usize),
     /// The compiled record has an invalid coordinate-pair structure.
     InvalidGlyph(usize),
+    /// A decoded glyph buffer exceeds platform capacity.
+    CapacityOverflow,
+    /// Reserving a decoded glyph buffer failed.
+    AllocationFailed { elements: usize },
 }
 
 impl fmt::Display for HersheyError {
@@ -166,17 +170,99 @@ impl fmt::Display for HersheyError {
             Self::InvalidGlyph(index) => {
                 write!(formatter, "Hershey glyph {index} has invalid compiled data")
             }
+            Self::CapacityOverflow => {
+                write!(formatter, "Hershey buffer capacity exceeds platform limits")
+            }
+            Self::AllocationFailed { elements } => write!(
+                formatter,
+                "could not allocate Hershey buffer for {elements} elements"
+            ),
         }
     }
 }
 
 impl Error for HersheyError {}
 
+/// Failure to construct complete native Hershey text.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum TextError {
+    /// Font selection, record validation or buffer reservation failed.
+    Font(HersheyError),
+    /// A zero scale cannot produce valid line strokes, even for empty text.
+    ZeroSize,
+    /// Nonzero scale could not be certified under the selected policy.
+    UndecidedSize { policy: hyperlimit::PredicatePolicy },
+    /// A selected stroke failed native curve validation.
+    Curve(CurveError),
+}
+
+impl fmt::Display for TextError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Font(source) => source.fmt(formatter),
+            Self::ZeroSize => write!(formatter, "Hershey size must be nonzero"),
+            Self::UndecidedSize { policy } => {
+                write!(formatter, "Hershey size is undecided under {policy:?}")
+            }
+            Self::Curve(source) => source.fmt(formatter),
+        }
+    }
+}
+
+impl Error for TextError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Font(source) => Some(source),
+            Self::Curve(source) => Some(source),
+            _ => None,
+        }
+    }
+}
+
+impl From<HersheyError> for TextError {
+    fn from(source: HersheyError) -> Self {
+        Self::Font(source)
+    }
+}
+
+impl From<CurveError> for TextError {
+    fn from(source: CurveError) -> Self {
+        Self::Curve(source)
+    }
+}
+
+fn validate_record(index: usize, encoded: &str) -> Result<(), HersheyError> {
+    if encoded.len() < 2
+        || !encoded.len().is_multiple_of(2)
+        || !encoded.bytes().all(|byte| (b' '..=b'~').contains(&byte))
+    {
+        return Err(HersheyError::InvalidGlyph(index));
+    }
+    Ok(())
+}
+
+fn reserve<T>(values: &mut Vec<T>, additional: usize) -> Result<(), HersheyError> {
+    let elements = values
+        .len()
+        .checked_add(additional)
+        .ok_or(HersheyError::CapacityOverflow)?;
+    if elements
+        .checked_mul(std::mem::size_of::<T>())
+        .is_none_or(|bytes| bytes > isize::MAX as usize)
+    {
+        return Err(HersheyError::CapacityOverflow);
+    }
+    values
+        .try_reserve(additional)
+        .map_err(|_| HersheyError::AllocationFailed { elements })
+}
+
 fn decode_glyph(
     index: usize,
     historical_id: Option<u32>,
     encoded: &str,
 ) -> Result<Glyph, HersheyError> {
+    validate_record(index, encoded)?;
     let (pairs, remainder) = encoded.as_bytes().as_chunks::<2>();
     if !remainder.is_empty() {
         return Err(HersheyError::InvalidGlyph(index));
@@ -196,6 +282,7 @@ fn decode_glyph(
         max_y: 0,
     };
     let mut move_pending = true;
+    reserve(&mut glyph.vectors, pairs.len())?;
 
     for pair in pairs {
         if pair == b" R" {
@@ -234,33 +321,55 @@ pub mod fonts {
 
 /// Creates native open curve strings for single-stroke text.
 ///
-/// Every pen-down run becomes one [`CurveString2`]. Unsupported characters
-/// advance by the same amount as whitespace and do not create geometry.
-pub fn strings(text: &str, font: &Font<'_>, size: Real) -> Vec<CurveString2> {
+/// Every nonempty pen-down run becomes one [`CurveString2`]. Whitespace advances
+/// by six times `size`; this is a horizontal layout, including line breaks.
+/// Missing/malformed glyphs and failed strokes return typed errors before any
+/// partial text is published. Empty text and blank glyphs remain successful.
+///
+/// Size must be provably nonzero; negative sizes are supported. The default
+/// policy is strict; [`crate::evaluate_under`] carries explicit policy and
+/// consumed certainty. Checked buffers are not a total-work or heap-byte bound.
+pub fn strings(text: &str, font: &Font<'_>, size: Real) -> Result<Vec<CurveString2>, TextError> {
+    for (index, encoded) in font.data.iter().enumerate() {
+        validate_record(index, encoded)?;
+    }
+    let policy = crate::policy::principal_context();
+    match crate::classify::real_sign(&size, &policy) {
+        Some(hyperreal::RealSign::Zero) => return Err(TextError::ZeroSize),
+        Some(_) => {}
+        None => {
+            return Err(TextError::UndecidedSize {
+                policy: policy.predicate_policy(),
+            });
+        }
+    }
     let mut strings = Vec::new();
     let mut cursor_x = Real::zero();
     let fallback_advance = Real::from(6_u8) * size.clone();
 
     for character in text.chars() {
-        if character.is_control() || character.is_whitespace() {
+        if character.is_whitespace() {
             cursor_x += fallback_advance.clone();
             continue;
         }
 
-        let Ok(glyph) = font.glyph(character) else {
-            cursor_x += fallback_advance.clone();
-            continue;
-        };
-        strings.extend(glyph_strings(&glyph, &size, &cursor_x));
+        let glyph = font.glyph(character)?;
+        let strokes = glyph_strings(&glyph, &size, &cursor_x)?;
+        reserve(&mut strings, strokes.len())?;
+        strings.extend(strokes);
 
         let scaled_advance = Real::from(glyph.advance()) * size.clone() * Real::from(4_u8);
         cursor_x +=
             (scaled_advance / Real::from(5_u8)).expect("the Hershey advance divisor is nonzero");
     }
-    strings
+    Ok(strings)
 }
 
-fn glyph_strings(glyph: &Glyph, scale: &Real, offset_x: &Real) -> Vec<CurveString2> {
+fn glyph_strings(
+    glyph: &Glyph,
+    scale: &Real,
+    offset_x: &Real,
+) -> Result<Vec<CurveString2>, TextError> {
     let mut strings = Vec::new();
     let mut points = Vec::new();
 
@@ -270,28 +379,31 @@ fn glyph_strings(glyph: &Glyph, scale: &Real, offset_x: &Real) -> Vec<CurveStrin
             Vector::LineTo { x, y } => (*x, *y, false),
         };
         if starts_stroke {
-            retain_stroke(&mut strings, std::mem::take(&mut points));
+            retain_stroke(&mut strings, std::mem::take(&mut points))?;
         }
+        reserve(&mut points, 1)?;
         points.push([
             offset_x.clone() + Real::from(x) * scale.clone(),
             Real::from(y) * scale.clone(),
         ]);
     }
-    retain_stroke(&mut strings, points);
-    strings
+    retain_stroke(&mut strings, points)?;
+    Ok(strings)
 }
 
-fn retain_stroke(strings: &mut Vec<CurveString2>, points: Vec<[Real; 2]>) {
-    if points.len() >= 2
-        && let Ok(string) = CurveString2::from_real_point_iter(points)
-    {
+fn retain_stroke(strings: &mut Vec<CurveString2>, points: Vec<[Real; 2]>) -> Result<(), TextError> {
+    // A lone MoveTo draws no edge. A failed pen-down stroke must propagate.
+    if points.len() >= 2 {
+        let string = CurveString2::from_real_point_iter(points)?;
+        reserve(strings, 1)?;
         strings.push(string);
     }
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Font, HersheyError, Vector, fonts, strings};
+    use super::{Font, HersheyError, TextError, Vector, fonts, strings};
     use hyperreal::Real;
 
     #[test]
@@ -326,7 +438,7 @@ mod tests {
 
     #[test]
     fn built_in_ascii_text_produces_exact_native_strokes() {
-        let strokes = strings("A A", &fonts::FUTURAL, Real::one());
+        let strokes = strings("A A", &fonts::FUTURAL, Real::one()).unwrap();
 
         assert!(!strokes.is_empty());
         assert!(
@@ -336,5 +448,77 @@ mod tests {
                 .all(|segment| segment.start().x().exact_rational().is_some()
                     && segment.start().y().exact_rational().is_some())
         );
+    }
+
+    #[test]
+    fn failures_never_publish_empty_or_partial_strokes() {
+        let valid = Font::new(&["MWRMNV RRMVV"], 'A');
+        let invalid = Font::new(&["MWRMNV RRMVV", "M"], 'A');
+        for text in ["", " ", "ABA"] {
+            assert_eq!(
+                strings(text, &invalid, Real::one()),
+                Err(TextError::Font(HersheyError::InvalidGlyph(1)))
+            );
+        }
+        assert_eq!(
+            strings("AB", &valid, Real::one()),
+            Err(TextError::Font(HersheyError::NoSuchGlyph('B')))
+        );
+        assert!(matches!(
+            strings("A", &Font::new(&["MWRRRR"], 'A'), Real::one()),
+            Err(TextError::Curve(_))
+        ));
+        for text in ["", "A"] {
+            assert_eq!(
+                strings(text, &valid, Real::zero()),
+                Err(TextError::ZeroSize)
+            );
+        }
+        assert!(strings(" \n\t", &valid, Real::one()).unwrap().is_empty());
+        assert!(
+            strings("A", &Font::new(&["MW"], 'A'), Real::one())
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(strings("A", &valid, -Real::one()).unwrap().len(), 2);
+    }
+
+    #[test]
+    fn catalog_records_and_buffer_capacity_are_checked() {
+        for font in fonts::ALL {
+            assert!(strings("", &font, Real::one()).unwrap().is_empty());
+            for index in 0..font.len() {
+                font.glyph_by_index(index).unwrap();
+            }
+        }
+        let mut values = vec![0_u8];
+        assert_eq!(
+            super::reserve(&mut values, usize::MAX),
+            Err(HersheyError::CapacityOverflow)
+        );
+        assert_eq!(values, [0]);
+    }
+
+    #[test]
+    fn policy_scope_does_not_turn_an_unproved_scale_into_a_strict_fact() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let size = &sine * &sine + &cosine * &cosine - Real::one();
+        let font = Font::new(&["MWRMNV RRMVV"], 'A');
+        for policy in [
+            hyperlimit::PredicatePolicy::STRICT,
+            hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            hyperlimit::PredicatePolicy::STRICT,
+        ] {
+            let outcome = crate::evaluate_under(policy, || strings("A", &font, size.clone()));
+            if policy == hyperlimit::PredicatePolicy::STRICT {
+                assert!(matches!(
+                    outcome.into_unverified(),
+                    Err(TextError::UndecidedSize { .. } | TextError::ZeroSize)
+                ));
+            } else if outcome.as_unverified().is_ok() {
+                assert!(!outcome.is_certified());
+            }
+        }
     }
 }

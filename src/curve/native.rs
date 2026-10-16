@@ -3046,10 +3046,37 @@ pub fn from_image(
         .map(super::image::RasterTraceReport::into_region)
 }
 
-/// Filled TrueType glyph outlines.
+/// Filled native line and Bézier glyph outlines at a strictly positive point size.
+///
+/// Uses exactly 127/360 millimeters per point and retains the requested `Real`
+/// scale. Coordinates emitted by ttf-parser are promoted exactly from f32;
+/// this does not certify fidelity to coordinates before parser rounding.
+/// Layout uses horizontal advances and pair adjustments, with newline, carriage
+/// return and tab controls; it is not a shaping or bidirectional-text engine.
+/// Invalid fonts, missing glyphs and failed outlines return typed errors.
 #[cfg(feature = "truetype-text")]
-pub fn truetype_text(text: &str, font_data: &[u8], scale: Real) -> CurveRegion2 {
-    super::truetype::text_region(text, font_data, scale)
+pub fn truetype_text(
+    text: &str,
+    font_data: &[u8],
+    scale: Real,
+) -> Result<CurveRegion2, ValidationError> {
+    truetype_text_with_context(text, font_data, scale, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Policy-explicit text construction with an operation-local certainty receipt.
+#[cfg(feature = "truetype-text")]
+pub fn truetype_text_with_context(
+    text: &str,
+    font_data: &[u8],
+    scale: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    positive_with(&scale, "font scale", &decisions)?;
+    let region =
+        decisions.exact_curve(|| super::truetype::text_region(text, font_data, scale))?;
+    Ok(decisions.finish(region))
 }
 
 /// Hershey stroke geometry as native open curve strings in Cartesian coordinates.
@@ -3057,29 +3084,45 @@ pub fn truetype_text(text: &str, font_data: &[u8], scale: Real) -> CurveRegion2 
 /// Hershey's source records use screen-style coordinates with positive Y
 /// pointing down. The returned geometry reflects that axis so positive Y
 /// points up, consistently with the rest of the planar curve API.
+/// Size must be provably nonzero; negative sizes are supported. Missing glyphs,
+/// malformed records and failed strokes return typed errors without partial text.
 #[cfg(feature = "hershey-text")]
 pub fn hershey_strings(
     text: &str,
     font: &hypercurve::hershey::Font<'_>,
     size: Real,
-) -> Vec<CurveString2> {
-    let source_to_cartesian = hypercurve::Similarity2::try_from_real_affine(
-        Real::one(),
-        Real::zero(),
-        Real::zero(),
-        -Real::one(),
-        Real::zero(),
-        Real::zero(),
-    )
-    .expect("Y reflection is a nonsingular exact similarity");
-    hypercurve::hershey::strings(text, font, size)
-        .into_iter()
-        .map(|string| {
-            string
-                .transform_similarity(&source_to_cartesian)
-                .expect("Hershey line strings remain valid under Y reflection")
-        })
-        .collect()
+) -> Result<Vec<CurveString2>, ValidationError> {
+    hershey_strings_with_context(text, font, size, &GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
+}
+
+/// Policy-explicit Hershey text with an operation-local certainty receipt.
+#[cfg(feature = "hershey-text")]
+pub fn hershey_strings_with_context(
+    text: &str,
+    font: &hypercurve::hershey::Font<'_>,
+    size: Real,
+    context: &GeometryContext,
+) -> Result<GeometryOutcome<Vec<CurveString2>>, ValidationError> {
+    let decisions = GeometryDecisions::new(context);
+    let strings = decisions.exact_curve(|| hypercurve::hershey::strings(text, font, size))?;
+    let source_to_cartesian = decisions.exact_curve(|| {
+        hypercurve::Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            -Real::one(),
+            Real::zero(),
+            Real::zero(),
+        )
+    })?;
+    let mut cartesian = solid::reserved(strings.len())?;
+    for string in strings {
+        cartesian.push(
+            decisions.exact_curve(|| string.transform_similarity(&source_to_cartesian))?,
+        );
+    }
+    Ok(decisions.finish(cartesian))
 }
 
 /// Applies a homogeneous matrix whose restriction to the XY plane is affine.
@@ -4248,7 +4291,8 @@ mod tests {
     #[test]
     fn hershey_catalog_is_native_hypercurve_code() {
         let strings =
-            hershey_strings("CSG", &crate::curve::hershey::fonts::FUTURAL, Real::one());
+            hershey_strings("CSG", &crate::curve::hershey::fonts::FUTURAL, Real::one())
+                .unwrap();
 
         assert!(!strings.is_empty());
         assert_eq!(crate::curve::hershey::fonts::ALL.len(), 32);
@@ -4259,7 +4303,7 @@ mod tests {
     #[test]
     fn hershey_strings_convert_source_coordinates_to_y_up() {
         let font = crate::curve::hershey::Font::new(&["MWRMNV RRMVV"], 'A');
-        let strings = hershey_strings("A", &font, Real::one());
+        let strings = hershey_strings("A", &font, Real::one()).unwrap();
 
         assert_eq!(strings.len(), 2);
         let left = &strings[0].segments()[0];

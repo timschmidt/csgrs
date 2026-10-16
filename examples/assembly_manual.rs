@@ -65,7 +65,7 @@ fn main() {
     )
     .expect("block width is a positive length");
     assert!(same(&width.length, &Real::from(30)));
-    annotate(&mut assembled_drawing.assembled, &width, "block");
+    annotate(&mut assembled_drawing.assembled, &width, "block").expect("dimension annotation");
 
     let directory = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target/assembly_manual");
     fs::create_dir_all(&directory).expect("create target/assembly_manual");

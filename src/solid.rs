@@ -94,6 +94,17 @@ pub(crate) fn reserved<T>(count: usize) -> Result<Vec<T>, ValidationError> {
     Ok(values)
 }
 
+/// Reserve input-controlled growth before publishing or appending geometry.
+pub(crate) fn reserve_additional<T>(
+    values: &mut Vec<T>,
+    additional: usize,
+) -> Result<(), ValidationError> {
+    let elements = capacity::<T>(values.len().checked_add(additional))?;
+    values
+        .try_reserve(additional)
+        .map_err(|_| ValidationError::AllocationFailed { elements })
+}
+
 fn sampled_circle(count: usize) -> Result<Vec<(Real, Real)>, ValidationError> {
     sample_minimum(count, 1, "circle samples")?;
     let denominator =

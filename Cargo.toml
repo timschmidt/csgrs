@@ -178,7 +178,6 @@ gerber-types = { version = "0.7.0", optional = true }
 gerber_parser = { version = "0.4.0", optional = true }
 
 # font
-ttf-utils = { version = "0.1", optional = true, package = "ttf-parser-utils"}
 ttf-parser = { version = "0.25", optional = true }
 
 doc-image-embed = "0.2.1"
@@ -267,8 +266,8 @@ gerber-io = [
   "gerber_parser",
 ]
 truetype-text = [
+  "curve",
   "ttf-parser",
-  "ttf-utils",
 ]
 hershey-text = [
   "curve",
