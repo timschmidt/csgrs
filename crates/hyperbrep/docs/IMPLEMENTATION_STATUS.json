@@ -1478,6 +1478,37 @@
       "decision": "kept",
       "validation": "On the integrated tree, BREP/IO release tests pass 512 with all features and 504 with minimal features; neither configuration has failures or ignored tests. Both warning-denied all-target Clippy configurations, rustdoc and fuzz-target compilation pass. The unchanged source-path WASM consumer passes 83 groups with zero imports and retains the preceding binary hash. The incoming seven OBJ and eight STL regressions pass in both debug and release with obj-io,stl-io and no default features; targeted format Clippy and the curve,stl-io basic_shapes build/Clippy pass. Counts overlap across configurations and are not coverage metrics. Formatting passes.",
       "limits": "No BREP, IO or numerical/geometry dependency runtime bytes change in this merge. The earlier prism correctness, exact representation migrations and 96-process costs remain source-bound historical evidence, with no new timing or speedup claim. Nineteen adverse timing rows, sixty allocation increases, the two inherited scalar zero-factor failures, upstream native timing gates and three format export defects remain open. Fresh physical validation does not repair historical nested-FUSE identity failures or missing artifacts. All 28 BREP work packages remain open; this is not full-workspace/pre-push, package/MSRV, binding distribution, resource-bound, coverage, fuzz-runtime or formal-proof admission. No push."
+    },
+    {
+      "id": "upstream-wasm-integration-2026-10-16",
+      "work_packages": [
+        "WP00",
+        "WP14a",
+        "WP17",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P6",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P28",
+        "P30",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Integrate exact export projections and typed WASM format errors/native STL import; preserve BREP ownership and current source qualification.",
+      "evidence": "evidence/2026-10-16-upstream-wasm-integration/manifest.json",
+      "decision": "kept",
+      "validation": "The merged branch passes 24 native OBJ/STL/projection regressions in debug and release, targeted warning-denied Clippy and curve-enabled format documentation, and eleven BREP prism/STEP workflows. The actual upstream binding harness passes both preceding JavaScript consumers, all twelve new IO tests, the preceding TypeScript check and the new compiled/executed TypeScript consumer. Actual WASM-target Clippy and formatting pass. Counts overlap across configurations. BREP/dependency byte identity preserves the immediately preceding 512 all-feature, 504 minimal and 83 source-path WASM checks; those full suites are not claimed as newly executed here.",
+      "limits": "No local runtime correction is added. Exact text preserves the chosen finite binary64 projection; ASCII STL import still quantizes to binary32. Binary STL per-triangle nondegeneracy is separate from closed topology, manifoldness and analytic fidelity. Typed host errors preserve categories, not complete native proof witnesses or inherited construction intent. Earlier BREP costs, nineteen adverse timing rows, sixty allocation increases and two scalar zero-factor failures remain open. Upstream native timing/storage failures and all 28 BREP work packages remain open. The root no-curve rustdoc configuration fails on its unchanged curve link; the separate curve-enabled documentation check does not waive this upstream-owned failure. No new cost campaign, published-package, MSRV, whole-history, resource-bound, coverage, runtime-fuzz, formal-proof or full pre-push claim. No push."
     }
   ],
   "work_packages": [
@@ -1666,10 +1697,10 @@
     "Continue every BREP work package and its cross-stack integration requirements in the plan. Surrounding-crate implementation is concurrent upstream work unless a reproduced dependency failure would make BREP worse; foundational progress does not close broader project gates.",
     "Preserve every historical feature/integration baseline and raw campaign. The prism increment extends exact extrusion STEP; cone/torus STEP writers remain an explicit exchange frontier. Close controlled-host, full dependency and shipped-consumer gates using their original contracts, not a successful subset.",
     "Investigate the sector increment\u2019s paired/multi-hole affine-tensor bridge costs (1.389189 and 1.312397 observed ratios). Preserve full wire simplicity/nesting validation and the crossing-hole rejection control; reuse native evidence rather than restoring an unjustified simplicity certificate. Keep the three arc/STEP timing rows and the inherited scalar zero-factor failure visible. Coordinate unrelated scalar repair through upstream.",
-    "Upstream c9410688b is integrated and affected BREP consumers are requalified. Fetch again at coherent development boundaries, keep each qualification source fixed, preserve both histories and ledger ownership, and requalify affected consumers. Preserve typed text/distribution contracts, source qualification, concatenation-versus-union and material-set Minkowski semantics. Parsed STL closed-PWN validity does not prove manifoldness or analytic fidelity; preserve native error causes and explicit empty outcomes. The three format export defects and unrelated native runtime failures remain upstream-owned. Fresh builds do not repair historical storage evidence."
+    "Upstream 99b88f707 is integrated, including exact binary64 decimal export, binary32 projected-triangle validation and typed WASM STL import/export errors. Preserve the native and real JS/TS consumers, text/error migrations and documented source-fidelity limits. Use message/code/cause.code directly; no compatibility shim. Fetch again at coherent checkpoints, freeze each qualification source and preserve both histories and ledger ownership. BREP/IO remain the implementation focus; unrelated native timing, storage and remaining boundary work stays upstream-owned."
   ],
   "acceptance_contract": {
-    "upstream_revision": "c9410688b0c7854fba6c9a90f34cae5b3382318a",
+    "upstream_revision": "99b88f707b04053de7f40a86d6d029e3c07460d9",
     "properties": "../../../properties.md",
     "protocol": "../../../docs/admission.md",
     "agent_rules": "../../../AGENTS.md",
@@ -1694,7 +1725,7 @@
       "incorrect result"
     ],
     "admission": "Documentation and integration do not establish implementation compliance. Source-specific evidence remains tied to its original revision; requalify after dependency changes.",
-    "latest_integration": "evidence/2026-10-16-upstream-format-integration/README.md",
+    "latest_integration": "evidence/2026-10-16-upstream-wasm-integration/README.md",
     "implementation_ownership": {
       "primary": [
         "hyperbrep",

@@ -12258,14 +12258,77 @@
       "Continue the remaining properties, clean external distribution and full pre-push validation."
     ]
   },
+  "export_projection_contracts": {
+    "status": "kept: exact decimal spelling of finite binary64 projections and strict validation of binary32 STL faces",
+    "main_parent_commit": "c9410688b0c7854fba6c9a90f34cae5b3382318a",
+    "contract": "docs/evidence/2026-10-16-export-projection-contracts/contract-v1.md",
+    "progress": "docs/evidence/2026-10-16-export-projection-contracts/progress-v1.md",
+    "decision": "docs/evidence/2026-10-16-export-projection-contracts/decision-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-export-projection-contracts/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-export-projection-contracts/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "src/io/mod.rs": "328680f991ae6a29b5274cc48f9dc59bd7f900b2c2f458dc0ef8a04bcc55535c",
+      "src/io/obj.rs": "e6db326c89440be606e4eeed8806a8e8fc464b3d7af174ce04d56a358db21fa7",
+      "src/io/stl.rs": "c0e1f44b9c46689e54d1bae59df82631253cc31a038b5d311b528e7d222bf2cb",
+      "tests/export_projection_contracts.rs": "1a9d30d74559219d3dcba263969b1f50070e3ec332618ef0ae70410346ea9394",
+      "scripts/test-wasm-bindings.sh": "d9163e199acf51df168009e3c4f5c3c639bd954038244d18d86152827c11ed49",
+      "tests/wasm/export_projection.cjs": "0f55257e2dd74294866a5bd75ba8b90fd2daf42c776b0ef326c9e30c7f8dc042"
+    },
+    "original_format_diagnostic": {
+      "remaining_failures": [],
+      "source_unchanged": true
+    },
+    "cost": "docs/evidence/2026-10-16-export-projection-contracts/cost-v1/result.json",
+    "cost_contract": "docs/evidence/2026-10-16-export-projection-contracts/cost-contract-v1.md",
+    "export_projection_fix_admitted": true,
+    "native_runtime_admitted": false,
+    "pending_native_files_unchanged": 35,
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "next": [
+      "Preserve typed format failures and their claim scope across WASM, where export errors currently flatten into strings.",
+      "Keep the 35 pending native changes unadmitted until their original full-board and copper-neck runtime gates pass.",
+      "Continue the remaining properties, clean external distribution and full pre-push validation."
+    ]
+  },
+  "wasm_format_contracts": {
+    "status": "kept: native STL imports and typed format/array failures through real WASM consumers",
+    "main_parent_commit": "3d335db43eac00d003bc2fb0ed1beb2a9c19d79b",
+    "contract": "docs/evidence/2026-10-16-wasm-format-failures/contract-v1.md",
+    "progress": "docs/evidence/2026-10-16-wasm-format-failures/progress-v1.md",
+    "decision": "docs/evidence/2026-10-16-wasm-format-failures/decision-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-wasm-format-failures/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-wasm-format-failures/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "src/wasm/mod.rs": "6f8a4101e44488865fe1be4be1713562eb410424449daa75f8e23c772adf0773",
+      "src/wasm/mesh_js.rs": "66067bc2eee3b3bbd4cc2e84cf2161298532a83fdf666a9635b676938d29bbe7",
+      "scripts/test-wasm-bindings.sh": "4ca3d896a5f5d2c7e2b6f55ad380e42281361c103dbc2d0bef319fdec0b887e1",
+      "tests/wasm/export_projection.cjs": "b578001c4f39882273514d29720b9dad29734090a290ede603305e8ab52ca3f1",
+      "src/wasm/io_error_js.rs": "152dcabf062fbcf87b3fb4db29407e9ef61c160022493655580573039265189d",
+      "tests/wasm/io_contracts.cjs": "0eb12ed3a8f6fe08efa4576a897fe667a9323407484d45a86dc7e6fffb1dee23",
+      "tests/wasm/io_contracts.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e"
+    },
+    "cost": "docs/evidence/2026-10-16-wasm-format-failures/cost-v1/result.json",
+    "cost_contract": "docs/evidence/2026-10-16-wasm-format-failures/cost-contract-v1.md",
+    "wasm_format_contracts_admitted": true,
+    "native_runtime_admitted": false,
+    "pending_native_files_unchanged": 35,
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "next": [
+      "Continue typed failures and claim scope across remaining legacy WASM boundaries; full P30 and inherited provenance remain open.",
+      "Keep the 35 pending native changes unadmitted until their original full-board and copper-neck runtime gates pass.",
+      "Continue ordinary strict completion, clean external distribution, remaining properties and complete pre-push validation."
+    ]
+  },
   "hyperbrep": {
     "status": "in-progress",
     "plan": "crates/hyperbrep/docs/DEVELOPMENT_PLAN.md",
     "work_packages": "crates/hyperbrep/docs/IMPLEMENTATION_STATUS.json",
-    "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-16-upstream-format-integration/manifest.json",
+    "latest_evidence": "crates/hyperbrep/docs/evidence/2026-10-16-upstream-wasm-integration/manifest.json",
     "contract": "Pure Rust native/WASM exact CAD implementation; greenfield API/archive changes with direct caller updates and no compatibility shims.",
-    "qualification": "On the integrated tree, BREP/IO release tests pass 512 with all features and 504 with minimal features; neither configuration has failures or ignored tests. Both warning-denied all-target Clippy configurations, rustdoc and fuzz-target compilation pass. The unchanged source-path WASM consumer passes 83 groups with zero imports and retains the preceding binary hash. The incoming seven OBJ and eight STL regressions pass in both debug and release with obj-io,stl-io and no default features; targeted format Clippy and the curve,stl-io basic_shapes build/Clippy pass. Counts overlap across configurations and are not coverage metrics. Formatting passes. No BREP, IO or numerical/geometry dependency runtime bytes change in this merge. The earlier prism correctness, exact representation migrations and 96-process costs remain source-bound historical evidence, with no new timing or speedup claim. Nineteen adverse timing rows, sixty allocation increases, the two inherited scalar zero-factor failures, upstream native timing gates and three format export defects remain open. Fresh physical validation does not repair historical nested-FUSE identity failures or missing artifacts. All 28 BREP work packages remain open; this is not full-workspace/pre-push, package/MSRV, binding distribution, resource-bound, coverage, fuzz-runtime or formal-proof admission. No push.",
-    "upstream_revision": "c9410688b0c7854fba6c9a90f34cae5b3382318a",
+    "qualification": "The merged branch passes 24 native OBJ/STL/projection regressions in debug and release, targeted warning-denied Clippy and curve-enabled format documentation, and eleven BREP prism/STEP workflows. The actual upstream binding harness passes both preceding JavaScript consumers, all twelve new IO tests, the preceding TypeScript check and the new compiled/executed TypeScript consumer. Actual WASM-target Clippy and formatting pass. Counts overlap across configurations. BREP/dependency byte identity preserves the immediately preceding 512 all-feature, 504 minimal and 83 source-path WASM checks; those full suites are not claimed as newly executed here. No local runtime correction is added. Exact text preserves the chosen finite binary64 projection; ASCII STL import still quantizes to binary32. Binary STL per-triangle nondegeneracy is separate from closed topology, manifoldness and analytic fidelity. Typed host errors preserve categories, not complete native proof witnesses or inherited construction intent. Earlier BREP costs, nineteen adverse timing rows, sixty allocation increases and two scalar zero-factor failures remain open. Upstream native timing/storage failures and all 28 BREP work packages remain open. The root no-curve rustdoc configuration fails on its unchanged curve link; the separate curve-enabled documentation check does not waive this upstream-owned failure. No new cost campaign, published-package, MSRV, whole-history, resource-bound, coverage, runtime-fuzz, formal-proof or full pre-push claim. No push.",
+    "upstream_revision": "99b88f707b04053de7f40a86d6d029e3c07460d9",
     "acceptance_protocol": "docs/admission.md",
     "integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-15-upstream-integration/README.md",
     "acceptance_order": [
@@ -12273,7 +12336,7 @@
       "Ordinary strict-mode completion",
       "Complete user-path and release validation"
     ],
-    "latest_integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-16-upstream-format-integration/README.md",
+    "latest_integration_evidence": "crates/hyperbrep/docs/evidence/2026-10-16-upstream-wasm-integration/README.md",
     "implementation_ownership": {
       "primary": [
         "hyperbrep",

@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
 Status: implementation blueprint. Updated 2026-10-16 for upstream
-`c9410688b0c7854fba6c9a90f34cae5b3382318a` and concurrent development ownership.
+`99b88f707b04053de7f40a86d6d029e3c07460d9` and concurrent development ownership.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,
@@ -97,7 +97,7 @@ guidance applies to future merges and evidence collection as well as the current
 increment. Upstream's full-board and copper-neck runtime gates and its 35-file
 pending candidate remain unadmitted; unrelated repairs retain upstream ownership.
 
-The [current format integration](evidence/2026-10-16-upstream-format-integration/README.md)
+The [preceding format integration](evidence/2026-10-16-upstream-format-integration/README.md)
 preserves the qualified prism implementation while incorporating upstream
 `c9410688b`. OBJ now resolves all triangle indices before emitting any bytes,
 using Hypermesh's existing resolver; this is not a general topology certificate.
@@ -117,11 +117,37 @@ and copper-neck check-body wall time of 86.843039677 seconds against 60 seconds.
 Those gates remain failed; subsequent format corrections do not admit the
 35 pending native files or repair missing historical artifacts. The current
 [STL record](../../../docs/evidence/2026-10-16-stl-native-validation/progress-v3.md)
-also retains tiny-coordinate text loss in OBJ/ASCII STL and binary STL projection
-that can collapse faces. These are upstream-owned export defects. BREP consumers
-must not promise topology-preserving tessellation interchange through them
-without separately validating the emitted representation. The documented
-`basic_shapes` feature combination now includes both `curve` and `stl-io`.
+retains the historical tiny-coordinate text and projected-face collapse failures.
+The documented `basic_shapes` feature combination includes both `curve` and
+`stl-io`.
+
+The [latest integration](evidence/2026-10-16-upstream-wasm-integration/README.md)
+incorporates `3d335db43` and `99b88f707`. OBJ/ASCII STL now encode the chosen
+finite binary64 projection as exact terminating decimals; affected fractional
+text, lengths and checksums intentionally migrate. Binary STL proves each
+actual binary32 triangle nondegenerate before publishing or caching its bytes.
+These correct the three earlier defects in their stated domains. They do not
+prove whole-model topology or exact preservation of an unrepresentable source.
+ASCII STL reimport still quantizes to binary32. Future tessellation/export
+operations must state each promised numerical, topological and fidelity claim
+and separately validate the emitted representation where required. Preserve
+the new proof costs and text migrations in their upstream evidence; older
+lossy output is not a valid performance baseline for the corrected contract.
+This mesh-format boundary does not authorize routing authoritative BREP values
+or exact STEP serialization through binary64; those remain native exact paths
+in BREP and BREP IO.
+
+The actual CSGRS WASM boundary now exposes `MeshJs.fromSTL(Uint8Array)` and
+ordinary `GeometryIoError` objects for STL import/export, with `code`, `format`,
+variant fields and a typed `cause` for native validation. Malformed `fromArrays`
+buffers use `GeometryError`/`invalid_input`. BREP-facing applications must read
+`message` for text and `code`/`cause.code` for classification, updating former
+string-error callers directly. Host errors outlive mesh handles and require
+no `free()`; import does not retain the input buffer. Reuse these error-category
+conventions in future BREP bindings while keeping their independent geometry
+and certainty contract. This does not deliver BREP bindings, deeper native proof
+witnesses or end-to-end source provenance. Preserve the real JavaScript and
+compiled/executed TypeScript pipelines across future merges.
 
 Future sketch/infill consumers must retain the upstream gear, rack and airfoil
 constructors' typed failures and contextual `GeometryOutcome` receipts. Their
