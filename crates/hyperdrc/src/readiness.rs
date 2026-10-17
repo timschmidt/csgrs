@@ -12,7 +12,7 @@ use crate::{Check, Violation};
 pub const CHECK_REGISTRY_VERSION: u32 = 1;
 
 /// Version of shared check execution and geometry-uncertainty reporting semantics.
-pub const CHECK_IMPLEMENTATION_VERSION: u32 = 20;
+pub const CHECK_IMPLEMENTATION_VERSION: u32 = 21;
 
 /// Opinionated default check plan used by both CLI and native callers.
 pub fn default_checks() -> &'static [Check] {

@@ -3,7 +3,7 @@
   "base_revision": "0c5508b89",
   "scope": "All 39 properties, all 14 known open targets, and crate-specific future work remain in scope. Inventory and documentation alone do not prove implementation.",
   "current_work": {
-  "updated_on": "2026-10-16",
+  "updated_on": "2026-10-17",
   "existing_worktree_changes_in_scope": true,
   "accepted_cache_contract": "Warming may strengthen Unknown into Certified and reuse prior higher-precision proofs; it must never contradict or weaken an available certificate.",
   "main_scalar_api": {
@@ -12582,6 +12582,82 @@
     "next": [
       "Continue ordinary strict completion and typed failure repairs from the preserved native regressions, using smaller changes with independent exact expectations and unchanged original workload gates.",
       "Complete end-to-end certainty/provenance and the clean external documented distribution pipeline, then the remaining properties, workflow matrix and measured coverage."
+    ]
+  },
+  "kicad_track_failures": {
+    "status": "kept: typed track-load failures and exact coincident disks preserve full-board completion",
+    "main_parent_commit": "ac14e99174318291a548749395552ab982a7d097",
+    "contract": "docs/evidence/2026-10-17-kicad-track-failures/contract-v4.md",
+    "decision": "docs/evidence/2026-10-17-kicad-track-failures/decision-v1.json",
+    "progress": "docs/evidence/2026-10-17-kicad-track-failures/progress-v1.md",
+    "checkpoint": "docs/evidence/2026-10-17-kicad-track-failures/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-kicad-track-failures/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "crates/hyperdrc/src/kicad.rs": "06db86ae66b0aa90928cf96221a4f314f6c8ee8f36b0030e8b33bf1530be8b1c",
+      "crates/hyperdrc/src/kicad/tracks.rs": "f0c5707d08c29362d263bd3244601557e58cccc38fe8783bdf465496da817430",
+      "crates/hyperdrc/src/readiness.rs": "821107ff3d2cf10f8ab8e282e2bcf3e678308413d9fab158641141537615b760",
+      "crates/hyperdrc/README.md": "61b0a4bd38f044500fd235acf8ced620ee829b4ad19c2b4817b92936da416693",
+      "crates/hyperdrc/tests/kicad_track_failures.rs": "ad3a266e19ab3e3256eb6aef76751efe05cda45fcd885f81313ccaaebc377279",
+      "crates/hyperdrc/src/kicad/native_circle_tests.rs": "029db861520d3dfdc1f83858bd14a167bb20d2e0e83b30828b55e258e7699a89"
+    },
+    "track_load_failures_admitted": true,
+    "general_exact_stroke_fidelity_claimed": false,
+    "new_public_tests": 39,
+    "typed_invalid_source_observations": 96,
+    "full_board_disks": 5,
+    "original_native_regressions": {
+      "baseline": {
+        "passed": 4,
+        "failed": 22
+      },
+      "candidate": {
+        "passed": 5,
+        "failed": 21
+      },
+      "newly_completed": [
+        "coincident_track_endpoints_keep_the_width_disk"
+      ],
+      "previous_passes_preserved": true
+    },
+    "comparison": "docs/evidence/2026-10-17-kicad-track-failures/comparison-v1/result.json",
+    "intentional_migration": {
+      "source_failure": "Required start/end/width fields are validated exactly; missing, malformed, duplicated, extra-valued or negative widths return a typed TrackLoadError through the existing anyhow Result instead of omitted/defaulted/truncated geometry. Shared exhaustion is preserved as BudgetExceeded. No partial board is published.",
+      "coincident_tracks": "Exact rational endpoint equality selects the existing native circle constructor with radius width/2. Five formerly omitted HVP109A tracks now form certified disks; finite coincidence of distinct source endpoints remains an explicit failure.",
+      "other_positive_track_failures": "Valid positive source that the legacy finite adapter cannot construct is an explicit unsupported/native-geometry failure; it is not counted as certified geometric completion.",
+      "version": "Readiness CHECK_IMPLEMENTATION_VERSION 20 to 21. All raw selected CLI report differences are recorded and confined to this field on the measured corpus.",
+      "legacy_tests": "Two complete original fixtures are byte-identical. One now requires the exact disk; the incomplete fixture requires typed MissingField(end) and separately preserves its pad/via/zone checks. Their original failed expectations remain in candidate v1.",
+      "archived_carrier": "The unchanged 26-test native-stroke file expects failed regions for some malformed/budget cases; the new public contract returns a load error instead. Its complete result and first failures remain visible."
+    },
+    "preserved_failed_attempts": {
+      "candidate-v1": [
+        "two silent-omission expectations",
+        "HVP109A load rejection in both original board gates",
+        "ignored Result in via test"
+      ],
+      "candidate-v2": [
+        "missing imports prevented unit/workload compilation; 39 public tests and docs passed"
+      ]
+    },
+    "pending_native_paths_remaining": 0,
+    "native_disposition_preserved": true,
+    "independently_reimplemented_archived_paths_sha256": {
+      "crates/hyperdrc/src/kicad/tracks.rs": "f0c5707d08c29362d263bd3244601557e58cccc38fe8783bdf465496da817430"
+    },
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "limitations": [
+      "Noncoincident tracks still use the legacy finite rectangular adapter. General round caps, exact source-coordinate fidelity and extreme noncoincident strokes remain open; local predicate certainty does not certify that source fidelity.",
+      "The new typed failure boundary covers straight-track start/end/width and their construction. Other object families, layer/net validation, the full error taxonomy, end-to-end provenance, and structured machine-readable CLI errors remain open.",
+      "Input parsing, exact coefficient growth, total work, heap bytes and cancellation have no new internal bound. Shared work-budget checks preserve existing denial, but do not bound parsing. Runs use external time/address-space limits; allocator requests and process RSS do not measure expression depth or prove a heap-byte bound.",
+      "HVP109A loads now include five additional disks. Their costs are retained as changed-workload observations, not a same-contract speed comparison. Instrumented matched samples for unchanged inputs do not establish uninstrumented production latency or a universal performance claim.",
+      "The archived native-stroke tests stop at their first failed assertion; no credit is claimed for later unexecuted checks. Their remaining failures and the rejected 35-file integration remain preserved.",
+      "The published-package user path, minimum compiler, complete pre-push/CI matrix, all-property audit and measured coverage remain incomplete. No push was performed; KiCad loading has no affected C/JS/WASM binding consumer in this patch.",
+      "The inherited physical artifact audit remains failed/incomplete with 27093 missing paths. Fresh paths are audited independently without a whole-history or zero-loss claim.",
+      "prepare_candidate_v2.py printed only its two test-path variables in the short terminal summary; its result.json correctly records all five changed paths and the complete source hashes. The inaccurate short summary is preserved, not used as a source inventory."
+    ],
+    "next": [
+      "Continue ordinary strict native-stroke completion and exact source fidelity using the preserved original regressions and unchanged workload gates; do not restore the rejected integration wholesale.",
+      "Extend visible failures and provenance through the remaining modeling/format boundaries, then complete clean external distribution, release/workflow validation and the remaining properties."
     ]
   }
 },
