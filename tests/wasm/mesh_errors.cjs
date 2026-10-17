@@ -105,3 +105,38 @@ test("successful membership retains its own query status and consumed certainty"
     }
   } finally { mesh.free(); }
 });
+
+for (const [name, construct] of [
+  ["open", () => malformed()],
+  ["degenerate", () => malformed(true)],
+  ["positions-only", () => MeshJs.fromArrays(Float64Array.from([0,0,0]), new Uint32Array())],
+]) {
+  test("membership rejects "+name+" input before bounds and boundary shortcuts", () => {
+    const mesh = construct();
+    try {
+      for (const xyz of [[10,10,10],[0,0,0]]) {
+        const point = new Point3Js(...xyz);
+        try {
+          invalid(capture(() => mesh.containsPoint(point)));
+          for (const approximate of [false,true,false]) {
+            invalid(capture(() => mesh.containsPointWithContext(point,approximate)));
+          }
+        } finally { point.free(); }
+      }
+    } finally { mesh.free(); }
+  });
+}
+test("canonical empty membership is a decided certified false", () => {
+  const mesh = new MeshJs(), point = new Point3Js(0,0,0);
+  try {
+    assert.equal(mesh.containsPoint(point),false);
+    for (const approximate of [false,true]) {
+      const result = mesh.containsPointWithContext(point,approximate);
+      try {
+        assert.equal(result.status,GeometryQueryStatusJs.Decided);
+        assert.equal(result.value,false);
+        assert.equal(result.certainty,GeometryCertaintyJs.Certified);
+      } finally { result.free(); }
+    }
+  } finally { point.free(); mesh.free(); }
+});

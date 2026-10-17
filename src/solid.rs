@@ -2077,6 +2077,11 @@ pub fn distribute_arc_with_context(
 }
 
 /// Exact point containment through the retained native triangle query path.
+///
+/// Canonical empty geometry returns `false`; every other input must be a valid
+/// closed-PWN mesh. Malformed input fails before bounds or boundary shortcuts.
+/// Points on source triangles are excluded by the native strict containment
+/// query. This convenience entry point selects the strict predicate policy.
 pub fn contains_point(
     mesh: &TriangleMesh,
     point: &Point3,
@@ -2086,6 +2091,9 @@ pub fn contains_point(
 }
 
 /// Classifies a point with the selected policy and reports aggregate certainty.
+///
+/// Source validation and query decisions share the returned certainty receipt.
+/// A cached approximate validation fact cannot certify a strict query.
 pub fn contains_point_with_context(
     mesh: &TriangleMesh,
     point: &Point3,

@@ -242,6 +242,9 @@ impl MeshJs {
             .unchecked_into()
     }
 
+    /// Strict containment: canonical empty geometry returns false. Malformed
+    /// closed-solid input throws GeometryError with code invalid_input, even
+    /// when the point is outside its bounds or on a source triangle.
     #[wasm_bindgen(js_name = containsPoint)]
     pub fn contains_point(&self, point: &Point3Js) -> Result<bool, JsValue> {
         solid::contains_point(&self.inner, &point.inner).map_err(mesh_error)
@@ -490,6 +493,8 @@ impl MeshJs {
             .map_err(geometry_error)
     }
 
+    /// Containment with the certainty of both source validation and the query.
+    /// Malformed input throws GeometryError; unresolved predicates keep Unknown.
     #[wasm_bindgen(js_name = containsPointWithContext)]
     pub fn contains_point_with_context(
         &self,
