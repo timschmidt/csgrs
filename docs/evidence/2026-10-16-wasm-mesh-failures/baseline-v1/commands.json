@@ -1,0 +1,51 @@
+[
+  {
+    "name": "real-js",
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/csgrs.js"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.1889907899312675,
+    "stdout_sha256": "531fc264a650f4b1e05757117e5f435794a7b7ef38f8b7822deca4a0ab16e0cc",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7125bb2163fff8a5f87d9913402ca0259326beadc97b730328e9c4902852bdb9"
+  },
+  {
+    "name": "compile-typescript",
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-source-v1/tests/wasm/node_modules/typescript/lib/tsc.js",
+      "--strict",
+      "--target",
+      "ES2020",
+      "--lib",
+      "ES2020,DOM,ESNext.Disposable",
+      "--module",
+      "Node16",
+      "--moduleResolution",
+      "Node16",
+      "--outDir",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/mesh_errors.ts"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.9976819320581853,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "09bdef6efec651fef2c33d27a594a5c354e42fa3f86c1f28a56f300a35e594eb"
+  },
+  {
+    "name": "real-typescript",
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/mesh_errors.js"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.11603685282170773,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f3971d8dff10800ca17ba4c3c245f280bc6ede980e182340c87c55dd1fdcc1fa",
+    "resources_sha256": "08e6008831bc9b0a3d0e78ba35bddb29947f4386c681ae3d8622a06dbc851ace"
+  }
+]

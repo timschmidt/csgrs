@@ -1,0 +1,17 @@
+{
+  "status": "prepared prototype; no implementation admission",
+  "owning_layer": "CSGRS WASM native mesh error conversion",
+  "properties": [
+    "P6",
+    "P18",
+    "P28",
+    "P30"
+  ],
+  "domain": "Existing MeshJs fallible mesh methods backed by HypermeshResult; zero subdivision level; existing qualified query outcomes remain separate. No expansion of supported native geometry.",
+  "reproduction": "preflight-v1: 31 real-JS observations on exact E29 committed-source artifacts; 28 string exceptions in Boolean, hull and zero-subdivision paths. Point queries returned three values; this probe does not establish or change their native input contract.",
+  "change": "Route typed native mesh errors through the existing ValidationError category mapper and host GeometryError constructor; make the zero-level subdivision error use that constructor too.",
+  "migration": "These formerly string-valued exceptions become ordinary Error objects carrying name=GeometryError and the existing six-way code union. Original diagnostic text remains the message. Callers should inspect error.code or error.message instead of assuming a thrown string.",
+  "certainty": "A returned Unknown query remains Unknown without a certainty receipt. No policy, geometric operation, uncertainty decision or certainty receipt is changed.",
+  "acceptance": "Real JS and compiled TypeScript consumers inspect errors after freeing all native handles; invalid operands paired with empty fail visibly, successful empty results compose and round-trip, all earlier binding consumers pass. Native lint/docs/affected checks and proportional artifact/runtime evidence are required before admission.",
+  "resource_limits": "Only existing bounded diagnostic cases in tests; no claim of internally bounded arbitrary subdivision, total geometry work, retained bytes or cancellation."
+}

@@ -1,0 +1,16 @@
+{
+  "runner_sha256": "cf2c586bd21a96cc12b8fb9b66d0a94138735b1b4513f271875a2ea995afc5ea",
+  "probe_sha256": "0017738661624ec3e4d5b667b061a50dcd301f5b5102fb975ddfe3bdc4681f9b",
+  "contract_sha256": "83d1c1bb6916fe2f4d7ef03134c11c7ea413121fc2e2c8128c1469fe3d931fd2",
+  "qualification_sha256": "ebef9a4787556f990b7138972f3077e7ed86f4c19f4ca2e22721be21f2c96c07",
+  "read_only_artifacts_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "663480d51ab9a44d52b65c6a4f5716435db8aff5ec346c4709b38a941c8764b6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.d.ts": "4929deff0be4f14fc59a6bca45c1999d46401aa8ae3bb8e3a395b0fa2ef64da3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.js": "6ad5697ee5e849f6d4859cc651ec155922ce7b97050a3a8221ddae0650183945",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm": "af3098788a905c8d9d68f5a16c54aeb7d36d8f430b718a34a128c677c5216348",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm.d.ts": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/geometry_certainty.ts": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/io_contracts.js": "37fb65ed6e244e3e134178c1358f129f6fe33191028592e9e53043110b45fb19",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/io_contracts.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e"
+  }
+}

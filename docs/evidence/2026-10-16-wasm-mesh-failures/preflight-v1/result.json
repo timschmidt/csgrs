@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "command": [
+    "node",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/preflight-v1/probe.cjs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.js"
+  ],
+  "elapsed_seconds": 0.1384788933210075,
+  "observations": 31,
+  "string_exceptions": 28,
+  "returned": 3,
+  "artifacts_unchanged": true,
+  "admission_claimed": false,
+  "stdout_sha256": "3a60c278a639dda3fbac90411d11e151067f6a67b9b6cd59d7a67e342997505e",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "d880c09269fb7f4b371476d075f25a283b1ffa291a17450ca33669b864f9f238"
+}

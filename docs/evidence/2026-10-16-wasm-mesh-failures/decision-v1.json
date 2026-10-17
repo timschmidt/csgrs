@@ -1,0 +1,80 @@
+{
+  "status": "kept: native mesh WASM exceptions preserve existing validation categories as host Error objects",
+  "main_parent_commit": "11dc17537a947873fa22d8177c41ae04177627e1",
+  "qualified_runtime_base_commit": "99b88f707b04053de7f40a86d6d029e3c07460d9",
+  "owning_layer": "CSGRS WASM error conversion; existing ValidationError::kind remains the shared category implementation",
+  "properties": [
+    "P6",
+    "P18",
+    "P28",
+    "P30",
+    "P36",
+    "P37"
+  ],
+  "domain": "Existing MeshJs native mesh-operation failures and zero subdivision level, preserving current native geometry and policy domains.",
+  "implementation": "A typed HypermeshError adapter calls the existing GeometryError conversion; zero subdivision level uses the same ordinary host Error constructor. The error message remains the native diagnostic.",
+  "migration": "Former string exceptions from native mesh Boolean, membership, hull and subdivision paths become Error objects with name GeometryError and the existing GeometryValidationError code union. Callers inspect code or message. STL retains GeometryIoError. Host exceptions require no free and outlive geometry handles.",
+  "baseline": {
+    "new_js_tests": 9,
+    "passed": 2,
+    "failed": 7,
+    "ignored": 0,
+    "typescript_compiled": true,
+    "typescript_execution_exit_code": 1
+  },
+  "candidate": {
+    "new_js_tests_passed": 9,
+    "prior_io_tests_passed": 12,
+    "earlier_js_consumers_passed": true,
+    "new_and_prior_typescript_consumers_compiled_and_executed": true,
+    "wasm_clippy_warnings_denied": true,
+    "native_all_feature_all_target_clippy_warnings_denied": true,
+    "all_feature_docs_warnings_denied": true,
+    "format_after_application_passed": true
+  },
+  "completed_contract_evidence": {
+    "processes": 10,
+    "successful_geometry_pipelines": 50,
+    "diagnostic_observations": 250,
+    "full_success_values_and_stl_bytes_equal": true,
+    "native_diagnostic_messages_equal": true,
+    "error_surface_intentionally_migrated": true,
+    "raw_samples": "cost-v1/result.json"
+  },
+  "processed_wasm_bytes": {
+    "baseline": 11198949,
+    "candidate": 11195752
+  },
+  "certainty_and_provenance": "No geometry, predicate policy, proof or receipt is changed. Exact empty compositions retain Certified even under an approximate policy; existing qualified Unknown query outcomes remain separate. This patch does not certify earlier approximate intent or close all P30/provenance gaps.",
+  "limits": "New regressions exercise invalid-input failures, successful empty composition and decided membership. Reuse of the existing native category mapper is not a claim that all six categories or every native error variant has a new JS trigger. No internal work, heap-byte, cancellation or arbitrary-subdivision bound is added. Root native geometry behavior is unchanged; the new host checks are compilation/lint/docs, not extra native runtime coverage.",
+  "cost_interpretation": "Every raw sample is kept. Identical completed geometry outputs are compared separately from the deliberately changed exception contract; diagnostic construction and forced stack materialization are timed. No speedup, performance-only optimization or broad resource bound is claimed.",
+  "source_identity": "All runtime, dependency, fixture and policy inputs match the qualified candidate. The only source-manifest difference is the prior admission ledger current_work value, with every protected byte and other decoded key verified equal.",
+  "admission_metadata_only_difference": {
+    "path": "docs/properties-status.json",
+    "qualified_sha256": "33123f41c57bb68b73042381470aa9a9a6e21b5f1a3c0d4e5f8a43d91f481050",
+    "current_sha256": "25665a5ef71a302eb137e0874696bd6dbf1e0a89172560e3a980bdf291d5792e",
+    "raw_bytes_outside_current_work_equal": true,
+    "other_decoded_keys_equal": true
+  },
+  "implementation_sha256": {
+    "src/wasm/mesh_js.rs": "75762275825314c6ef364e5a07c3b8b7ef5f49d21db2eacff3b9b047a3537560",
+    "scripts/test-wasm-bindings.sh": "451f6a62d0ef08b2c6a5e6175ef60fa259d99da956193973084e72525069428c",
+    "tests/wasm/mesh_errors.cjs": "901c4ff2680bd5edc0c8b4796c50239966fd9a5d0ca73ace584903b2341cfb4f",
+    "tests/wasm/mesh_errors.ts": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614"
+  },
+  "wasm_mesh_failures_admitted": true,
+  "pending_native_paths_remaining": 0,
+  "native_disposition_preserved": true,
+  "native_candidate_admitted": false,
+  "historical_artifact_audit_passed": false,
+  "historical_preservation_complete": false,
+  "published_package_pipeline_executed": false,
+  "full_pre_push_matrix_executed": false,
+  "push_performed": false,
+  "full_plan_complete": false,
+  "next": [
+    "Continue typed failures, certainty and provenance across remaining public boundaries; keep qualified Unknown distinct from a successful false result.",
+    "Use the preserved native regressions for smaller independently admitted repairs without weakening original workload gates.",
+    "Continue ordinary strict completion, clean external distribution and remaining properties work."
+  ]
+}

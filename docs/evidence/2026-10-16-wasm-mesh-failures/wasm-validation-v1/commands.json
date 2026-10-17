@@ -1,0 +1,63 @@
+[
+  {
+    "name": "shell-syntax",
+    "command": [
+      "bash",
+      "-n",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/candidate-source-v1/scripts/test-wasm-bindings.sh"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.21999157406389713,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5123b80a6ac32ee8cc574717e653a81c833d19d8713d8372fda28d758f8e5fc7"
+  },
+  {
+    "name": "real-consumers",
+    "command": [
+      "bash",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/candidate-source-v1/scripts/test-wasm-bindings.sh"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 166.67079520924017,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "32734868bd2fc2ef6516d19b5198aa4f8264355a8857b6ee232c2ee8843bf247",
+    "stderr_sha256": "dbc51b319e71fb08562c55b0021ca59901df659f85d2bb7bb1d8a8d2aa9430d2",
+    "resources_sha256": "1dc1df4a2bb1510010b72b5d3be43fb827c64235d4cc9fbeeb979d77b31055f9"
+  },
+  {
+    "name": "wasm-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--profile",
+      "wasm",
+      "--target",
+      "wasm32-unknown-unknown",
+      "--no-default-features",
+      "--features",
+      "wasm",
+      "--lib",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 25.12959600891918,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "7721d04cac1f77fa8d96b6b289fa644587a9035d19cd8ba91ab7e5520f33813d",
+    "resources_sha256": "c178ef0134507519afe8a72414a6e338335abdf771b2101b2ed1f655c83471a8"
+  }
+]

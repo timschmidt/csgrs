@@ -1,0 +1,149 @@
+WASM certainty, query status, geometry, and invalid-input checks passed
+WASM export projection, failure, cache and composition contracts passed
+TAP version 13
+# Subtest: array length failures retain the invalid-input category
+ok 1 - array length failures retain the invalid-input category
+  ---
+  duration_ms: 2.868414
+  type: 'test'
+  ...
+# Subtest: array nonfinite failures retain the invalid-input category
+ok 2 - array nonfinite failures retain the invalid-input category
+  ---
+  duration_ms: 0.428551
+  type: 'test'
+  ...
+# Subtest: array index failures retain the invalid-input category
+ok 3 - array index failures retain the invalid-input category
+  ---
+  duration_ms: 0.327747
+  type: 'test'
+  ...
+# Subtest: binary projection collapse retains typed format detail
+ok 4 - binary projection collapse retains typed format detail
+  ---
+  duration_ms: 4.292216
+  type: 'test'
+  ...
+# Subtest: binary overflow retains coordinate field and target
+ok 5 - binary overflow retains coordinate field and target
+  ---
+  duration_ms: 0.272531
+  type: 'test'
+  ...
+# Subtest: ASCII export failure retains typed format detail
+ok 6 - ASCII export failure retains typed format detail
+  ---
+  duration_ms: 0.422221
+  type: 'test'
+  ...
+# Subtest: successful exports and recovery remain unchanged
+ok 7 - successful exports and recovery remain unchanged
+  ---
+  duration_ms: 4.576466
+  type: 'test'
+  ...
+# Subtest: canonical empty native imports compose
+ok 8 - canonical empty native imports compose
+  ---
+  duration_ms: 12.561128
+  type: 'test'
+  ...
+# Subtest: both native STL encodings reimport and compose at ordinary and tiny scales
+ok 9 - both native STL encodings reimport and compose at ordinary and tiny scales
+  ---
+  duration_ms: 22.45567
+  type: 'test'
+  ...
+# Subtest: malformed bytes retain the parser IO category
+ok 10 - malformed bytes retain the parser IO category
+  ---
+  duration_ms: 0.58451
+  type: 'test'
+  ...
+# Subtest: nonfinite STL coordinates remain malformed input
+ok 11 - nonfinite STL coordinates remain malformed input
+  ---
+  duration_ms: 0.466648
+  type: 'test'
+  ...
+# Subtest: invalid STL topology retains its validation cause after disposal
+ok 12 - invalid STL topology retains its validation cause after disposal
+  ---
+  duration_ms: 0.869051
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 71.079246
+TAP version 13
+# Subtest: union retains invalid-input errors for either operand beside empty
+ok 1 - union retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 5.959191
+  type: 'test'
+  ...
+# Subtest: intersection retains invalid-input errors for either operand beside empty
+ok 2 - intersection retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.848752
+  type: 'test'
+  ...
+# Subtest: difference retains invalid-input errors for either operand beside empty
+ok 3 - difference retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.660315
+  type: 'test'
+  ...
+# Subtest: xor retains invalid-input errors for either operand beside empty
+ok 4 - xor retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.597179
+  type: 'test'
+  ...
+# Subtest: insufficient hull geometry keeps its typed failure for every policy
+ok 5 - insufficient hull geometry keeps its typed failure for every policy
+  ---
+  duration_ms: 1.700273
+  type: 'test'
+  ...
+# Subtest: zero subdivision fails visibly even for canonical empty geometry
+ok 6 - zero subdivision fails visibly even for canonical empty geometry
+  ---
+  duration_ms: 0.5799
+  type: 'test'
+  ...
+# Subtest: mesh diagnostics remain ordinary host errors after all native inputs are freed
+ok 7 - mesh diagnostics remain ordinary host errors after all native inputs are freed
+  ---
+  duration_ms: 2.960557
+  type: 'test'
+  ...
+# Subtest: successful empty outputs retain certainty and compose through STL reimport
+ok 8 - successful empty outputs retain certainty and compose through STL reimport
+  ---
+  duration_ms: 2.978746
+  type: 'test'
+  ...
+# Subtest: successful membership retains its own query status and consumed certainty
+ok 9 - successful membership retains its own query status and consumed certainty
+  ---
+  duration_ms: 5.302396
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 45.760472
+TypeScript native STL pipeline and discriminated errors passed

@@ -1,0 +1,96 @@
+{
+  "runner_probe_contract_qualification_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.py": "189321c78dd46ed1f3a05df8310c42b4795b7d556b2971d3f0a8b01a3ec95ce3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs": "47db7a8a5e774ad3a7b07db95f280604146f964eea8b95233ed3eff5a05192d5",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-contract-v1.json": "85e8405dc71ba8a7f0d279ca46c3238af35a158376d0cac5f2429b8437e0543d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/committed-validation-v1/result.json": "d700d0690e1620832ad4f8c42be5006b92d420b8ff41e6e3013f10dbbabd76c3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/result.json": "14ba2e9794b2f08f7fe5c43b231046112229c722e52d607e965300a7937a19c5",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/result.json": "006e0f04dab6897368b65c858db86c00a71963f54bcb158606fb7d48eac4ed03"
+  },
+  "artifacts_read_only": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": {
+      "sha256": "663480d51ab9a44d52b65c6a4f5716435db8aff5ec346c4709b38a941c8764b6",
+      "bytes": 12251710
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.d.ts": {
+      "sha256": "4929deff0be4f14fc59a6bca45c1999d46401aa8ae3bb8e3a395b0fa2ef64da3",
+      "bytes": 15809
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.js": {
+      "sha256": "6ad5697ee5e849f6d4859cc651ec155922ce7b97050a3a8221ddae0650183945",
+      "bytes": 80582
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm": {
+      "sha256": "af3098788a905c8d9d68f5a16c54aeb7d36d8f430b718a34a128c677c5216348",
+      "bytes": 11198949
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm.d.ts": {
+      "sha256": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+      "bytes": 14726
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/geometry_certainty.ts": {
+      "sha256": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7",
+      "bytes": 3098
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/io_contracts.js": {
+      "sha256": "37fb65ed6e244e3e134178c1358f129f6fe33191028592e9e53043110b45fb19",
+      "bytes": 4009
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/io_contracts.ts": {
+      "sha256": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e",
+      "bytes": 4087
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": {
+      "sha256": "f205aa1079e001de418b75c8fadf3fade65acc301a8f6d3666a19eb5b7b4641d",
+      "bytes": 12248548
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs.d.ts": {
+      "sha256": "e168e988214494beace0784269d3d5d43bcfb0d4bb36d324f73b87c341a035da",
+      "bytes": 16322
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs.js": {
+      "sha256": "83fa27b1ef6232e6648436af69061293426c299ead7fc1b64f35288aa9662149",
+      "bytes": 81095
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm": {
+      "sha256": "aef6955fc6f73ee08eb58e75a381c233d7f0f4f626405d1d96ff38ddb3853b24",
+      "bytes": 11195752
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm.d.ts": {
+      "sha256": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+      "bytes": 14726
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/geometry_certainty.ts": {
+      "sha256": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7",
+      "bytes": 3098
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/io_contracts.js": {
+      "sha256": "37fb65ed6e244e3e134178c1358f129f6fe33191028592e9e53043110b45fb19",
+      "bytes": 4009
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/io_contracts.ts": {
+      "sha256": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e",
+      "bytes": 4087
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/mesh_errors.js": {
+      "sha256": "5f133abd2e072712599372bdfcf2275b78c92b339c28e2e33a4d0877408f7efd",
+      "bytes": 1960
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/mesh_errors.ts": {
+      "sha256": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614",
+      "bytes": 1926
+    }
+  },
+  "node": "v22.22.2",
+  "hardware": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           48 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  16\nOn-line CPU(s) list:                     0-15\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 7 5800X3D 8-Core Processor\nCPU family:                              25\nModel:                                   33\nThread(s) per core:                      2\nCore(s) per socket:                      8\nSocket(s):                               1\nStepping:                                2\nFrequency boost:                         enabled\nCPU(s) scaling MHz:                      75%\nCPU max MHz:                             4552.9521\nCPU min MHz:                             575.9760\nBogoMIPS:                                6800.15\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nVirtualization:                          AMD-V\nL1d cache:                               256 KiB (8 instances)\nL1i cache:                               256 KiB (8 instances)\nL2 cache:                                4 MiB (8 instances)\nL3 cache:                                96 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-15\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Mitigation; Safe RET\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP always-on; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Mitigation; Clear CPU buffers\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Mitigation; IBPB before exit to userspace\n",
+  "source_manifests": {
+    "baseline": "53221aed09db5326c966b3edd58453a6261a3cf303dd13f09d1374943e9a69bb",
+    "candidate": "d9f927407ee842d6b06f3bbaa12dce1e03cdbe50199711ac5e11ad388910b0e4"
+  },
+  "pairs": 5,
+  "process_limit_seconds": 60,
+  "address_space_limit_bytes": 68719476736,
+  "independent_mathematical_oracle_claimed": false,
+  "optimization_claimed": false,
+  "timing_boundary": "Within-process timers cover construction, native operations, arrays/STL materialization and forced error-stack access; final JSON report encoding is outside those timers and inside whole-process GNU time."
+}

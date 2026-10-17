@@ -1,0 +1,440 @@
+{
+  "main_parent_commit": "11dc17537a947873fa22d8177c41ae04177627e1",
+  "qualified_runtime_base_commit": "99b88f707b04053de7f40a86d6d029e3c07460d9",
+  "implementation_sha256": {
+    "src/wasm/mesh_js.rs": "75762275825314c6ef364e5a07c3b8b7ef5f49d21db2eacff3b9b047a3537560",
+    "scripts/test-wasm-bindings.sh": "451f6a62d0ef08b2c6a5e6175ef60fa259d99da956193973084e72525069428c",
+    "tests/wasm/mesh_errors.cjs": "901c4ff2680bd5edc0c8b4796c50239966fd9a5d0ca73ace584903b2341cfb4f",
+    "tests/wasm/mesh_errors.ts": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614"
+  },
+  "final_source_inputs": 2826,
+  "qualified_source_hashes_sha256": "d9f927407ee842d6b06f3bbaa12dce1e03cdbe50199711ac5e11ad388910b0e4",
+  "final_input_hashes_sha256": "59bcafaeb9c5a503f9b6c43dec0f68f57d6f334c8b62040433163e25f1c30892",
+  "source_inputs_equal_except_admission_metadata": true,
+  "admission_metadata_only_difference": {
+    "path": "docs/properties-status.json",
+    "qualified_sha256": "33123f41c57bb68b73042381470aa9a9a6e21b5f1a3c0d4e5f8a43d91f481050",
+    "current_sha256": "25665a5ef71a302eb137e0874696bd6dbf1e0a89172560e3a980bdf291d5792e",
+    "raw_bytes_outside_current_work_equal": true,
+    "other_decoded_keys_equal": true
+  },
+  "retained_completed_evidence": {
+    "preflight-v1/contract.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/preflight-v1/contract.json",
+      "sha256": "83d1c1bb6916fe2f4d7ef03134c11c7ea413121fc2e2c8128c1469fe3d931fd2"
+    },
+    "preflight-v1/probe.cjs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/preflight-v1/probe.cjs",
+      "sha256": "0017738661624ec3e4d5b667b061a50dcd301f5b5102fb975ddfe3bdc4681f9b"
+    },
+    "preflight-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/preflight-v1/protocol.json",
+      "sha256": "5e487dcbda8cf07769c9f6757517689c53bbb1476c0b1b6a92f72cd49391d822"
+    },
+    "preflight-v1/resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/preflight-v1/resources",
+      "sha256": "d880c09269fb7f4b371476d075f25a283b1ffa291a17450ca33669b864f9f238"
+    },
+    "preflight-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/preflight-v1/result.json",
+      "sha256": "ea875a33bf03f0438417bcd0abf8c4643f63f09df4fe0c4fee80daafd866c41c"
+    },
+    "preflight-v1/run.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/preflight-v1/run.py",
+      "sha256": "cf2c586bd21a96cc12b8fb9b66d0a94138735b1b4513f271875a2ea995afc5ea"
+    },
+    "preflight-v1/stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/preflight-v1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "preflight-v1/stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/preflight-v1/stdout",
+      "sha256": "3a60c278a639dda3fbac90411d11e151067f6a67b9b6cd59d7a67e342997505e"
+    },
+    "prototype-v1/baseline-source.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/baseline-source.json",
+      "sha256": "c087359d0aa2ad0683a8718bdb17582f58284c95a46c8a786d1fdc3b8beb7d0a"
+    },
+    "prototype-v1/contract.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/contract.json",
+      "sha256": "11f5630fb221afc79aaa3ddf766fdfbb862df9d12ba25b7ebffab42eabe7181e"
+    },
+    "prototype-v1/scripts/test-wasm-bindings.sh": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/scripts/test-wasm-bindings.sh",
+      "sha256": "451f6a62d0ef08b2c6a5e6175ef60fa259d99da956193973084e72525069428c"
+    },
+    "prototype-v1/src/wasm/mesh_js.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/src/wasm/mesh_js.rs",
+      "sha256": "75762275825314c6ef364e5a07c3b8b7ef5f49d21db2eacff3b9b047a3537560"
+    },
+    "prototype-v1/tests/wasm/mesh_errors.cjs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs",
+      "sha256": "901c4ff2680bd5edc0c8b4796c50239966fd9a5d0ca73ace584903b2341cfb4f"
+    },
+    "prototype-v1/tests/wasm/mesh_errors.ts": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.ts",
+      "sha256": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614"
+    },
+    "baseline-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/commands.json",
+      "sha256": "28e43c4b8bc644da2bef7a6395bc7f8c3178e6017b1fd7a9bf6e8898c124f5e5"
+    },
+    "baseline-v1/compile-typescript.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/compile-typescript.resources",
+      "sha256": "09bdef6efec651fef2c33d27a594a5c354e42fa3f86c1f28a56f300a35e594eb"
+    },
+    "baseline-v1/compile-typescript.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/compile-typescript.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/compile-typescript.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/compile-typescript.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/consumer/csgrs.d.ts": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/csgrs.d.ts",
+      "sha256": "4929deff0be4f14fc59a6bca45c1999d46401aa8ae3bb8e3a395b0fa2ef64da3"
+    },
+    "baseline-v1/consumer/csgrs.js": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/csgrs.js",
+      "sha256": "6ad5697ee5e849f6d4859cc651ec155922ce7b97050a3a8221ddae0650183945"
+    },
+    "baseline-v1/consumer/csgrs_bg.wasm.d.ts": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/csgrs_bg.wasm.d.ts",
+      "sha256": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6"
+    },
+    "baseline-v1/consumer/mesh_errors.js": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/mesh_errors.js",
+      "sha256": "5f133abd2e072712599372bdfcf2275b78c92b339c28e2e33a4d0877408f7efd"
+    },
+    "baseline-v1/consumer/mesh_errors.ts": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/mesh_errors.ts",
+      "sha256": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614"
+    },
+    "baseline-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/protocol.json",
+      "sha256": "ce7a95ca9de4eb9e2c73fafcfa2e67a702c95b6f6bf31cbdbb30f4539888f7e3"
+    },
+    "baseline-v1/real-js.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/real-js.resources",
+      "sha256": "7125bb2163fff8a5f87d9913402ca0259326beadc97b730328e9c4902852bdb9"
+    },
+    "baseline-v1/real-js.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/real-js.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/real-js.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/real-js.stdout",
+      "sha256": "531fc264a650f4b1e05757117e5f435794a7b7ef38f8b7822deca4a0ab16e0cc"
+    },
+    "baseline-v1/real-typescript.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/real-typescript.resources",
+      "sha256": "08e6008831bc9b0a3d0e78ba35bddb29947f4386c681ae3d8622a06dbc851ace"
+    },
+    "baseline-v1/real-typescript.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/real-typescript.stderr",
+      "sha256": "f3971d8dff10800ca17ba4c3c245f280bc6ede980e182340c87c55dd1fdcc1fa"
+    },
+    "baseline-v1/real-typescript.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/real-typescript.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/result.json",
+      "sha256": "0e877723f2fd27f9269f1bc4fa0175d1dcc9dc637d0fa8ef30e3734f0b9cac28"
+    },
+    "preparation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/preparation-v1/result.json",
+      "sha256": "f27b1e7c22ca5ed120dd6c0bcc348c224d36f395c85ec2e14380f7395fef26e1"
+    },
+    "preparation-v1/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/preparation-v1/source-hashes.json.gz",
+      "sha256": "d9f927407ee842d6b06f3bbaa12dce1e03cdbe50199711ac5e11ad388910b0e4"
+    },
+    "wasm-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/commands.json",
+      "sha256": "0ab0650ac7ba5c2c8cc968de95495694bbaddc89d176247eab2c8633d06e3373"
+    },
+    "wasm-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/protocol.json",
+      "sha256": "ef365c85555b740cb995bc5a36fc5fff73175013b73f3f19356e6c5154c2f58f"
+    },
+    "wasm-validation-v1/real-consumers.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/real-consumers.resources",
+      "sha256": "1dc1df4a2bb1510010b72b5d3be43fb827c64235d4cc9fbeeb979d77b31055f9"
+    },
+    "wasm-validation-v1/real-consumers.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/real-consumers.stderr",
+      "sha256": "dbc51b319e71fb08562c55b0021ca59901df659f85d2bb7bb1d8a8d2aa9430d2"
+    },
+    "wasm-validation-v1/real-consumers.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/real-consumers.stdout",
+      "sha256": "32734868bd2fc2ef6516d19b5198aa4f8264355a8857b6ee232c2ee8843bf247"
+    },
+    "wasm-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/result.json",
+      "sha256": "006e0f04dab6897368b65c858db86c00a71963f54bcb158606fb7d48eac4ed03"
+    },
+    "wasm-validation-v1/shell-syntax.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/shell-syntax.resources",
+      "sha256": "5123b80a6ac32ee8cc574717e653a81c833d19d8713d8372fda28d758f8e5fc7"
+    },
+    "wasm-validation-v1/shell-syntax.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/shell-syntax.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v1/shell-syntax.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/shell-syntax.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "wasm-validation-v1/wasm-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/wasm-clippy.resources",
+      "sha256": "c178ef0134507519afe8a72414a6e338335abdf771b2101b2ed1f655c83471a8"
+    },
+    "wasm-validation-v1/wasm-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/wasm-clippy.stderr",
+      "sha256": "7721d04cac1f77fa8d96b6b289fa644587a9035d19cd8ba91ab7e5520f33813d"
+    },
+    "wasm-validation-v1/wasm-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-validation-v1/wasm-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-validation-v1/all-feature-all-target-clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/all-feature-all-target-clippy.resources",
+      "sha256": "537df2eeb9d57fd60b4096ce3464f868ecabe38ba50c647ea496059dcb71f93a"
+    },
+    "native-validation-v1/all-feature-all-target-clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/all-feature-all-target-clippy.stderr",
+      "sha256": "75b42ca74cb3aa037987f2acf3acd4734d773f938fb90a7974ccbd3eb45fec97"
+    },
+    "native-validation-v1/all-feature-all-target-clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/all-feature-all-target-clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-validation-v1/all-feature-docs.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/all-feature-docs.resources",
+      "sha256": "d6819b62291e6f5c4dd1f9e37e819fac147bf7839f9b97bed5894b608bcfb477"
+    },
+    "native-validation-v1/all-feature-docs.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/all-feature-docs.stderr",
+      "sha256": "55c0456f061759a0686ca71b3b83fb06138351722380ba9227248e693706bdea"
+    },
+    "native-validation-v1/all-feature-docs.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/all-feature-docs.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/commands.json",
+      "sha256": "bbda97e3bb3ffd64fe04108c19c24d16ff5c816beb727f2209904f9ae9899a44"
+    },
+    "native-validation-v1/format.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/format.resources",
+      "sha256": "45ffe481e1c1dd6c981ffcba270193fe2a02ec2bd002dba079c6b41602581de7"
+    },
+    "native-validation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-validation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/protocol.json",
+      "sha256": "8411246af78d7dbdb192ce5cf9d2625e3415744ff3113ab8af8aa3ce4c895887"
+    },
+    "native-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-validation-v1/result.json",
+      "sha256": "14ba2e9794b2f08f7fe5c43b231046112229c722e52d607e965300a7937a19c5"
+    },
+    "cost-v1/00-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/00-baseline.resources",
+      "sha256": "b78a5d8475eabc1cb11f3d286a609fccc0ae7d845dbb7e4a0267d150c15aefef"
+    },
+    "cost-v1/00-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/00-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/00-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/00-baseline.stdout",
+      "sha256": "a1b879f0ba5579903fe67c31cc9fc67e45207c507d0cf1e0accb5d4150fab8c1"
+    },
+    "cost-v1/00-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/00-candidate.resources",
+      "sha256": "225670520b43c6608b1d138e62094a8cb5c516048e3fe74b4a864c79e03831af"
+    },
+    "cost-v1/00-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/00-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/00-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/00-candidate.stdout",
+      "sha256": "5c94f7a44ae4d276abad907433ccbc7a8018fe47f68f6c7222326fa2d574e728"
+    },
+    "cost-v1/01-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/01-baseline.resources",
+      "sha256": "5aecea47957ccb2a66c0612bb57fda39ce83ab5618e7f260c12e5a0ed68fc39b"
+    },
+    "cost-v1/01-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/01-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/01-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/01-baseline.stdout",
+      "sha256": "e26ea9d8ac8e0e62cf99ba7ab0b745d2994f0cdc935a461b865947959c0e8d91"
+    },
+    "cost-v1/01-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/01-candidate.resources",
+      "sha256": "de816d2c76ff7697c21f7298e2c59f33702317f18eb9eeb29b62075d4f9b3078"
+    },
+    "cost-v1/01-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/01-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/01-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/01-candidate.stdout",
+      "sha256": "a9b5fb23abfc99f1e1d3487c237df6bcde8cf17abcdb1f9d4ee9f66a08b8c1b7"
+    },
+    "cost-v1/02-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/02-baseline.resources",
+      "sha256": "9ffe1045c194e31cec42c885daf2955e52cf2e5064857bb65921dda5eeeb8296"
+    },
+    "cost-v1/02-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/02-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/02-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/02-baseline.stdout",
+      "sha256": "37d1e978ed6a7699b30bfcb4dacb12543ab00e44b39ca6de82e9a894e0f94421"
+    },
+    "cost-v1/02-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/02-candidate.resources",
+      "sha256": "3a65602286c82bda8953ec68d0b575f7790961fd48487a893ab1725abbfc1f6e"
+    },
+    "cost-v1/02-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/02-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/02-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/02-candidate.stdout",
+      "sha256": "816e27d3d49d439cb95ce60ee768fe01189c68debf33ecfc78553cfd6c7ca536"
+    },
+    "cost-v1/03-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/03-baseline.resources",
+      "sha256": "8b0cd07c191377649dda491776828a057c74102294263586dd5f6119ea87e4fc"
+    },
+    "cost-v1/03-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/03-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/03-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/03-baseline.stdout",
+      "sha256": "2bda4ae12920f02a3c2d679b6385968f21ef4ea6f6712162052c98f8ef9e6ae1"
+    },
+    "cost-v1/03-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/03-candidate.resources",
+      "sha256": "35d3e93f08449a066dcb0cc994a8664461839ce43917469ef62edc5e7f170c46"
+    },
+    "cost-v1/03-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/03-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/03-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/03-candidate.stdout",
+      "sha256": "2a75389e443c9ce35d0a478dc38db69f414c273c58675948c3d46f7ce2b8dd26"
+    },
+    "cost-v1/04-baseline.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/04-baseline.resources",
+      "sha256": "4cb8c4fa01ca6917745f08c5b92d1bf81f8c3b3b6097c491bc392d35dc92df18"
+    },
+    "cost-v1/04-baseline.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/04-baseline.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/04-baseline.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/04-baseline.stdout",
+      "sha256": "c57296c0faa997490962e5461a8385fcab11b3cd3c2ff176c00a01316915b15f"
+    },
+    "cost-v1/04-candidate.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/04-candidate.resources",
+      "sha256": "aecc071a7842631af4c56b236e9c7dce25f83c6c13a07bfc76fefd8a7cba8941"
+    },
+    "cost-v1/04-candidate.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/04-candidate.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-v1/04-candidate.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/04-candidate.stdout",
+      "sha256": "fb900d658145b4da761f0d3911d03108123da69a8c8fc73bdd451b9abcb64edb"
+    },
+    "cost-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/commands.json",
+      "sha256": "599460412e575169758bfcdb6fac817641e77e8f5dd2317857a6e9955d9a1dde"
+    },
+    "cost-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/protocol.json",
+      "sha256": "66a7c044d0a4d2c7bbcdc88a27d9e49bd96c4e8642e0827296a0b46b63c5c2e6"
+    },
+    "cost-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-v1/result.json",
+      "sha256": "6b315e1d1a95bfb81538f3ce7d41b973e9cf252bf67df898d840a188f6731e66"
+    },
+    "wasm_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm_v1.py",
+      "sha256": "9b205556b4c5340e9fd3fb6fe2f7eeee5240b288117bd73fa5ed6597309a17a0"
+    },
+    "baseline_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline_v1.py",
+      "sha256": "bba5e9fca64ff85c55616f7ae6a05986422cd10811e8a9cc05eba96acc6519aa"
+    },
+    "prepare_wasm_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prepare_wasm_v1.py",
+      "sha256": "399e593bd4eaf20bcaa7c090dc3e39fb1faf4bc0ad53e297ee6ffe5ddf5c9353"
+    },
+    "checkpoint_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/checkpoint_v1.py",
+      "sha256": "fc258b3d8967ba1b29fd1a9b1c581caceabb247747a3d0f912053e06b57c0ba8"
+    },
+    "wasm_validation_common_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm_validation_common_v1.py",
+      "sha256": "e87f6c89cdb4a76b60db132344260a44526f5a8d8b9fad5026c6ba38ef6e1c8d"
+    },
+    "apply_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/apply_v1.py",
+      "sha256": "f4924aae99bf51a02171f4d1d75c37391b20711ca7176e398f001c13060cd46b"
+    },
+    "cost_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.py",
+      "sha256": "189321c78dd46ed1f3a05df8310c42b4795b7d556b2971d3f0a8b01a3ec95ce3"
+    },
+    "native_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native_v1.py",
+      "sha256": "f1d61d9e4c56d9699e813b956e6e945ae0e6c25da300c8a0bfe3b7bca933a6c4"
+    },
+    "assess_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/assess_v1.py",
+      "sha256": "fec356476a1cb800e77ebaf1e4b41fca7d351fa13f4f29e1d781b0adf164364c"
+    },
+    "cost_v1.cjs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs",
+      "sha256": "47db7a8a5e774ad3a7b07db95f280604146f964eea8b95233ed3eff5a05192d5"
+    },
+    "cost-contract-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost-contract-v1.json",
+      "sha256": "85e8405dc71ba8a7f0d279ca46c3238af35a158376d0cac5f2429b8437e0543d"
+    }
+  },
+  "format_command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "format_exit_code": 0,
+  "format_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "format_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "pending_native_paths_remaining": 0,
+  "native_disposition_preserved": true,
+  "full_plan_complete": false
+}

@@ -12390,6 +12390,40 @@
       "Use the preserved failing source-fidelity and construction-failure regressions for smaller independently qualified changes; retain the original workload gates.",
       "Continue typed public failures, ordinary strict completion, end-to-end evidence and clean external distribution under the properties contract."
     ]
+  },
+  "wasm_mesh_failures": {
+    "status": "kept: native mesh WASM exceptions preserve existing validation categories as host Error objects",
+    "main_parent_commit": "11dc17537a947873fa22d8177c41ae04177627e1",
+    "contract": "docs/evidence/2026-10-16-wasm-mesh-failures/prototype-v1/contract.json",
+    "progress": "docs/evidence/2026-10-16-wasm-mesh-failures/progress-v1.md",
+    "decision": "docs/evidence/2026-10-16-wasm-mesh-failures/decision-v1.json",
+    "checkpoint": "docs/evidence/2026-10-16-wasm-mesh-failures/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-16-wasm-mesh-failures/artifact-expectations-v1.json.gz",
+    "implementation_sha256": {
+      "src/wasm/mesh_js.rs": "75762275825314c6ef364e5a07c3b8b7ef5f49d21db2eacff3b9b047a3537560",
+      "scripts/test-wasm-bindings.sh": "451f6a62d0ef08b2c6a5e6175ef60fa259d99da956193973084e72525069428c",
+      "tests/wasm/mesh_errors.cjs": "901c4ff2680bd5edc0c8b4796c50239966fd9a5d0ca73ace584903b2341cfb4f",
+      "tests/wasm/mesh_errors.ts": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614"
+    },
+    "cost": "docs/evidence/2026-10-16-wasm-mesh-failures/cost-v1/result.json",
+    "cost_contract": "docs/evidence/2026-10-16-wasm-mesh-failures/cost-contract-v1.json",
+    "wasm_mesh_failures_admitted": true,
+    "pending_native_paths_remaining": 0,
+    "native_disposition_preserved": true,
+    "source_metadata_difference": {
+      "path": "docs/properties-status.json",
+      "qualified_sha256": "33123f41c57bb68b73042381470aa9a9a6e21b5f1a3c0d4e5f8a43d91f481050",
+      "current_sha256": "25665a5ef71a302eb137e0874696bd6dbf1e0a89172560e3a980bdf291d5792e",
+      "raw_bytes_outside_current_work_equal": true,
+      "other_decoded_keys_equal": true
+    },
+    "published_package_pipeline_executed": false,
+    "full_plan_complete": false,
+    "next": [
+      "Continue typed failures, certainty and provenance across remaining public boundaries; keep qualified Unknown distinct from a successful false result.",
+      "Use the preserved native regressions for smaller independently admitted repairs without weakening original workload gates.",
+      "Continue ordinary strict completion, clean external distribution and remaining properties work."
+    ]
   }
 },
   "status_meanings": {

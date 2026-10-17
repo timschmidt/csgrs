@@ -1,0 +1,30 @@
+{
+  "complete": true,
+  "runner_sha256": "399e593bd4eaf20bcaa7c090dc3e39fb1faf4bc0ad53e297ee6ffe5ddf5c9353",
+  "base_runtime_commit": "99b88f707b04053de7f40a86d6d029e3c07460d9",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/candidate-source-v1",
+  "source_inputs": 2826,
+  "source_hashes_sha256": "d9f927407ee842d6b06f3bbaa12dce1e03cdbe50199711ac5e11ad388910b0e4",
+  "qualified_parent_source_manifest_sha256": "53221aed09db5326c966b3edd58453a6261a3cf303dd13f09d1374943e9a69bb",
+  "qualified_parent_result_sha256": "ebef9a4787556f990b7138972f3077e7ed86f4c19f4ca2e22721be21f2c96c07",
+  "changes": {
+    "src/wasm/mesh_js.rs": "75762275825314c6ef364e5a07c3b8b7ef5f49d21db2eacff3b9b047a3537560",
+    "scripts/test-wasm-bindings.sh": "451f6a62d0ef08b2c6a5e6175ef60fa259d99da956193973084e72525069428c",
+    "tests/wasm/mesh_errors.cjs": "901c4ff2680bd5edc0c8b4796c50239966fd9a5d0ca73ace584903b2341cfb4f",
+    "tests/wasm/mesh_errors.ts": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614"
+  },
+  "prototype_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/baseline-source.json": "c087359d0aa2ad0683a8718bdb17582f58284c95a46c8a786d1fdc3b8beb7d0a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/contract.json": "11f5630fb221afc79aaa3ddf766fdfbb862df9d12ba25b7ebffab42eabe7181e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/scripts/test-wasm-bindings.sh": "451f6a62d0ef08b2c6a5e6175ef60fa259d99da956193973084e72525069428c",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/src/wasm/mesh_js.rs": "75762275825314c6ef364e5a07c3b8b7ef5f49d21db2eacff3b9b047a3537560",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs": "901c4ff2680bd5edc0c8b4796c50239966fd9a5d0ca73ace584903b2341cfb4f",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.ts": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614"
+  },
+  "main_sources_modified": false,
+  "completed_targets_reopened": false,
+  "ledger_snapshot": "The source snapshot retains the E29 qualified source ledger (E28 current_work). Subsequent admission-only current_work changes are not runtime code; any later application must explicitly verify all other source inputs and preserve the raw protected ledger boundary.",
+  "timing_isolation": "This build may overlap E29 curve correctness tests. Its completion must precede E29 timed board gates; overlapping gate evidence must not be called isolated.",
+  "new_per_command_external_limit_seconds": 720,
+  "candidate_admitted": false
+}

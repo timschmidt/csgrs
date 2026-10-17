@@ -1,0 +1,246 @@
+{
+  "complete": true,
+  "processes": 10,
+  "completed_geometry_pipelines": 50,
+  "typed_or_legacy_diagnostics": 250,
+  "complete_success_values_and_stl_bytes_equal": true,
+  "native_diagnostic_messages_equal": true,
+  "intentional_error_contract_migration_verified": true,
+  "all_samples": {
+    "00-baseline": {
+      "completed": 5,
+      "diagnosed": 25,
+      "elapsed_ns": "34143928",
+      "cpu_microseconds": {
+        "user": 52522,
+        "system": 14319
+      },
+      "successful_phase": {
+        "elapsedNs": "32076540",
+        "cpuMicroseconds": {
+          "user": 47211,
+          "system": 10567
+        }
+      },
+      "diagnostic_phase": {
+        "elapsedNs": "1953006",
+        "cpuMicroseconds": {
+          "user": 5298,
+          "system": 3749
+        }
+      }
+    },
+    "00-candidate": {
+      "completed": 5,
+      "diagnosed": 25,
+      "elapsed_ns": "43211327",
+      "cpu_microseconds": {
+        "user": 99598,
+        "system": 10856
+      },
+      "successful_phase": {
+        "elapsedNs": "27781355",
+        "cpuMicroseconds": {
+          "user": 49296,
+          "system": 5597
+        }
+      },
+      "diagnostic_phase": {
+        "elapsedNs": "15373885",
+        "cpuMicroseconds": {
+          "user": 50291,
+          "system": 5257
+        }
+      }
+    },
+    "01-candidate": {
+      "completed": 5,
+      "diagnosed": 25,
+      "elapsed_ns": "33400429",
+      "cpu_microseconds": {
+        "user": 69640,
+        "system": 11514
+      },
+      "successful_phase": {
+        "elapsedNs": "27886387",
+        "cpuMicroseconds": {
+          "user": 45435,
+          "system": 10448
+        }
+      },
+      "diagnostic_phase": {
+        "elapsedNs": "5457896",
+        "cpuMicroseconds": {
+          "user": 24193,
+          "system": 1065
+        }
+      }
+    },
+    "01-baseline": {
+      "completed": 5,
+      "diagnosed": 25,
+      "elapsed_ns": "34260230",
+      "cpu_microseconds": {
+        "user": 60267,
+        "system": 11497
+      },
+      "successful_phase": {
+        "elapsedNs": "32180883",
+        "cpuMicroseconds": {
+          "user": 51183,
+          "system": 10450
+        }
+      },
+      "diagnostic_phase": {
+        "elapsedNs": "1963575",
+        "cpuMicroseconds": {
+          "user": 9071,
+          "system": 1044
+        }
+      }
+    },
+    "02-baseline": {
+      "completed": 5,
+      "diagnosed": 25,
+      "elapsed_ns": "31083898",
+      "cpu_microseconds": {
+        "user": 55524,
+        "system": 11394
+      },
+      "successful_phase": {
+        "elapsedNs": "29023759",
+        "cpuMicroseconds": {
+          "user": 46522,
+          "system": 10392
+        }
+      },
+      "diagnostic_phase": {
+        "elapsedNs": "1943267",
+        "cpuMicroseconds": {
+          "user": 8989,
+          "system": 999
+        }
+      }
+    },
+    "02-candidate": {
+      "completed": 5,
+      "diagnosed": 25,
+      "elapsed_ns": "33965261",
+      "cpu_microseconds": {
+        "user": 73956,
+        "system": 8708
+      },
+      "successful_phase": {
+        "elapsedNs": "28237074",
+        "cpuMicroseconds": {
+          "user": 47233,
+          "system": 5733
+        }
+      },
+      "diagnostic_phase": {
+        "elapsedNs": "5671361",
+        "cpuMicroseconds": {
+          "user": 26712,
+          "system": 2973
+        }
+      }
+    },
+    "03-candidate": {
+      "completed": 5,
+      "diagnosed": 25,
+      "elapsed_ns": "33186554",
+      "cpu_microseconds": {
+        "user": 74169,
+        "system": 7674
+      },
+      "successful_phase": {
+        "elapsedNs": "27813272",
+        "cpuMicroseconds": {
+          "user": 45865,
+          "system": 6789
+        }
+      },
+      "diagnostic_phase": {
+        "elapsedNs": "5317186",
+        "cpuMicroseconds": {
+          "user": 28293,
+          "system": 882
+        }
+      }
+    },
+    "03-baseline": {
+      "completed": 5,
+      "diagnosed": 25,
+      "elapsed_ns": "30640368",
+      "cpu_microseconds": {
+        "user": 52895,
+        "system": 10501
+      },
+      "successful_phase": {
+        "elapsedNs": "28580969",
+        "cpuMicroseconds": {
+          "user": 43927,
+          "system": 9494
+        }
+      },
+      "diagnostic_phase": {
+        "elapsedNs": "1945427",
+        "cpuMicroseconds": {
+          "user": 8956,
+          "system": 1004
+        }
+      }
+    },
+    "04-baseline": {
+      "completed": 5,
+      "diagnosed": 25,
+      "elapsed_ns": "30132294",
+      "cpu_microseconds": {
+        "user": 59483,
+        "system": 4842
+      },
+      "successful_phase": {
+        "elapsedNs": "28180118",
+        "cpuMicroseconds": {
+          "user": 49679,
+          "system": 4841
+        }
+      },
+      "diagnostic_phase": {
+        "elapsedNs": "1841133",
+        "cpuMicroseconds": {
+          "user": 9790,
+          "system": 0
+        }
+      }
+    },
+    "04-candidate": {
+      "completed": 5,
+      "diagnosed": 25,
+      "elapsed_ns": "34941194",
+      "cpu_microseconds": {
+        "user": 68414,
+        "system": 14514
+      },
+      "successful_phase": {
+        "elapsedNs": "29255234",
+        "cpuMicroseconds": {
+          "user": 45007,
+          "system": 12411
+        }
+      },
+      "diagnostic_phase": {
+        "elapsedNs": "5630004",
+        "cpuMicroseconds": {
+          "user": 23396,
+          "system": 2100
+        }
+      }
+    }
+  },
+  "baseline_processed_wasm_bytes": 11198949,
+  "candidate_processed_wasm_bytes": 11195752,
+  "artifacts_and_probes_unchanged": true,
+  "optimization_claimed": false,
+  "candidate_admitted": false
+}

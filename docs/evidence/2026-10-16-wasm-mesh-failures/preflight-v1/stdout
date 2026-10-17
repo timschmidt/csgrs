@@ -1,0 +1,216 @@
+[
+  {
+    "name": "union/open-empty",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "unionWithContext/open-empty/false",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "unionWithContext/open-empty/true",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "union/empty-open",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "unionWithContext/empty-open/false",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "unionWithContext/empty-open/true",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "intersection/open-empty",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "intersectionWithContext/open-empty/false",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "intersectionWithContext/open-empty/true",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "intersection/empty-open",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "intersectionWithContext/empty-open/false",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "intersectionWithContext/empty-open/true",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "difference/open-empty",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "differenceWithContext/open-empty/false",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "differenceWithContext/open-empty/true",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "difference/empty-open",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "differenceWithContext/empty-open/false",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "differenceWithContext/empty-open/true",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "xor/open-empty",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "xorWithContext/open-empty/false",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "xorWithContext/open-empty/true",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 0 has 3 boundary edges"
+  },
+  {
+    "name": "xor/empty-open",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "xorWithContext/empty-open/false",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "xorWithContext/empty-open/true",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "input mesh 1 has 3 boundary edges"
+  },
+  {
+    "name": "containsPoint/open",
+    "outcome": "returned",
+    "type": "boolean",
+    "value": false
+  },
+  {
+    "name": "containsPointWithContext/open/false",
+    "outcome": "returned",
+    "type": "object",
+    "status": 0
+  },
+  {
+    "name": "containsPointWithContext/open/true",
+    "outcome": "returned",
+    "type": "object",
+    "status": 0
+  },
+  {
+    "name": "subdivide/zero",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "levels must be positive"
+  },
+  {
+    "name": "convexHull/open",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "convex hull input does not span three dimensions"
+  },
+  {
+    "name": "convexHullWithContext/open/false",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "convex hull input does not span three dimensions"
+  },
+  {
+    "name": "convexHullWithContext/open/true",
+    "outcome": "threw",
+    "type": "string",
+    "isError": false,
+    "diagnostic": "convex hull input does not span three dimensions"
+  }
+]

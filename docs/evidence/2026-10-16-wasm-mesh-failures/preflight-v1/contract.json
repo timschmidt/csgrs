@@ -1,0 +1,14 @@
+{
+  "owning_layer": "CSGRS WASM boundary; reuse ValidationError::kind for native mesh diagnostics",
+  "properties": [
+    "P6",
+    "P18",
+    "P28",
+    "P30",
+    "P37"
+  ],
+  "domain": "Finite valid buffers representing open or degenerate meshes, paired with canonical empty geometry; zero subdivision level and insufficient hull points; ordinary strict and approximate-policy public methods",
+  "missing_acceptance": "A failed operation throws an Error with a stable typed category and returns no geometry. Public receipt-returning Unknown remains a qualified query outcome.",
+  "scope": "Read-only characterization against the freshly qualified committed-source E29 WASM artifacts. No production mutation or admission. Independent of the running native correctness suite; finish before its timed gates.",
+  "resource_contract": "60-second external process limit; 64-GiB per-process address-space containment for WASM reservation; no added internal bound or performance claim."
+}

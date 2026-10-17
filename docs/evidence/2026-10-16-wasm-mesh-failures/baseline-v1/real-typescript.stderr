@@ -1,0 +1,17 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/mesh_errors.js:6
+        throw new Error(message);
+        ^
+
+Error: native failure must be a host Error
+    at check (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/mesh_errors.js:6:15)
+    at capture (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/mesh_errors.js:14:9)
+    at Object.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/mesh_errors.js:30:18)
+    at Module._compile (node:internal/modules/cjs/loader:1705:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1838:10)
+    at Module.load (node:internal/modules/cjs/loader:1441:32)
+    at Module._load (node:internal/modules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+
+Node.js v22.22.2

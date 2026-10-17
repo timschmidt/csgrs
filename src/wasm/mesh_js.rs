@@ -15,8 +15,8 @@ use hypermesh::{Triangle, TriangleMesh};
 use js_sys::{Float64Array, Object, Reflect, Uint32Array};
 use wasm_bindgen::prelude::*;
 
-fn js_error(error: impl std::fmt::Display) -> JsValue {
-    JsValue::from_str(&error.to_string())
+fn mesh_error(error: hypermesh::HypermeshError) -> JsValue {
+    geometry_error(error.into())
 }
 
 pub(super) fn geometry_error(error: crate::errors::ValidationError) -> JsValue {
@@ -64,6 +64,14 @@ fn face_normal(points: &[Point3; 3]) -> Option<hyperlattice::Vector3> {
         .ok()
 }
 
+/// Native triangle geometry exposed to JavaScript.
+///
+/// Native modeling failures throw ordinary `GeometryError` objects with a stable
+/// `code` from `GeometryValidationError` and the native diagnostic in `message`.
+/// Boolean, hull, membership and subdivision errors formerly thrown as strings
+/// now use this same category-bearing error contract. Errors are owned by
+/// JavaScript and remain usable after mesh handles are freed. Interchange methods
+/// expose their format failures as `GeometryIoError`.
 #[wasm_bindgen]
 pub struct MeshJs {
     pub(crate) inner: TriangleMesh,
@@ -236,35 +244,35 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = containsPoint)]
     pub fn contains_point(&self, point: &Point3Js) -> Result<bool, JsValue> {
-        solid::contains_point(&self.inner, &point.inner).map_err(js_error)
+        solid::contains_point(&self.inner, &point.inner).map_err(mesh_error)
     }
 
     pub fn union(&self, other: &Self) -> Result<Self, JsValue> {
         self.inner
             .try_union(&other.inner)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(mesh_error)
     }
 
     pub fn difference(&self, other: &Self) -> Result<Self, JsValue> {
         self.inner
             .try_difference(&other.inner)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(mesh_error)
     }
 
     pub fn intersection(&self, other: &Self) -> Result<Self, JsValue> {
         self.inner
             .try_intersection(&other.inner)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(mesh_error)
     }
 
     pub fn xor(&self, other: &Self) -> Result<Self, JsValue> {
         self.inner
             .try_xor(&other.inner)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(mesh_error)
     }
 
     #[wasm_bindgen(js_name = unionWithContext)]
@@ -276,7 +284,7 @@ impl MeshJs {
         self.inner
             .try_union_with_context(&other.inner, &geometry_context(approximate_512))
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(mesh_error)
     }
 
     #[wasm_bindgen(js_name = differenceWithContext)]
@@ -288,7 +296,7 @@ impl MeshJs {
         self.inner
             .try_difference_with_context(&other.inner, &geometry_context(approximate_512))
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(mesh_error)
     }
 
     #[wasm_bindgen(js_name = intersectionWithContext)]
@@ -300,7 +308,7 @@ impl MeshJs {
         self.inner
             .try_intersection_with_context(&other.inner, &geometry_context(approximate_512))
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(mesh_error)
     }
 
     #[wasm_bindgen(js_name = xorWithContext)]
@@ -312,7 +320,7 @@ impl MeshJs {
         self.inner
             .try_xor_with_context(&other.inner, &geometry_context(approximate_512))
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(mesh_error)
     }
 
     #[wasm_bindgen(js_name = transformWithContext)]
@@ -431,7 +439,7 @@ impl MeshJs {
         let context = geometry_context(approximate_512);
         solid::convex_hull_with_context(&self.inner, &context)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(mesh_error)
     }
 
     #[wasm_bindgen(js_name = minkowskiSumWithContext)]
@@ -501,7 +509,7 @@ impl MeshJs {
                 GeometryQueryStatusJs::Unknown,
                 error.to_string(),
             )),
-            Err(error) => Err(js_error(error)),
+            Err(error) => Err(mesh_error(error)),
         }
     }
 
@@ -582,7 +590,7 @@ impl MeshJs {
     pub fn convex_hull(&self) -> Result<Self, JsValue> {
         solid::convex_hull(&self.inner)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(mesh_error)
     }
 
     #[wasm_bindgen(js_name = minkowskiSum)]
@@ -658,11 +666,15 @@ impl MeshJs {
     }
 
     pub fn subdivide(&self, levels: u32) -> Result<Self, JsValue> {
-        let levels = std::num::NonZeroU32::new(levels)
-            .ok_or_else(|| JsValue::from_str("levels must be positive"))?;
+        let levels = std::num::NonZeroU32::new(levels).ok_or_else(|| {
+            geometry_exception(
+                "levels must be positive",
+                crate::errors::ValidationErrorKind::InvalidInput,
+            )
+        })?;
         solid::subdivide(&self.inner, levels)
             .map(Into::into)
-            .map_err(js_error)
+            .map_err(mesh_error)
     }
 
     pub fn cube(size: f64) -> Result<Self, JsValue> {

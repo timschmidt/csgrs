@@ -1,0 +1,11 @@
+{
+  "scope": "Proportionate resource and completed-output observations for a WASM error-contract migration, not an optimization claim.",
+  "baseline": "Freshly qualified E29 committed-source WASM and generated JS; read-only.",
+  "candidate": "Independent E30 prototype WASM and generated JS; read-only after successful real consumers and Clippy.",
+  "workloads": "Five exact translated cube/empty Boolean pipelines per process, each with certainty inspection, full arrays, STL materialization, native reimport and complete subtraction; five invalid Boolean/hull/subdivision diagnostics per iteration (25 per process). Five alternating fresh-process pairs.",
+  "equality": "Full success output values and STL bytes must agree exactly across artifacts and repetitions. Error diagnostic messages must agree. The new Error/name/code/stack surface is an intentional API migration and has a separate asserted contract; error outputs are not claimed byte-identical.",
+  "oracle": "The actual binding acceptance suites separately establish empty-set composition, typed failure, ownership and exact cube/IO contracts. Wrapper agreement in this probe only checks preserved artifacts; it is not an independent mathematical oracle.",
+  "timing": "Separate monotonic elapsed and process-CPU observations cover the identical completed geometry phase and the intentionally migrated diagnostic phase. Construction, native operations, arrays/STL materialization and forced error-stack access are inside those phase timers. Final JSON report encoding is outside phase timers and inside GNU time whole-process CPU/RSS. No speedup or internal work/heap/cancellation bound is claimed.",
+  "environment": "Record exact tool versions, hardware, source manifests, generated artifacts, scripts, fixtures and all raw outputs. Wait for E29 full native validation and E30 native/WASM checks before running; retain every sample including unfavorable results.",
+  "containment": "60-second external timeout and 64-GiB per-process address-space cap for V8 reservation. Do not reopen completed Cargo targets."
+}

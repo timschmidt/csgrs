@@ -1,0 +1,27 @@
+{
+  "runner_sha256": "f1d61d9e4c56d9699e813b956e6e945ae0e6c25da300c8a0bfe3b7bca933a6c4",
+  "common_sha256": "e87f6c89cdb4a76b60db132344260a44526f5a8d8b9fad5026c6ba38ef6e1c8d",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/candidate-source-v1",
+  "source_hashes_sha256": "d9f927407ee842d6b06f3bbaa12dce1e03cdbe50199711ac5e11ad388910b0e4",
+  "preparation_result_sha256": "f27b1e7c22ca5ed120dd6c0bcc348c224d36f395c85ec2e14380f7395fef26e1",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-target-v1",
+  "target_initially_empty": true,
+  "mount": "/ ext4 rw,relatime,seclabel\n",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)\n",
+  "node": "v22.22.2",
+  "tools_read_only_sha256": {},
+  "environment": {
+    "CARGO_HOME": "/home/tim/.cargo",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-target-v1",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_INCREMENTAL": "0",
+    "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/native-scratch-v1"
+  },
+  "elapsed_limit_seconds_per_command": 720,
+  "address_space_limit_bytes_per_process": 8589934592,
+  "containment": "External elapsed/address-space limits only; V8 requires large virtual reservations. No internal heap/work/cancellation guarantee.",
+  "base_commit": "99b88f707b04053de7f40a86d6d029e3c07460d9",
+  "main_sources_modified": false
+}

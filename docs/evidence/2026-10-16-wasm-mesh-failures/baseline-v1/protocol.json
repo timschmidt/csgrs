@@ -1,0 +1,34 @@
+{
+  "runner_sha256": "bba5e9fca64ff85c55616f7ae6a05986422cd10811e8a9cc05eba96acc6519aa",
+  "prototype_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/baseline-source.json": "c087359d0aa2ad0683a8718bdb17582f58284c95a46c8a786d1fdc3b8beb7d0a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/contract.json": "11f5630fb221afc79aaa3ddf766fdfbb862df9d12ba25b7ebffab42eabe7181e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/scripts/test-wasm-bindings.sh": "451f6a62d0ef08b2c6a5e6175ef60fa259d99da956193973084e72525069428c",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/src/wasm/mesh_js.rs": "75762275825314c6ef364e5a07c3b8b7ef5f49d21db2eacff3b9b047a3537560",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs": "901c4ff2680bd5edc0c8b4796c50239966fd9a5d0ca73ace584903b2341cfb4f",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.ts": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614"
+  },
+  "read_only_artifacts_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm32-unknown-unknown/wasm/csgrs.wasm": "663480d51ab9a44d52b65c6a4f5716435db8aff5ec346c4709b38a941c8764b6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.d.ts": "4929deff0be4f14fc59a6bca45c1999d46401aa8ae3bb8e3a395b0fa2ef64da3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.js": "6ad5697ee5e849f6d4859cc651ec155922ce7b97050a3a8221ddae0650183945",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm": "af3098788a905c8d9d68f5a16c54aeb7d36d8f430b718a34a128c677c5216348",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs_bg.wasm.d.ts": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/geometry_certainty.ts": "6182dc1669ac96345916d1d45753cd7ac16e9a1d79d46b2e594cdfb3ed557fe7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/io_contracts.js": "37fb65ed6e244e3e134178c1358f129f6fe33191028592e9e53043110b45fb19",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/io_contracts.ts": "268c4308cb6321dd2ae8f58f5891d2eeaad91986c705bda9c9c0a14a3275c91e"
+  },
+  "qualification_sha256": "ebef9a4787556f990b7138972f3077e7ed86f4c19f4ca2e22721be21f2c96c07",
+  "tsc": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/export-projection-contracts/wasm-source-v1/tests/wasm/node_modules/typescript/lib/tsc.js",
+  "tsc_sha256": "2cffde0b8c6760dfb0b5b0382bbb7e00ba6a8b2d981b9205b256a700a481d983",
+  "copied_consumer_inputs_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/csgrs.js": "6ad5697ee5e849f6d4859cc651ec155922ce7b97050a3a8221ddae0650183945",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/csgrs.d.ts": "4929deff0be4f14fc59a6bca45c1999d46401aa8ae3bb8e3a395b0fa2ef64da3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/mesh_errors.ts": "88387f444539385e02765a816d385b820d9ba9c23aac814590d1c808ddf1e614",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/csgrs_bg.wasm.d.ts": "2b8bbe2bad53bbdb5dee40235004739510bdf0be4e706ddc1ae5839eac691aa6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/baseline-v1/consumer/csgrs_bg.wasm": "af3098788a905c8d9d68f5a16c54aeb7d36d8f430b718a34a128c677c5216348"
+  },
+  "timeout_seconds": 60,
+  "per_process_address_space_bytes": 68719476736,
+  "purpose": "Failing acceptance tests on exact committed libraries before implementation; preserve failure output."
+}

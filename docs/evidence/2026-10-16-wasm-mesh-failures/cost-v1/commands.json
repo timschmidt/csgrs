@@ -1,0 +1,152 @@
+[
+  {
+    "name": "00-baseline",
+    "variant": "baseline",
+    "pair": 0,
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2217324827797711,
+    "stdout_sha256": "a1b879f0ba5579903fe67c31cc9fc67e45207c507d0cf1e0accb5d4150fab8c1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "b78a5d8475eabc1cb11f3d286a609fccc0ae7d845dbb7e4a0267d150c15aefef"
+  },
+  {
+    "name": "00-candidate",
+    "variant": "candidate",
+    "pair": 0,
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.15085323434323072,
+    "stdout_sha256": "5c94f7a44ae4d276abad907433ccbc7a8018fe47f68f6c7222326fa2d574e728",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "225670520b43c6608b1d138e62094a8cb5c516048e3fe74b4a864c79e03831af"
+  },
+  {
+    "name": "01-candidate",
+    "variant": "candidate",
+    "pair": 1,
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.15355346910655499,
+    "stdout_sha256": "a9b5fb23abfc99f1e1d3487c237df6bcde8cf17abcdb1f9d4ee9f66a08b8c1b7",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "de816d2c76ff7697c21f7298e2c59f33702317f18eb9eeb29b62075d4f9b3078"
+  },
+  {
+    "name": "01-baseline",
+    "variant": "baseline",
+    "pair": 1,
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.15934915095567703,
+    "stdout_sha256": "e26ea9d8ac8e0e62cf99ba7ab0b745d2994f0cdc935a461b865947959c0e8d91",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5aecea47957ccb2a66c0612bb57fda39ce83ab5618e7f260c12e5a0ed68fc39b"
+  },
+  {
+    "name": "02-baseline",
+    "variant": "baseline",
+    "pair": 2,
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.154386670794338,
+    "stdout_sha256": "37d1e978ed6a7699b30bfcb4dacb12543ab00e44b39ca6de82e9a894e0f94421",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "9ffe1045c194e31cec42c885daf2955e52cf2e5064857bb65921dda5eeeb8296"
+  },
+  {
+    "name": "02-candidate",
+    "variant": "candidate",
+    "pair": 2,
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1534855030477047,
+    "stdout_sha256": "816e27d3d49d439cb95ce60ee768fe01189c68debf33ecfc78553cfd6c7ca536",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3a65602286c82bda8953ec68d0b575f7790961fd48487a893ab1725abbfc1f6e"
+  },
+  {
+    "name": "03-candidate",
+    "variant": "candidate",
+    "pair": 3,
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.15409118216484785,
+    "stdout_sha256": "2a75389e443c9ce35d0a478dc38db69f414c273c58675948c3d46f7ce2b8dd26",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "35d3e93f08449a066dcb0cc994a8664461839ce43917469ef62edc5e7f170c46"
+  },
+  {
+    "name": "03-baseline",
+    "variant": "baseline",
+    "pair": 3,
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1552150957286358,
+    "stdout_sha256": "2bda4ae12920f02a3c2d679b6385968f21ef4ea6f6712162052c98f8ef9e6ae1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8b0cd07c191377649dda491776828a057c74102294263586dd5f6119ea87e4fc"
+  },
+  {
+    "name": "04-baseline",
+    "variant": "baseline",
+    "pair": 4,
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-change-disposition/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1519882958382368,
+    "stdout_sha256": "c57296c0faa997490962e5461a8385fcab11b3cd3c2ff176c00a01316915b15f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4cb8c4fa01ca6917745f08c5b92d1bf81f8c3b3b6097c491bc392d35dc92df18"
+  },
+  {
+    "name": "04-candidate",
+    "variant": "candidate",
+    "pair": 4,
+    "command": [
+      "node",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/cost_v1.cjs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/wasm-target-v1/wasm-bindings-node/csgrs.js"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.15551623422652483,
+    "stdout_sha256": "fb900d658145b4da761f0d3911d03108123da69a8c8fc73bdd451b9abcb64edb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "aecc071a7842631af4c56b236e9c7dce25f83c6c13a07bfc76fefd8a7cba8941"
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "complete": true,
+  "javascript_exit_code": 1,
+  "typescript_compile_exit_code": 0,
+  "typescript_consumer_exit_code": 1,
+  "prototype_and_baseline_artifacts_unchanged": true,
+  "candidate_admitted": false,
+  "native_disposition_changed": false
+}

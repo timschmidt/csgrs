@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "commands": 3,
+  "unexpected_exits": [],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "scope": "Host compilation/lint/docs of a WASM-only error-mapping change. Its runtime acceptance is the real JS and compiled TS consumer suite. No additional native geometry coverage claimed."
+}

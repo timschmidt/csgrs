@@ -27,6 +27,7 @@ cargo build --locked --profile wasm --target wasm32-unknown-unknown \
 node tests/wasm/geometry_certainty.cjs "${wasm_bindings_dir}/csgrs.js"
 node tests/wasm/export_projection.cjs "${wasm_bindings_dir}/csgrs.js"
 node tests/wasm/io_contracts.cjs "${wasm_bindings_dir}/csgrs.js"
+node tests/wasm/mesh_errors.cjs "${wasm_bindings_dir}/csgrs.js"
 cp tests/wasm/geometry_certainty.ts "${wasm_bindings_dir}/geometry_certainty.ts"
 "${tsc_bin}" --noEmit --strict --target ES2020 --lib ES2020,DOM,ESNext.Disposable \
     --module Node16 --moduleResolution Node16 \
@@ -38,3 +39,10 @@ cp tests/wasm/io_contracts.ts "${wasm_bindings_dir}/io_contracts.ts"
     --module Node16 --moduleResolution Node16 --outDir "${wasm_bindings_dir}" \
     "${wasm_bindings_dir}/io_contracts.ts"
 node "${wasm_bindings_dir}/io_contracts.js"
+
+# Exercise typed mesh failures through the generated TypeScript declarations.
+cp tests/wasm/mesh_errors.ts "${wasm_bindings_dir}/mesh_errors.ts"
+"${tsc_bin}" --strict --target ES2020 --lib ES2020,DOM,ESNext.Disposable \
+    --module Node16 --moduleResolution Node16 --outDir "${wasm_bindings_dir}" \
+    "${wasm_bindings_dir}/mesh_errors.ts"
+node "${wasm_bindings_dir}/mesh_errors.js"

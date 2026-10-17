@@ -1,0 +1,209 @@
+TAP version 13
+# Subtest: union retains invalid-input errors for either operand beside empty
+not ok 1 - union retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 24.453832
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:25:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    invalid (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:14:10)
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:32:13)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: intersection retains invalid-input errors for either operand beside empty
+not ok 2 - intersection retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.631877
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:25:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    invalid (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:14:10)
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:32:13)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: difference retains invalid-input errors for either operand beside empty
+not ok 3 - difference retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.361406
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:25:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    invalid (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:14:10)
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:32:13)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: xor retains invalid-input errors for either operand beside empty
+not ok 4 - xor retains invalid-input errors for either operand beside empty
+  ---
+  duration_ms: 0.331337
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:25:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    invalid (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:14:10)
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:32:13)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: insufficient hull geometry keeps its typed failure for every policy
+not ok 5 - insufficient hull geometry keeps its typed failure for every policy
+  ---
+  duration_ms: 0.968074
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:40:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    invalid (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:14:10)
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:44:7)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: zero subdivision fails visibly even for canonical empty geometry
+not ok 6 - zero subdivision fails visibly even for canonical empty geometry
+  ---
+  duration_ms: 0.399093
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:49:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    invalid (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:14:10)
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:52:11)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: mesh diagnostics remain ordinary host errors after all native inputs are freed
+not ok 7 - mesh diagnostics remain ordinary host errors after all native inputs are freed
+  ---
+  duration_ms: 0.381084
+  type: 'test'
+  location: '/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:56:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(error instanceof Error)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    invalid (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:14:10)
+    TestContext.<anonymous> (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/wasm-mesh-failure-review/prototype-v1/tests/wasm/mesh_errors.cjs:61:3)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: successful empty outputs retain certainty and compose through STL reimport
+ok 8 - successful empty outputs retain certainty and compose through STL reimport
+  ---
+  duration_ms: 4.301605
+  type: 'test'
+  ...
+# Subtest: successful membership retains its own query status and consumed certainty
+ok 9 - successful membership retains its own query status and consumed certainty
+  ---
+  duration_ms: 5.671891
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 2
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 53.817049
