@@ -240,6 +240,11 @@ impl Default for MaterializationOptions {
 }
 
 /// Reproducible caller-selected font policy for production artwork.
+///
+/// Construction uses the selected materialization context and retains its
+/// certainty receipt. Invalid fonts, missing glyphs and failed outlines return
+/// [`GeometryMaterializationError::Construction`] with the typed source error;
+/// they no longer produce a successful report with omitted artwork.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ProductionTextPolicy {
     /// Stable human-readable font identity recorded in release evidence.
@@ -464,7 +469,7 @@ pub enum ProcessMaterializationOmission {
     MissingArtworkStroke { source: String },
     /// Text remains retained because no production-font policy was selected.
     TextArtwork { source: String },
-    /// The selected production font could not produce geometry for non-whitespace text.
+    /// A valid selected font produced an empty outline for non-whitespace text.
     TextFontRejected { source: String },
     /// Package-local edge-cut artwork was not merged with the authoritative board contour.
     PackageEdgeCuts { source: String },
@@ -3017,10 +3022,15 @@ fn graphic_profile(
             // floating policy at the hypercircuit boundary.
             let point_height = (height.clone() * Real::from(360) / Real::from(127))
                 .map_err(|_| GeometryMaterializationError::Arithmetic)?;
-            let profile = decisions.rotated(
-                &curve::truetype_text(text, &policy.font_data, point_height),
-                rotation_degrees.clone(),
-            )?;
+            let profile = decisions
+                .consume_geometry(curve::truetype_text_with_context(
+                    text,
+                    &policy.font_data,
+                    point_height,
+                    &decisions.geometry_context(),
+                ))
+                .map_err(GeometryMaterializationError::Construction)?;
+            let profile = decisions.rotated(&profile, rotation_degrees.clone())?;
             let profile = decisions.translated(&profile, position.x.clone(), position.y.clone())?;
             if profile.is_empty() {
                 omissions.push(ProcessMaterializationOmission::TextFontRejected {
