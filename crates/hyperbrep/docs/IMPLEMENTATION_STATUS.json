@@ -1714,6 +1714,40 @@
       "validation": "Native/IO debug and release suites each pass 552 tests; minimal features pass 544. The four dependency libraries pass 3525 all-feature tests with six existing ignored cases and 3419 minimal tests with one existing ignore. Native/dependency Clippy, rustdoc, all STEP examples, optional OCCT reads, fuzz-target compilation and Cargo formatting pass. The corrected WASM consumer passes 111 groups with zero imports and a warning-denied build. Its only late change adds a source-map check; all native consumed crate/test inputs remain byte-identical. The two inherited zero-factor debug failures remain reproduced and unfixed.",
       "cost_evidence": "All 175 preceding main benchmark cases retain their exact receipts across 18 preserved corpora. One new complete cone exchange workflow adds absolute cost, for 19 corpora and 111 processes. 1 existing timing rows exceed a 1.10 ratio; maximum 1.123806. 40 rows increase allocation calls or requested bytes. The dependency supplement preserves all 196 cases in 18 processes, with 2 ratios above 1.10 and maximum 1.223467.",
       "limits": "The finite conical LINE-revolution subset is admitted separately from general cone/revolution exchange and Boolean closure. Direct CONICAL_SURFACE, B-spline generators, arbitrary cone trims and apex-ending solids remain open. Irrational vertices can remain exact native geometry while unencodable by the writer. Parser/output cardinalities and solver counters do not bound total work, retained heap or cancellation. Source-path native/WASM tests and optional OCCT reads do not establish package/MSRV/actual C-Python-JS delivery, formal proof, coverage, runtime fuzz/ASan/lexicase, release or the full pre-push gate. All 28 work packages remain open or in progress; no push. Fetched upstream be2a0c37b is pending a separate integration and requalification; this evidence belongs to the pinned cone increment."
+    },
+    {
+      "id": "stroke-upstream-integration-2026-10-17",
+      "work_packages": [
+        "WP00",
+        "WP08",
+        "WP14a",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P1",
+        "P6",
+        "P11",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P24",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "change": "Merge upstream be2a0c37b, preserve both histories and all unrelated ledger bytes, and requalify unchanged BREP/STEP consumers against the new curve dependency.",
+      "evidence": "evidence/2026-10-17-stroke-upstream-integration/manifest.json",
+      "validation": "Merged-source native/IO release suites pass 552 all-feature and 544 minimal-feature tests. Hypercurve's all-feature library and two upstream stroke targets pass 1755 tests with 6 existing ignores; the ten new stroke controls also pass in debug. Both native all-target Clippy configurations, the stroke/consumer lints, warning-denied rustdoc, eight STEP examples, fuzz-target compilation and Cargo formatting pass. The warning-denied standalone WASM build executes all 111 groups with zero imports. All 81 preceding native diagnostic outcomes and 71 original STEP artifacts are preserved. Optional OCCT readers pass their independent topology/measure expectations. The new four-case stroke-path consumer completes two butt workflows with four byte-identical STEP/native artifacts; both round workflows retain Geometry(UnsupportedMeasurement) on both revisions. Its original all-cases-success contract remains failed. The inherited zero-factor debug failure is reproduced in both scalar feature configurations and left with its owner.",
+      "cost_evidence": "Three fresh processes per phase and original stroke case preserve all outcomes and completed artifacts. The two successful workflows have complete-process timing/RSS observations; the two unsupported workflows have no successful-work ratio. All raw samples and executable sizes remain recorded (25798760 baseline and 25798848 candidate bytes). These shared-host observations do not establish a speedup, retained-heap bound, allocation count or shipped-package size. The preceding 176-case cone campaign and 196-case dependency campaign remain historical evidence on their pinned source, including every adverse timing/allocation observation. Completed-case observations: Butt-reverse-false 21.829 to 20.139 ms (ratio 0.922602), RSS 13540 to 13504 KiB; Butt-reverse-true 20.985 to 21.027 ms (ratio 1.002017), RSS 13548 to 13212 KiB.",
+      "limits": "This merge adds no BREP runtime algorithm and does not admit the unsupported round-cap path measurement workflow. A public normalized-region extrusion entry point is separate future work; preserve the general rational-path blocker while qualifying that extension. General Boolean/analytic exchange closure, whole-operation work/heap/cancellation bounds, package/MSRV and actual C/Python/JavaScript delivery, formal proofs, coverage, runtime fuzz/ASan/lexicase, release and the full pre-push matrix remain open. All 28 work packages remain open or in progress. No push is part of this checkpoint."
     }
   ],
   "work_packages": [
@@ -1887,8 +1921,8 @@
     }
   ],
   "next_actions": [
-    "Preserve all 81 native diagnostic outcomes, 61 original STEP artifacts, the complete cone exchange/subdivision corpus and all failure controls. Continue native contact/arrangement and singular-chart work under evidence/2026-10-17-cone-exchange/next-domains.md. Integrate fetched upstream be2a0c37b at a source-pinned checkpoint and requalify affected BREP consumers; unrelated repairs remain upstream work.",
-    "Use evidence/2026-10-17-cone-exchange/manifest.json as the current cone feature baseline. Preserve all 176 main cases and 196 dependency cases, with original inputs, receipts, raw samples and every current/historical adverse observation. All 175 preceding main benchmark cases retain their exact receipts across 18 preserved corpora. One new complete cone exchange workflow adds absolute cost, for 19 corpora and 111 processes. 1 existing timing rows exceed a 1.10 ratio; maximum 1.123806. 40 rows increase allocation calls or requested bytes. The dependency supplement preserves all 196 cases in 18 processes, with 2 ratios above 1.10 and maximum 1.223467. Supporting changes belong in their owning crates when required for BREP features; avoid unrelated repairs.",
+    "Expose strict normalized CurveRegion2 extrusion through the ordinary model-owning builder, reusing the existing native component/line-arc proof. Reproduce the missing public API first; qualify original butt/round strokes, holes, disconnected/empty material, invalid heights, certainty, cold replay, STEP, continued Booleans and resource observations. Preserve the existing rational-path measurement blockers separately.",
+    "Use the stroke-upstream-integration record for the merged be2a0c37b source and the cone-exchange record for the latest geometry/STEP feature. Preserve 81 native diagnostic outcomes, 71 preceding STEP artifacts, all conical subdivisions and failure controls, and the 176 main/196 dependency benchmark contracts. New source requires fresh applicable evidence; historical timings do not qualify later merges. Supporting crate work is allowed when needed for BREP features; leave unrelated repairs to their owner.",
     "Preserve and extend named BREP strict workflows with independent set, topology and source-fidelity checks. Observe upstream drilled-body and dependency corrections during integration; unrelated repairs remain upstream work. Record all seven outcome categories and the concrete failing BREP stage (WP00/WP21, P39).",
     "Preserve the completed half-case recut/clear/reconstruct workflows in evidence/2026-10-16-curved-coplanar/manifest.json alongside the sector extension: nine original exact configurations and 54 transformed variants, full-size geometry, near samples, split/reflection/replay, source parameters and public overlap provenance. The five formerly blocked quarter/band diagnostics now complete in evidence/2026-10-16-sector-cuts/continuation-frontier.json. Further composition extensions must retain these successes and independently verify represented-set identities (WP03/WP06/WP07/WP08, P17-P20/P35/P39).",
     "Complete the documented-package pipeline in clean external consumers and actual affected bindings; verify features, dependency versions, MSRV, certainty and format-specific round trips. Local paths, source builds and WASM probes do not close delivery gates (WP17/WP18/WP23, P37).",

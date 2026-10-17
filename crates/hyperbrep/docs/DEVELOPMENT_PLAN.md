@@ -1,7 +1,7 @@
 # HyperBRep development plan
 
-Status: implementation blueprint. Updated 2026-10-16 for upstream
-`99b88f707b04053de7f40a86d6d029e3c07460d9` and concurrent development ownership.
+Status: implementation blueprint. Updated 2026-10-17 for upstream
+`be2a0c37bfe57799c62a36125a5cb883a5458f00` and concurrent development ownership.
 
 HyperBRep should become a pure Rust, native and WebAssembly CAD kernel for
 exact boundary modeling, general Booleans, sweeps, lofts, fillets, shelling,
@@ -122,7 +122,7 @@ retains the historical tiny-coordinate text and projected-face collapse failures
 The documented `basic_shapes` feature combination includes both `curve` and
 `stl-io`.
 
-The [latest integration](evidence/2026-10-16-upstream-wasm-integration/README.md)
+The [preceding WASM integration](evidence/2026-10-16-upstream-wasm-integration/README.md)
 incorporates `3d335db43` and `99b88f707`. OBJ/ASCII STL now encode the chosen
 finite binary64 projection as exact terminating decimals; affected fractional
 text, lengths and checksums intentionally migrate. Binary STL proves each
@@ -137,6 +137,31 @@ lossy output is not a valid performance baseline for the corrected contract.
 This mesh-format boundary does not authorize routing authoritative BREP values
 or exact STEP serialization through binary64; those remain native exact paths
 in BREP and BREP IO.
+
+The [stroke integration](evidence/2026-10-17-stroke-upstream-integration/README.md)
+incorporates upstream `be2a0c37b` after the conical STEP increment. Hypercurve
+owns the exact single-line butt/round stroke fast path. Its regularized region
+and certified native contour view remain the authority for extrusion; boundary
+subdivision can change without changing the represented set. Future BREP
+consumers should accept `CurveRegion2` directly where its retained line/arc
+evidence is sufficient, while preserving the complete original component and
+its source qualification. Do not reconstruct native circle identity by fitting
+the rational Bézier paths returned by `boundary_paths()`. The integration's
+unchanged round-cap path measurement blocker remains an independent open case;
+a new normalized-region entry point must earn complete native, replay, STEP,
+Boolean and empty-recovery acceptance separately.
+
+Upstream mesh containment now validates closed PWN input before shortcuts and
+tests strict interior of the regularized nonzero-winding set. Multiplicity,
+canceling sheets and internal source faces follow the represented material,
+not ray-hit parity or mere membership in source triangles. Future BREP mesh
+reconstruction and display consumers must preserve that meaning and its typed
+failures. These are Hypermesh/facade responsibilities; this integration does
+not add a Hypermesh dependency to HyperBRep. Its finite ray count is not a
+total-work, expression-growth, heap or cancellation bound. The rejected circle
+support-index trials remain upstream evidence, without a retained runtime
+optimization. Preserve their unfavorable results and separate admission status
+when considering later shared proof or spatial indexes.
 
 The actual CSGRS WASM boundary now exposes `MeshJs.fromSTL(Uint8Array)` and
 ordinary `GeometryIoError` objects for STL import/export, with `code`, `format`,

@@ -22,6 +22,7 @@ use crate::polygon::{
 };
 use crate::predicate::classify_point_decision;
 use crate::storage_hash::StorageHashMap;
+use crate::winding::mesh_winding_number_decision;
 
 mod concatenation;
 
@@ -249,15 +250,20 @@ impl TriangleMesh {
     /// an admissible policy. A stronger fact requires new native validation.
     pub fn validate_closed_pwn(&self, context: &MeshContext) -> HypermeshResult<MeshOutcome<()>> {
         let decisions = DecisionContext::new(context);
+        self.validate_closed_pwn_decision(&decisions)?;
+        Ok(decisions.finish(()))
+    }
+
+    fn validate_closed_pwn_decision(&self, decisions: &DecisionContext) -> HypermeshResult<()> {
         let view = self.as_ref();
         validate_non_empty_mesh_views(&[view])?;
         if !self
             .geometry_facts()
-            .is_some_and(|facts| facts.valid_pwn.consume(&decisions))
+            .is_some_and(|facts| facts.valid_pwn.consume(decisions))
         {
-            validate_source_pwn(&decisions, view, 0)?;
+            validate_source_pwn(decisions, view, 0)?;
         }
-        Ok(decisions.finish(()))
+        Ok(())
     }
 
     /// Resolves a triangle's position rows, preserving invalid-index diagnostics.
@@ -951,8 +957,26 @@ impl TriangleMesh {
         Ok(unique_hits)
     }
 
-    /// Tests strict solid containment using exact boundary predicates and ray
-    /// parity. Points on a triangle, edge, or vertex are not inside.
+    /// Tests strict interior of the regularized nonzero-winding solid.
+    ///
+    /// Oriented crossings retain winding multiplicity and cancellation. Points
+    /// on the represented set's boundary are excluded; internal source faces,
+    /// edges and vertices follow the represented set's interior. Certified
+    /// supporting bounds exclude points that cannot be strictly inside. Other
+    /// source-face queries reuse the native Boolean arrangement to establish
+    /// that boundary.
+    ///
+    /// Canonical empty geometry (both buffers empty) returns `false`. Every
+    /// other input must satisfy [`Self::validate_closed_pwn`], including queries
+    /// outside its bounds or on a source face. Invalid geometry returns its
+    /// typed error before a containment shortcut can answer. Validation facts
+    /// contribute their certainty and obey the same policy and source identity
+    /// rules as explicit validation.
+    ///
+    /// Off-surface winding uses at most `8n + 1` candidate directions for `n`
+    /// triangles. Boundary regularization uses the native arrangement. These
+    /// algorithms have no total-work, heap-byte or cancellation limit; the ray
+    /// count does not bound scalar expression growth or arrangement work.
     pub fn contains_point(
         &self,
         context: &MeshContext,
@@ -968,9 +992,10 @@ impl TriangleMesh {
         decisions: &DecisionContext,
         point: &Point3,
     ) -> HypermeshResult<bool> {
-        if self.triangles.is_empty() {
+        if self.positions.is_empty() && self.triangles.is_empty() {
             return Ok(false);
         }
+        self.validate_closed_pwn_decision(decisions)?;
         let bounds = match self.exact_bounds_decision(decisions) {
             Ok(bounds) => bounds,
             Err(HypermeshError::PredicateUndecided { .. }) => None,
@@ -982,13 +1007,51 @@ impl TriangleMesh {
                 (&point.y, &bounds.mins.y, &bounds.maxs.y),
                 (&point.z, &bounds.mins.z, &bounds.maxs.z),
             ] {
-                if compare_real_decision(decisions, coordinate, minimum)?.is_lt()
-                    || compare_real_decision(decisions, coordinate, maximum)?.is_gt()
+                // A validated finite solid has exterior points arbitrarily
+                // close to a supporting plane, so that plane has no strict
+                // interior. This shortcut needs certified validation, bounds
+                // and equality; approximate equality is not that proof.
+                let lower = compare_real_decision(decisions, coordinate, minimum)?;
+                if lower.is_lt()
+                    || (lower.is_eq() && decisions.certainty() == MeshCertainty::Certified)
+                {
+                    return Ok(false);
+                }
+                let upper = compare_real_decision(decisions, coordinate, maximum)?;
+                if upper.is_gt()
+                    || (upper.is_eq() && decisions.certainty() == MeshCertainty::Certified)
                 {
                     return Ok(false);
                 }
             }
         }
+        if self.point_on_surface_decision(decisions, point)? {
+            let regularized = crate::boolean(
+                &MeshContext::new(decisions.policy()),
+                &[self.as_ref()],
+                crate::BooleanProgram::Operation(crate::BooleanOp::Union),
+            )?;
+            decisions.absorb(regularized.certainty);
+            let normalized = regularized.value.into_triangle_meshes()?.pop().ok_or(
+                HypermeshError::SurfaceArrangementFailed {
+                    reason: "containment regularization produced no result",
+                },
+            )?;
+            if normalized.point_on_surface_decision(decisions, point)? {
+                return Ok(false);
+            }
+            return Ok(
+                mesh_winding_number_decision(decisions, &normalized, point, || Ok(()))? != 0,
+            );
+        }
+        Ok(mesh_winding_number_decision(decisions, self, point, || Ok(()))? != 0)
+    }
+
+    fn point_on_surface_decision(
+        &self,
+        decisions: &DecisionContext,
+        point: &Point3,
+    ) -> HypermeshResult<bool> {
         let query = hyperlimit::Point3::new(point.x.clone(), point.y.clone(), point.z.clone());
         for triangle in self.triangles.iter() {
             let [a, b, c] = triangle.indices();
@@ -1020,19 +1083,10 @@ impl TriangleMesh {
                     | hyperlimit::Triangle3Location::OnEdge
                     | hyperlimit::Triangle3Location::OnVertex
             ) {
-                return Ok(false);
+                return Ok(true);
             }
         }
-        let direction = Vector3::from_xyz(
-            Real::one(),
-            (Real::from(3_u8) / Real::from(8_u8)).expect("eight is nonzero"),
-            (Real::from(5_u8) / Real::from(16_u8)).expect("sixteen is nonzero"),
-        );
-        Ok(self
-            .ray_intersections_decision(decisions, point, &direction)?
-            .len()
-            % 2
-            == 1)
+        Ok(false)
     }
 
     /// Intersects consecutive polyline segments with native triangles and

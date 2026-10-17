@@ -668,8 +668,10 @@ mod tests {
     #[test]
     fn converter_provenance_hashes_inputs_and_manifests_outputs() {
         let process_id = process::id();
-        let temp_input = PathBuf::from(format!("/tmp/hyperdrc-provenance-input-{process_id}"));
-        let temp_output = PathBuf::from(format!("/tmp/hyperdrc-provenance-output-{process_id}"));
+        let temp_input =
+            std::env::temp_dir().join(format!("hyperdrc-provenance-input-{process_id}"));
+        let temp_output =
+            std::env::temp_dir().join(format!("hyperdrc-provenance-output-{process_id}"));
         let _ = remove_dir_all(&temp_input);
         let _ = remove_dir_all(&temp_output);
         std::fs::create_dir_all(temp_input.join("nested")).unwrap();
@@ -1080,8 +1082,8 @@ mod tests {
     #[test]
     fn convert_executes_successful_converter_and_returns_output_paths() {
         let process_id = process::id();
-        let temp_input = PathBuf::from(format!("/tmp/hyperdrc-conv-input-{process_id}"));
-        let temp_output = PathBuf::from(format!("/tmp/hyperdrc-conv-output-{process_id}"));
+        let temp_input = std::env::temp_dir().join(format!("hyperdrc-conv-input-{process_id}"));
+        let temp_output = std::env::temp_dir().join(format!("hyperdrc-conv-output-{process_id}"));
         let _ = remove_dir_all(&temp_input);
         let _ = remove_dir_all(&temp_output);
         std::fs::create_dir_all(&temp_input).unwrap();
@@ -1132,8 +1134,9 @@ mod tests {
     #[test]
     fn convert_executes_successful_kicad_cli_converter_and_returns_output_paths() {
         let process_id = process::id();
-        let temp_input = PathBuf::from(format!("/tmp/hyperdrc-kicad-input-{process_id}.kicad_pcb"));
-        let temp_output = PathBuf::from(format!("/tmp/hyperdrc-kicad-output-{process_id}"));
+        let temp_input =
+            std::env::temp_dir().join(format!("hyperdrc-kicad-input-{process_id}.kicad_pcb"));
+        let temp_output = std::env::temp_dir().join(format!("hyperdrc-kicad-output-{process_id}"));
         let _ = std::fs::remove_file(&temp_input);
         let _ = remove_dir_all(&temp_output);
         std::fs::write(&temp_input, "(kicad_pcb)").unwrap();
@@ -1249,8 +1252,10 @@ mod tests {
     #[test]
     fn convert_reports_directory_creation_failure() {
         let process_id = process::id();
-        let temp_input = PathBuf::from(format!("/tmp/hyperdrc-conv-input-{process_id}"));
-        let temp_output_file = PathBuf::from(format!("/tmp/hyperdrc-output-file-{process_id}.txt"));
+        let temp_input =
+            std::env::temp_dir().join(format!("hyperdrc-conv-failure-input-{process_id}"));
+        let temp_output_file =
+            std::env::temp_dir().join(format!("hyperdrc-output-file-{process_id}.txt"));
         let _ = remove_dir_all(&temp_input);
         std::fs::create_dir_all(&temp_input).unwrap();
         std::fs::write(&temp_output_file, "file-path-conflict").unwrap();
@@ -1284,6 +1289,6 @@ mod tests {
 
         assert!(message.contains("failed to create"));
         let _ = remove_dir_all(&temp_input);
-        let _ = std::fs::remove_file(format!("/tmp/hyperdrc-output-file-{process_id}.txt"));
+        let _ = std::fs::remove_file(&request.output_dir);
     }
 }

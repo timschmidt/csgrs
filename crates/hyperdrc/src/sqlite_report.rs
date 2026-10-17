@@ -195,7 +195,6 @@ fn severity_label(severity: Severity) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
 
     use rusqlite::Connection;
 
@@ -252,10 +251,8 @@ mod tests {
             summary: report_summary(&active, 1),
             violations: active,
         };
-        let path = PathBuf::from(format!(
-            "/tmp/hyperdrc-report-{}.sqlite",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("hyperdrc-report-{}.sqlite", std::process::id()));
         let _ = std::fs::remove_file(&path);
 
         write_report_sqlite(&report, &path).unwrap();

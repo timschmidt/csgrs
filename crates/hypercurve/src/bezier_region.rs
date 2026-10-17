@@ -19,6 +19,7 @@ pub(crate) mod curve_corner_chain;
 use curve_corner_chain::CurveCornerChain2;
 
 mod corner_edit;
+mod linear_stroke;
 mod native_fragments;
 mod offset_joins;
 mod offset_spans;
@@ -4232,6 +4233,13 @@ impl CurveRegion2 {
     /// escape as raw linework or create sequential intermediate regions. Closed
     /// paths receive their cyclic corner and ignore endpoint caps.
     ///
+    /// A single line with certified distinct endpoints retains its two exact
+    /// parallels and butt or semicircular endpoint caps. Its native boundary
+    /// remains reusable for exact area, bounds, point queries and subsequent
+    /// region operations. Boundary subdivisions are an implementation detail;
+    /// this construction can change them while preserving the represented set.
+    /// Unresolved endpoint distinctness retains the general certified path.
+    ///
     /// General polynomial, rational, B-spline, and NURBS paths retain analytic
     /// parallel carriers rather than being chordized. `STRICT` accepts only
     /// certified predicates; `APPROXIMATE_512` may consume its terminal
@@ -4308,6 +4316,14 @@ impl CurveRegion2 {
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
+        }
+        if let [curve] = path.curves()
+            && let Some(CurveGeometry2::Line(line)) = curve.geometry()
+            && line.endpoints_decided_distinct()
+            && matches!(cap_style, OffsetCap::Butt | OffsetCap::Round)
+        {
+            return linear_stroke::native_line_stroke(line, &half_width, cap_style, policy)
+                .map(Classification::Decided);
         }
         let closed = match crate::curve::curve_path_is_closed(path, policy) {
             Classification::Decided(closed) => closed,
