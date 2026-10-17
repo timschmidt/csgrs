@@ -1,0 +1,5 @@
+{
+  "scope": "Extends v1 without modifying the completed record.",
+  "summarize_v1": {"session": 72407, "exit_code": 0},
+  "checkpoint_v1": {"session": 20100, "exit_code": 1, "evidence_directory_created": false, "ledger_modified": false, "reason": "Fixture allowlist incorrectly required all seven E35 artifact migrations to be JSON; one is a release ZIP."}
+}

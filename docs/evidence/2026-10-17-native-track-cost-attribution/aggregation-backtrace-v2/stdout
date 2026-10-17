@@ -1,0 +1,42 @@
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x0000561d7638f763 in <hyperreal::real::arithmetic::Real>::same_symbolic_basis ()
+
+Thread 1 (Thread 0x7f6476810240 (LWP 1615485) "candidate-stage"):
+#0  0x0000561d7638f763 in <hyperreal::real::arithmetic::Real>::same_symbolic_basis ()
+#1  0x0000561d76091d73 in <&hyperreal::real::arithmetic::Real as core::ops::arith::Sub>::sub ()
+#2  0x0000561d7609fa2a in <hypercurve::point::Point2 as core::cmp::PartialEq>::eq ()
+#3  0x0000561d75ab6999 in <hypercurve::curve_intersection::CurveIntersectionBatchCache>::circular_support_relation ()
+#4  0x0000561d75abdfb4 in hypercurve::curve_intersection::native_arc_intersection ()
+#5  0x0000561d75ab9ab1 in <hypercurve::curve_intersection::CurveIntersectionContext>::try_new_with_optional_batch_cache ()
+#6  0x0000561d75f8e81f in hypercurve::curve_region_boolean::build_candidate_carrier_pair ()
+#7  0x0000561d75f9735d in <&mut hypercurve::curve_region_boolean::build_unary_carrier_pairs::{closure#0} as core::ops::function::FnMut<(usize, usize, bool)>>::call_mut ()
+#8  0x0000561d75e4052b in hypercurve::events::visit_aabb_pair_candidates::<&mut hypercurve::curve_region_boolean::build_unary_carrier_pairs::{closure#0}, hypercurve::error::ExactCurveError> ()
+#9  0x0000561d75f6bd26 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::try_new_unary ()
+#10 0x0000561d760b8d97 in <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw ()
+#11 0x0000561d760b5463 in <hypercurve::bezier_region::CurveRegion2>::try_from_native_contours_with_policy::{closure#0} ()
+#12 0x0000561d760c7b4a in <hypercurve::bezier_region::CurveRegion2>::try_from_native_contours_with_policy ()
+#13 0x0000561d760bfdb2 in <hypercurve::bezier_region::CurveRegion2>::try_from_native_contours ()
+#14 0x0000561d75a08055 in hyperdrc::geometry::region::aggregate_native_regions ()
+#15 0x0000561d759e5925 in hyperdrc::operations::evaluate::<alloc::sync::Arc<hypercurve::bezier_region::CurveRegion2>, hyperdrc::geometry::region::regions_to_profile::{closure#1}> ()
+#16 0x0000561d75a06a65 in hyperdrc::geometry::region::regions_to_profile ()
+#17 0x0000561d759bcfca in <core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<&hyperdrc::PcbRegion>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}> as core::iter::traits::iterator::Iterator>::try_fold::<(), <core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<&hyperdrc::PcbRegion>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>, core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>> as core::iter::traits::iterator::Iterator>::try_fold<(), core::iter::traits::iterator::Iterator::try_for_each::call<(alloc::string::String, hyperdrc::PcbRegion), core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>, core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>::Break>::{closure#0}, core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>>::{closure#0}, core::ops::control_flow::ControlFlow<core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>>> ()
+#18 0x0000561d759998d8 in <alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)> as alloc::vec::spec_from_iter::SpecFromIter<(alloc::string::String, hyperdrc::PcbRegion), core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<&hyperdrc::PcbRegion>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>, core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>>>>::from_iter ()
+#19 0x0000561d759bf9eb in core::iter::adapters::try_process::<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<&hyperdrc::PcbRegion>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>, (alloc::string::String, hyperdrc::PcbRegion), core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>, <core::result::Result<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>, hyperdrc::PcbGeometryUncertainty> as core::iter::traits::collect::FromIterator<core::result::Result<(alloc::string::String, hyperdrc::PcbRegion), hyperdrc::PcbGeometryUncertainty>>>::from_iter<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<&hyperdrc::PcbRegion>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>>::{closure#0}, alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>> ()
+#20 0x0000561d759e51e7 in hyperdrc::operations::evaluate::<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}> ()
+#21 0x0000561d75a13c08 in <hyperdrc::kicad::model::BoardModel>::copper_layers ()
+#22 0x0000561d75989343 in hypercurve::policy::evaluate_under::<core::result::Result<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>, hyperdrc::PcbGeometryUncertainty>, stages_v1::main::{closure#1}> ()
+#23 0x0000561d7596e1a5 in stages_v1::main ()
+#24 0x0000561d759874e3 in std::sys::backtrace::__rust_begin_short_backtrace::<fn() -> core::result::Result<(), alloc::boxed::Box<dyn core::error::Error>>, core::result::Result<(), alloc::boxed::Box<dyn core::error::Error>>> ()
+#25 0x0000561d759887c1 in std::rt::lang_start::<core::result::Result<(), alloc::boxed::Box<dyn core::error::Error>>>::{closure#0} ()
+#26 0x0000561d76471e27 in core::ops::function::impls::{impl#2}::call_once<(), (dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe)> () at library/core/src/ops/function.rs:287
+#27 std::panicking::catch_unwind::do_call<&(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe), i32> () at library/std/src/panicking.rs:576
+#28 std::panicking::catch_unwind<i32, &(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe)> () at library/std/src/panicking.rs:544
+#29 std::panic::catch_unwind<&(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe), i32> () at library/std/src/panic.rs:359
+#30 std::rt::lang_start_internal::{closure#0} () at library/std/src/rt.rs:175
+#31 std::panicking::catch_unwind::do_call<std::rt::lang_start_internal::{closure_env#0}, isize> () at library/std/src/panicking.rs:576
+#32 std::panicking::catch_unwind<isize, std::rt::lang_start_internal::{closure_env#0}> () at library/std/src/panicking.rs:544
+#33 std::panic::catch_unwind<std::rt::lang_start_internal::{closure_env#0}, isize> () at library/std/src/panic.rs:359
+#34 std::rt::lang_start_internal () at library/std/src/rt.rs:171
+#35 0x0000561d75975bc5 in main ()
+[Inferior 1 (process 1615485) detached]

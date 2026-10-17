@@ -1,0 +1,40 @@
+{
+  "baseline_source_inputs": 2835,
+  "complete": true,
+  "main_differences": {
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32.json": {
+      "baseline": "d4e237c1b77a98216d9c80c6f0819cd206ee253833826fb02bf1b2a53345f3eb",
+      "main": "b3a0428305689adb1520b80fb741616dd6bff7a1e4cd853870b43a3bbc3765ae"
+    },
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32s3.json": {
+      "baseline": "04b3d92d6218d3ddb73a32dfa2c5c91bd1b564e609035be26ef6dab0a2479b22",
+      "main": "64aca0494a1107cfb415eae9c6eda5838f613291e75c553780e8a7600843f517"
+    },
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/nano.json": {
+      "baseline": "4f4e6673b793a23fe0bc00b799670198bb88050969e0f5d5d6c239e4cd1a436a",
+      "main": "25be72d0dd282a4f2ea552b9e1f79ca1bcd087b93c51d5e53ab435c45db54a02"
+    },
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/rp2040.json": {
+      "baseline": "d283c7be8beca4e3f2ce752c23ac3b9bdb4219560232e57f12b20098a13d4c9a",
+      "main": "792319f31fac7910f7ca91a79071b405c1ee60a721c94596aebcae5a4dc8c9b0"
+    },
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/stm32f103.json": {
+      "baseline": "84d0efe06bb97602c319abae76ae5865dba7e98e1ce1ab0dff0a95c70a188f23",
+      "main": "5c057de4b6f0cf9319ca33f63ca198cc567d43536a313e2f1a4613be3a73919b"
+    },
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/uno.json": {
+      "baseline": "3241c7a2b79a21571c056c56096cc897c0e56d1d19098d81a0333f7daf1bfa30",
+      "main": "7d3dc6055a8408d553af96661b634c6f030251c9cb9bee6994d51aee19654316"
+    },
+    "crates/hypercircuit/tests/fixtures/manufacturing-release/release-board-v1.zip": {
+      "baseline": "c22ba6c79b42b0c4754664b5b0f8fa03616ee2e7ae16401965287dfcbeb41e6d",
+      "main": "aaae55e9957c7a2db67f3b60489d117afab7411b00f25a61e06e8c8de0e2d188"
+    },
+    "docs/properties-status.json": {
+      "baseline": "3a03cad4dae7ad2a07b3a555c58789d006bdcd24e2930047baf284b5b391a4f6",
+      "main": "b538e0ed7c81b38c17536c0ba327e9fa24289883e2fcab5ce238dd3b4f016e0d"
+    }
+  },
+  "native_implementation_inputs_byte_identical": true,
+  "scope": "The reused E35 compiled baseline differs from current main only in the ledger and seven previously admitted Hypercircuit expected artifacts (six JSON files and one release ZIP). None is a HyperDRC implementation input."
+}

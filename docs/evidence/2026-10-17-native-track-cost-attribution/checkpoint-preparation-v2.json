@@ -1,0 +1,7 @@
+{
+  "complete": true,
+  "original_runner_sha256": "41477340c1f4987ccbd394af04c80b588c8dddaaaaa5f2fa6508244fb9ca4d24",
+  "corrected_runner_sha256": "279e39eee1096529ed544055ff032ed90a6f4edd14cce227f7a784f220c4be9d",
+  "reason": "The seventh admitted expected artifact is a release ZIP, not a JSON file. The first guard failed before any evidence directory or ledger mutation.",
+  "ledger_unchanged": true
+}

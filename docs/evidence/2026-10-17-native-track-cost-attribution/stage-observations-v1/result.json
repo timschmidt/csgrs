@@ -1,0 +1,12 @@
+{
+  "complete": true,
+  "command_failures": [],
+  "source_and_read_only_inputs_unchanged": true,
+  "compiled_binary_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-stages": "e7d5ab91bf58743d32adcdff9a602250c3ffb970eb778e7e3135ea88fb8f7981",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-stages": "09186a8ffa57e690736eaea63b5ec508d7f77b4408c6b87fd63d9767e567e408"
+  },
+  "diagnostic_only": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false
+}

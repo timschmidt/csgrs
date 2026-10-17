@@ -1,0 +1,72 @@
+{
+  "runner_sha256": "df10a5a773f368cd6eafa99bc692fda53f4ae347b363e32e1e3d30b32221ec34",
+  "pid": 1615485,
+  "exe_sha256": "09186a8ffa57e690736eaea63b5ec508d7f77b4408c6b87fd63d9767e567e408",
+  "raw_stat_before": "1615485 (candidate-stage) R 1615484 1615484 1615483 0 -1 4194304 435740 0 0 0 19114 85 0 0 20 0 1 0 277422693 1720750080 410127 18446744073709551615 94684526850672 94684538557504 140720686397488 0 0 0 0 4096 1088 0 0 0 17 9 0 0 0 0 0 94684538708656 94684538906496 94684908429312 140720686402491 140720686402940 140720686402940 140720686411638 0\n",
+  "stdout_before": "{\"elapsed_seconds\":5.519258219,\"local_receipt\":\"Certified\",\"stage\":\"load\"}\n{\"copper_features\":10829,\"drills\":1283,\"feature_kinds\":{\"B.Cu:Pad\":200,\"B.Cu:Segment\":1761,\"B.Cu:Via\":1149,\"B.Cu:Zone\":3,\"F.Cu:Pad\":1523,\"F.Cu:Segment\":4575,\"F.Cu:Via\":1149,\"F.Cu:Zone\":16,\"In1.Cu:Pad\":140,\"In1.Cu:Segment\":5,\"In1.Cu:Zone\":11,\"In2.Cu:Pad\":140,\"In2.Cu:Segment\":146,\"In2.Cu:Zone\":9,\"unknown:Zone\":2},\"source\":\"/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/projects/cparti/CPArti FPGA dev board.kicad_pcb\"}\n",
+  "stderr_before": "START 0.000010719 load\nEND 5.519340873 load 5.519258219\nSTART 5.520996049 copper-layers\n",
+  "scope": "Sampled CPU attribution only. The instrumented stage timing cannot establish production performance.",
+  "commands": [
+    {
+      "name": "record",
+      "command": [
+        "perf",
+        "record",
+        "-F",
+        "199",
+        "--call-graph",
+        "dwarf,16384",
+        "-p",
+        "1615485",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/perf.data",
+        "--",
+        "sleep",
+        "3"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.128394258208573,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "83e7640dbb9e9fea426d62e038e5020d45897954132d007fa97b084a1693917d"
+    },
+    {
+      "name": "report",
+      "command": [
+        "perf",
+        "report",
+        "-i",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/perf.data",
+        "--stdio",
+        "--children",
+        "--percent-limit",
+        "0.5",
+        "--call-graph",
+        "graph,0.5,caller"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.7419404592365026,
+      "stdout_sha256": "6831fa7368a07bf01ed4e99863dad20051feb2e3458f5579a040afa76a827882",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "flat",
+      "command": [
+        "perf",
+        "report",
+        "-i",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/perf.data",
+        "--stdio",
+        "--no-children",
+        "--percent-limit",
+        "0.5",
+        "--call-graph",
+        "none"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.04860357102006674,
+      "stdout_sha256": "f867aecc8add1cff51677c3ad10ead4f74038ee04321e52cb60363c7b3eabd55",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "perf_data_sha256": "1ed910054354a5f2c1ad7f89fdd4a29886078269f1d429efb32173a0830208d7"
+}

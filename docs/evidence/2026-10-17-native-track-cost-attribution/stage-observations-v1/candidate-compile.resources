@@ -1,0 +1,23 @@
+	Command being timed: "timeout --signal=TERM --kill-after=20s 1800s rustc --edition=2024 -D warnings -C opt-level=3 -C embed-bitcode=no -L dependency=/tmp/csgrs-kicad-native-target-v4/release/deps --extern hyperdrc=/tmp/csgrs-kicad-native-target-v4/release/libhyperdrc.rlib --extern hypercurve=/tmp/csgrs-kicad-native-target-v4/release/deps/libhypercurve-7548676b4153986b.rlib --extern hyperlimit=/tmp/csgrs-kicad-native-target-v4/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib --extern serde_json=/tmp/csgrs-kicad-native-target-v4/release/deps/libserde_json-9f19710c6540a4ad.rlib --extern log=/tmp/csgrs-kicad-native-target-v4/release/deps/liblog-c34fa4a937c92699.rlib /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stages_v1.rs -o /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-stages"
+	User time (seconds): 2.23
+	System time (seconds): 0.33
+	Percent of CPU this job got: 317%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.80
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 291276
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 118
+	Minor (reclaiming a frame) page faults: 79517
+	Voluntary context switches: 2579
+	Involuntary context switches: 163
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 48976
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

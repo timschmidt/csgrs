@@ -1,0 +1,124 @@
+[
+  {
+    "name": "baseline-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "embed-bitcode=no",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--extern",
+      "log=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/liblog-c34fa4a937c92699.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stages_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-stages"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.803335415199399,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8bda51a1c15c8ba11b2541e48835a5c66cb410f3d7f3cc6b08c623845054e344"
+  },
+  {
+    "name": "candidate-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "embed-bitcode=no",
+      "-L",
+      "dependency=/tmp/csgrs-kicad-native-target-v4/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/csgrs-kicad-native-target-v4/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/tmp/csgrs-kicad-native-target-v4/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/tmp/csgrs-kicad-native-target-v4/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/tmp/csgrs-kicad-native-target-v4/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--extern",
+      "log=/tmp/csgrs-kicad-native-target-v4/release/deps/liblog-c34fa4a937c92699.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stages_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-stages"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8127093906514347,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3c093c5de857b99329b89fd8bac5816a34eb3ef78496f0249d71c294794f57ed"
+  },
+  {
+    "name": "baseline-cparti-groups",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-stages",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/projects/cparti/CPArti FPGA dev board.kicad_pcb",
+      "groups",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-cparti-groups.findings.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 36.77456457912922,
+    "stdout_sha256": "2415a39a0c285d1334847c6b3b767ddc722713c9f6afde68988a4789cd87ded4",
+    "stderr_sha256": "4abc8bea4580c91615b813c025074e2220b843547734004d7514e9e5d8679317",
+    "resources_sha256": "f3f77b8ef9afab8cbc1af742588bafc1561907e24827552855222c56cfd6ef44"
+  },
+  {
+    "name": "candidate-cparti-groups",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-stages",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/projects/cparti/CPArti FPGA dev board.kicad_pcb",
+      "groups",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-cparti-groups.findings.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 332.78977583535016,
+    "stdout_sha256": "4cb938c5a426af93b4ad93bd56815bb1bf70b066dce96b190b49fca8b9102b64",
+    "stderr_sha256": "fcc6e8bd1686817733205f4e42a33cd080bc5d3611b34e6defd7c84fb60aa565",
+    "resources_sha256": "5385cf8aef60f6bdfcddfc35cb5829e7dacf277dd4c23992f9b1d11de4016ad1"
+  },
+  {
+    "name": "baseline-hvp109a-groups",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-stages",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/projects/hvp109a/HVP109A.kicad_pcb",
+      "groups",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-hvp109a-groups.findings.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 16.60522428713739,
+    "stdout_sha256": "efb4edd4b6dfda06e986de017362a11e39d4fcaf8fad225c64cb9ce631b79b04",
+    "stderr_sha256": "3d29296c5bbdfc1c99fb354b897ca41869c8d54134cf95cc533417e02e1228e9",
+    "resources_sha256": "17c9d1520e734af548d486dc5e36d1c4108a133ff42925d80dfe62ebfaa74cb0"
+  },
+  {
+    "name": "candidate-hvp109a-groups",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-stages",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/projects/hvp109a/HVP109A.kicad_pcb",
+      "groups",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-hvp109a-groups.findings.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 55.46903181774542,
+    "stdout_sha256": "a449b633dccfbf63c5d052940aa2babbfced2de955e5289e5c807a1d118ea243",
+    "stderr_sha256": "d05abe42a2559f534eabcd1eeb83ca41775c826c8cd6444b4bc01e34a9088248",
+    "resources_sha256": "15dfdec065c3701ce9903edac5b46ecd67cb30158d29e6d110e45a23b5f066ac"
+  }
+]

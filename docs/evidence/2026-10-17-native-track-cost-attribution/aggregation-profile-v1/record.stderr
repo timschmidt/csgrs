@@ -1,0 +1,2 @@
+[ perf record: Woken up 38 times to write data ]
+[ perf record: Captured and wrote 9.450 MB /home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/perf.data (598 samples) ]

@@ -1,0 +1,8 @@
+
+warning: "target:/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-stages": could not open as an executable file: Input/output error.
+
+warning: `target:/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-stages': can't open to read symbols: Input/output error.
+
+warning: Could not load vsyscall page because no executable was specified
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.

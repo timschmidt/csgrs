@@ -1,0 +1,729 @@
+{
+  "status": "observed: native aggregation dominates the rejected exact-track workload; separate neck cost remains",
+  "main_parent_commit": "7906f9da08ad55ad2f36719a9375ed702f896707",
+  "source_changes_applied": false,
+  "implementation_sha256": {},
+  "observations": {
+    "baseline-cparti-groups": {
+      "source_load_seconds": 1.462500204,
+      "native_aggregation_seconds": 28.962392911,
+      "layer_checks_seconds": 0.656410287,
+      "neck_checks_seconds": 5.301778467,
+      "individual_stages_seconds": {
+        "load": 1.462500204,
+        "copper-layers": 28.962392911,
+        "B.Cu:layer-sanity": 0.011278005,
+        "B.Cu:tiny-feature": 0.060360973,
+        "B.Cu:skinny-feature": 0.007936085,
+        "B.Cu:duplicate-island": 0.215035439,
+        "F.Cu:layer-sanity": 0.021236701,
+        "F.Cu:tiny-feature": 0.130315688,
+        "F.Cu:skinny-feature": 0.015183377,
+        "F.Cu:duplicate-island": 0.170128773,
+        "In1.Cu:layer-sanity": 0.003102947,
+        "In1.Cu:tiny-feature": 0.004607184,
+        "In1.Cu:skinny-feature": 0.000611558,
+        "In1.Cu:duplicate-island": 0.001791787,
+        "In2.Cu:layer-sanity": 0.002589532,
+        "In2.Cu:tiny-feature": 0.005106359,
+        "In2.Cu:skinny-feature": 0.000705861,
+        "In2.Cu:duplicate-island": 0.003912271,
+        "unknown:layer-sanity": 7.3375e-05,
+        "unknown:tiny-feature": 4.5257e-05,
+        "unknown:skinny-feature": 3.3887e-05,
+        "unknown:duplicate-island": 2.8398e-05,
+        "duplicate-layers": 0.00232683,
+        "B.Cu:min-copper-neck": 1.586269802,
+        "F.Cu:min-copper-neck": 1.951898745,
+        "In1.Cu:min-copper-neck": 0.280442075,
+        "In2.Cu:min-copper-neck": 1.252522539,
+        "unknown:min-copper-neck": 0.230645306
+      },
+      "findings_per_stage": {
+        "B.Cu:layer-sanity": 0,
+        "B.Cu:tiny-feature": 0,
+        "B.Cu:skinny-feature": 1,
+        "B.Cu:duplicate-island": 0,
+        "F.Cu:layer-sanity": 0,
+        "F.Cu:tiny-feature": 0,
+        "F.Cu:skinny-feature": 1,
+        "F.Cu:duplicate-island": 1,
+        "In1.Cu:layer-sanity": 0,
+        "In1.Cu:tiny-feature": 0,
+        "In1.Cu:skinny-feature": 0,
+        "In1.Cu:duplicate-island": 0,
+        "In2.Cu:layer-sanity": 0,
+        "In2.Cu:tiny-feature": 0,
+        "In2.Cu:skinny-feature": 1,
+        "In2.Cu:duplicate-island": 0,
+        "unknown:layer-sanity": 0,
+        "unknown:tiny-feature": 0,
+        "unknown:skinny-feature": 0,
+        "unknown:duplicate-island": 0,
+        "duplicate-layers": 3,
+        "B.Cu:min-copper-neck": 1,
+        "F.Cu:min-copper-neck": 1,
+        "In1.Cu:min-copper-neck": 1,
+        "In2.Cu:min-copper-neck": 1,
+        "unknown:min-copper-neck": 1
+      },
+      "findings_by_check": {
+        "layer-sanity": 7,
+        "minimum-copper-neck-width": 5
+      },
+      "findings_sha256": "98e4f6f2d3eb7441baa9fddad6663d395cdb876f977db53bb1cb251a62083c55",
+      "peak_rss_kib": 884244,
+      "complete_process_body_seconds": 36.397340343,
+      "neck_islands_traced": 10829,
+      "largest_neck_trace_gaps": [
+        {
+          "at": 31.313922294,
+          "layer": "B.Cu",
+          "island": 3111,
+          "exterior_vertices": 25,
+          "holes": 0,
+          "seconds_to_next_trace": 1.3555344130000009
+        },
+        {
+          "at": 32.944743356,
+          "layer": "F.Cu",
+          "island": 7252,
+          "exterior_vertices": 24,
+          "holes": 0,
+          "seconds_to_next_trace": 0.6238337170000037
+        },
+        {
+          "at": 33.56860938,
+          "layer": "F.Cu",
+          "island": 7254,
+          "exterior_vertices": 7,
+          "holes": 0,
+          "seconds_to_next_trace": 0.6150456800000015
+        },
+        {
+          "at": 35.221766798,
+          "layer": "In2.Cu",
+          "island": 289,
+          "exterior_vertices": 23,
+          "holes": 0,
+          "seconds_to_next_trace": 0.5745813999999996
+        },
+        {
+          "at": 34.628489093,
+          "layer": "In1.Cu",
+          "island": 149,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.27699796200000293
+        },
+        {
+          "at": 36.165236007,
+          "layer": "unknown",
+          "island": 1,
+          "exterior_vertices": 11,
+          "holes": 0,
+          "seconds_to_next_trace": 0.22379481700000525
+        },
+        {
+          "at": 34.389121626,
+          "layer": "F.Cu",
+          "island": 7260,
+          "exterior_vertices": 11,
+          "holes": 0,
+          "seconds_to_next_trace": 0.2234346310000035
+        },
+        {
+          "at": 35.960173144,
+          "layer": "In2.Cu",
+          "island": 292,
+          "exterior_vertices": 14,
+          "holes": 0,
+          "seconds_to_next_trace": 0.19062642499999782
+        },
+        {
+          "at": 34.91210368,
+          "layer": "In2.Cu",
+          "island": 286,
+          "exterior_vertices": 29,
+          "holes": 0,
+          "seconds_to_next_trace": 0.18817187399999824
+        },
+        {
+          "at": 31.146545332,
+          "layer": "B.Cu",
+          "island": 3110,
+          "exterior_vertices": 10,
+          "holes": 0,
+          "seconds_to_next_trace": 0.1673769620000023
+        },
+        {
+          "at": 35.796348198,
+          "layer": "In2.Cu",
+          "island": 290,
+          "exterior_vertices": 28,
+          "holes": 0,
+          "seconds_to_next_trace": 0.16379396800000023
+        },
+        {
+          "at": 34.247906537,
+          "layer": "F.Cu",
+          "island": 7258,
+          "exterior_vertices": 18,
+          "holes": 0,
+          "seconds_to_next_trace": 0.1337362430000013
+        }
+      ],
+      "neck_trace_gap_counts": {
+        "0.001": 23,
+        "0.01": 17,
+        "0.1": 13,
+        "1.0": 1
+      },
+      "instrumentation": "Stage and trace logging only."
+    },
+    "baseline-hvp109a-groups": {
+      "source_load_seconds": 0.883458021,
+      "native_aggregation_seconds": 6.060737272,
+      "layer_checks_seconds": 1.80191083,
+      "neck_checks_seconds": 7.726233892,
+      "individual_stages_seconds": {
+        "load": 0.883458021,
+        "copper-layers": 6.060737272,
+        "B.Cu:layer-sanity": 0.016354147,
+        "B.Cu:tiny-feature": 0.028766634,
+        "B.Cu:skinny-feature": 0.002977726,
+        "B.Cu:duplicate-island": 0.021322085,
+        "F.Cu:layer-sanity": 0.814589652,
+        "F.Cu:tiny-feature": 0.04077318,
+        "F.Cu:skinny-feature": 0.003538117,
+        "F.Cu:duplicate-island": 0.025727802,
+        "In1.Cu:layer-sanity": 0.017919929,
+        "In1.Cu:tiny-feature": 0.002690696,
+        "In1.Cu:skinny-feature": 0.000388283,
+        "In1.Cu:duplicate-island": 0.001324789,
+        "In2.Cu:layer-sanity": 0.001876901,
+        "In2.Cu:tiny-feature": 0.002163881,
+        "In2.Cu:skinny-feature": 0.00028492,
+        "In2.Cu:duplicate-island": 0.000920717,
+        "duplicate-layers": 0.820291371,
+        "B.Cu:min-copper-neck": 0.402861156,
+        "F.Cu:min-copper-neck": 2.396310717,
+        "In1.Cu:min-copper-neck": 1.9565326870000002,
+        "In2.Cu:min-copper-neck": 2.970529332
+      },
+      "findings_per_stage": {
+        "B.Cu:layer-sanity": 0,
+        "B.Cu:tiny-feature": 0,
+        "B.Cu:skinny-feature": 1,
+        "B.Cu:duplicate-island": 0,
+        "F.Cu:layer-sanity": 1,
+        "F.Cu:tiny-feature": 0,
+        "F.Cu:skinny-feature": 1,
+        "F.Cu:duplicate-island": 0,
+        "In1.Cu:layer-sanity": 0,
+        "In1.Cu:tiny-feature": 0,
+        "In1.Cu:skinny-feature": 1,
+        "In1.Cu:duplicate-island": 0,
+        "In2.Cu:layer-sanity": 0,
+        "In2.Cu:tiny-feature": 0,
+        "In2.Cu:skinny-feature": 1,
+        "In2.Cu:duplicate-island": 0,
+        "duplicate-layers": 0,
+        "B.Cu:min-copper-neck": 1,
+        "F.Cu:min-copper-neck": 1,
+        "In1.Cu:min-copper-neck": 1,
+        "In2.Cu:min-copper-neck": 1
+      },
+      "findings_by_check": {
+        "layer-sanity": 5,
+        "geometry-uncertainty": 3,
+        "minimum-copper-neck-width": 1
+      },
+      "findings_sha256": "59fb838d9541e21054fcce06f3447c4623538e0946c207c5af045f6f720768b2",
+      "peak_rss_kib": 251192,
+      "complete_process_body_seconds": 16.475841335,
+      "neck_islands_traced": 1810,
+      "largest_neck_trace_gaps": [
+        {
+          "at": 9.152752618,
+          "layer": "F.Cu",
+          "island": 62,
+          "exterior_vertices": 27,
+          "holes": 0,
+          "seconds_to_next_trace": 2.394773583000001
+        },
+        {
+          "at": 14.251936524,
+          "layer": "In2.Cu",
+          "island": 103,
+          "exterior_vertices": 11,
+          "holes": 0,
+          "seconds_to_next_trace": 0.9070065940000003
+        },
+        {
+          "at": 13.506940581,
+          "layer": "In2.Cu",
+          "island": 102,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.7449959429999993
+        },
+        {
+          "at": 12.267012347,
+          "layer": "In1.Cu",
+          "island": 130,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.731646940000001
+        },
+        {
+          "at": 15.746552563,
+          "layer": "In2.Cu",
+          "island": 106,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.7281402600000018
+        },
+        {
+          "at": 11.550821515,
+          "layer": "In1.Cu",
+          "island": 128,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.7161546739999984
+        },
+        {
+          "at": 15.158943118,
+          "layer": "In2.Cu",
+          "island": 104,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.5875767570000008
+        },
+        {
+          "at": 12.998690345,
+          "layer": "In1.Cu",
+          "island": 132,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.50541898
+        },
+        {
+          "at": 8.77932798,
+          "layer": "B.Cu",
+          "island": 1506,
+          "exterior_vertices": 7,
+          "holes": 0,
+          "seconds_to_next_trace": 0.37184496699999947
+        },
+        {
+          "at": 8.758012865,
+          "layer": "B.Cu",
+          "island": 478,
+          "exterior_vertices": 5,
+          "holes": 0,
+          "seconds_to_next_trace": 0.00015480899999964493
+        },
+        {
+          "at": 8.761732839,
+          "layer": "B.Cu",
+          "island": 639,
+          "exterior_vertices": 5,
+          "holes": 0,
+          "seconds_to_next_trace": 0.00013149099999942848
+        },
+        {
+          "at": 8.756111495,
+          "layer": "B.Cu",
+          "island": 385,
+          "exterior_vertices": 5,
+          "holes": 0,
+          "seconds_to_next_trace": 0.00010137299999968263
+        }
+      ],
+      "neck_trace_gap_counts": {
+        "0.001": 9,
+        "0.01": 9,
+        "0.1": 9,
+        "1.0": 1
+      },
+      "instrumentation": "Stage and trace logging only."
+    },
+    "candidate-cparti-groups": {
+      "source_load_seconds": 5.519258219,
+      "native_aggregation_seconds": 220.172968539,
+      "layer_checks_seconds": 22.664639818,
+      "neck_checks_seconds": 83.258199342,
+      "individual_stages_seconds": {
+        "load": 5.519258219,
+        "copper-layers": 220.172968539,
+        "B.Cu:layer-sanity": 3.869678855,
+        "B.Cu:tiny-feature": 0.438782448,
+        "B.Cu:skinny-feature": 0.012314314,
+        "B.Cu:duplicate-island": 4.203883547,
+        "F.Cu:layer-sanity": 11.369186372,
+        "F.Cu:tiny-feature": 1.045441104,
+        "F.Cu:skinny-feature": 0.022571919,
+        "F.Cu:duplicate-island": 1.04172442,
+        "In1.Cu:layer-sanity": 0.148552885,
+        "In1.Cu:tiny-feature": 0.004564807,
+        "In1.Cu:skinny-feature": 0.000389603,
+        "In1.Cu:duplicate-island": 0.001801366,
+        "In2.Cu:layer-sanity": 0.457399149,
+        "In2.Cu:tiny-feature": 0.033082748,
+        "In2.Cu:skinny-feature": 0.000742949,
+        "In2.Cu:duplicate-island": 0.00873357,
+        "unknown:layer-sanity": 0.000101253,
+        "unknown:tiny-feature": 4.0737e-05,
+        "unknown:skinny-feature": 3.4217e-05,
+        "unknown:duplicate-island": 3.2638e-05,
+        "duplicate-layers": 0.005580917,
+        "B.Cu:min-copper-neck": 23.365969503,
+        "F.Cu:min-copper-neck": 56.39818345,
+        "In1.Cu:min-copper-neck": 0.253951025,
+        "In2.Cu:min-copper-neck": 3.029189062,
+        "unknown:min-copper-neck": 0.210906302
+      },
+      "findings_per_stage": {
+        "B.Cu:layer-sanity": 1,
+        "B.Cu:tiny-feature": 0,
+        "B.Cu:skinny-feature": 0,
+        "B.Cu:duplicate-island": 0,
+        "F.Cu:layer-sanity": 1,
+        "F.Cu:tiny-feature": 0,
+        "F.Cu:skinny-feature": 0,
+        "F.Cu:duplicate-island": 1,
+        "In1.Cu:layer-sanity": 0,
+        "In1.Cu:tiny-feature": 0,
+        "In1.Cu:skinny-feature": 0,
+        "In1.Cu:duplicate-island": 0,
+        "In2.Cu:layer-sanity": 1,
+        "In2.Cu:tiny-feature": 0,
+        "In2.Cu:skinny-feature": 0,
+        "In2.Cu:duplicate-island": 0,
+        "unknown:layer-sanity": 0,
+        "unknown:tiny-feature": 0,
+        "unknown:skinny-feature": 0,
+        "unknown:duplicate-island": 0,
+        "duplicate-layers": 3,
+        "B.Cu:min-copper-neck": 1,
+        "F.Cu:min-copper-neck": 1,
+        "In1.Cu:min-copper-neck": 1,
+        "In2.Cu:min-copper-neck": 1,
+        "unknown:min-copper-neck": 1
+      },
+      "findings_by_check": {
+        "layer-sanity": 7,
+        "minimum-copper-neck-width": 5
+      },
+      "findings_sha256": "2885ad9f22b464e9a411e3736ce9c1e9d49e37272749dcfc966c08c3aae056dc",
+      "peak_rss_kib": 1663420,
+      "complete_process_body_seconds": 331.625947143,
+      "neck_islands_traced": 10829,
+      "largest_neck_trace_gaps": [
+        {
+          "at": 270.28023339,
+          "layer": "B.Cu",
+          "island": 3111,
+          "exterior_vertices": 25,
+          "holes": 0,
+          "seconds_to_next_trace": 1.4498497730000395
+        },
+        {
+          "at": 326.536405565,
+          "layer": "F.Cu",
+          "island": 7252,
+          "exterior_vertices": 24,
+          "holes": 0,
+          "seconds_to_next_trace": 0.5911949090000235
+        },
+        {
+          "at": 327.127634191,
+          "layer": "F.Cu",
+          "island": 7254,
+          "exterior_vertices": 7,
+          "holes": 0,
+          "seconds_to_next_trace": 0.5799947179999663
+        },
+        {
+          "at": 330.523973493,
+          "layer": "In2.Cu",
+          "island": 289,
+          "exterior_vertices": 23,
+          "holes": 0,
+          "seconds_to_next_trace": 0.5524465799999803
+        },
+        {
+          "at": 328.133593488,
+          "layer": "In1.Cu",
+          "island": 149,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.25047050400002036
+        },
+        {
+          "at": 327.902701799,
+          "layer": "F.Cu",
+          "island": 7260,
+          "exterior_vertices": 11,
+          "holes": 0,
+          "seconds_to_next_trace": 0.2171563219999939
+        },
+        {
+          "at": 331.419696012,
+          "layer": "unknown",
+          "island": 1,
+          "exterior_vertices": 11,
+          "holes": 0,
+          "seconds_to_next_trace": 0.2048473480000439
+        },
+        {
+          "at": 330.23082968,
+          "layer": "In2.Cu",
+          "island": 286,
+          "exterior_vertices": 29,
+          "holes": 0,
+          "seconds_to_next_trace": 0.17986448400000654
+        },
+        {
+          "at": 331.232132086,
+          "layer": "In2.Cu",
+          "island": 292,
+          "exterior_vertices": 14,
+          "holes": 0,
+          "seconds_to_next_trace": 0.1745858770000268
+        },
+        {
+          "at": 282.287991066,
+          "layer": "F.Cu",
+          "island": 2466,
+          "exterior_vertices": 60,
+          "holes": 0,
+          "seconds_to_next_trace": 0.16587015599998267
+        },
+        {
+          "at": 270.121885457,
+          "layer": "B.Cu",
+          "island": 3110,
+          "exterior_vertices": 10,
+          "holes": 0,
+          "seconds_to_next_trace": 0.15834793299995908
+        },
+        {
+          "at": 331.076420073,
+          "layer": "In2.Cu",
+          "island": 290,
+          "exterior_vertices": 28,
+          "holes": 0,
+          "seconds_to_next_trace": 0.15568212499999845
+        }
+      ],
+      "neck_trace_gap_counts": {
+        "0.001": 1768,
+        "0.01": 1762,
+        "0.1": 14,
+        "1.0": 1
+      },
+      "instrumentation": "CPArti candidate includes debugger pauses and a three-second perf sample during aggregation, plus one debugger pause during neck. All rows include stage and trace logging."
+    },
+    "candidate-hvp109a-groups": {
+      "source_load_seconds": 1.756314361,
+      "native_aggregation_seconds": 29.254448668,
+      "layer_checks_seconds": 7.874430761,
+      "neck_checks_seconds": 16.186674709,
+      "individual_stages_seconds": {
+        "load": 1.756314361,
+        "copper-layers": 29.254448668,
+        "B.Cu:layer-sanity": 1.9223047389999999,
+        "B.Cu:tiny-feature": 0.173516601,
+        "B.Cu:skinny-feature": 0.004423406,
+        "B.Cu:duplicate-island": 0.049079469,
+        "F.Cu:layer-sanity": 3.074916981,
+        "F.Cu:tiny-feature": 0.168779506,
+        "F.Cu:skinny-feature": 0.004477992,
+        "F.Cu:duplicate-island": 0.068402791,
+        "In1.Cu:layer-sanity": 0.308082056,
+        "In1.Cu:tiny-feature": 0.012914002,
+        "In1.Cu:skinny-feature": 0.000398322,
+        "In1.Cu:duplicate-island": 0.002859054,
+        "In2.Cu:layer-sanity": 0.19594103,
+        "In2.Cu:tiny-feature": 0.008515795,
+        "In2.Cu:skinny-feature": 0.000257592,
+        "In2.Cu:duplicate-island": 0.001733251,
+        "duplicate-layers": 1.877828174,
+        "B.Cu:min-copper-neck": 7.976429325,
+        "F.Cu:min-copper-neck": 2.3723138759999998,
+        "In1.Cu:min-copper-neck": 2.554831418,
+        "In2.Cu:min-copper-neck": 3.28310009
+      },
+      "findings_per_stage": {
+        "B.Cu:layer-sanity": 0,
+        "B.Cu:tiny-feature": 0,
+        "B.Cu:skinny-feature": 0,
+        "B.Cu:duplicate-island": 0,
+        "F.Cu:layer-sanity": 1,
+        "F.Cu:tiny-feature": 0,
+        "F.Cu:skinny-feature": 0,
+        "F.Cu:duplicate-island": 0,
+        "In1.Cu:layer-sanity": 0,
+        "In1.Cu:tiny-feature": 0,
+        "In1.Cu:skinny-feature": 0,
+        "In1.Cu:duplicate-island": 0,
+        "In2.Cu:layer-sanity": 0,
+        "In2.Cu:tiny-feature": 0,
+        "In2.Cu:skinny-feature": 0,
+        "In2.Cu:duplicate-island": 0,
+        "duplicate-layers": 0,
+        "B.Cu:min-copper-neck": 1,
+        "F.Cu:min-copper-neck": 1,
+        "In1.Cu:min-copper-neck": 1,
+        "In2.Cu:min-copper-neck": 1
+      },
+      "findings_by_check": {
+        "layer-sanity": 1,
+        "geometry-uncertainty": 3,
+        "minimum-copper-neck-width": 1
+      },
+      "findings_sha256": "2473945566dec24f764702c0c30886a44dba36c047b80dbf35e9fe5ca1c98736",
+      "peak_rss_kib": 492856,
+      "complete_process_body_seconds": 55.075505901,
+      "neck_islands_traced": 1810,
+      "largest_neck_trace_gaps": [
+        {
+          "at": 46.866140267,
+          "layer": "F.Cu",
+          "island": 62,
+          "exterior_vertices": 27,
+          "holes": 0,
+          "seconds_to_next_trace": 2.3705388580000033
+        },
+        {
+          "at": 52.911530274,
+          "layer": "In2.Cu",
+          "island": 103,
+          "exterior_vertices": 11,
+          "holes": 0,
+          "seconds_to_next_trace": 0.8847424430000004
+        },
+        {
+          "at": 52.184107573,
+          "layer": "In2.Cu",
+          "island": 102,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.7274227010000018
+        },
+        {
+          "at": 54.359005341,
+          "layer": "In2.Cu",
+          "island": 106,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.7156931960000037
+        },
+        {
+          "at": 50.599442801,
+          "layer": "In1.Cu",
+          "island": 130,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.7113206759999997
+        },
+        {
+          "at": 49.900757567,
+          "layer": "In1.Cu",
+          "island": 128,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.698652715999998
+        },
+        {
+          "at": 53.796272717,
+          "layer": "In2.Cu",
+          "island": 104,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.5627026459999982
+        },
+        {
+          "at": 51.310796705,
+          "layer": "In1.Cu",
+          "island": 132,
+          "exterior_vertices": 9,
+          "holes": 0,
+          "seconds_to_next_trace": 0.48075733499999984
+        },
+        {
+          "at": 46.492205614,
+          "layer": "B.Cu",
+          "island": 1506,
+          "exterior_vertices": 7,
+          "holes": 0,
+          "seconds_to_next_trace": 0.37211463799999933
+        },
+        {
+          "at": 41.315914136,
+          "layer": "B.Cu",
+          "island": 466,
+          "exterior_vertices": 57,
+          "holes": 0,
+          "seconds_to_next_trace": 0.05462255699999474
+        },
+        {
+          "at": 40.045942735,
+          "layer": "B.Cu",
+          "island": 374,
+          "exterior_vertices": 56,
+          "holes": 0,
+          "seconds_to_next_trace": 0.05452017500000039
+        },
+        {
+          "at": 40.52582913,
+          "layer": "B.Cu",
+          "island": 413,
+          "exterior_vertices": 56,
+          "holes": 0,
+          "seconds_to_next_trace": 0.05434961600000321
+        }
+      ],
+      "neck_trace_gap_counts": {
+        "0.001": 204,
+        "0.01": 204,
+        "0.1": 9,
+        "1.0": 1
+      },
+      "instrumentation": "Stage and trace logging only."
+    }
+  },
+  "owning_layer_findings": [
+    "The full layer-sanity application group includes copper aggregation. CPArti candidate attribution assigns most of that group to aggregation, not to the public layer_sanity function alone.",
+    "The verified aggregation stack enters CurveRegionBooleanContext unary candidate pairs and CurveIntersectionBatchCache::circular_support_relation. Current code scans all retained support-pair entries with arithmetic Point2 equality. This is a concrete optimization candidate, not a measured fraction of whole-stage time.",
+    "Later perf samples include scalar interval/conversion and retained-ray classification work. Call-graph unwinding is incomplete; 598 cycle samples with zero reported losses do not establish reliable inclusive percentages or a single cause.",
+    "The verified neck stack enters native offset regularization and retained-loop bounds. The independent neck resource limit remains a separate admission requirement; faster source aggregation alone cannot make it pass."
+  ],
+  "retained_failed_attempts": {
+    "aggregation-backtrace-v1": "Debugger exited zero but could not load the executable across the sandbox namespace. Its two unknown frames are not a usable attribution.",
+    "aggregation-backtrace-v2": "Explicit verified executable and host sysroot resolve the native stack. The debugger still warns about different PID namespaces; this is one observed stack, not exhaustive thread coverage.",
+    "backtrace-v3": "Stage guard failed before creating output or attaching: aggregation had already completed. No snapshot receives credit."
+  },
+  "native_runtime_admitted": false,
+  "full_archived_integration_admitted": false,
+  "full_plan_complete": false,
+  "full_pre_push_matrix_executed": false,
+  "original_workload_gates_unchanged": true,
+  "published_package_pipeline_executed": false,
+  "limitations": [
+    "Diagnostic stage timings compare different represented source sets, carry instrumentation and use one process per board. They are not speedup claims or a replacement for the original full-project gates.",
+    "All returned findings, including geometry uncertainty, remain in raw JSON. Certified local evaluation receipts do not establish exact source intent, topology of every report or certification of readiness heuristics.",
+    "The public checks are executed in application order; earlier stages warm later queries. Cold-neck mode is implemented in the probe but was not executed here. E36 retains the separately executed cold-neck failure.",
+    "Baseline libraries come from completed E35 consumer validation and candidate libraries from completed E36 v4 CLI validation. Source manifests, full library hashes, exact flags and toolchain are retained; different feature histories and geometry preclude a performance-only comparison.",
+    "No new kernel code, cache, internal resource bound or provenance mechanism is implemented. External containment and process RSS are not heap-byte or total-work proofs.",
+    "Historical artifact audit remains failed/incomplete with 27093 missing paths. Only this new diagnostic evidence is added to the physical manifest."
+  ],
+  "next": [
+    "Reproduce a growing batch of native circular supports against the unchanged kernel. Compare exact support-key indexing with existing linear lookup while preserving ordered pairs, independent exact intersection oracles, symbolic fallback, uncertainty, policy admissibility, budget recovery and output determinism.",
+    "Measure allocations, retained state and cold/warm lookup costs over the same completed input/output contract. Retain unfavorable cases; no indexed cache is admitted from this stack sample alone.",
+    "Investigate native loop-bound reuse and neck construction evidence separately. Any repair must preserve exact geometry and prove its own acceptance tests before replaying both original full-project resource gates.",
+    "Continue the complete properties plan, typed failures, ordinary strict completion and shipped user-path validation. E36 and the original full native bundle remain unadmitted."
+  ]
+}

@@ -1,0 +1,47 @@
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x0000561d763bd667 in <hyperreal::computable::node::Computable>::exact_rational ()
+
+Thread 1 (Thread 0x7f6476810240 (LWP 1615485) "candidate-stage"):
+#0  0x0000561d763bd667 in <hyperreal::computable::node::Computable>::exact_rational ()
+#1  0x0000561d763d3a2f in <hyperreal::computable::node::Computable>::pi_acos_linear_form ()
+#2  0x0000561d763d3b2d in <hyperreal::computable::node::Computable>::pi_acos_linear_form ()
+#3  0x0000561d763d3af3 in <hyperreal::computable::node::Computable>::pi_acos_linear_form ()
+#4  0x0000561d763b9f79 in <hyperreal::computable::node::Computable>::exact_sign ()
+#5  0x0000561d763b87d5 in <hyperreal::computable::node::Computable>::structural_facts ()
+#6  0x0000561d75ef7404 in <hyperreal::real::arithmetic::Real>::structural_facts ()
+#7  0x0000561d75f01775 in hypercurve::classify::compare_reals ()
+#8  0x0000561d75e18aab in hypercurve::bbox::include_coordinate ()
+#9  0x0000561d75e00595 in <hypercurve::bbox::Aabb2>::from_points::<[&hypercurve::point::Point2; 3]> ()
+#10 0x0000561d75a6b8a9 in <hypercurve::rational_bezier::RationalQuadraticBezier2>::certified_bounds ()
+#11 0x0000561d75e7ff2b in hypercurve::curve_support::native_subcurve_outer_bounds ()
+#12 0x0000561d75e80882 in hypercurve::curve_support::subcurve_certified_outer_bounds ()
+#13 0x0000561d75e57013 in <hypercurve::curve_support::CurveSupport2>::certified_outer_bounds ()
+#14 0x0000561d75e2919f in hypercurve::bezier_region::point_location::retained_fragment_query_bounds ()
+#15 0x0000561d75e28d52 in hypercurve::bezier_region::point_location::retained_loop_query_bounds ()
+#16 0x0000561d75e31387 in hypercurve::bezier_region::point_location::retained_loops_have_pairwise_disjoint_bounds ()
+#17 0x0000561d760c9154 in <hypercurve::bezier_region::CurveRegion2>::with_pairwise_disjoint_material_loop_roles ()
+#18 0x0000561d75f7a3fa in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region ()
+#19 0x0000561d760b8e52 in <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw ()
+#20 0x0000561d75eb2359 in hypercurve::bezier_region::offset_joins::regularized_exact_offset_band_arrangement ()
+#21 0x0000561d760b10a6 in <hypercurve::bezier_region::CurveRegion2>::offset_with_policy::{closure#0} ()
+#22 0x0000561d760cb941 in <hypercurve::bezier_region::CurveRegion2>::offset ()
+#23 0x0000561d759e9aa1 in hyperdrc::operations::evaluate::<hyperdrc::PcbRegion, <hyperdrc::PcbRegion>::offset::{closure#1}> ()
+#24 0x0000561d75994b58 in hyperdrc::checks::offset_for_check ()
+#25 0x0000561d7598d6fe in hyperdrc::checks::run_geometry_check::<hyperdrc::checks::layer::min_copper_neck_width::{closure#0}> ()
+#26 0x0000561d759a7ba7 in hyperdrc::checks::layer::min_copper_neck_width ()
+#27 0x0000561d759891af in hypercurve::policy::evaluate_under::<alloc::vec::Vec<hyperdrc::report::Violation>, stages_v1::main::{closure#7}> ()
+#28 0x0000561d7596f002 in stages_v1::main ()
+#29 0x0000561d759874e3 in std::sys::backtrace::__rust_begin_short_backtrace::<fn() -> core::result::Result<(), alloc::boxed::Box<dyn core::error::Error>>, core::result::Result<(), alloc::boxed::Box<dyn core::error::Error>>> ()
+#30 0x0000561d759887c1 in std::rt::lang_start::<core::result::Result<(), alloc::boxed::Box<dyn core::error::Error>>>::{closure#0} ()
+#31 0x0000561d76471e27 in core::ops::function::impls::{impl#2}::call_once<(), (dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe)> () at library/core/src/ops/function.rs:287
+#32 std::panicking::catch_unwind::do_call<&(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe), i32> () at library/std/src/panicking.rs:576
+#33 std::panicking::catch_unwind<i32, &(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe)> () at library/std/src/panicking.rs:544
+#34 std::panic::catch_unwind<&(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe), i32> () at library/std/src/panic.rs:359
+#35 std::rt::lang_start_internal::{closure#0} () at library/std/src/rt.rs:175
+#36 std::panicking::catch_unwind::do_call<std::rt::lang_start_internal::{closure_env#0}, isize> () at library/std/src/panicking.rs:576
+#37 std::panicking::catch_unwind<isize, std::rt::lang_start_internal::{closure_env#0}> () at library/std/src/panicking.rs:544
+#38 std::panic::catch_unwind<std::rt::lang_start_internal::{closure_env#0}, isize> () at library/std/src/panic.rs:359
+#39 std::rt::lang_start_internal () at library/std/src/rt.rs:171
+#40 0x0000561d75975bc5 in main ()
+[Inferior 1 (process 1615485) detached]

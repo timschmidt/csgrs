@@ -1,0 +1,60 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 598  of event 'cpu/cycles/Pu'
+# Event count (approx.): 12773260691
+#
+# Overhead  Command          Shared Object     Symbol                                                                                                                                                                                                                                                                                                                                                                                                                              
+# ........  ...............  ................  ....................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+     6.74%  candidate-stage  candidate-stages  [.] <hyperreal::rational::arithmetic::Rational>::to_f64_enclosure
+     5.69%  candidate-stage  candidate-stages  [.] hyperreal::rational::arithmetic::normalized_rational_magnitude_interval
+     5.67%  candidate-stage  candidate-stages  [.] num_bigint::biguint::shift::biguint_shl2
+     5.21%  candidate-stage  candidate-stages  [.] <hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced
+     4.69%  candidate-stage  candidate-stages  [.] num_bigint::biguint::shift::biguint_shr2
+     4.37%  candidate-stage  libc.so.6         [.] malloc
+     3.20%  candidate-stage  candidate-stages  [.] <num_bigint::biguint::BigUint>::normalized
+     2.85%  candidate-stage  candidate-stages  [.] <alloc::vec::Vec<(i16, hyperreal::computable::node::RadicalCoefficient)> as core::clone::Clone>::clone
+     2.52%  candidate-stage  candidate-stages  [.] <hyperreal::computable::node::EvaluationCache>::at_precision
+     2.36%  candidate-stage  libc.so.6         [.] _int_malloc
+     2.35%  candidate-stage  libc.so.6         [.] cfree@GLIBC_2.2.5
+     2.18%  candidate-stage  candidate-stages  [.] <num_bigint::biguint::BigUint>::trailing_zeros
+     2.11%  candidate-stage  candidate-stages  [.] hyperreal::verified::gcd::gcd_u128
+     2.02%  candidate-stage  candidate-stages  [.] <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo
+     2.02%  candidate-stage  libc.so.6         [.] __memcmp_avx2_movbe
+     2.01%  candidate-stage  libc.so.6         [.] __memmove_avx_unaligned_erms
+     1.85%  candidate-stage  candidate-stages  [.] <hyperreal::computable::node::Computable>::approx_signal
+     1.85%  candidate-stage  candidate-stages  [.] <hyperreal::real::arithmetic::Real>::interval_from_approximation
+     1.83%  candidate-stage  candidate-stages  [.] <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1}
+     1.69%  candidate-stage  candidate-stages  [.] hypercurve::bezier_region::point_location::classify_point_with_retained_ray_skipping_origin
+     1.51%  candidate-stage  candidate-stages  [.] <num_bigint::biguint::BigUint as core::ops::arith::Add<&num_bigint::biguint::BigUint>>::add
+     1.51%  candidate-stage  candidate-stages  [.] <hyperreal::real::arithmetic::Real>::interval_from_approximation::scaled_integer
+     1.34%  candidate-stage  candidate-stages  [.] <hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts
+     1.34%  candidate-stage  candidate-stages  [.] <alloc::raw_vec::RawVecInner>::finish_grow
+     1.34%  candidate-stage  candidate-stages  [.] <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul
+     1.34%  candidate-stage  candidate-stages  [.] hypercurve::bezier_region::certified_f64_enclosure
+     1.34%  candidate-stage  candidate-stages  [.] <alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::drop_slow
+     1.34%  candidate-stage  candidate-stages  [.] <alloc::raw_vec::RawVec<u64>>::grow_one
+     1.34%  candidate-stage  candidate-stages  [.] <hyperreal::computable::node::PiLaurentPolynomial>::insert
+     1.17%  candidate-stage  candidate-stages  [.] <hyperreal::rational::arithmetic::Rational>::mul_div_words
+     1.01%  candidate-stage  candidate-stages  [.] <&num_bigint::biguint::BigUint as core::ops::arith::Sub<num_bigint::biguint::BigUint>>::sub
+     0.84%  candidate-stage  candidate-stages  [.] <hyperreal::rational::arithmetic::Rational>::add_sub_words
+     0.84%  candidate-stage  candidate-stages  [.] hyperreal::verified::fixed_gcd::gcd_fixed::<8>
+     0.84%  candidate-stage  libc.so.6         [.] _int_free_chunk
+     0.69%  candidate-stage  candidate-stages  [.] <hyperreal::rational::arithmetic::Rational>::learn_dyadic_denominator_shift
+     0.67%  candidate-stage  candidate-stages  [.] <num_bigint::biguint::BigUint>::normalized
+     0.67%  candidate-stage  candidate-stages  [.] __rustc::__rdl_dealloc
+     0.67%  candidate-stage  candidate-stages  [.] <alloc::vec::Vec<(hyperreal::rational::arithmetic::Rational, hyperreal::rational::arithmetic::Rational)> as core::ops::drop::Drop>::drop
+     0.67%  candidate-stage  candidate-stages  [.] <hyperreal::computable::node::PiLaurentPolynomial>::multiply
+     0.67%  candidate-stage  candidate-stages  [.] <hyperreal::real::arithmetic::Real>::certified_rational_interval
+     0.67%  candidate-stage  candidate-stages  [.] __rustc::__rdl_alloc
+     0.50%  candidate-stage  candidate-stages  [.] <hyperreal::rational::arithmetic::Rational>::retain_linear
+     0.50%  candidate-stage  candidate-stages  [.] <&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg
+     0.50%  candidate-stage  candidate-stages  [.] <hyperreal::rational::arithmetic::Rational>::from_word_magnitude_difference
+
+
+#
+# (Tip: For tracepoint events, try: perf report -s trace_fields)
+#

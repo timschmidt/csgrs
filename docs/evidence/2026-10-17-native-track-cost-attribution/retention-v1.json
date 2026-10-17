@@ -1,0 +1,257 @@
+{
+  "complete": true,
+  "format_exit_code": 0,
+  "physical_artifacts_not_duplicated_in_git": [
+    {
+      "bytes": 9925196,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/perf.data",
+      "sha256": "1ed910054354a5f2c1ad7f89fdd4a29886078269f1d429efb32173a0830208d7"
+    },
+    {
+      "bytes": 24394256,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-stages",
+      "sha256": "e7d5ab91bf58743d32adcdff9a602250c3ffb970eb778e7e3135ea88fb8f7981"
+    },
+    {
+      "bytes": 24485304,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-stages",
+      "sha256": "09186a8ffa57e690736eaea63b5ec508d7f77b4408c6b87fd63d9767e567e408"
+    }
+  ],
+  "retained_files": {
+    "aggregation-backtrace-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-backtrace-v1/result.json",
+      "sha256": "bbc9389eb97ed86d2cccecd6c4cd176cd3289c8bf9a30be9b774a9fde6663406"
+    },
+    "aggregation-backtrace-v1/stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-backtrace-v1/stderr",
+      "sha256": "f7b2f003cd2f557dd7f40ae3ff2299100d8dc9a99d94e96d9b82ab899e59e541"
+    },
+    "aggregation-backtrace-v1/stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-backtrace-v1/stdout",
+      "sha256": "8ba88539a03eff6bbb66d95d043292e81e793e65dcea1474a6f39617086786a1"
+    },
+    "aggregation-backtrace-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-backtrace-v2/result.json",
+      "sha256": "1d6ab4c501414116df5dadae1bae03a92b93538f284eed7a21d28d5b37809c06"
+    },
+    "aggregation-backtrace-v2/stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-backtrace-v2/stderr",
+      "sha256": "d3ffa4a8a4af46195db222fb795fba972bc8452c4285914c0943cd753b9ff798"
+    },
+    "aggregation-backtrace-v2/stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-backtrace-v2/stdout",
+      "sha256": "b26871fb2e31b2da5cbca968c963bf7160deac67cc5aad50352ee811e8c3f2f4"
+    },
+    "aggregation-profile-v1/flat.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/flat.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "aggregation-profile-v1/flat.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/flat.stdout",
+      "sha256": "f867aecc8add1cff51677c3ad10ead4f74038ee04321e52cb60363c7b3eabd55"
+    },
+    "aggregation-profile-v1/record.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/record.stderr",
+      "sha256": "83e7640dbb9e9fea426d62e038e5020d45897954132d007fa97b084a1693917d"
+    },
+    "aggregation-profile-v1/record.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/record.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "aggregation-profile-v1/report.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/report.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "aggregation-profile-v1/report.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/report.stdout",
+      "sha256": "6831fa7368a07bf01ed4e99863dad20051feb2e3458f5579a040afa76a827882"
+    },
+    "aggregation-profile-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/aggregation-profile-v1/result.json",
+      "sha256": "9a19c1b18c1441a67f232a0f8b7209a752c4a394cfcc4802787392be0374eeba"
+    },
+    "backtrace_neck_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/backtrace_neck_v1.py",
+      "sha256": "7f5d49a6e4c7e7b25ef8f342cd4fd52a3f6ad4b3c48226ff6716345be1ca91ea"
+    },
+    "backtrace_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/backtrace_v1.py",
+      "sha256": "50465f110dbbfc1b694bdd23277ef5dd7e7431c5ccef7b6ed8b1f72ba2fc2ff2"
+    },
+    "backtrace_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/backtrace_v2.py",
+      "sha256": "bfccb64805e92028191fd8ab34e90d9bb9dca3852a7ef0d93844b7ec7c6b2834"
+    },
+    "backtrace_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/backtrace_v3.py",
+      "sha256": "71da8f2ef7aef9c287707cffe2174e421c90b0a95abbf6806ef9876243fbe922"
+    },
+    "checkpoint-preparation-v2.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/checkpoint-preparation-v2.json",
+      "sha256": "e6657f15e69c891ceeb59bbdfadb257c1e1eeb52ce94367d5e6e0844b7919231"
+    },
+    "checkpoint_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/checkpoint_v1.py",
+      "sha256": "41477340c1f4987ccbd394af04c80b588c8dddaaaaa5f2fa6508244fb9ca4d24"
+    },
+    "checkpoint_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/checkpoint_v2.py",
+      "sha256": "279e39eee1096529ed544055ff032ed90a6f4edd14cce227f7a784f220c4be9d"
+    },
+    "contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/contract-v1.md",
+      "sha256": "ad3466ed072a7b48b5350f7894c0e10ba68bb32efdedaf1bb340462449e691fb"
+    },
+    "decision-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/decision-v1.json",
+      "sha256": "67693c99280553acd70b068141367ae80f11d1b827cfa9a4d28de3833129932f"
+    },
+    "neck-backtrace-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/neck-backtrace-v1/result.json",
+      "sha256": "92503c33332ca6359da0465cc80a840a80ce48d1d5016fd3f5f2b05b58a24894"
+    },
+    "neck-backtrace-v1/stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/neck-backtrace-v1/stderr",
+      "sha256": "d3ffa4a8a4af46195db222fb795fba972bc8452c4285914c0943cd753b9ff798"
+    },
+    "neck-backtrace-v1/stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/neck-backtrace-v1/stdout",
+      "sha256": "1dd2105bb29b9471ed803f765539f73dc51fd5e1f0f83f44932e6e984fbb5532"
+    },
+    "observe_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/observe_v1.py",
+      "sha256": "e41ea6dfd5a6586b89698b87cc03b336d59d788fe71c1b0be59e141d853736e5"
+    },
+    "prepare_checkpoint_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/prepare_checkpoint_v2.py",
+      "sha256": "8d7d3ebb403564ce1c76ec54391a8ebb8440e5bdeaa4a726a39e0df64de3d787"
+    },
+    "profile_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/profile_v1.py",
+      "sha256": "df10a5a773f368cd6eafa99bc692fda53f4ae347b363e32e1e3d30b32221ec34"
+    },
+    "progress-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/progress-v1.md",
+      "sha256": "0f2c0758f021545eca422d979c88e0b4766eedad35ea12866f53d17ed296c842"
+    },
+    "stage-observations-v1/baseline-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-compile.resources",
+      "sha256": "8bda51a1c15c8ba11b2541e48835a5c66cb410f3d7f3cc6b08c623845054e344"
+    },
+    "stage-observations-v1/baseline-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stage-observations-v1/baseline-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stage-observations-v1/baseline-cparti-groups.findings.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-cparti-groups.findings.json",
+      "sha256": "98e4f6f2d3eb7441baa9fddad6663d395cdb876f977db53bb1cb251a62083c55"
+    },
+    "stage-observations-v1/baseline-cparti-groups.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-cparti-groups.resources",
+      "sha256": "f3f77b8ef9afab8cbc1af742588bafc1561907e24827552855222c56cfd6ef44"
+    },
+    "stage-observations-v1/baseline-cparti-groups.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-cparti-groups.stderr",
+      "sha256": "4abc8bea4580c91615b813c025074e2220b843547734004d7514e9e5d8679317"
+    },
+    "stage-observations-v1/baseline-cparti-groups.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-cparti-groups.stdout",
+      "sha256": "2415a39a0c285d1334847c6b3b767ddc722713c9f6afde68988a4789cd87ded4"
+    },
+    "stage-observations-v1/baseline-hvp109a-groups.findings.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-hvp109a-groups.findings.json",
+      "sha256": "59fb838d9541e21054fcce06f3447c4623538e0946c207c5af045f6f720768b2"
+    },
+    "stage-observations-v1/baseline-hvp109a-groups.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-hvp109a-groups.resources",
+      "sha256": "17c9d1520e734af548d486dc5e36d1c4108a133ff42925d80dfe62ebfaa74cb0"
+    },
+    "stage-observations-v1/baseline-hvp109a-groups.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-hvp109a-groups.stderr",
+      "sha256": "3d29296c5bbdfc1c99fb354b897ca41869c8d54134cf95cc533417e02e1228e9"
+    },
+    "stage-observations-v1/baseline-hvp109a-groups.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/baseline-hvp109a-groups.stdout",
+      "sha256": "efb4edd4b6dfda06e986de017362a11e39d4fcaf8fad225c64cb9ce631b79b04"
+    },
+    "stage-observations-v1/candidate-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-compile.resources",
+      "sha256": "3c093c5de857b99329b89fd8bac5816a34eb3ef78496f0249d71c294794f57ed"
+    },
+    "stage-observations-v1/candidate-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stage-observations-v1/candidate-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stage-observations-v1/candidate-cparti-groups.findings.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-cparti-groups.findings.json",
+      "sha256": "2885ad9f22b464e9a411e3736ce9c1e9d49e37272749dcfc966c08c3aae056dc"
+    },
+    "stage-observations-v1/candidate-cparti-groups.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-cparti-groups.resources",
+      "sha256": "5385cf8aef60f6bdfcddfc35cb5829e7dacf277dd4c23992f9b1d11de4016ad1"
+    },
+    "stage-observations-v1/candidate-cparti-groups.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-cparti-groups.stderr",
+      "sha256": "fcc6e8bd1686817733205f4e42a33cd080bc5d3611b34e6defd7c84fb60aa565"
+    },
+    "stage-observations-v1/candidate-cparti-groups.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-cparti-groups.stdout",
+      "sha256": "4cb938c5a426af93b4ad93bd56815bb1bf70b066dce96b190b49fca8b9102b64"
+    },
+    "stage-observations-v1/candidate-hvp109a-groups.findings.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-hvp109a-groups.findings.json",
+      "sha256": "2473945566dec24f764702c0c30886a44dba36c047b80dbf35e9fe5ca1c98736"
+    },
+    "stage-observations-v1/candidate-hvp109a-groups.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-hvp109a-groups.resources",
+      "sha256": "15dfdec065c3701ce9903edac5b46ecd67cb30158d29e6d110e45a23b5f066ac"
+    },
+    "stage-observations-v1/candidate-hvp109a-groups.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-hvp109a-groups.stderr",
+      "sha256": "d05abe42a2559f534eabcd1eeb83ca41775c826c8cd6444b4bc01e34a9088248"
+    },
+    "stage-observations-v1/candidate-hvp109a-groups.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/candidate-hvp109a-groups.stdout",
+      "sha256": "a449b633dccfbf63c5d052940aa2babbfced2de955e5289e5c807a1d118ea243"
+    },
+    "stage-observations-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/commands.json",
+      "sha256": "0d756772bb67cd0d01b4e491da27ce9077cf1e35e8f2f4cbd2901b0fdb58a773"
+    },
+    "stage-observations-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/protocol.json",
+      "sha256": "f82020d2e5a004380446754de4716bb2cf70bef454ca52a942424bda753cc816"
+    },
+    "stage-observations-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/result.json",
+      "sha256": "ef81b889ecd50fef0e940447343cbbf14a53763fe4fe180b7ece4266862a2de5"
+    },
+    "stages_v1.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stages_v1.rs",
+      "sha256": "3b61ae4108e7a96915f57714b0822cbf27d1df9b75227b5c25f5577e1ba4bead"
+    },
+    "summarize_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/summarize_v1.py",
+      "sha256": "7bb1e8b1bcd9d94dda2b13a18013be19b5da37aac26f2cecf9b0175effbe45d1"
+    },
+    "terminal-observations-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/terminal-observations-v1.json",
+      "sha256": "158afddc377354ec1b6ae9b0fc5353445b1a5a7b9d05b8800806d802f3652eb2"
+    },
+    "terminal-observations-v2.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/terminal-observations-v2.json",
+      "sha256": "7afed3f7403f5037f22e8c3e052c8b3a8efe2cdde6f96977fc4f406f147c14a5"
+    }
+  },
+  "runner_sha256": "279e39eee1096529ed544055ff032ed90a6f4edd14cce227f7a784f220c4be9d",
+  "source_changes_applied": false
+}

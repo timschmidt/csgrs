@@ -1,0 +1,9 @@
+{
+  "scope": "Observed terminal exits; no unexecuted work is credited.",
+  "observe_v1": {"session": 56247, "exit_code": 0, "commands": 6, "all_command_exits_zero": true},
+  "backtrace_v1": {"exit_code": 0, "useful_symbols": false},
+  "backtrace_v2": {"exit_code": 0, "useful_symbols": true, "namespace_warning_retained": true},
+  "backtrace_v3": {"exit_code": 1, "debugger_attached": false, "reason": "Aggregation stage had completed before guard validation."},
+  "profile_v1": {"session": 27846, "exit_code": 0, "samples": 598, "reported_lost_samples": 0, "inclusive_unwinding_reliable": false},
+  "backtrace_neck_v1": {"exit_code": 0, "observed_stage": "F.Cu:min-copper-neck", "namespace_warning_retained": true}
+}

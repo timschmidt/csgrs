@@ -1,0 +1,31 @@
+{
+  "runner_sha256": "50465f110dbbfc1b694bdd23277ef5dd7e7431c5ccef7b6ed8b1f72ba2fc2ff2",
+  "pid": 1615485,
+  "command": [
+    "gdb",
+    "-q",
+    "-nx",
+    "-batch",
+    "-iex",
+    "set debuginfod enabled off",
+    "-iex",
+    "set auto-load safe-path /nonexistent",
+    "-p",
+    "1615485",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "thread apply all bt 60",
+    "-ex",
+    "detach"
+  ],
+  "exe_sha256": "09186a8ffa57e690736eaea63b5ec508d7f77b4408c6b87fd63d9767e567e408",
+  "raw_stat_before": "1615485 (candidate-stage) R 1615484 1615484 1615483 0 -1 4194304 210893 0 0 0 4665 39 0 0 20 0 1 0 277422693 829530112 199359 18446744073709551615 94684526850672 94684538557504 140720686397488 0 0 0 0 4096 1088 0 0 0 17 1 0 0 0 0 0 94684538708656 94684538906496 94684908429312 140720686402491 140720686402940 140720686402940 140720686411638 0\n",
+  "stdout_before": "{\"elapsed_seconds\":5.519258219,\"local_receipt\":\"Certified\",\"stage\":\"load\"}\n{\"copper_features\":10829,\"drills\":1283,\"feature_kinds\":{\"B.Cu:Pad\":200,\"B.Cu:Segment\":1761,\"B.Cu:Via\":1149,\"B.Cu:Zone\":3,\"F.Cu:Pad\":1523,\"F.Cu:Segment\":4575,\"F.Cu:Via\":1149,\"F.Cu:Zone\":16,\"In1.Cu:Pad\":140,\"In1.Cu:Segment\":5,\"In1.Cu:Zone\":11,\"In2.Cu:Pad\":140,\"In2.Cu:Segment\":146,\"In2.Cu:Zone\":9,\"unknown:Zone\":2},\"source\":\"/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-track-cost-attribution/stage-observations-v1/projects/cparti/CPArti FPGA dev board.kicad_pcb\"}\n",
+  "stderr_before": "START 0.000010719 load\nEND 5.519340873 load 5.519258219\nSTART 5.520996049 copper-layers\n",
+  "scope": "Read-only stack snapshot of the verified aggregation stage. This instrumented diagnostic timing is not benchmark admission.",
+  "exit_code": 0,
+  "elapsed_seconds": 0.09440355468541384,
+  "stdout_sha256": "8ba88539a03eff6bbb66d95d043292e81e793e65dcea1474a6f39617086786a1",
+  "stderr_sha256": "f7b2f003cd2f557dd7f40ae3ff2299100d8dc9a99d94e96d9b82ab899e59e541"
+}
