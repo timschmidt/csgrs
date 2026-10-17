@@ -1,0 +1,129 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "archive": "/run/user/1000/csgrs-circle-support-lazy-index-v1/collection-v1/raw-evidence-v1.tar.xz",
+  "archive_sha256": "b74f1aad990e4187bb4d901656175984aecc792fe76e36e4a062ce2d0956ac5e",
+  "archive_bytes": 553096,
+  "archive_members": "/run/user/1000/csgrs-circle-support-lazy-index-v1/collection-v1/archive-members-v1.json.gz",
+  "archive_members_sha256": "88cc3e8e8029232cebac4415ddbb1550a94f957360a09a996127646248fb5476",
+  "member_count": 2937,
+  "uncompressed_member_bytes": 43411936,
+  "all_member_bytes_independently_verified": true,
+  "original_files_unchanged": true,
+  "archive_metadata_is_normalized": true,
+  "metadata_roundtrip_claimed": false,
+  "physical_artifacts_not_duplicated_in_git": {
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/all-feature-library-v1/hypercurve-tests": {
+      "sha256": "df0f7683124304274641b94eae314b149332bb75991d2c17ef3fe1b99d1d64e9",
+      "bytes": 47930760
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/all-feature-library-v1/hypercurve.rmeta": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/build-v1/baseline-tests": {
+      "sha256": "83917cc2659d7a97ef67122b2897e8c9158c7dae9d5a34f569484be9dbedc6ba",
+      "bytes": 46953248
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/build-v1/baseline.rmeta": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/build-v1/candidate-tests": {
+      "sha256": "0e675439efb4fa263ae9d606f49154e2f30bd6560c781dfddf519d1ea7b97791",
+      "bytes": 46975904
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/build-v1/candidate.rmeta": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/mixed-128-baseline-allocations.zst": {
+      "sha256": "ddb944520e37308d0391e2ffdd2e3d7f600ecd6ee371f9a77cd4679f45239757",
+      "bytes": 56344
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/mixed-128-candidate-allocations.zst": {
+      "sha256": "c6cacab87691f2642a7c79ddba94461d3acb9814c10dbc2968bf879864c3f8b5",
+      "bytes": 59797
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/rational-1-baseline-allocations.zst": {
+      "sha256": "4a995ddd4bcbe47df5722f51426e458911d513a3a074d5dc99ae41258fd3c42e",
+      "bytes": 32088
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/rational-1-candidate-allocations.zst": {
+      "sha256": "419d8daecdcd1e01a15dc131611b2ea046d69f8e8e66c2373a396e066a364a03",
+      "bytes": 32067
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/rational-2048-baseline-allocations.zst": {
+      "sha256": "378cbcf7f847b7ae7fa77222c208b95e0aa38afe0aa9edb0324738dd819f9a47",
+      "bytes": 108765
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/rational-2048-candidate-allocations.zst": {
+      "sha256": "6c91c778bd0bacb1056d8095e0c38ec01063981107bdd4e5941228ce098c3933",
+      "bytes": 35015
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/rational-512-baseline-allocations.zst": {
+      "sha256": "9c0762e31e8651ee0ce2127dc081c4cb0e80dd23e0b20d94f505ec07776383c9",
+      "bytes": 45436
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/rational-512-candidate-allocations.zst": {
+      "sha256": "0c00e863265137e5096c227272c915664b33696c5f8e6a10c40a9e2e9f34103a",
+      "bytes": 34550
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/shared-coefficient-1048576-baseline-allocations.zst": {
+      "sha256": "683ba407c5e6210b44efd01f6bc2d84b359b1a69971b3e3832cec14f755821b5",
+      "bytes": 30335
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/shared-coefficient-1048576-candidate-allocations.zst": {
+      "sha256": "e69b7a54775abdadadf3afc5d613ba0e60d98b0bd4d7509a352747ea2a52565f",
+      "bytes": 30328
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/shared-coefficient-64-baseline-allocations.zst": {
+      "sha256": "85a04ed1a08aea352dfb966bf8bb9e3c68fe1403abe6a21a24173a96a92866e1",
+      "bytes": 30032
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/shared-coefficient-64-candidate-allocations.zst": {
+      "sha256": "6018350ab249149af472051a4633db845e658ae33a43b5b90c578f00cebdedee",
+      "bytes": 30012
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/shared-coefficient-65536-baseline-allocations.zst": {
+      "sha256": "d9a07e4726e1aedacf975dfcb548dfc50f6bdbfb8aef2c1e8102008f44888140",
+      "bytes": 30342
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/shared-coefficient-65536-candidate-allocations.zst": {
+      "sha256": "098fbd160899cddac18a5812371fe266a0757dbfff7fa42ce2a7e78850afa878",
+      "bytes": 30336
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/subrange-128-baseline-allocations.zst": {
+      "sha256": "d8bfd7c29f8cd8b939dcade7efb3a88730e9ee100c704e8ce052ae222918905a",
+      "bytes": 133499
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/subrange-128-candidate-allocations.zst": {
+      "sha256": "2e780e6338aa12f265d1be9338922f7c156456cf5ee8f521ad96c05a59d33aae",
+      "bytes": 53516
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/superrange-128-baseline-allocations.zst": {
+      "sha256": "b9d7d81d8343e82fe10166817ca906dded4a22d4b60a52657322cd30b9cdb935",
+      "bytes": 36704
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/superrange-128-candidate-allocations.zst": {
+      "sha256": "06a577cecd60dfed9b46a8c27932b45b652fe87144d7fa3a2016dcd38a967f92",
+      "bytes": 35355
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/symbolic-128-baseline-allocations.zst": {
+      "sha256": "8f301a1eac7f3eb18bf057056ebd9dd8362672e892a1c0d95f1b0bb3b5797a27",
+      "bytes": 51995
+    },
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/symbolic-128-candidate-allocations.zst": {
+      "sha256": "06e93b5a5a396e7c12a023d434130a4d9bd4f07f39ced25a9657e94757e650c7",
+      "bytes": 51610
+    }
+  },
+  "excluded_source_mirrors_remain_physically_retained": true,
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-lazy-index/collect_v1.py": "15e6c771a117104fa39d7dafe7c2a2e7f9df59022b8dbfd06a4eceee4c83a123",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-lazy-index/decision-v1.json": "ec18e48d05c8616febf8a33d7196a2d99e2c6c0c98719fb7f40b9ef51e5ba5e5"
+  },
+  "source_changes_applied": false,
+  "cache_admitted": false,
+  "full_plan_complete": false
+}

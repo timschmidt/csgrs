@@ -1,0 +1,151 @@
+{
+  "complete": true,
+  "main_parent_commit": "f638d2df303d68103b09c3179c78601642879bf1",
+  "status": "unadmitted: lazy index completes local qualification; measured transition costs and downstream acceptance remain open",
+  "retention_decision": "unadmitted",
+  "cache_index_admitted": false,
+  "source_changes_applied": false,
+  "implementation_sha256": {},
+  "proposal_sha256": {
+    "crates/hypercurve/src/curve_intersection.rs": "1fcd89f0b48730f58cdc11ae042fbca6926302f5163354ec7bb4e434ba2da673",
+    "crates/hypercurve/src/circle_support_cache_tests.rs": "4d7b2fdcee72fc064361de4bc91fb5ce8eac342188ca02f830a543a283c3184c",
+    "crates/hypercurve/README.md": "3a5a6e4cc9a909e99ffc4b0a91fe411460f464417c93e1797b1d7d220fa7de5a"
+  },
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-lazy-index/decision_v1.py": "048a2fa5046cc16675594969deca9385e7ce5b8a040344472f587005d76e14da",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-lazy-index/contract-v1.md": "d3084455b69c9a7a8cbd087f6a55b43f57346f2c6a4a1cfd5c9a02577b8bf8ac",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-lazy-index/shared-aggregate-contract-v1.md": "f3af7ac60dd59b0aa229eec6b3ce2c59c9097455952f8d54a4fe1e5e78e1f354",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-lazy-index/progress-v1.md": "5cfc64ded90def0b36c5931bbf23b1da099387cc39ecf36a8e6705a68e7b5e31",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/reproduction-v1/protocol.json": "bea0d1d329d080c6c2c4dccca89db76e10f63a439656ded8e3813192eb9fdfc7",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/reproduction-v1/commands.json": "af81a5bf0ef8f3809e5efaa2f57c2a6d9a1f9cb67c18d77eb0513781a14526ac",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/reproduction-v1/result.json": "c1a3126ade3624b05f9b01c6a868a8f7699eee34974bb2788fa3b7bd6e626d87",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/build-v1/protocol.json": "dae8f6853ad76af6276dd2cacecb073d37b574c3e60461ba5f35613bf1a006ab",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/build-v1/commands.json": "a8cbbdd2dfaecd42d1e28eb448473e0bc9788a5e0bedcb0b48026faeb7585211",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/build-v1/result.json": "9a75c517874151b7d6fcb17bed1492c6226f25ce5107517e8596c93b66cb4290",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/cost-preflight-v1/protocol.json": "eebe8394a94c6277216d9a2cc9d187f25de1a181dc80c204f46d5c8402df3d7f",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/cost-preflight-v1/commands.json": "e6a42b79185dc06cc8551dc01edb3265d15f3a0e7982f28393c58134ada6e09e",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/cost-preflight-v1/result.json": "390045b04cf986f47733d5537f73adc72787758fc58440deaabf18333ae0739b",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/cost-matched-v1/protocol.json": "89bfd98f688afd110700562836736a260d852cabe2dcc8beeee8dc1a2b6929c4",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/cost-matched-v1/commands.json": "2faeea24d074ed579c2c2f5fe56711c63893aa1b71d721b141f2184d0bc80a78",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/cost-matched-v1/result.json": "4cbb0bb672b4e266af8601fa09f2fbb686faa30cc3b0a3b791346d97069ccd41",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/support-cost-preflight-v1/protocol.json": "9ed82638b224e21dd0f5cf4eb1ad98bfdb3fbb9f16b367240e228d9d88aabd7f",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/support-cost-preflight-v1/commands.json": "4d1db9bd17d68cd3b3537959d3ed06bbded162b742ad356091c67dab566c3e22",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/support-cost-preflight-v1/result.json": "e3655df1b6946d5c4e2851dbfc563a35f304aa117e0192a8ec860c9f4fbbf870",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/support-cost-matched-v1/protocol.json": "13d164c1b0214438e159ba174c617ae43a1c514afa0bd84ed07fbb78eff061df",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/support-cost-matched-v1/commands.json": "58590c028566c208395e3e209b3dfc674f0eae283ca64c207bee3ff2b4e6e479",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/support-cost-matched-v1/result.json": "f40efce9845b7ceb29e497d5fd0d6e7ea6c98790ff97fa3431294f56f74c7297",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/protocol.json": "06f5df8b13534c1d940cd998ce8fad4f53676933f2e6523ab39c3e67d4e44bae",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/commands.json": "0b80793e5d3591b889894db01b602b332e67282a45dd5cad79c120f4ad81ef61",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/heap-v1/result.json": "f4d3076d34dfaaba8161693bc00ed9a7a0ce85edf8f5b58472d67bd543c64328",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/corpus-v1/protocol.json": "0d6a11a746babf766c03f3c7e4b445365a87024ddfba41939c12bd7a054d0349",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/corpus-v1/commands.json": "5d93e0a1c7a36273272f400799d93e763f8247c5f26ff5e10e9702800bc765a8",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/corpus-v1/result.json": "eb961964c59812ad9b93f908105f95aaec1a1223bb0a6df530026c70dc66d44c",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/all-feature-library-v1/protocol.json": "506c289d8dfc55151ab61128051173695f56bf7781c0ef6d9d2fb2be98045afe",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/all-feature-library-v1/commands.json": "1a675db3962cc9fe059dc19a276339239851d50923be2775220afcde63a007f1",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/all-feature-library-v1/result.json": "816d180d795907cc9e36c6e44670f252a16d819d36b270f702b8e692b00a8fc7",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/proposal-v1/result.json": "45d742c6d96bc6a08db9fe7d5e9d79502757f136918d2912d6b485e748a9a77e",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/shared-aggregate-v1/protocol.json": "419f196899803c88845158f6454e22a5d3bd524f6be5dbf04dcef7e3ba0fb44b",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/shared-aggregate-v1/commands.json": "6296046787cd9e03db24294c24062636ee9eccc74a830181c0fecf3d30765415",
+    "/run/user/1000/csgrs-circle-support-lazy-index-v1/shared-aggregate-v1/result.json": "ca860155efa03e94d60aea202aa8509cb8700b14007762f9046d20f75ad03139"
+  },
+  "library_results": {
+    "corpus-v1": {
+      "passed": 1743,
+      "failed": 0,
+      "ignored": 4
+    },
+    "all-feature-library-v1": {
+      "passed": 1750,
+      "failed": 0,
+      "ignored": 9
+    }
+  },
+  "matched_small_processes": 140,
+  "matched_support_processes": 210,
+  "aggregate_shared_processes": 112,
+  "aggregate_shared_comparison": {
+    "baseline_seconds": [
+      0.0038084069999999998,
+      0.003953206,
+      0.00392405,
+      0.003946977,
+      0.003964456,
+      0.003755932,
+      0.003907331
+    ],
+    "candidate_seconds": [
+      0.004204572,
+      0.0042495169999999995,
+      0.00451689,
+      0.004314295,
+      0.004555357,
+      0.004243419,
+      0.004334943
+    ],
+    "baseline_median_seconds": 0.00392405,
+    "candidate_median_seconds": 0.004314295,
+    "candidate_over_baseline_median": 1.0994495482983142,
+    "positive_paired_differences": 7,
+    "candidate_range_above_baseline": true,
+    "predeclared_rejection_criterion_met": false
+  },
+  "small_cold_33_regression_retained": {
+    "count": 33,
+    "phase": "cold",
+    "baseline_seconds": [
+      0.215041133,
+      0.221060769,
+      0.21406925,
+      0.21914414,
+      0.214319932,
+      0.214766842,
+      0.219797956
+    ],
+    "candidate_seconds": [
+      0.243865181,
+      0.233626025,
+      0.232664871,
+      0.235105254,
+      0.235344537,
+      0.235081865,
+      0.23951945
+    ],
+    "baseline_median_seconds": 0.215041133,
+    "candidate_median_seconds": 0.235105254,
+    "candidate_over_baseline": 1.0933036425175457,
+    "positive_paired_differences": 7,
+    "candidate_min_exceeds_baseline_max": true,
+    "predeclared_rejection_criterion_met": false
+  },
+  "allocation_observations": 20,
+  "diagnostic_binary_sizes": {
+    "baseline": {
+      "file_bytes": 46953248,
+      "text_bytes": 33448132,
+      "data_bytes": 1305808,
+      "bss_bytes": 2840
+    },
+    "candidate": {
+      "file_bytes": 46975904,
+      "text_bytes": 33457324,
+      "data_bytes": 1305336,
+      "bss_bytes": 2304
+    }
+  },
+  "native_disposition_preserved": true,
+  "pending_native_paths_remaining": 0,
+  "full_archived_integration_admitted": false,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "limits": [
+    "Private-kernel comparison; no end-to-end, package-size or isolated-cache-heap claim.",
+    "Internal work and heap-byte bounds remain open; experiments use external containment.",
+    "Full affected Cargo/downstream/native/report/binding and release validation remains open.",
+    "27,093 inherited missing physical artifacts remain disclosed."
+  ],
+  "next": [
+    "Evaluate an early direct small-hit return and activation cost without weakening any previous case.",
+    "Require all affected downstream, original native workload/report and real binding gates before retention.",
+    "Continue every remaining property and target, including ordinary strict completion, provenance and the shipped user path."
+  ]
+}

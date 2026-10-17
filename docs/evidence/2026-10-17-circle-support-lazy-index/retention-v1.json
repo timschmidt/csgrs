@@ -1,0 +1,62 @@
+{
+  "all_new_output_roots_closed": true,
+  "all_original_physical_files_unchanged": true,
+  "archive_members_verified": 2937,
+  "cache_index_applied": false,
+  "complete": true,
+  "copied_evidence_files": {
+    "archive-members-v1.json.gz": {
+      "original": "/run/user/1000/csgrs-circle-support-lazy-index-v1/collection-v1/archive-members-v1.json.gz",
+      "sha256": "88cc3e8e8029232cebac4415ddbb1550a94f957360a09a996127646248fb5476"
+    },
+    "checkpoint_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-lazy-index/checkpoint_v1.py",
+      "sha256": "97633d64cd935dd3f038b7ba01dd24c1606678f7b9b9b1e4209d92f4d59fc2d5"
+    },
+    "collection-v1.json": {
+      "original": "/run/user/1000/csgrs-circle-support-lazy-index-v1/collection-v1/result.json",
+      "sha256": "5cc06d31fb67d849d56273df9254b5cbd6bdda454a5e1b1781849e5086179fbf"
+    },
+    "contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-lazy-index/contract-v1.md",
+      "sha256": "d3084455b69c9a7a8cbd087f6a55b43f57346f2c6a4a1cfd5c9a02577b8bf8ac"
+    },
+    "decision-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-lazy-index/decision-v1.json",
+      "sha256": "ec18e48d05c8616febf8a33d7196a2d99e2c6c0c98719fb7f40b9ef51e5ba5e5"
+    },
+    "progress-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-lazy-index/progress-v1.md",
+      "sha256": "5cfc64ded90def0b36c5931bbf23b1da099387cc39ecf36a8e6705a68e7b5e31"
+    },
+    "proposal/README.md.patch": {
+      "original": "/run/user/1000/csgrs-circle-support-lazy-index-v1/proposal-v1/README.md.patch",
+      "sha256": "a53968924667d1a9d82567dcb209bd4343c229f3b3f7ce67eec22820630f2d3b"
+    },
+    "proposal/circle_support_cache_tests.rs.patch": {
+      "original": "/run/user/1000/csgrs-circle-support-lazy-index-v1/proposal-v1/circle_support_cache_tests.rs.patch",
+      "sha256": "f01f04a655c44a92cbb2375c6e3bfc072a843602e5dcb7d27b0ad216a5c31a56"
+    },
+    "proposal/curve_intersection.rs.patch": {
+      "original": "/run/user/1000/csgrs-circle-support-lazy-index-v1/proposal-v1/curve_intersection.rs.patch",
+      "sha256": "65329f978aa1f949b95e4c14d6e8c0299f429dbc30478ade9435dde42ba258b9"
+    },
+    "raw-evidence-v1.tar.xz": {
+      "original": "/run/user/1000/csgrs-circle-support-lazy-index-v1/collection-v1/raw-evidence-v1.tar.xz",
+      "sha256": "b74f1aad990e4187bb4d901656175984aecc792fe76e36e4a062ce2d0956ac5e"
+    },
+    "shared-aggregate-contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-lazy-index/shared-aggregate-contract-v1.md",
+      "sha256": "f3af7ac60dd59b0aa229eec6b3ce2c59c9097455952f8d54a4fe1e5e78e1f354"
+    }
+  },
+  "format_exit_code": 0,
+  "full_plan_complete": false,
+  "main_parent_commit": "f638d2df303d68103b09c3179c78601642879bf1",
+  "main_sources_unchanged": true,
+  "only_current_work_changed": true,
+  "python_sources_parse": true,
+  "retention_decision": "unadmitted",
+  "source_changes_applied": false,
+  "source_inputs": 2835
+}
