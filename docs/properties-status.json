@@ -17657,6 +17657,29 @@
     "full_plan_complete": false,
     "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
     "original_worktree_integration_pending": true
+  },
+  "in_scope_msrv_qualification": {
+    "status": "declared Rust 1.95 matrix passed; Hypervoxel explicitly deferred by user",
+    "contract": "docs/evidence/2026-10-17-in-scope-msrv/contract-v1.md",
+    "qualification": "docs/evidence/2026-10-17-in-scope-msrv/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-in-scope-msrv/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-in-scope-msrv/artifact-expectations-v1.json.gz",
+    "compiler": "1.95.0",
+    "compiler_checks_passed": 11,
+    "hypervoxel_deferred_by_user": true,
+    "dependency_blocked_in_scope_distributions": [
+      "csgrs",
+      "csgrs-ffi",
+      "hypercircuit",
+      "hyperdrc",
+      "hypersdf"
+    ],
+    "runtime_tests_rerun": false,
+    "cache_index_admitted": false,
+    "release_qualification_complete": false,
+    "full_plan_complete": false,
+    "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
+    "original_worktree_integration_pending": true
   }
 },
   "status_meanings": {
