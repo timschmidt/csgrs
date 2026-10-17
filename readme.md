@@ -47,22 +47,14 @@ exchange geometry with another format.
 
 ## Quick start
 
-Install Rust with [rustup](https://rustup.rs/), then:
+The example below uses the unreleased `csgrs 0.23.0` API. Install Rust with
+[rustup](https://rustup.rs/), then run it from this source checkout's root:
 
 ```sh
-cargo new drilled-cube
-cd drilled-cube
-cargo add csgrs
+cargo run --example basic
 ```
 
-Replace `src/main.rs` with:
-
-The equivalent dependency entry is:
-
-```toml
-[dependencies]
-csgrs = "0.23.0"
-```
+It writes `drilled_cube.stl`. The program is included as `examples/basic.rs`:
 
 <!-- quickstart:start -->
 ```rust
@@ -88,13 +80,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 <!-- quickstart:end -->
-
-Run it with `cargo run`. It writes `drilled_cube.stl`. The same program is
-included as `examples/basic.rs` and runs with:
-
-```sh
-cargo run --example basic
-```
 
 ## Modeling API
 
