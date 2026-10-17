@@ -1,0 +1,31 @@
+{
+  "name": "symbolic-512-r2-candidate",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/candidate-tests",
+    "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+    "--exact",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.215621012263,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 862277632,
+      "runtime_free_bytes": 845275136,
+      "host_available_memory_bytes": 8655966208
+    }
+  ],
+  "environment_overrides": {
+    "CIRCLE_CACHE_COST_N": "512",
+    "CIRCLE_CACHE_COST_MODE": "symbolic",
+    "RUST_BACKTRACE": "0"
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "15b5580226a6f325c7df869e30fc04de7e9576c699f53065e68d1352a906c2b1",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "04b668ebcdb226055997813c96ac7b5a79b88f13a0be15f95ca4bde25c0bfa93"
+}

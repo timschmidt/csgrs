@@ -1,0 +1,322 @@
+[
+  {
+    "case": "rational",
+    "parameter": 1,
+    "variant": "baseline",
+    "allocation_calls": 786,
+    "peak_heap_human_readable": "374.27K",
+    "process_end_retention_human_readable": "4.62K",
+    "largest_massif_snapshot_heap_bytes": 4616,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/rational-1-baseline-allocations.zst",
+      "sha256": "84694ddc55bec2b618359de52ebb82eaea08745c36712cbcffcbcf5b132750ca",
+      "bytes": 32049
+    },
+    "massif_sha256": "4df66bec49f4ba60e1acae2c14693b07d2a96d1ab7f0ac131e1789be414f2016"
+  },
+  {
+    "case": "rational",
+    "parameter": 1,
+    "variant": "candidate",
+    "allocation_calls": 787,
+    "peak_heap_human_readable": "374.27K",
+    "process_end_retention_human_readable": "4.62K",
+    "largest_massif_snapshot_heap_bytes": 4616,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/rational-1-candidate-allocations.zst",
+      "sha256": "356a3a6e17985496b6a4764c75cd69cfb142cd466ece3f5df1198ce0767c4b92",
+      "bytes": 32206
+    },
+    "massif_sha256": "7439a81b7ff7deab2a4a6971d38d3bd3128325babc27861d4f1312d95cd3bb6d"
+  },
+  {
+    "case": "rational",
+    "parameter": 512,
+    "variant": "baseline",
+    "allocation_calls": 817906,
+    "peak_heap_human_readable": "2.56M",
+    "process_end_retention_human_readable": "8.26K",
+    "largest_massif_snapshot_heap_bytes": 2563957,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/rational-512-baseline-allocations.zst",
+      "sha256": "585776262110ac744d5560e5d9a0ec74a9e481b1e3d841e38a95f60c807d514d",
+      "bytes": 45298
+    },
+    "massif_sha256": "ca81fa3e4309dc82afe6e2bac5be622f17bdf357c8eae7e6a3f890fb4362fa79"
+  },
+  {
+    "case": "rational",
+    "parameter": 512,
+    "variant": "candidate",
+    "allocation_calls": 40232,
+    "peak_heap_human_readable": "2.47M",
+    "process_end_retention_human_readable": "8.26K",
+    "largest_massif_snapshot_heap_bytes": 2441255,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/rational-512-candidate-allocations.zst",
+      "sha256": "739862c1b6398cc9fba1a9784f05345a9a980c32b5603ed570d83ec1d8fae2b7",
+      "bytes": 34452
+    },
+    "massif_sha256": "96336a8577c57ddd2084dccd82f09db90d17b05b10bf51ee3d84487584f141e0"
+  },
+  {
+    "case": "rational",
+    "parameter": 2048,
+    "variant": "baseline",
+    "allocation_calls": 12706548,
+    "peak_heap_human_readable": "9.96M",
+    "process_end_retention_human_readable": "8.26K",
+    "largest_massif_snapshot_heap_bytes": 9963200,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/rational-2048-baseline-allocations.zst",
+      "sha256": "2e9d493511f5a755895d82490f20e715163cd46df722cfc3dcddf2e7ca981fd7",
+      "bytes": 108930
+    },
+    "massif_sha256": "0c2ca9b211bc4f1ba7090f69600e184f0048754bb4f7bb98411d72962be540dd"
+  },
+  {
+    "case": "rational",
+    "parameter": 2048,
+    "variant": "candidate",
+    "allocation_calls": 158508,
+    "peak_heap_human_readable": "9.59M",
+    "process_end_retention_human_readable": "8.26K",
+    "largest_massif_snapshot_heap_bytes": 9593278,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/rational-2048-candidate-allocations.zst",
+      "sha256": "a86e53724fcd2d88affac01fadfdd08c92dfb0f17d02a0f793fcb339c5d17013",
+      "bytes": 34916
+    },
+    "massif_sha256": "9878d86d64ea8594867acadeb095f9079ba264705e3f41c0d9d67acdbc65fb69"
+  },
+  {
+    "case": "symbolic",
+    "parameter": 128,
+    "variant": "baseline",
+    "allocation_calls": 476069,
+    "peak_heap_human_readable": "814.81K",
+    "process_end_retention_human_readable": "7.44K",
+    "largest_massif_snapshot_heap_bytes": 813639,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/symbolic-128-baseline-allocations.zst",
+      "sha256": "6631aeb79021d44c452467111acc957faacdf42040fa51a25c690866d96ba3d5",
+      "bytes": 51426
+    },
+    "massif_sha256": "36bac87f97affb4903e52f6025fdd9f682aba3738b81a4083bd4929917b5fde0"
+  },
+  {
+    "case": "symbolic",
+    "parameter": 128,
+    "variant": "candidate",
+    "allocation_calls": 476075,
+    "peak_heap_human_readable": "815.84K",
+    "process_end_retention_human_readable": "7.44K",
+    "largest_massif_snapshot_heap_bytes": 814290,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/symbolic-128-candidate-allocations.zst",
+      "sha256": "ac5973a6e941df0d8a2bd807ee972804ee1591b95552ba1a4743e0b587f073d4",
+      "bytes": 51533
+    },
+    "massif_sha256": "faa2f231c2bfd548a30921066f25708ba1d8c647b40d776da25b7c9f8e899a4d"
+  },
+  {
+    "case": "mixed",
+    "parameter": 128,
+    "variant": "baseline",
+    "allocation_calls": 606821,
+    "peak_heap_human_readable": "846.29K",
+    "process_end_retention_human_readable": "9.26K",
+    "largest_massif_snapshot_heap_bytes": 845222,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/mixed-128-baseline-allocations.zst",
+      "sha256": "472b34e4e976aa6261d4875cbefc344c0549a4988ced3220c49a77bc1738fa72",
+      "bytes": 56584
+    },
+    "massif_sha256": "7bb32ad57858a44cd9ce725a4df0ccc74c74706c07401d8fda70bd44f797dce4"
+  },
+  {
+    "case": "mixed",
+    "parameter": 128,
+    "variant": "candidate",
+    "allocation_calls": 595123,
+    "peak_heap_human_readable": "854.12K",
+    "process_end_retention_human_readable": "9.26K",
+    "largest_massif_snapshot_heap_bytes": 853541,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/mixed-128-candidate-allocations.zst",
+      "sha256": "3d1e9b095ce39d43c7d94ca82c93fde9c1e32fb2d51d06bf16a84a9de01a7262",
+      "bytes": 60698
+    },
+    "massif_sha256": "5630bff03d0616dcddac9c3dd21d4e5f3ca947f3299b6ee75a3eb0e528375ee8"
+  },
+  {
+    "case": "superrange",
+    "parameter": 128,
+    "variant": "baseline",
+    "allocation_calls": 110967,
+    "peak_heap_human_readable": "855.15K",
+    "process_end_retention_human_readable": "7.26K",
+    "largest_massif_snapshot_heap_bytes": 849357,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/superrange-128-baseline-allocations.zst",
+      "sha256": "5f476c965b45a4368c481299e8fef369fc7ca91f199c38f99a6320dde54a1d93",
+      "bytes": 36705
+    },
+    "massif_sha256": "f06b0504bde6020fd9da505427507c3a8efce737a5bb2f231d00058ca310bf2f"
+  },
+  {
+    "case": "superrange",
+    "parameter": 128,
+    "variant": "candidate",
+    "allocation_calls": 15127,
+    "peak_heap_human_readable": "869.76K",
+    "process_end_retention_human_readable": "7.26K",
+    "largest_massif_snapshot_heap_bytes": 395120,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/superrange-128-candidate-allocations.zst",
+      "sha256": "15e7b8b35d044f6d3b97a0ef406a5851dacba3b843514431f9b6f68a745b8386",
+      "bytes": 35221
+    },
+    "massif_sha256": "e843d33d3e275e5706ec8460f9aac70112b7e2333990c2131e2e72f4fcdddb8e"
+  },
+  {
+    "case": "subrange",
+    "parameter": 128,
+    "variant": "baseline",
+    "allocation_calls": 375941,
+    "peak_heap_human_readable": "2.10M",
+    "process_end_retention_human_readable": "18.52K",
+    "largest_massif_snapshot_heap_bytes": 2071735,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/subrange-128-baseline-allocations.zst",
+      "sha256": "b82ac7d1eb401ab3149837b26292510833ac3633f9c47911f4118574de88ea61",
+      "bytes": 132670
+    },
+    "massif_sha256": "2df9449345e79f5464762f11670f5184e9beafbe76a0b26b78b3f552d6b6fac8"
+  },
+  {
+    "case": "subrange",
+    "parameter": 128,
+    "variant": "candidate",
+    "allocation_calls": 88357,
+    "peak_heap_human_readable": "2.06M",
+    "process_end_retention_human_readable": "18.52K",
+    "largest_massif_snapshot_heap_bytes": 1912718,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/subrange-128-candidate-allocations.zst",
+      "sha256": "b47737506180299d6fe0545a9dd1e801b0d0474c02f1c6bd3f866f718b45bcda",
+      "bytes": 50617
+    },
+    "massif_sha256": "2236db038b632d22bbbe354063bf99732c56bd2d651d358465fd20e9407c9838"
+  },
+  {
+    "case": "shared-coefficient",
+    "parameter": 64,
+    "variant": "baseline",
+    "allocation_calls": 713,
+    "peak_heap_human_readable": "374.30K",
+    "process_end_retention_human_readable": "2.26K",
+    "largest_massif_snapshot_heap_bytes": 2256,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/shared-coefficient-64-baseline-allocations.zst",
+      "sha256": "1bf88a5e8f07313ea52024be05ba20a587f5f4bbec03e5c74ceb6e5f6a18a474",
+      "bytes": 30007
+    },
+    "massif_sha256": "cce13d9740b705f318546c9280b379bf8c1deb3d479761ae71ccffe2d3690a73"
+  },
+  {
+    "case": "shared-coefficient",
+    "parameter": 64,
+    "variant": "candidate",
+    "allocation_calls": 714,
+    "peak_heap_human_readable": "374.30K",
+    "process_end_retention_human_readable": "2.26K",
+    "largest_massif_snapshot_heap_bytes": 2256,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/shared-coefficient-64-candidate-allocations.zst",
+      "sha256": "efb01e002c6cd36199bff3bd403cf403b66be55a795874eb137b1395fda51bcb",
+      "bytes": 30163
+    },
+    "massif_sha256": "d00da11ea39b3b3b2aa1e228a2298c2a81f1a3d6e86e2ee7f1598c213a9a2478"
+  },
+  {
+    "case": "shared-coefficient",
+    "parameter": 65536,
+    "variant": "baseline",
+    "allocation_calls": 726,
+    "peak_heap_human_readable": "374.30K",
+    "process_end_retention_human_readable": "2.26K",
+    "largest_massif_snapshot_heap_bytes": 2256,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/shared-coefficient-65536-baseline-allocations.zst",
+      "sha256": "dbc5ee3d43d7a064b28fce57b5b6ee046b8fd6d21a1b009e2e91755428dccc59",
+      "bytes": 30279
+    },
+    "massif_sha256": "68639782252c9f00c7fba6b83fcc054384cfe0a31372ec56909debb09d78c913"
+  },
+  {
+    "case": "shared-coefficient",
+    "parameter": 65536,
+    "variant": "candidate",
+    "allocation_calls": 727,
+    "peak_heap_human_readable": "374.30K",
+    "process_end_retention_human_readable": "2.26K",
+    "largest_massif_snapshot_heap_bytes": 2256,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/shared-coefficient-65536-candidate-allocations.zst",
+      "sha256": "f02bec14621a165ddd2c1f3e176c1284656c37a1b4c63ee68f6a7477da57cead",
+      "bytes": 30441
+    },
+    "massif_sha256": "669a9b94a6c0635783d7313235e9ca8ee7db3e6d89c55e2301813e6d26a3080c"
+  },
+  {
+    "case": "shared-coefficient",
+    "parameter": 1048576,
+    "variant": "baseline",
+    "allocation_calls": 726,
+    "peak_heap_human_readable": "754.98K",
+    "process_end_retention_human_readable": "2.26K",
+    "largest_massif_snapshot_heap_bytes": 2256,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/shared-coefficient-1048576-baseline-allocations.zst",
+      "sha256": "eb5896d38e4ef2c41a89803f8cabf98c50692028fbb1c7738245ff8941a255d6",
+      "bytes": 30287
+    },
+    "massif_sha256": "68639782252c9f00c7fba6b83fcc054384cfe0a31372ec56909debb09d78c913"
+  },
+  {
+    "case": "shared-coefficient",
+    "parameter": 1048576,
+    "variant": "candidate",
+    "allocation_calls": 727,
+    "peak_heap_human_readable": "754.98K",
+    "process_end_retention_human_readable": "2.26K",
+    "largest_massif_snapshot_heap_bytes": 2256,
+    "exact_instrumented_witnesses_equal_to_uninstrumented": true,
+    "trace": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/shared-coefficient-1048576-candidate-allocations.zst",
+      "sha256": "f60269c1d453cbf5ee7ab003d6cb2b27662694591a4800cc7b58f2f094c786f6",
+      "bytes": 30461
+    },
+    "massif_sha256": "669a9b94a6c0635783d7313235e9ca8ee7db3e6d89c55e2301813e6d26a3080c"
+  }
+]

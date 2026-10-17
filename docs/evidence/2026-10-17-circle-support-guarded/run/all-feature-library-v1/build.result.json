@@ -1,0 +1,173 @@
+{
+  "name": "build",
+  "command": [
+    "rustc",
+    "--crate-name",
+    "hypercurve",
+    "--edition=2024",
+    "--test",
+    "crates/hypercurve/src/lib.rs",
+    "-C",
+    "opt-level=3",
+    "-C",
+    "codegen-units=16",
+    "-C",
+    "embed-bitcode=no",
+    "-D",
+    "warnings",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps",
+    "-o",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/all-feature-library-v1/hypercurve-tests",
+    "--cfg",
+    "feature=\"comparative-benchmarks\"",
+    "--cfg",
+    "feature=\"default\"",
+    "--cfg",
+    "feature=\"dispatch-trace\"",
+    "--cfg",
+    "feature=\"hershey\"",
+    "--cfg",
+    "feature=\"svg\"",
+    "--cfg",
+    "feature=\"triangulation\"",
+    "--extern",
+    "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libhyperreal-ad4a7408ff1f3d72.rlib",
+    "--extern",
+    "hypersolve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libhypersolve-1d4ed5f568c578f5.rlib",
+    "--extern",
+    "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libhyperlimit-5bb4bdbfd2650df4.rlib",
+    "--extern",
+    "hypertri=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libhypertri-bcf49d7ea6600f6f.rlib",
+    "--extern",
+    "num=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libnum-3f13fa42f92eed91.rlib",
+    "--extern",
+    "cavalier_contours=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libcavalier_contours-c42603185eff061e.rlib",
+    "--extern",
+    "curvo=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libcurvo-ace8240df03ea058.rlib",
+    "--extern",
+    "i_overlay=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libi_overlay-8bb61a163aa1e8f8.rlib",
+    "--extern",
+    "nalgebra=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libnalgebra-e004678a23b2fbec.rlib",
+    "--extern",
+    "svg=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libsvg-dcc41acfcbb529f9.rlib",
+    "--extern",
+    "svgtypes=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libsvgtypes-d506b782e69a83e1.rlib",
+    "--extern",
+    "geo=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libgeo-0db22aff13e04858.rlib",
+    "--extern",
+    "proptest=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/libproptest-5fbfd9af07765a6f.rlib"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 83.57488202303648,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 864788480,
+      "runtime_free_bytes": 900235264,
+      "host_available_memory_bytes": 8742637568
+    },
+    {
+      "elapsed_seconds": 5.002646745648235,
+      "repository_free_bytes": 864763904,
+      "runtime_free_bytes": 900222976,
+      "host_available_memory_bytes": 7767199744
+    },
+    {
+      "elapsed_seconds": 10.002931964583695,
+      "repository_free_bytes": 864739328,
+      "runtime_free_bytes": 900222976,
+      "host_available_memory_bytes": 7596670976
+    },
+    {
+      "elapsed_seconds": 15.003162886947393,
+      "repository_free_bytes": 864722944,
+      "runtime_free_bytes": 900222976,
+      "host_available_memory_bytes": 7087595520
+    },
+    {
+      "elapsed_seconds": 20.003406398929656,
+      "repository_free_bytes": 864706560,
+      "runtime_free_bytes": 900222976,
+      "host_available_memory_bytes": 6693806080
+    },
+    {
+      "elapsed_seconds": 25.00363475177437,
+      "repository_free_bytes": 864673792,
+      "runtime_free_bytes": 900222976,
+      "host_available_memory_bytes": 6419673088
+    },
+    {
+      "elapsed_seconds": 30.003864443860948,
+      "repository_free_bytes": 864620544,
+      "runtime_free_bytes": 900222976,
+      "host_available_memory_bytes": 6215753728
+    },
+    {
+      "elapsed_seconds": 35.00412211474031,
+      "repository_free_bytes": 864600064,
+      "runtime_free_bytes": 900214784,
+      "host_available_memory_bytes": 4977221632
+    },
+    {
+      "elapsed_seconds": 40.00443791085854,
+      "repository_free_bytes": 864583680,
+      "runtime_free_bytes": 900214784,
+      "host_available_memory_bytes": 5109657600
+    },
+    {
+      "elapsed_seconds": 45.004702450707555,
+      "repository_free_bytes": 864567296,
+      "runtime_free_bytes": 900214784,
+      "host_available_memory_bytes": 5890924544
+    },
+    {
+      "elapsed_seconds": 50.00495406193659,
+      "repository_free_bytes": 864542720,
+      "runtime_free_bytes": 900214784,
+      "host_available_memory_bytes": 5329162240
+    },
+    {
+      "elapsed_seconds": 55.00523787084967,
+      "repository_free_bytes": 864534528,
+      "runtime_free_bytes": 898101248,
+      "host_available_memory_bytes": 5415047168
+    },
+    {
+      "elapsed_seconds": 60.005535408854485,
+      "repository_free_bytes": 864514048,
+      "runtime_free_bytes": 869191680,
+      "host_available_memory_bytes": 6269841408
+    },
+    {
+      "elapsed_seconds": 65.00580785889179,
+      "repository_free_bytes": 864432128,
+      "runtime_free_bytes": 847994880,
+      "host_available_memory_bytes": 7052304384
+    },
+    {
+      "elapsed_seconds": 70.00606928998604,
+      "repository_free_bytes": 864415744,
+      "runtime_free_bytes": 847994880,
+      "host_available_memory_bytes": 7215861760
+    },
+    {
+      "elapsed_seconds": 75.00630781194195,
+      "repository_free_bytes": 864387072,
+      "runtime_free_bytes": 839127040,
+      "host_available_memory_bytes": 7488307200
+    },
+    {
+      "elapsed_seconds": 80.00652758497745,
+      "repository_free_bytes": 864358400,
+      "runtime_free_bytes": 839127040,
+      "host_available_memory_bytes": 7525556224
+    }
+  ],
+  "environment_overrides": {},
+  "scratch_remaining": [],
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "d2e9cba11d4847d4a3f34ecf8f8ce2c5eb6c91e64efef396d0021fdff0b3a015"
+}

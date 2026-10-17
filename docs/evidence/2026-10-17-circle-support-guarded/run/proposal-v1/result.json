@@ -1,0 +1,22 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "main_parent_commit": "d1e1f737447bc099c008fc7404e86db141b0611d",
+  "source": "/run/user/1000/csgrs-circle-support-guarded-v1/proposal-v1/source",
+  "proposal_sha256": {
+    "crates/hypercurve/src/curve_intersection.rs": "31e8ae30b71d7538c44105d74e78260efa2e793414a22b42b0544060ef38a134",
+    "crates/hypercurve/src/circle_support_cache_tests.rs": "9e2cd9b5f44c19c4a5e7a5758d4232719ed796ffed8fcbeed334714501886c75",
+    "crates/hypercurve/README.md": "fc2ae41175b00141d46afbfb781dc5f1fb4b2e76120af4a5f32575e4f5b3845e"
+  },
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-guarded/proposal_v1.py": "04152f901b259e587c3eb7ea53fb5cc3909b68332c5f454373743a1e1dca8630",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/protocol.json": "1d2798b0fdf49550b6c1a56a891221d0136b50c6212f00929046b3bd564bbdd8",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/result.json": "3ba28ed4f763ec6f144dd85198572006f656376e0ef3b7191142fc796202c7f0"
+  },
+  "only_ignored_diagnostic_module_hooks_removed_from_qualified_source": true,
+  "semantic_tests_and_production_source_unchanged": true,
+  "source_changes_applied": false,
+  "format_exit_code": 0,
+  "cache_admitted": false,
+  "full_plan_complete": false
+}

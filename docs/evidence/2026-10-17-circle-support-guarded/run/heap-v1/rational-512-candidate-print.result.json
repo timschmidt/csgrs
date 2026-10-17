@@ -1,0 +1,36 @@
+{
+  "name": "rational-512-candidate-print",
+  "command": [
+    "heaptrack_print",
+    "-f",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/rational-512-candidate-allocations.zst",
+    "-m",
+    "0",
+    "-n",
+    "5",
+    "-s",
+    "2",
+    "-M",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/rational-512-candidate.massif",
+    "--disable-builtin-suppressions",
+    "--disable-embedded-suppressions"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.065073745790869,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 860635136,
+      "runtime_free_bytes": 819191808,
+      "host_available_memory_bytes": 8516608000
+    }
+  ],
+  "environment_overrides": {
+    "DEBUGINFOD_URLS": ""
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "aa0015e0466da0d5afd0c87b864cdcbb9381eaefe3d1aa5002af2c530dee6664",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "22205d485f33f68e28c4f64c5b05fbea86cbcd33f86387cde2ad58b352e4594b"
+}

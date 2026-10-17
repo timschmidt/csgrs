@@ -1,0 +1,919 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "phase": "matched",
+  "process_samples": 210,
+  "expected_process_samples": 210,
+  "timed_observations": 420,
+  "expected_timed_observations": 420,
+  "all_exact_rows_equal_and_certified": true,
+  "all_independent_oracles_passed": true,
+  "failures": [],
+  "external_resource_stop": false,
+  "comparisons": [
+    {
+      "case": "rational",
+      "parameter": 1,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          5.5377e-05,
+          6.2585e-05,
+          5.5966e-05,
+          6.8395e-05,
+          6.0426e-05,
+          6.8745e-05,
+          5.4266e-05
+        ],
+        "candidate": [
+          8.8584e-05,
+          7.3525e-05,
+          0.000115442,
+          7.7675e-05,
+          8.2844e-05,
+          9.5513e-05,
+          7.9175e-05
+        ]
+      },
+      "median_seconds": {
+        "baseline": 6.0426e-05,
+        "candidate": 8.2844e-05
+      },
+      "candidate_over_baseline_median": 1.3709992387382914
+    },
+    {
+      "case": "rational",
+      "parameter": 1,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          4.74e-06,
+          6.34e-06,
+          5.479e-06,
+          5.949e-06,
+          6.34e-06,
+          6.48e-06,
+          5.96e-06
+        ],
+        "candidate": [
+          5.439e-06,
+          5.4e-06,
+          6.25e-06,
+          5.699e-06,
+          5.86e-06,
+          5.689e-06,
+          5.959e-06
+        ]
+      },
+      "median_seconds": {
+        "baseline": 5.96e-06,
+        "candidate": 5.699e-06
+      },
+      "candidate_over_baseline_median": 0.9562080536912753
+    },
+    {
+      "case": "rational",
+      "parameter": 16,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          0.000127432,
+          0.000154199,
+          0.00015669,
+          0.000151859,
+          0.000120892,
+          0.000117032,
+          0.000168348
+        ],
+        "candidate": [
+          0.000165109,
+          0.000163559,
+          0.000179007,
+          0.000220675,
+          0.000181748,
+          0.000157289,
+          0.000178978
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.000151859,
+        "candidate": 0.000178978
+      },
+      "candidate_over_baseline_median": 1.178580130252405
+    },
+    {
+      "case": "rational",
+      "parameter": 16,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          3.3258e-05,
+          3.8887e-05,
+          3.9997e-05,
+          3.9487e-05,
+          4.1927e-05,
+          3.1098e-05,
+          4.2457e-05
+        ],
+        "candidate": [
+          3.6177e-05,
+          3.2988e-05,
+          3.2418e-05,
+          3.6728e-05,
+          3.4467e-05,
+          2.8358e-05,
+          2.8848e-05
+        ]
+      },
+      "median_seconds": {
+        "baseline": 3.9487e-05,
+        "candidate": 3.2988e-05
+      },
+      "candidate_over_baseline_median": 0.835414186947603
+    },
+    {
+      "case": "rational",
+      "parameter": 128,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          0.001147231,
+          0.001367276,
+          0.001325949,
+          0.001143341,
+          0.001083865,
+          0.001141331,
+          0.001281162
+        ],
+        "candidate": [
+          0.000690882,
+          0.000694202,
+          0.000717071,
+          0.000718681,
+          0.000771707,
+          0.000702082,
+          0.000623847
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.001147231,
+        "candidate": 0.000702082
+      },
+      "candidate_over_baseline_median": 0.6119796274682257
+    },
+    {
+      "case": "rational",
+      "parameter": 128,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.000813714,
+          0.000923907,
+          0.000996922,
+          0.000777037,
+          0.00071909,
+          0.000749248,
+          0.000792146
+        ],
+        "candidate": [
+          0.000263602,
+          0.000223755,
+          0.000260982,
+          0.000238914,
+          0.00029099,
+          0.00028323,
+          0.000232604
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.000792146,
+        "candidate": 0.000260982
+      },
+      "candidate_over_baseline_median": 0.32946199311743035
+    },
+    {
+      "case": "rational",
+      "parameter": 512,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          0.011153663,
+          0.011447502,
+          0.01148092,
+          0.011569554,
+          0.011395517,
+          0.01090774,
+          0.011875623
+        ],
+        "candidate": [
+          0.002299442,
+          0.002300282,
+          0.002076787,
+          0.002345069,
+          0.002108575,
+          0.002151803,
+          0.002081887
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.011447502,
+        "candidate": 0.002151803
+      },
+      "candidate_over_baseline_median": 0.18797140197049103
+    },
+    {
+      "case": "rational",
+      "parameter": 512,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.009620989,
+          0.009553544,
+          0.009677744,
+          0.009567002,
+          0.0100375,
+          0.010383066,
+          0.010676866
+        ],
+        "candidate": [
+          0.001092315,
+          0.001069806,
+          0.000837493,
+          0.001041759,
+          0.000833213,
+          0.000832443,
+          0.000850512
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.009677744,
+        "candidate": 0.000850512
+      },
+      "candidate_over_baseline_median": 0.08788329180850413
+    },
+    {
+      "case": "rational",
+      "parameter": 2048,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          0.166046879,
+          0.159529382,
+          0.165350682,
+          0.156308924,
+          0.159760076,
+          0.160550892,
+          0.168877189
+        ],
+        "candidate": [
+          0.009489308,
+          0.008299029,
+          0.008082794,
+          0.008089754,
+          0.008611099,
+          0.008866691,
+          0.007736388
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.160550892,
+        "candidate": 0.008299029
+      },
+      "candidate_over_baseline_median": 0.05169095541368901
+    },
+    {
+      "case": "rational",
+      "parameter": 2048,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.151457431,
+          0.154559434,
+          0.155305393,
+          0.152362355,
+          0.154042819,
+          0.1528732,
+          0.150512222
+        ],
+        "candidate": [
+          0.00333662,
+          0.003266716,
+          0.003470962,
+          0.004170303,
+          0.003432894,
+          0.00349101,
+          0.00333817
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.1528732,
+        "candidate": 0.003432894
+      },
+      "candidate_over_baseline_median": 0.02245582613564706
+    },
+    {
+      "case": "rational",
+      "parameter": 8192,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          2.429319906,
+          2.448368057,
+          2.438735957,
+          2.46967364,
+          2.445395039,
+          2.452101928,
+          2.466451442
+        ],
+        "candidate": [
+          0.036498911,
+          0.034038241,
+          0.032715591,
+          0.036926222,
+          0.033550113,
+          0.035757021,
+          0.034932119
+        ]
+      },
+      "median_seconds": {
+        "baseline": 2.448368057,
+        "candidate": 0.034932119
+      },
+      "candidate_over_baseline_median": 0.014267511332753838
+    },
+    {
+      "case": "rational",
+      "parameter": 8192,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          2.422960043,
+          2.41923567,
+          2.387407266,
+          2.424819463,
+          2.388155634,
+          2.406334905,
+          2.429472204
+        ],
+        "candidate": [
+          0.017148221,
+          0.01470451,
+          0.014268769,
+          0.016090494,
+          0.014539181,
+          0.015713859,
+          0.014653423
+        ]
+      },
+      "median_seconds": {
+        "baseline": 2.41923567,
+        "candidate": 0.01470451
+      },
+      "candidate_over_baseline_median": 0.006078163521787028
+    },
+    {
+      "case": "symbolic",
+      "parameter": 128,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          0.008684553,
+          0.008120002,
+          0.007410251,
+          0.007549871,
+          0.007776746,
+          0.007758537,
+          0.008455368
+        ],
+        "candidate": [
+          0.007634795,
+          0.008270071,
+          0.007675602,
+          0.008820434,
+          0.008075075,
+          0.007665722,
+          0.008076215
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.007776746,
+        "candidate": 0.008075075
+      },
+      "candidate_over_baseline_median": 1.0383616746644417
+    },
+    {
+      "case": "symbolic",
+      "parameter": 128,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.006501293,
+          0.007290749,
+          0.0063979,
+          0.007009338,
+          0.006858618,
+          0.006290117,
+          0.006384991
+        ],
+        "candidate": [
+          0.006584627,
+          0.006457776,
+          0.00727296,
+          0.007532382,
+          0.006328395,
+          0.006592066,
+          0.006563079
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.006501293,
+        "candidate": 0.006584627
+      },
+      "candidate_over_baseline_median": 1.012818065575571
+    },
+    {
+      "case": "symbolic",
+      "parameter": 512,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          0.087874271,
+          0.087651766,
+          0.084304944,
+          0.091819088,
+          0.083899752,
+          0.085618854,
+          0.083473221
+        ],
+        "candidate": [
+          0.086241933,
+          0.084456456,
+          0.083793599,
+          0.087473226,
+          0.083754382,
+          0.084177193,
+          0.082851484
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.085618854,
+        "candidate": 0.084177193
+      },
+      "candidate_over_baseline_median": 0.9831618746029934
+    },
+    {
+      "case": "symbolic",
+      "parameter": 512,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.082859396,
+          0.080752701,
+          0.079816962,
+          0.089355587,
+          0.080062986,
+          0.079692041,
+          0.07984972
+        ],
+        "candidate": [
+          0.078230523,
+          0.079327958,
+          0.080112232,
+          0.084258657,
+          0.079333176,
+          0.080825183,
+          0.077051632
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.080062986,
+        "candidate": 0.079333176
+      },
+      "candidate_over_baseline_median": 0.9908845518202382
+    },
+    {
+      "case": "mixed",
+      "parameter": 128,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          0.009394574,
+          0.010596102,
+          0.010090826,
+          0.009060727,
+          0.009263664,
+          0.009425862,
+          0.009496697
+        ],
+        "candidate": [
+          0.009249364,
+          0.009545704,
+          0.009645347,
+          0.009503787,
+          0.00917369,
+          0.009793856,
+          0.009727262
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.009425862,
+        "candidate": 0.009545704
+      },
+      "candidate_over_baseline_median": 1.012714168741278
+    },
+    {
+      "case": "mixed",
+      "parameter": 128,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.008217355,
+          0.008116682,
+          0.008183907,
+          0.00815392,
+          0.008042757,
+          0.00829094,
+          0.008254292
+        ],
+        "candidate": [
+          0.00830343,
+          0.008111703,
+          0.008683763,
+          0.007967892,
+          0.007976461,
+          0.008440069,
+          0.008528813
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.008183907,
+        "candidate": 0.00830343
+      },
+      "candidate_over_baseline_median": 1.014604638102559
+    },
+    {
+      "case": "mixed",
+      "parameter": 512,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          0.119398285,
+          0.122250988,
+          0.123068033,
+          0.118832323,
+          0.120222664,
+          0.121417273,
+          0.121991623
+        ],
+        "candidate": [
+          0.118914738,
+          0.119103085,
+          0.120795699,
+          0.116741777,
+          0.127677862,
+          0.122561944,
+          0.118025376
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.121417273,
+        "candidate": 0.119103085
+      },
+      "candidate_over_baseline_median": 0.9809402077412823
+    },
+    {
+      "case": "mixed",
+      "parameter": 512,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.115681349,
+          0.116297758,
+          0.117116101,
+          0.117024607,
+          0.117888635,
+          0.118523132,
+          0.116238698
+        ],
+        "candidate": [
+          0.11451114,
+          0.11670518,
+          0.11232294,
+          0.117242439,
+          0.123361748,
+          0.116150244,
+          0.115379568
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.117024607,
+        "candidate": 0.116150244
+      },
+      "candidate_over_baseline_median": 0.9925283833681235
+    },
+    {
+      "case": "superrange",
+      "parameter": 128,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          0.002868583,
+          0.002852374,
+          0.002564654,
+          0.002460121,
+          0.002686955,
+          0.002562113,
+          0.002841195
+        ],
+        "candidate": [
+          0.001122123,
+          0.001434461,
+          0.001149741,
+          0.00130727,
+          0.001472909,
+          0.001338368,
+          0.001513066
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.002686955,
+        "candidate": 0.001338368
+      },
+      "candidate_over_baseline_median": 0.4980984050719122
+    },
+    {
+      "case": "superrange",
+      "parameter": 128,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.002137704,
+          0.001863582,
+          0.001879201,
+          0.001910078,
+          0.002000792,
+          0.001879301,
+          0.001885941
+        ],
+        "candidate": [
+          0.00057628,
+          0.000634536,
+          0.00057531,
+          0.000670644,
+          0.00072922,
+          0.00072795,
+          0.000623247
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.001885941,
+        "candidate": 0.000634536
+      },
+      "candidate_over_baseline_median": 0.33645591245961565
+    },
+    {
+      "case": "subrange",
+      "parameter": 128,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          0.010902871,
+          0.010966486,
+          0.011769311,
+          0.011826507,
+          0.011840436,
+          0.01061126,
+          0.011829617
+        ],
+        "candidate": [
+          0.005164995,
+          0.005069851,
+          0.00523852,
+          0.005365041,
+          0.006299647,
+          0.005760184,
+          0.005842479
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.011769311,
+        "candidate": 0.005365041
+      },
+      "candidate_over_baseline_median": 0.4558500493359382
+    },
+    {
+      "case": "subrange",
+      "parameter": 128,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.007461168,
+          0.007542331,
+          0.008661994,
+          0.007501544,
+          0.007986071,
+          0.007434169,
+          0.007502554
+        ],
+        "candidate": [
+          0.001723852,
+          0.001718662,
+          0.001692304,
+          0.001722742,
+          0.001692823,
+          0.00218174,
+          0.001685344
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.007502554,
+        "candidate": 0.001718662
+      },
+      "candidate_over_baseline_median": 0.2290769250044718
+    },
+    {
+      "case": "shared-coefficient",
+      "parameter": 64,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          2.0989e-05,
+          2.2319e-05,
+          1.8348e-05,
+          2.0328e-05,
+          1.0939e-05,
+          2.2208e-05,
+          1.9708e-05
+        ],
+        "candidate": [
+          2.4038e-05,
+          3.4267e-05,
+          2.9168e-05,
+          3.5088e-05,
+          4.0737e-05,
+          3.1228e-05,
+          3.4638e-05
+        ]
+      },
+      "median_seconds": {
+        "baseline": 2.0328e-05,
+        "candidate": 3.4267e-05
+      },
+      "candidate_over_baseline_median": 1.6857044470680835
+    },
+    {
+      "case": "shared-coefficient",
+      "parameter": 64,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.000495446,
+          0.000486527,
+          0.000451309,
+          0.000457178,
+          0.000396663,
+          0.000462968,
+          0.000476127
+        ],
+        "candidate": [
+          0.000371234,
+          0.000481507,
+          0.000478257,
+          0.000600238,
+          0.000466558,
+          0.000464308,
+          0.000412362
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.000462968,
+        "candidate": 0.000466558
+      },
+      "candidate_over_baseline_median": 1.007754315633046
+    },
+    {
+      "case": "shared-coefficient",
+      "parameter": 65536,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          0.000108642,
+          1.9619e-05,
+          2.3479e-05,
+          1.4379e-05,
+          2.3198e-05,
+          3.0848e-05,
+          1.4899e-05
+        ],
+        "candidate": [
+          2.6339e-05,
+          2.7608e-05,
+          3.4778e-05,
+          2.8708e-05,
+          2.2069e-05,
+          2.2339e-05,
+          3.7487e-05
+        ]
+      },
+      "median_seconds": {
+        "baseline": 2.3198e-05,
+        "candidate": 2.7608e-05
+      },
+      "candidate_over_baseline_median": 1.1901025950512976
+    },
+    {
+      "case": "shared-coefficient",
+      "parameter": 65536,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.00044289,
+          0.000487557,
+          0.000456979,
+          0.000492387,
+          0.000495196,
+          0.000504256,
+          0.000493176
+        ],
+        "candidate": [
+          0.000496765,
+          0.000488417,
+          0.000465438,
+          0.000396393,
+          0.000411642,
+          0.000523414,
+          0.000476798
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.000492387,
+        "candidate": 0.000476798
+      },
+      "candidate_over_baseline_median": 0.9683399439871484
+    },
+    {
+      "case": "shared-coefficient",
+      "parameter": 1048576,
+      "phase": "cold",
+      "seconds": {
+        "baseline": [
+          3.8127e-05,
+          3.4857e-05,
+          4.6557e-05,
+          2.8988e-05,
+          4.0597e-05,
+          2.5878e-05,
+          2.7828e-05
+        ],
+        "candidate": [
+          5.4216e-05,
+          4.7936e-05,
+          4.1647e-05,
+          5.2547e-05,
+          5.0136e-05,
+          4.1207e-05,
+          4.9587e-05
+        ]
+      },
+      "median_seconds": {
+        "baseline": 3.4857e-05,
+        "candidate": 4.9587e-05
+      },
+      "candidate_over_baseline_median": 1.4225836991135208
+    },
+    {
+      "case": "shared-coefficient",
+      "parameter": 1048576,
+      "phase": "warm",
+      "seconds": {
+        "baseline": [
+          0.000448079,
+          0.000359615,
+          0.000481807,
+          0.000399893,
+          0.000465408,
+          0.000466528,
+          0.000370555
+        ],
+        "candidate": [
+          0.000495086,
+          0.00044629,
+          0.000393903,
+          0.000479987,
+          0.000488117,
+          0.000515985,
+          0.000477297
+        ]
+      },
+      "median_seconds": {
+        "baseline": 0.000448079,
+        "candidate": 0.000479987
+      },
+      "candidate_over_baseline_median": 1.071210657049315
+    }
+  ],
+  "read_only_inputs_unchanged": true,
+  "unfavorable_samples_retained": true,
+  "cache_admitted": false,
+  "end_to_end_performance_claimed": false
+}

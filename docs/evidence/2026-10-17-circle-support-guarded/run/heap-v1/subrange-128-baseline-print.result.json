@@ -1,0 +1,36 @@
+{
+  "name": "subrange-128-baseline-print",
+  "command": [
+    "heaptrack_print",
+    "-f",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/subrange-128-baseline-allocations.zst",
+    "-m",
+    "0",
+    "-n",
+    "5",
+    "-s",
+    "2",
+    "-M",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/subrange-128-baseline.massif",
+    "--disable-builtin-suppressions",
+    "--disable-embedded-suppressions"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.11539104720577598,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 860610560,
+      "runtime_free_bytes": 816107520,
+      "host_available_memory_bytes": 8416182272
+    }
+  ],
+  "environment_overrides": {
+    "DEBUGINFOD_URLS": ""
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "88fe5c2de95ae257191c9eb8607ba3f7b702156772e33141fb26384ad893c966",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "38e312b48088725883666d26b1c4d976fb0f180cd273169672a502473dc4e009"
+}

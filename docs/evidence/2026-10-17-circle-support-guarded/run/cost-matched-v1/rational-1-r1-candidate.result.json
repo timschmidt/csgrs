@@ -1,0 +1,31 @@
+{
+  "name": "rational-1-r1-candidate",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/candidate-tests",
+    "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+    "--exact",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.0052237301133573055,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 861990912,
+      "runtime_free_bytes": 822431744,
+      "host_available_memory_bytes": 8654295040
+    }
+  ],
+  "environment_overrides": {
+    "CIRCLE_CACHE_COST_N": "1",
+    "CIRCLE_CACHE_COST_MODE": "rational",
+    "RUST_BACKTRACE": "0"
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "a58e43e79f492210bf0138cbf16c22430a6ee8d37a61a660d2fd85549f958e94",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "46eb796ed34678032c31733867f90a736904f38436c7541fa44fd2624bef6419"
+}

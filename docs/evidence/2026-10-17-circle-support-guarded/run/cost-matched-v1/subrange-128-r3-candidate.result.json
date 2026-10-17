@@ -1,0 +1,31 @@
+{
+  "name": "subrange-128-r3-candidate",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/candidate-tests",
+    "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+    "--exact",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.017339557874947786,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 861986816,
+      "runtime_free_bytes": 821805056,
+      "host_available_memory_bytes": 8659251200
+    }
+  ],
+  "environment_overrides": {
+    "CIRCLE_CACHE_COST_N": "128",
+    "CIRCLE_CACHE_COST_MODE": "subrange",
+    "RUST_BACKTRACE": "0"
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "aa5f88db8b87dd403877e17e2c557b565979e3e89a0dc7377892c008c68ce932",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "261c899b9ae9d2b8a24a00a9654bd7ae1308da95dcbb749d958f517c59d02d2e"
+}

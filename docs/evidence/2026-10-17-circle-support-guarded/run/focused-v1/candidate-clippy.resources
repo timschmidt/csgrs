@@ -1,0 +1,24 @@
+Command exited with non-zero status 1
+	Command being timed: "clippy-driver --crate-name hypercurve --edition=2024 --test /run/user/1000/csgrs-circle-support-guarded-v1/build-v1/candidate-source/crates/hypercurve/src/lib.rs -C opt-level=3 -C codegen-units=16 -C embed-bitcode=no -D warnings --emit=metadata --remap-path-prefix /run/user/1000/csgrs-circle-support-guarded-v1/build-v1/candidate-source=/csgrs-circle-support-guarded-v1 -L dependency=/tmp/csgrs-circle-support-baseline-v1/release/deps -o /run/user/1000/csgrs-circle-support-guarded-v1/focused-v1/candidate.rmeta --extern hyperreal=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperreal-86511eec4d66f0cc.rlib --extern hypersolve=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhypersolve-a58f596b7de02570.rlib --extern hyperlimit=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperlimit-2ad10ffcdb42be91.rlib --extern num=/tmp/csgrs-circle-support-baseline-v1/release/deps/libnum-36df5186e93ba5a2.rlib --extern geo=/tmp/csgrs-circle-support-baseline-v1/release/deps/libgeo-33e2c5cd72e991cc.rlib --extern proptest=/tmp/csgrs-circle-support-baseline-v1/release/deps/libproptest-01da0546681a5c32.rlib"
+	User time (seconds): 18.58
+	System time (seconds): 1.22
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:19.95
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 2153228
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 20
+	Minor (reclaiming a frame) page faults: 573554
+	Voluntary context switches: 52
+	Involuntary context switches: 218
+	Swaps: 0
+	File system inputs: 3032
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 1

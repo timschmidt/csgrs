@@ -1,0 +1,229 @@
+#-----------
+snapshot=0
+#-----------
+time=0.024
+mem_heap_B=445373
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 445373 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 28 places, all below massif's threshold (1)
+#-----------
+snapshot=1
+#-----------
+time=0.069
+mem_heap_B=475349
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=2
+#-----------
+time=0.079
+mem_heap_B=633389
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 633389 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 28 places, all below massif's threshold (1)
+#-----------
+snapshot=3
+#-----------
+time=0.089
+mem_heap_B=2143231
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=4
+#-----------
+time=0.099
+mem_heap_B=2237392
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 2237392 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 39 places, all below massif's threshold (1)
+#-----------
+snapshot=5
+#-----------
+time=0.109
+mem_heap_B=2288521
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=6
+#-----------
+time=0.119
+mem_heap_B=2373688
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 2373688 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 39 places, all below massif's threshold (1)
+#-----------
+snapshot=7
+#-----------
+time=0.13
+mem_heap_B=2409536
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=8
+#-----------
+time=0.14
+mem_heap_B=2442549
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 2442549 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 39 places, all below massif's threshold (1)
+#-----------
+snapshot=9
+#-----------
+time=0.15
+mem_heap_B=2472390
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=10
+#-----------
+time=0.16
+mem_heap_B=2499268
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 2499268 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 39 places, all below massif's threshold (1)
+#-----------
+snapshot=11
+#-----------
+time=0.17
+mem_heap_B=2525249
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=12
+#-----------
+time=0.18
+mem_heap_B=2549468
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 2549468 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 39 places, all below massif's threshold (1)
+#-----------
+snapshot=13
+#-----------
+time=0.19
+mem_heap_B=2550626
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=14
+#-----------
+time=0.2
+mem_heap_B=2553799
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 2553799 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 39 places, all below massif's threshold (1)
+#-----------
+snapshot=15
+#-----------
+time=0.211
+mem_heap_B=2555676
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=16
+#-----------
+time=0.221
+mem_heap_B=2557260
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 2557260 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 39 places, all below massif's threshold (1)
+#-----------
+snapshot=17
+#-----------
+time=0.231
+mem_heap_B=2558782
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=18
+#-----------
+time=0.241
+mem_heap_B=2559899
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 2559899 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 39 places, all below massif's threshold (1)
+#-----------
+snapshot=19
+#-----------
+time=0.251
+mem_heap_B=2561053
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=20
+#-----------
+time=0.261
+mem_heap_B=2562012
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 2562012 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 39 places, all below massif's threshold (1)
+#-----------
+snapshot=21
+#-----------
+time=0.271
+mem_heap_B=2562969
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=22
+#-----------
+time=0.281
+mem_heap_B=2563957
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 2563957 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 39 places, all below massif's threshold (1)
+#-----------
+snapshot=23
+#-----------
+time=0.289
+mem_heap_B=8256
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=24
+#-----------
+time=0.29
+mem_heap_B=8256
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 8256 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n0: 0 in 40 places, all below massif's threshold (1)
+desc: heaptrack
+cmd: /run/user/1000/csgrs-circle-support-guarded-v1/build-v3/baseline-tests curve_intersection::circle_support_cost_probe::support_lookup_cost --exact --ignored --nocapture --test-threads=1
+time_unit: s

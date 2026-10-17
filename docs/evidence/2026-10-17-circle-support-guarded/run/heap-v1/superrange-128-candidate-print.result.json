@@ -1,0 +1,36 @@
+{
+  "name": "superrange-128-candidate-print",
+  "command": [
+    "heaptrack_print",
+    "-f",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/superrange-128-candidate-allocations.zst",
+    "-m",
+    "0",
+    "-n",
+    "5",
+    "-s",
+    "2",
+    "-M",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/superrange-128-candidate.massif",
+    "--disable-builtin-suppressions",
+    "--disable-embedded-suppressions"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.06526649324223399,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 860610560,
+      "runtime_free_bytes": 816795648,
+      "host_available_memory_bytes": 8448704512
+    }
+  ],
+  "environment_overrides": {
+    "DEBUGINFOD_URLS": ""
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "cae03c67266d239ac81f9b3d9abea06a978a428d98a3658242cfd4fee31e8dbd",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "875373e251e4ba90e1358349a98841ed4d0f4a7aef17a340328020b4cc5f09fd"
+}

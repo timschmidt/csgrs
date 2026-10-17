@@ -1,0 +1,36 @@
+{
+  "name": "shared-coefficient-64-candidate-record",
+  "command": [
+    "heaptrack",
+    "--record-only",
+    "-o",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/shared-coefficient-64-candidate-allocations",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/candidate-tests",
+    "curve_intersection::circle_support_coefficient_probe::shared_coefficient_lookup_cost",
+    "--exact",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.16556319827213883,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 860602368,
+      "runtime_free_bytes": 815083520,
+      "host_available_memory_bytes": 8411205632
+    }
+  ],
+  "environment_overrides": {
+    "CIRCLE_SHARED_BITS": "64",
+    "CIRCLE_SHARED_REPEATS": "20000",
+    "DEBUGINFOD_URLS": "",
+    "RUST_BACKTRACE": "0"
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "d1be93ec24793d374cc5a00b709ef6d7037c1122745c24c9fadac97e21905ab2",
+  "stderr_sha256": "e629871d5ec9be309e0c5f3f3495131ecf201c5b16161264ed5e9f7ac41894bd",
+  "resources_sha256": "01a3bcc04154043e2b08d65eee99cf1696decab67cc01dffd4984c3124ba7779"
+}

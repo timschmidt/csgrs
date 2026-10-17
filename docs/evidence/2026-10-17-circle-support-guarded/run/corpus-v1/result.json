@@ -1,0 +1,16 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "command_failures": [
+    "tests"
+  ],
+  "exit_code": -15,
+  "external_stop_reason": null,
+  "source_mirror_unchanged": true,
+  "generated_outputs": {},
+  "test_summaries": [],
+  "all_inputs_unchanged": true,
+  "no_feature_library_only": true,
+  "cache_admitted": false,
+  "full_plan_complete": false
+}

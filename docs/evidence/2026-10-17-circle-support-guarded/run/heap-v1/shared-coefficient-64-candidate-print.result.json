@@ -1,0 +1,36 @@
+{
+  "name": "shared-coefficient-64-candidate-print",
+  "command": [
+    "heaptrack_print",
+    "-f",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/shared-coefficient-64-candidate-allocations.zst",
+    "-m",
+    "0",
+    "-n",
+    "5",
+    "-s",
+    "2",
+    "-M",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/shared-coefficient-64-candidate.massif",
+    "--disable-builtin-suppressions",
+    "--disable-embedded-suppressions"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.065361597109586,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 860602368,
+      "runtime_free_bytes": 814968832,
+      "host_available_memory_bytes": 8422739968
+    }
+  ],
+  "environment_overrides": {
+    "DEBUGINFOD_URLS": ""
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "a9275bfb33a3dc2517461c4c9079007f571e9f5e10edf1708cd0f45ec726b79f",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "d5e9fbb62824b930684e40a5b55aa2e075747866f71d781a408db982cf760352"
+}

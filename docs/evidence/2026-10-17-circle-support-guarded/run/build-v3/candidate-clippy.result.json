@@ -1,0 +1,70 @@
+{
+  "name": "candidate-clippy",
+  "command": [
+    "clippy-driver",
+    "--crate-name",
+    "hypercurve",
+    "--edition=2024",
+    "--test",
+    "crates/hypercurve/src/lib.rs",
+    "-C",
+    "opt-level=3",
+    "-C",
+    "codegen-units=16",
+    "-C",
+    "embed-bitcode=no",
+    "-D",
+    "warnings",
+    "-L",
+    "dependency=/tmp/csgrs-circle-support-baseline-v1/release/deps",
+    "-o",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/candidate.rmeta",
+    "--extern",
+    "hyperreal=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperreal-86511eec4d66f0cc.rlib",
+    "--extern",
+    "hypersolve=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhypersolve-a58f596b7de02570.rlib",
+    "--extern",
+    "hyperlimit=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperlimit-2ad10ffcdb42be91.rlib",
+    "--extern",
+    "num=/tmp/csgrs-circle-support-baseline-v1/release/deps/libnum-36df5186e93ba5a2.rlib",
+    "--extern",
+    "geo=/tmp/csgrs-circle-support-baseline-v1/release/deps/libgeo-33e2c5cd72e991cc.rlib",
+    "--extern",
+    "proptest=/tmp/csgrs-circle-support-baseline-v1/release/deps/libproptest-01da0546681a5c32.rlib",
+    "--emit=metadata"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 19.9222145001404,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 865222656,
+      "runtime_free_bytes": 955891712,
+      "host_available_memory_bytes": 8710270976
+    },
+    {
+      "elapsed_seconds": 5.0017387587577105,
+      "repository_free_bytes": 865202176,
+      "runtime_free_bytes": 955887616,
+      "host_available_memory_bytes": 7864889344
+    },
+    {
+      "elapsed_seconds": 10.00199687993154,
+      "repository_free_bytes": 865181696,
+      "runtime_free_bytes": 955887616,
+      "host_available_memory_bytes": 7696654336
+    },
+    {
+      "elapsed_seconds": 15.002225591801107,
+      "repository_free_bytes": 865148928,
+      "runtime_free_bytes": 955887616,
+      "host_available_memory_bytes": 6993666048
+    }
+  ],
+  "environment_overrides": {},
+  "scratch_remaining": [],
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "bf57642f531c93c43370fa6bc250ba8169f2eb3a31890b7a6dd83929c7704c84"
+}

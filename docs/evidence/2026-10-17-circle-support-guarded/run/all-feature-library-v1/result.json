@@ -1,0 +1,28 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "command_failures": [],
+  "source_mirror_unchanged": true,
+  "generated_outputs": {},
+  "binaries": {
+    "/run/user/1000/csgrs-circle-support-guarded-v1/all-feature-library-v1/hypercurve-tests": {
+      "sha256": "c7435e22e3190247a6987100eeea687d1cf524c3fb3095c89b4e27c90739a459",
+      "bytes": 47863576
+    }
+  },
+  "property_persistence_warnings": false,
+  "test_summaries": [
+    [
+      "ok",
+      "1749",
+      "0",
+      "8",
+      "0",
+      "0"
+    ]
+  ],
+  "library_only": true,
+  "all_inputs_unchanged": true,
+  "cache_admitted": false,
+  "full_plan_complete": false
+}

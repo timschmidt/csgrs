@@ -1,0 +1,36 @@
+{
+  "name": "mixed-128-baseline-print",
+  "command": [
+    "heaptrack_print",
+    "-f",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/mixed-128-baseline-allocations.zst",
+    "-m",
+    "0",
+    "-n",
+    "5",
+    "-s",
+    "2",
+    "-M",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/mixed-128-baseline.massif",
+    "--disable-builtin-suppressions",
+    "--disable-embedded-suppressions"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.1656915587373078,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 860614656,
+      "runtime_free_bytes": 817790976,
+      "host_available_memory_bytes": 8503193600
+    }
+  ],
+  "environment_overrides": {
+    "DEBUGINFOD_URLS": ""
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "c5c4b03bb2bf3e3d5f5528f576955b4c8451c50c2b8e5c3ca15f37e6adbab1d2",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "81dcd77e79b6bfd7b6c98e2d2cf4d46c8f1f0a2650a87f3e03f61be8fc6049b1"
+}

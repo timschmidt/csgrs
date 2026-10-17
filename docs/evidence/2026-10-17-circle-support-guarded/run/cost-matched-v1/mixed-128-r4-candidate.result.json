@@ -1,0 +1,31 @@
+{
+  "name": "mixed-128-r4-candidate",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/candidate-tests",
+    "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+    "--exact",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.03365313680842519,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 862146560,
+      "runtime_free_bytes": 839647232,
+      "host_available_memory_bytes": 8677195776
+    }
+  ],
+  "environment_overrides": {
+    "CIRCLE_CACHE_COST_N": "128",
+    "CIRCLE_CACHE_COST_MODE": "mixed",
+    "RUST_BACKTRACE": "0"
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "ba9ba73291b89bc447d4f5c71c1843a5e3b4ef98df60ec7c65f8c9192fad0bd8",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "2d91b037553f70fabbbb7ee7e605b9f901854c8bad69d580d36bee4b8f7c6ec0"
+}

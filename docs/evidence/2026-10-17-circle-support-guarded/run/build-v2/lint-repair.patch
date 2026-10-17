@@ -1,0 +1,25 @@
+diff --git a/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/candidate-source/crates/hypercurve/src/curve_intersection.rs b/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate-source/crates/hypercurve/src/curve_intersection.rs
+index 3840662af..e011d3769 100644
+--- a/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/candidate-source/crates/hypercurve/src/curve_intersection.rs
++++ b/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate-source/crates/hypercurve/src/curve_intersection.rs
+@@ -756,14 +756,13 @@ impl CurveIntersectionBatchCache {
+         // Small batches preserve the cheap original scan, including shared
+         // Point2 identity hits. Populate the index only when inserting a miss.
+         let small_batch = self.circular_support_relations.len() <= 8;
+-        if small_batch {
+-            if let Some(index) =
++        if small_batch
++            && let Some(index) =
+                 (0..self.circular_support_relations.len()).find(|&index| matches(index))
+-            {
+-                return Ok(Some(
+-                    self.circular_support_relations[index].relation.clone(),
+-                ));
+-            }
++        {
++            return Ok(Some(
++                self.circular_support_relations[index].relation.clone(),
++            ));
+         }
+         let key = ExactCircularSupportPairKey::new(first, second);
+         let indexed = key

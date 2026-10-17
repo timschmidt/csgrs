@@ -1,0 +1,281 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate-source/crates/hypercurve/src/curve_intersection.rs"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.11540645780041814,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 868462592,
+        "runtime_free_bytes": 1153220608,
+        "host_available_memory_bytes": 9040928768
+      }
+    ],
+    "environment_overrides": {},
+    "scratch_remaining": [],
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "386fa58fa0984b95009808f527060a25c66a65eb4117779938922cc58766420f"
+  },
+  {
+    "name": "candidate",
+    "command": [
+      "rustc",
+      "--crate-name",
+      "hypercurve",
+      "--edition=2024",
+      "--test",
+      "/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate-source/crates/hypercurve/src/lib.rs",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "codegen-units=16",
+      "-C",
+      "embed-bitcode=no",
+      "-D",
+      "warnings",
+      "--remap-path-prefix",
+      "/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate-source=/csgrs-circle-support-guarded-v1",
+      "-L",
+      "dependency=/tmp/csgrs-circle-support-baseline-v1/release/deps",
+      "-o",
+      "/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate-tests",
+      "--extern",
+      "hyperreal=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperreal-86511eec4d66f0cc.rlib",
+      "--extern",
+      "hypersolve=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhypersolve-a58f596b7de02570.rlib",
+      "--extern",
+      "hyperlimit=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperlimit-2ad10ffcdb42be91.rlib",
+      "--extern",
+      "num=/tmp/csgrs-circle-support-baseline-v1/release/deps/libnum-36df5186e93ba5a2.rlib",
+      "--extern",
+      "geo=/tmp/csgrs-circle-support-baseline-v1/release/deps/libgeo-33e2c5cd72e991cc.rlib",
+      "--extern",
+      "proptest=/tmp/csgrs-circle-support-baseline-v1/release/deps/libproptest-01da0546681a5c32.rlib"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 80.77111853193492,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 868462592,
+        "runtime_free_bytes": 1152888832,
+        "host_available_memory_bytes": 9038626816
+      },
+      {
+        "elapsed_seconds": 5.001962014008313,
+        "repository_free_bytes": 868429824,
+        "runtime_free_bytes": 1152884736,
+        "host_available_memory_bytes": 8157671424
+      },
+      {
+        "elapsed_seconds": 10.002227993682027,
+        "repository_free_bytes": 868413440,
+        "runtime_free_bytes": 1152884736,
+        "host_available_memory_bytes": 7959310336
+      },
+      {
+        "elapsed_seconds": 15.002534210681915,
+        "repository_free_bytes": 868392960,
+        "runtime_free_bytes": 1152884736,
+        "host_available_memory_bytes": 7405834240
+      },
+      {
+        "elapsed_seconds": 20.00274491496384,
+        "repository_free_bytes": 868364288,
+        "runtime_free_bytes": 1152884736,
+        "host_available_memory_bytes": 7011008512
+      },
+      {
+        "elapsed_seconds": 25.002994055859745,
+        "repository_free_bytes": 868343808,
+        "runtime_free_bytes": 1152884736,
+        "host_available_memory_bytes": 6649577472
+      },
+      {
+        "elapsed_seconds": 30.0033013029024,
+        "repository_free_bytes": 868327424,
+        "runtime_free_bytes": 1152884736,
+        "host_available_memory_bytes": 6489284608
+      },
+      {
+        "elapsed_seconds": 35.003568903077394,
+        "repository_free_bytes": 868311040,
+        "runtime_free_bytes": 1152884736,
+        "host_available_memory_bytes": 5238030336
+      },
+      {
+        "elapsed_seconds": 40.00384487165138,
+        "repository_free_bytes": 868286464,
+        "runtime_free_bytes": 1152884736,
+        "host_available_memory_bytes": 5842485248
+      },
+      {
+        "elapsed_seconds": 45.00411129184067,
+        "repository_free_bytes": 868265984,
+        "runtime_free_bytes": 1152884736,
+        "host_available_memory_bytes": 7361249280
+      },
+      {
+        "elapsed_seconds": 50.00440885964781,
+        "repository_free_bytes": 868253696,
+        "runtime_free_bytes": 1152884736,
+        "host_available_memory_bytes": 6195445760
+      },
+      {
+        "elapsed_seconds": 55.004683420062065,
+        "repository_free_bytes": 868241408,
+        "runtime_free_bytes": 1133178880,
+        "host_available_memory_bytes": 6462365696
+      },
+      {
+        "elapsed_seconds": 60.004956878721714,
+        "repository_free_bytes": 868216832,
+        "runtime_free_bytes": 1109692416,
+        "host_available_memory_bytes": 7244832768
+      },
+      {
+        "elapsed_seconds": 65.0052414177917,
+        "repository_free_bytes": 868200448,
+        "runtime_free_bytes": 1102241792,
+        "host_available_memory_bytes": 7591202816
+      },
+      {
+        "elapsed_seconds": 70.00546714104712,
+        "repository_free_bytes": 868175872,
+        "runtime_free_bytes": 1093619712,
+        "host_available_memory_bytes": 7880675328
+      },
+      {
+        "elapsed_seconds": 75.00569098303095,
+        "repository_free_bytes": 868159488,
+        "runtime_free_bytes": 1093619712,
+        "host_available_memory_bytes": 7947255808
+      },
+      {
+        "elapsed_seconds": 80.00591354584321,
+        "repository_free_bytes": 868139008,
+        "runtime_free_bytes": 1093619712,
+        "host_available_memory_bytes": 7953137664
+      }
+    ],
+    "environment_overrides": {},
+    "scratch_remaining": [],
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0a549cfa10d87a0da083e02a1088b22955298c9dc90e72f946325da328bbdfe0"
+  },
+  {
+    "name": "candidate-contracts",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate-tests",
+      "curve_intersection::circle_support_cache_tests::",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.017056518234312534,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 868134912,
+        "runtime_free_bytes": 1105956864,
+        "host_available_memory_bytes": 8964116480
+      }
+    ],
+    "environment_overrides": {},
+    "scratch_remaining": [],
+    "stdout_sha256": "86465a67ff42a2dfabda19cfe8b6a9767824c74fbd8e561fe8e8bb9ead325933",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "8928fc589778813f03fba8114e98a47f9971daa8dd76456cd872013c8e5a2234"
+  },
+  {
+    "name": "candidate-clippy",
+    "command": [
+      "clippy-driver",
+      "--crate-name",
+      "hypercurve",
+      "--edition=2024",
+      "--test",
+      "/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate-source/crates/hypercurve/src/lib.rs",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "codegen-units=16",
+      "-C",
+      "embed-bitcode=no",
+      "-D",
+      "warnings",
+      "--remap-path-prefix",
+      "/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate-source=/csgrs-circle-support-guarded-v1",
+      "-L",
+      "dependency=/tmp/csgrs-circle-support-baseline-v1/release/deps",
+      "-o",
+      "/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate.rmeta",
+      "--extern",
+      "hyperreal=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperreal-86511eec4d66f0cc.rlib",
+      "--extern",
+      "hypersolve=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhypersolve-a58f596b7de02570.rlib",
+      "--extern",
+      "hyperlimit=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperlimit-2ad10ffcdb42be91.rlib",
+      "--extern",
+      "num=/tmp/csgrs-circle-support-baseline-v1/release/deps/libnum-36df5186e93ba5a2.rlib",
+      "--extern",
+      "geo=/tmp/csgrs-circle-support-baseline-v1/release/deps/libgeo-33e2c5cd72e991cc.rlib",
+      "--extern",
+      "proptest=/tmp/csgrs-circle-support-baseline-v1/release/deps/libproptest-01da0546681a5c32.rlib",
+      "--emit=metadata"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 20.034107078798115,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 868134912,
+        "runtime_free_bytes": 1105940480,
+        "host_available_memory_bytes": 8955330560
+      },
+      {
+        "elapsed_seconds": 5.001874848734587,
+        "repository_free_bytes": 868028416,
+        "runtime_free_bytes": 1105936384,
+        "host_available_memory_bytes": 8104280064
+      },
+      {
+        "elapsed_seconds": 10.00213256990537,
+        "repository_free_bytes": 868007936,
+        "runtime_free_bytes": 1105936384,
+        "host_available_memory_bytes": 7885598720
+      },
+      {
+        "elapsed_seconds": 15.002373890951276,
+        "repository_free_bytes": 867987456,
+        "runtime_free_bytes": 1105936384,
+        "host_available_memory_bytes": 7245365248
+      },
+      {
+        "elapsed_seconds": 20.00263436185196,
+        "repository_free_bytes": 867966976,
+        "runtime_free_bytes": 1105936384,
+        "host_available_memory_bytes": 8535666688
+      }
+    ],
+    "environment_overrides": {},
+    "scratch_remaining": [],
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "bca202598eaa7de286a20afdabff5d45c6bc8a3990605e35c30e4fa910a1aaa8"
+  }
+]

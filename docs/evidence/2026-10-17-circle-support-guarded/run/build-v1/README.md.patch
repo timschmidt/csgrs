@@ -1,0 +1,22 @@
+diff --git a/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/baseline-source/crates/hypercurve/README.md b/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/candidate-source/crates/hypercurve/README.md
+index d3fc050f3..a04e7ae62 100644
+--- a/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/baseline-source/crates/hypercurve/README.md
++++ b/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/candidate-source/crates/hypercurve/README.md
+@@ -433,6 +433,17 @@ Hypercurve separates exact values from decisions about them:
+   scalar refinement, coefficient growth, allocation, or wall-clock time. The
+   [accounting module](../hypersolve/src/work_budget.rs) lists the coverage and
+   remaining gaps; the full per-operation bound remains an open target.
++- Native intersection batches retain owned circle-support relations for one
++  synchronous operation under one predicate policy. Batches of up to eight
++  retained entries use ordered equality lookup. Larger batches index exact
++  rational centers and squared radii when their scalar storage class is not
++  `VeryLarge`; symbolic and very large supports retain ordered equality lookup.
++  These cost choices do not restrict supported inputs. Earlier unindexed entries
++  keep their original matching priority. Hits reuse the same relation and ordered
++  witnesses. The cache has no eviction or configurable disable switch and is
++  released when the batch is dropped. Its entry count, key storage, and scalar
++  payloads have no internal heap-byte or total-work bound; it is not shared
++  between independent operations or threads.
+ - `CurvePreviewOptions` owns finite display tolerances separately. Operations
+   called inside `evaluate` use its edge-preview context; its scoped preview
+   results are never exact topology or construction provenance.

@@ -1,0 +1,72 @@
+{
+  "name": "candidate-clippy",
+  "command": [
+    "clippy-driver",
+    "--crate-name",
+    "hypercurve",
+    "--edition=2024",
+    "--test",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/candidate-source/crates/hypercurve/src/lib.rs",
+    "-C",
+    "opt-level=3",
+    "-C",
+    "codegen-units=16",
+    "-C",
+    "embed-bitcode=no",
+    "-D",
+    "warnings",
+    "--emit=metadata",
+    "--remap-path-prefix",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/candidate-source=/csgrs-circle-support-guarded-v1",
+    "-L",
+    "dependency=/tmp/csgrs-circle-support-baseline-v1/release/deps",
+    "-o",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/focused-v1/candidate.rmeta",
+    "--extern",
+    "hyperreal=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperreal-86511eec4d66f0cc.rlib",
+    "--extern",
+    "hypersolve=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhypersolve-a58f596b7de02570.rlib",
+    "--extern",
+    "hyperlimit=/tmp/csgrs-circle-support-baseline-v1/release/deps/libhyperlimit-2ad10ffcdb42be91.rlib",
+    "--extern",
+    "num=/tmp/csgrs-circle-support-baseline-v1/release/deps/libnum-36df5186e93ba5a2.rlib",
+    "--extern",
+    "geo=/tmp/csgrs-circle-support-baseline-v1/release/deps/libgeo-33e2c5cd72e991cc.rlib",
+    "--extern",
+    "proptest=/tmp/csgrs-circle-support-baseline-v1/release/deps/libproptest-01da0546681a5c32.rlib"
+  ],
+  "exit_code": 1,
+  "elapsed_seconds": 19.972459156997502,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 869056512,
+      "runtime_free_bytes": 1180880896,
+      "host_available_memory_bytes": 8731406336
+    },
+    {
+      "elapsed_seconds": 5.001608857885003,
+      "repository_free_bytes": 868999168,
+      "runtime_free_bytes": 1180876800,
+      "host_available_memory_bytes": 8123428864
+    },
+    {
+      "elapsed_seconds": 10.001868858002126,
+      "repository_free_bytes": 868970496,
+      "runtime_free_bytes": 1180876800,
+      "host_available_memory_bytes": 7958867968
+    },
+    {
+      "elapsed_seconds": 15.002117299940437,
+      "repository_free_bytes": 868950016,
+      "runtime_free_bytes": 1180876800,
+      "host_available_memory_bytes": 7241838592
+    }
+  ],
+  "environment_overrides": {},
+  "scratch_remaining": [],
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e9b25d2509b1d560d8dce81e118a9298610e0860d95620d4f2034dade03e6e1a",
+  "resources_sha256": "dcd2545a1974f9693f763a26435c10b5f3ad5d63dee65152ec97191a3fa46f73"
+}

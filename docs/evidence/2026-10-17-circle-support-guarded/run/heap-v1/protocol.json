@@ -1,0 +1,69 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-guarded/heap_v1.py": "3f41cb3d07d1c3840527549957d530dd2805739eb5996b0a6ca2ddb59714f021",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-guarded/runner_v1.py": "ea5a69f6e786441a4dbb4004e15af054ec56b62a4ee99c3fc6cab869863fae81",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-guarded/contract-v1.md": "4224ab66a59e5afb8bbc274260af986eaa9f28a10dc3231f5e1e42d478f763b0",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/result.json": "3ba28ed4f763ec6f144dd85198572006f656376e0ef3b7191142fc796202c7f0",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/cost-matched-v1/result.json": "a7654a29df5bd0c8bcb643ee064de61f9274c2494e46699a846c3c2a8591a97f",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/cost-preflight-v1/result.json": "8230f658373a50ae21c77f2ef32b4f609077c98a85eb7b87da124336d09c0af3",
+    "/usr/bin/heaptrack": "06e04745c7ba96e22ee384c33fc54dbccac2848b3840eae3bb194d8c3d6c5f1c",
+    "/usr/bin/heaptrack_print": "4faef7780583936570656684c3bf8733e092cb4c8ecb3dc1e4a337c957fa2291",
+    "/usr/bin/size": "aba3e6a47f09bf0f736ee6646118a6f32ea517cd8f830437c57ba0e0bc964e6a",
+    "/usr/lib64/heaptrack/libheaptrack_inject.so": "83393cb998a61c8611ccecadc75b0c2e1bcf1419d4d5529f9600635d92434af0",
+    "/usr/lib64/heaptrack/libheaptrack_preload.so": "72126df9bbe7fcc25021886ee217dab60c762c637c46b6ab5c016f3103591e74",
+    "/usr/lib64/heaptrack/libexec/heaptrack_interpret": "bac9ca2b2985d97927aa92fb954e4df2acaf3290cd2a953d7a7a30da3dbaac3c",
+    "/usr/lib64/heaptrack/libexec/heaptrack_env": "edc2a1601276dfe5b60c66c5d40c0acb3676cdeda0bd014510b0a8c0565ca050",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/baseline-tests": "fcef50e2505a8914e7dfd147be9731e88929da7a4b2bbd63fdbd008aae4d727d",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/candidate-tests": "eff2f6e745b9856b3eb7886202fbaa38ca9594eb59cc05f35638943871da28ad"
+  },
+  "cases": [
+    [
+      "rational",
+      1
+    ],
+    [
+      "rational",
+      512
+    ],
+    [
+      "rational",
+      2048
+    ],
+    [
+      "symbolic",
+      128
+    ],
+    [
+      "mixed",
+      128
+    ],
+    [
+      "superrange",
+      128
+    ],
+    [
+      "subrange",
+      128
+    ],
+    [
+      "shared-coefficient",
+      64
+    ],
+    [
+      "shared-coefficient",
+      65536
+    ],
+    [
+      "shared-coefficient",
+      1048576
+    ]
+  ],
+  "heaptrack_version": "heaptrack 1.5.0\n",
+  "print_version": "heaptrack_print 1.5.0\n",
+  "scope": "One complete-process observation per variant/case: input construction, cold/warm queries, independent exact oracles, complete result rows, printing and cleanup.",
+  "instrumented_time_is_not_latency_evidence": true,
+  "cache_owned_heap_not_isolated": true,
+  "internal_heap_bound_claimed": false,
+  "process_end_retention_is_not_automatically_a_cache_leak": true,
+  "size_scope": "Matched no-feature diagnostic executables with identical relative source paths, flags and dependencies, not distributed package size."
+}

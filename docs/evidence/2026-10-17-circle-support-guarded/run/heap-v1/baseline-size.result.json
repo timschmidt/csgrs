@@ -1,0 +1,23 @@
+{
+  "name": "baseline-size",
+  "command": [
+    "size",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/baseline-tests"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.01731881918385625,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 860602368,
+      "runtime_free_bytes": 813641728,
+      "host_available_memory_bytes": 8259293184
+    }
+  ],
+  "environment_overrides": {},
+  "scratch_remaining": [],
+  "stdout_sha256": "3c1eaaa14ce4c18b2cec658e257e915becca1d2ecc4b94648ea60e5acb18ef46",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "8b5dbccd065cf4958eb24d12d219ff632080bc84c8fcd16827b772b251e3de83"
+}

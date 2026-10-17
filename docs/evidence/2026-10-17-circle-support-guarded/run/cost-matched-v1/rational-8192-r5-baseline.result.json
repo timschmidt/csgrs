@@ -1,0 +1,31 @@
+{
+  "name": "rational-8192-r5-baseline",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/baseline-tests",
+    "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+    "--exact",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 4.971944415010512,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 862253056,
+      "runtime_free_bytes": 842338304,
+      "host_available_memory_bytes": 8689893376
+    }
+  ],
+  "environment_overrides": {
+    "CIRCLE_CACHE_COST_N": "8192",
+    "CIRCLE_CACHE_COST_MODE": "rational",
+    "RUST_BACKTRACE": "0"
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "08c9f4968fefb7481ca5d435193acd45ad0cd8e88a3e6c658f89962c4e627228",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "9c01c251db9789c4c800d3f75809196a727a4a48efd722ecbac315664e81561e"
+}

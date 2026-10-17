@@ -1,0 +1,36 @@
+{
+  "name": "mixed-128-candidate-record",
+  "command": [
+    "heaptrack",
+    "--record-only",
+    "-o",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/mixed-128-candidate-allocations",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/candidate-tests",
+    "curve_intersection::circle_support_cost_probe::support_lookup_cost",
+    "--exact",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.31578412977978587,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 860610560,
+      "runtime_free_bytes": 817664000,
+      "host_available_memory_bytes": 8547110912
+    }
+  ],
+  "environment_overrides": {
+    "CIRCLE_CACHE_COST_N": "128",
+    "CIRCLE_CACHE_COST_MODE": "mixed",
+    "DEBUGINFOD_URLS": "",
+    "RUST_BACKTRACE": "0"
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "df9bf1d53ba90624f428bacd1c106a8ac8492e1aef17fcb75fed8bc63a958641",
+  "stderr_sha256": "19a56af98bbb709809e3d2044042de2fd758d502ed71d7bfc3f5e3a41a9d28ea",
+  "resources_sha256": "60b314f932f1085309f1806d1138db216345e8877317f4c10c2c911f98ca4ccf"
+}

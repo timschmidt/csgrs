@@ -1,0 +1,20 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "binaries": {
+    "baseline": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/baseline-tests",
+      "sha256": "da6ac20aab5920c4687046cf82ffbe7b6cfedf28fd51c36c861e7909b5437162",
+      "bytes": 46952984
+    },
+    "candidate": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/candidate-tests",
+      "sha256": "9ae0d97eca16222a37f483a00fdc4ef05a91f365cf094a429766a4fa7a880261",
+      "bytes": 46910320
+    }
+  },
+  "command_failures": [],
+  "sources_and_dependencies_unchanged": true,
+  "main_sources_unchanged": true,
+  "cache_admitted": false
+}

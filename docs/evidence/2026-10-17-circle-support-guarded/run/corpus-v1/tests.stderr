@@ -1,0 +1,15 @@
+proptest: FileFailurePersistence::SourceParallel set, but failed to find lib.rs or main.rs
+proptest: FileFailurePersistence::SourceParallel set, but failed to find lib.rs or main.rs
+proptest: FileFailurePersistence::SourceParallel set, but failed to find lib.rs or main.rs
+retained-chord-affine-oracle: axis
+retained-chord-affine-oracle: recursive-quadratic-line
+retained-chord-affine-oracle: recursive-quadratic-line
+retained-chord-affine-oracle: represented-oblique
+retained-chord-affine-oracle: selected-radial
+retained-chord-affine-oracle: selected-radial
+recursive bounds center lift: direct_product=false, lifted_product=true
+retained-chord-affine-oracle: recursive-quadratic-line
+recursive bounds center lift: direct_product=false, lifted_product=true
+retained-chord-affine-oracle: recursive-quadratic-line
+recursive bounds center lift: direct_product=false, lifted_product=true
+recursive bounds center lift: direct_product=false, lifted_product=true

@@ -1,0 +1,36 @@
+{
+  "name": "rational-1-baseline-print",
+  "command": [
+    "heaptrack_print",
+    "-f",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/rational-1-baseline-allocations.zst",
+    "-m",
+    "0",
+    "-n",
+    "5",
+    "-s",
+    "2",
+    "-M",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/heap-v1/rational-1-baseline.massif",
+    "--disable-builtin-suppressions",
+    "--disable-embedded-suppressions"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.06505494704470038,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 860659712,
+      "runtime_free_bytes": 819933184,
+      "host_available_memory_bytes": 8644698112
+    }
+  ],
+  "environment_overrides": {
+    "DEBUGINFOD_URLS": ""
+  },
+  "scratch_remaining": [],
+  "stdout_sha256": "b9af4ed325ce586dbd2891ac682a4bbc982620a5b65edd6740f49fcccdb1d268",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "88fd19eebfd9c9d00221dddbb3d8b8e9c16dbcf188e0759242e1592841ade9e9"
+}

@@ -1,0 +1,137 @@
+diff --git a/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/src/curve_intersection.rs b/run/user/1000/csgrs-circle-support-guarded-v1/proposal-v1/source/crates/hypercurve/src/curve_intersection.rs
+index 91512f15a..874546b67 100644
+--- a/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/src/curve_intersection.rs
++++ b/run/user/1000/csgrs-circle-support-guarded-v1/proposal-v1/source/crates/hypercurve/src/curve_intersection.rs
+@@ -6,7 +6,8 @@ mod curve_support_intersection;
+ use std::sync::Arc;
+ use std::sync::OnceLock;
+ 
+-use hyperreal::Real;
++use hyperreal::{Rational, Real};
++use std::collections::HashMap;
+ 
+ use crate::classify::compare_reals;
+ use crate::intersect::{circle_relation_from_supports, oriented_param_range_overlap};
+@@ -639,6 +640,8 @@ pub(crate) struct CurveIntersectionContext {
+ #[derive(Debug, Default)]
+ pub(crate) struct CurveIntersectionBatchCache {
+     circular_support_relations: Vec<CircularSupportRelationCacheEntry>,
++    exact_circular_support_index: HashMap<ExactCircularSupportPairKey, usize>,
++    unkeyed_circular_support_relations: Vec<usize>,
+     circular_point_parameters: Vec<CircularPointParameterCacheEntry>,
+     unit_parallel_self_intersections: Vec<Arc<UnitParallelSelfIntersections>>,
+ }
+@@ -673,6 +676,34 @@ struct CircularSupportRef<'a> {
+     radius_squared: &'a Real,
+ }
+ 
++/// Ordered support values owned by this temporary intersection batch.
++/// Rational hashing uses the scalar carrier's exact numeric equality, including
++/// internally unreduced values. No geometry address or finite projection is a key.
++#[derive(Debug, Eq, Hash, PartialEq)]
++struct ExactCircularSupportPairKey([[Rational; 3]; 2]);
++
++impl ExactCircularSupportPairKey {
++    fn new(first: CircularSupportRef<'_>, second: CircularSupportRef<'_>) -> Option<Self> {
++        let support = |circle: CircularSupportRef<'_>| {
++            let values = [
++                circle.center.x().exact_rational_ref()?,
++                circle.center.y().exact_rational_ref()?,
++                circle.radius_squared.exact_rational_ref()?,
++            ];
++            // This cost hint reads stored bit lengths without reducing values.
++            // Very large coefficients keep the original equality path.
++            if values
++                .iter()
++                .any(|value| value.storage_class() == hyperreal::RationalStorageClass::VeryLarge)
++            {
++                return None;
++            }
++            Some(values.map(Clone::clone))
++        };
++        Some(Self([support(first)?, support(second)?]))
++    }
++}
++
+ #[derive(Debug)]
+ struct CircularPointParameterCacheEntry {
+     curve: RationalBezier2,
+@@ -715,13 +746,47 @@ impl CurveIntersectionBatchCache {
+         ) else {
+             return Ok(None);
+         };
+-        if let Some(entry) = self.circular_support_relations.iter().find(|entry| {
++        let matches = |index: usize| {
++            let entry = &self.circular_support_relations[index];
+             entry.first.center == *first.center
+                 && entry.first.radius_squared == *first.radius_squared
+                 && entry.second.center == *second.center
+                 && entry.second.radius_squared == *second.radius_squared
+-        }) {
+-            return Ok(Some(entry.relation.clone()));
++        };
++        // Small batches preserve the cheap original scan, including shared
++        // Point2 identity hits. Populate the index only when inserting a miss.
++        let small_batch = self.circular_support_relations.len() <= 8;
++        if small_batch
++            && let Some(index) =
++                (0..self.circular_support_relations.len()).find(|&index| matches(index))
++        {
++            return Ok(Some(
++                self.circular_support_relations[index].relation.clone(),
++            ));
++        }
++        let key = ExactCircularSupportPairKey::new(first, second);
++        let indexed = key
++            .as_ref()
++            .and_then(|key| self.exact_circular_support_index.get(key).copied());
++        let retained = if small_batch {
++            None
++        } else if key.is_some() {
++            // Unequal indexed keys cannot match. Earlier unindexed entries
++            // still get their original equality proof and priority; scalar
++            // warming may have made one of those equalities recognizable.
++            self.unkeyed_circular_support_relations
++                .iter()
++                .copied()
++                .take_while(|&index| indexed.is_none_or(|cached| index < cached))
++                .find(|&index| matches(index))
++                .or(indexed)
++        } else {
++            (0..self.circular_support_relations.len()).find(|&index| matches(index))
++        };
++        if let Some(index) = retained {
++            return Ok(Some(
++                self.circular_support_relations[index].relation.clone(),
++            ));
+         }
+         let relation = circle_relation_from_supports(
+             first.center,
+@@ -733,6 +798,7 @@ impl CurveIntersectionBatchCache {
+         .map_err(|cause| {
+             ExactCurveError::invalid(CurveOperation2::Intersection, first_curve.family(), cause)
+         })?;
++        let index = self.circular_support_relations.len();
+         self.circular_support_relations
+             .push(CircularSupportRelationCacheEntry {
+                 first: RationalQuadraticCircle2 {
+@@ -747,6 +813,11 @@ impl CurveIntersectionBatchCache {
+                 },
+                 relation: relation.clone(),
+             });
++        if let Some(key) = key {
++            self.exact_circular_support_index.insert(key, index);
++        } else {
++            self.unkeyed_circular_support_relations.push(index);
++        }
+         Ok(Some(relation))
+     }
+ 
+@@ -3963,3 +4034,7 @@ mod overlap_restriction_tests {
+         }
+     }
+ }
++
++#[cfg(test)]
++#[path = "circle_support_cache_tests.rs"]
++mod circle_support_cache_tests;

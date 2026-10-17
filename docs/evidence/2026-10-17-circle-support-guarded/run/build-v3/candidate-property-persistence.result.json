@@ -1,0 +1,26 @@
+{
+  "name": "candidate-property-persistence",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/candidate-tests",
+    "algebraic_image_tests::linear_coordinate_images_match_exact_midpoint_values",
+    "--exact",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.008743219077587128,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 865222656,
+      "runtime_free_bytes": 955908096,
+      "host_available_memory_bytes": 8709922816
+    }
+  ],
+  "environment_overrides": {},
+  "scratch_remaining": [],
+  "stdout_sha256": "911f17183b301e52e7205fd125b9876ea2f996c4b0e50613de80d06e21129414",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "a4b31f4a36ba4808c7671ebcd2515c2b5a96c28d84b9c411c5766988897ff016"
+}

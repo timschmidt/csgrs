@@ -1,0 +1,19 @@
+{
+  "reason": "Stop the live partial diagnostic corpus to repair source-path-based proptest failure persistence; no test or policy is changed.",
+  "pid": 300189,
+  "process_group": 300189,
+  "command_line": [
+    "/usr/bin/time",
+    "-v",
+    "-o",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/corpus-v1/tests.resources",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate-tests",
+    "--nocapture",
+    "--test-threads=1",
+    ""
+  ],
+  "process_record_sha256": "64b62ea9d537f6a78af7ee2d47ed23a6a9530f731c6cdaf1ac04205825101ba9",
+  "requested_signal": "SIGTERM",
+  "requested_unix": 1792241751.4833608,
+  "observation": "Live process inspected in /proc; three source-persistence warnings observed."
+}

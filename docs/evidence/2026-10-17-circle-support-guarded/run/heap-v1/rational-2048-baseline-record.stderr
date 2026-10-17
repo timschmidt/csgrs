@@ -1,0 +1,7 @@
+NOTE: heaptrack detected DEBUGINFOD_URLS but will disable it to prevent 
+unintended network delays during recording
+If you really want to use DEBUGINFOD, export HEAPTRACK_ENABLE_DEBUGINFOD=1
+heaptrack stats:
+	allocations:          	12706548
+	leaked allocations:   	113
+	temporary allocations:	16443

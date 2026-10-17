@@ -1,0 +1,180 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-guarded/measure_v1.py": "d0552f52a5504d0f2a64cbc1a30035fb9cf6a0f5dda4df1cc857cf9f2fc088d0",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-guarded/runner_v1.py": "ea5a69f6e786441a4dbb4004e15af054ec56b62a4ee99c3fc6cab869863fae81",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-guarded/contract-v1.md": "4224ab66a59e5afb8bbc274260af986eaa9f28a10dc3231f5e1e42d478f763b0",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/result.json": "3ba28ed4f763ec6f144dd85198572006f656376e0ef3b7191142fc796202c7f0",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/protocol.json": "1d2798b0fdf49550b6c1a56a891221d0136b50c6212f00929046b3bd564bbdd8",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/corpus-v2/result.json": "ad2cd0b384d13702f5eaae7ee2c058c815cfe38bb5473851d05702a2a851ef45",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/all-feature-library-v1/result.json": "09278092a2ed26423062b31b5386cc26667e1b9d4abf13c137328d8f7145cc61",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/baseline-tests": "fcef50e2505a8914e7dfd147be9731e88929da7a4b2bbd63fdbd008aae4d727d",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/candidate-tests": "eff2f6e745b9856b3eb7886202fbaa38ca9594eb59cc05f35638943871da28ad"
+  },
+  "build_protocol": "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/protocol.json",
+  "phase": "preflight",
+  "cases": [
+    [
+      "rational",
+      1
+    ],
+    [
+      "rational",
+      16
+    ],
+    [
+      "rational",
+      128
+    ],
+    [
+      "rational",
+      512
+    ],
+    [
+      "rational",
+      2048
+    ],
+    [
+      "rational",
+      8192
+    ],
+    [
+      "symbolic",
+      128
+    ],
+    [
+      "symbolic",
+      512
+    ],
+    [
+      "mixed",
+      128
+    ],
+    [
+      "mixed",
+      512
+    ],
+    [
+      "superrange",
+      128
+    ],
+    [
+      "subrange",
+      128
+    ],
+    [
+      "shared-coefficient",
+      64
+    ],
+    [
+      "shared-coefficient",
+      65536
+    ],
+    [
+      "shared-coefficient",
+      1048576
+    ]
+  ],
+  "repetitions": 1,
+  "seed": 20261017,
+  "case_order": [
+    [
+      "mixed",
+      128,
+      0
+    ],
+    [
+      "shared-coefficient",
+      65536,
+      0
+    ],
+    [
+      "subrange",
+      128,
+      0
+    ],
+    [
+      "symbolic",
+      128,
+      0
+    ],
+    [
+      "rational",
+      512,
+      0
+    ],
+    [
+      "mixed",
+      512,
+      0
+    ],
+    [
+      "shared-coefficient",
+      1048576,
+      0
+    ],
+    [
+      "rational",
+      8192,
+      0
+    ],
+    [
+      "shared-coefficient",
+      64,
+      0
+    ],
+    [
+      "rational",
+      16,
+      0
+    ],
+    [
+      "superrange",
+      128,
+      0
+    ],
+    [
+      "rational",
+      128,
+      0
+    ],
+    [
+      "symbolic",
+      512,
+      0
+    ],
+    [
+      "rational",
+      1,
+      0
+    ],
+    [
+      "rational",
+      2048,
+      0
+    ]
+  ],
+  "variant_order": "baseline/candidate on even sequence index, reversed on odd",
+  "initial_host_load": [
+    2.41357421875,
+    3.18408203125,
+    3.45361328125
+  ],
+  "policy": "STRICT",
+  "required_certainty": "Certified",
+  "fresh_process_and_owned_batch_per_sample": true,
+  "ordinary_case_timing": "Preconstructed input; each phase includes private kernel queries, independent exact circle and 3-4-5 assertions, and complete ordered witness rows.",
+  "coefficient_case_timing": "Preconstructed concentric circles; one cold query then 20000 warm queries, complete Disjoint relations validated and materialized.",
+  "timing_excludes": [
+    "input construction",
+    "coefficient inventory",
+    "printing",
+    "teardown",
+    "process startup"
+  ],
+  "process_resources_include_excluded_phase_work": true,
+  "all_local_test_and_build_processes_terminal_before_measurement": true,
+  "small_case_limitation": "Single-query cold rows and other microsecond/sub-millisecond rows are diagnostic controls, not precise general speed factors.",
+  "source_build": "Matched direct rustc test harnesses with identical frozen dependencies, not distributed binaries.",
+  "remaining_affected_feature_downstream_and_binding_qualification_open": true,
+  "retention_or_end_to_end_performance_claimed": false
+}

@@ -1,0 +1,25 @@
+error: this `if` statement can be collapsed
+   --> /csgrs-circle-support-guarded-v1/crates/hypercurve/src/curve_intersection.rs:759:9
+    |
+759 | /         if small_batch {
+760 | |             if let Some(index) =
+761 | |                 (0..self.circular_support_relations.len()).find(|&index| matches(index))
+...   |
+767 | |         }
+    | |_________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#collapsible_if
+    = note: `-D clippy::collapsible-if` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::collapsible_if)]`
+help: collapse nested if block
+    |
+759 ~         if small_batch
+760 ~             && let Some(index) =
+761 |                 (0..self.circular_support_relations.len()).find(|&index| matches(index))
+...
+765 |                 ));
+766 ~             }
+    |
+
+error: aborting due to 1 previous error
+

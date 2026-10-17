@@ -1,0 +1,62 @@
+[
+  {
+    "name": "baseline",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/baseline-tests",
+      "curve_intersection::circle_support_cost_probe::shared_coefficient_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.00909241521731019,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 870068224,
+        "runtime_free_bytes": 1330659328,
+        "host_available_memory_bytes": 9171795968
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SHARED_BITS": "1048576",
+      "CIRCLE_SHARED_REPEATS": "20000"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "6dcfb6021a2864828f0f31e5be2b94896e7b94d3a5db131d917d8f8b52c5921f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "6611572ed27269bad693c8676b215acda7ae3db47e638a8020daa03656539ebd"
+  },
+  {
+    "name": "candidate",
+    "command": [
+      "/run/user/1000/csgrs-circle-support-coefficients-v1/build-v1/candidate-tests",
+      "curve_intersection::circle_support_cost_probe::shared_coefficient_lookup_cost",
+      "--exact",
+      "--ignored",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.815890952013433,
+    "external_stop_reason": null,
+    "resource_observations": [
+      {
+        "elapsed_seconds": 0,
+        "repository_free_bytes": 870068224,
+        "runtime_free_bytes": 1330585600,
+        "host_available_memory_bytes": 9171795968
+      }
+    ],
+    "environment_overrides": {
+      "CIRCLE_SHARED_BITS": "1048576",
+      "CIRCLE_SHARED_REPEATS": "20000"
+    },
+    "scratch_remaining": [],
+    "stdout_sha256": "03ec77a6f5e43f09c1ae0b38e2713a6e59afec8c3c7dcea391552e4e10f56972",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7a6d6c39e94946277105d2c8a9b79bf10f2d2216859a54045dc177f3c87ff256"
+  }
+]

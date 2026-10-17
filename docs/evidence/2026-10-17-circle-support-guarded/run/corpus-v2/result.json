@@ -1,0 +1,24 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "command_failures": [],
+  "exit_code": 0,
+  "external_stop_reason": null,
+  "source_mirror_unchanged": true,
+  "generated_outputs": {},
+  "test_summaries": [
+    [
+      "ok",
+      "1742",
+      "0",
+      "3",
+      "0",
+      "0"
+    ]
+  ],
+  "all_inputs_unchanged": true,
+  "property_persistence_warnings": false,
+  "no_feature_library_only": true,
+  "cache_admitted": false,
+  "full_plan_complete": false
+}

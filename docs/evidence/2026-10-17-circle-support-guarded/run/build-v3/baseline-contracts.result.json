@@ -1,0 +1,25 @@
+{
+  "name": "baseline-contracts",
+  "command": [
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/baseline-tests",
+    "curve_intersection::circle_support_cache_tests::",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.01704369904473424,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 865722368,
+      "runtime_free_bytes": 1002897408,
+      "host_available_memory_bytes": 8780386304
+    }
+  ],
+  "environment_overrides": {},
+  "scratch_remaining": [],
+  "stdout_sha256": "86465a67ff42a2dfabda19cfe8b6a9767824c74fbd8e561fe8e8bb9ead325933",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "859c7059da1d9d840a1a889d2974739a47eaef864c0cd2158d9e7b71dee8718c"
+}

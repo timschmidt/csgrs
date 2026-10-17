@@ -1,0 +1,22 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "binaries": {
+    "baseline": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/baseline-tests",
+      "sha256": "da6ac20aab5920c4687046cf82ffbe7b6cfedf28fd51c36c861e7909b5437162",
+      "bytes": 46952984
+    },
+    "candidate": {
+      "path": "/run/user/1000/csgrs-circle-support-guarded-v1/build-v2/candidate-tests",
+      "sha256": "27a022697cb2edbc9021802a1dfc89ee4fccc270981e43409426e7aacc4ae39b",
+      "bytes": 46911592
+    }
+  },
+  "command_failures": [],
+  "sources_and_dependencies_unchanged": true,
+  "main_sources_unchanged": true,
+  "baseline_reused_with_qualified_source_and_binary_identity": true,
+  "scope": "Both no-feature test harnesses passed the eight exact cache contracts and strict direct Clippy.",
+  "cache_admitted": false
+}

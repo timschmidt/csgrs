@@ -1,0 +1,28 @@
+{
+  "name": "candidate-format",
+  "command": [
+    "rustfmt",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/candidate-source/crates/hypercurve/src/curve_intersection.rs",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v1/candidate-source/crates/hypercurve/src/circle_support_cache_tests.rs"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.11525283893570304,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 870060032,
+      "runtime_free_bytes": 1275215872,
+      "host_available_memory_bytes": 9142665216
+    }
+  ],
+  "environment_overrides": {},
+  "scratch_remaining": [],
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "eafbce7cc6717224520cdf3e3100430687ebd10ddf724e72acc960ab584dafbd"
+}

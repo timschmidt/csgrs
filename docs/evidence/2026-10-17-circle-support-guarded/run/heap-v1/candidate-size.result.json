@@ -1,0 +1,23 @@
+{
+  "name": "candidate-size",
+  "command": [
+    "size",
+    "/run/user/1000/csgrs-circle-support-guarded-v1/build-v3/candidate-tests"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.004957078956067562,
+  "external_stop_reason": null,
+  "resource_observations": [
+    {
+      "elapsed_seconds": 0,
+      "repository_free_bytes": 860602368,
+      "runtime_free_bytes": 813621248,
+      "host_available_memory_bytes": 8260313088
+    }
+  ],
+  "environment_overrides": {},
+  "scratch_remaining": [],
+  "stdout_sha256": "21ced14e0d2a7037cc239bd647a9040350b815218fefb63d7d0d3bb3e92a7f51",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "resources_sha256": "67d230ba707d1ccd4a32d3c0550c2bbb674fe2c59a559a872bdd6d7ba186ce7d"
+}

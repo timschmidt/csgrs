@@ -1,0 +1,9 @@
+{
+  "complete": true,
+  "output_closed": true,
+  "command_failures": [
+    "candidate-clippy"
+  ],
+  "all_inputs_unchanged": true,
+  "cache_admitted": false
+}
