@@ -1,0 +1,16 @@
+{
+  "complete": true,
+  "command_failures": [
+    "library"
+  ],
+  "passed_tests": 1651,
+  "failed_tests": 5,
+  "source_and_binaries_and_dependencies_unchanged": true,
+  "generated_regression_outputs": {},
+  "selected_temporary_directory_cleaned": true,
+  "temporary_leftovers": [],
+  "original_performance_gates_included": true,
+  "cargo_targets_reopened": false,
+  "cache_admitted": false,
+  "full_plan_complete": false
+}

@@ -1,0 +1,155 @@
+{
+  "complete": true,
+  "reproduced_failures": 5,
+  "commands": [
+    {
+      "name": "test-1",
+      "test": "app::tests::load_all_layers_discovers_all_input_channels_and_marks_conversion_origin",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-replay-v4/hyperdrc-tests",
+        "app::tests::load_all_layers_discovers_all_input_channels_and_marks_conversion_origin",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "pid": 2241743,
+      "exit_code": 101,
+      "elapsed_seconds": 0.005244709085673094,
+      "quota_error": true,
+      "hardcoded_temporary_path": "/tmp/hyperdrc-load-all-layers-2241743",
+      "stdout_sha256": "db2e964244b67023ac5476fc61d80edf15a173bb763b59a372c5c9209438bc93",
+      "stderr_sha256": "9219d5e49f36dbd13626d9bc983ae83acd6088f381d6661559c93d99106c1343"
+    },
+    {
+      "name": "test-2",
+      "test": "app::tests::load_all_layers_discovers_extracted_package_archives_recursively",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-replay-v4/hyperdrc-tests",
+        "app::tests::load_all_layers_discovers_extracted_package_archives_recursively",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "pid": 2241745,
+      "exit_code": 101,
+      "elapsed_seconds": 0.004983208142220974,
+      "quota_error": true,
+      "hardcoded_temporary_path": "/tmp/hyperdrc-archive-layers-2241745",
+      "stdout_sha256": "5a9a4a2b8f94a8046085f9ed9872713d7a4fa788967103e7a630f1735a42709a",
+      "stderr_sha256": "4c698d59180b94cf85c76a22cfb46e9e121af1c330be3b76a606ff64a2e0aaa1"
+    },
+    {
+      "name": "test-3",
+      "test": "app::tests::load_layers_preserves_gerber_x2_file_metadata_for_manifest",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-replay-v4/hyperdrc-tests",
+        "app::tests::load_layers_preserves_gerber_x2_file_metadata_for_manifest",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "pid": 2241747,
+      "exit_code": 101,
+      "elapsed_seconds": 0.004965338855981827,
+      "quota_error": true,
+      "hardcoded_temporary_path": "/tmp/hyperdrc-x2-metadata-2241747.gbr",
+      "stdout_sha256": "f01ccd8ee5c2133af4878d6a470ecbd110690c038f8cf7f95e186460912bac9a",
+      "stderr_sha256": "496f3d56ec86f9e6b05f5aa96c42d5fbaf843b2161d26baa58724164ef7ba350"
+    },
+    {
+      "name": "test-4",
+      "test": "app::tests::load_all_layers_wraps_parse_errors_with_file_path_context",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-replay-v4/hyperdrc-tests",
+        "app::tests::load_all_layers_wraps_parse_errors_with_file_path_context",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "pid": 2241749,
+      "exit_code": 101,
+      "elapsed_seconds": 0.004919962026178837,
+      "quota_error": true,
+      "hardcoded_temporary_path": "/tmp/hyperdrc-load-all-layers-parse-2241749",
+      "stdout_sha256": "7fb5a77a6bd498561e7db8788c510e591be0633e869da728d4816cbd6b28f27d",
+      "stderr_sha256": "8a60a0d4ecfd7d5b59fd2897989b0937a124aa359b7670cac66b0be2c07c6809"
+    },
+    {
+      "name": "test-5",
+      "test": "arrow_report::tests::writes_readable_arrow_report",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-replay-v4/hyperdrc-tests",
+        "arrow_report::tests::writes_readable_arrow_report",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "pid": 2241751,
+      "exit_code": 101,
+      "elapsed_seconds": 0.0049233208410441875,
+      "quota_error": true,
+      "hardcoded_temporary_path": "/tmp/hyperdrc-report-2241751.arrow",
+      "stdout_sha256": "3b6e8208bdd6b6a663a0bc314d995fef7c640b846e28f0db89e2769189042413",
+      "stderr_sha256": "0f3acc8c7b75422e57029135828df8d4ee4907e6273df0c78abe107fc62a8691"
+    }
+  ],
+  "selected_temporary_directory_ignored": true,
+  "temporary_roots": [
+    "/tmp/hyperdrc-load-all-layers-2241743",
+    "/tmp/hyperdrc-archive-layers-2241745",
+    "/tmp/hyperdrc-x2-metadata-2241747.gbr",
+    "/tmp/hyperdrc-load-all-layers-parse-2241749",
+    "/tmp/hyperdrc-report-2241751.arrow",
+    "/tmp/hyperdrc-load-all-layers-2207880",
+    "/tmp/hyperdrc-archive-layers-2207880",
+    "/tmp/hyperdrc-x2-metadata-2207880.gbr",
+    "/tmp/hyperdrc-load-all-layers-parse-2207880",
+    "/tmp/hyperdrc-report-2207880.arrow"
+  ],
+  "raw_failed_artifacts": {
+    "/tmp/hyperdrc-load-all-layers-2241743/direct.gbr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/hyperdrc-archive-layers-2241745/release.zip": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/hyperdrc-x2-metadata-2241747.gbr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/hyperdrc-load-all-layers-parse-2241749/invalid.gbr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/hyperdrc-report-2241751.arrow": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/hyperdrc-load-all-layers-2207880/direct.gbr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/hyperdrc-archive-layers-2207880/release.zip": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/hyperdrc-x2-metadata-2207880.gbr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/hyperdrc-load-all-layers-parse-2207880/invalid.gbr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/hyperdrc-report-2207880.arrow": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "native_time_supervisor_pid": 2207879,
+  "native_test_pid": 2207880,
+  "source_and_binary_unchanged": true,
+  "cache_candidate_included": false
+}

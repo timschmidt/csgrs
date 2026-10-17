@@ -1,0 +1,10 @@
+
+running 5 tests
+test distinct_close_rotations_reach_duplicate_and_polarized_checks ... ok
+test exhausted_numbers_are_visible_and_cannot_form_false_matches ... ok
+test parser_and_readiness_share_numeric_syntax_and_failure_classes ... ok
+test placement_identity_preserves_small_differences_and_numeric_aliases ... ok
+test rotation_parity_uses_exact_euclidean_remainders ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

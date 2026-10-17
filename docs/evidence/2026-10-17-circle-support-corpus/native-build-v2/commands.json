@@ -1,0 +1,109 @@
+[
+  {
+    "name": "compile",
+    "command": [
+      "rustc",
+      "--crate-name",
+      "hyperdrc",
+      "--edition=2024",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/runtime-source-mirror/crates/hyperdrc/src/lib.rs",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "codegen-units=16",
+      "-C",
+      "embed-bitcode=no",
+      "-D",
+      "warnings",
+      "-L",
+      "dependency=/tmp/csgrs-circle-support-qualification-v2/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/hyperdrc-tests",
+      "--extern",
+      "anyhow=/tmp/csgrs-circle-support-qualification-v2/release/deps/libanyhow-af4f35109210643f.rlib",
+      "--extern",
+      "arrow_array=/tmp/csgrs-circle-support-qualification-v2/release/deps/libarrow_array-72b32ca401dc3511.rlib",
+      "--extern",
+      "arrow_ipc=/tmp/csgrs-circle-support-qualification-v2/release/deps/libarrow_ipc-9226c117b2da4f64.rlib",
+      "--extern",
+      "arrow_schema=/tmp/csgrs-circle-support-qualification-v2/release/deps/libarrow_schema-b13a2dee268c3bb1.rlib",
+      "--extern",
+      "clap=/tmp/csgrs-circle-support-qualification-v2/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "csgrs=/tmp/csgrs-circle-support-qualification-v2/release/deps/libcsgrs.rlib",
+      "--extern",
+      "hyperlattice=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhyperlattice-d2be40e036cfd712.rlib",
+      "--extern",
+      "flate2=/tmp/csgrs-circle-support-qualification-v2/release/deps/libflate2-9e07234d4f6f9d95.rlib",
+      "--extern",
+      "hyperlimit=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperpath=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhyperpath-0a3a53b2098990f6.rlib",
+      "--extern",
+      "hyperreal=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hypersolve=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhypersolve-b2f0264618dfc8f9.rlib",
+      "--extern",
+      "log=/tmp/csgrs-circle-support-qualification-v2/release/deps/liblog-c34fa4a937c92699.rlib",
+      "--extern",
+      "libc=/tmp/csgrs-circle-support-qualification-v2/release/deps/liblibc-909f3e1349433593.rlib",
+      "--extern",
+      "parquet=/tmp/csgrs-circle-support-qualification-v2/release/deps/libparquet-533783f8ae2044c5.rlib",
+      "--extern",
+      "serde=/tmp/csgrs-circle-support-qualification-v2/release/deps/libserde-84969463ebf1e798.rlib",
+      "--extern",
+      "serde_json=/tmp/csgrs-circle-support-qualification-v2/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--extern",
+      "sha2=/tmp/csgrs-circle-support-qualification-v2/release/deps/libsha2-c0083845f9e38631.rlib",
+      "--extern",
+      "tar=/tmp/csgrs-circle-support-qualification-v2/release/deps/libtar-6e2d13d8169f9634.rlib",
+      "--extern",
+      "zip=/tmp/csgrs-circle-support-qualification-v2/release/deps/libzip-3ba51f2c24434d27.rlib",
+      "--extern",
+      "calamine=/tmp/csgrs-circle-support-qualification-v2/release/deps/libcalamine-6feb1a1ea75a0a81.rlib",
+      "--extern",
+      "quick_xml=/tmp/csgrs-circle-support-qualification-v2/release/deps/libquick_xml-3ce2dadfc8769ab8.rlib",
+      "--extern",
+      "rusqlite=/tmp/csgrs-circle-support-qualification-v2/release/deps/librusqlite-9aabf916876e27fd.rlib",
+      "--extern",
+      "proptest=/tmp/csgrs-circle-support-qualification-v2/release/deps/libproptest-b7ac7599fb585462.rlib",
+      "-L",
+      "native=/tmp/csgrs-circle-support-qualification-v2/release/build/libsqlite3-sys-4602cf7a09d5fdc8/out"
+    ],
+    "exit_code": 0,
+    "external_stop_reason": null,
+    "elapsed_seconds": 29.239572227932513,
+    "free_space_observations": [
+      {
+        "elapsed_seconds": 0.002404164057224989,
+        "available_bytes": 1108160512
+      },
+      {
+        "elapsed_seconds": 5.0025516101159155,
+        "available_bytes": 1108140032
+      },
+      {
+        "elapsed_seconds": 10.00266476906836,
+        "available_bytes": 1108123648
+      },
+      {
+        "elapsed_seconds": 15.002796276006848,
+        "available_bytes": 1108107264
+      },
+      {
+        "elapsed_seconds": 20.002954361960292,
+        "available_bytes": 1108078592
+      },
+      {
+        "elapsed_seconds": 25.003079370129853,
+        "available_bytes": 1103331328
+      }
+    ],
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "2130ebf8e96cecec2fc5812df998f5ad2e795e6a80c514c18762d4cb7190d182"
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/reproduce_storage_v1.py": "f1c8fc27e6adfa309645921df0c1aa5e8d11127ca9d50e59eb53365876b0f80d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-contract-v1.md": "0f83af34a21807ef01d399b702d7faadcfaefac4a7afcad4b2e7d6f80bb79fbc",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/result.json": "81a8268cc7180f360e67811184f107185aa312cc3c52c134d6ecc9ca421f307c",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-replay-v4/binary.json": "b9cccdaa8db5f9f62ec4866f4ae0373d256b16010fd162fbe767dfbbcddd57b9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-replay-v4/hyperdrc-tests": "2d01215f79c71fdb048931353ef5b1e6866f45f805d9e55a5ff714fc48a8d9ff",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/selected-temporary-directory/write-control": "55e77e35e69924fcbaba8917648b8fd9ffa2be3f8c5d84f04fcd929dbfdd6019",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-preparation-v1/source-hashes.json.gz": "6bdda7c96ae0cb3b2097d94a645d4a9b68a3a0266a75c6d6f9811b7e71dc678c"
+  },
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-replay-v4/hyperdrc-tests",
+    "sha256": "2d01215f79c71fdb048931353ef5b1e6866f45f805d9e55a5ff714fc48a8d9ff",
+    "bytes": 60462448
+  },
+  "source_differences_from_current_main": [
+    "docs/properties-status.json"
+  ],
+  "implementation_matches_current_main": true,
+  "cache_candidate_included": false,
+  "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/selected-temporary-directory",
+  "timeout_seconds_per_test": 60,
+  "address_space_bytes": 8589934592,
+  "closed_sources_and_targets_used_read_only": true
+}

@@ -1,0 +1,17 @@
+{
+  "pid": 2236445,
+  "command": [
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "-p",
+    "hypercurve",
+    "--release",
+    "--all-features",
+    "--no-fail-fast",
+    "--",
+    "--test-threads=1"
+  ],
+  "started_unix": 1792235860.2088976
+}

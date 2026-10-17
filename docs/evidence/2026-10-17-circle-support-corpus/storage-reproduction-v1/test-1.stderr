@@ -1,0 +1,4 @@
+
+thread 'app::tests::load_all_layers_discovers_all_input_channels_and_marks_conversion_origin' (2241744) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-candidate-source-v1/crates/hyperdrc/src/app.rs:10623:47:
+called `Result::unwrap()` on an `Err` value: Os { code: 122, kind: QuotaExceeded, message: "Disk quota exceeded" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

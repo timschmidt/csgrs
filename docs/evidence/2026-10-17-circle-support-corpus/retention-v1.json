@@ -1,0 +1,677 @@
+{
+  "cache_index_applied": false,
+  "complete": true,
+  "format_exit_code": 0,
+  "implementation_sha256": {
+    "crates/hyperdrc/src/app.rs": "1ebb5d47c56c70de6b17ce22abb8a97794e03bfd0efa8ec139061cc961a91452",
+    "crates/hyperdrc/src/arrow_report.rs": "aa1b1c34ccaf056e7655e601465dfaf92b20387b1e8772e4ba67c42634115759"
+  },
+  "main_parent_commit": "0ed5a970cf0d9204e9f4c5c73e93b16a6a13bc89",
+  "physical_artifacts_not_duplicated_in_git": [
+    {
+      "bytes": 60470504,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/hyperdrc-tests",
+      "sha256": "73199478ab46b9bf994c63cba7b3f1aafa20a270304cf3663e1545209ae7abec"
+    },
+    {
+      "bytes": 60475200,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/hyperdrc-tests",
+      "sha256": "9036d539fe1d5b316b1ec76bf5a34edd4569f6d1685d050fb22ce12e5f74b900"
+    },
+    {
+      "bytes": 60462352,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/hyperdrc-tests",
+      "sha256": "b1f50882ee2a76ff33eef62c5e75c789cd372bd31bb9c79adb42d4c41ed9cbe2"
+    }
+  ],
+  "post_application_commands": [
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/hyperdrc-tests",
+        "app::tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "name": "app",
+      "stderr_sha256": "e0ff8c0e3e46d29e1a5f6dadd038963fc52452d3c8c382c74af44546992a5b30",
+      "stdout_sha256": "70fd56d0f8aedc0b2888bfa25be5a588cc2e8e75ef9586efda108d23ba6dd673"
+    },
+    {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/hyperdrc-tests",
+        "arrow_report::tests::writes_readable_arrow_report",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "name": "arrow",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "fa4aa17fdd9d48c23d64a560e2b35bb8aeb9314d27f5bfa7fb1626e06a6ce6cf"
+    }
+  ],
+  "post_application_temporary_directory_cleaned": true,
+  "production_prefixes_unchanged": true,
+  "python_sources_parse": true,
+  "retained_evidence_files": {
+    "build_native_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/build_native_v1.py",
+      "sha256": "4439e6ecd08ccf5d31d95dc1258834d34a70596c653ade500a1ab7ec93b75763"
+    },
+    "build_native_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/build_native_v2.py",
+      "sha256": "32418367611eeda5589676c1351afd554830a6d6c2fc9ecafb099f222df6d0cb"
+    },
+    "checkpoint_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/checkpoint_v1.py",
+      "sha256": "d999ef337f037a9a662e827a943fc204868bcb8678c8a93f47ca3f23d7133f8b"
+    },
+    "contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/contract-v1.md",
+      "sha256": "53035d99c34d07a951ba577c738116fbef95c74ab3132e67832f0840bda82bf3"
+    },
+    "curve-all-v1/build-phase-result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/build-phase-result.json",
+      "sha256": "7d8de23991be690543e5861aedf85774c34ecfc9695908819c709132d649199f"
+    },
+    "curve-all-v1/build.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/build.process.json",
+      "sha256": "82b388a4b669f241478cfd64b33de3f465c9615b53c67a769aac7baef0295ead"
+    },
+    "curve-all-v1/build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/build.resources",
+      "sha256": "c92a6afee23faefe835e82612dec9af705e4274c302f58e5f11febc92fb79dc4"
+    },
+    "curve-all-v1/build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/build.stderr",
+      "sha256": "526fee5d14a710c5b3f7f1bcd0759cc10b862a76cbf69dee5c1256633f403f54"
+    },
+    "curve-all-v1/build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/build.stdout",
+      "sha256": "b11c7a300eff34db769a6b2c920ae57d9db50aac2026c1b9f0a00ad9c323f0fc"
+    },
+    "curve-all-v1/clippy.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/clippy.process.json",
+      "sha256": "2fc4380b2ac4e8116fc2642b7e4cf4a4bec98bc6469319d9e23b6e644a81e4f1"
+    },
+    "curve-all-v1/clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/clippy.resources",
+      "sha256": "874d32af20226b8f2a13a144c57187b7a02f75ad46e16d31b86214b635367cc2"
+    },
+    "curve-all-v1/clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/clippy.stderr",
+      "sha256": "df123d23e1f8900ad09925a9ad6e9d4d03a303da99a848f567519f13dea78c3f"
+    },
+    "curve-all-v1/clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "curve-all-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/commands.json",
+      "sha256": "0ba479f2ed22732118abd9d2c208ec22cf63e289feff756d9450983598c03904"
+    },
+    "curve-all-v1/native-gates-before-tests.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/native-gates-before-tests.json",
+      "sha256": "c085e9630bfe4e9ea2f9b1b6cb061bcad30544f1007f9371643bb38ae9109696"
+    },
+    "curve-all-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/protocol.json",
+      "sha256": "04a1fd40749d82caf20846eb70f9bc59b40c01cc0247314991a73d398c4eb536"
+    },
+    "curve-all-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/result.json",
+      "sha256": "42836584aaceb359d662c4ef4469cbd298742e894d5bb2f9a4dcb695988de04a"
+    },
+    "curve-all-v1/tests.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/tests.process.json",
+      "sha256": "b0adfc089feef444d26edda6f46bd261a84eaa172d6b1a55912552d351d4e85b"
+    },
+    "curve-all-v1/tests.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/tests.resources",
+      "sha256": "2beaaf55ae751fc02b57b9a624d666f1021a76304f44b3000927de71bff71996"
+    },
+    "curve-all-v1/tests.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/tests.stderr",
+      "sha256": "0028e8617aae770754126d49041d369f2ccb43361bff503c6bffe74a663bb19c"
+    },
+    "curve-all-v1/tests.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/tests.stdout",
+      "sha256": "2edb1833520ce1559dbbc20856c40ef92db69a0643235c174231ce77168ebfe2"
+    },
+    "curve_all_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve_all_v1.py",
+      "sha256": "592424c8c41e6940b23c725fcb3da64062cd953a0d2a86d5e65200c912e1dc7e"
+    },
+    "decision-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/decision-v1.json",
+      "sha256": "5da8f5f3b7749be1eb08673b20f6cd747ea63f55529bc1ce7741d5f79aed78ca"
+    },
+    "default-corpus-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/default-corpus-v1/commands.json",
+      "sha256": "8ed5c1506353f35a91fad6f7b373408809e4e8901b49c062bf8bd0b4320394cb"
+    },
+    "default-corpus-v1/process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/default-corpus-v1/process.json",
+      "sha256": "ed03a9934329d61552dc854700d13f4b1905c05999370f8dc630403ef8f36541"
+    },
+    "default-corpus-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/default-corpus-v1/protocol.json",
+      "sha256": "7cc10a4cfe959e57abd706f2450dacba661b5026c7f7cc0a31d7ee04548ea13d"
+    },
+    "default-corpus-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/default-corpus-v1/result.json",
+      "sha256": "1b3efdfee7e3e7b40c077bd6d1cd9602e58414adc5df39a1cc004d9ae1fc4553"
+    },
+    "default-corpus-v1/tests.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/default-corpus-v1/tests.resources",
+      "sha256": "4272a0ca583acf1961364330c1b3c88a97d26778f5a8b08323ce9425d8ede05e"
+    },
+    "default-corpus-v1/tests.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/default-corpus-v1/tests.stderr",
+      "sha256": "caddd4337410bafce5b3a55153eed16b1dffb8849dd9600ced6f2feaf2673942"
+    },
+    "default-corpus-v1/tests.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/default-corpus-v1/tests.stdout",
+      "sha256": "07068ec25ae9c393eb6398f258d1ebb47cca99a547e9f8571eceef2820ec4276"
+    },
+    "default_corpus_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/default_corpus_v1.py",
+      "sha256": "85f404992d2d710c60095adaf0b020ddbe6d4c016127e16051d88c15428fe891"
+    },
+    "feature-scope-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/feature-scope-v1.json",
+      "sha256": "5c195768ff4a7c3605530af14cce0c9eb192960b91fbe3c4699225364b775e0a"
+    },
+    "feature_scope_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/feature_scope_v1.py",
+      "sha256": "d2a111286d45b491833d6effcb83869f8a39434fdb98b5417486c0cd3f6f56e3"
+    },
+    "native-build-v1/binary.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/binary.json",
+      "sha256": "312d6f485423400d54636adeee7d223a96a81221bbebebd61b1142830e26bc63"
+    },
+    "native-build-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/commands.json",
+      "sha256": "311c8c0fcec5578f6fe8ffa0b4d5acd3d98ed928370e15eac339add2a6afdf4a"
+    },
+    "native-build-v1/compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/compile.resources",
+      "sha256": "a82fa950338bdfb3e11c56ed6b525e595954cfac7dfe0a81e9f505475b7fb96e"
+    },
+    "native-build-v1/compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-build-v1/compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-build-v1/process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/process.json",
+      "sha256": "bea45d833a58b0573013b3d0011084ec77c9b31fdc78184f3d09eb80f7c67ba4"
+    },
+    "native-build-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/protocol.json",
+      "sha256": "2d2e40ec15fa6c4a9f855c89786a0e5d747e6961a27111f1b6fb43ea4cb8a0b9"
+    },
+    "native-build-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/result.json",
+      "sha256": "491292e43415754cfd11056fc698fec9494ab4b6b624d115e471e9ec8370a115"
+    },
+    "native-build-v2/binary.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/binary.json",
+      "sha256": "20844b6790a90eaa79f4bff9c90ec547506bdd00dac2a2731ace19f55398e5d9"
+    },
+    "native-build-v2/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/commands.json",
+      "sha256": "01218e91c56a398da324801aec09ab3ffb48c1844fc6578b28e9f8ce575ab6af"
+    },
+    "native-build-v2/compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/compile.resources",
+      "sha256": "2130ebf8e96cecec2fc5812df998f5ad2e795e6a80c514c18762d4cb7190d182"
+    },
+    "native-build-v2/compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-build-v2/compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-build-v2/process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/process.json",
+      "sha256": "6097766eec52e22c473cb0f18056d355061fb502b56c2d15f46a29059124100e"
+    },
+    "native-build-v2/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/protocol.json",
+      "sha256": "dffe76460609c765f28e813a1ee92594491146c48ab34230f2d09a7ccff1e471"
+    },
+    "native-build-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/result.json",
+      "sha256": "491292e43415754cfd11056fc698fec9494ab4b6b624d115e471e9ec8370a115"
+    },
+    "native-corpus-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/commands.json",
+      "sha256": "df497244f507c270b6ec791432d27b9ac4c1445561f114ed07baff3d67f753a8"
+    },
+    "native-corpus-v1/doctests.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/doctests.process.json",
+      "sha256": "ef01cf8d97fb0d763917ec08cbe35b4d00e4388acafb57b0fea6566243cba29e"
+    },
+    "native-corpus-v1/doctests.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/doctests.resources",
+      "sha256": "3c0bcbab44a6933cc4f22714a0b7ec7bea3be79dfe4e9ee24169ce9f34ce718f"
+    },
+    "native-corpus-v1/doctests.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/doctests.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-corpus-v1/doctests.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/doctests.stdout",
+      "sha256": "3b33dc10b0670845292c7f20177bf5aaf96808cc0d44916a924486a99bd16fce"
+    },
+    "native-corpus-v1/integration-artifact_numeric_keys.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-artifact_numeric_keys.process.json",
+      "sha256": "8cd77a78626ac8700564cafcdad8c92744b2661833bee8a0fb32a76888a555ef"
+    },
+    "native-corpus-v1/integration-artifact_numeric_keys.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-artifact_numeric_keys.resources",
+      "sha256": "fe34b768e69939db849407f0ab6e2b998a73b80ee2f71bceba71fadc045019de"
+    },
+    "native-corpus-v1/integration-artifact_numeric_keys.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-artifact_numeric_keys.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-corpus-v1/integration-artifact_numeric_keys.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-artifact_numeric_keys.stdout",
+      "sha256": "68a2eb3d3b82760f07d65c70d8c59861bc3fab8de3d1beb6d7362ef7ac6611d5"
+    },
+    "native-corpus-v1/integration-diagnostic_formatting.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-diagnostic_formatting.process.json",
+      "sha256": "6dc2646587d986e7835a72b94c36bc9d204ca82c30cc1efebf40c094b428dac1"
+    },
+    "native-corpus-v1/integration-diagnostic_formatting.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-diagnostic_formatting.resources",
+      "sha256": "cd7a3d1c510d38cc051a46665ab2c152e67aacf24ff4e3293872065219a23a14"
+    },
+    "native-corpus-v1/integration-diagnostic_formatting.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-diagnostic_formatting.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-corpus-v1/integration-diagnostic_formatting.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-diagnostic_formatting.stdout",
+      "sha256": "323c444bd2e97d8bd5c7b7ebf9ace80c2e580d63f2ab0a6679504116c9ce4a8f"
+    },
+    "native-corpus-v1/integration-hyperdrc.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-hyperdrc.process.json",
+      "sha256": "4be2c67f0e9c18e6728561bbb1c46c004610d68a56964e199ad1af3c134dfa63"
+    },
+    "native-corpus-v1/integration-hyperdrc.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-hyperdrc.resources",
+      "sha256": "940bf5195a602e9aa9a3bf57a110338553a911727e00c4cbf21bdebc647fcfe7"
+    },
+    "native-corpus-v1/integration-hyperdrc.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-hyperdrc.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-corpus-v1/integration-hyperdrc.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-hyperdrc.stdout",
+      "sha256": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd"
+    },
+    "native-corpus-v1/integration-kicad_pad_sources.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_pad_sources.process.json",
+      "sha256": "6671244e2226efb972e08388359a341949c1e048917a4567f283e54e5b111ab4"
+    },
+    "native-corpus-v1/integration-kicad_pad_sources.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_pad_sources.resources",
+      "sha256": "c327dd148bfda882bf73e966864497c4b0fa91bd2a77415d29040f2065d80703"
+    },
+    "native-corpus-v1/integration-kicad_pad_sources.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_pad_sources.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-corpus-v1/integration-kicad_pad_sources.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_pad_sources.stdout",
+      "sha256": "d22a27748667bc42c5795cd49b7253a49ba8ba093b53799038178724f2489852"
+    },
+    "native-corpus-v1/integration-kicad_rule_export.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_rule_export.process.json",
+      "sha256": "8bb6e43d307e7df5163992417f7026182e34290ae1c36fd27d0c4f80086a91f0"
+    },
+    "native-corpus-v1/integration-kicad_rule_export.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_rule_export.resources",
+      "sha256": "b6a6a035459b8ed3ae2c9e2f5a276e8f901b011fa9d16b5f63c03d8ae9c40f15"
+    },
+    "native-corpus-v1/integration-kicad_rule_export.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_rule_export.stderr",
+      "sha256": "90127d2004235caa0531a8a6dbef4ce60d429a38661e6beb6aa86a350107c636"
+    },
+    "native-corpus-v1/integration-kicad_rule_export.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_rule_export.stdout",
+      "sha256": "4f1e793c3a080a7a323fcb9a4b3200651aa4e77d2bd4fa125e5f7c9680762d30"
+    },
+    "native-corpus-v1/integration-kicad_track_failures.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_track_failures.process.json",
+      "sha256": "7e53def36f2459a8970c0f2696fee969d3603c737df98ea35306651f32eef122"
+    },
+    "native-corpus-v1/integration-kicad_track_failures.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_track_failures.resources",
+      "sha256": "68bba2a4ab3b4da31f27c1f9eed44216e52ca1acdd2e233017f182033627258b"
+    },
+    "native-corpus-v1/integration-kicad_track_failures.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_track_failures.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-corpus-v1/integration-kicad_track_failures.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-kicad_track_failures.stdout",
+      "sha256": "bc94d437bd522dc3db8104136ee3e03b0763f9f52dbf4168023d8612285df761"
+    },
+    "native-corpus-v1/integration-readme.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-readme.process.json",
+      "sha256": "a55b1e5afba3f19686e5465a05eb524118e23a9af46dc0f2cccf0bb875be7e55"
+    },
+    "native-corpus-v1/integration-readme.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-readme.resources",
+      "sha256": "184c89ea5c9178171b9070a36d6999ca88040e8ad8d0945e8432da22d071570e"
+    },
+    "native-corpus-v1/integration-readme.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-readme.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-corpus-v1/integration-readme.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/integration-readme.stdout",
+      "sha256": "293d6068ed6b268888c81f9c3520df58b6d4e78fc6f1771f3474c111b2e83ecd"
+    },
+    "native-corpus-v1/library.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/library.process.json",
+      "sha256": "f32beb4fdb966a64e1af1485fe779c6de8dc890789dad32f73d667c64645f721"
+    },
+    "native-corpus-v1/library.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/library.resources",
+      "sha256": "82a430c3f8e38f0322631208756ea5ad1ffe16db11c427fcbd89d5ce43b595a0"
+    },
+    "native-corpus-v1/library.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/library.stderr",
+      "sha256": "ec797253db6256ca5e428ce76892a877e16cd66d8c72c87a16ba381626bfa39e"
+    },
+    "native-corpus-v1/library.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/library.stdout",
+      "sha256": "dfb093a7a76c2cf66665e9cf990d4dcd4baf32fb6ed3aa0f02f4224d6565a0d5"
+    },
+    "native-corpus-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/protocol.json",
+      "sha256": "e70eefc1188f941d7f95af2aa20d309ca1fcd7beb24295be6fb5587f9ee8038e"
+    },
+    "native-corpus-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/result.json",
+      "sha256": "81a8268cc7180f360e67811184f107185aa312cc3c52c134d6ecc9ca421f307c"
+    },
+    "native-corpus-v2/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v2/commands.json",
+      "sha256": "ad149c94ec2b5c58cb9abb18ceb94c35946b4cdc1a4af815bfffcea1d483f3e8"
+    },
+    "native-corpus-v2/library.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v2/library.process.json",
+      "sha256": "b316351c27d8b639d9cc9bae003f6a1324491abfbe585fe2cee650f827c4d774"
+    },
+    "native-corpus-v2/library.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v2/library.resources",
+      "sha256": "579ad9a8ab6b8cec39365beb3bfd00ebdd67c94d1b1853c4339c8e9cefef8198"
+    },
+    "native-corpus-v2/library.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v2/library.stderr",
+      "sha256": "0e389a3032aff2e91e64700c778e4b8fd2db625a4f061eb47fae93e6a3c20de0"
+    },
+    "native-corpus-v2/library.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v2/library.stdout",
+      "sha256": "0f7fa551b62ad97c13693382270c5caad96948c4ec675b5380dd86bc6826bdac"
+    },
+    "native-corpus-v2/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v2/protocol.json",
+      "sha256": "5b8816373b7461020f6fcecbd2dd4191383305d067353bfc01728ae01b1e1fe1"
+    },
+    "native-corpus-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v2/result.json",
+      "sha256": "945c5ac17b0280b1d43cf5d66d2b95dda53aa1810de734739e32ed86512ec4b6"
+    },
+    "native_corpus_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native_corpus_v1.py",
+      "sha256": "97fbf0131d9b4a058d1db11a5e58cfcbb758792fee7535b319502e975255bdc8"
+    },
+    "native_corpus_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native_corpus_v2.py",
+      "sha256": "efa6d914c480517fd75078a5f9d29c54635fc417fbd0397938d40219567e6ddf"
+    },
+    "preparation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/preparation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "preparation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/preparation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "preparation-v1/main-input-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/preparation-v1/main-input-hashes.json.gz",
+      "sha256": "fb5f83207e164beab24f5075173bbe25de79547dc3959badb7c03db87a9e05d4"
+    },
+    "preparation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/preparation-v1/result.json",
+      "sha256": "598392af8598875a4215aaf5cc29e9e043e03b9384402052d1e6d69de358fe45"
+    },
+    "preparation-v1/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/preparation-v1/source-hashes.json.gz",
+      "sha256": "685545e5794ceb842425b825ac980e631166e4524236e75ee548ad861a6520b7"
+    },
+    "preparation-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/preparation-v2/result.json",
+      "sha256": "b9b5d540c9c68e9a3e0888dd657fef741669bdd4c4d08216bda4442c6b43a02d"
+    },
+    "preparation-v2/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/preparation-v2/source-hashes.json.gz",
+      "sha256": "8d8d977ef3b8c9b76afbac21e599f88411ec9ab2c30149e21c4c67c6148b122a"
+    },
+    "prepare_indexed_storage_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/prepare_indexed_storage_v1.py",
+      "sha256": "9b8a57d1ae657ce8127baa9d74056e1db029cbc7494c32f66ddfab73b8ae3f9a"
+    },
+    "prepare_storage_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/prepare_storage_v1.py",
+      "sha256": "715995a76fdf41495712ad46d94821184c372c16192146dd3d7e6d3399c24179"
+    },
+    "prepare_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/prepare_v1.py",
+      "sha256": "888e42e0f444bf516cac22bce373bc525cd5346032e139b1fbf0a861213ffcd5"
+    },
+    "progress-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/progress-v1.md",
+      "sha256": "cb54839cffead64248298bbe6af6e865c1afcf44835176a17f484a80fc4ffe05"
+    },
+    "report_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/report_v1.py",
+      "sha256": "11a6dd96472e695188c429b7ef242e9bd3ef89a4be1e80f9778619300f1cfb71"
+    },
+    "reproduce_storage_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/reproduce_storage_v1.py",
+      "sha256": "f1c8fc27e6adfa309645921df0c1aa5e8d11127ca9d50e59eb53365876b0f80d"
+    },
+    "storage-contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-contract-v1.md",
+      "sha256": "0f83af34a21807ef01d399b702d7faadcfaefac4a7afcad4b2e7d6f80bb79fbc"
+    },
+    "storage-preparation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-preparation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "storage-preparation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-preparation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "storage-preparation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-preparation-v1/result.json",
+      "sha256": "ad91695a4bc5b33bfd95bd5eef1920bf27bd69670acbb1b8de9fc8e58c3d1988"
+    },
+    "storage-preparation-v1/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-preparation-v1/source-hashes.json.gz",
+      "sha256": "341c4a64a1f73ed503d1ff4bbb3446210629107e24a74acdcc69dd7a0b146ef5"
+    },
+    "storage-preparation-v1/test-storage.patch": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-preparation-v1/test-storage.patch",
+      "sha256": "c566a3e1a1171bd841f3a738a9a963ee0950dd45f38c7353a72c145a15a657f3"
+    },
+    "storage-reproduction-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/commands.json",
+      "sha256": "35faed77242f7b837ee15e977908709ec8a7adb6cf50153e9541fc0fed63e874"
+    },
+    "storage-reproduction-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/protocol.json",
+      "sha256": "d47f6944c2eaa4aeb826441c13ff4e7ed283d3e39e21acfc8bc507e67efc9aa9"
+    },
+    "storage-reproduction-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/result.json",
+      "sha256": "9c104487cf9629dcc4630de3ceba86cea012523341c519b2b66090c292c6ada5"
+    },
+    "storage-reproduction-v1/test-1.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/test-1.stderr",
+      "sha256": "9219d5e49f36dbd13626d9bc983ae83acd6088f381d6661559c93d99106c1343"
+    },
+    "storage-reproduction-v1/test-1.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/test-1.stdout",
+      "sha256": "db2e964244b67023ac5476fc61d80edf15a173bb763b59a372c5c9209438bc93"
+    },
+    "storage-reproduction-v1/test-2.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/test-2.stderr",
+      "sha256": "4c698d59180b94cf85c76a22cfb46e9e121af1c330be3b76a606ff64a2e0aaa1"
+    },
+    "storage-reproduction-v1/test-2.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/test-2.stdout",
+      "sha256": "5a9a4a2b8f94a8046085f9ed9872713d7a4fa788967103e7a630f1735a42709a"
+    },
+    "storage-reproduction-v1/test-3.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/test-3.stderr",
+      "sha256": "496f3d56ec86f9e6b05f5aa96c42d5fbaf843b2161d26baa58724164ef7ba350"
+    },
+    "storage-reproduction-v1/test-3.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/test-3.stdout",
+      "sha256": "f01ccd8ee5c2133af4878d6a470ecbd110690c038f8cf7f95e186460912bac9a"
+    },
+    "storage-reproduction-v1/test-4.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/test-4.stderr",
+      "sha256": "8a60a0d4ecfd7d5b59fd2897989b0937a124aa359b7670cac66b0be2c07c6809"
+    },
+    "storage-reproduction-v1/test-4.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/test-4.stdout",
+      "sha256": "7fb5a77a6bd498561e7db8788c510e591be0633e869da728d4816cbd6b28f27d"
+    },
+    "storage-reproduction-v1/test-5.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/test-5.stderr",
+      "sha256": "0f3acc8c7b75422e57029135828df8d4ee4907e6273df0c78abe107fc62a8691"
+    },
+    "storage-reproduction-v1/test-5.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/test-5.stdout",
+      "sha256": "3b6e8208bdd6b6a663a0bc314d995fef7c640b846e28f0db89e2769189042413"
+    },
+    "storage-validation-v1/app-tests.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/app-tests.process.json",
+      "sha256": "3313f44e0d1746a19f6cc2ce68170e936a5413d216e4154a1690343b37d5cdc3"
+    },
+    "storage-validation-v1/app-tests.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/app-tests.resources",
+      "sha256": "3c342880a4739d8f2ed511623e328980fb243e0af93e0093c169c61e152d1791"
+    },
+    "storage-validation-v1/app-tests.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/app-tests.stderr",
+      "sha256": "e0ff8c0e3e46d29e1a5f6dadd038963fc52452d3c8c382c74af44546992a5b30"
+    },
+    "storage-validation-v1/app-tests.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/app-tests.stdout",
+      "sha256": "70fd56d0f8aedc0b2888bfa25be5a588cc2e8e75ef9586efda108d23ba6dd673"
+    },
+    "storage-validation-v1/arrow-test.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/arrow-test.process.json",
+      "sha256": "dcae0f44582ddf101de317b7af723992bcbf7479058734eb5b0ba40ce4810a83"
+    },
+    "storage-validation-v1/arrow-test.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/arrow-test.resources",
+      "sha256": "479c9dd430bbfbd34f41c27e71567e7e1417675134a2742309c67924953816ec"
+    },
+    "storage-validation-v1/arrow-test.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/arrow-test.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "storage-validation-v1/arrow-test.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/arrow-test.stdout",
+      "sha256": "fa4aa17fdd9d48c23d64a560e2b35bb8aeb9314d27f5bfa7fb1626e06a6ce6cf"
+    },
+    "storage-validation-v1/binary.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/binary.json",
+      "sha256": "761398fd547bc7203e3cb839273c4028c0c2acf0cad363d68b650f504370e126"
+    },
+    "storage-validation-v1/clippy.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/clippy.process.json",
+      "sha256": "10c13630a1670cb940e195b8377503e8182546d7ad0a1360ded4440f3810b6c6"
+    },
+    "storage-validation-v1/clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/clippy.resources",
+      "sha256": "69d18945c46b73325f6c3b9c47c12b68bfefc04588a1328b767f7e685f84a9a2"
+    },
+    "storage-validation-v1/clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/clippy.stderr",
+      "sha256": "5c686e7f22512ce67303b27e45aace230e904a57f94e5a765e9bd855345f77b6"
+    },
+    "storage-validation-v1/clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "storage-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/commands.json",
+      "sha256": "7fef83aa496f049ffefd7a60cde01cec649be653e043c2811b509cf292ce8664"
+    },
+    "storage-validation-v1/compile.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/compile.process.json",
+      "sha256": "8c06134324f3339d318f14ccc42446959616dc0076c49b21a4b9bcd002bf0c0b"
+    },
+    "storage-validation-v1/compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/compile.resources",
+      "sha256": "c9120895aaf8ab4971e5c30e3385290f7792fc34b9465ec046f4557b11b11635"
+    },
+    "storage-validation-v1/compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "storage-validation-v1/compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "storage-validation-v1/format.process.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/format.process.json",
+      "sha256": "791495397eacd539e47b0fd47dbdd66a8a99e71621962dde610eec359d48e9af"
+    },
+    "storage-validation-v1/format.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/format.resources",
+      "sha256": "d7d5d1f62d1e27c8b7f1320693fdbc597668a306f80972bb6cc8b63479d0c96f"
+    },
+    "storage-validation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "storage-validation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "storage-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/protocol.json",
+      "sha256": "c5c1a8625c71f3e191398f8531d4b6332d3fd0aaa0f659667f952b7f8e5bc0cc"
+    },
+    "storage-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/result.json",
+      "sha256": "cd4b8bf1317703e29f5105356db5c62608b674a015c0a45f442f51f6f202f5cc"
+    },
+    "validate_storage_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/validate_storage_v1.py",
+      "sha256": "61d98fad889f0d4f78c2089269bc240436f215940a45b9a004d6ef42582db20e"
+    }
+  },
+  "scope": "The independent test-only storage repair is applied. The cache candidate remains isolated, and all earlier admission and rejection decisions remain in force.",
+  "source_changes_applied": true,
+  "source_inputs": 2835
+}

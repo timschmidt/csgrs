@@ -1,0 +1,38 @@
+{
+  "scope_clarification": "The earlier default-feature shorthand denotes the empty optional-feature configuration. The retained binary was actually compiled with --no-default-features; no separate default-feature Cargo invocation is claimed.",
+  "build_command": [
+    "cargo",
+    "test",
+    "--offline",
+    "--locked",
+    "-p",
+    "hypercurve",
+    "--release",
+    "--no-default-features",
+    "--lib",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "compiled_features": [],
+  "declared_default_features": [],
+  "retained_binary": {
+    "built": "/tmp/csgrs-circle-support-candidate-v1/release/deps/hypercurve-a6e9089b857b4c48",
+    "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests",
+    "sha256": "75fe536ecc89881e63424938273c202f1dff152951913adfc635f9f39aa8a9ca",
+    "bytes": 40649744
+  },
+  "unchanged_ignored_tests": [
+    "test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... ignored, long exact end-to-end benchmark; about 326 seconds in an unoptimized all-feature build",
+    "test curve_intersection::circle_support_cost_probe::support_lookup_cost ... ignored, explicit cost diagnostic; never part of semantic test counts"
+  ],
+  "inputs_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/feature_scope_v1.py": "d2a111286d45b491833d6effcb83869f8a39434fdb98b5417486c0cd3f6f56e3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/commands.json": "f9fc81888d1b02a5ea08e620404c8cd02e4f77c07c376f74e3234d406f3c5d6d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/build.stdout": "e774a4b7cc3ba3350c22b10d30835aaf68029954e6bc3fd70f6d3158d41b4f51",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/binary.json": "06cfb204de2c7ce7a6a126e3d39fde47c94ef3a6373570e252113ded554432eb",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/Cargo.toml": "ea02192fc4699f0182c12a09690c50a40f3109ece96ed6a9a5f3a745df443c27",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/default-corpus-v1/tests.stdout": "07068ec25ae9c393eb6398f258d1ebb47cca99a547e9f8571eceef2820ec4276"
+  },
+  "existing_protocol_and_logs_modified": false,
+  "default_integration_or_doc_pass_claimed": false
+}

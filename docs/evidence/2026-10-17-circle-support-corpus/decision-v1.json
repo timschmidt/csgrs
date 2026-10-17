@@ -1,0 +1,808 @@
+{
+  "phase": "Qualification decision before checkpoint application; retention-v1.json records the applied test-only repair.",
+  "main_parent_commit": "0ed5a970cf0d9204e9f4c5c73e93b16a6a13bc89",
+  "status": "qualified two-file test-storage repair; cache proposal remains unadmitted with continued corpus results recorded",
+  "cache_status": "unadmitted: continued curve and native corpus results recorded; remaining affected-crate, binding and matched-cost qualification is open",
+  "progress_classification": "progress",
+  "owning_layer": "Hypercurve intersection batch cache; public native consumers checked without changing their represented geometry.",
+  "properties": [
+    "P4",
+    "P17",
+    "P18",
+    "P19",
+    "P20",
+    "P27",
+    "P35",
+    "P36",
+    "P37",
+    "P38",
+    "P39"
+  ],
+  "results": {
+    "default-corpus-v1": {
+      "result": "docs/evidence/2026-10-17-circle-support-corpus/default-corpus-v1/result.json",
+      "command_failures": [],
+      "commands": [
+        {
+          "name": "tests",
+          "exit_code": 0,
+          "elapsed_seconds": 869.9524920098484,
+          "external_stop_reason": null
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 1741,
+          "failed": 0,
+          "ignored": 2,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "existing_ignored_test_lines": [
+        "test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... ignored, long exact end-to-end benchmark; about 326 seconds in an unoptimized all-feature build",
+        "test curve_intersection::circle_support_cost_probe::support_lookup_cost ... ignored, explicit cost diagnostic; never part of semantic test counts"
+      ],
+      "test_totals": {
+        "passed": 1741,
+        "failed": 0,
+        "ignored": 2,
+        "measured": 0,
+        "filtered_out": 0
+      },
+      "scope_complete": true
+    },
+    "native-build-v1": {
+      "result": "docs/evidence/2026-10-17-circle-support-corpus/native-build-v1/result.json",
+      "command_failures": [],
+      "commands": [
+        {
+          "name": "compile",
+          "exit_code": 0,
+          "elapsed_seconds": 28.742189682088792,
+          "external_stop_reason": null
+        }
+      ],
+      "test_summaries": [],
+      "existing_ignored_test_lines": [],
+      "test_totals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0
+      },
+      "scope_complete": true
+    },
+    "native-corpus-v1": {
+      "result": "docs/evidence/2026-10-17-circle-support-corpus/native-corpus-v1/result.json",
+      "command_failures": [
+        "library"
+      ],
+      "commands": [
+        {
+          "name": "library",
+          "exit_code": 101,
+          "elapsed_seconds": 326.4001205889508,
+          "external_stop_reason": null
+        },
+        {
+          "name": "integration-kicad_track_failures",
+          "exit_code": 0,
+          "elapsed_seconds": 0.25532538210973144,
+          "external_stop_reason": null
+        },
+        {
+          "name": "integration-kicad_rule_export",
+          "exit_code": 0,
+          "elapsed_seconds": 0.23890455067157745,
+          "external_stop_reason": null
+        },
+        {
+          "name": "integration-diagnostic_formatting",
+          "exit_code": 0,
+          "elapsed_seconds": 0.2261892263777554,
+          "external_stop_reason": null
+        },
+        {
+          "name": "integration-hyperdrc",
+          "exit_code": 0,
+          "elapsed_seconds": 0.2265664297156036,
+          "external_stop_reason": null
+        },
+        {
+          "name": "integration-kicad_pad_sources",
+          "exit_code": 0,
+          "elapsed_seconds": 0.2920084889046848,
+          "external_stop_reason": null
+        },
+        {
+          "name": "integration-artifact_numeric_keys",
+          "exit_code": 0,
+          "elapsed_seconds": 0.23337822081521153,
+          "external_stop_reason": null
+        },
+        {
+          "name": "integration-readme",
+          "exit_code": 0,
+          "elapsed_seconds": 0.23043830413371325,
+          "external_stop_reason": null
+        },
+        {
+          "name": "doctests",
+          "exit_code": 0,
+          "elapsed_seconds": 1.3917223047465086,
+          "external_stop_reason": null
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 1554,
+          "failed": 5,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 39,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 14,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 33,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "existing_ignored_test_lines": [],
+      "test_totals": {
+        "passed": 1651,
+        "failed": 5,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0
+      },
+      "scope_complete": false
+    },
+    "curve-all-v1": {
+      "result": "docs/evidence/2026-10-17-circle-support-corpus/curve-all-v1/result.json",
+      "command_failures": [],
+      "commands": [
+        {
+          "name": "build",
+          "exit_code": 0,
+          "elapsed_seconds": 339.0371338548139,
+          "external_stop_reason": null
+        },
+        {
+          "name": "tests",
+          "exit_code": 0,
+          "elapsed_seconds": 1684.8119797050022,
+          "external_stop_reason": null
+        },
+        {
+          "name": "clippy",
+          "exit_code": 0,
+          "elapsed_seconds": 41.55983840674162,
+          "external_stop_reason": null
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 1748,
+          "failed": 0,
+          "ignored": 6,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 28,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 48,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 23,
+          "failed": 0,
+          "ignored": 11,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 14,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 49,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 60,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 39,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 108,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 3,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 38,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 13,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 21,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 13,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 22,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 15,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 34,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 20,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 8,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "existing_ignored_test_lines": [
+        "test bezier_offset::conversion_tests::benchmark_correlated_circle_partition_offset_driver ... ignored, manual performance checkpoint driver",
+        "test bezier_offset::conversion_tests::benchmark_independent_oblique_chord_cap_offset_driver ... ignored, manual performance checkpoint driver",
+        "test bezier_offset::conversion_tests::benchmark_nested_chord_mapped_cap_offset_driver ... ignored, manual performance checkpoint driver",
+        "test bezier_offset::conversion_tests::benchmark_nonendpoint_rational_mapped_cap_offset_driver ... ignored, manual performance checkpoint driver",
+        "test bezier_offset::conversion_tests::benchmark_pair_mapped_lens_offset_driver ... ignored, manual performance checkpoint driver",
+        "test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... ignored, long exact end-to-end benchmark; about 326 seconds in an unoptimized all-feature build",
+        "test bevel_then_round_erosion_of_a_weight_six_conic_completes ... ignored, open: recursive quadratic tower signs of a twice-eroded weight-6 conic are too slow",
+        "test beveled_rational_seed_double_inward_offset_completes ... ignored, endpoint identity: six recursive promotions take over a minute",
+        "test booleans_then_double_round_erosion_completes ... ignored, slow: two round erosions after Booleans take about seventy-five seconds",
+        "test chamfered_conic_round_then_miter_inward_offset_completes ... ignored, open: opposite-sheet double root in a chord/parallel band incidence",
+        "test filleted_boolean_miter_erosion_completes ... ignored, open: degree-40 selected fiber over a degree-14 field needs a cheaper complete isolator",
+        "test filleted_union_miter_dilation_completes ... ignored, open: adjacent tangent chord/parallel junction in boundary reconstruction",
+        "test miter_eroded_ring_miter_erosion_completes ... ignored, open: repeated miter chord/parallel projection over recursive fields",
+        "test nested_xor_miter_dilation_completes ... ignored, open: degree-14 recursive chord/parallel enumerator in a miter offset",
+        "test repeated_inward_miter_offset_of_a_weighted_quadratic_completes ... ignored, open: scalar promotion of a recursive projective parameter in repeated miter offset",
+        "test weighted_conic_miter_bevel_bevel_offsets_complete ... ignored, slow: about a minute in the final bevel offset",
+        "test wide_weighted_conic_miter_bevel_bevel_offsets_complete ... ignored, open: chord-pair side test of a correlated pair point in a bevel band",
+        "test exact_path_stroke_preserves_an_even_multiplicity_stationary_source ... ignored, long exact degree-four end-to-end regression; about 24 seconds in release mode",
+        "test exact_path_stroke_splits_a_nonuniform_rational_source_cusp ... ignored, long exact rational-cusp end-to-end regression; run explicitly in release mode",
+        "test exact_path_stroke_splits_an_interior_source_cusp ... ignored, long exact end-to-end source-cusp regression; run explicitly in release mode",
+        "test bevel_stroke_of_a_filleted_hyperbola_pair_completes ... ignored, open: selected cusp-semicircle/parallel fiber isolation is too slow for fillet-trimmed hyperbolas",
+        "test chamfered_cubic_line_bevel_stroke_round_trips ... ignored, open: chord/parallel incidence over a recursive quadratic tower is too slow",
+        "test chamfered_quadratic_bevel_stroke_round_trips ... ignored, open: equal recursive projective parameters are compared by refinement",
+        "test chamfered_rational_nurbs_miter_stroke_completes ... ignored, open: recursive chord/parallel dense projection is too slow",
+        "test chamfered_spline_bevel_stroke_round_trips ... ignored, open: chord/parallel tangent sign over a recursive quadratic tower is too slow",
+        "test miter_stroke_of_a_filleted_heavy_rational_cubic_completes ... ignored, open: selected-fiber fillet tangency in a high-weight rational stroke is too slow",
+        "test mixed_cubic_arc_miter_stroke_completes ... ignored, slow: high-degree parallel/parallel resultants take about three minutes",
+        "test mixed_family_miter_stroke_round_trips ... ignored, slow: the mixed-family miter stroke round trip takes about two minutes",
+        "test refilleting_a_filleted_vertex_completes ... ignored, open: fillet of a tangent junction left by an earlier fillet",
+        "test round_stroke_of_a_filleted_heavy_nurbs_path_completes ... ignored, open: a filleted heavy NURBS round stroke is too slow",
+        "test round_stroke_of_a_filleted_nurbs_pair_completes ... ignored, open: tangent-junction double root in selected cusp-semicircle/parallel isolation",
+        "test stroke_fillet_stroke_of_a_cubic_arc_path_completes ... ignored, open: point equality over recursive quadratic fields in a repeated stroke is too slow",
+        "test trimmed_chamfered_arc_cubic_bevel_stroke_completes ... ignored, open: recursive tower refinement while rebuilding the stroke region"
+      ],
+      "test_totals": {
+        "passed": 2485,
+        "failed": 0,
+        "ignored": 33,
+        "measured": 0,
+        "filtered_out": 0
+      },
+      "scope_complete": true
+    },
+    "storage-validation-v1": {
+      "result": "docs/evidence/2026-10-17-circle-support-corpus/storage-validation-v1/result.json",
+      "command_failures": [],
+      "commands": [
+        {
+          "name": "format",
+          "exit_code": 0,
+          "elapsed_seconds": 10.61307793436572,
+          "external_stop_reason": null
+        },
+        {
+          "name": "compile",
+          "exit_code": 0,
+          "elapsed_seconds": 27.26755224307999,
+          "external_stop_reason": null
+        },
+        {
+          "name": "app-tests",
+          "exit_code": 0,
+          "elapsed_seconds": 0.22760298242792487,
+          "external_stop_reason": null
+        },
+        {
+          "name": "arrow-test",
+          "exit_code": 0,
+          "elapsed_seconds": 0.1992356269620359,
+          "external_stop_reason": null
+        },
+        {
+          "name": "clippy",
+          "exit_code": 0,
+          "elapsed_seconds": 45.660411049146205,
+          "external_stop_reason": null
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 39,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 1520
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 1558
+        }
+      ],
+      "existing_ignored_test_lines": [],
+      "test_totals": {
+        "passed": 40,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 3078
+      },
+      "scope_complete": true
+    },
+    "native-build-v2": {
+      "result": "docs/evidence/2026-10-17-circle-support-corpus/native-build-v2/result.json",
+      "command_failures": [],
+      "commands": [
+        {
+          "name": "compile",
+          "exit_code": 0,
+          "elapsed_seconds": 29.239572227932513,
+          "external_stop_reason": null
+        }
+      ],
+      "test_summaries": [],
+      "existing_ignored_test_lines": [],
+      "test_totals": {
+        "passed": 0,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0
+      },
+      "scope_complete": true
+    },
+    "native-corpus-v2": {
+      "result": "docs/evidence/2026-10-17-circle-support-corpus/native-corpus-v2/result.json",
+      "command_failures": [],
+      "commands": [
+        {
+          "name": "library",
+          "exit_code": 0,
+          "elapsed_seconds": 324.5955246249214,
+          "external_stop_reason": null
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 1559,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "existing_ignored_test_lines": [],
+      "test_totals": {
+        "passed": 1559,
+        "failed": 0,
+        "ignored": 0,
+        "measured": 0,
+        "filtered_out": 0
+      },
+      "scope_complete": true
+    }
+  },
+  "implementation_sha256": {
+    "crates/hyperdrc/src/app.rs": "1ebb5d47c56c70de6b17ce22abb8a97794e03bfd0efa8ec139061cc961a91452",
+    "crates/hyperdrc/src/arrow_report.rs": "aa1b1c34ccaf056e7655e601465dfaf92b20387b1e8772e4ba67c42634115759"
+  },
+  "test_storage_repair_qualified": true,
+  "production_prefixes_unchanged": true,
+  "final_native_library_tests_passed": 1559,
+  "unchanged_native_consumer_and_doc_tests_reused": 97,
+  "source_changes_applied": false,
+  "cache_index_admitted": false,
+  "performance_claimed": false,
+  "full_plan_complete": false,
+  "prior_decisions_preserved": [
+    "The original 35-file native bundle remains rejected; its independently admitted components stay admitted.",
+    "The E36 general exact KiCad track integration remains rejected by its unchanged workload gates.",
+    "The E39 temporary-storage test repair remains admitted, and the full project report byte comparison remains valid for the same production candidate."
+  ],
+  "limits": [
+    "Only the independently qualified two-file test-storage repair is eligible for application. The cache proposal remains isolated; neither it nor the rejected exact-track integration is admitted.",
+    "Full CSGRS and Hypercircuit affected-configuration runs, actual C/C++/Python/WASM consumers and final matched-cost samples remain outstanding for this proposal.",
+    "The reused library was built with --no-default-features; the crate declares an empty default feature set. This minimal-feature library result is not a separate default-feature Cargo invocation or an integration/doc pass. See feature-scope-v1.json.",
+    "Any failed or externally stopped command is retained in the result table and is not converted into a pass.",
+    "The /tmp per-user quota was still full at the start of this continuation. New output uses guarded repository storage; retained build artifacts were not removed or reused for writes.",
+    "The 1,800-second/8-GiB external containment and 768-MiB repository reserve are harness limits, not production work, heap or cancellation guarantees.",
+    "No performance comparison is inferred from these functional runs. Curve functional suites overlapped independent compilation; both native runs waited for their preceding task-owned CPU-heavy checks to finish.",
+    "The inherited audit still has 27,093 missing paths. New paths are pinned separately; no whole-history preservation claim is made.",
+    "All other properties, future-work, coverage, directed campaigns, proofs, bindings, distribution and release obligations remain open according to their existing records."
+  ],
+  "next": [
+    "Investigate any recorded corpus failure without weakening policy, fixture resolution, assertions or validation.",
+    "Complete remaining affected CSGRS and Hypercircuit configurations and real binding consumers in available, guarded storage; resolve the pending larger-build storage constraint.",
+    "Complete matched cold/warm cost samples, preserving exact rows, certainty, report bytes and unfavorable cases, before deciding whether to admit the cache change.",
+    "Continue ordinary strict-mode workload completion and the full property plan; the rejected native-ingress integration still needs its own acceptance evidence."
+  ]
+}

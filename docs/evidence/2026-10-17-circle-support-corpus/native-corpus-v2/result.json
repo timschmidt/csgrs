@@ -1,0 +1,16 @@
+{
+  "complete": true,
+  "command_failures": [],
+  "passed_library_tests": 1559,
+  "failed_library_tests": 0,
+  "reused_passed_consumer_and_doc_tests": 97,
+  "source_and_binaries_and_dependencies_unchanged": true,
+  "generated_regression_outputs": {},
+  "selected_temporary_directory_cleaned": true,
+  "temporary_leftovers": [],
+  "original_performance_gates_included": true,
+  "original_failures_retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/result.json",
+  "cargo_targets_reopened": false,
+  "cache_admitted": false,
+  "full_plan_complete": false
+}

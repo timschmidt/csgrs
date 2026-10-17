@@ -1,0 +1,44 @@
+
+running 39 tests
+test app::tests::board_outline_validation_rejects_conflicting_explicit_roles ... ok
+test app::tests::cli_exit_status_policy_allows_report_only_runs ... ok
+test app::tests::explicit_pairs_do_not_default_to_all_pairs ... ok
+test app::tests::gerber_directory_loader_discovers_supported_extensions_in_stable_order ... ok
+test app::tests::gerber_directory_sidecars_feed_manifest_and_provenance ... ok
+test app::tests::gerber_path_detection_covers_jlc_style_names ... ok
+test app::tests::inferred_layer_roles_fill_missing_cli_roles_from_filenames ... ok
+test app::tests::inferred_layer_roles_use_x2_file_function_and_preserve_explicit_cli_roles ... ok
+test app::tests::input_manifest_records_readiness_artifacts ... ok
+test app::tests::layer_index_validation_rejects_out_of_range_indexes ... ok
+test app::tests::layer_pairs_defaults_to_unique_pairs ... ok
+test app::tests::layer_pairs_reject_malformed_or_duplicate_pairs ... ok
+test app::tests::load_all_layers_discovers_all_input_channels_and_marks_conversion_origin ... ok
+test app::tests::load_all_layers_discovers_extracted_package_archives_recursively ... ok
+test app::tests::load_all_layers_wraps_parse_errors_with_file_path_context ... ok
+test app::tests::load_layers_preserves_gerber_x2_file_metadata_for_manifest ... ok
+test app::tests::loaders_report_missing_sidecar_files ... ok
+test app::tests::manifest_input_collects_declared_counts_and_kicad_metadata ... ok
+test app::tests::manifest_input_discards_non_positive_optional_counts_when_no_readiness_context ... ok
+test app::tests::parser_diagnostics_collect_converter_output_manifest_issues ... ok
+test app::tests::parser_diagnostics_collect_drawing_sidecar_parser_evidence ... ok
+test app::tests::parser_diagnostics_collect_excellon_and_ipc356_issues ... ok
+test app::tests::parser_diagnostics_collect_gerber_metadata_issues ... ok
+test app::tests::parser_diagnostics_collect_kicad_drc_report_entries ... ok
+test app::tests::parser_diagnostics_collect_manufacturing_handoff_issues ... ok
+test app::tests::parser_diagnostics_collect_spreadsheet_formula_warnings ... ok
+test app::tests::parser_diagnostics_collect_text_sidecar_table_issues ... ok
+test app::tests::parser_diagnostics_collect_workbook_semantics_warnings ... ok
+test app::tests::run_rejects_empty_input_set ... ok
+test app::tests::silk_layer_validation_rejects_every_gerber_layer_as_silkscreen ... ok
+test app::tests::text_artifact_loader_extracts_json_tables ... ok
+test app::tests::text_artifact_loader_extracts_nested_json_tables_and_flattened_fields ... ok
+test app::tests::text_artifact_loader_extracts_selected_workbook_sheet ... ok
+test app::tests::text_artifact_loader_extracts_xlsx_tables ... ok
+test app::tests::text_artifact_loader_keeps_binary_spreadsheets_non_fatal ... ok
+test app::tests::text_artifact_loader_merges_selected_workbook_sheets_with_different_headers ... ok
+test app::tests::text_artifact_loader_merges_workbook_sheets_with_matching_headers ... ok
+test app::tests::text_artifact_loader_preserves_workbook_formula_comments ... ok
+test app::tests::waiver_governance_selection_tracks_explicit_check ... ok
+
+test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 1520 filtered out; finished in 0.02s
+

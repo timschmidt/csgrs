@@ -1,0 +1,35 @@
+{
+  "complete": true,
+  "base_commit": "0ed5a970cf0d9204e9f4c5c73e93b16a6a13bc89",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1",
+  "source_inputs": 2836,
+  "source_hashes_sha256": "685545e5794ceb842425b825ac980e631166e4524236e75ee548ad861a6520b7",
+  "main_input_hashes_sha256": "fb5f83207e164beab24f5075173bbe25de79547dc3959badb7c03db87a9e05d4",
+  "proposal_sha256": {
+    "crates/hypercurve/src/curve_intersection.rs": "2b6729bbef6ae8ac1ec95341c0311a299fde90e1a4dd207bb92bc43fc1ac472e",
+    "crates/hypercurve/src/circle_support_cache_tests.rs": "a95c3b73c00c486bc63de4e7711aef3fd2790ab7a3e1c5899b6ddd57755b783f",
+    "crates/hypercurve/README.md": "7587b7b82534a4a14502092dffc76f7189afff4f5db73d9e929976b0dff36bbe"
+  },
+  "changes_from_e38_candidate": {
+    "docs/properties-status.json": {
+      "previous": "38e8dc3ec154e3c7fc4fb7b30542c10a6b0379017e49f836c2d511116b34fc8c",
+      "current": "e2e0a289b736771ddf974e29fe9517eb11dcd30b1de572533d031809b15b8537"
+    },
+    "crates/hyperdrc/src/parquet_report.rs": {
+      "previous": "38684fb9fbe1e419e0ba37bba003755a9e4f68389f64709c77dd356814a54418",
+      "current": "93fa0b9cf5a55ca5d9cd26b260baa45b511bc53cd68bbad505d77a391a61e37d"
+    },
+    "crates/hyperdrc/src/sqlite_report.rs": {
+      "previous": "27d6503c7443b14cb4fedd65451fc3927fa3e01ce8f417cb15a1411a632eda09",
+      "current": "7d4c6b9748f1aeed6c2530d9bc47cbe3af61d1931bd2b04c4d0ec321d78e1b86"
+    },
+    "crates/hyperdrc/src/conversion.rs": {
+      "previous": "82530d53f3a777394ac6226446e57f52d4a3f5c35fd11da4861ff159a0eb7b1b",
+      "current": "f1ca13372f42fd13ca6c061dc8d61e1230cc5f65b2daba43ad6ffb7a260ef62f"
+    }
+  },
+  "production_implementation_identical_to_e38_candidate": true,
+  "test_storage_repair_included": true,
+  "main_sources_modified": false,
+  "cache_admitted": false
+}

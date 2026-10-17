@@ -1,0 +1,11 @@
+
+running 1 test
+test arrow_report::tests::writes_readable_arrow_report ... FAILED
+
+failures:
+
+failures:
+    arrow_report::tests::writes_readable_arrow_report
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1558 filtered out; finished in 0.00s
+

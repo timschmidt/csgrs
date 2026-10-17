@@ -1,0 +1,5 @@
+
+thread 'app::tests::load_all_layers_discovers_extracted_package_archives_recursively' (2241746) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-candidate-source-v1/crates/hyperdrc/src/app.rs:10701:58:
+called `Result::unwrap()` on an `Err` value: Io(Os { code: 122, kind: QuotaExceeded, message: "Disk quota exceeded" })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+ZipWriter drop failed: Io(Os { code: 122, kind: QuotaExceeded, message: "Disk quota exceeded" })

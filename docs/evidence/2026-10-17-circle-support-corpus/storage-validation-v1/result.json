@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "command_failures": [],
+  "source_and_read_only_dependencies_unchanged": true,
+  "selected_temporary_directory_cleaned": true,
+  "cargo_target_closed": true,
+  "cache_candidate_included": false,
+  "source_changes_applied": false,
+  "production_prefixes_unchanged": true,
+  "implementation_sha256": {
+    "crates/hyperdrc/src/app.rs": "1ebb5d47c56c70de6b17ce22abb8a97794e03bfd0efa8ec139061cc961a91452",
+    "crates/hyperdrc/src/arrow_report.rs": "aa1b1c34ccaf056e7655e601465dfaf92b20387b1e8772e4ba67c42634115759"
+  }
+}

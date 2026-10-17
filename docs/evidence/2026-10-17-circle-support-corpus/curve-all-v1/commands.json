@@ -1,0 +1,3516 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-features",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "external_stop_reason": null,
+    "elapsed_seconds": 339.0371338548139,
+    "free_space_observations": [
+      {
+        "elapsed_seconds": 0.0022348458878695965,
+        "available_bytes": 3484508160
+      },
+      {
+        "elapsed_seconds": 5.002386458683759,
+        "available_bytes": 3427205120
+      },
+      {
+        "elapsed_seconds": 10.002504353877157,
+        "available_bytes": 3364720640
+      },
+      {
+        "elapsed_seconds": 15.002620469778776,
+        "available_bytes": 3322572800
+      },
+      {
+        "elapsed_seconds": 20.002737984992564,
+        "available_bytes": 3271491584
+      },
+      {
+        "elapsed_seconds": 25.002854339778423,
+        "available_bytes": 3236597760
+      },
+      {
+        "elapsed_seconds": 30.00296753598377,
+        "available_bytes": 3233632256
+      },
+      {
+        "elapsed_seconds": 35.003039684612304,
+        "available_bytes": 3226701824
+      },
+      {
+        "elapsed_seconds": 40.00315604964271,
+        "available_bytes": 3198820352
+      },
+      {
+        "elapsed_seconds": 45.00326962582767,
+        "available_bytes": 3159924736
+      },
+      {
+        "elapsed_seconds": 50.00338861066848,
+        "available_bytes": 3139952640
+      },
+      {
+        "elapsed_seconds": 55.0035021356307,
+        "available_bytes": 3104071680
+      },
+      {
+        "elapsed_seconds": 60.00362261105329,
+        "available_bytes": 3069788160
+      },
+      {
+        "elapsed_seconds": 65.00374007690698,
+        "available_bytes": 3054030848
+      },
+      {
+        "elapsed_seconds": 70.00385317159817,
+        "available_bytes": 3041243136
+      },
+      {
+        "elapsed_seconds": 75.00396909797564,
+        "available_bytes": 3033849856
+      },
+      {
+        "elapsed_seconds": 80.00408607302234,
+        "available_bytes": 3031027712
+      },
+      {
+        "elapsed_seconds": 85.0042294668965,
+        "available_bytes": 3026563072
+      },
+      {
+        "elapsed_seconds": 90.00435062171891,
+        "available_bytes": 3015286784
+      },
+      {
+        "elapsed_seconds": 95.0044676666148,
+        "available_bytes": 3011772416
+      },
+      {
+        "elapsed_seconds": 100.00458440277725,
+        "available_bytes": 3003015168
+      },
+      {
+        "elapsed_seconds": 105.0047022877261,
+        "available_bytes": 3003011072
+      },
+      {
+        "elapsed_seconds": 110.00482719298452,
+        "available_bytes": 3002798080
+      },
+      {
+        "elapsed_seconds": 115.00494541786611,
+        "available_bytes": 3002798080
+      },
+      {
+        "elapsed_seconds": 120.00504842400551,
+        "available_bytes": 3002793984
+      },
+      {
+        "elapsed_seconds": 125.00516468985006,
+        "available_bytes": 3002781696
+      },
+      {
+        "elapsed_seconds": 130.0052813650109,
+        "available_bytes": 3002781696
+      },
+      {
+        "elapsed_seconds": 135.00540291983634,
+        "available_bytes": 3002781696
+      },
+      {
+        "elapsed_seconds": 140.00551906460896,
+        "available_bytes": 3002773504
+      },
+      {
+        "elapsed_seconds": 145.0056351609528,
+        "available_bytes": 3002732544
+      },
+      {
+        "elapsed_seconds": 150.00576514471322,
+        "available_bytes": 3002720256
+      },
+      {
+        "elapsed_seconds": 155.00588541990146,
+        "available_bytes": 2994421760
+      },
+      {
+        "elapsed_seconds": 160.00600755494088,
+        "available_bytes": 2989182976
+      },
+      {
+        "elapsed_seconds": 165.00612592091784,
+        "available_bytes": 2985320448
+      },
+      {
+        "elapsed_seconds": 170.00624350598082,
+        "available_bytes": 2983333888
+      },
+      {
+        "elapsed_seconds": 175.0063628507778,
+        "available_bytes": 2979803136
+      },
+      {
+        "elapsed_seconds": 180.00647320691496,
+        "available_bytes": 2978217984
+      },
+      {
+        "elapsed_seconds": 185.00658884178847,
+        "available_bytes": 2976428032
+      },
+      {
+        "elapsed_seconds": 190.00670358771458,
+        "available_bytes": 2973335552
+      },
+      {
+        "elapsed_seconds": 195.00681676296517,
+        "available_bytes": 2971938816
+      },
+      {
+        "elapsed_seconds": 200.00692999875173,
+        "available_bytes": 2970214400
+      },
+      {
+        "elapsed_seconds": 205.00705292401835,
+        "available_bytes": 2905346048
+      },
+      {
+        "elapsed_seconds": 210.007168518845,
+        "available_bytes": 2871816192
+      },
+      {
+        "elapsed_seconds": 215.00727896485478,
+        "available_bytes": 2815655936
+      },
+      {
+        "elapsed_seconds": 220.00739376060665,
+        "available_bytes": 2815655936
+      },
+      {
+        "elapsed_seconds": 225.00751544581726,
+        "available_bytes": 2794160128
+      },
+      {
+        "elapsed_seconds": 230.0075896140188,
+        "available_bytes": 2755624960
+      },
+      {
+        "elapsed_seconds": 235.00770315993577,
+        "available_bytes": 2702626816
+      },
+      {
+        "elapsed_seconds": 240.00781163573265,
+        "available_bytes": 2668892160
+      },
+      {
+        "elapsed_seconds": 245.0079266410321,
+        "available_bytes": 2648186880
+      },
+      {
+        "elapsed_seconds": 250.00804470665753,
+        "available_bytes": 2624737280
+      },
+      {
+        "elapsed_seconds": 255.008156391792,
+        "available_bytes": 2624696320
+      },
+      {
+        "elapsed_seconds": 260.00827854685485,
+        "available_bytes": 2610556928
+      },
+      {
+        "elapsed_seconds": 265.00839483272284,
+        "available_bytes": 2581618688
+      },
+      {
+        "elapsed_seconds": 270.00850730761886,
+        "available_bytes": 2518245376
+      },
+      {
+        "elapsed_seconds": 275.0086224740371,
+        "available_bytes": 2491138048
+      },
+      {
+        "elapsed_seconds": 280.0087321298197,
+        "available_bytes": 2469117952
+      },
+      {
+        "elapsed_seconds": 285.00884452462196,
+        "available_bytes": 2427588608
+      },
+      {
+        "elapsed_seconds": 290.00895764073357,
+        "available_bytes": 2381996032
+      },
+      {
+        "elapsed_seconds": 295.0090770958923,
+        "available_bytes": 2352246784
+      },
+      {
+        "elapsed_seconds": 300.00919676059857,
+        "available_bytes": 2346491904
+      },
+      {
+        "elapsed_seconds": 305.00930787669495,
+        "available_bytes": 2282049536
+      },
+      {
+        "elapsed_seconds": 310.0094223227352,
+        "available_bytes": 2254843904
+      },
+      {
+        "elapsed_seconds": 315.009531007614,
+        "available_bytes": 2205540352
+      },
+      {
+        "elapsed_seconds": 320.0096353748813,
+        "available_bytes": 2147602432
+      },
+      {
+        "elapsed_seconds": 325.0097545199096,
+        "available_bytes": 2123730944
+      },
+      {
+        "elapsed_seconds": 330.00986862462014,
+        "available_bytes": 2116317184
+      },
+      {
+        "elapsed_seconds": 335.0099806007929,
+        "available_bytes": 2111033344
+      }
+    ],
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/marching_squares-038ea04afeca3641": {
+        "sha256": "b454bda8adaf209ef0faf20510304cfb22fc3fcb43605b2b7cb25dacdd128a0e",
+        "bytes": 18330504,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "marching_squares",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/marching_squares.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/examples/arrangement": {
+        "sha256": "d88306ebf753e702243442b2faf6cd119fabeb5e623fe3e909bbeb5872472c3d",
+        "bytes": 17267912,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "example"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "arrangement",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/examples/arrangement.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": false
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": false
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_derivative_completeness-3b7db4764a27ca62": {
+        "sha256": "8bbacccf06a3e3780b1c91427d8d130302fe753690e5ba310e5a07e5bad09842",
+        "bytes": 12797872,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_derivative_completeness",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_derivative_completeness.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_composed_workloads-00d318fe4aa418d9": {
+        "sha256": "1cab2314321843d661aa95a1c0b1dbaeea3d834279a14aeb58d205df6e5624ac",
+        "bytes": 20375072,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_composed_workloads",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_composed_workloads.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_curve_point-723c0db0e305158f": {
+        "sha256": "55939721b965c9fb9e0c3beb4ddc8d9f2914ec884e83b32b7718a8b915307121",
+        "bytes": 12989904,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_curve_point",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_curve_point.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_exact_closure-321fd937dd57609f": {
+        "sha256": "36c0b77ff7f0d40cdb6bad3d988fa826d83d08cc3b7c4566cfd1e2524714ae72",
+        "bytes": 18701048,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_exact_closure",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_exact_closure.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_pr59_shape_regressions-83b1fc0d5a794bdf": {
+        "sha256": "8e6d66181155f6341344c4e463b9b44693394856078b2a2522b2899a8a215469",
+        "bytes": 17974072,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_pr59_shape_regressions",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_pr59_shape_regressions.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_svg-556a1ede74b5cd05": {
+        "sha256": "1612cdafdff1e1fb3c3c53c8c1f01972c81badd76324dd2a5a21776c75938c00",
+        "bytes": 19552080,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_svg",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_svg.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_curve_intersection-84afdd00f969615e": {
+        "sha256": "329c2117dbc6d997218b54241c41bb64045317bec0c5205c1503ced1ce19b88f",
+        "bytes": 21457192,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_curve_intersection",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_curve_intersection.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_geo_regressions-1b602cdcbb4fe85c": {
+        "sha256": "f85819a6dd7bf64bba6dfab4817918e9176f64b18918781ddd10fbc7cf574fc4",
+        "bytes": 18949704,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_geo_regressions",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_geo_regressions.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_stationary_fillets-bb316e3e756ce796": {
+        "sha256": "4c56a374fd7b7cbe9ca6a657f15989412e234d81a69d4ad6995823ec726099f3",
+        "bytes": 19467704,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_stationary_fillets",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_stationary_fillets.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/native_linear_stroke-5eb5c1ee2586089c": {
+        "sha256": "a61d5e11687d5423c35a617febd4a9be084f904c351400feb9e09942c0dcaac4",
+        "bytes": 18631664,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "native_linear_stroke",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/native_linear_stroke.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/examples/basic": {
+        "sha256": "bd2fde8446444944f9d072acadbfa9ced9176a0cb947a5b101602c4c5619d438",
+        "bytes": 17290464,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "example"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "basic",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/examples/basic.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": false
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": false
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_curve_range-ce272b03c5af5e60": {
+        "sha256": "70c678e83f4481e26bffb972f7f70645f4a962f4fe3ea8cec0c6306ad1551c10",
+        "bytes": 17034968,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_curve_range",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_curve_range.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_rational_bezier-ebc5ec163d658b4d": {
+        "sha256": "eebd733564227d55538c29dfed29afd5998cc79f48b5014ad702905e213a2baf",
+        "bytes": 12857272,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_rational_bezier",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_rational_bezier.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/bbox_initial_pair-42009948bb13c480": {
+        "sha256": "efa3967b3d5d20e1bde4304a21a2f0db34bee714f637e84efa78da00f35486a3",
+        "bytes": 4720096,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "bbox_initial_pair",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/bbox_initial_pair.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_analytic_parallel_region-726d47dc1888e58a": {
+        "sha256": "eb8f4711b20ab4c0a8d3181dec28d69fc173977feb01aa9e63c846c13a495655",
+        "bytes": 20548256,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_analytic_parallel_region",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_analytic_parallel_region.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_bezier_fit_offset-000e6dcd62486581": {
+        "sha256": "a042a73140a18262844ee7a6c6044bac31e358e8567c0301466e4c582e8ef3bc",
+        "bytes": 19749312,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_bezier_fit_offset",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_bezier_fit_offset.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_circle_predicates-6a21d60fefd977d6": {
+        "sha256": "76272853b9cf0a73aced8d6d9c033c171d170380531533e5c4c11ff29808b6f4",
+        "bytes": 5551976,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_circle_predicates",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_circle_predicates.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_curve_region_promotion-e3e18c6ed854aea1": {
+        "sha256": "74e4fa571977d2ac419bb5176a242b0b588713a0173e2e1cc36f346e9627325a",
+        "bytes": 22238760,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_curve_region_promotion",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_curve_region_promotion.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_events-c6fa78e0298355bc": {
+        "sha256": "470f4f4290c296765d35b4f52800b0fee834da698ec7b6d8343384b45d5b05fc",
+        "bytes": 5694712,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_events",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_events.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_fragments-531bd9eccf3a410b": {
+        "sha256": "a99a1874a21e3f7900e231c0ab4f307870271dce432f7dc50c93ce5da7a15be6",
+        "bytes": 6547288,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_fragments",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_fragments.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_reconstruct-a445dce1f120dd8a": {
+        "sha256": "a2acc9362836c479c286f21ffe94397f9f61e685a15368d2dde6abd34f732d8f",
+        "bytes": 18513840,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_reconstruct",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_reconstruct.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_offset-13a102504eed15de": {
+        "sha256": "86047831c3e355d5526bbadfea1c23293fb35e4b47afbbc7ad8f5ebddd5f71d2",
+        "bytes": 5042176,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_offset",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_offset.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/contour_area_normal_form-4bb910b60a3a7465": {
+        "sha256": "fc6ea18504ff0521e4862fc006305a46d330e061de6f1dc139f6d44464a99e89",
+        "bytes": 17957424,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "contour_area_normal_form",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/contour_area_normal_form.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_bezier_evaluation-2b2af0cd20a58eb6": {
+        "sha256": "1443e19a5914ed782e13b081dbdb8dbaf1ba752adbfd7cb6f633ee9fd1a9c927",
+        "bytes": 12497992,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_bezier_evaluation",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_bezier_evaluation.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_curve_region_boolean_fuzz-2e74957ca48860d4": {
+        "sha256": "8257c93d652b87f8dda4622742155f6abdf1800456975a2e38cca5b71e23a439",
+        "bytes": 18786912,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_curve_region_boolean_fuzz",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_curve_region_boolean_fuzz.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_dispatch_trace-19500280b30d6468": {
+        "sha256": "77813e60974d09994e11235f614ece7e79292a01790d8caf3dc759e4d5084929",
+        "bytes": 6167784,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_dispatch_trace",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_dispatch_trace.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_path_closure-13e4ed5ea986002d": {
+        "sha256": "ec68370f4e839038d6bed3fd33a0129475ecee2292f0c203df17a9cf55598f79",
+        "bytes": 20793832,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_path_closure",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_path_closure.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/pathological_benchmark_fixture-376aa6ef985840a8": {
+        "sha256": "2f84b2731820d6e310867174f7778ffa050b6b3474a9bef67c7797d919db713a",
+        "bytes": 18730336,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "pathological_benchmark_fixture",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/pathological_benchmark_fixture.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_bbox-fd4e6060656a9e53": {
+        "sha256": "6d54d49facd9ec019d7668715e29e8092c3620ae8827cae88d65f957a95466d5",
+        "bytes": 17984464,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_bbox",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_bbox.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_curve_region_boolean-73f474d9f89ada3b": {
+        "sha256": "27352b3ca9fb80bd79ef49818defa6d817adfb5f5257c083adee8e4de50af3ef",
+        "bytes": 20415480,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_curve_region_boolean",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_curve_region_boolean.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_open_path_compositions-24ae05f9efc2f345": {
+        "sha256": "fa26dedccc91ad5d2d816ebd130cb250dece8a03d5a05081ad7c0868831e0af9",
+        "bytes": 20171448,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_open_path_compositions",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_open_path_compositions.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_self_contacts-6c627d173f5b69e1": {
+        "sha256": "eea653caef349e5cab59d740132392cb9f3d21cd147d033a5db400d5bdf6b24c",
+        "bytes": 5397808,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_self_contacts",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_self_contacts.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_adversarial_polygons-648061a661d2d4d2": {
+        "sha256": "69bd3098f4696729dab64fee307e5929e7e38baa9e508303660a7d3004db7542",
+        "bytes": 18723032,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_adversarial_polygons",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_adversarial_polygons.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_bezier_algebraic_parameter-b3c101ceb1f03d27": {
+        "sha256": "10ccbf54125411aae755a3b13a5789dcbe68a79a3f68e527b450859c7f8d3f9a",
+        "bytes": 6642576,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_bezier_algebraic_parameter",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_bezier_algebraic_parameter.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_curve-9910e4ca7e304f6a": {
+        "sha256": "19d8793a7ee13372c551ffb3c17ae11a76559b4d8f029e3e40f27eb32fd49371",
+        "bytes": 21301040,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_curve",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_curve.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_triangulation-352ff74abe37fd6e": {
+        "sha256": "b70b7669f775f04ac8fd41b5fe898a9d0edf97f9e245b472af1b50a7d28d0f6f",
+        "bytes": 18129208,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_triangulation",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_triangulation.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/line_fragment_orientation-f9fa75a347463c52": {
+        "sha256": "027ab571931d4635d12ae2229e6880325be12bb12befb9d4483fc71deb574bdb",
+        "bytes": 5183736,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "line_fragment_orientation",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/line_fragment_orientation.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/ray_filter_extreme_coordinates-9d17ed123cd5307c": {
+        "sha256": "6acd93889c2d49f5af931d9d73892b95459a091d8f2a26bbcac199c737bc8555",
+        "bytes": 18021152,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "ray_filter_extreme_coordinates",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/ray_filter_extreme_coordinates.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/work_budget-9fefc193fdafb511": {
+        "sha256": "f73c0bd3593a43949e60157cb50abb4697be39f0627786cf2777bd49c71458e2",
+        "bytes": 16199888,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "work_budget",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/work_budget.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/line_constant_coordinates-d121d91fba5474b4": {
+        "sha256": "5d1c755d9299d1171ebc590b125d774ce68fed06dba7e233e69c21584b04fbd4",
+        "bytes": 4544952,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "line_constant_coordinates",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/line_constant_coordinates.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/readme-e31e3117e75caf45": {
+        "sha256": "cb6f69599650d84fa2b01546c02163dba59e80336e0fc1fc8741dc570c4ab907",
+        "bytes": 1123112,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "readme",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/readme.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_arc_bezier-1e373a41b9ebc9c7": {
+        "sha256": "4027e3d38f8c327cc8e0b8e6f373352420965b6345d329016e4378f4d8586237",
+        "bytes": 13485944,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_arc_bezier",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_arc_bezier.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_pcb_boolean_regressions-6789f90d07d16ed5": {
+        "sha256": "9abcf0b77f094cf867d2d6f54e32fbd1003c19dd66f4aa685034dec33f0182b6",
+        "bytes": 17990312,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_pcb_boolean_regressions",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_pcb_boolean_regressions.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_curve_string-a6f5cb6c05aed1b9": {
+        "sha256": "590eee74eadd81cd265bfb753a6d328948eeb288f90da4519dba64dcd2829052",
+        "bytes": 18934800,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_curve_string",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_curve_string.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_contour-4ebf43d4cac44124": {
+        "sha256": "6e4320d6877ae96615eaf6cbda0b3cf17b7d106b2f510534df1e1c867602772b",
+        "bytes": 5622800,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_contour",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_contour.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_curve_region_stroke-e159e365a3ffcb56": {
+        "sha256": "c9014097e7c06760498426d8cbd5a9141a129d79686b65f4c389287bc45454e0",
+        "bytes": 18761128,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_curve_region_stroke",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_curve_region_stroke.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_fuzz_regressions-76bc9ae059bb9293": {
+        "sha256": "9e05e4ebe0bc4ea993df8d420914b6625a17a63b5441ff0924410f8dd7e9059e",
+        "bytes": 5333320,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_fuzz_regressions",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_fuzz_regressions.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/exact_structural_facts-76451eec1ebb234c": {
+        "sha256": "b103ee58784519905e9900ef004181d44d4467197caba8fc1eede55ba2a962c0",
+        "bytes": 18036616,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "exact_structural_facts",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/exact_structural_facts.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_split-6e8c2606d715ddf3": {
+        "sha256": "e48abe267215219e6447d073fc0568ade2620ffebe76811a9b34e4e1cbc41f12",
+        "bytes": 5665056,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_split",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_split.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/native_linear_stroke_contracts-1999b8908e8feebb": {
+        "sha256": "b13844b30fab21bb0b714181d7499cd71b3f66aa48f5765d1cc7af8e350361fd",
+        "bytes": 18362048,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "native_linear_stroke_contracts",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/native_linear_stroke_contracts.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve_nurbs_interpolation-eebf1e52f536fb73": {
+        "sha256": "2987efe9cb28e0ef5079ebcfdc332736be3941c5cedb7ee97e77a4e305ae7b78",
+        "bytes": 5853888,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "test"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hypercurve_nurbs_interpolation",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/tests/hypercurve_nurbs_interpolation.rs",
+          "edition": "2024",
+          "doc": false,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-target-v1/release/deps/hypercurve-c64b9a6905916d79": {
+        "sha256": "0cc4e8b54d6a8daf218199d7dfcaaf042cc906db99862a1b051e760a75f3a783",
+        "bytes": 41667440,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "target": {
+          "kind": [
+            "lib"
+          ],
+          "crate_types": [
+            "lib"
+          ],
+          "name": "hypercurve",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/candidate-source-v1/crates/hypercurve/src/lib.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": true,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        }
+      }
+    },
+    "stdout_sha256": "b11c7a300eff34db769a6b2c920ae57d9db50aac2026c1b9f0a00ad9c323f0fc",
+    "stderr_sha256": "526fee5d14a710c5b3f7f1bcd0759cc10b862a76cbf69dee5c1256633f403f54",
+    "resources_sha256": "c92a6afee23faefe835e82612dec9af705e4274c302f58e5f11febc92fb79dc4"
+  },
+  {
+    "name": "tests",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "external_stop_reason": null,
+    "elapsed_seconds": 1684.8119797050022,
+    "free_space_observations": [
+      {
+        "elapsed_seconds": 0.0022372957319021225,
+        "available_bytes": 2140016640
+      },
+      {
+        "elapsed_seconds": 5.002371980808675,
+        "available_bytes": 2139987968
+      },
+      {
+        "elapsed_seconds": 10.002478006761521,
+        "available_bytes": 2139987968
+      },
+      {
+        "elapsed_seconds": 15.00258542271331,
+        "available_bytes": 2139987968
+      },
+      {
+        "elapsed_seconds": 20.00268884887919,
+        "available_bytes": 2139979776
+      },
+      {
+        "elapsed_seconds": 25.0027934149839,
+        "available_bytes": 2139979776
+      },
+      {
+        "elapsed_seconds": 30.002904790919274,
+        "available_bytes": 2139979776
+      },
+      {
+        "elapsed_seconds": 35.003018165938556,
+        "available_bytes": 2139975680
+      },
+      {
+        "elapsed_seconds": 40.00312659190968,
+        "available_bytes": 2139971584
+      },
+      {
+        "elapsed_seconds": 45.003239788115025,
+        "available_bytes": 2139971584
+      },
+      {
+        "elapsed_seconds": 50.00335433380678,
+        "available_bytes": 2139971584
+      },
+      {
+        "elapsed_seconds": 55.003465248737484,
+        "available_bytes": 2139967488
+      },
+      {
+        "elapsed_seconds": 60.00363779067993,
+        "available_bytes": 2139906048
+      },
+      {
+        "elapsed_seconds": 65.00374317681417,
+        "available_bytes": 2139852800
+      },
+      {
+        "elapsed_seconds": 70.00386794190854,
+        "available_bytes": 2139750400
+      },
+      {
+        "elapsed_seconds": 75.00397725775838,
+        "available_bytes": 2139742208
+      },
+      {
+        "elapsed_seconds": 80.00409444281831,
+        "available_bytes": 2139742208
+      },
+      {
+        "elapsed_seconds": 85.00420244876295,
+        "available_bytes": 2139738112
+      },
+      {
+        "elapsed_seconds": 90.00428348686546,
+        "available_bytes": 2139721728
+      },
+      {
+        "elapsed_seconds": 95.00438586296514,
+        "available_bytes": 2139684864
+      },
+      {
+        "elapsed_seconds": 100.00448733009398,
+        "available_bytes": 2139684864
+      },
+      {
+        "elapsed_seconds": 105.00459415605292,
+        "available_bytes": 2139684864
+      },
+      {
+        "elapsed_seconds": 110.0047005917877,
+        "available_bytes": 2139672576
+      },
+      {
+        "elapsed_seconds": 115.00480630807579,
+        "available_bytes": 2139672576
+      },
+      {
+        "elapsed_seconds": 120.00490964902565,
+        "available_bytes": 2139668480
+      },
+      {
+        "elapsed_seconds": 125.00502216769382,
+        "available_bytes": 2139656192
+      },
+      {
+        "elapsed_seconds": 130.00513194687665,
+        "available_bytes": 2139656192
+      },
+      {
+        "elapsed_seconds": 135.00524138612673,
+        "available_bytes": 2139656192
+      },
+      {
+        "elapsed_seconds": 140.0053575336933,
+        "available_bytes": 2139648000
+      },
+      {
+        "elapsed_seconds": 145.00547973206267,
+        "available_bytes": 2139643904
+      },
+      {
+        "elapsed_seconds": 150.00557852210477,
+        "available_bytes": 2139635712
+      },
+      {
+        "elapsed_seconds": 155.00567855173722,
+        "available_bytes": 2139623424
+      },
+      {
+        "elapsed_seconds": 160.00578184099868,
+        "available_bytes": 2139533312
+      },
+      {
+        "elapsed_seconds": 165.00589017989114,
+        "available_bytes": 1899896832
+      },
+      {
+        "elapsed_seconds": 170.0059906700626,
+        "available_bytes": 1899884544
+      },
+      {
+        "elapsed_seconds": 175.00608972879127,
+        "available_bytes": 1899708416
+      },
+      {
+        "elapsed_seconds": 180.00620563793927,
+        "available_bytes": 1899597824
+      },
+      {
+        "elapsed_seconds": 185.00627835886553,
+        "available_bytes": 1899401216
+      },
+      {
+        "elapsed_seconds": 190.0063815289177,
+        "available_bytes": 1899380736
+      },
+      {
+        "elapsed_seconds": 195.00647985795513,
+        "available_bytes": 1899360256
+      },
+      {
+        "elapsed_seconds": 200.00658015767112,
+        "available_bytes": 1899343872
+      },
+      {
+        "elapsed_seconds": 205.00669841608033,
+        "available_bytes": 1899327488
+      },
+      {
+        "elapsed_seconds": 210.00679841591045,
+        "available_bytes": 1899302912
+      },
+      {
+        "elapsed_seconds": 215.00689694611356,
+        "available_bytes": 1899196416
+      },
+      {
+        "elapsed_seconds": 220.0070230141282,
+        "available_bytes": 1898827776
+      },
+      {
+        "elapsed_seconds": 225.0071230828762,
+        "available_bytes": 1898807296
+      },
+      {
+        "elapsed_seconds": 230.00722332298756,
+        "available_bytes": 1898766336
+      },
+      {
+        "elapsed_seconds": 235.00728732487187,
+        "available_bytes": 1898725376
+      },
+      {
+        "elapsed_seconds": 240.00741645274684,
+        "available_bytes": 1898680320
+      },
+      {
+        "elapsed_seconds": 245.00753006199375,
+        "available_bytes": 1898659840
+      },
+      {
+        "elapsed_seconds": 250.01092805480585,
+        "available_bytes": 1896763392
+      },
+      {
+        "elapsed_seconds": 255.0110373836942,
+        "available_bytes": 1830739968
+      },
+      {
+        "elapsed_seconds": 260.0111517016776,
+        "available_bytes": 1780772864
+      },
+      {
+        "elapsed_seconds": 265.01126491092145,
+        "available_bytes": 1747554304
+      },
+      {
+        "elapsed_seconds": 270.01137259975076,
+        "available_bytes": 1691156480
+      },
+      {
+        "elapsed_seconds": 275.01148161897436,
+        "available_bytes": 1658404864
+      },
+      {
+        "elapsed_seconds": 280.0116047170013,
+        "available_bytes": 1630593024
+      },
+      {
+        "elapsed_seconds": 285.01172670489177,
+        "available_bytes": 1618919424
+      },
+      {
+        "elapsed_seconds": 290.01183691387996,
+        "available_bytes": 1604259840
+      },
+      {
+        "elapsed_seconds": 295.01194539293647,
+        "available_bytes": 1592930304
+      },
+      {
+        "elapsed_seconds": 300.0120414728299,
+        "available_bytes": 1588244480
+      },
+      {
+        "elapsed_seconds": 305.012140003033,
+        "available_bytes": 1588146176
+      },
+      {
+        "elapsed_seconds": 310.01224445179105,
+        "available_bytes": 1587994624
+      },
+      {
+        "elapsed_seconds": 315.01234288094565,
+        "available_bytes": 1587929088
+      },
+      {
+        "elapsed_seconds": 320.0124453296885,
+        "available_bytes": 1587875840
+      },
+      {
+        "elapsed_seconds": 325.01254705991596,
+        "available_bytes": 1348034560
+      },
+      {
+        "elapsed_seconds": 330.01264342898503,
+        "available_bytes": 1270824960
+      },
+      {
+        "elapsed_seconds": 335.01275213900954,
+        "available_bytes": 1108140032
+      },
+      {
+        "elapsed_seconds": 340.01285277772695,
+        "available_bytes": 1108123648
+      },
+      {
+        "elapsed_seconds": 345.0135949640535,
+        "available_bytes": 1108107264
+      },
+      {
+        "elapsed_seconds": 350.01580004766583,
+        "available_bytes": 1108078592
+      },
+      {
+        "elapsed_seconds": 355.01592228608206,
+        "available_bytes": 1103376384
+      },
+      {
+        "elapsed_seconds": 360.01601793570444,
+        "available_bytes": 1047220224
+      },
+      {
+        "elapsed_seconds": 365.0161165059544,
+        "available_bytes": 1046806528
+      },
+      {
+        "elapsed_seconds": 370.0162208150141,
+        "available_bytes": 1046786048
+      },
+      {
+        "elapsed_seconds": 375.01627409784123,
+        "available_bytes": 1046769664
+      },
+      {
+        "elapsed_seconds": 380.01637591701,
+        "available_bytes": 1046745088
+      },
+      {
+        "elapsed_seconds": 385.0164778768085,
+        "available_bytes": 1046728704
+      },
+      {
+        "elapsed_seconds": 390.0165774957277,
+        "available_bytes": 1046704128
+      },
+      {
+        "elapsed_seconds": 395.0166755160317,
+        "available_bytes": 1046622208
+      },
+      {
+        "elapsed_seconds": 400.016775035765,
+        "available_bytes": 1046601728
+      },
+      {
+        "elapsed_seconds": 405.01687493594363,
+        "available_bytes": 1046585344
+      },
+      {
+        "elapsed_seconds": 410.0169752249494,
+        "available_bytes": 1046568960
+      },
+      {
+        "elapsed_seconds": 415.01707422500476,
+        "available_bytes": 1046544384
+      },
+      {
+        "elapsed_seconds": 420.01717165485024,
+        "available_bytes": 1046491136
+      },
+      {
+        "elapsed_seconds": 425.0172701939009,
+        "available_bytes": 1046470656
+      },
+      {
+        "elapsed_seconds": 430.0173687338829,
+        "available_bytes": 1046454272
+      },
+      {
+        "elapsed_seconds": 435.01746656373143,
+        "available_bytes": 1046433792
+      },
+      {
+        "elapsed_seconds": 440.0175694427453,
+        "available_bytes": 1046409216
+      },
+      {
+        "elapsed_seconds": 445.01766709284857,
+        "available_bytes": 1046392832
+      },
+      {
+        "elapsed_seconds": 450.0177642228082,
+        "available_bytes": 1046376448
+      },
+      {
+        "elapsed_seconds": 455.0178644130938,
+        "available_bytes": 1046347776
+      },
+      {
+        "elapsed_seconds": 460.017962872982,
+        "available_bytes": 1046331392
+      },
+      {
+        "elapsed_seconds": 465.018063781783,
+        "available_bytes": 1046310912
+      },
+      {
+        "elapsed_seconds": 470.0181644121185,
+        "available_bytes": 1046278144
+      },
+      {
+        "elapsed_seconds": 475.0182724110782,
+        "available_bytes": 1046261760
+      },
+      {
+        "elapsed_seconds": 480.01837409986183,
+        "available_bytes": 1046237184
+      },
+      {
+        "elapsed_seconds": 485.01847488991916,
+        "available_bytes": 1046212608
+      },
+      {
+        "elapsed_seconds": 490.0185735099949,
+        "available_bytes": 1046192128
+      },
+      {
+        "elapsed_seconds": 495.0186762190424,
+        "available_bytes": 1046171648
+      },
+      {
+        "elapsed_seconds": 500.0187755189836,
+        "available_bytes": 1046134784
+      },
+      {
+        "elapsed_seconds": 505.0188768180087,
+        "available_bytes": 1046118400
+      },
+      {
+        "elapsed_seconds": 510.0189783880487,
+        "available_bytes": 1046093824
+      },
+      {
+        "elapsed_seconds": 515.019079176709,
+        "available_bytes": 1046073344
+      },
+      {
+        "elapsed_seconds": 520.0191815667786,
+        "available_bytes": 1046052864
+      },
+      {
+        "elapsed_seconds": 525.0192732671276,
+        "available_bytes": 1046036480
+      },
+      {
+        "elapsed_seconds": 530.0193734569475,
+        "available_bytes": 1046016000
+      },
+      {
+        "elapsed_seconds": 535.0194728067145,
+        "available_bytes": 1045999616
+      },
+      {
+        "elapsed_seconds": 540.0195715459995,
+        "available_bytes": 1045983232
+      },
+      {
+        "elapsed_seconds": 545.0196792851202,
+        "available_bytes": 1045921792
+      },
+      {
+        "elapsed_seconds": 550.019779484719,
+        "available_bytes": 1045868544
+      },
+      {
+        "elapsed_seconds": 555.0198799651116,
+        "available_bytes": 1045848064
+      },
+      {
+        "elapsed_seconds": 560.0199800939299,
+        "available_bytes": 1045831680
+      },
+      {
+        "elapsed_seconds": 565.0200788239017,
+        "available_bytes": 1045803008
+      },
+      {
+        "elapsed_seconds": 570.020180223044,
+        "available_bytes": 1045786624
+      },
+      {
+        "elapsed_seconds": 575.0202785828151,
+        "available_bytes": 1045770240
+      },
+      {
+        "elapsed_seconds": 580.0203779828735,
+        "available_bytes": 1045749760
+      },
+      {
+        "elapsed_seconds": 585.0204762327485,
+        "available_bytes": 1045716992
+      },
+      {
+        "elapsed_seconds": 590.0205755517818,
+        "available_bytes": 1045676032
+      },
+      {
+        "elapsed_seconds": 595.020678312052,
+        "available_bytes": 1045659648
+      },
+      {
+        "elapsed_seconds": 600.0207788511179,
+        "available_bytes": 1045639168
+      },
+      {
+        "elapsed_seconds": 605.0208812910132,
+        "available_bytes": 1045622784
+      },
+      {
+        "elapsed_seconds": 610.0209836200811,
+        "available_bytes": 1045598208
+      },
+      {
+        "elapsed_seconds": 615.0210836599581,
+        "available_bytes": 1045573632
+      },
+      {
+        "elapsed_seconds": 620.0211824788712,
+        "available_bytes": 1045553152
+      },
+      {
+        "elapsed_seconds": 625.0212835087441,
+        "available_bytes": 1045524480
+      },
+      {
+        "elapsed_seconds": 630.021389848087,
+        "available_bytes": 1045475328
+      },
+      {
+        "elapsed_seconds": 635.0214942777529,
+        "available_bytes": 1045458944
+      },
+      {
+        "elapsed_seconds": 640.0215924270451,
+        "available_bytes": 1045442560
+      },
+      {
+        "elapsed_seconds": 645.0216970467009,
+        "available_bytes": 1045417984
+      },
+      {
+        "elapsed_seconds": 650.0217958558351,
+        "available_bytes": 1045401600
+      },
+      {
+        "elapsed_seconds": 655.0218967059627,
+        "available_bytes": 1045385216
+      },
+      {
+        "elapsed_seconds": 660.0219943947159,
+        "available_bytes": 1045368832
+      },
+      {
+        "elapsed_seconds": 665.0220946348272,
+        "available_bytes": 1045352448
+      },
+      {
+        "elapsed_seconds": 670.0221926439553,
+        "available_bytes": 1045336064
+      },
+      {
+        "elapsed_seconds": 675.0222735446878,
+        "available_bytes": 1045319680
+      },
+      {
+        "elapsed_seconds": 680.0223810337484,
+        "available_bytes": 1045299200
+      },
+      {
+        "elapsed_seconds": 685.0224887928925,
+        "available_bytes": 1045254144
+      },
+      {
+        "elapsed_seconds": 690.0225952416658,
+        "available_bytes": 1045233664
+      },
+      {
+        "elapsed_seconds": 695.0226968917996,
+        "available_bytes": 1045221376
+      },
+      {
+        "elapsed_seconds": 700.0227954420261,
+        "available_bytes": 1045204992
+      },
+      {
+        "elapsed_seconds": 705.0228945207782,
+        "available_bytes": 1045188608
+      },
+      {
+        "elapsed_seconds": 710.0229945508763,
+        "available_bytes": 1045159936
+      },
+      {
+        "elapsed_seconds": 715.0231040199287,
+        "available_bytes": 1045143552
+      },
+      {
+        "elapsed_seconds": 720.0232115387917,
+        "available_bytes": 1045131264
+      },
+      {
+        "elapsed_seconds": 725.0232771909796,
+        "available_bytes": 1045114880
+      },
+      {
+        "elapsed_seconds": 730.0233764210716,
+        "available_bytes": 1045090304
+      },
+      {
+        "elapsed_seconds": 735.0234765610658,
+        "available_bytes": 1045065728
+      },
+      {
+        "elapsed_seconds": 740.0235762400553,
+        "available_bytes": 1045032960
+      },
+      {
+        "elapsed_seconds": 745.0236807600595,
+        "available_bytes": 1045012480
+      },
+      {
+        "elapsed_seconds": 750.0237814188004,
+        "available_bytes": 1044996096
+      },
+      {
+        "elapsed_seconds": 755.0238804989494,
+        "available_bytes": 1044979712
+      },
+      {
+        "elapsed_seconds": 760.0239817979746,
+        "available_bytes": 1044959232
+      },
+      {
+        "elapsed_seconds": 765.0240829978138,
+        "available_bytes": 1044946944
+      },
+      {
+        "elapsed_seconds": 770.0241943867877,
+        "available_bytes": 1044930560
+      },
+      {
+        "elapsed_seconds": 775.0242847567424,
+        "available_bytes": 1044750336
+      },
+      {
+        "elapsed_seconds": 780.0243932357989,
+        "available_bytes": 1044709376
+      },
+      {
+        "elapsed_seconds": 785.024542381987,
+        "available_bytes": 1044692992
+      },
+      {
+        "elapsed_seconds": 790.024633883033,
+        "available_bytes": 1044668416
+      },
+      {
+        "elapsed_seconds": 795.0247421720996,
+        "available_bytes": 1044652032
+      },
+      {
+        "elapsed_seconds": 800.0248405318707,
+        "available_bytes": 1044635648
+      },
+      {
+        "elapsed_seconds": 805.0249427808449,
+        "available_bytes": 1044615168
+      },
+      {
+        "elapsed_seconds": 810.0250486307777,
+        "available_bytes": 1044598784
+      },
+      {
+        "elapsed_seconds": 815.0251502497122,
+        "available_bytes": 1044582400
+      },
+      {
+        "elapsed_seconds": 820.025256338995,
+        "available_bytes": 1044566016
+      },
+      {
+        "elapsed_seconds": 825.0253560687415,
+        "available_bytes": 1044549632
+      },
+      {
+        "elapsed_seconds": 830.0254540988244,
+        "available_bytes": 1044529152
+      },
+      {
+        "elapsed_seconds": 835.0255601280369,
+        "available_bytes": 1044508672
+      },
+      {
+        "elapsed_seconds": 840.0256681870669,
+        "available_bytes": 1044467712
+      },
+      {
+        "elapsed_seconds": 845.0257778461091,
+        "available_bytes": 1044439040
+      },
+      {
+        "elapsed_seconds": 850.0258764256723,
+        "available_bytes": 1044418560
+      },
+      {
+        "elapsed_seconds": 855.0259747747332,
+        "available_bytes": 1044402176
+      },
+      {
+        "elapsed_seconds": 860.0260749948211,
+        "available_bytes": 1044389888
+      },
+      {
+        "elapsed_seconds": 865.02617495507,
+        "available_bytes": 1044373504
+      },
+      {
+        "elapsed_seconds": 870.0262750741094,
+        "available_bytes": 1044357120
+      },
+      {
+        "elapsed_seconds": 875.026379364077,
+        "available_bytes": 1044340736
+      },
+      {
+        "elapsed_seconds": 880.0264792828821,
+        "available_bytes": 1044320256
+      },
+      {
+        "elapsed_seconds": 885.026575922966,
+        "available_bytes": 1044303872
+      },
+      {
+        "elapsed_seconds": 890.0266750827432,
+        "available_bytes": 1044283392
+      },
+      {
+        "elapsed_seconds": 895.0267729531042,
+        "available_bytes": 1044234240
+      },
+      {
+        "elapsed_seconds": 900.0268713720143,
+        "available_bytes": 1044213760
+      },
+      {
+        "elapsed_seconds": 905.0269674020819,
+        "available_bytes": 1044148224
+      },
+      {
+        "elapsed_seconds": 910.0270688217133,
+        "available_bytes": 1044127744
+      },
+      {
+        "elapsed_seconds": 915.0271673109382,
+        "available_bytes": 1043996672
+      },
+      {
+        "elapsed_seconds": 920.0272741611116,
+        "available_bytes": 1044107264
+      },
+      {
+        "elapsed_seconds": 925.0273711108603,
+        "available_bytes": 1044094976
+      },
+      {
+        "elapsed_seconds": 930.0274716299027,
+        "available_bytes": 1044078592
+      },
+      {
+        "elapsed_seconds": 935.0275716297328,
+        "available_bytes": 1044062208
+      },
+      {
+        "elapsed_seconds": 940.0276696500368,
+        "available_bytes": 1044045824
+      },
+      {
+        "elapsed_seconds": 945.0277666598558,
+        "available_bytes": 1044017152
+      },
+      {
+        "elapsed_seconds": 950.0278662987985,
+        "available_bytes": 1043996672
+      },
+      {
+        "elapsed_seconds": 955.0279713580385,
+        "available_bytes": 1043951616
+      },
+      {
+        "elapsed_seconds": 960.02806889778,
+        "available_bytes": 1043931136
+      },
+      {
+        "elapsed_seconds": 965.0281734680757,
+        "available_bytes": 1043918848
+      },
+      {
+        "elapsed_seconds": 970.0282757370733,
+        "available_bytes": 1043902464
+      },
+      {
+        "elapsed_seconds": 975.0283740269952,
+        "available_bytes": 1043886080
+      },
+      {
+        "elapsed_seconds": 980.0284727169201,
+        "available_bytes": 1043869696
+      },
+      {
+        "elapsed_seconds": 985.0285708960146,
+        "available_bytes": 1043849216
+      },
+      {
+        "elapsed_seconds": 990.0286713261157,
+        "available_bytes": 1043828736
+      },
+      {
+        "elapsed_seconds": 995.0287701659836,
+        "available_bytes": 1043808256
+      },
+      {
+        "elapsed_seconds": 1000.0288691846654,
+        "available_bytes": 1043791872
+      },
+      {
+        "elapsed_seconds": 1005.0289724441245,
+        "available_bytes": 1043771392
+      },
+      {
+        "elapsed_seconds": 1010.0290685440414,
+        "available_bytes": 1043742720
+      },
+      {
+        "elapsed_seconds": 1015.0291666439734,
+        "available_bytes": 1043718144
+      },
+      {
+        "elapsed_seconds": 1020.0292751328088,
+        "available_bytes": 1043701760
+      },
+      {
+        "elapsed_seconds": 1025.0293730930425,
+        "available_bytes": 1043689472
+      },
+      {
+        "elapsed_seconds": 1030.0294723929837,
+        "available_bytes": 1043664896
+      },
+      {
+        "elapsed_seconds": 1035.0295708230697,
+        "available_bytes": 1043623936
+      },
+      {
+        "elapsed_seconds": 1040.0296695120633,
+        "available_bytes": 1043603456
+      },
+      {
+        "elapsed_seconds": 1045.0297746919096,
+        "available_bytes": 1043591168
+      },
+      {
+        "elapsed_seconds": 1050.0298733408563,
+        "available_bytes": 1043574784
+      },
+      {
+        "elapsed_seconds": 1055.0299705308862,
+        "available_bytes": 1043558400
+      },
+      {
+        "elapsed_seconds": 1060.030067501124,
+        "available_bytes": 1043537920
+      },
+      {
+        "elapsed_seconds": 1065.0301657109521,
+        "available_bytes": 1043517440
+      },
+      {
+        "elapsed_seconds": 1070.030271079857,
+        "available_bytes": 1043501056
+      },
+      {
+        "elapsed_seconds": 1075.030369460117,
+        "available_bytes": 1043484672
+      },
+      {
+        "elapsed_seconds": 1080.0304663800634,
+        "available_bytes": 1043464192
+      },
+      {
+        "elapsed_seconds": 1085.0305649600923,
+        "available_bytes": 1043451904
+      },
+      {
+        "elapsed_seconds": 1090.0306651000865,
+        "available_bytes": 1043398656
+      },
+      {
+        "elapsed_seconds": 1095.030764458701,
+        "available_bytes": 1043386368
+      },
+      {
+        "elapsed_seconds": 1100.0309104160406,
+        "available_bytes": 1043361792
+      },
+      {
+        "elapsed_seconds": 1105.0310071450658,
+        "available_bytes": 1043329024
+      },
+      {
+        "elapsed_seconds": 1110.0311116450466,
+        "available_bytes": 1043300352
+      },
+      {
+        "elapsed_seconds": 1115.0312099047005,
+        "available_bytes": 1043279872
+      },
+      {
+        "elapsed_seconds": 1120.031275246758,
+        "available_bytes": 1043263488
+      },
+      {
+        "elapsed_seconds": 1125.031456911005,
+        "available_bytes": 1043243008
+      },
+      {
+        "elapsed_seconds": 1130.0315629900433,
+        "available_bytes": 1043214336
+      },
+      {
+        "elapsed_seconds": 1135.0316622387618,
+        "available_bytes": 1043193856
+      },
+      {
+        "elapsed_seconds": 1140.0317602390423,
+        "available_bytes": 1043169280
+      },
+      {
+        "elapsed_seconds": 1145.0318595189601,
+        "available_bytes": 1043152896
+      },
+      {
+        "elapsed_seconds": 1150.0319576389156,
+        "available_bytes": 1043132416
+      },
+      {
+        "elapsed_seconds": 1155.032058574725,
+        "available_bytes": 1043111936
+      },
+      {
+        "elapsed_seconds": 1160.0321832937188,
+        "available_bytes": 1043066880
+      },
+      {
+        "elapsed_seconds": 1165.032278393861,
+        "available_bytes": 1043046400
+      },
+      {
+        "elapsed_seconds": 1170.032382144127,
+        "available_bytes": 1043030016
+      },
+      {
+        "elapsed_seconds": 1175.0324810747989,
+        "available_bytes": 1043009536
+      },
+      {
+        "elapsed_seconds": 1180.0325804348104,
+        "available_bytes": 1042980864
+      },
+      {
+        "elapsed_seconds": 1185.0326775456779,
+        "available_bytes": 1042964480
+      },
+      {
+        "elapsed_seconds": 1190.0327751757577,
+        "available_bytes": 1042948096
+      },
+      {
+        "elapsed_seconds": 1195.032876365818,
+        "available_bytes": 1042931712
+      },
+      {
+        "elapsed_seconds": 1200.032974217087,
+        "available_bytes": 1042919424
+      },
+      {
+        "elapsed_seconds": 1205.0330752767622,
+        "available_bytes": 1042903040
+      },
+      {
+        "elapsed_seconds": 1210.0331761469133,
+        "available_bytes": 1042866176
+      },
+      {
+        "elapsed_seconds": 1215.0332797267474,
+        "available_bytes": 1042849792
+      },
+      {
+        "elapsed_seconds": 1220.0333777680062,
+        "available_bytes": 1042829312
+      },
+      {
+        "elapsed_seconds": 1225.033483217936,
+        "available_bytes": 1042804736
+      },
+      {
+        "elapsed_seconds": 1230.0335834180005,
+        "available_bytes": 1042767872
+      },
+      {
+        "elapsed_seconds": 1235.0336816678755,
+        "available_bytes": 1042743296
+      },
+      {
+        "elapsed_seconds": 1240.03378088912,
+        "available_bytes": 1042747392
+      },
+      {
+        "elapsed_seconds": 1245.0338786588982,
+        "available_bytes": 1042731008
+      },
+      {
+        "elapsed_seconds": 1250.0339777898043,
+        "available_bytes": 1042718720
+      },
+      {
+        "elapsed_seconds": 1255.034078199882,
+        "available_bytes": 1042698240
+      },
+      {
+        "elapsed_seconds": 1260.0341920889914,
+        "available_bytes": 1042681856
+      },
+      {
+        "elapsed_seconds": 1265.0342874201015,
+        "available_bytes": 1042669568
+      },
+      {
+        "elapsed_seconds": 1270.0343883098103,
+        "available_bytes": 1042653184
+      },
+      {
+        "elapsed_seconds": 1275.0344902407378,
+        "available_bytes": 1042636800
+      },
+      {
+        "elapsed_seconds": 1280.0345896007493,
+        "available_bytes": 1042616320
+      },
+      {
+        "elapsed_seconds": 1285.034687420819,
+        "available_bytes": 1042579456
+      },
+      {
+        "elapsed_seconds": 1290.0347904819064,
+        "available_bytes": 1042546688
+      },
+      {
+        "elapsed_seconds": 1295.0348908319138,
+        "available_bytes": 1042526208
+      },
+      {
+        "elapsed_seconds": 1300.0349894617684,
+        "available_bytes": 1042505728
+      },
+      {
+        "elapsed_seconds": 1305.0350874727592,
+        "available_bytes": 1042481152
+      },
+      {
+        "elapsed_seconds": 1310.035188172944,
+        "available_bytes": 1042468864
+      },
+      {
+        "elapsed_seconds": 1315.0352765540592,
+        "available_bytes": 1042452480
+      },
+      {
+        "elapsed_seconds": 1320.0353736449033,
+        "available_bytes": 1042432000
+      },
+      {
+        "elapsed_seconds": 1325.0354811549187,
+        "available_bytes": 1042403328
+      },
+      {
+        "elapsed_seconds": 1330.0355816348456,
+        "available_bytes": 1042378752
+      },
+      {
+        "elapsed_seconds": 1335.0357239730656,
+        "available_bytes": 1042362368
+      },
+      {
+        "elapsed_seconds": 1340.0358303519897,
+        "available_bytes": 1042341888
+      },
+      {
+        "elapsed_seconds": 1345.0359344920143,
+        "available_bytes": 1042321408
+      },
+      {
+        "elapsed_seconds": 1350.0360338129103,
+        "available_bytes": 1042300928
+      },
+      {
+        "elapsed_seconds": 1355.0361358528025,
+        "available_bytes": 1042284544
+      },
+      {
+        "elapsed_seconds": 1360.036247742828,
+        "available_bytes": 1042243584
+      },
+      {
+        "elapsed_seconds": 1365.0363455726765,
+        "available_bytes": 1042219008
+      },
+      {
+        "elapsed_seconds": 1370.0364516228437,
+        "available_bytes": 1042202624
+      },
+      {
+        "elapsed_seconds": 1375.03655036306,
+        "available_bytes": 1042190336
+      },
+      {
+        "elapsed_seconds": 1380.0366500536911,
+        "available_bytes": 1042173952
+      },
+      {
+        "elapsed_seconds": 1385.0367494439706,
+        "available_bytes": 1042157568
+      },
+      {
+        "elapsed_seconds": 1390.036850353703,
+        "available_bytes": 1042141184
+      },
+      {
+        "elapsed_seconds": 1395.0369493048638,
+        "available_bytes": 1042124800
+      },
+      {
+        "elapsed_seconds": 1400.0370518350974,
+        "available_bytes": 1042108416
+      },
+      {
+        "elapsed_seconds": 1405.0371457156725,
+        "available_bytes": 1042087936
+      },
+      {
+        "elapsed_seconds": 1410.0372499660589,
+        "available_bytes": 1042063360
+      },
+      {
+        "elapsed_seconds": 1415.0373516660184,
+        "available_bytes": 1042042880
+      },
+      {
+        "elapsed_seconds": 1420.0374531559646,
+        "available_bytes": 1042001920
+      },
+      {
+        "elapsed_seconds": 1425.0375504768454,
+        "available_bytes": 1041985536
+      },
+      {
+        "elapsed_seconds": 1430.0376537367702,
+        "available_bytes": 1041960960
+      },
+      {
+        "elapsed_seconds": 1435.0377542967908,
+        "available_bytes": 1041833984
+      },
+      {
+        "elapsed_seconds": 1440.0378555878997,
+        "available_bytes": 1041813504
+      },
+      {
+        "elapsed_seconds": 1445.0379554778337,
+        "available_bytes": 1041772544
+      },
+      {
+        "elapsed_seconds": 1450.0380619480275,
+        "available_bytes": 1041727488
+      },
+      {
+        "elapsed_seconds": 1455.0381602379493,
+        "available_bytes": 1041686528
+      },
+      {
+        "elapsed_seconds": 1460.03826379776,
+        "available_bytes": 1041657856
+      },
+      {
+        "elapsed_seconds": 1465.0383628387935,
+        "available_bytes": 1041633280
+      },
+      {
+        "elapsed_seconds": 1470.0384615687653,
+        "available_bytes": 1041616896
+      },
+      {
+        "elapsed_seconds": 1475.0385166527703,
+        "available_bytes": 1041592320
+      },
+      {
+        "elapsed_seconds": 1480.03861954296,
+        "available_bytes": 1041575936
+      },
+      {
+        "elapsed_seconds": 1485.0387176629156,
+        "available_bytes": 1041551360
+      },
+      {
+        "elapsed_seconds": 1490.0388152739033,
+        "available_bytes": 1041510400
+      },
+      {
+        "elapsed_seconds": 1495.0389182339422,
+        "available_bytes": 1041477632
+      },
+      {
+        "elapsed_seconds": 1500.0390225239098,
+        "available_bytes": 1041448960
+      },
+      {
+        "elapsed_seconds": 1505.0391222736798,
+        "available_bytes": 1041420288
+      },
+      {
+        "elapsed_seconds": 1510.0392205649987,
+        "available_bytes": 1041399808
+      },
+      {
+        "elapsed_seconds": 1515.039286796935,
+        "available_bytes": 1041379328
+      },
+      {
+        "elapsed_seconds": 1520.0393923968077,
+        "available_bytes": 1041362944
+      },
+      {
+        "elapsed_seconds": 1525.0394921377301,
+        "available_bytes": 1041342464
+      },
+      {
+        "elapsed_seconds": 1530.039590677712,
+        "available_bytes": 1041326080
+      },
+      {
+        "elapsed_seconds": 1535.0396906686947,
+        "available_bytes": 1041309696
+      },
+      {
+        "elapsed_seconds": 1540.0397908389568,
+        "available_bytes": 1041293312
+      },
+      {
+        "elapsed_seconds": 1545.0398915386759,
+        "available_bytes": 1041276928
+      },
+      {
+        "elapsed_seconds": 1550.0400112480856,
+        "available_bytes": 1041256448
+      },
+      {
+        "elapsed_seconds": 1555.040108918678,
+        "available_bytes": 1041211392
+      },
+      {
+        "elapsed_seconds": 1560.0402078190818,
+        "available_bytes": 1041195008
+      },
+      {
+        "elapsed_seconds": 1565.0403162590228,
+        "available_bytes": 1041174528
+      },
+      {
+        "elapsed_seconds": 1570.0404156087898,
+        "available_bytes": 1041158144
+      },
+      {
+        "elapsed_seconds": 1575.0405151098967,
+        "available_bytes": 1041133568
+      },
+      {
+        "elapsed_seconds": 1580.040617799852,
+        "available_bytes": 1041108992
+      },
+      {
+        "elapsed_seconds": 1585.0407196399756,
+        "available_bytes": 1041088512
+      },
+      {
+        "elapsed_seconds": 1590.0408300799318,
+        "available_bytes": 1041068032
+      },
+      {
+        "elapsed_seconds": 1595.04093036009,
+        "available_bytes": 1041051648
+      },
+      {
+        "elapsed_seconds": 1600.0410288097337,
+        "available_bytes": 1041018880
+      },
+      {
+        "elapsed_seconds": 1605.0411272807978,
+        "available_bytes": 1041002496
+      },
+      {
+        "elapsed_seconds": 1610.0412261108868,
+        "available_bytes": 1040977920
+      },
+      {
+        "elapsed_seconds": 1615.0413354709744,
+        "available_bytes": 1040961536
+      },
+      {
+        "elapsed_seconds": 1620.0414347411133,
+        "available_bytes": 1040945152
+      },
+      {
+        "elapsed_seconds": 1625.0415330417454,
+        "available_bytes": 1040920576
+      },
+      {
+        "elapsed_seconds": 1630.041633272078,
+        "available_bytes": 1040891904
+      },
+      {
+        "elapsed_seconds": 1635.0417332919315,
+        "available_bytes": 1040850944
+      },
+      {
+        "elapsed_seconds": 1640.041834932752,
+        "available_bytes": 1040834560
+      },
+      {
+        "elapsed_seconds": 1645.0419423431158,
+        "available_bytes": 1040805888
+      },
+      {
+        "elapsed_seconds": 1650.0420410330407,
+        "available_bytes": 1040777216
+      },
+      {
+        "elapsed_seconds": 1655.0421398128383,
+        "available_bytes": 1040756736
+      },
+      {
+        "elapsed_seconds": 1660.0422443440184,
+        "available_bytes": 1040740352
+      },
+      {
+        "elapsed_seconds": 1665.0423479140736,
+        "available_bytes": 1040715776
+      },
+      {
+        "elapsed_seconds": 1670.04244896397,
+        "available_bytes": 1040699392
+      },
+      {
+        "elapsed_seconds": 1675.0425532939844,
+        "available_bytes": 1040683008
+      },
+      {
+        "elapsed_seconds": 1680.0426504840143,
+        "available_bytes": 1040662528
+      }
+    ],
+    "binaries": {},
+    "stdout_sha256": "2edb1833520ce1559dbbc20856c40ef92db69a0643235c174231ce77168ebfe2",
+    "stderr_sha256": "0028e8617aae770754126d49041d369f2ccb43361bff503c6bffe74a663bb19c",
+    "resources_sha256": "2beaaf55ae751fc02b57b9a624d666f1021a76304f44b3000927de71bff71996"
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "external_stop_reason": null,
+    "elapsed_seconds": 41.55983840674162,
+    "free_space_observations": [
+      {
+        "elapsed_seconds": 0.0019278679974377155,
+        "available_bytes": 1040596992
+      },
+      {
+        "elapsed_seconds": 5.00205278582871,
+        "available_bytes": 1003524096
+      },
+      {
+        "elapsed_seconds": 10.00215892586857,
+        "available_bytes": 975405056
+      },
+      {
+        "elapsed_seconds": 15.002272245939821,
+        "available_bytes": 946536448
+      },
+      {
+        "elapsed_seconds": 20.00237435568124,
+        "available_bytes": 926068736
+      },
+      {
+        "elapsed_seconds": 25.002479925751686,
+        "available_bytes": 921587712
+      },
+      {
+        "elapsed_seconds": 30.002588915638626,
+        "available_bytes": 921538560
+      },
+      {
+        "elapsed_seconds": 35.00271116383374,
+        "available_bytes": 910258176
+      },
+      {
+        "elapsed_seconds": 40.00281824404374,
+        "available_bytes": 909099008
+      }
+    ],
+    "binaries": {},
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "df123d23e1f8900ad09925a9ad6e9d4d03a303da99a848f567519f13dea78c3f",
+    "resources_sha256": "874d32af20226b8f2a13a144c57187b7a02f75ad46e16d31b86214b635367cc2"
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "pid": 2890310,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/hyperdrc-tests",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "started_unix": 1792237620.0191433
+}

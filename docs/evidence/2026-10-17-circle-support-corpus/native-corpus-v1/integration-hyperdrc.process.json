@@ -1,0 +1,9 @@
+{
+  "pid": 2236017,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af/hyperdrc-5da1690b41025398",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "started_unix": 1792235855.620876
+}

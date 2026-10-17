@@ -1,0 +1,4 @@
+
+thread 'app::tests::load_layers_preserves_gerber_x2_file_metadata_for_manifest' (2241748) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-candidate-source-v1/crates/hyperdrc/src/app.rs:10729:10:
+called `Result::unwrap()` on an `Err` value: Os { code: 122, kind: QuotaExceeded, message: "Disk quota exceeded" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

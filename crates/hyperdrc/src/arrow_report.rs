@@ -268,7 +268,6 @@ fn severity_label(severity: Severity) -> &'static str {
 #[cfg(test)]
 mod tests {
     use std::fs::File;
-    use std::path::PathBuf;
 
     use arrow_array::{Array, StringArray};
     use arrow_ipc::reader::FileReader;
@@ -326,7 +325,8 @@ mod tests {
             summary: report_summary(&active, 1),
             violations: active,
         };
-        let path = PathBuf::from(format!("/tmp/hyperdrc-report-{}.arrow", std::process::id()));
+        let path =
+            std::env::temp_dir().join(format!("hyperdrc-report-{}.arrow", std::process::id()));
         let _ = std::fs::remove_file(&path);
 
         write_report_arrow(&report, &path).unwrap();

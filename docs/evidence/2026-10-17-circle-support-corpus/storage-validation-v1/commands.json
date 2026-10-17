@@ -1,0 +1,256 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 10.61307793436572,
+    "external_stop_reason": null,
+    "free_space_observations": [
+      {
+        "elapsed_seconds": 0.002068048343062401,
+        "available_bytes": 1898844160
+      },
+      {
+        "elapsed_seconds": 5.002202065195888,
+        "available_bytes": 1898827776
+      },
+      {
+        "elapsed_seconds": 10.002306544221938,
+        "available_bytes": 1898803200
+      }
+    ],
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "d7d5d1f62d1e27c8b7f1320693fdbc597668a306f80972bb6cc8b63479d0c96f"
+  },
+  {
+    "name": "compile",
+    "command": [
+      "rustc",
+      "--crate-name",
+      "hyperdrc",
+      "--edition=2024",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-source-v1/crates/hyperdrc/src/lib.rs",
+      "-C",
+      "opt-level=3",
+      "-C",
+      "codegen-units=16",
+      "-C",
+      "embed-bitcode=no",
+      "-D",
+      "warnings",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/hyperdrc-tests",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libanyhow-af4f35109210643f.rlib",
+      "--extern",
+      "arrow_array=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libarrow_array-7af8beca099b62df.rlib",
+      "--extern",
+      "arrow_ipc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libarrow_ipc-c293ebc01c50fb69.rlib",
+      "--extern",
+      "arrow_schema=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libarrow_schema-b13a2dee268c3bb1.rlib",
+      "--extern",
+      "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libcsgrs.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperlattice-d2be40e036cfd712.rlib",
+      "--extern",
+      "flate2=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libflate2-9e07234d4f6f9d95.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperpath=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperpath-0a3a53b2098990f6.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hypersolve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhypersolve-b2f0264618dfc8f9.rlib",
+      "--extern",
+      "log=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/liblog-c34fa4a937c92699.rlib",
+      "--extern",
+      "libc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/liblibc-909f3e1349433593.rlib",
+      "--extern",
+      "parquet=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libparquet-84ea55dc998a9ea4.rlib",
+      "--extern",
+      "serde=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libserde-84969463ebf1e798.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--extern",
+      "sha2=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libsha2-c0083845f9e38631.rlib",
+      "--extern",
+      "tar=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libtar-8c9742c89668517f.rlib",
+      "--extern",
+      "zip=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libzip-3ba51f2c24434d27.rlib",
+      "--extern",
+      "calamine=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libcalamine-6feb1a1ea75a0a81.rlib",
+      "--extern",
+      "quick_xml=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libquick_xml-3ce2dadfc8769ab8.rlib",
+      "--extern",
+      "rusqlite=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/librusqlite-9aabf916876e27fd.rlib",
+      "--extern",
+      "proptest=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libproptest-b7ac7599fb585462.rlib",
+      "-L",
+      "native=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/build/libsqlite3-sys-4602cf7a09d5fdc8/out"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 27.26755224307999,
+    "external_stop_reason": null,
+    "free_space_observations": [
+      {
+        "elapsed_seconds": 0.001950075849890709,
+        "available_bytes": 1898782720
+      },
+      {
+        "elapsed_seconds": 5.002090652938932,
+        "available_bytes": 1898758144
+      },
+      {
+        "elapsed_seconds": 10.0021983217448,
+        "available_bytes": 1898696704
+      },
+      {
+        "elapsed_seconds": 15.002338918857276,
+        "available_bytes": 1898676224
+      },
+      {
+        "elapsed_seconds": 20.002469717059284,
+        "available_bytes": 1898659840
+      },
+      {
+        "elapsed_seconds": 25.002597883809358,
+        "available_bytes": 1894060032
+      }
+    ],
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "c9120895aaf8ab4971e5c30e3385290f7792fc34b9465ec046f4557b11b11635"
+  },
+  {
+    "name": "app-tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/hyperdrc-tests",
+      "app::tests::",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/selected-temporary-directory"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.22760298242792487,
+    "external_stop_reason": null,
+    "free_space_observations": [
+      {
+        "elapsed_seconds": 0.0018442734144628048,
+        "available_bytes": 1837985792
+      }
+    ],
+    "stdout_sha256": "70fd56d0f8aedc0b2888bfa25be5a588cc2e8e75ef9586efda108d23ba6dd673",
+    "stderr_sha256": "e0ff8c0e3e46d29e1a5f6dadd038963fc52452d3c8c382c74af44546992a5b30",
+    "resources_sha256": "3c342880a4739d8f2ed511623e328980fb243e0af93e0093c169c61e152d1791"
+  },
+  {
+    "name": "arrow-test",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/hyperdrc-tests",
+      "arrow_report::tests::writes_readable_arrow_report",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "environment_overrides": {
+      "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/selected-temporary-directory"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 0.1992356269620359,
+    "external_stop_reason": null,
+    "free_space_observations": [
+      {
+        "elapsed_seconds": 0.0017500398680567741,
+        "available_bytes": 1837965312
+      }
+    ],
+    "stdout_sha256": "fa4aa17fdd9d48c23d64a560e2b35bb8aeb9314d27f5bfa7fb1626e06a6ce6cf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "479c9dd430bbfbd34f41c27e71567e7e1417675134a2742309c67924953816ec"
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "environment_overrides": {},
+    "exit_code": 0,
+    "elapsed_seconds": 45.660411049146205,
+    "external_stop_reason": null,
+    "free_space_observations": [
+      {
+        "elapsed_seconds": 0.00171267194673419,
+        "available_bytes": 1837953024
+      },
+      {
+        "elapsed_seconds": 5.001834011171013,
+        "available_bytes": 1802006528
+      },
+      {
+        "elapsed_seconds": 10.001942649949342,
+        "available_bytes": 1755697152
+      },
+      {
+        "elapsed_seconds": 15.002054627984762,
+        "available_bytes": 1698369536
+      },
+      {
+        "elapsed_seconds": 20.002174046821892,
+        "available_bytes": 1663258624
+      },
+      {
+        "elapsed_seconds": 25.00229639513418,
+        "available_bytes": 1632702464
+      },
+      {
+        "elapsed_seconds": 30.002405154053122,
+        "available_bytes": 1619124224
+      },
+      {
+        "elapsed_seconds": 35.002516742795706,
+        "available_bytes": 1606967296
+      },
+      {
+        "elapsed_seconds": 40.002626872155815,
+        "available_bytes": 1592934400
+      },
+      {
+        "elapsed_seconds": 45.00273124082014,
+        "available_bytes": 1588264960
+      }
+    ],
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "5c686e7f22512ce67303b27e45aace230e904a57f94e5a765e9bd855345f77b6",
+    "resources_sha256": "69d18945c46b73325f6c3b9c47c12b68bfefc04588a1328b767f7e685f84a9a2"
+  }
+]

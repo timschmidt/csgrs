@@ -1,0 +1,9 @@
+{
+  "pid": 2236038,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/fd2d0683239dd5203148d373df6d06dcb4fb11c3eae759f5222fbf823a365086/kicad_pad_sources-e4732b4399bed56a",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "started_unix": 1792235855.848067
+}

@@ -1,0 +1,6 @@
+{
+  "complete": true,
+  "exit_code": 0,
+  "command_record": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/commands.json",
+  "next_build_or_test_waits_for_native_corpus": true
+}

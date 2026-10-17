@@ -1,0 +1,18 @@
+{
+  "pid": 2291783,
+  "command": [
+    "cargo",
+    "clippy",
+    "--offline",
+    "--locked",
+    "-p",
+    "hyperdrc",
+    "--release",
+    "--all-features",
+    "--all-targets",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "started_unix": 1792236114.2970755
+}

@@ -1,0 +1,246 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native_corpus_v1.py": "97fbf0131d9b4a058d1db11a5e58cfcbb758792fee7535b319502e975255bdc8",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/contract-v1.md": "53035d99c34d07a951ba577c738116fbef95c74ab3132e67832f0840bda82bf3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/default-corpus-v1/result.json": "1b3efdfee7e3e7b40c077bd6d1cd9602e58414adc5df39a1cc004d9ae1fc4553",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/protocol.json": "2d2e40ec15fa6c4a9f855c89786a0e5d747e6961a27111f1b6fb43ea4cb8a0b9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/commands.json": "311c8c0fcec5578f6fe8ffa0b4d5acd3d98ed928370e15eac339add2a6afdf4a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/result.json": "491292e43415754cfd11056fc698fec9494ab4b6b624d115e471e9ec8370a115",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/binary.json": "312d6f485423400d54636adeee7d223a96a81221bbebebd61b1142830e26bc63",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/build-phase-result.json": "7d8de23991be690543e5861aedf85774c34ecfc9695908819c709132d649199f",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/commands.json": "bc66a2733aa1bb49d40463f4b86b725a5ab33ba0e7675223a8b4a3acd3864efc",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/selected-temporary-directory/write-control": "6ae10ea911828fad08f0a144ce373f6d9fab9701cd7fc37ed7a7a99cc47fb42e",
+    "/tmp/csgrs-circle-support-qualification-v2/release/hyperdrc": "d1a4b3d5960743ed599abc7b6c4c0bfcbee3a8e78101d55a7eaff75c13237e06"
+  },
+  "library_binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/hyperdrc-tests",
+    "sha256": "73199478ab46b9bf994c63cba7b3f1aafa20a270304cf3663e1545209ae7abec",
+    "bytes": 60470504
+  },
+  "integration_binaries": [
+    {
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/5159160c5ab9cce2572c1ba00927bcd7f603b10af4aec1b09a952d4ae18ac727/kicad_track_failures-b846f6af7dd90fbe",
+      "sha256": "5159160c5ab9cce2572c1ba00927bcd7f603b10af4aec1b09a952d4ae18ac727",
+      "bytes": 20543664,
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "kicad_track_failures",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/kicad_track_failures.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      }
+    },
+    {
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/6baad32e8bb74146b055115a9bdc63671b78acca9a2aa88db235068631fa8134/kicad_rule_export-c09b25b29b958a07",
+      "sha256": "6baad32e8bb74146b055115a9bdc63671b78acca9a2aa88db235068631fa8134",
+      "bytes": 43581760,
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "kicad_rule_export",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/kicad_rule_export.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      }
+    },
+    {
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/1fc9389a42a87317b8473de1db8e74f29662c737b67731f9f1d6f075bfe3d19d/diagnostic_formatting-e5ef4baeabfbc955",
+      "sha256": "1fc9389a42a87317b8473de1db8e74f29662c737b67731f9f1d6f075bfe3d19d",
+      "bytes": 20076968,
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "diagnostic_formatting",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/diagnostic_formatting.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      }
+    },
+    {
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af/hyperdrc-5da1690b41025398",
+      "sha256": "c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af",
+      "bytes": 1079400,
+      "target": {
+        "kind": [
+          "bin"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "hyperdrc",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/src/main.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      }
+    },
+    {
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/fd2d0683239dd5203148d373df6d06dcb4fb11c3eae759f5222fbf823a365086/kicad_pad_sources-e4732b4399bed56a",
+      "sha256": "fd2d0683239dd5203148d373df6d06dcb4fb11c3eae759f5222fbf823a365086",
+      "bytes": 20810280,
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "kicad_pad_sources",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/kicad_pad_sources.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      }
+    },
+    {
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/9058e50a5c5c541ea2447f1949aeb71b1d73edc82b8ae7bbb9587b0ef8cdc727/artifact_numeric_keys-03d9b7a570505404",
+      "sha256": "9058e50a5c5c541ea2447f1949aeb71b1d73edc82b8ae7bbb9587b0ef8cdc727",
+      "bytes": 6799136,
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "artifact_numeric_keys",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/artifact_numeric_keys.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      }
+    },
+    {
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/87afe91b185172eaa34cb976ea0a10c8742a8c82d8ae9987ce5e0d2952b1a6ab/readme-990ac56b4fb5e9a5",
+      "sha256": "87afe91b185172eaa34cb976ea0a10c8742a8c82d8ae9987ce5e0d2952b1a6ab",
+      "bytes": 1117544,
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "readme",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/tests/readme.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      }
+    }
+  ],
+  "compiled_cli_paths_used_by_integration_tests": {
+    "/tmp/csgrs-circle-support-qualification-v2/release/hyperdrc": {
+      "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/d1a4b3d5960743ed599abc7b6c4c0bfcbee3a8e78101d55a7eaff75c13237e06/hyperdrc",
+      "sha256": "d1a4b3d5960743ed599abc7b6c4c0bfcbee3a8e78101d55a7eaff75c13237e06",
+      "bytes": 42936544,
+      "target": {
+        "kind": [
+          "bin"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "hyperdrc",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-source-v2/crates/hyperdrc/src/main.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": false
+      }
+    }
+  },
+  "native_build_protocol": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/protocol.json",
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/runtime-source-mirror",
+  "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/selected-temporary-directory",
+  "full_library_selection": "Entire test binary, including all three original performance gates; no added skips or filters.",
+  "integration_reuse_proof": "Production implementation, all integration source, fixtures, dependency lock and package features match the successful E38 build. Only three library cfg(test) storage sections and the ledger changed.",
+  "features": [],
+  "cargo_all_features_equivalent": true,
+  "default_corpus_terminal_before_start": true,
+  "existing_generated_test_environment": {},
+  "external_timeout_seconds": 1800,
+  "address_space_bytes": 8589934592,
+  "minimum_repository_free_bytes": 805306368,
+  "cargo_targets_reopened": false,
+  "cache_admitted": false
+}

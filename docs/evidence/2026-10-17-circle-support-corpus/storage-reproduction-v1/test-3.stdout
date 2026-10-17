@@ -1,0 +1,11 @@
+
+running 1 test
+test app::tests::load_layers_preserves_gerber_x2_file_metadata_for_manifest ... FAILED
+
+failures:
+
+failures:
+    app::tests::load_layers_preserves_gerber_x2_file_metadata_for_manifest
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1558 filtered out; finished in 0.00s
+

@@ -1,0 +1,18 @@
+{
+  "pid": 2859138,
+  "command": [
+    "cargo",
+    "clippy",
+    "--offline",
+    "--locked",
+    "-p",
+    "hypercurve",
+    "--release",
+    "--all-features",
+    "--all-targets",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "started_unix": 1792237545.0216186
+}

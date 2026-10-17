@@ -1,0 +1,11 @@
+{
+  "pid": 2291702,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/hyperdrc-tests",
+    "arrow_report::tests::writes_readable_arrow_report",
+    "--exact",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "started_unix": 1792236114.0972738
+}

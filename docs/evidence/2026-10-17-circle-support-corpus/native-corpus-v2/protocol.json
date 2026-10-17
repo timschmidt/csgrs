@@ -1,0 +1,347 @@
+{
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native_corpus_v2.py": "efa6d914c480517fd75078a5f9d29c54635fc417fbd0397938d40219567e6ddf",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-contract-v1.md": "0f83af34a21807ef01d399b702d7faadcfaefac4a7afcad4b2e7d6f80bb79fbc",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/curve-all-v1/result.json": "42836584aaceb359d662c4ef4469cbd298742e894d5bb2f9a4dcb695988de04a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-validation-v1/result.json": "cd4b8bf1317703e29f5105356db5c62608b674a015c0a45f442f51f6f202f5cc",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-preparation-v1/result.json": "ad91695a4bc5b33bfd95bd5eef1920bf27bd69670acbb1b8de9fc8e58c3d1988",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/protocol.json": "dffe76460609c765f28e813a1ee92594491146c48ab34230f2d09a7ccff1e471",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/commands.json": "01218e91c56a398da324801aec09ab3ffb48c1844fc6578b28e9f8ce575ab6af",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/result.json": "491292e43415754cfd11056fc698fec9494ab4b6b624d115e471e9ec8370a115",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/binary.json": "20844b6790a90eaa79f4bff9c90ec547506bdd00dac2a2731ace19f55398e5d9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/commands.json": "df497244f507c270b6ec791432d27b9ac4c1445561f114ed07baff3d67f753a8",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v1/protocol.json": "e70eefc1188f941d7f95af2aa20d309ca1fcd7beb24295be6fb5587f9ee8038e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v2/selected-temporary-directory/write-control": "d47a82df4e1fbb07d5558c9740b36f989bfb720b229114ef5b8a300137507227"
+  },
+  "library_binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/hyperdrc-tests",
+    "sha256": "9036d539fe1d5b316b1ec76bf5a34edd4569f6d1685d050fb22ce12e5f74b900",
+    "bytes": 60475200
+  },
+  "native_build_protocol": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/protocol.json",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/runtime-source-mirror",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v2/hyperdrc-tests",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "TMPDIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-corpus-v2/selected-temporary-directory",
+  "source_changes_since_first_native_run": {
+    "crates/hyperdrc/src/app.rs": "1ebb5d47c56c70de6b17ce22abb8a97794e03bfd0efa8ec139061cc961a91452",
+    "crates/hyperdrc/src/arrow_report.rs": "aa1b1c34ccaf056e7655e601465dfaf92b20387b1e8772e4ba67c42634115759"
+  },
+  "production_prefixes_unchanged": true,
+  "reused_integration_and_doc_commands": [
+    {
+      "name": "integration-kicad_track_failures",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/5159160c5ab9cce2572c1ba00927bcd7f603b10af4aec1b09a952d4ae18ac727/kicad_track_failures-b846f6af7dd90fbe",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "external_stop_reason": null,
+      "elapsed_seconds": 0.25532538210973144,
+      "free_space_observations": [
+        {
+          "elapsed_seconds": 0.0020341998897492886,
+          "available_bytes": 2140151808
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 39,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "stdout_sha256": "bc94d437bd522dc3db8104136ee3e03b0763f9f52dbf4168023d8612285df761",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "68bba2a4ab3b4da31f27c1f9eed44216e52ca1acdd2e233017f182033627258b"
+    },
+    {
+      "name": "integration-kicad_rule_export",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/6baad32e8bb74146b055115a9bdc63671b78acca9a2aa88db235068631fa8134/kicad_rule_export-c09b25b29b958a07",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "external_stop_reason": null,
+      "elapsed_seconds": 0.23890455067157745,
+      "free_space_observations": [
+        {
+          "elapsed_seconds": 0.0020008417777717113,
+          "available_bytes": 2140135424
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 14,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "stdout_sha256": "4f1e793c3a080a7a323fcb9a4b3200651aa4e77d2bd4fa125e5f7c9680762d30",
+      "stderr_sha256": "90127d2004235caa0531a8a6dbef4ce60d429a38661e6beb6aa86a350107c636",
+      "resources_sha256": "b6a6a035459b8ed3ae2c9e2f5a276e8f901b011fa9d16b5f63c03d8ae9c40f15"
+    },
+    {
+      "name": "integration-diagnostic_formatting",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/1fc9389a42a87317b8473de1db8e74f29662c737b67731f9f1d6f075bfe3d19d/diagnostic_formatting-e5ef4baeabfbc955",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "external_stop_reason": null,
+      "elapsed_seconds": 0.2261892263777554,
+      "free_space_observations": [
+        {
+          "elapsed_seconds": 0.0020240512676537037,
+          "available_bytes": 2140110848
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "stdout_sha256": "323c444bd2e97d8bd5c7b7ebf9ace80c2e580d63f2ab0a6679504116c9ce4a8f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "cd7a3d1c510d38cc051a46665ab2c152e67aacf24ff4e3293872065219a23a14"
+    },
+    {
+      "name": "integration-hyperdrc",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af/hyperdrc-5da1690b41025398",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "external_stop_reason": null,
+      "elapsed_seconds": 0.2265664297156036,
+      "free_space_observations": [
+        {
+          "elapsed_seconds": 0.001991412602365017,
+          "available_bytes": 2140098560
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "stdout_sha256": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "940bf5195a602e9aa9a3bf57a110338553a911727e00c4cbf21bdebc647fcfe7"
+    },
+    {
+      "name": "integration-kicad_pad_sources",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/fd2d0683239dd5203148d373df6d06dcb4fb11c3eae759f5222fbf823a365086/kicad_pad_sources-e4732b4399bed56a",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "external_stop_reason": null,
+      "elapsed_seconds": 0.2920084889046848,
+      "free_space_observations": [
+        {
+          "elapsed_seconds": 0.0019680140540003777,
+          "available_bytes": 2140086272
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 33,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "stdout_sha256": "d22a27748667bc42c5795cd49b7253a49ba8ba093b53799038178724f2489852",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "c327dd148bfda882bf73e966864497c4b0fa91bd2a77415d29040f2065d80703"
+    },
+    {
+      "name": "integration-artifact_numeric_keys",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/9058e50a5c5c541ea2447f1949aeb71b1d73edc82b8ae7bbb9587b0ef8cdc727/artifact_numeric_keys-03d9b7a570505404",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "external_stop_reason": null,
+      "elapsed_seconds": 0.23337822081521153,
+      "free_space_observations": [
+        {
+          "elapsed_seconds": 0.0019763638265430927,
+          "available_bytes": 2140069888
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "stdout_sha256": "68a2eb3d3b82760f07d65c70d8c59861bc3fab8de3d1beb6d7362ef7ac6611d5",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "fe34b768e69939db849407f0ab6e2b998a73b80ee2f71bceba71fadc045019de"
+    },
+    {
+      "name": "integration-readme",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-qualification-v2/executables/87afe91b185172eaa34cb976ea0a10c8742a8c82d8ae9987ce5e0d2952b1a6ab/readme-990ac56b4fb5e9a5",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "external_stop_reason": null,
+      "elapsed_seconds": 0.23043830413371325,
+      "free_space_observations": [
+        {
+          "elapsed_seconds": 0.0021029459312558174,
+          "available_bytes": 2140057600
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "stdout_sha256": "293d6068ed6b268888c81f9c3520df58b6d4e78fc6f1771f3474c111b2e83ecd",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "184c89ea5c9178171b9070a36d6999ca88040e8ad8d0945e8432da22d071570e"
+    },
+    {
+      "name": "doctests",
+      "command": [
+        "rustdoc",
+        "--crate-name",
+        "hyperdrc",
+        "--edition=2024",
+        "--test",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/native-build-v1/runtime-source-mirror/crates/hyperdrc/src/lib.rs",
+        "-D",
+        "warnings",
+        "--test-args",
+        "--test-threads=1",
+        "-L",
+        "dependency=/tmp/csgrs-circle-support-qualification-v2/release/deps",
+        "--extern",
+        "anyhow=/tmp/csgrs-circle-support-qualification-v2/release/deps/libanyhow-af4f35109210643f.rlib",
+        "--extern",
+        "arrow_array=/tmp/csgrs-circle-support-qualification-v2/release/deps/libarrow_array-72b32ca401dc3511.rlib",
+        "--extern",
+        "arrow_ipc=/tmp/csgrs-circle-support-qualification-v2/release/deps/libarrow_ipc-9226c117b2da4f64.rlib",
+        "--extern",
+        "arrow_schema=/tmp/csgrs-circle-support-qualification-v2/release/deps/libarrow_schema-b13a2dee268c3bb1.rlib",
+        "--extern",
+        "clap=/tmp/csgrs-circle-support-qualification-v2/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+        "--extern",
+        "csgrs=/tmp/csgrs-circle-support-qualification-v2/release/deps/libcsgrs.rlib",
+        "--extern",
+        "hyperlattice=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhyperlattice-d2be40e036cfd712.rlib",
+        "--extern",
+        "flate2=/tmp/csgrs-circle-support-qualification-v2/release/deps/libflate2-9e07234d4f6f9d95.rlib",
+        "--extern",
+        "hyperlimit=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+        "--extern",
+        "hypercurve=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhypercurve-7548676b4153986b.rlib",
+        "--extern",
+        "hyperpath=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhyperpath-0a3a53b2098990f6.rlib",
+        "--extern",
+        "hyperreal=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhyperreal-a23a946140139d6a.rlib",
+        "--extern",
+        "hypersolve=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhypersolve-b2f0264618dfc8f9.rlib",
+        "--extern",
+        "log=/tmp/csgrs-circle-support-qualification-v2/release/deps/liblog-c34fa4a937c92699.rlib",
+        "--extern",
+        "libc=/tmp/csgrs-circle-support-qualification-v2/release/deps/liblibc-909f3e1349433593.rlib",
+        "--extern",
+        "parquet=/tmp/csgrs-circle-support-qualification-v2/release/deps/libparquet-533783f8ae2044c5.rlib",
+        "--extern",
+        "serde=/tmp/csgrs-circle-support-qualification-v2/release/deps/libserde-84969463ebf1e798.rlib",
+        "--extern",
+        "serde_json=/tmp/csgrs-circle-support-qualification-v2/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "--extern",
+        "sha2=/tmp/csgrs-circle-support-qualification-v2/release/deps/libsha2-c0083845f9e38631.rlib",
+        "--extern",
+        "tar=/tmp/csgrs-circle-support-qualification-v2/release/deps/libtar-6e2d13d8169f9634.rlib",
+        "--extern",
+        "zip=/tmp/csgrs-circle-support-qualification-v2/release/deps/libzip-3ba51f2c24434d27.rlib",
+        "--extern",
+        "calamine=/tmp/csgrs-circle-support-qualification-v2/release/deps/libcalamine-6feb1a1ea75a0a81.rlib",
+        "--extern",
+        "quick_xml=/tmp/csgrs-circle-support-qualification-v2/release/deps/libquick_xml-3ce2dadfc8769ab8.rlib",
+        "--extern",
+        "rusqlite=/tmp/csgrs-circle-support-qualification-v2/release/deps/librusqlite-9aabf916876e27fd.rlib",
+        "--extern",
+        "proptest=/tmp/csgrs-circle-support-qualification-v2/release/deps/libproptest-b7ac7599fb585462.rlib",
+        "-L",
+        "native=/tmp/csgrs-circle-support-qualification-v2/release/build/libsqlite3-sys-4602cf7a09d5fdc8/out",
+        "--extern",
+        "hyperdrc=/tmp/csgrs-circle-support-qualification-v2/release/deps/libhyperdrc-a3de6c11c183673a.rlib"
+      ],
+      "exit_code": 0,
+      "external_stop_reason": null,
+      "elapsed_seconds": 1.3917223047465086,
+      "free_space_observations": [
+        {
+          "elapsed_seconds": 0.001959945075213909,
+          "available_bytes": 2140045312
+        }
+      ],
+      "test_summaries": [
+        {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        },
+        {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0
+        }
+      ],
+      "stdout_sha256": "3b33dc10b0670845292c7f20177bf5aaf96808cc0d44916a924486a99bd16fce",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "resources_sha256": "3c0bcbab44a6933cc4f22714a0b7ec7bea3be79dfe4e9ee24169ce9f34ce718f"
+    }
+  ],
+  "reuse_proof": "All production source and read-only dependencies are identical; only five fixture path constructors and an unused test import differ. The seven consumer executables, their CLI and the three doc tests already passed in native-corpus-v1.",
+  "features": [],
+  "cargo_all_features_equivalent": true,
+  "selection": "Entire native library, including all three original workload gates; no filters or added skips.",
+  "curve_checks_and_other_task_builds_terminal_before_start": true,
+  "external_timeout_seconds": 1800,
+  "address_space_bytes": 8589934592,
+  "minimum_repository_free_bytes": 805306368,
+  "cargo_targets_reopened": false
+}

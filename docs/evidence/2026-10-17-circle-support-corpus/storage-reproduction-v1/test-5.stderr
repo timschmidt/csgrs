@@ -1,0 +1,8 @@
+
+thread 'arrow_report::tests::writes_readable_arrow_report' (2241752) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-recovery/temp-candidate-source-v1/crates/hyperdrc/src/arrow_report.rs:332:44:
+called `Result::unwrap()` on an `Err` value: failed to open Arrow writer for /tmp/hyperdrc-report-2241751.arrow
+
+Caused by:
+    0: Io error: Disk quota exceeded (os error 122)
+    1: Disk quota exceeded (os error 122)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

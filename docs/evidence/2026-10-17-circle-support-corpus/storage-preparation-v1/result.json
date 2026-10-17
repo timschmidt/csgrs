@@ -1,0 +1,50 @@
+{
+  "complete": true,
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-source-v1",
+  "source_inputs": 2835,
+  "source_hashes_sha256": "341c4a64a1f73ed503d1ff4bbb3446210629107e24a74acdcc69dd7a0b146ef5",
+  "implementation_sha256": {
+    "crates/hyperdrc/src/app.rs": "1ebb5d47c56c70de6b17ce22abb8a97794e03bfd0efa8ec139061cc961a91452",
+    "crates/hyperdrc/src/arrow_report.rs": "aa1b1c34ccaf056e7655e601465dfaf92b20387b1e8772e4ba67c42634115759"
+  },
+  "production_prefixes_unchanged": true,
+  "exact_replacements": {
+    "crates/hyperdrc/src/app.rs": [
+      [
+        "PathBuf::from(format!(\"/tmp/hyperdrc-load-all-layers-{process_id}\"))",
+        "std::env::temp_dir().join(format!(\"hyperdrc-load-all-layers-{process_id}\"))"
+      ],
+      [
+        "PathBuf::from(format!(\n            \"/tmp/hyperdrc-archive-layers-{}\",",
+        "std::env::temp_dir().join(format!(\n            \"hyperdrc-archive-layers-{}\","
+      ],
+      [
+        "PathBuf::from(format!(\"/tmp/hyperdrc-x2-metadata-{process_id}.gbr\"))",
+        "std::env::temp_dir().join(format!(\"hyperdrc-x2-metadata-{process_id}.gbr\"))"
+      ],
+      [
+        "PathBuf::from(format!(\"/tmp/hyperdrc-load-all-layers-parse-{process_id}\"))",
+        "std::env::temp_dir().join(format!(\"hyperdrc-load-all-layers-parse-{process_id}\"))"
+      ]
+    ],
+    "crates/hyperdrc/src/arrow_report.rs": [
+      [
+        "PathBuf::from(format!(\"/tmp/hyperdrc-report-{}.arrow\", std::process::id()))",
+        "std::env::temp_dir().join(format!(\"hyperdrc-report-{}.arrow\", std::process::id()))"
+      ],
+      [
+        "    use std::path::PathBuf;\n",
+        ""
+      ]
+    ]
+  },
+  "format_exit_code": 0,
+  "cache_candidate_included": false,
+  "main_sources_modified": false,
+  "input_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/prepare_storage_v1.py": "715995a76fdf41495712ad46d94821184c372c16192146dd3d7e6d3399c24179",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-contract-v1.md": "0f83af34a21807ef01d399b702d7faadcfaefac4a7afcad4b2e7d6f80bb79fbc",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/storage-reproduction-v1/result.json": "9c104487cf9629dcc4630de3ceba86cea012523341c519b2b66090c292c6ada5",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-corpus/preparation-v1/main-input-hashes.json.gz": "fb5f83207e164beab24f5075173bbe25de79547dc3959badb7c03db87a9e05d4"
+  }
+}

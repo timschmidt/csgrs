@@ -1,0 +1,10 @@
+{
+  "pid": 2119070,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/circle-support-index/candidate-validation-v1/hypercurve-tests",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "supervisor": "/usr/bin/time",
+  "started_unix": 1792234546.613273
+}

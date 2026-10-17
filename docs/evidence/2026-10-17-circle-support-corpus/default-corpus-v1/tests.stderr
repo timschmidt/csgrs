@@ -1,0 +1,95 @@
+retained-chord-affine-oracle: axis
+retained-chord-affine-oracle: recursive-quadratic-line
+retained-chord-affine-oracle: recursive-quadratic-line
+retained-chord-affine-oracle: represented-oblique
+retained-chord-affine-oracle: selected-radial
+retained-chord-affine-oracle: selected-radial
+recursive bounds center lift: direct_product=false, lifted_product=true
+retained-chord-affine-oracle: recursive-quadratic-line
+recursive bounds center lift: direct_product=false, lifted_product=true
+retained-chord-affine-oracle: recursive-quadratic-line
+recursive bounds center lift: direct_product=false, lifted_product=true
+recursive bounds center lift: direct_product=false, lifted_product=true
+retained-chord-affine-oracle: recursive-quadratic-line
+retained-chord-affine-oracle: oblique
+retained-chord-affine-oracle: retained-offset
+retained-chord-affine-oracle: chord-normal-projective
+stationary=false distance=0 swapped=false complete=true contacts=1
+stationary=false distance=0 swapped=true complete=true contacts=1
+stationary=false distance=1 swapped=false complete=true contacts=1
+stationary=false distance=1 swapped=true complete=true contacts=1
+stationary=true distance=0 swapped=false complete=true contacts=1
+stationary=true distance=0 swapped=true complete=true contacts=1
+stationary=true distance=1 swapped=false complete=true contacts=1
+stationary=true distance=1 swapped=true complete=true contacts=1
+stationary=false distance=0 swapped=false complete=true contacts=1
+stationary=false distance=0 swapped=true complete=true contacts=1
+stationary=false distance=1 swapped=false complete=true contacts=1
+stationary=false distance=1 swapped=true complete=true contacts=1
+stationary=true distance=0 swapped=false complete=true contacts=1
+stationary=true distance=0 swapped=true complete=true contacts=1
+stationary=true distance=1 swapped=false complete=true contacts=1
+stationary=true distance=1 swapped=true complete=true contacts=1
+rational normal sheet swapped=false complete=true contacts=1
+rational normal sheet swapped=true complete=true contacts=1
+rational normal sheet swapped=false complete=true contacts=1
+rational normal sheet swapped=true complete=true contacts=1
+REPARAMETERIZED_OVERLAP reversed=false complete=true contacts=2 overlaps=1
+REPARAMETERIZED_OVERLAP reversed=false complete=true contacts=2 overlaps=1
+REPARAMETERIZED_OVERLAP reversed=true complete=true contacts=2 overlaps=1
+REPARAMETERIZED_OVERLAP reversed=true complete=true contacts=2 overlaps=1
+retained point kind=1 checks=90 failures=0
+retained point kind=0 checks=90 failures=0
+retained point kind=3 checks=90 failures=0
+retained point kind=2 checks=90 failures=0
+nonlinear cusp: policy=0, reversed=false, constraint=center
+nonlinear cusp: policy=0, reversed=false, constraint=parameter
+nonlinear cusp: policy=0, reversed=false, constraint=point
+nonlinear cusp: policy=0, reversed=true, constraint=center
+nonlinear cusp: policy=0, reversed=true, constraint=parameter
+nonlinear cusp: policy=0, reversed=true, constraint=point
+nonlinear cusp: policy=1, reversed=false, constraint=center
+nonlinear cusp: policy=1, reversed=false, constraint=parameter
+nonlinear cusp: policy=1, reversed=false, constraint=point
+nonlinear cusp: policy=1, reversed=true, constraint=center
+nonlinear cusp: policy=1, reversed=true, constraint=parameter
+nonlinear cusp: policy=1, reversed=true, constraint=point
+selected-circle seam: policy=CurveContext(0), reversed=false, mode=TrimOnly
+selected-circle seam: chamfer
+selected-circle seam: offset
+selected-circle seam: policy=CurveContext(0), reversed=false, mode=TrimOrExtend
+selected-circle seam: policy=CurveContext(0), reversed=true, mode=TrimOnly
+selected-circle seam: chamfer
+selected-circle seam: offset
+selected-circle seam: policy=CurveContext(0), reversed=true, mode=TrimOrExtend
+selected-circle seam: policy=CurveContext(1), reversed=false, mode=TrimOnly
+selected-circle seam: chamfer
+selected-circle seam: offset
+selected-circle seam: policy=CurveContext(1), reversed=false, mode=TrimOrExtend
+selected-circle seam: policy=CurveContext(1), reversed=true, mode=TrimOnly
+selected-circle seam: chamfer
+selected-circle seam: offset
+selected-circle seam: policy=CurveContext(1), reversed=true, mode=TrimOrExtend
+selected circle: policy=CurveContext(0), reversed=false, mode=TrimOnly, parameter=false
+selected circle: policy=CurveContext(0), reversed=false, mode=TrimOnly, parameter=true
+selected circle: policy=CurveContext(0), reversed=false, mode=TrimOrExtend, parameter=false
+selected circle: policy=CurveContext(0), reversed=false, mode=TrimOrExtend, parameter=true
+selected circle: policy=CurveContext(0), reversed=true, mode=TrimOnly, parameter=false
+selected circle: policy=CurveContext(0), reversed=true, mode=TrimOnly, parameter=true
+selected circle: policy=CurveContext(0), reversed=true, mode=TrimOrExtend, parameter=false
+selected circle: policy=CurveContext(0), reversed=true, mode=TrimOrExtend, parameter=true
+selected circle: policy=CurveContext(1), reversed=false, mode=TrimOnly, parameter=false
+selected circle: policy=CurveContext(1), reversed=false, mode=TrimOnly, parameter=true
+selected circle: policy=CurveContext(1), reversed=false, mode=TrimOrExtend, parameter=false
+selected circle: policy=CurveContext(1), reversed=false, mode=TrimOrExtend, parameter=true
+selected circle: policy=CurveContext(1), reversed=true, mode=TrimOnly, parameter=false
+selected circle: policy=CurveContext(1), reversed=true, mode=TrimOnly, parameter=true
+selected circle: policy=CurveContext(1), reversed=true, mode=TrimOrExtend, parameter=false
+selected circle: policy=CurveContext(1), reversed=true, mode=TrimOrExtend, parameter=true
+
+thread 'policy::tests::explicit_policy_suspends_preview_and_restores_it_after_unwinding' (2198972) panicked at crates/hypercurve/src/policy.rs:1342:21:
+exercise explicit policy scope restoration
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'policy::tests::preview_tolerances_are_nested_and_unwind_safe' (2198973) panicked at crates/hypercurve/src/policy.rs:1194:17:
+preview unwind sentinel
