@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "decision_sha256": "6ff64f1fb7cd5f499db8574b4d2cb7305e4c8489793660766c1897eb062f9c1f",
+  "main_inputs_verified": 2835,
+  "retained_evidence_files": 347,
+  "runner_sha256": "8834d1a58673520e6aaab9d596b4157098e4bc8b870b830b83abfd61e15933df",
+  "source_changes_applied": false
+}

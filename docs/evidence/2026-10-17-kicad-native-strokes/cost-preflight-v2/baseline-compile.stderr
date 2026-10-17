@@ -1,0 +1,27 @@
+error[E0463]: can't find crate for `hypercurve`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/source_cost_probe_v1.rs:46:5
+   |
+46 | use hypercurve::{CurveRegion2, Point2, RegionPointLocation, Segment2};
+   |     ^^^^^^^^^^ can't find crate
+
+error[E0463]: can't find crate for `hyperdrc`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/source_cost_probe_v1.rs:47:5
+   |
+47 | use hyperdrc::kicad::{BoardModel, TrackLoadError, load_kicad_pcb};
+   |     ^^^^^^^^ can't find crate
+
+error[E0463]: can't find crate for `hyperlimit`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/source_cost_probe_v1.rs:49:5
+   |
+49 | use hyperlimit::PredicatePolicy;
+   |     ^^^^^^^^^^ can't find crate
+
+error[E0463]: can't find crate for `serde_json`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/source_cost_probe_v1.rs:50:5
+   |
+50 | use serde_json::{Value, json};
+   |     ^^^^^^^^^^ can't find crate
+
+error: aborting due to 4 previous errors
+
+For more information about this error, try `rustc --explain E0463`.

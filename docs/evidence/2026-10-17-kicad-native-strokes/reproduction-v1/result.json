@@ -1,0 +1,106 @@
+{
+  "complete": true,
+  "base_commit": "a843bf79dfe329fb51ababaaf803752bb74a0f64",
+  "counts": {
+    "archived-frontier": {
+      "exit_code": 101,
+      "counts": [
+        [
+          "5",
+          "21",
+          "0"
+        ]
+      ],
+      "passed_names": [
+        "coincident_track_endpoints_keep_the_width_disk",
+        "ordinary_butt_stroke_keeps_its_contract",
+        "rejected_finite_adapter_inputs_remain_absent",
+        "reversed_stroke_preserves_exact_bounds_and_area",
+        "zero_track_width_is_certified_empty"
+      ],
+      "failed_names": [
+        "ambient_approximate_policy_does_not_change_stroke_geometry",
+        "denied_stroke_construction_retains_failure_after_scope_exit",
+        "denied_track_import_cannot_disappear_or_become_a_valid_origin",
+        "exact_diagonal_track_area_includes_caps_without_rounding_the_width",
+        "finite_endpoint_difference_can_exceed_float_range",
+        "finite_length_squaring_cannot_overflow",
+        "finite_length_squaring_cannot_underflow_to_zero",
+        "fresh_zero_budget_admits_rational_butt_strokes",
+        "irrational_diagonal_retains_native_surd_width",
+        "irrational_diagonal_track_keeps_line_and_arc_geometry",
+        "kicad_linear_tracks_include_both_round_caps",
+        "large_finite_stroke_does_not_collapse_its_width",
+        "malformed_track_fields_retain_source_failure",
+        "pythagorean_diagonal_has_exact_rational_area",
+        "subnormal_width_is_halved_after_lifting",
+        "tangent_track_caps_do_not_create_filled_overlap",
+        "track_caps_drive_actual_short_readiness",
+        "track_decimal_endpoints_and_width_are_never_rounded_first",
+        "track_subrange_width_and_length_remain_nonzero",
+        "track_superrange_coordinates_stay_native",
+        "warmed_stroke_queries_recheck_exhausted_scope"
+      ],
+      "binary_sha256": "947075a6244f7508335342eb4e8df065a34d503e98fb1ecc7861da580c1b30ad"
+    },
+    "current-source-failures": {
+      "exit_code": 0,
+      "counts": [
+        [
+          "39",
+          "0",
+          "0"
+        ]
+      ],
+      "passed_names": [
+        "cli_preserves_source_diagnostic_and_cannot_allow_a_failed_load",
+        "coincident_tracks_are_exact_disks_including_decimal_source_precision",
+        "end_bad",
+        "end_bad_y",
+        "end_duplicate",
+        "end_empty",
+        "end_extra",
+        "end_infinity",
+        "end_missing",
+        "end_nan",
+        "end_nested",
+        "end_short",
+        "exhausted_source_load_cannot_escape_as_a_board_and_later_load_recovers",
+        "positive_source_that_the_finite_adapter_cannot_construct_is_an_error",
+        "second_segment_failure_does_not_publish_the_valid_prefix",
+        "start_bad",
+        "start_bad_y",
+        "start_duplicate",
+        "start_empty",
+        "start_extra",
+        "start_infinity",
+        "start_missing",
+        "start_nan",
+        "start_nested",
+        "start_short",
+        "valid_source_controls_preserve_metadata_and_known_membership",
+        "validated_zero_width_is_empty_even_when_coordinates_exceed_binary64",
+        "width_bad",
+        "width_duplicate",
+        "width_empty",
+        "width_extra",
+        "width_infinity",
+        "width_missing",
+        "width_nan",
+        "width_negative",
+        "width_negative_subrange",
+        "width_nested",
+        "zero_width_invalid_start",
+        "zero_width_missing_end"
+      ],
+      "failed_names": [],
+      "binary_sha256": "87a93c4051323ef2b513a31fb38d82553ad3f4fc70bd7504f39f5db5a440d9f3"
+    }
+  },
+  "source_inputs": 2835,
+  "all_sources_and_read_only_artifacts_unchanged": true,
+  "test_sources_unmodified": true,
+  "main_sources_modified": false,
+  "scope": "Each regression stops at its first failure; later assertions are not credited.",
+  "full_plan_complete": false
+}

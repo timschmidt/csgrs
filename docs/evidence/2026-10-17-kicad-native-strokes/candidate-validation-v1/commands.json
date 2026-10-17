@@ -1,0 +1,146 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 10.546724944841117,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "ab8f088ddc6176873db73c617967a659eacf60d4366401acfdf1d76fa1a02c25"
+  },
+  {
+    "name": "native-build",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 340.98805064195767,
+    "sources_unchanged": true,
+    "binaries": {},
+    "rustdocflags": null,
+    "stdout_sha256": "da06217e4e3d7bd2811d5693654a7050c933f5ed8d338bcc4e9ca107a0a85ad6",
+    "stderr_sha256": "4a404e97e6db9c5e255451b5f90cb84234371f0f57e711d44705eac6a80b17bc",
+    "resources_sha256": "0918c69a6a1305c62f9f803669a853e53a0670c230c0f927db9897a84e2ccc7e"
+  },
+  {
+    "name": "cold-zero-budget",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--test",
+      "kicad_native_strokes",
+      "fresh_zero_budget_load_retains_native_rational_direction_certificates",
+      "--",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.5096307671628892,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v1/release/deps/kicad_native_strokes-125b8b8f2c20f1d9": {
+        "sha256": "fde4ae3e1bbd0c38b38086b8d90f0538c04449fea51e8d15e55bc6ec761b851f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v1/fde4ae3e1bbd0c38b38086b8d90f0538c04449fea51e8d15e55bc6ec761b851f/kicad_native_strokes-125b8b8f2c20f1d9",
+        "bytes": 20622560
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "b9f029d4b8b3c8d6f82f38d7499e716103c3d129c446d3f3e660b8f8b86850de",
+    "stderr_sha256": "0cfea8ea876467c49a34f237e58ebb184e4926c4089526131c4eccdd3c9a9995",
+    "resources_sha256": "e68c2b1d53a98b892a052b447b20c3445f7603fa3535669edff9c1c780fa8d61"
+  },
+  {
+    "name": "native-strokes",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--test",
+      "kicad_native_strokes",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.4505625730380416,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v1/release/deps/kicad_native_strokes-125b8b8f2c20f1d9": {
+        "sha256": "fde4ae3e1bbd0c38b38086b8d90f0538c04449fea51e8d15e55bc6ec761b851f",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v1/fde4ae3e1bbd0c38b38086b8d90f0538c04449fea51e8d15e55bc6ec761b851f/kicad_native_strokes-125b8b8f2c20f1d9",
+        "bytes": 20622560
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "999e78083d167ae9496d3d87216c8cc8fa47be453cdc6eb407a9bd5dba631d52",
+    "stderr_sha256": "68334ef6077b1e365098a3836429dc533928eea6baa270d3cdfd1bae67ea2f35",
+    "resources_sha256": "4e1dda1ca0b3d294256b5c93f850f700c3e8089ff2b5135ef02497438b14d39b"
+  },
+  {
+    "name": "source-failures",
+    "command": [
+      "cargo",
+      "test",
+      "--offline",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--all-features",
+      "--test",
+      "kicad_track_failures",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 0,
+    "elapsed_seconds": 0.415204840246588,
+    "sources_unchanged": true,
+    "binaries": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v1/release/deps/kicad_track_failures-b846f6af7dd90fbe": {
+        "sha256": "ce4300519eb9f6319dcbaba38a8db4654858d66e97b23290ff6aca388ffe773e",
+        "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v1/ce4300519eb9f6319dcbaba38a8db4654858d66e97b23290ff6aca388ffe773e/kicad_track_failures-b846f6af7dd90fbe",
+        "bytes": 20890144
+      }
+    },
+    "rustdocflags": null,
+    "stdout_sha256": "c24728ad9051a00cb161f804c9e25e765d6b6a6b9f5350af81f79eede1e55fb7",
+    "stderr_sha256": "ac7d718258c7ea80dfd135258573469f7f8ee56593c984627440690896624013",
+    "resources_sha256": "8edf5d0c887b992510c0a05c079c64252b9101ee00d79263f9982d907e43799b"
+  }
+]

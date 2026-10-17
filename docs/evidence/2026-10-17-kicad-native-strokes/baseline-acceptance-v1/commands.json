@@ -1,0 +1,107 @@
+[
+  {
+    "name": "kicad_native_strokes-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/libhyperdrc.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libanyhow-af4f35109210643f.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_native_strokes"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.4937751847319305,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "de23e6dee0a4f254384931710b531c42faac2ff1d24b911197785723e5e67422"
+  },
+  {
+    "name": "zero-budget-fresh-process",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_native_strokes",
+      "fresh_zero_budget_load_retains_native_rational_direction_certificates",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.00545512605458498,
+    "stdout_sha256": "1f9382b812d0a45d4e91be3c79a73e2fc85875d80857c31d607124d1d6e38bd6",
+    "stderr_sha256": "8d207f7c0895a645ce59928b674696ee9c9a4faa9823d9ca179cc156e9559419",
+    "resources_sha256": "3cf79a229922a5522464a65c8bb425962b3f0770c23facd0ce3b4544475c6d6c"
+  },
+  {
+    "name": "kicad_native_strokes",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_native_strokes",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.007937074638903141,
+    "stdout_sha256": "1fe81d036ccbade877f2adcd667bca590e30233f52684982bdd56026e5d1970d",
+    "stderr_sha256": "8a447ca7a38f589d7296e7ac929cccde69f8fb09f3b93edf3b61b4f60491b56d",
+    "resources_sha256": "0492c2abee37bd36fe67159042d44c1a69ec0f77a31227c12855f1e8aaece69b"
+  },
+  {
+    "name": "kicad_track_failures-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/libhyperdrc.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libanyhow-af4f35109210643f.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_track_failures.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_track_failures"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8145955079235137,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "994f2138b3dfd0b60c7e54a57dd24b0e66c72dd5a11aa0401406caa574df7125"
+  },
+  {
+    "name": "kicad_track_failures",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_track_failures",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.024289432913064957,
+    "stdout_sha256": "c24728ad9051a00cb161f804c9e25e765d6b6a6b9f5350af81f79eede1e55fb7",
+    "stderr_sha256": "f561a86f0c8d0a8287ee6f5f11e424843c09dc971d67535c11fdba300eaf04c4",
+    "resources_sha256": "fa61b2a00854c7453323768d4f827f95820fc4b3cc531c663ce7f65ca4cb2530"
+  }
+]

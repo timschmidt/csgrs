@@ -1,0 +1,7 @@
+    Finished `release` profile [optimized] target(s) in 0.20s
+     Running unittests src/lib.rs (/tmp/csgrs-kicad-native-target-v4/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+thread 'zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers' (1449927) panicked at crates/hyperdrc/src/checks/layer.rs:6023:9:
+complex project copper neck regression fixture took 133.165601323s
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+error: test failed, to rerun pass `-p hyperdrc --lib`

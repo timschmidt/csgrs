@@ -1,0 +1,2 @@
+[ perf record: Woken up 1 times to write data ]
+[ perf record: Captured and wrote 0.023 MB /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-profile-v1/perf.data (307 samples) ]

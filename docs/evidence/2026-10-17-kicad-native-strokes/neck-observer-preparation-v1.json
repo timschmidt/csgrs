@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "runner_sha256": "668cbb817aad8572e193083fec22dad54e92bf5bfcaf864f2853eb46a37466d1",
+  "observer_sha256": "620d1ad2e1eaeb78999e2ede7dd7b6a71a972c14264d5c4f8edf5f1acc15e7ec",
+  "backtrace_sha256": "7dfb91f2dfc482811577500f27569f4f342fa9d3e05a3790d34b7702a9c46559",
+  "full_board_completed_failure": true,
+  "cold_neck_still_incomplete": true
+}

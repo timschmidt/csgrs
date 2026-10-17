@@ -1,0 +1,28 @@
+{
+  "complete": true,
+  "runner_sha256": "b5d4252c0b35c1a3c9dcfb0ec68345ba17b4f0205c669b576de22d3a8572e930",
+  "command": [
+    "gdb",
+    "-q",
+    "-nx",
+    "-batch",
+    "-iex",
+    "set debuginfod enabled off",
+    "-iex",
+    "set auto-load safe-path /nonexistent",
+    "-p",
+    "1394089",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "thread apply all bt 48",
+    "-ex",
+    "detach"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.27329638320952654,
+  "stdout_sha256": "3b169fac77350b461ad0b73cc681057fb6012c1c554bd7c21696fad6be49dcc7",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "exe_sha256": "b5e00062cbb1202ab87c9e0438c40776b0825ca3e30845d364f760d53e01f0cd",
+  "diagnostic_only_not_performance_admission": true
+}

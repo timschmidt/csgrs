@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "counts": [
+    [
+      "6",
+      "2",
+      "0"
+    ]
+  ],
+  "exit_code": 101,
+  "read_only_inputs_unchanged": true,
+  "source_modified": false,
+  "scope": "No assertion after a failure receives credit."
+}

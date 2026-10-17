@@ -1,0 +1,46 @@
+{
+  "complete": true,
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4",
+  "source_inputs": 2837,
+  "source_hashes_sha256": "b2f7dde1b51e401d2af34d32a1fac46444d6efe005b90d8f308db9d425392f80",
+  "changed_from_v3": {
+    "crates/hyperdrc/README.md": {
+      "before": "b783db55a7c24718f469ca7054c39ad674e375555b63ef93b4c2255c92690852",
+      "after": "c5603e006cb33e8ac1791ec36185df03422dda06578312e32b4802dca24857cf"
+    },
+    "crates/hyperdrc/src/geometry/region.rs": {
+      "before": "19729612fbf1b462d467b484fc53db1d63d4e49869012b556e5b1c56fc45322c",
+      "after": "635c415392a00c6d108370c2c5241bb2480c2c3659e9a8878bb44775091c9542"
+    },
+    "crates/hyperdrc/src/kicad.rs": {
+      "before": "06db86ae66b0aa90928cf96221a4f314f6c8ee8f36b0030e8b33bf1530be8b1c",
+      "after": "ce6e5f50e94a9426916779c6885dd45bf9ba99a849f0252dbde47d9697171b15"
+    },
+    "crates/hyperdrc/src/kicad/README.md": {
+      "before": "cde4b95048766a6ef1cd3da14468d1182d02f15db73a6875ed4cd0f1fcf262e1",
+      "after": "e139ad90f02403ab525b2dbac3e578b10212507a4b15a022dedde0d493af69b6"
+    },
+    "crates/hyperdrc/src/lib.rs": {
+      "before": "d32706daff1e54d6c1e481741b357837c431e59b8f396f8ee5b7daa87f996c29",
+      "after": "319d37434823a6acff27a6188445f913fd3a27dac1d5ae021515b66269a036d6"
+    },
+    "crates/hyperdrc/src/region/projection.rs": {
+      "before": "dfb002b60b3b9de525768ffb4e9b5d3112855f1665640a3d8dfa70429540959d",
+      "after": "7f785f00f4cbd4a5763dfeda9631988fc8309c179f3744a27dcf7d395c4dbe5f"
+    },
+    "crates/hyperdrc/tests/kicad_native_aggregation.rs": {
+      "before": "9be64a2fcd59278f464cc27a430c53a7754124e95f47142ef71e3fe709a26311",
+      "after": "d0ecf664a2846801025fd4c1d5afe8038dbe8077546dd61037cee07985e30840"
+    }
+  },
+  "preparation_exit": 1,
+  "preparation_assertion": "Whitespace normalization did not admit optional trailing array commas introduced by Cargo fmt.",
+  "preparation_runner_sha256": "7bf216ce940d648813462bde9fbf2ef8fe4fe7e7a3fd945040eafbb52a040a04",
+  "finalizer_sha256": "5603e72290537f5a83aac0afc3f81c6ed90cd797e36d9f248ecf90745bd0e03d",
+  "probe_sha256": "d9d3ae95bc547a4ba5fefa0adfbe9d86fd29f5c4f54b5ec9c31e616ab8bbddb6",
+  "crate_rustfmt_output_matches_candidate_test": true,
+  "format_exit_code": 0,
+  "all_source_bytes_unchanged_by_finalizer": true,
+  "main_sources_modified": false,
+  "native_runtime_admitted": false
+}

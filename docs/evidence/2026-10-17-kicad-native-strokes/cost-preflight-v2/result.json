@@ -1,0 +1,117 @@
+{
+  "complete": true,
+  "command_failures": true,
+  "observations": {
+    "candidate-v3-empty": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "2d10943ffc32fec76d6b5e0743baf0403500ad527b99e95ca09f40698a6b84b9",
+      "snapshot_bytes": 7247
+    },
+    "candidate-v3-coincident_disk": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "f623587a3d2c568292394cae08c6d02a2f4945244f3a43e5e7d3239a263590ac",
+      "snapshot_bytes": 45471
+    },
+    "candidate-v3-axis": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "059bd4d31c6522734f250b7cee14912e5d9a003a6fecdae23f30b417a57f3d13",
+      "snapshot_bytes": 53145
+    },
+    "candidate-v3-rational_diagonal": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "841c5e855facd3cd89c16b8bd713bb16232f433d353afbf5756df42d04d033ca",
+      "snapshot_bytes": 67439
+    },
+    "candidate-v3-surd_diagonal": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "425a1fd15c0103f891c3f1c16c6efe6865e63422270d628eacf3888ef7a762f0",
+      "snapshot_bytes": 66407
+    },
+    "candidate-v3-decimal_translation": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "81d16afe64282cf024508e42983490421544609f0acd2fc8c41711d463ec374a",
+      "snapshot_bytes": 63355
+    },
+    "candidate-v3-subrange": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "c5fa66a9ec31df0188f2b4c1ae457901f318bb4c2e0388c5d2b1aebf1f6724d4",
+      "snapshot_bytes": 88993
+    },
+    "candidate-v3-superrange": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "c411eccd157d56c1cb9d0daca5a9d79e1ee22d108d68b7238fba0ba8099d995a",
+      "snapshot_bytes": 63945
+    },
+    "candidate-v3-disjoint_disks": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "11f072bfe3aa793bc17444f345ad7b369e21674f2265387f7bef7330b8315682",
+      "snapshot_bytes": 83837
+    }
+  },
+  "candidate_is_rejected_v3": true,
+  "timing_and_allocation_values_excluded_from_final_comparison": true,
+  "inputs_and_read_only_libraries_unchanged": true
+}

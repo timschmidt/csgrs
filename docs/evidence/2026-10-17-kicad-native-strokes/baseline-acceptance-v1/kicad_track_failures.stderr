@@ -1,0 +1,7 @@
+
+thread 'exact_source_ranges_remain_certified_after_native_handoff' (138) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_track_failures.rs:435:43:
+called `Result::unwrap()` on an `Err` value: failed to load tracks from /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/hyperdrc-track-failure-124-39.kicad_pcb
+
+Caused by:
+    KiCad segment 1: unsupported finite track geometry: positive width is outside the finite adapter range
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

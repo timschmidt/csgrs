@@ -1,0 +1,24 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4/crates/hyperreal)
+   Compiling getrandom v0.3.4
+    Checking ahash v0.8.12
+    Checking arrow-array v57.3.1
+    Checking arrow-select v57.3.1
+   Compiling rustix v1.1.4
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4/crates/hyperlattice)
+    Checking arrow-ord v57.3.1
+    Checking arrow-cast v57.3.1
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4/crates/hyperlimit)
+    Checking arrow-ipc v57.3.1
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4/crates/hypersolve)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4/crates/hypermesh)
+    Checking xattr v1.6.1
+    Checking parquet v57.3.1
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4/crates/hypercurve)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4/crates/hyperphysics)
+    Checking hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4/crates/hyperpath)
+    Checking tar v0.4.46
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4)
+ Documenting hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v4/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 23.69s
+   Generated /tmp/csgrs-kicad-native-target-v4/doc/hyperdrc/index.html

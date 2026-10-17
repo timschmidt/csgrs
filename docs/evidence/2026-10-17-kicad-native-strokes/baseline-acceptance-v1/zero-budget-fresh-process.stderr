@@ -1,0 +1,6 @@
+
+thread 'fresh_zero_budget_load_retains_native_rational_direction_certificates' (58) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs:11:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 202824096036516676767514785900135, denominator: 20282409603651670423947251286016 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: ConstOffset(ConstOffsetClass { pi_power: 1, exp_power: Rational { sign: NoSign, numerator: 0, denominator: 1 }, offset: Rational { sign: Plus, numerator: 10, denominator: 1 } }), computable: Some(Computable { internal: Node { facts: AtomicFacts(12885034807), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(10), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

@@ -1,0 +1,11 @@
+{
+  "complete": true,
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer_common_v1.py",
+  "source_sha256": "866fb22b8c9faeda116da1aeabdeab9e95873d34092d241a0c9e206793b3a0a2",
+  "created": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/validation_common_v1.py",
+  "created_sha256": "add51ef654707ea81e2f7dd69fc8c0bd04caf9d42329a0d78c5473bf68b990ae",
+  "runner_sha256": "3d7affeb6cedb99fb173be1c504ea25609e645652ff3fca311d72ab66d52b033",
+  "limits_unchanged": true,
+  "per_command_seconds": 1800,
+  "per_process_address_space_bytes": 8589934592
+}

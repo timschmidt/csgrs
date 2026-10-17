@@ -1,0 +1,41 @@
+{
+  "observed_unix_seconds": 1792227950.251628,
+  "runner_sha256": "7f36483ef8c7c69f8f71eb2c977a2b51ec436f91a4c700d96876ca3e0d0f62f3",
+  "clock_ticks_per_second": 100,
+  "read_only": true,
+  "processes": [
+    {
+      "pid": 1394089,
+      "args": [
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1",
+        ""
+      ],
+      "pgid": 1394058,
+      "tasks": [
+        {
+          "tid": 1394089,
+          "comm": "hyperdrc-f2524b",
+          "raw_stat": "1394089 (hyperdrc-f2524b) S 1394059 1394058 1394057 0 -1 4194304 522 347 0 0 0 0 6 1 20 0 2 0 277247421 1765699584 412513 18446744073709551615 94521584502144 94521616857808 140723442623200 0 0 0 0 4096 1088 1 0 0 17 12 0 0 0 0 0 94521618108032 94521618321872 94522638622720 140723442632425 140723442632613 140723442632613 140723442642863 0\n",
+          "utime_ticks": 0,
+          "stime_ticks": 0,
+          "cpu_seconds": 0.0
+        },
+        {
+          "tid": 1394090,
+          "comm": "zz_complex_proj",
+          "raw_stat": "1394090 (zz_complex_proj) R 1394059 1394058 1394057 0 -1 4194368 440897 347 0 0 20290 143 6 1 20 0 2 0 277247421 1765699584 412513 18446744073709551615 94521584502144 94521616857808 140723442623200 0 0 0 0 4096 1088 0 0 0 -1 9 0 0 0 0 0 94521618108032 94521618321872 94522638622720 140723442632425 140723442632613 140723442632613 140723442642863 0\n",
+          "utime_ticks": 20290,
+          "stime_ticks": 143,
+          "cpu_seconds": 204.33
+        }
+      ],
+      "exe_sha256": "b5e00062cbb1202ab87c9e0438c40776b0825ca3e30845d364f760d53e01f0cd",
+      "status": "Name:\thyperdrc-f2524b\nUmask:\t0022\nState:\tS (sleeping)\nTgid:\t1394089\nNgid:\t0\nPid:\t1394089\nPPid:\t1394059\nTracerPid:\t0\nUid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\nFDSize:\t64\nGroups:\t10 961 962 1000 \nNStgid:\t1394089\nNSpid:\t1394089\nNSpgid:\t1394058\nNSsid:\t1394057\nKthread:\t0\nVmPeak:\t 1789852 kB\nVmSize:\t 1724316 kB\nVmLck:\t       0 kB\nVmPin:\t       0 kB\nVmHWM:\t 1651424 kB\nVmRSS:\t 1651424 kB\nRssAnon:\t 1632636 kB\nRssFile:\t    2396 kB\nRssShmem:\t   16392 kB\nVmData:\t 1665172 kB\nVmStk:\t     140 kB\nVmExe:\t   31600 kB\nVmLib:\t    2300 kB\nVmPTE:\t    3332 kB\nVmSwap:\t       0 kB\nHugetlbPages:\t       0 kB\nCoreDumping:\t0\nTHP_enabled:\t1\nuntag_mask:\t0xffffffffffffffff\nThreads:\t2\nSigQ:\t1/514246\nSigPnd:\t0000000000000000\nShdPnd:\t0000000000000000\nSigBlk:\t0000000000000000\nSigIgn:\t0000000000001000\nSigCgt:\t0000000100000440\nCapInh:\t0000000800000000\nCapPrm:\t0000000000000000\nCapEff:\t0000000000000000\nCapBnd:\t000001ffffffffff\nCapAmb:\t0000000000000000\nNoNewPrivs:\t0\nSeccomp:\t0\nSeccomp_filters:\t0\nSpeculation_Store_Bypass:\tthread vulnerable\nSpeculationIndirectBranch:\tconditional enabled\nCpus_allowed:\tffff\nCpus_allowed_list:\t0-15\nMems_allowed:\t00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000000,00000001\nMems_allowed_list:\t0\nvoluntary_ctxt_switches:\t1\nnonvoluntary_ctxt_switches:\t0\nx86_Thread_features:\t\nx86_Thread_features_locked:\t\n"
+    }
+  ],
+  "scope": "OS task counters; no assertion about the internal timer start or successful completion."
+}

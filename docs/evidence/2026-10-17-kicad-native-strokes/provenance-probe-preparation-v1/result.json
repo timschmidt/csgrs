@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "runner_sha256": "4edf3b9146f6420625420249971e88c89aec39ae77d29dd38e15927840c307e7",
+  "original_test_sha256": "083a9b5d5b28529e4736438a0fef937e761df9f15713b1f6f71212135040f443",
+  "new_test_sha256": "0a82eafa095404051b55de47635cbc9d1c840d1ce31c1d0c260811cf79a484c3",
+  "original_tests_preserved_as_exact_prefix": true,
+  "diagnostic_runner_sha256": "6891c181d3b3a5f4efc1be62755ec5b758664530a49ed3318d6b4b5c7b526b99"
+}

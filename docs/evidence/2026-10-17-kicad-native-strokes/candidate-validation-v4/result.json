@@ -1,0 +1,22 @@
+{
+  "complete": true,
+  "commands": 13,
+  "unexpected_exits": [
+    "full-board",
+    "copper-neck",
+    "clippy"
+  ],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "source_fidelity_migration": "Exact source coordinates and round caps replace finite rectangles.",
+  "readiness_version_migration": [
+    21,
+    22
+  ],
+  "original_workload_gates_unchanged": true,
+  "full_pre_push_matrix_executed": false,
+  "published_package_pipeline_executed": false,
+  "downstream_hypercircuit_validation_complete": false
+}

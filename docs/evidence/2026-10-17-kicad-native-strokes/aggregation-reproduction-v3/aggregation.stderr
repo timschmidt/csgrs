@@ -1,0 +1,9 @@
+
+thread 'aggregation_preserves_source_nonfinite_history_after_exact_intersection' (64) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v4/kicad_native_aggregation.rs:336:9:
+aggregation must retain source history
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'authored_report_decomposition_is_separate_from_exact_union_topology' (65) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v4/kicad_native_aggregation.rs:352:9:
+assertion `left == right` failed: authored reports are not canonical components
+  left: 1
+ right: 2

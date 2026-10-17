@@ -1,0 +1,7 @@
+
+thread 'subrange_stroke_composes_without_a_finite_report_ring' (65) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v2/kicad_native_aggregation.rs:53:47:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "report-projection", source: Some("KiCad segment"), detail: "finite material/hole ring must be closed with at least three finite vertices" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'superrange_stroke_survives_empty_accumulation_and_native_handoff' (66) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v2/kicad_native_aggregation.rs:53:47:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "report-projection", source: Some("KiCad segment"), detail: "invalid state during exact Evaluation: finite projection point is not finite" }

@@ -1,0 +1,26 @@
+[
+  {
+    "allocated_bytes": 8572921,
+    "allocation_calls": 124095,
+    "certified_completion": true,
+    "elapsed_ns": 9343377,
+    "local_operation_receipt": "Certified",
+    "peak_extra_requested_bytes": 560374,
+    "phase": "fresh_process",
+    "retained_profiles": 2,
+    "retained_requested_bytes_delta": 319202,
+    "status": "certified_completion"
+  },
+  {
+    "allocated_bytes": 8512873,
+    "allocation_calls": 123042,
+    "certified_completion": true,
+    "elapsed_ns": 8063556,
+    "local_operation_receipt": "Certified",
+    "peak_extra_requested_bytes": 499142,
+    "phase": "repeat_after_owner_drop",
+    "retained_profiles": 2,
+    "retained_requested_bytes_delta": 257970,
+    "status": "certified_completion"
+  }
+]

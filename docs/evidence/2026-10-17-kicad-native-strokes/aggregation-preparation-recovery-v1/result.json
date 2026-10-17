@@ -1,0 +1,11 @@
+{
+  "complete": true,
+  "runner_sha256": "79238986e1dd4ae0031a2366b220bd6175e6e25e9514316f45f68c2c158dec95",
+  "v2_preparation_exit": 1,
+  "failure": "replace_once substring also matched the all_copper statement; assertion stopped before model.rs edit",
+  "v2_source_inputs_retained": 2837,
+  "v2_source_manifest_sha256": "e1dfc9572af3336615293bdfe9f716d1ced32fa4c117e7ee4136c7ad48aa7ae2",
+  "v3_runner_sha256": "de60600863edec6117c3472ccffb400b348fe0d8d519076e9240fdd17e55ecc0",
+  "v2_source_executed": false,
+  "main_sources_modified": false
+}

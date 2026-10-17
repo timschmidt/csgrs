@@ -1,0 +1,96 @@
+[
+  {
+    "name": "archived-frontier-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/libhyperdrc.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libanyhow-af4f35109210643f.rlib",
+      "--crate-name",
+      "archived_frontier",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v1/archived-frontier.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/archived-frontier"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6416239682585001,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5234a64645847a4bdf4b687b7516673b180a50c159fcc073515ff9f877cb4074"
+  },
+  {
+    "name": "archived-frontier",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/archived-frontier",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.012139727361500263,
+    "stdout_sha256": "05f4d3e5e12463244d840d404205d5e5bcd4d712810b37e582bd4056190fd34f",
+    "stderr_sha256": "81001fbaaa64062838d1445ec8a261794cc7d601b8f71d862a96365f533cbeb4",
+    "resources_sha256": "65a60d24411465957eaebbde0c6398a66af267e8f381b55be2ca5dfa690ed3b2"
+  },
+  {
+    "name": "current-source-failures-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/libhyperdrc.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libanyhow-af4f35109210643f.rlib",
+      "--crate-name",
+      "current_source_failures",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v1/current-source-failures.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/current-source-failures"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6865530051290989,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "be697527afb2882326041ab797c59d3ea9192c034e37550a817eb50df39457fb"
+  },
+  {
+    "name": "current-source-failures",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/current-source-failures",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.024730512406677008,
+    "stdout_sha256": "bc94d437bd522dc3db8104136ee3e03b0763f9f52dbf4168023d8612285df761",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "70073e40b1703041ad90ff0bb03a2a3a6232d677a5cb53304ed240bd39831b14"
+  }
+]

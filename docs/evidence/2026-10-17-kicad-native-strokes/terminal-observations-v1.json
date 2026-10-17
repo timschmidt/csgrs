@@ -1,0 +1,12 @@
+{
+  "scope": "Terminal session observations only; no future command is credited.",
+  "reproduce_v1": {"session": 35846, "exit_code": 0},
+  "prepare_candidate_v1": {"session": 6027, "exit_code": 0},
+  "baseline_acceptance_v1": {"session": 75664, "exit_code": 0},
+  "candidate_v1": {"session": 14436, "exit_code": 101, "stopped_after": "source-failures"},
+  "aggregation_reproduce_v1": {"session": 59938, "exit_code": 0, "test_exit_code": 101, "passed": 6, "failed": 2},
+  "prepare_candidate_v2": {"exit_code": 1, "reason": "ambiguous replacement substring; source not executed"},
+  "prepare_aggregation_recovery_v1": {"exit_code": 0},
+  "prepare_candidate_v3": {"session": 1329, "exit_code": 1, "reason": "byte-identity guard rejects Cargo formatting; source not executed at this stage"},
+  "finalize_preparation_v3": {"session": 63973, "exit_code": 0, "source_bytes_modified": false}
+}

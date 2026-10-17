@@ -1,0 +1,118 @@
+{
+  "complete": true,
+  "command_failures": false,
+  "observations": {
+    "baseline-empty": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "2d10943ffc32fec76d6b5e0743baf0403500ad527b99e95ca09f40698a6b84b9",
+      "snapshot_bytes": 7247
+    },
+    "baseline-coincident_disk": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "f623587a3d2c568292394cae08c6d02a2f4945244f3a43e5e7d3239a263590ac",
+      "snapshot_bytes": 45471
+    },
+    "baseline-axis": {
+      "statuses": [
+        "incorrect_source_geometry",
+        "incorrect_source_geometry"
+      ],
+      "certified_completion": [
+        false,
+        false
+      ],
+      "snapshot_sha256": "a7ffdce643a63e9983135341c2bc84c6968b7f1b967311326bc6f408359d8917",
+      "snapshot_bytes": 25151
+    },
+    "baseline-rational_diagonal": {
+      "statuses": [
+        "incorrect_source_geometry",
+        "incorrect_source_geometry"
+      ],
+      "certified_completion": [
+        false,
+        false
+      ],
+      "snapshot_sha256": "ddc459c42943497dde184912b682114979996040d858e7f4426acf4bd61503fb",
+      "snapshot_bytes": 41717
+    },
+    "baseline-surd_diagonal": {
+      "statuses": [
+        "incorrect_source_geometry",
+        "incorrect_source_geometry"
+      ],
+      "certified_completion": [
+        false,
+        false
+      ],
+      "snapshot_sha256": "7f21f12f13387e08b10375b77b754f93471fc0ba1a75477ea927a91f09b7695e",
+      "snapshot_bytes": 27789
+    },
+    "baseline-decimal_translation": {
+      "statuses": [
+        "incorrect_source_geometry",
+        "incorrect_source_geometry"
+      ],
+      "certified_completion": [
+        false,
+        false
+      ],
+      "snapshot_sha256": "45fae81dd780af7d55f4926640ec092645b508c4c925cc6fa2f81e3a6acee07d",
+      "snapshot_bytes": 25893
+    },
+    "baseline-subrange": {
+      "statuses": [
+        "source_load_error",
+        "source_load_error"
+      ],
+      "certified_completion": [
+        false,
+        false
+      ],
+      "snapshot_sha256": "14c4a64b5fa4410c99a45b14d514e232936cfb8d463e38fb058b7fe40962756d",
+      "snapshot_bytes": 813
+    },
+    "baseline-superrange": {
+      "statuses": [
+        "source_load_error",
+        "source_load_error"
+      ],
+      "certified_completion": [
+        false,
+        false
+      ],
+      "snapshot_sha256": "db402551aaa3660f81fbd9dc1a23b259d5f5be4640fe31a84e6ed24a18a2a92e",
+      "snapshot_bytes": 797
+    },
+    "baseline-disjoint_disks": {
+      "statuses": [
+        "certified_completion",
+        "certified_completion"
+      ],
+      "certified_completion": [
+        true,
+        true
+      ],
+      "snapshot_sha256": "11f072bfe3aa793bc17444f345ad7b369e21674f2265387f7bef7330b8315682",
+      "snapshot_bytes": 83837
+    }
+  },
+  "candidate_is_rejected_v3": true,
+  "candidate_preflight_reuse": "cost-preflight-v2/result.json",
+  "timing_and_allocation_values_excluded_from_final_comparison": true,
+  "inputs_and_read_only_libraries_unchanged": true
+}

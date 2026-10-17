@@ -1,0 +1,17 @@
+{
+  "scope": "Terminal observations extending v1; no unexecuted work receives credit.",
+  "candidate_v3": {"session": 65374, "exit_code": 130, "cancelled": true, "full_board_assertion_executed": false},
+  "prepare_provenance_probe_v1": {"exit_code": 0},
+  "aggregation_reproduce_v2": {"session": 5314, "exit_code": 0, "test_exit_code": 101, "passed": 6, "failed": 3},
+  "prepare_report_probe_v1": {"exit_code": 0},
+  "aggregation_reproduce_v3": {"session": 57086, "exit_code": 0, "test_exit_code": 101, "passed": 10, "failed": 2},
+  "prepare_candidate_v4": {"session": 48912, "exit_code": 1, "reason": "Formatting-only guard rejects optional array trailing commas; source retained."},
+  "finalize_preparation_v4": {"session": 87838, "exit_code": 0, "source_bytes_modified": false},
+  "candidate_v4": {"session": 45735, "exit_code": 101, "cancelled": false, "unexpected_exits": ["full-board", "copper-neck", "clippy"], "cargo_target_closed": true},
+  "profile_gate_v1": {"session": 19653, "exit_code": 0, "scope": "Full-board worker had used 204.33 CPU seconds before profiling; final timing is not an uninstrumented benchmark."},
+  "stop_candidate_v4": {"exit_code": 1, "signals_sent": [], "reason": "Full-board PID exited naturally before the verified cancellation code could send a signal; validation continued."},
+  "neck_observation_correction": {"scope": "gate-observation-v3 and gate-backtrace-v2 observed the subsequent native suite's mechanical panel test, not the completed copper-neck gate. The preparation file's cold-neck attribution is stale."},
+  "cost_preflight_v1": {"exit_code": 1, "reason": "Ambiguous baseline serde_json library selection; no compilation."},
+  "cost_preflight_v2": {"session": 68481, "exit_code": 0, "baseline_compile_exit": 1, "candidate_compile_exit": 0, "candidate_cases": 9, "performance_admission": false},
+  "cost_preflight_v3": {"session": 95523, "exit_code": 0, "baseline_compile_exit": 0, "baseline_cases": 9, "performance_admission": false}
+}

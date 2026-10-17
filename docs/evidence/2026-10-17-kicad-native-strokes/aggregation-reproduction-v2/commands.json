@@ -1,0 +1,47 @@
+[
+  {
+    "name": "compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "--test",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v1/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v1/release/deps/libhyperdrc-a3de6c11c183673a.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v1/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v1/release/deps/libanyhow-af4f35109210643f.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v3/kicad_native_aggregation.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/kicad_native_aggregation"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.816694641020149,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "4c947fe5a4de0dc3a2c886de73a893dcc3cee035fe605a0ca21743aac55b672f"
+  },
+  {
+    "name": "aggregation",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/kicad_native_aggregation",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 0.01499038003385067,
+    "stdout_sha256": "8b9329387a834840fa574f96d3f31a88e6de811c6d4682b03ee37b7b2ed65efe",
+    "stderr_sha256": "da2f75d11f8582c13296e1bbb8e311576680b46ea942eb56464cf5fe50be8543",
+    "resources_sha256": "5d9f8ff10fdae75985b2fa3ccb214a357d0e24a82e66944df051af9bd20c32d1"
+  }
+]

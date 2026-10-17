@@ -1,0 +1,13 @@
+{
+  "complete": true,
+  "commands": 5,
+  "unexpected_exits": [
+    "source-failures"
+  ],
+  "sources_unchanged": true,
+  "read_only_tools_unchanged": true,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false,
+  "workload_gates_attempted": false,
+  "reason": "source-fidelity prerequisite failed"
+}

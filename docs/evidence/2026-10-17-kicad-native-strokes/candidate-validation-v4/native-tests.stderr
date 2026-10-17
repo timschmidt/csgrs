@@ -1,0 +1,12 @@
+    Finished `release` profile [optimized] target(s) in 0.14s
+     Running unittests src/lib.rs (/tmp/csgrs-kicad-native-target-v4/release/deps/hyperdrc-f2524bbb15bdb74d)
+     Running unittests src/main.rs (/tmp/csgrs-kicad-native-target-v4/release/deps/hyperdrc-5da1690b41025398)
+     Running tests/artifact_numeric_keys.rs (/tmp/csgrs-kicad-native-target-v4/release/deps/artifact_numeric_keys-03d9b7a570505404)
+     Running tests/diagnostic_formatting.rs (/tmp/csgrs-kicad-native-target-v4/release/deps/diagnostic_formatting-e5ef4baeabfbc955)
+     Running tests/kicad_native_aggregation.rs (/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_native_aggregation-1d6b1a45acb4c8a9)
+     Running tests/kicad_native_strokes.rs (/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_native_strokes-125b8b8f2c20f1d9)
+     Running tests/kicad_pad_sources.rs (/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_pad_sources-e4732b4399bed56a)
+     Running tests/kicad_rule_export.rs (/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_rule_export-c09b25b29b958a07)
+     Running tests/kicad_track_failures.rs (/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_track_failures-b846f6af7dd90fbe)
+     Running tests/readme.rs (/tmp/csgrs-kicad-native-target-v4/release/deps/readme-990ac56b4fb5e9a5)
+   Doc-tests hyperdrc

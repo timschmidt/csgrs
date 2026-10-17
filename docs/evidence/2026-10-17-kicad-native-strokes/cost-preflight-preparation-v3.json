@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "runner_sha256": "ada0443e71f3e19d851c3dba8bdb7ab81102151526daa6a5b3f9e4c2c10a78a7",
+  "v2_baseline_compile_exit": 1,
+  "reason": "Public hyperdrc rlib is in release/ but transitive dependencies are in release/deps/.",
+  "v2_runner_sha256": "ba2256b56ecc64c0a6b001725de1626047cab97605ca583156cb7fff1eaf27aa",
+  "v3_runner_sha256": "fe801a3d17c1a9801a9152dc0df4200d254253da71dd02b30cb171182df5fe3b",
+  "passed_candidate_observations_sha256": "230953d5c713c6bb398b8f167ee7615852782a566fe9c064275f68db2b5ae37b",
+  "candidate_probes_repeated": false
+}

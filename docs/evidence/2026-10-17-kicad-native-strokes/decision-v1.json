@@ -1,0 +1,2346 @@
+{
+  "candidate_source_changes_sha256": {
+    "1": {
+      "crates/hyperdrc/README.md": "067021727b2128a590ececf23dbc9eb4ebc26687e7bdaa5681c7a435e295e335",
+      "crates/hyperdrc/src/kicad/tracks.rs": "372b521efbf7aa96b5fbd4ad7594f4dd1dac62a87dd4a74a2edd19d37bd76a71",
+      "crates/hyperdrc/src/readiness.rs": "be41561ba67c1603355e1d2bc5c035fd1f43095f252b143d8801133b511f8036",
+      "crates/hyperdrc/tests/kicad_native_strokes.rs": "e716ca93d0736ab20db5f9ee54ff7d6d8dbf7c14dee0685b070b346a25264ce1",
+      "crates/hyperdrc/tests/kicad_track_failures.rs": "baa05c67102d66fd63ece12cd90d01a7b0f8e4dafda58330d3fdd624226bfbe0"
+    },
+    "2": {
+      "crates/hyperdrc/README.md": "067021727b2128a590ececf23dbc9eb4ebc26687e7bdaa5681c7a435e295e335",
+      "crates/hyperdrc/src/geometry.rs": "bcbd1be58e44ac08d605af616e2bbd18e94e8eb90d81ab2305c3982a9d95d658",
+      "crates/hyperdrc/src/geometry/region.rs": "cb30bc0cec819133e457b187686ac6a26fd714c80091fc0e03849fdbc84f721e",
+      "crates/hyperdrc/src/kicad/tracks.rs": "372b521efbf7aa96b5fbd4ad7594f4dd1dac62a87dd4a74a2edd19d37bd76a71",
+      "crates/hyperdrc/src/readiness.rs": "be41561ba67c1603355e1d2bc5c035fd1f43095f252b143d8801133b511f8036",
+      "crates/hyperdrc/tests/kicad_native_strokes.rs": "e716ca93d0736ab20db5f9ee54ff7d6d8dbf7c14dee0685b070b346a25264ce1",
+      "crates/hyperdrc/tests/kicad_track_failures.rs": "baa05c67102d66fd63ece12cd90d01a7b0f8e4dafda58330d3fdd624226bfbe0"
+    },
+    "3": {
+      "crates/hyperdrc/README.md": "b783db55a7c24718f469ca7054c39ad674e375555b63ef93b4c2255c92690852",
+      "crates/hyperdrc/src/geometry.rs": "3f9c92a62a521048ce8e0fa57ca087a90c50bcd860911722f2093c4097f4811a",
+      "crates/hyperdrc/src/geometry/region.rs": "19729612fbf1b462d467b484fc53db1d63d4e49869012b556e5b1c56fc45322c",
+      "crates/hyperdrc/src/kicad/model.rs": "9354d7c38250a5162700a441e23b94004c60be8e6dfa8e89eba41a3c31844ded",
+      "crates/hyperdrc/src/kicad/tracks.rs": "372b521efbf7aa96b5fbd4ad7594f4dd1dac62a87dd4a74a2edd19d37bd76a71",
+      "crates/hyperdrc/src/readiness.rs": "be41561ba67c1603355e1d2bc5c035fd1f43095f252b143d8801133b511f8036",
+      "crates/hyperdrc/tests/kicad_native_aggregation.rs": "9be64a2fcd59278f464cc27a430c53a7754124e95f47142ef71e3fe709a26311",
+      "crates/hyperdrc/tests/kicad_native_strokes.rs": "e716ca93d0736ab20db5f9ee54ff7d6d8dbf7c14dee0685b070b346a25264ce1",
+      "crates/hyperdrc/tests/kicad_track_failures.rs": "baa05c67102d66fd63ece12cd90d01a7b0f8e4dafda58330d3fdd624226bfbe0"
+    },
+    "4": {
+      "crates/hyperdrc/README.md": "c5603e006cb33e8ac1791ec36185df03422dda06578312e32b4802dca24857cf",
+      "crates/hyperdrc/src/geometry.rs": "3f9c92a62a521048ce8e0fa57ca087a90c50bcd860911722f2093c4097f4811a",
+      "crates/hyperdrc/src/geometry/region.rs": "635c415392a00c6d108370c2c5241bb2480c2c3659e9a8878bb44775091c9542",
+      "crates/hyperdrc/src/kicad.rs": "ce6e5f50e94a9426916779c6885dd45bf9ba99a849f0252dbde47d9697171b15",
+      "crates/hyperdrc/src/kicad/README.md": "e139ad90f02403ab525b2dbac3e578b10212507a4b15a022dedde0d493af69b6",
+      "crates/hyperdrc/src/kicad/model.rs": "9354d7c38250a5162700a441e23b94004c60be8e6dfa8e89eba41a3c31844ded",
+      "crates/hyperdrc/src/kicad/tracks.rs": "372b521efbf7aa96b5fbd4ad7594f4dd1dac62a87dd4a74a2edd19d37bd76a71",
+      "crates/hyperdrc/src/lib.rs": "319d37434823a6acff27a6188445f913fd3a27dac1d5ae021515b66269a036d6",
+      "crates/hyperdrc/src/readiness.rs": "be41561ba67c1603355e1d2bc5c035fd1f43095f252b143d8801133b511f8036",
+      "crates/hyperdrc/src/region/projection.rs": "7f785f00f4cbd4a5763dfeda9631988fc8309c179f3744a27dcf7d395c4dbe5f",
+      "crates/hyperdrc/tests/kicad_native_aggregation.rs": "d0ecf664a2846801025fd4c1d5afe8038dbe8077546dd61037cee07985e30840",
+      "crates/hyperdrc/tests/kicad_native_strokes.rs": "e716ca93d0736ab20db5f9ee54ff7d6d8dbf7c14dee0685b070b346a25264ce1",
+      "crates/hyperdrc/tests/kicad_track_failures.rs": "baa05c67102d66fd63ece12cd90d01a7b0f8e4dafda58330d3fdd624226bfbe0"
+    }
+  },
+  "candidate_v3_cancelled": {
+    "exit_code": 130,
+    "full_board_assertion_executed": false,
+    "later_checks_attempted": false,
+    "worker_cpu_seconds_observed": 150.11
+  },
+  "completed_cargo_targets_closed": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v3",
+    "/tmp/csgrs-kicad-native-target-v4"
+  ],
+  "copper_neck_resource_gate": {
+    "check_body_wall_seconds": 133.165601323,
+    "exit_code": 101,
+    "instrumentation": "No profiler attached to this cold gate. Follow-up observer raced into the subsequent native mechanical suite.",
+    "limit_seconds": 60
+  },
+  "current_source_failure_regressions": {
+    "failed": 0,
+    "ignored": 0,
+    "passed": 39
+  },
+  "downstream_hypercircuit_validation_complete": false,
+  "final_candidate_commands": [
+    {
+      "binaries": {},
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "elapsed_seconds": 10.56125849392265,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "name": "format",
+      "resources_sha256": "dff593e344fff22dc21cee972d4ca727041d92eb801c55a27d7867a41ded9003",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "binaries": {},
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "elapsed_seconds": 342.1691880743019,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "name": "native-build",
+      "resources_sha256": "0e946cf64ab6b12c14a61d8a82d5b4103220e7c6db27415efce2546c7c93cede",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "b2b7eb6fe8024030333cf14795976b7a403aaa009eb0b2b60e89f78eee6680ce",
+      "stdout_sha256": "4067f07f9a7d10d457d90f350a239cb263e7e78c564eb3db4121c8d9dbffc793"
+    },
+    {
+      "binaries": {
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_native_strokes-125b8b8f2c20f1d9": {
+          "bytes": 20644600,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/f69dbd9153a2ae098a0140c8305cdf536ebb01ba8de073618a214798c6fc8e23/kicad_native_strokes-125b8b8f2c20f1d9",
+          "sha256": "f69dbd9153a2ae098a0140c8305cdf536ebb01ba8de073618a214798c6fc8e23"
+        }
+      },
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--test",
+        "kicad_native_strokes",
+        "fresh_zero_budget_load_retains_native_rational_direction_certificates",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "elapsed_seconds": 0.45925214793533087,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "name": "cold-zero-budget",
+      "resources_sha256": "82ee0727d767d2cbf7419483a07db8c4fcb06e99cd1c2604b415ef901e12ebcc",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "94b69ab2e0b3755cb16d5aa6860256a80b72cad6b6a26cf1f5b9bcda974bfade",
+      "stdout_sha256": "b9f029d4b8b3c8d6f82f38d7499e716103c3d129c446d3f3e660b8f8b86850de"
+    },
+    {
+      "binaries": {
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_native_strokes-125b8b8f2c20f1d9": {
+          "bytes": 20644600,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/f69dbd9153a2ae098a0140c8305cdf536ebb01ba8de073618a214798c6fc8e23/kicad_native_strokes-125b8b8f2c20f1d9",
+          "sha256": "f69dbd9153a2ae098a0140c8305cdf536ebb01ba8de073618a214798c6fc8e23"
+        }
+      },
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--test",
+        "kicad_native_strokes",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "elapsed_seconds": 0.4135844246484339,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "name": "native-strokes",
+      "resources_sha256": "fd777c4f4ba86bdeea2da5755e03fb53d8caf8e91345543061335fb9b23be705",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "e340f8d950829c338b393fe1145e14ec790e570cc35242187073e7119f5f13ac",
+      "stdout_sha256": "78019a5453e0a923afd39296a84195420b96b8cb71e045c14b9eaec931860f1a"
+    },
+    {
+      "binaries": {
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_track_failures-b846f6af7dd90fbe": {
+          "bytes": 20788288,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/4251c8dc4b930c21a03b647ca6e88fbdcd227c5e3848ff7faf0971a190ee564f/kicad_track_failures-b846f6af7dd90fbe",
+          "sha256": "4251c8dc4b930c21a03b647ca6e88fbdcd227c5e3848ff7faf0971a190ee564f"
+        }
+      },
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--test",
+        "kicad_track_failures",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "elapsed_seconds": 0.43791578290984035,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "name": "source-failures",
+      "resources_sha256": "9269f92c598cbc6ee69970a7088d95e6d92257ae785f76a6f842807aea41451a",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "777f01a7bdccad7f91af0c800f2cb98e5bc036fce15890d885a438bf360c0362",
+      "stdout_sha256": "568c6deb48f8a4fce8eb9af75eec62565c8df244664fc80d23e42674b2771e37"
+    },
+    {
+      "binaries": {
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_native_aggregation-1d6b1a45acb4c8a9": {
+          "bytes": 21143968,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/305f678b708e2d50720378a4cb5c1a7695c8a085b651482c13df33e7bf340f72/kicad_native_aggregation-1d6b1a45acb4c8a9",
+          "sha256": "305f678b708e2d50720378a4cb5c1a7695c8a085b651482c13df33e7bf340f72"
+        }
+      },
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--test",
+        "kicad_native_aggregation",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "elapsed_seconds": 0.4071410368196666,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "name": "native-aggregation",
+      "resources_sha256": "67bf4e25ba7082c61080791d62ec085f32bb9cbc8c87692ab9745bd7cebdb5e6",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "6f5ca649d5c3a323f74d092dcd55511abcce5bc3e4af2e335b4e616a35a4ae5a",
+      "stdout_sha256": "80f40cc4d0542892f627a5b26224badf5a58d2802e219e2eebdd43a537472005"
+    },
+    {
+      "binaries": {
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/hyperdrc-f2524bbb15bdb74d": {
+          "bytes": 54343312,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/b5e00062cbb1202ab87c9e0438c40776b0825ca3e30845d364f760d53e01f0cd/hyperdrc-f2524bbb15bdb74d",
+          "sha256": "b5e00062cbb1202ab87c9e0438c40776b0825ca3e30845d364f760d53e01f0cd"
+        }
+      },
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "elapsed_seconds": 399.51873803325,
+      "exit_code": 101,
+      "expected_exit_code": 0,
+      "name": "full-board",
+      "resources_sha256": "ce92b57cc21f69b3be28b0a156f3263a0848c4e856fc5d1a8d0c219c4dc5fe16",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "4bc72700db0d5ae5e95bb62ed876d42b1eea19f20e5fa26ad5f5a2382dfdf90b",
+      "stdout_sha256": "3cd735df8e5f78d4de81a56001962c1edc1dec2f417ba88fd28f3953b745ba5f"
+    },
+    {
+      "binaries": {
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/hyperdrc-f2524bbb15bdb74d": {
+          "bytes": 54343312,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/b5e00062cbb1202ab87c9e0438c40776b0825ca3e30845d364f760d53e01f0cd/hyperdrc-f2524bbb15bdb74d",
+          "sha256": "b5e00062cbb1202ab87c9e0438c40776b0825ca3e30845d364f760d53e01f0cd"
+        }
+      },
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "elapsed_seconds": 393.8240996990353,
+      "exit_code": 101,
+      "expected_exit_code": 0,
+      "name": "copper-neck",
+      "resources_sha256": "acde76872e9118188c69b599d375d08988dc48917dddec91ee491c24a5572497",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "14189ea24116d0b0d2f472f5f7fbb8ff964439264ed3a6a4c025176f26b74e9b",
+      "stdout_sha256": "7d49612bb25292a28e8f458f2447fefb83a8e6981c239f5aeb24ce6ecfc06f12"
+    },
+    {
+      "binaries": {
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/hyperdrc-f2524bbb15bdb74d": {
+          "bytes": 54343312,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/b5e00062cbb1202ab87c9e0438c40776b0825ca3e30845d364f760d53e01f0cd/hyperdrc-f2524bbb15bdb74d",
+          "sha256": "b5e00062cbb1202ab87c9e0438c40776b0825ca3e30845d364f760d53e01f0cd"
+        }
+      },
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "elapsed_seconds": 0.5856361440382898,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "name": "gerber",
+      "resources_sha256": "e29bc167d907322c639f287d1e2c2303c284bc1a9c974e06f4796ce594fb5d16",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "689191dab126888291486b96bd49d751dba7e39cb7d625937d27304f6dcfe208",
+      "stdout_sha256": "ad0094e8779893e9957c9115899cb57707257bffc489462178c9d16167ff7b2b"
+    },
+    {
+      "binaries": {
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/artifact_numeric_keys-03d9b7a570505404": {
+          "bytes": 6791632,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/909e9721e9c6206eff759b3fcb12921360434449d4e8f902dde8970a656e3e93/artifact_numeric_keys-03d9b7a570505404",
+          "sha256": "909e9721e9c6206eff759b3fcb12921360434449d4e8f902dde8970a656e3e93"
+        },
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/diagnostic_formatting-e5ef4baeabfbc955": {
+          "bytes": 20067688,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/dadf1077456dbaa6be4f4c1a2e3022907ca55e969af310bcb39ca2973fbce7b9/diagnostic_formatting-e5ef4baeabfbc955",
+          "sha256": "dadf1077456dbaa6be4f4c1a2e3022907ca55e969af310bcb39ca2973fbce7b9"
+        },
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/hyperdrc-5da1690b41025398": {
+          "bytes": 1079400,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af/hyperdrc-5da1690b41025398",
+          "sha256": "c99c6e24ef3a8ce263a54ccd5a9a174afc3db6e8a53e91a27034c4a76cae87af"
+        },
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/hyperdrc-f2524bbb15bdb74d": {
+          "bytes": 54343312,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/b5e00062cbb1202ab87c9e0438c40776b0825ca3e30845d364f760d53e01f0cd/hyperdrc-f2524bbb15bdb74d",
+          "sha256": "b5e00062cbb1202ab87c9e0438c40776b0825ca3e30845d364f760d53e01f0cd"
+        },
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_native_aggregation-1d6b1a45acb4c8a9": {
+          "bytes": 21143968,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/305f678b708e2d50720378a4cb5c1a7695c8a085b651482c13df33e7bf340f72/kicad_native_aggregation-1d6b1a45acb4c8a9",
+          "sha256": "305f678b708e2d50720378a4cb5c1a7695c8a085b651482c13df33e7bf340f72"
+        },
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_native_strokes-125b8b8f2c20f1d9": {
+          "bytes": 20644600,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/f69dbd9153a2ae098a0140c8305cdf536ebb01ba8de073618a214798c6fc8e23/kicad_native_strokes-125b8b8f2c20f1d9",
+          "sha256": "f69dbd9153a2ae098a0140c8305cdf536ebb01ba8de073618a214798c6fc8e23"
+        },
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_pad_sources-e4732b4399bed56a": {
+          "bytes": 21099984,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/a5d45836ee797ba8947bafd397ad037bd342eaf446e6c379e76d159b28d843a1/kicad_pad_sources-e4732b4399bed56a",
+          "sha256": "a5d45836ee797ba8947bafd397ad037bd342eaf446e6c379e76d159b28d843a1"
+        },
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_rule_export-c09b25b29b958a07": {
+          "bytes": 43660168,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/910a88f18abc28bcb00884a65420d4321140946590c1b7f9bb16d21ba5bafb8a/kicad_rule_export-c09b25b29b958a07",
+          "sha256": "910a88f18abc28bcb00884a65420d4321140946590c1b7f9bb16d21ba5bafb8a"
+        },
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/kicad_track_failures-b846f6af7dd90fbe": {
+          "bytes": 20788288,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/4251c8dc4b930c21a03b647ca6e88fbdcd227c5e3848ff7faf0971a190ee564f/kicad_track_failures-b846f6af7dd90fbe",
+          "sha256": "4251c8dc4b930c21a03b647ca6e88fbdcd227c5e3848ff7faf0971a190ee564f"
+        },
+        "/tmp/csgrs-kicad-native-target-v4/release/deps/readme-990ac56b4fb5e9a5": {
+          "bytes": 1118792,
+          "retained": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-executables-v4/9206e21515a5806a2cf553f23a1d3f99040a9506935e73c3634ab0d2c8d9c40d/readme-990ac56b4fb5e9a5",
+          "sha256": "9206e21515a5806a2cf553f23a1d3f99040a9506935e73c3634ab0d2c8d9c40d"
+        }
+      },
+      "command": [
+        "cargo",
+        "test",
+        "--no-fail-fast",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--",
+        "--test-threads=1",
+        "--skip",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--skip",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "--skip",
+        "zz_complex_project_performance_tests::gerber_package_completes_smoke_check_suite"
+      ],
+      "elapsed_seconds": 231.252873016987,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "name": "native-tests",
+      "resources_sha256": "ee6a72acc97e91076bf0a06b74894863af4695408e786c715e97cc42629519e2",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "487637e2e6b1ed3d81d9f2bf5af5ec51586c47d6f72f8743e323418bc64d20f6",
+      "stdout_sha256": "b0a584d25d50c9970f5f98194c46f5c3a5a949eb14b42059564049043098fe29"
+    },
+    {
+      "binaries": {},
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "elapsed_seconds": 36.244292977266014,
+      "exit_code": 101,
+      "expected_exit_code": 0,
+      "name": "clippy",
+      "resources_sha256": "e0290efa197995a08e45103b7453c75811d612246c451f2d487011436e9f7b80",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "4f50bb5ae63394613349c07fba395b7b88f599af6a19711db5aca24b23135290",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "binaries": {},
+      "command": [
+        "cargo",
+        "doc",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--no-deps"
+      ],
+      "elapsed_seconds": 23.917487097904086,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "name": "docs",
+      "resources_sha256": "39fc7b476d0bb56d07eef1d81f20d833b192f25b4ee974dbe8cf07d2b913c6bd",
+      "rustdocflags": "-D warnings",
+      "sources_unchanged": true,
+      "stderr_sha256": "7e961831c30c888bf5ff5ab1ca40d78957d63039736924c0bc26c49f4ba5513f",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "binaries": {},
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "elapsed_seconds": 107.68808218091726,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "name": "native-cli",
+      "resources_sha256": "76624f0fd581bc915cc12a08607e7d8e1d0c00fabd506cfdf5f933508c6b995e",
+      "rustdocflags": null,
+      "sources_unchanged": true,
+      "stderr_sha256": "f2287705b2743b37bd7f0055cedf5290f50e3cd1fa5073721c4e92a4ccc6e7ef",
+      "stdout_sha256": "7fd418cd8c61cb24b164a5e54458ab098041151dbd413c2c5a2f3769fb206965"
+    }
+  ],
+  "final_candidate_test_results": {
+    "cold-zero-budget": {
+      "failed": 0,
+      "ignored": 0,
+      "passed": 1
+    },
+    "copper-neck": {
+      "failed": 1,
+      "ignored": 0,
+      "passed": 0
+    },
+    "full-board": {
+      "failed": 1,
+      "ignored": 0,
+      "passed": 0
+    },
+    "gerber": {
+      "failed": 0,
+      "ignored": 0,
+      "passed": 1
+    },
+    "native-aggregation": {
+      "failed": 0,
+      "ignored": 0,
+      "passed": 12
+    },
+    "native-strokes": {
+      "failed": 0,
+      "ignored": 0,
+      "passed": 10
+    },
+    "native-tests": {
+      "failed": 0,
+      "ignored": 0,
+      "passed": 1675
+    },
+    "source-failures": {
+      "failed": 0,
+      "ignored": 0,
+      "passed": 39
+    }
+  },
+  "full_archived_integration_admitted": false,
+  "full_board_resource_gate": {
+    "exit_code": 101,
+    "instrumentation": "Perf and gdb attached after the worker had already exceeded its unchanged CPU limit. Final time is diagnostic, not an uninstrumented benchmark.",
+    "limit_seconds": 120,
+    "peak_rss_kib": 1671044,
+    "worker_cpu_seconds": 396.946659071,
+    "worker_cpu_seconds_before_profiling": 204.33
+  },
+  "full_plan_complete": false,
+  "full_pre_push_matrix_executed": false,
+  "general_exact_kicad_stroke_fidelity_claimed": false,
+  "implementation_sha256": {},
+  "limitations": [
+    "Focused exact area, bounds and point-membership regressions pass in the prototype. They do not establish admission when unchanged workload gates fail.",
+    "The candidate intentionally changes finite rectangles to exact round-capped source sets and readiness version 21 to 22. That migration remains unadmitted; changed findings have not received an independent full-report semantic audit.",
+    "Native aggregation avoids obligatory finite projection and preserves authored report sources and non-finite input history in v4. This component has not been independently admitted on the unchanged main source adapter.",
+    "Strict Clippy fails on the new explicit clone iterator. No warning suppression or passing lint claim is made.",
+    "The 1675 broad native results exclude three separately executed gates; the two failed gates remain failures. Focused results also occur in the broad suite and must not be summed as unique coverage.",
+    "Cost preflights verify fixture/oracle execution only. They ran concurrently with validation compilation and use rejected v3 libraries; no final matched benchmark or performance retention is claimed.",
+    "A full-board stack sampled neck morphology repeatedly computing retained-loop bounds. Another stack sampled mechanical native aggregation. Neither proves sole causation or supports an unmeasured optimization.",
+    "No new internal work, retained-heap, expression-growth or cancellation bound is implemented. External timeout/address-space limits and RSS are distinct contracts.",
+    "Cancelled v3 and all harness preparation/compile failures remain preserved. Failed v4 cancellation sent no signals; the v4 runner completed normally with exit 101.",
+    "Finite line_polygon fidelity, general strict completion, end-to-end provenance, downstream consumers, shipped external packages, minimum compiler and complete CI validation remain open.",
+    "Historical physical artifact audit remains failed/incomplete with 27093 inherited missing paths. New path hashing does not establish whole-history recovery."
+  ],
+  "main_parent_commit": "a843bf79dfe329fb51ababaaf803752bb74a0f64",
+  "native_disposition_preserved": true,
+  "native_runtime_admitted": false,
+  "next": [
+    "Use unchanged original full projects to isolate source load, native aggregation and individual readiness-check costs against read-only completed v4 libraries.",
+    "Repair the owning kernel or composition invariant with independent semantic and cache/budget tests; preserve every original workload gate before reconsidering exact track ingress.",
+    "Continue the full properties plan, including independently justified components of the rejected archive, ordinary strict completion, provenance and complete external user-path validation."
+  ],
+  "original_archived_regressions": {
+    "failed": 21,
+    "ignored": 0,
+    "passed": 5
+  },
+  "original_fixture_resolution_preserved": true,
+  "original_workload_gates_unchanged": true,
+  "pending_native_paths_remaining": 0,
+  "physical_artifacts_not_duplicated_in_git": [
+    {
+      "bytes": 26947768,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v1/kicad_native_aggregation",
+      "sha256": "fb9221d71e6d2183980eb496fe5bf0bbe777bb37807711b5e55edf4801bacd60"
+    },
+    {
+      "bytes": 27180792,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/kicad_native_aggregation",
+      "sha256": "a71aa9b0f42cb824d12121a0747d25c792605967783cf6bb3104e6c1c3513c9d"
+    },
+    {
+      "bytes": 27244480,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v3/kicad_native_aggregation",
+      "sha256": "e70db84e571e4ae206ae1fc8f9939d89405a74aed35a1f218d81739b1d21658a"
+    },
+    {
+      "bytes": 26435160,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_native_strokes",
+      "sha256": "db68ae1caf4104de2b76da2f647981607502ae451f85ff664b2cc8ebc41fe017"
+    },
+    {
+      "bytes": 26703928,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_track_failures",
+      "sha256": "48eae994b55e2389e91f857bdab68c9314f17d6f1068e6cbf6e8815b2e378a9b"
+    },
+    {
+      "bytes": 24166888,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-probe",
+      "sha256": "ddd9f3422160d487af174ddc17f907269ac37e928f3c54c3264cbdc50cfee5bf"
+    },
+    {
+      "bytes": 23855024,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-probe",
+      "sha256": "959dc094c2cbab3fd0bd7b1210e77e020604a215581a6ef303ee62418fbaa2b3"
+    },
+    {
+      "bytes": 40092,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-profile-v1/perf.data",
+      "sha256": "90329f7c5633ba0cda607b1ec1aab41e489935cf16465b844db98061e6ac9394"
+    },
+    {
+      "bytes": 26474712,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/archived-frontier",
+      "sha256": "947075a6244f7508335342eb4e8df065a34d503e98fb1ecc7861da580c1b30ad"
+    },
+    {
+      "bytes": 26646056,
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/current-source-failures",
+      "sha256": "87a93c4051323ef2b513a31fb38d82553ad3f4fc70bd7504f39f5db5a440d9f3"
+    }
+  ],
+  "published_package_pipeline_executed": false,
+  "report_counts": {
+    "baseline": [
+      12,
+      201
+    ],
+    "candidate": [
+      12,
+      197
+    ],
+    "semantic_report_audit_complete": false
+  },
+  "retained_completed_evidence": {
+    "aggregation-contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-contract-v1.md",
+      "sha256": "de630817eccbce8fc34a382f3598c7a75ba5e86a61077fd5b6ac95e7f4e5b959"
+    },
+    "aggregation-preparation-recovery-v1/partial-v2-sha256.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-preparation-recovery-v1/partial-v2-sha256.json.gz",
+      "sha256": "e1dfc9572af3336615293bdfe9f716d1ced32fa4c117e7ee4136c7ad48aa7ae2"
+    },
+    "aggregation-preparation-recovery-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-preparation-recovery-v1/result.json",
+      "sha256": "da8424bcac6264e129ef640323674469c9283d95d2e67b0c039cc46b0a1d2cfb"
+    },
+    "aggregation-provenance-contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-provenance-contract-v1.md",
+      "sha256": "dc7950f1abb4d41e4d3df2144a96931ef35bea1487c145d4be09a2422e12dc78"
+    },
+    "aggregation-reproduction-v1/aggregation.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v1/aggregation.resources",
+      "sha256": "b92cc9ae888421fb99a58cd6517c6697a3229cfa1cc1961d7e26062e6597f683"
+    },
+    "aggregation-reproduction-v1/aggregation.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v1/aggregation.stderr",
+      "sha256": "3622803eec4fa81937fd2e48b95c6d3f38c429f24a58ba71d4bc84e0dbf485c6"
+    },
+    "aggregation-reproduction-v1/aggregation.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v1/aggregation.stdout",
+      "sha256": "531e80690b587ed06ea25375617528522a4b80e58c5a2d8a17930c45f9e62b92"
+    },
+    "aggregation-reproduction-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v1/commands.json",
+      "sha256": "a234d0e31eeeb3f921b8ce9fb6245bf962a623d4fb7949dd8a10c84c95d1d046"
+    },
+    "aggregation-reproduction-v1/compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v1/compile.resources",
+      "sha256": "9feab60fb3467db9fa5f5f1c16eacd5e3cdc011f5a32d690d3aa12bf6b28e4dc"
+    },
+    "aggregation-reproduction-v1/compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v1/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "aggregation-reproduction-v1/compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v1/compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "aggregation-reproduction-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v1/protocol.json",
+      "sha256": "59c338dc3dc8eabf98a1f01b168abb74dad58e3ea5b14af3e35314ddc89e9564"
+    },
+    "aggregation-reproduction-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v1/result.json",
+      "sha256": "8a1c8ad90edaa87fc867ddc5e1d4bd9333f8355f5844ebdaa88f919911e623f2"
+    },
+    "aggregation-reproduction-v2/aggregation.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/aggregation.resources",
+      "sha256": "5d9f8ff10fdae75985b2fa3ccb214a357d0e24a82e66944df051af9bd20c32d1"
+    },
+    "aggregation-reproduction-v2/aggregation.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/aggregation.stderr",
+      "sha256": "da2f75d11f8582c13296e1bbb8e311576680b46ea942eb56464cf5fe50be8543"
+    },
+    "aggregation-reproduction-v2/aggregation.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/aggregation.stdout",
+      "sha256": "8b9329387a834840fa574f96d3f31a88e6de811c6d4682b03ee37b7b2ed65efe"
+    },
+    "aggregation-reproduction-v2/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/commands.json",
+      "sha256": "bd337c246427d3a2d8d79b324876664e384c4e01efdf69362be2ac36ea58cdfa"
+    },
+    "aggregation-reproduction-v2/compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/compile.resources",
+      "sha256": "4c947fe5a4de0dc3a2c886de73a893dcc3cee035fe605a0ca21743aac55b672f"
+    },
+    "aggregation-reproduction-v2/compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "aggregation-reproduction-v2/compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "aggregation-reproduction-v2/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/protocol.json",
+      "sha256": "821a35fe599532f88157a6405e428b5613e8564fd146d17e7c200fac7a862262"
+    },
+    "aggregation-reproduction-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v2/result.json",
+      "sha256": "710615b951683882310de5b62f4218a202f7c01084ecd8ecf62491fc927fc264"
+    },
+    "aggregation-reproduction-v3/aggregation.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v3/aggregation.resources",
+      "sha256": "d057d24fb421c995f9d6544189dfbcd0a33aeeada6b1b27b7a2adf9e838a5d58"
+    },
+    "aggregation-reproduction-v3/aggregation.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v3/aggregation.stderr",
+      "sha256": "76a6b975e8d2ed3aa480f1be8c1a4bb18139cc1a8532be9d52a5d9707b164e3f"
+    },
+    "aggregation-reproduction-v3/aggregation.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v3/aggregation.stdout",
+      "sha256": "9c077a54893dc531b34c898dbff2026199915436daa7425f9d090aef3f5efc02"
+    },
+    "aggregation-reproduction-v3/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v3/commands.json",
+      "sha256": "c8a7d1509272a4ba18cb86ad3a5b603dcab94c5d30d06d0f14762f024f7c6e7b"
+    },
+    "aggregation-reproduction-v3/compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v3/compile.resources",
+      "sha256": "16bd262c53f235a1447cc913a8c4242f6625c76c8c51ccf326bcd6dbaffb0ec3"
+    },
+    "aggregation-reproduction-v3/compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v3/compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "aggregation-reproduction-v3/compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v3/compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "aggregation-reproduction-v3/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v3/protocol.json",
+      "sha256": "4af1619428c7707aceafd0f164ba2eb6a632ec33ddd655e85ecc18813996269b"
+    },
+    "aggregation-reproduction-v3/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation-reproduction-v3/result.json",
+      "sha256": "65981ede1a7ebf144a1d49cbaa6d9629913b767c2006970392ac89349a233ceb"
+    },
+    "aggregation_reproduce_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation_reproduce_v1.py",
+      "sha256": "07711f82def1b519ce89a2a1dafbad21946ef27e7d8dd01229f04f927d9f5719"
+    },
+    "aggregation_reproduce_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation_reproduce_v2.py",
+      "sha256": "6891c181d3b3a5f4efc1be62755ec5b758664530a49ed3318d6b4b5c7b526b99"
+    },
+    "aggregation_reproduce_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/aggregation_reproduce_v3.py",
+      "sha256": "16392d1b60ffd3d7123d990144f162fec01cb837fb22c03777d04639353f3625"
+    },
+    "assess_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/assess_v1.py",
+      "sha256": "8834d1a58673520e6aaab9d596b4157098e4bc8b870b830b83abfd61e15933df"
+    },
+    "backtrace_gate_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/backtrace_gate_v1.py",
+      "sha256": "b5d4252c0b35c1a3c9dcfb0ec68345ba17b4f0205c669b576de22d3a8572e930"
+    },
+    "backtrace_gate_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/backtrace_gate_v2.py",
+      "sha256": "7dfb91f2dfc482811577500f27569f4f342fa9d3e05a3790d34b7702a9c46559"
+    },
+    "baseline-acceptance-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/commands.json",
+      "sha256": "ec0154a1696bc11fbbb9f03e3d6efc2410ad62be2dc6d47f1aa81f0149b86343"
+    },
+    "baseline-acceptance-v1/kicad_native_strokes-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_native_strokes-compile.resources",
+      "sha256": "de23e6dee0a4f254384931710b531c42faac2ff1d24b911197785723e5e67422"
+    },
+    "baseline-acceptance-v1/kicad_native_strokes-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_native_strokes-compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-acceptance-v1/kicad_native_strokes-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_native_strokes-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-acceptance-v1/kicad_native_strokes.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_native_strokes.resources",
+      "sha256": "0492c2abee37bd36fe67159042d44c1a69ec0f77a31227c12855f1e8aaece69b"
+    },
+    "baseline-acceptance-v1/kicad_native_strokes.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_native_strokes.stderr",
+      "sha256": "8a447ca7a38f589d7296e7ac929cccde69f8fb09f3b93edf3b61b4f60491b56d"
+    },
+    "baseline-acceptance-v1/kicad_native_strokes.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_native_strokes.stdout",
+      "sha256": "1fe81d036ccbade877f2adcd667bca590e30233f52684982bdd56026e5d1970d"
+    },
+    "baseline-acceptance-v1/kicad_track_failures-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_track_failures-compile.resources",
+      "sha256": "994f2138b3dfd0b60c7e54a57dd24b0e66c72dd5a11aa0401406caa574df7125"
+    },
+    "baseline-acceptance-v1/kicad_track_failures-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_track_failures-compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-acceptance-v1/kicad_track_failures-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_track_failures-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-acceptance-v1/kicad_track_failures.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_track_failures.resources",
+      "sha256": "fa61b2a00854c7453323768d4f827f95820fc4b3cc531c663ce7f65ca4cb2530"
+    },
+    "baseline-acceptance-v1/kicad_track_failures.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_track_failures.stderr",
+      "sha256": "f561a86f0c8d0a8287ee6f5f11e424843c09dc971d67535c11fdba300eaf04c4"
+    },
+    "baseline-acceptance-v1/kicad_track_failures.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/kicad_track_failures.stdout",
+      "sha256": "c24728ad9051a00cb161f804c9e25e765d6b6a6b9f5350af81f79eede1e55fb7"
+    },
+    "baseline-acceptance-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/protocol.json",
+      "sha256": "6a3663a55b6ebaebb3fa8c16e7bd1472d360bcd42923a3a2b423e7ae7217a1ca"
+    },
+    "baseline-acceptance-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/result.json",
+      "sha256": "0f3bfb115a9ef93c8037ee14b6cac958fe99d3f21f67d5d46860211f48907c3b"
+    },
+    "baseline-acceptance-v1/zero-budget-fresh-process.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/zero-budget-fresh-process.resources",
+      "sha256": "3cf79a229922a5522464a65c8bb425962b3f0770c23facd0ce3b4544475c6d6c"
+    },
+    "baseline-acceptance-v1/zero-budget-fresh-process.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/zero-budget-fresh-process.stderr",
+      "sha256": "8d207f7c0895a645ce59928b674696ee9c9a4faa9823d9ca179cc156e9559419"
+    },
+    "baseline-acceptance-v1/zero-budget-fresh-process.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/zero-budget-fresh-process.stdout",
+      "sha256": "1f9382b812d0a45d4e91be3c79a73e2fc85875d80857c31d607124d1d6e38bd6"
+    },
+    "baseline_acceptance_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline_acceptance_v1.py",
+      "sha256": "3b00c911438c5c157d5ba685651032c4d84b56776eaca9f76774b79ef7ca6ec4"
+    },
+    "cancellation-preparation-v4.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cancellation-preparation-v4.json",
+      "sha256": "3c053a4f11ff93ab7ecb270939e9dce62c3c5f88c295665150506c9cd1214242"
+    },
+    "candidate-preparation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v1/result.json",
+      "sha256": "27eeb3409027815d2556f5627915cf4684163ba07c622125951c4ab9e71da65e"
+    },
+    "candidate-preparation-v1/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v1/source-hashes.json.gz",
+      "sha256": "10eef836a7122008bb0aa8ce3e39b2df94f42a88a66e5fc3e52adf3e20f97e05"
+    },
+    "candidate-preparation-v3/final-format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v3/final-format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v3/final-format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v3/final-format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v3/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v3/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v3/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v3/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v3/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v3/result.json",
+      "sha256": "7ff6183cd983680aaedd2cabb6aa2b6ac441400cc4db5587473c7a4ba50bfc77"
+    },
+    "candidate-preparation-v3/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v3/source-hashes.json.gz",
+      "sha256": "9a7497c51d6f87393a9ebbd46bf2039e5e24e48db9f19def0a76622a6805dd11"
+    },
+    "candidate-preparation-v4/final-format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v4/final-format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v4/final-format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v4/final-format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v4/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v4/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v4/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v4/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v4/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v4/result.json",
+      "sha256": "019977063938e1866e7f32e3ea9b463229bc953f03aac13422fc6c44b49b700b"
+    },
+    "candidate-preparation-v4/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v4/source-hashes.json.gz",
+      "sha256": "b2f7dde1b51e401d2af34d32a1fac46444d6efe005b90d8f308db9d425392f80"
+    },
+    "candidate-preparation-v4/verified-test-format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v4/verified-test-format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-preparation-v4/verified-test-format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-preparation-v4/verified-test-format.stdout",
+      "sha256": "9c457ad871d6f6e50c8bf2e58014f94470bf0b8aaf1f8c3c1b4a94dce2afa490"
+    },
+    "candidate-v3-cancellation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-v3-cancellation-v1/protocol.json",
+      "sha256": "af7062f2919da6f0f57e8fd931301a5de6ed80046c548aafba41f913c53ff3e1"
+    },
+    "candidate-v3-cancellation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-v3-cancellation-v1/result.json",
+      "sha256": "b03b994306891b4ac6d1401207f7f1e742b18bd472e72931bcea38ec7d608177"
+    },
+    "candidate-validation-v1/cold-zero-budget.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/cold-zero-budget.resources",
+      "sha256": "e68c2b1d53a98b892a052b447b20c3445f7603fa3535669edff9c1c780fa8d61"
+    },
+    "candidate-validation-v1/cold-zero-budget.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/cold-zero-budget.stderr",
+      "sha256": "0cfea8ea876467c49a34f237e58ebb184e4926c4089526131c4eccdd3c9a9995"
+    },
+    "candidate-validation-v1/cold-zero-budget.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/cold-zero-budget.stdout",
+      "sha256": "b9f029d4b8b3c8d6f82f38d7499e716103c3d129c446d3f3e660b8f8b86850de"
+    },
+    "candidate-validation-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/commands.json",
+      "sha256": "0fbf3b8faed723a57a6ec55b7cf0e2bac6932cc68b84e32bcc1f96314a812f2e"
+    },
+    "candidate-validation-v1/format.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/format.resources",
+      "sha256": "ab8f088ddc6176873db73c617967a659eacf60d4366401acfdf1d76fa1a02c25"
+    },
+    "candidate-validation-v1/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v1/native-build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/native-build.resources",
+      "sha256": "0918c69a6a1305c62f9f803669a853e53a0670c230c0f927db9897a84e2ccc7e"
+    },
+    "candidate-validation-v1/native-build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/native-build.stderr",
+      "sha256": "4a404e97e6db9c5e255451b5f90cb84234371f0f57e711d44705eac6a80b17bc"
+    },
+    "candidate-validation-v1/native-build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/native-build.stdout",
+      "sha256": "da06217e4e3d7bd2811d5693654a7050c933f5ed8d338bcc4e9ca107a0a85ad6"
+    },
+    "candidate-validation-v1/native-strokes.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/native-strokes.resources",
+      "sha256": "4e1dda1ca0b3d294256b5c93f850f700c3e8089ff2b5135ef02497438b14d39b"
+    },
+    "candidate-validation-v1/native-strokes.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/native-strokes.stderr",
+      "sha256": "68334ef6077b1e365098a3836429dc533928eea6baa270d3cdfd1bae67ea2f35"
+    },
+    "candidate-validation-v1/native-strokes.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/native-strokes.stdout",
+      "sha256": "999e78083d167ae9496d3d87216c8cc8fa47be453cdc6eb407a9bd5dba631d52"
+    },
+    "candidate-validation-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/protocol.json",
+      "sha256": "6725268bb6a0eaf26632666967419b0730908a37fb3580d2223e1d2ec4653aa7"
+    },
+    "candidate-validation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/result.json",
+      "sha256": "e98f8e41754ae8991e95d6a26c3d1a80c6080c5f19c51eeb0aadd472f8cd9224"
+    },
+    "candidate-validation-v1/source-failures.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/source-failures.resources",
+      "sha256": "8edf5d0c887b992510c0a05c079c64252b9101ee00d79263f9982d907e43799b"
+    },
+    "candidate-validation-v1/source-failures.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/source-failures.stderr",
+      "sha256": "ac7d718258c7ea80dfd135258573469f7f8ee56593c984627440690896624013"
+    },
+    "candidate-validation-v1/source-failures.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v1/source-failures.stdout",
+      "sha256": "c24728ad9051a00cb161f804c9e25e765d6b6a6b9f5350af81f79eede1e55fb7"
+    },
+    "candidate-validation-v3/cold-zero-budget.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/cold-zero-budget.resources",
+      "sha256": "1e11ccb8a31c4a168a66d4aa907003a0f28c2e8e0984a5b17fe365af1393c38f"
+    },
+    "candidate-validation-v3/cold-zero-budget.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/cold-zero-budget.stderr",
+      "sha256": "4fe3ded0a265ec01ed84f476be1725009272f7fa858d8845eff7ed914ad2610f"
+    },
+    "candidate-validation-v3/cold-zero-budget.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/cold-zero-budget.stdout",
+      "sha256": "b9f029d4b8b3c8d6f82f38d7499e716103c3d129c446d3f3e660b8f8b86850de"
+    },
+    "candidate-validation-v3/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/commands.json",
+      "sha256": "8a953079fa72b8310d9cc51cb295c95937a1faec9a668997489c9f0a7d0037e0"
+    },
+    "candidate-validation-v3/format.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/format.resources",
+      "sha256": "593e325101b7a331bef7e43ff74257f8f961bb96fd1001c9338a3e38e869baa1"
+    },
+    "candidate-validation-v3/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v3/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v3/full-board.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/full-board.resources",
+      "sha256": "17efbc84a676adc1d94927da8d43eb2986b19f335cfdcdd61ed730235e14fce4"
+    },
+    "candidate-validation-v3/full-board.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/full-board.stderr",
+      "sha256": "3e07afaf28bebeb3cafe5f018f8470c1a665eeef547082c2b6ee81cbd64ff9d7"
+    },
+    "candidate-validation-v3/full-board.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/full-board.stdout",
+      "sha256": "15252bfdda1e19845a26e6ad3283aa5517951636ac886217214c28774e563144"
+    },
+    "candidate-validation-v3/native-aggregation.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/native-aggregation.resources",
+      "sha256": "8ae85b891ebe8c338f653db8a0ab7ebf084e9a16eef43da90cd5c285d4c0ab6a"
+    },
+    "candidate-validation-v3/native-aggregation.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/native-aggregation.stderr",
+      "sha256": "f7e67f96b171966eccb324d1e0a3ecb8a5493236453cc54a4fe0e87a893c48af"
+    },
+    "candidate-validation-v3/native-aggregation.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/native-aggregation.stdout",
+      "sha256": "d246abc05e959fbac9302f02887abda7d5cca705ad903b9445ec8c891494aab3"
+    },
+    "candidate-validation-v3/native-build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/native-build.resources",
+      "sha256": "f1f50395d06332663ed07c9103bcdcd765d7c32e5f3977628dfb780c376d5c17"
+    },
+    "candidate-validation-v3/native-build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/native-build.stderr",
+      "sha256": "737cb21104f8896b2eb21e3316b90961f630966aba58dea60dd913a78171679c"
+    },
+    "candidate-validation-v3/native-build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/native-build.stdout",
+      "sha256": "b919491a5a49cf885ad3a8db1ba70ea0948fb8407807098580d80deaf50a1a31"
+    },
+    "candidate-validation-v3/native-strokes.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/native-strokes.resources",
+      "sha256": "0f2da2e3879c04f4a40c76624a90e3023ae7224b082725517017af5ec8436368"
+    },
+    "candidate-validation-v3/native-strokes.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/native-strokes.stderr",
+      "sha256": "247bde0aa5ac129148491ad57cf70a66d8001c654e355f3daceff65f2e18b10e"
+    },
+    "candidate-validation-v3/native-strokes.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/native-strokes.stdout",
+      "sha256": "78019a5453e0a923afd39296a84195420b96b8cb71e045c14b9eaec931860f1a"
+    },
+    "candidate-validation-v3/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/protocol.json",
+      "sha256": "0cf5073b6e9cc788f4d7bd091cf42f2b336460aec6c43790e8b445a5172b16fe"
+    },
+    "candidate-validation-v3/source-failures.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/source-failures.resources",
+      "sha256": "0c94a9418deff3e4f4e0df51f42c325b319efd7f9122cb2b1a60a6329008cabc"
+    },
+    "candidate-validation-v3/source-failures.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/source-failures.stderr",
+      "sha256": "1283dfd63162328b13e09333a9854ffe9cf71099e372e70d9a1783c312d5c451"
+    },
+    "candidate-validation-v3/source-failures.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/source-failures.stdout",
+      "sha256": "568c6deb48f8a4fce8eb9af75eec62565c8df244664fc80d23e42674b2771e37"
+    },
+    "candidate-validation-v4/clippy.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/clippy.resources",
+      "sha256": "e0290efa197995a08e45103b7453c75811d612246c451f2d487011436e9f7b80"
+    },
+    "candidate-validation-v4/clippy.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/clippy.stderr",
+      "sha256": "4f50bb5ae63394613349c07fba395b7b88f599af6a19711db5aca24b23135290"
+    },
+    "candidate-validation-v4/clippy.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/clippy.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v4/cold-zero-budget.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/cold-zero-budget.resources",
+      "sha256": "82ee0727d767d2cbf7419483a07db8c4fcb06e99cd1c2604b415ef901e12ebcc"
+    },
+    "candidate-validation-v4/cold-zero-budget.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/cold-zero-budget.stderr",
+      "sha256": "94b69ab2e0b3755cb16d5aa6860256a80b72cad6b6a26cf1f5b9bcda974bfade"
+    },
+    "candidate-validation-v4/cold-zero-budget.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/cold-zero-budget.stdout",
+      "sha256": "b9f029d4b8b3c8d6f82f38d7499e716103c3d129c446d3f3e660b8f8b86850de"
+    },
+    "candidate-validation-v4/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/commands.json",
+      "sha256": "c6936c17e1a14b6fb931f5f35d210cab0dac509e564241769f133144ff0f6710"
+    },
+    "candidate-validation-v4/copper-neck.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/copper-neck.resources",
+      "sha256": "acde76872e9118188c69b599d375d08988dc48917dddec91ee491c24a5572497"
+    },
+    "candidate-validation-v4/copper-neck.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/copper-neck.stderr",
+      "sha256": "14189ea24116d0b0d2f472f5f7fbb8ff964439264ed3a6a4c025176f26b74e9b"
+    },
+    "candidate-validation-v4/copper-neck.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/copper-neck.stdout",
+      "sha256": "7d49612bb25292a28e8f458f2447fefb83a8e6981c239f5aeb24ce6ecfc06f12"
+    },
+    "candidate-validation-v4/docs.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/docs.resources",
+      "sha256": "39fc7b476d0bb56d07eef1d81f20d833b192f25b4ee974dbe8cf07d2b913c6bd"
+    },
+    "candidate-validation-v4/docs.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/docs.stderr",
+      "sha256": "7e961831c30c888bf5ff5ab1ca40d78957d63039736924c0bc26c49f4ba5513f"
+    },
+    "candidate-validation-v4/docs.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/docs.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v4/format.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/format.resources",
+      "sha256": "dff593e344fff22dc21cee972d4ca727041d92eb801c55a27d7867a41ded9003"
+    },
+    "candidate-validation-v4/format.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/format.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v4/format.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/format.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-validation-v4/full-board.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/full-board.resources",
+      "sha256": "ce92b57cc21f69b3be28b0a156f3263a0848c4e856fc5d1a8d0c219c4dc5fe16"
+    },
+    "candidate-validation-v4/full-board.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/full-board.stderr",
+      "sha256": "4bc72700db0d5ae5e95bb62ed876d42b1eea19f20e5fa26ad5f5a2382dfdf90b"
+    },
+    "candidate-validation-v4/full-board.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/full-board.stdout",
+      "sha256": "3cd735df8e5f78d4de81a56001962c1edc1dec2f417ba88fd28f3953b745ba5f"
+    },
+    "candidate-validation-v4/gerber.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/gerber.resources",
+      "sha256": "e29bc167d907322c639f287d1e2c2303c284bc1a9c974e06f4796ce594fb5d16"
+    },
+    "candidate-validation-v4/gerber.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/gerber.stderr",
+      "sha256": "689191dab126888291486b96bd49d751dba7e39cb7d625937d27304f6dcfe208"
+    },
+    "candidate-validation-v4/gerber.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/gerber.stdout",
+      "sha256": "ad0094e8779893e9957c9115899cb57707257bffc489462178c9d16167ff7b2b"
+    },
+    "candidate-validation-v4/native-aggregation.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-aggregation.resources",
+      "sha256": "67bf4e25ba7082c61080791d62ec085f32bb9cbc8c87692ab9745bd7cebdb5e6"
+    },
+    "candidate-validation-v4/native-aggregation.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-aggregation.stderr",
+      "sha256": "6f5ca649d5c3a323f74d092dcd55511abcce5bc3e4af2e335b4e616a35a4ae5a"
+    },
+    "candidate-validation-v4/native-aggregation.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-aggregation.stdout",
+      "sha256": "80f40cc4d0542892f627a5b26224badf5a58d2802e219e2eebdd43a537472005"
+    },
+    "candidate-validation-v4/native-build.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-build.resources",
+      "sha256": "0e946cf64ab6b12c14a61d8a82d5b4103220e7c6db27415efce2546c7c93cede"
+    },
+    "candidate-validation-v4/native-build.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-build.stderr",
+      "sha256": "b2b7eb6fe8024030333cf14795976b7a403aaa009eb0b2b60e89f78eee6680ce"
+    },
+    "candidate-validation-v4/native-build.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-build.stdout",
+      "sha256": "4067f07f9a7d10d457d90f350a239cb263e7e78c564eb3db4121c8d9dbffc793"
+    },
+    "candidate-validation-v4/native-cli.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-cli.resources",
+      "sha256": "76624f0fd581bc915cc12a08607e7d8e1d0c00fabd506cfdf5f933508c6b995e"
+    },
+    "candidate-validation-v4/native-cli.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-cli.stderr",
+      "sha256": "f2287705b2743b37bd7f0055cedf5290f50e3cd1fa5073721c4e92a4ccc6e7ef"
+    },
+    "candidate-validation-v4/native-cli.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-cli.stdout",
+      "sha256": "7fd418cd8c61cb24b164a5e54458ab098041151dbd413c2c5a2f3769fb206965"
+    },
+    "candidate-validation-v4/native-strokes.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-strokes.resources",
+      "sha256": "fd777c4f4ba86bdeea2da5755e03fb53d8caf8e91345543061335fb9b23be705"
+    },
+    "candidate-validation-v4/native-strokes.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-strokes.stderr",
+      "sha256": "e340f8d950829c338b393fe1145e14ec790e570cc35242187073e7119f5f13ac"
+    },
+    "candidate-validation-v4/native-strokes.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-strokes.stdout",
+      "sha256": "78019a5453e0a923afd39296a84195420b96b8cb71e045c14b9eaec931860f1a"
+    },
+    "candidate-validation-v4/native-tests.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-tests.resources",
+      "sha256": "ee6a72acc97e91076bf0a06b74894863af4695408e786c715e97cc42629519e2"
+    },
+    "candidate-validation-v4/native-tests.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-tests.stderr",
+      "sha256": "487637e2e6b1ed3d81d9f2bf5af5ec51586c47d6f72f8743e323418bc64d20f6"
+    },
+    "candidate-validation-v4/native-tests.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/native-tests.stdout",
+      "sha256": "b0a584d25d50c9970f5f98194c46f5c3a5a949eb14b42059564049043098fe29"
+    },
+    "candidate-validation-v4/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/protocol.json",
+      "sha256": "df7deb088c16b55ed21f364fb8abb77b3b7f888162966bcb93daa2ff919d30a3"
+    },
+    "candidate-validation-v4/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/result.json",
+      "sha256": "047ef6ca70521848adf689053f8c2c5d046b804bd3f00e70899ea1e2b6876f3a"
+    },
+    "candidate-validation-v4/source-failures.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/source-failures.resources",
+      "sha256": "9269f92c598cbc6ee69970a7088d95e6d92257ae785f76a6f842807aea41451a"
+    },
+    "candidate-validation-v4/source-failures.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/source-failures.stderr",
+      "sha256": "777f01a7bdccad7f91af0c800f2cb98e5bc036fce15890d885a438bf360c0362"
+    },
+    "candidate-validation-v4/source-failures.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v4/source-failures.stdout",
+      "sha256": "568c6deb48f8a4fce8eb9af75eec62565c8df244664fc80d23e42674b2771e37"
+    },
+    "candidate_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate_v1.py",
+      "sha256": "669dabdd485211ff5a3be195cb00141dd41541c7babfd9f408f38f8e6c1b519e"
+    },
+    "candidate_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate_v3.py",
+      "sha256": "d5b2dee294cabc9fb3006ac1d1302fc4d0da92d4eeda9506b707b00219cf26a5"
+    },
+    "candidate_v4.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate_v4.py",
+      "sha256": "23388e11ca4df55529cdf1f186e20b277b44e7cc403321b6f1ac64ece208780a"
+    },
+    "contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/contract-v1.md",
+      "sha256": "ae05e397e5e3c62073dcb9409a359b8bfee093d1558a02f0e59678103a84c88a"
+    },
+    "cost-contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-contract-v1.md",
+      "sha256": "dabb7ba1baae096217e2ac43dca047a18206fbec3c52c9bb437c18c972d0e5da"
+    },
+    "cost-preflight-preparation-v2.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-preparation-v2.json",
+      "sha256": "2f5c41eb99cddf78dd793f30615269458a3301f4ab005a95918dcf6582f33bd6"
+    },
+    "cost-preflight-preparation-v3.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-preparation-v3.json",
+      "sha256": "01407e76bbd88b0080d9cfb6bb6a219826fa83e976ffa160386509661eb2cb5d"
+    },
+    "cost-preflight-v2/baseline-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/baseline-compile.resources",
+      "sha256": "04baf8998e771cedc23a2f17c21c3ab28c565d365a694bc771ee307cf7a48c8f"
+    },
+    "cost-preflight-v2/baseline-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/baseline-compile.stderr",
+      "sha256": "9acef02ead64f477bc0ed94470f5434394cac9eb4697e1684061a3fdd7a12e21"
+    },
+    "cost-preflight-v2/baseline-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/baseline-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-axis.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-axis.resources",
+      "sha256": "5369530440becbfd5fd02fabe84220a6f58e3560827313f421bb9c73d57c6c68"
+    },
+    "cost-preflight-v2/candidate-v3-axis.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-axis.snapshot.json",
+      "sha256": "059bd4d31c6522734f250b7cee14912e5d9a003a6fecdae23f30b417a57f3d13"
+    },
+    "cost-preflight-v2/candidate-v3-axis.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-axis.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-axis.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-axis.stdout",
+      "sha256": "5839923c30032050bf615bd68edff48d6be831cb356900a12ec21707b6743240"
+    },
+    "cost-preflight-v2/candidate-v3-coincident_disk.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-coincident_disk.resources",
+      "sha256": "f7bc6e476ebf79aa9d940f2ef1bfbddec51e043f29e91e73a3101f5f5b6d3e83"
+    },
+    "cost-preflight-v2/candidate-v3-coincident_disk.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-coincident_disk.snapshot.json",
+      "sha256": "f623587a3d2c568292394cae08c6d02a2f4945244f3a43e5e7d3239a263590ac"
+    },
+    "cost-preflight-v2/candidate-v3-coincident_disk.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-coincident_disk.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-coincident_disk.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-coincident_disk.stdout",
+      "sha256": "7f1ddd48e77262de1dfeceea22f81ca129e43e57f31287be7f8278c57d98a6d1"
+    },
+    "cost-preflight-v2/candidate-v3-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-compile.resources",
+      "sha256": "3106c687c600d1ad5ca06c5e92a8663c1772ca677a18fd98503065aa9f660ba6"
+    },
+    "cost-preflight-v2/candidate-v3-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-decimal_translation.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-decimal_translation.resources",
+      "sha256": "97c5f6eeb7b847553c01d2ba1649952266a351ef782aad2e297d6b70ee1ebdff"
+    },
+    "cost-preflight-v2/candidate-v3-decimal_translation.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-decimal_translation.snapshot.json",
+      "sha256": "81d16afe64282cf024508e42983490421544609f0acd2fc8c41711d463ec374a"
+    },
+    "cost-preflight-v2/candidate-v3-decimal_translation.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-decimal_translation.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-decimal_translation.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-decimal_translation.stdout",
+      "sha256": "3d4f1c69d8d70f3adc8724fe95a29f358e12c7582ca7835bdfd94f47f1e0d9f1"
+    },
+    "cost-preflight-v2/candidate-v3-disjoint_disks.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-disjoint_disks.resources",
+      "sha256": "0ac1ddd5c88a12d508545b1fbf2f8e22f2f4774e7d9e7d90e377c3207c2bc2bd"
+    },
+    "cost-preflight-v2/candidate-v3-disjoint_disks.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-disjoint_disks.snapshot.json",
+      "sha256": "11f072bfe3aa793bc17444f345ad7b369e21674f2265387f7bef7330b8315682"
+    },
+    "cost-preflight-v2/candidate-v3-disjoint_disks.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-disjoint_disks.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-disjoint_disks.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-disjoint_disks.stdout",
+      "sha256": "e047932ef99ca40b116dfbfaccbaa2ff1e14be56e96068e71ae814ce17c4caed"
+    },
+    "cost-preflight-v2/candidate-v3-empty.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-empty.resources",
+      "sha256": "85e2759336bb3789cf1ecf0adb3d87ba0e3ba28e24ebe7efa01c4194c5607a39"
+    },
+    "cost-preflight-v2/candidate-v3-empty.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-empty.snapshot.json",
+      "sha256": "2d10943ffc32fec76d6b5e0743baf0403500ad527b99e95ca09f40698a6b84b9"
+    },
+    "cost-preflight-v2/candidate-v3-empty.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-empty.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-empty.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-empty.stdout",
+      "sha256": "2ad6d0a3d7e4fba43852c2759c04cdb427c4353aef2a45e100107135a888aed7"
+    },
+    "cost-preflight-v2/candidate-v3-rational_diagonal.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-rational_diagonal.resources",
+      "sha256": "07313cbffb4663fbe03585d632321fab23eba47f9d8dc4e21d1f9a355c05f1c7"
+    },
+    "cost-preflight-v2/candidate-v3-rational_diagonal.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-rational_diagonal.snapshot.json",
+      "sha256": "841c5e855facd3cd89c16b8bd713bb16232f433d353afbf5756df42d04d033ca"
+    },
+    "cost-preflight-v2/candidate-v3-rational_diagonal.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-rational_diagonal.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-rational_diagonal.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-rational_diagonal.stdout",
+      "sha256": "479dd9b0d745eb7916d2178cd7e3c563fd98f5095a0fe10f35ff0e2b152ec64b"
+    },
+    "cost-preflight-v2/candidate-v3-subrange.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-subrange.resources",
+      "sha256": "47eed19c6b63278fc78d17d9a9993ef2e85cf0540876a61c89a6565b0af0243d"
+    },
+    "cost-preflight-v2/candidate-v3-subrange.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-subrange.snapshot.json",
+      "sha256": "c5fa66a9ec31df0188f2b4c1ae457901f318bb4c2e0388c5d2b1aebf1f6724d4"
+    },
+    "cost-preflight-v2/candidate-v3-subrange.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-subrange.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-subrange.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-subrange.stdout",
+      "sha256": "555aaadc9548cecdd952e005c01eb6e4705942c473a99f345bb9462c68dbeb3d"
+    },
+    "cost-preflight-v2/candidate-v3-superrange.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-superrange.resources",
+      "sha256": "7db55aeda88ece3e896fa82f0ad27d603cc29508ebd6b9dc002da7fe6d2d0ea8"
+    },
+    "cost-preflight-v2/candidate-v3-superrange.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-superrange.snapshot.json",
+      "sha256": "c411eccd157d56c1cb9d0daca5a9d79e1ee22d108d68b7238fba0ba8099d995a"
+    },
+    "cost-preflight-v2/candidate-v3-superrange.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-superrange.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-superrange.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-superrange.stdout",
+      "sha256": "1efb645b20c367651ae1ef0356986dc3a0c45cc213e5d582e570aae167fbbd97"
+    },
+    "cost-preflight-v2/candidate-v3-surd_diagonal.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-surd_diagonal.resources",
+      "sha256": "5aee6adab7490bde8273462a06e5728582db75ee867013c57b75b69168db5878"
+    },
+    "cost-preflight-v2/candidate-v3-surd_diagonal.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-surd_diagonal.snapshot.json",
+      "sha256": "425a1fd15c0103f891c3f1c16c6efe6865e63422270d628eacf3888ef7a762f0"
+    },
+    "cost-preflight-v2/candidate-v3-surd_diagonal.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-surd_diagonal.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v2/candidate-v3-surd_diagonal.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-surd_diagonal.stdout",
+      "sha256": "4fc50d79da61c9998a94707e428291fceca26d1d1ef34cd526cf8657f8420a54"
+    },
+    "cost-preflight-v2/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/commands.json",
+      "sha256": "d7392fd8cc55244fd4545240a9e10a76b8774671101399d1aebd3c90eca52b9e"
+    },
+    "cost-preflight-v2/inputs/00-empty.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/00-empty.kicad_pcb",
+      "sha256": "1afe66239800cfbf14f664d0adc41301778d0b952d8056bc1d61d57e4a35c61f"
+    },
+    "cost-preflight-v2/inputs/01-coincident_disk.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/01-coincident_disk.kicad_pcb",
+      "sha256": "99ef4db7d04ab31c76288165a517cfde194bd199e01840f516d70a80115a349f"
+    },
+    "cost-preflight-v2/inputs/02-axis.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/02-axis.kicad_pcb",
+      "sha256": "35dd6682b6d5f55a81f4ca7cb0df337152e9555faac438124489f081ca4f8dd5"
+    },
+    "cost-preflight-v2/inputs/03-rational_diagonal.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/03-rational_diagonal.kicad_pcb",
+      "sha256": "d78c4af8b841debf87893d96b6026f1fafd6f68ead55542ca17b2475801f0d58"
+    },
+    "cost-preflight-v2/inputs/04-surd_diagonal.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/04-surd_diagonal.kicad_pcb",
+      "sha256": "bb92767d6cc2afdec3f7b4a8e290a587fc838c635d48656dd1e410bc6b14fd90"
+    },
+    "cost-preflight-v2/inputs/05-decimal_translation.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/05-decimal_translation.kicad_pcb",
+      "sha256": "7c42516f44b808f5196dfed477d0e168f5f62ad6116aa9a061b6fc519fd4c209"
+    },
+    "cost-preflight-v2/inputs/06-subrange.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/06-subrange.kicad_pcb",
+      "sha256": "34830a2f56bf3ec44eff03db59c2a85872f2b2a44d6a72300b06e4ff63fb091a"
+    },
+    "cost-preflight-v2/inputs/07-superrange.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/07-superrange.kicad_pcb",
+      "sha256": "13b475f91ae62330995bf6d3a8ee8e40b5b1b5536cfe55e1b09a3be071ee176c"
+    },
+    "cost-preflight-v2/inputs/08-disjoint_disks.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/08-disjoint_disks.kicad_pcb",
+      "sha256": "9e96b0c74af372a7a91e05f24321ff2d148fe28ec98626941658aac916b56d74"
+    },
+    "cost-preflight-v2/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/protocol.json",
+      "sha256": "3324a5bb5368c245a9ead0b930c637cee4fe09133ba9e7dc154abca7687890bb"
+    },
+    "cost-preflight-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/result.json",
+      "sha256": "230953d5c713c6bb398b8f167ee7615852782a566fe9c064275f68db2b5ae37b"
+    },
+    "cost-preflight-v3/baseline-axis.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-axis.resources",
+      "sha256": "f6525ac74c75bbc8a012648503b091fb46b9b6200ab6b76bd0673609424785ff"
+    },
+    "cost-preflight-v3/baseline-axis.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-axis.snapshot.json",
+      "sha256": "a7ffdce643a63e9983135341c2bc84c6968b7f1b967311326bc6f408359d8917"
+    },
+    "cost-preflight-v3/baseline-axis.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-axis.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-axis.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-axis.stdout",
+      "sha256": "37415be964c3220a6b28eef5a01341d7e2f8b816d766528a6e17abf6874b19a4"
+    },
+    "cost-preflight-v3/baseline-coincident_disk.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-coincident_disk.resources",
+      "sha256": "e27812ed0a7368fec5c2ad517016803804736b32f17017f58f359da46c8ce7e3"
+    },
+    "cost-preflight-v3/baseline-coincident_disk.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-coincident_disk.snapshot.json",
+      "sha256": "f623587a3d2c568292394cae08c6d02a2f4945244f3a43e5e7d3239a263590ac"
+    },
+    "cost-preflight-v3/baseline-coincident_disk.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-coincident_disk.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-coincident_disk.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-coincident_disk.stdout",
+      "sha256": "db89b762963e972c4c7ac398921185cd817ecbaeb2ba2f13902bf6b40b8322d4"
+    },
+    "cost-preflight-v3/baseline-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-compile.resources",
+      "sha256": "94b66aff6754f5207c720b9617bd0d592f74a69ccecffdd321162d27e85117ba"
+    },
+    "cost-preflight-v3/baseline-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-decimal_translation.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-decimal_translation.resources",
+      "sha256": "77ea22172ec66e74a3a3c026d3760ab3646fcff24d7a730f7b04b1b7b5440a24"
+    },
+    "cost-preflight-v3/baseline-decimal_translation.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-decimal_translation.snapshot.json",
+      "sha256": "45fae81dd780af7d55f4926640ec092645b508c4c925cc6fa2f81e3a6acee07d"
+    },
+    "cost-preflight-v3/baseline-decimal_translation.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-decimal_translation.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-decimal_translation.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-decimal_translation.stdout",
+      "sha256": "a7de34d2dd485ae5b6f4a04c6bb5b6a0067233ee685c925990bc639f217d1bac"
+    },
+    "cost-preflight-v3/baseline-disjoint_disks.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-disjoint_disks.resources",
+      "sha256": "0fc01dcd39419c0ed1cf5cf60a64de0b28d3cc234cd0c0fa4269642585cb893d"
+    },
+    "cost-preflight-v3/baseline-disjoint_disks.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-disjoint_disks.snapshot.json",
+      "sha256": "11f072bfe3aa793bc17444f345ad7b369e21674f2265387f7bef7330b8315682"
+    },
+    "cost-preflight-v3/baseline-disjoint_disks.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-disjoint_disks.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-disjoint_disks.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-disjoint_disks.stdout",
+      "sha256": "d8f67b09b8117fd1e795953a307178c8635b593df39453da0989170f6e28e839"
+    },
+    "cost-preflight-v3/baseline-empty.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-empty.resources",
+      "sha256": "55a6f428c659316237536f582c740553b9ff81ca7436d2cb848a3e192dcc97a1"
+    },
+    "cost-preflight-v3/baseline-empty.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-empty.snapshot.json",
+      "sha256": "2d10943ffc32fec76d6b5e0743baf0403500ad527b99e95ca09f40698a6b84b9"
+    },
+    "cost-preflight-v3/baseline-empty.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-empty.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-empty.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-empty.stdout",
+      "sha256": "91aca74e4f414e96b95e02325ed8bcaaf5a71fbb19a617e63cb726a6a0b18f4a"
+    },
+    "cost-preflight-v3/baseline-rational_diagonal.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-rational_diagonal.resources",
+      "sha256": "f3123da15cb709585e70ac13a259d60e430ff79a24ba3f23ce391e635bd865e2"
+    },
+    "cost-preflight-v3/baseline-rational_diagonal.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-rational_diagonal.snapshot.json",
+      "sha256": "ddc459c42943497dde184912b682114979996040d858e7f4426acf4bd61503fb"
+    },
+    "cost-preflight-v3/baseline-rational_diagonal.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-rational_diagonal.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-rational_diagonal.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-rational_diagonal.stdout",
+      "sha256": "7d1577d4de463a4c13f60eae7750bb887fe307192880dce427a2ce96de8e8865"
+    },
+    "cost-preflight-v3/baseline-subrange.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-subrange.resources",
+      "sha256": "fcb74cb9d23d89219b62b59d9a6a11f3b54b14f47d822f682d809f319f751d25"
+    },
+    "cost-preflight-v3/baseline-subrange.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-subrange.snapshot.json",
+      "sha256": "14c4a64b5fa4410c99a45b14d514e232936cfb8d463e38fb058b7fe40962756d"
+    },
+    "cost-preflight-v3/baseline-subrange.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-subrange.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-subrange.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-subrange.stdout",
+      "sha256": "b9832d59836514bdbddd03bcb00bbbea38ca9baf98850193bad836eee87ebc84"
+    },
+    "cost-preflight-v3/baseline-superrange.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-superrange.resources",
+      "sha256": "67ce5d60309bf3039b67fc284415b9570d215509adbeb91e654d0c970a0994ee"
+    },
+    "cost-preflight-v3/baseline-superrange.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-superrange.snapshot.json",
+      "sha256": "db402551aaa3660f81fbd9dc1a23b259d5f5be4640fe31a84e6ed24a18a2a92e"
+    },
+    "cost-preflight-v3/baseline-superrange.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-superrange.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-superrange.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-superrange.stdout",
+      "sha256": "d44a71d9ddba786e38b6174ed7981d10d549c7aeb2a2e8ec04086a28e2f18eb1"
+    },
+    "cost-preflight-v3/baseline-surd_diagonal.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-surd_diagonal.resources",
+      "sha256": "24b19e3ab0fcf128722a19a2d82bd5a26698b074a37cfabee32769098a23ec55"
+    },
+    "cost-preflight-v3/baseline-surd_diagonal.snapshot.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-surd_diagonal.snapshot.json",
+      "sha256": "7f21f12f13387e08b10375b77b754f93471fc0ba1a75477ea927a91f09b7695e"
+    },
+    "cost-preflight-v3/baseline-surd_diagonal.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-surd_diagonal.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost-preflight-v3/baseline-surd_diagonal.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/baseline-surd_diagonal.stdout",
+      "sha256": "660c80260f6b3867d2a93ebac907d6da1d386a86a9e7fa270e3fed4361e7ae67"
+    },
+    "cost-preflight-v3/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/commands.json",
+      "sha256": "1fd15247955f701698db52feadb91d123bac542888d5bf23b514edc620d24c00"
+    },
+    "cost-preflight-v3/inputs/00-empty.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/inputs/00-empty.kicad_pcb",
+      "sha256": "1afe66239800cfbf14f664d0adc41301778d0b952d8056bc1d61d57e4a35c61f"
+    },
+    "cost-preflight-v3/inputs/01-coincident_disk.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/inputs/01-coincident_disk.kicad_pcb",
+      "sha256": "99ef4db7d04ab31c76288165a517cfde194bd199e01840f516d70a80115a349f"
+    },
+    "cost-preflight-v3/inputs/02-axis.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/inputs/02-axis.kicad_pcb",
+      "sha256": "35dd6682b6d5f55a81f4ca7cb0df337152e9555faac438124489f081ca4f8dd5"
+    },
+    "cost-preflight-v3/inputs/03-rational_diagonal.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/inputs/03-rational_diagonal.kicad_pcb",
+      "sha256": "d78c4af8b841debf87893d96b6026f1fafd6f68ead55542ca17b2475801f0d58"
+    },
+    "cost-preflight-v3/inputs/04-surd_diagonal.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/inputs/04-surd_diagonal.kicad_pcb",
+      "sha256": "bb92767d6cc2afdec3f7b4a8e290a587fc838c635d48656dd1e410bc6b14fd90"
+    },
+    "cost-preflight-v3/inputs/05-decimal_translation.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/inputs/05-decimal_translation.kicad_pcb",
+      "sha256": "7c42516f44b808f5196dfed477d0e168f5f62ad6116aa9a061b6fc519fd4c209"
+    },
+    "cost-preflight-v3/inputs/06-subrange.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/inputs/06-subrange.kicad_pcb",
+      "sha256": "34830a2f56bf3ec44eff03db59c2a85872f2b2a44d6a72300b06e4ff63fb091a"
+    },
+    "cost-preflight-v3/inputs/07-superrange.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/inputs/07-superrange.kicad_pcb",
+      "sha256": "13b475f91ae62330995bf6d3a8ee8e40b5b1b5536cfe55e1b09a3be071ee176c"
+    },
+    "cost-preflight-v3/inputs/08-disjoint_disks.kicad_pcb": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/inputs/08-disjoint_disks.kicad_pcb",
+      "sha256": "9e96b0c74af372a7a91e05f24321ff2d148fe28ec98626941658aac916b56d74"
+    },
+    "cost-preflight-v3/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/protocol.json",
+      "sha256": "eca785cddc973382600157c486e84ee5f791db89c360c6b80b55ec6f20583ed1"
+    },
+    "cost-preflight-v3/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v3/result.json",
+      "sha256": "bbc36f1d959b7e0cd78026941bf60f0591c0bcff3aa4f2e79d6b16c1ad927dc8"
+    },
+    "cost-probe-preparation-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-probe-preparation-v1.json",
+      "sha256": "659e201ff33e895b223d9e7e798eea6ea68f5592395416e573960d41fa7243ab"
+    },
+    "cost_preflight_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost_preflight_v1.py",
+      "sha256": "266dccc4d38d75ea314b2dfce54789a44ce8e803f621d0e5a464764f8b1a1c48"
+    },
+    "cost_preflight_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost_preflight_v2.py",
+      "sha256": "ba2256b56ecc64c0a6b001725de1626047cab97605ca583156cb7fff1eaf27aa"
+    },
+    "cost_preflight_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost_preflight_v3.py",
+      "sha256": "fe801a3d17c1a9801a9152dc0df4200d254253da71dd02b30cb171182df5fe3b"
+    },
+    "finalize_preparation_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/finalize_preparation_v3.py",
+      "sha256": "7b9088a71db4d6e4905762798cc442297cd46742e04e8e0fb647c3fff0bf2c04"
+    },
+    "finalize_preparation_v4.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/finalize_preparation_v4.py",
+      "sha256": "5603e72290537f5a83aac0afc3f81c6ed90cd797e36d9f248ecf90745bd0e03d"
+    },
+    "gate-backtrace-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-backtrace-v1/result.json",
+      "sha256": "59be019ee17aaf5c0f7c449615d930c4eafe8d480a46b6531200804a1474c1ab"
+    },
+    "gate-backtrace-v1/stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-backtrace-v1/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "gate-backtrace-v1/stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-backtrace-v1/stdout",
+      "sha256": "3b169fac77350b461ad0b73cc681057fb6012c1c554bd7c21696fad6be49dcc7"
+    },
+    "gate-backtrace-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-backtrace-v2/result.json",
+      "sha256": "798fc004836a3a4fde8ff8e372ebdfb776065991e20c7cc1c27acf8006a285b3"
+    },
+    "gate-backtrace-v2/stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-backtrace-v2/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "gate-backtrace-v2/stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-backtrace-v2/stdout",
+      "sha256": "38988fea1ddc823e24b3b5c00fabe7322e13ca5ae3d33caf9a220cad862c32ac"
+    },
+    "gate-observation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-observation-v1/result.json",
+      "sha256": "35f745c487c1e3f9674b581c46bcf2c31e0e3e55bd5f064ddbc571ad5f9c0301"
+    },
+    "gate-observation-v2/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-observation-v2/result.json",
+      "sha256": "baa89da324f914db9b9961a82d9552017485b54e75599c3005f00a5e90014efe"
+    },
+    "gate-observation-v3/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-observation-v3/result.json",
+      "sha256": "310adb9977805317a4e7be2bf139e251b694382fad31fa50bb84842a9ee6ab7b"
+    },
+    "gate-observer-preparation-v2.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-observer-preparation-v2.json",
+      "sha256": "fc11b255d067ccd583a92b134f9196dec48ed85663114c03d96dfbce1fb96cba"
+    },
+    "gate-profile-v1/report.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-profile-v1/report.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "gate-profile-v1/report.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-profile-v1/report.stdout",
+      "sha256": "79018b51cfbc0da7cd881da805988c376a06502e41bca69968f0f527d4e7c1aa"
+    },
+    "gate-profile-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-profile-v1/result.json",
+      "sha256": "5b2871ab3745994c6d0ccfb091ebba29a772f82578e8352b96322311ab66a67e"
+    },
+    "gate-profile-v1/sample.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-profile-v1/sample.stderr",
+      "sha256": "96fc3f36485809ae98a6d75ac174428b85cdc3e1b1557cfae7b5ba140ae60139"
+    },
+    "gate-profile-v1/sample.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-profile-v1/sample.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "neck-observer-preparation-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/neck-observer-preparation-v1.json",
+      "sha256": "291187733432e053472e4be7d7866e1798c34a848c8e357b5f5aaab3be6f05b3"
+    },
+    "observe_gate_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/observe_gate_v1.py",
+      "sha256": "0509c4f1e0133f2c380e245854071a34036e5e927c52ad210041d73e01ad1eac"
+    },
+    "observe_gate_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/observe_gate_v2.py",
+      "sha256": "7f36483ef8c7c69f8f71eb2c977a2b51ec436f91a4c700d96876ca3e0d0f62f3"
+    },
+    "observe_gate_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/observe_gate_v3.py",
+      "sha256": "620d1ad2e1eaeb78999e2ede7dd7b6a71a972c14264d5c4f8edf5f1acc15e7ec"
+    },
+    "prepare_aggregation_recovery_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_aggregation_recovery_v1.py",
+      "sha256": "79238986e1dd4ae0031a2366b220bd6175e6e25e9514316f45f68c2c158dec95"
+    },
+    "prepare_candidate_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_candidate_v1.py",
+      "sha256": "7a27f0a5ee1554f8b87c4088dae2cf23d0ca1bd04b8b699e04ffc73cd77cf1af"
+    },
+    "prepare_candidate_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_candidate_v2.py",
+      "sha256": "fa6dda4b0e95c78dffbb575d5dc86a209d23c83f33a3823563aab96bfb33ea93"
+    },
+    "prepare_candidate_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_candidate_v3.py",
+      "sha256": "de60600863edec6117c3472ccffb400b348fe0d8d519076e9240fdd17e55ecc0"
+    },
+    "prepare_candidate_v4.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_candidate_v4.py",
+      "sha256": "7bf216ce940d648813462bde9fbf2ef8fe4fe7e7a3fd945040eafbb52a040a04"
+    },
+    "prepare_cost_preflight_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_cost_preflight_v2.py",
+      "sha256": "b8885182da35d619e009f8ddc63b3b007996320400439f1c0b6d1a1fd50e8608"
+    },
+    "prepare_cost_preflight_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_cost_preflight_v3.py",
+      "sha256": "ada0443e71f3e19d851c3dba8bdb7ab81102151526daa6a5b3f9e4c2c10a78a7"
+    },
+    "prepare_cost_probe_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_cost_probe_v1.py",
+      "sha256": "5409af18751e2b3ce44cf43b2efc18501cd8c88a620119b718e84e44c36e7df7"
+    },
+    "prepare_gate_observation_v2.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_gate_observation_v2.py",
+      "sha256": "36a933550af04866d4e8cb74d43c65a156cff169c019c64a819ec17b379a41e3"
+    },
+    "prepare_neck_observation_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_neck_observation_v1.py",
+      "sha256": "668cbb817aad8572e193083fec22dad54e92bf5bfcaf864f2853eb46a37466d1"
+    },
+    "prepare_provenance_probe_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_provenance_probe_v1.py",
+      "sha256": "4edf3b9146f6420625420249971e88c89aec39ae77d29dd38e15927840c307e7"
+    },
+    "prepare_report_probe_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_report_probe_v1.py",
+      "sha256": "9b12c1796ae53ce9fe12a78795ba56cc3e0191055bedfb09dd25aa792cde7bdd"
+    },
+    "prepare_stop_v4.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_stop_v4.py",
+      "sha256": "a5d367cb09234bd4de93961a762108b0ae89e6d80d02a7f0855534c1d641c1f7"
+    },
+    "prepare_validation_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_validation_v1.py",
+      "sha256": "3d7affeb6cedb99fb173be1c504ea25609e645652ff3fca311d72ab66d52b033"
+    },
+    "probe-source-v1/archived-frontier.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v1/archived-frontier.rs",
+      "sha256": "84f86db87c666e019b54bad7bff57cbbb290fe23960cc891966134cddd0a7b74"
+    },
+    "probe-source-v1/current-source-failures.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v1/current-source-failures.rs",
+      "sha256": "ad3a266e19ab3e3256eb6aef76751efe05cda45fcd885f81313ccaaebc377279"
+    },
+    "probe-source-v2/kicad_native_aggregation.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v2/kicad_native_aggregation.rs",
+      "sha256": "083a9b5d5b28529e4736438a0fef937e761df9f15713b1f6f71212135040f443"
+    },
+    "probe-source-v3/kicad_native_aggregation.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v3/kicad_native_aggregation.rs",
+      "sha256": "0a82eafa095404051b55de47635cbc9d1c840d1ce31c1d0c260811cf79a484c3"
+    },
+    "probe-source-v4/kicad_native_aggregation.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/probe-source-v4/kicad_native_aggregation.rs",
+      "sha256": "d9d3ae95bc547a4ba5fefa0adfbe9d86fd29f5c4f54b5ec9c31e616ab8bbddb6"
+    },
+    "profile_gate_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/profile_gate_v1.py",
+      "sha256": "abf7ed8cdc06a6ce5f9163467cabd40c334fa101450d355f779039e5f5001f67"
+    },
+    "provenance-probe-preparation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/provenance-probe-preparation-v1/result.json",
+      "sha256": "f40cded5532e79a246dbab93d36479a39e22a22e1becd98acd107af6ecd28633"
+    },
+    "report-probe-preparation-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/report-probe-preparation-v1/result.json",
+      "sha256": "afa0e865f1210da2f70ee879f049a2e2ea9ae23708399f92c10213e5755e33a8"
+    },
+    "report-source-contract-v1.md": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/report-source-contract-v1.md",
+      "sha256": "abc1326d5c632c05ce8deaea09e435d14f4b467d46e901eda03b02b145e6b4f7"
+    },
+    "reproduce_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduce_v1.py",
+      "sha256": "b809076afe59b0da815fab083a631cbb46abe5d626cb0393690e81ac3a2793e6"
+    },
+    "reproduction-v1/archived-frontier-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/archived-frontier-compile.resources",
+      "sha256": "5234a64645847a4bdf4b687b7516673b180a50c159fcc073515ff9f877cb4074"
+    },
+    "reproduction-v1/archived-frontier-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/archived-frontier-compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reproduction-v1/archived-frontier-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/archived-frontier-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reproduction-v1/archived-frontier.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/archived-frontier.resources",
+      "sha256": "65a60d24411465957eaebbde0c6398a66af267e8f381b55be2ca5dfa690ed3b2"
+    },
+    "reproduction-v1/archived-frontier.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/archived-frontier.stderr",
+      "sha256": "81001fbaaa64062838d1445ec8a261794cc7d601b8f71d862a96365f533cbeb4"
+    },
+    "reproduction-v1/archived-frontier.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/archived-frontier.stdout",
+      "sha256": "05f4d3e5e12463244d840d404205d5e5bcd4d712810b37e582bd4056190fd34f"
+    },
+    "reproduction-v1/commands.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/commands.json",
+      "sha256": "ae52693ce8f9ae592b20b5232032858bf43c02bccc9e8bb336559277d2b54392"
+    },
+    "reproduction-v1/current-source-failures-compile.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/current-source-failures-compile.resources",
+      "sha256": "be697527afb2882326041ab797c59d3ea9192c034e37550a817eb50df39457fb"
+    },
+    "reproduction-v1/current-source-failures-compile.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/current-source-failures-compile.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reproduction-v1/current-source-failures-compile.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/current-source-failures-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reproduction-v1/current-source-failures.resources": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/current-source-failures.resources",
+      "sha256": "70073e40b1703041ad90ff0bb03a2a3a6232d677a5cb53304ed240bd39831b14"
+    },
+    "reproduction-v1/current-source-failures.stderr": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/current-source-failures.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reproduction-v1/current-source-failures.stdout": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/current-source-failures.stdout",
+      "sha256": "bc94d437bd522dc3db8104136ee3e03b0763f9f52dbf4168023d8612285df761"
+    },
+    "reproduction-v1/protocol.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/protocol.json",
+      "sha256": "bb7acffc4191c7097960af4856c7e5519193be076af968fbba55269bab74c52d"
+    },
+    "reproduction-v1/result.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/result.json",
+      "sha256": "63ba3b5db166dc1abeb402b0c65886a7d6902f0a2e48a4614c440310d5ba4c2b"
+    },
+    "reproduction-v1/source-hashes.json.gz": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/reproduction-v1/source-hashes.json.gz",
+      "sha256": "aa5c2b3a4f8a55b6859db808a850dcb203c215fb70d6ee068dd8d54b56bd5a0c"
+    },
+    "source_cost_body_v1.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/source_cost_body_v1.rs",
+      "sha256": "59fc677d0efb4fefdc659d3b3add4cae56adc463e3f2f93c8d3c5c03180421be"
+    },
+    "source_cost_probe_v1.rs": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/source_cost_probe_v1.rs",
+      "sha256": "e7a16b75c51697ee01f67ae15359c6d542c7c4d3950e1cac8857e99263b71bf3"
+    },
+    "stop_candidate_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/stop_candidate_v3.py",
+      "sha256": "3c422ec652f37d72a222d70be3942e144057a0ac046829c0d6ed6cadbdaef237"
+    },
+    "stop_candidate_v4.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/stop_candidate_v4.py",
+      "sha256": "c9a34ba580041386115d2e288f8a4a98a7dc577621934d2f1f05e8f515864712"
+    },
+    "terminal-observations-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/terminal-observations-v1.json",
+      "sha256": "709dcc18da592c142d44c99ef019cee9e6c4c71a8356428ab5bd451fe97104f8"
+    },
+    "terminal-observations-v2.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/terminal-observations-v2.json",
+      "sha256": "1cad17595dcee1d6f7fc951cfb94333be19034dd07c24c61e54b1ba8d300cdd2"
+    },
+    "validation-preparation-v1.json": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/validation-preparation-v1.json",
+      "sha256": "7ecf3113537cb0ef358088e7c53b1e844e8047d7c8132cfb501c50ad3fa5cda7"
+    },
+    "validation_common_v1.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/validation_common_v1.py",
+      "sha256": "add51ef654707ea81e2f7dd69fc8c0bd04caf9d42329a0d78c5473bf68b990ae"
+    },
+    "validation_common_v3.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/validation_common_v3.py",
+      "sha256": "51098d6b0d7c49af3ad628ab5079c4d8fd6af2033d5452fc1bfd546a0f002d02"
+    },
+    "validation_common_v4.py": {
+      "original": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/validation_common_v4.py",
+      "sha256": "a5028972e89acf3bbf84c372460ec696b04b97f691f3b1194512a98a5dc68e06"
+    }
+  },
+  "source_changes_applied": false,
+  "status": "rejected: exact track ingress exceeds preserved full-board and copper-neck resource contracts",
+  "verified_command_records": [
+    {
+      "exit_code": 0,
+      "folder": "aggregation-reproduction-v1",
+      "name": "compile"
+    },
+    {
+      "exit_code": 101,
+      "folder": "aggregation-reproduction-v1",
+      "name": "aggregation"
+    },
+    {
+      "exit_code": 0,
+      "folder": "aggregation-reproduction-v2",
+      "name": "compile"
+    },
+    {
+      "exit_code": 101,
+      "folder": "aggregation-reproduction-v2",
+      "name": "aggregation"
+    },
+    {
+      "exit_code": 0,
+      "folder": "aggregation-reproduction-v3",
+      "name": "compile"
+    },
+    {
+      "exit_code": 101,
+      "folder": "aggregation-reproduction-v3",
+      "name": "aggregation"
+    },
+    {
+      "exit_code": 0,
+      "folder": "baseline-acceptance-v1",
+      "name": "kicad_native_strokes-compile"
+    },
+    {
+      "exit_code": 101,
+      "folder": "baseline-acceptance-v1",
+      "name": "zero-budget-fresh-process"
+    },
+    {
+      "exit_code": 101,
+      "folder": "baseline-acceptance-v1",
+      "name": "kicad_native_strokes"
+    },
+    {
+      "exit_code": 0,
+      "folder": "baseline-acceptance-v1",
+      "name": "kicad_track_failures-compile"
+    },
+    {
+      "exit_code": 101,
+      "folder": "baseline-acceptance-v1",
+      "name": "kicad_track_failures"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v1",
+      "name": "format"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v1",
+      "name": "native-build"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v1",
+      "name": "cold-zero-budget"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v1",
+      "name": "native-strokes"
+    },
+    {
+      "exit_code": 101,
+      "folder": "candidate-validation-v1",
+      "name": "source-failures"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v3",
+      "name": "format"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v3",
+      "name": "native-build"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v3",
+      "name": "cold-zero-budget"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v3",
+      "name": "native-strokes"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v3",
+      "name": "source-failures"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v3",
+      "name": "native-aggregation"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v4",
+      "name": "format"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v4",
+      "name": "native-build"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v4",
+      "name": "cold-zero-budget"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v4",
+      "name": "native-strokes"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v4",
+      "name": "source-failures"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v4",
+      "name": "native-aggregation"
+    },
+    {
+      "exit_code": 101,
+      "folder": "candidate-validation-v4",
+      "name": "full-board"
+    },
+    {
+      "exit_code": 101,
+      "folder": "candidate-validation-v4",
+      "name": "copper-neck"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v4",
+      "name": "gerber"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v4",
+      "name": "native-tests"
+    },
+    {
+      "exit_code": 101,
+      "folder": "candidate-validation-v4",
+      "name": "clippy"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v4",
+      "name": "docs"
+    },
+    {
+      "exit_code": 0,
+      "folder": "candidate-validation-v4",
+      "name": "native-cli"
+    },
+    {
+      "exit_code": 1,
+      "folder": "cost-preflight-v2",
+      "name": "baseline-compile"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v2",
+      "name": "candidate-v3-compile"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v2",
+      "name": "candidate-v3-empty"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v2",
+      "name": "candidate-v3-coincident_disk"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v2",
+      "name": "candidate-v3-axis"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v2",
+      "name": "candidate-v3-rational_diagonal"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v2",
+      "name": "candidate-v3-surd_diagonal"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v2",
+      "name": "candidate-v3-decimal_translation"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v2",
+      "name": "candidate-v3-subrange"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v2",
+      "name": "candidate-v3-superrange"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v2",
+      "name": "candidate-v3-disjoint_disks"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v3",
+      "name": "baseline-compile"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v3",
+      "name": "baseline-empty"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v3",
+      "name": "baseline-coincident_disk"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v3",
+      "name": "baseline-axis"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v3",
+      "name": "baseline-rational_diagonal"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v3",
+      "name": "baseline-surd_diagonal"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v3",
+      "name": "baseline-decimal_translation"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v3",
+      "name": "baseline-subrange"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v3",
+      "name": "baseline-superrange"
+    },
+    {
+      "exit_code": 0,
+      "folder": "cost-preflight-v3",
+      "name": "baseline-disjoint_disks"
+    },
+    {
+      "exit_code": 0,
+      "folder": "reproduction-v1",
+      "name": "archived-frontier-compile"
+    },
+    {
+      "exit_code": 101,
+      "folder": "reproduction-v1",
+      "name": "archived-frontier"
+    },
+    {
+      "exit_code": 0,
+      "folder": "reproduction-v1",
+      "name": "current-source-failures-compile"
+    },
+    {
+      "exit_code": 0,
+      "folder": "reproduction-v1",
+      "name": "current-source-failures"
+    }
+  ]
+}

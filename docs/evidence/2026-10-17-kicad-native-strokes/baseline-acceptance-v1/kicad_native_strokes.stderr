@@ -1,0 +1,54 @@
+
+thread 'exact_diagonal_track_area_includes_caps_without_rounding_the_width' (62) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs:11:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 1125899906842625, denominator: 1125899906842624 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 100 }, class: ConstOffset(ConstOffsetClass { pi_power: 1, exp_power: Rational { sign: NoSign, numerator: 0, denominator: 1 }, offset: Rational { sign: Plus, numerator: 100, denominator: 1 } }), computable: Some(Computable { internal: Node { facts: AtomicFacts(25769936695), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(100), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'fresh_zero_budget_load_retains_native_rational_direction_certificates' (63) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs:11:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 202824096036516676767514785900135, denominator: 20282409603651670423947251286016 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: ConstOffset(ConstOffsetClass { pi_power: 1, exp_power: Rational { sign: NoSign, numerator: 0, denominator: 1 }, offset: Rational { sign: Plus, numerator: 10, denominator: 1 } }), computable: Some(Computable { internal: Node { facts: AtomicFacts(12885034807), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(10), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+thread 'irrational_diagonal_track_keeps_line_and_arc_geometry' (64) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs:11:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 1592262918131443, denominator: 562949953421312 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: Irrational, computable: Some(Computable { internal: Node { facts: AtomicFacts(198407), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295033655), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(823), approximation: Sqrt(Computable { internal: Node { facts: AtomicFacts(4294967863), approximation: Int(2), cache: None }, signal: None }), cache: Some((-5, 45)) }, signal: None }, 1), cache: Some((-4, 45)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }), cache: Some((-2, 24)) }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+thread 'kicad_linear_tracks_include_both_round_caps' (65) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs:11:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: ConstOffset(ConstOffsetClass { pi_power: 1, exp_power: Rational { sign: NoSign, numerator: 0, denominator: 1 }, offset: Rational { sign: Plus, numerator: 4, denominator: 1 } }), computable: Some(Computable { internal: Node { facts: AtomicFacts(8590067511), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(4), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+thread 'source_strokes_retain_strict_receipts_inside_approximate_and_preview_scopes' (66) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs:11:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 1592262918131443, denominator: 562949953421312 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: Irrational, computable: Some(Computable { internal: Node { facts: AtomicFacts(198407), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295033655), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(823), approximation: Sqrt(Computable { internal: Node { facts: AtomicFacts(4294967863), approximation: Int(2), cache: None }, signal: None }), cache: Some((-5, 45)) }, signal: None }, 1), cache: Some((-4, 45)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }), cache: Some((-2, 24)) }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+thread 'tangent_track_caps_do_not_create_filled_overlap' (67) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs:143:5:
+assertion `left == right` failed
+  left: Ok(Outside)
+ right: Ok(Boundary)
+
+thread 'track_caps_drive_actual_short_readiness' (68) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs:130:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+thread 'track_decimal_endpoints_and_width_are_never_rounded_first' (69) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs:32:12:
+called `Result::unwrap()` on an `Err` value: failed to load tracks from /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/hyperdrc-linear-source-61-9.kicad_pcb
+
+Caused by:
+    KiCad segment 1: unsupported finite track geometry: positive-width track collapsed in the finite adapter
+
+thread 'track_subrange_width_and_length_remain_nonzero' (70) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs:32:12:
+called `Result::unwrap()` on an `Err` value: failed to load tracks from /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/hyperdrc-linear-source-61-10.kicad_pcb
+
+Caused by:
+    KiCad segment 1: unsupported finite track geometry: positive width is outside the finite adapter range
+
+thread 'track_superrange_coordinates_stay_native' (71) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v1/crates/hyperdrc/tests/kicad_native_strokes.rs:32:12:
+called `Result::unwrap()` on an `Err` value: failed to load tracks from /home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/baseline-acceptance-v1/hyperdrc-linear-source-61-11.kicad_pcb
+
+Caused by:
+    KiCad segment 1: unsupported finite track geometry: endpoint is outside the finite adapter range

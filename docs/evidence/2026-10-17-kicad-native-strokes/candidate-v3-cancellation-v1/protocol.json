@@ -1,0 +1,116 @@
+{
+  "runner_sha256": "3c422ec652f37d72a222d70be3942e144057a0ac046829c0d6ed6cadbdaef237",
+  "observation_sha256": "35f745c487c1e3f9674b581c46bcf2c31e0e3e55bd5f064ddbc571ad5f9c0301",
+  "reason": "Rejected candidate exceeded 120 seconds total worker CPU while still at first layer-sanity; source report decomposition is not retained.",
+  "ancestors": [
+    {
+      "pid": 1276193,
+      "args": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v3/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1",
+        ""
+      ],
+      "stat": "1276193 (hyperdrc-f2524b) S 1276156 1276155 1276154 0 -1 4194304 435900 345 0 2 19540 134 6 1 20 0 2 0 277162781 1765416960 411332 18446744073709551615 94102403553216 94102435888272 140737295838144 0 0 0 0 4096 1088 0 0 0 17 14 0 0 0 0 0 94102437136992 94102437350832 94102526574592 140737295844689 140737295844945 140737295844945 140737295855467 0\n"
+    },
+    {
+      "pid": 1276156,
+      "args": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1",
+        ""
+      ],
+      "stat": "1276156 (cargo) S 1276155 1276155 1276154 0 -1 4194304 16742 0 0 0 10 4 0 0 20 0 2 0 277162766 231088128 19322 18446744073709551615 94834557296000 94834581954848 140734944928928 0 0 0 0 4096 1600 0 0 0 17 11 0 0 0 0 0 94834583108216 94834583177856 94835396448256 140734944934658 140734944934914 140734944934914 140734944944049 0\n"
+    },
+    {
+      "pid": 1276155,
+      "args": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1800s",
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1",
+        ""
+      ],
+      "stat": "1276155 (timeout) S 1276154 1276155 1276154 0 -1 4194304 105 0 0 0 0 0 0 0 20 0 1 0 277162766 236335104 483 18446744073709551615 94793307209728 94793307230113 140731863926976 0 0 0 0 3145728 90119 1 0 0 17 14 0 0 0 0 0 94793307245040 94793307247192 94793606201344 140731863936035 140731863936271 140731863936271 140731863945191 0\n"
+    },
+    {
+      "pid": 1276154,
+      "args": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-validation-v3/full-board.resources",
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1800s",
+        "cargo",
+        "test",
+        "--offline",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--release",
+        "--all-features",
+        "--lib",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1",
+        ""
+      ],
+      "stat": "1276154 (time) S 1224406 1276154 1276154 0 -1 4194304 209 0 0 0 0 0 0 0 20 0 1 0 277162766 2633728 381 18446744073709551615 93890241073152 93890241080445 140727003380128 0 0 0 0 6 0 1 0 0 17 5 0 0 0 0 0 93890241092528 93890241093952 93890616414208 140727003388819 140727003389202 140727003389202 140727003398122 0\n"
+    },
+    {
+      "pid": 1224406,
+      "args": [
+        "python3",
+        "target/properties/kicad-native-strokes/candidate_v3.py",
+        ""
+      ],
+      "stat": "1224406 (python3) S 1883277 1224406 1224406 0 -1 4194304 9956 9461784 0 1765 237 48 66511 2460 20 0 1 0 277127283 260390912 4782 18446744073709551615 94512900550656 94512900551865 140730818214224 0 0 0 0 16781312 2 1 0 0 17 11 0 0 0 0 0 94512900562280 94512900562948 94513637187584 140730818219575 140730818219638 140730818219638 140730818228199 0\n"
+    }
+  ],
+  "intended_signals": [
+    {
+      "pid": 1224406,
+      "signal": "SIGINT"
+    },
+    {
+      "pid": 1276193,
+      "signal": "SIGTERM"
+    }
+  ],
+  "test_assertion_completed": false,
+  "full_board_admitted": false,
+  "remaining_commands_attempted": false
+}

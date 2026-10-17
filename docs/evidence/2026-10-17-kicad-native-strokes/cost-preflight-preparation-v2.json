@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "runner_sha256": "b8885182da35d619e009f8ddc63b3b007996320400439f1c0b6d1a1fd50e8608",
+  "v1_exit": 1,
+  "v1_error": "Baseline dependency directory contains multiple serde_json feature builds; no compilation or measurement ran.",
+  "v1_runner_sha256": "266dccc4d38d75ea314b2dfce54789a44ce8e803f621d0e5a464764f8b1a1c48",
+  "v2_runner_sha256": "ba2256b56ecc64c0a6b001725de1626047cab97605ca583156cb7fff1eaf27aa"
+}

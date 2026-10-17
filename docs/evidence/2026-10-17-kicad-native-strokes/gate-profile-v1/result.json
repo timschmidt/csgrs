@@ -1,0 +1,53 @@
+{
+  "complete": true,
+  "runner_sha256": "abf7ed8cdc06a6ce5f9163467cabd40c334fa101450d355f779039e5f5001f67",
+  "observation_sha256": "baa89da324f914db9b9961a82d9552017485b54e75599c3005f00a5e90014efe",
+  "pid": 1394089,
+  "exe_sha256": "b5e00062cbb1202ab87c9e0438c40776b0825ca3e30845d364f760d53e01f0cd",
+  "commands": [
+    {
+      "name": "sample",
+      "command": [
+        "perf",
+        "record",
+        "-F",
+        "99",
+        "-g",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-profile-v1/perf.data",
+        "-p",
+        "1394089",
+        "--",
+        "sleep",
+        "3"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.168357109185308
+    },
+    {
+      "name": "report",
+      "command": [
+        "perf",
+        "report",
+        "--stdio",
+        "--no-children",
+        "--sort",
+        "symbol",
+        "--percent-limit",
+        "1",
+        "-i",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/gate-profile-v1/perf.data"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.564710752107203
+    }
+  ],
+  "profiled_run_is_not_performance_admission_evidence": true,
+  "file_sha256": {
+    "report.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf.data": "90329f7c5633ba0cda607b1ec1aab41e489935cf16465b844db98061e6ac9394",
+    "report.stdout": "79018b51cfbc0da7cd881da805988c376a06502e41bca69968f0f527d4e7c1aa",
+    "sample.stderr": "96fc3f36485809ae98a6d75ac174428b85cdc3e1b1557cfae7b5ba140ae60139",
+    "sample.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

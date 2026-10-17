@@ -1,0 +1,19 @@
+
+running 8 tests
+test canonical_empty_and_complete_subtraction_remain_composable ... ok
+test holes_overlaps_and_disconnected_material_keep_set_semantics ... ok
+test layer_selection_metadata_and_mutation_do_not_reuse_stale_geometry ... ok
+test malformed_input_cannot_hide_behind_empty_or_layer_aggregation ... ok
+test native_quadratic_and_linear_components_share_aggregation ... ok
+test subrange_stroke_composes_without_a_finite_report_ring ... FAILED
+test superrange_stroke_survives_empty_accumulation_and_native_handoff ... FAILED
+test warmed_aggregation_cannot_escape_exhaustion_and_retry_recovers ... ok
+
+failures:
+
+failures:
+    subrange_stroke_composes_without_a_finite_report_ring
+    superrange_stroke_survives_empty_accumulation_and_native_handoff
+
+test result: FAILED. 6 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

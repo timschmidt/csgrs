@@ -1,0 +1,38 @@
+{
+  "complete": true,
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-source-v3",
+  "source_inputs": 2837,
+  "source_hashes_sha256": "9a7497c51d6f87393a9ebbd46bf2039e5e24e48db9f19def0a76622a6805dd11",
+  "changed_from_v1": {
+    "crates/hyperdrc/README.md": {
+      "before": "067021727b2128a590ececf23dbc9eb4ebc26687e7bdaa5681c7a435e295e335",
+      "after": "b783db55a7c24718f469ca7054c39ad674e375555b63ef93b4c2255c92690852"
+    },
+    "crates/hyperdrc/src/geometry.rs": {
+      "before": "78b4627d7c179e8b02bd52fa2088bd18b3448fca8c475e79ea209f8523a794c4",
+      "after": "3f9c92a62a521048ce8e0fa57ca087a90c50bcd860911722f2093c4097f4811a"
+    },
+    "crates/hyperdrc/src/geometry/region.rs": {
+      "before": "30bde9e11a6a3a5a3de95c547604233e85dc8cdb4d88fb7b563bc6b86ca22fe1",
+      "after": "19729612fbf1b462d467b484fc53db1d63d4e49869012b556e5b1c56fc45322c"
+    },
+    "crates/hyperdrc/src/kicad/model.rs": {
+      "before": "1768d7d541f9b656b362547caa4925aea8024c65767e70d6d097c081832334db",
+      "after": "9354d7c38250a5162700a441e23b94004c60be8e6dfa8e89eba41a3c31844ded"
+    },
+    "crates/hyperdrc/tests/kicad_native_aggregation.rs": {
+      "before": null,
+      "after": "9be64a2fcd59278f464cc27a430c53a7754124e95f47142ef71e3fe709a26311"
+    }
+  },
+  "preparation_runner": "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/prepare_candidate_v3.py",
+  "preparation_runner_sha256": "de60600863edec6117c3472ccffb400b348fe0d8d519076e9240fdd17e55ecc0",
+  "preparation_exit": 1,
+  "preparation_assertion": "Byte-identical test guard rejected cargo fmt wrapping and optional trailing commas.",
+  "finalizer_sha256": "7b9088a71db4d6e4905762798cc442297cd46742e04e8e0fb647c3fff0bf2c04",
+  "test_contract_unchanged": true,
+  "format_exit": 0,
+  "all_source_bytes_unchanged_by_finalizer": true,
+  "main_sources_modified": false,
+  "native_runtime_admitted": false
+}

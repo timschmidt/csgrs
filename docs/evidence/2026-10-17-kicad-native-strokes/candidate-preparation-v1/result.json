@@ -1,0 +1,32 @@
+{
+  "complete": true,
+  "base_commit": "a843bf79dfe329fb51ababaaf803752bb74a0f64",
+  "source_inputs": 2836,
+  "source_hashes_sha256": "10eef836a7122008bb0aa8ce3e39b2df94f42a88a66e5fc3e52adf3e20f97e05",
+  "changes": {
+    "crates/hyperdrc/README.md": "067021727b2128a590ececf23dbc9eb4ebc26687e7bdaa5681c7a435e295e335",
+    "crates/hyperdrc/src/kicad/tracks.rs": "372b521efbf7aa96b5fbd4ad7594f4dd1dac62a87dd4a74a2edd19d37bd76a71",
+    "crates/hyperdrc/src/readiness.rs": "be41561ba67c1603355e1d2bc5c035fd1f43095f252b143d8801133b511f8036",
+    "crates/hyperdrc/tests/kicad_track_failures.rs": "baa05c67102d66fd63ece12cd90d01a7b0f8e4dafda58330d3fdd624226bfbe0",
+    "crates/hyperdrc/tests/kicad_native_strokes.rs": "e716ca93d0736ab20db5f9ee54ff7d6d8dbf7c14dee0685b070b346a25264ce1"
+  },
+  "runner_sha256": "7a27f0a5ee1554f8b87c4088dae2cf23d0ca1bd04b8b699e04ffc73cd77cf1af",
+  "archived_track_tests_preserved_byte_identically": [
+    "kicad_linear_tracks_include_both_round_caps",
+    "track_decimal_endpoints_and_width_are_never_rounded_first",
+    "track_subrange_width_and_length_remain_nonzero",
+    "track_superrange_coordinates_stay_native",
+    "exact_diagonal_track_area_includes_caps_without_rounding_the_width",
+    "irrational_diagonal_track_keeps_line_and_arc_geometry",
+    "track_caps_drive_actual_short_readiness",
+    "tangent_track_caps_do_not_create_filled_overlap"
+  ],
+  "readiness_version_migration": [
+    21,
+    22
+  ],
+  "unsupported_range_expectation_explicitly_migrated": true,
+  "main_sources_modified": false,
+  "native_runtime_admitted": false,
+  "full_plan_complete": false
+}

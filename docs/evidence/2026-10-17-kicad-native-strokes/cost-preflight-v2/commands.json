@@ -1,0 +1,194 @@
+[
+  {
+    "name": "baseline-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/libhyperdrc.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libanyhow-af4f35109210643f.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/native-stroke-completion/consumer-target-v1/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/source_cost_probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/baseline-probe"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 0.039256170857697725,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "9acef02ead64f477bc0ed94470f5434394cac9eb4697e1684061a3fdd7a12e21",
+    "resources_sha256": "04baf8998e771cedc23a2f17c21c3ab28c565d365a694bc771ee307cf7a48c8f"
+  },
+  {
+    "name": "candidate-v3-compile",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-D",
+      "warnings",
+      "-C",
+      "opt-level=3",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v3/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v3/release/deps/libhyperdrc-a3de6c11c183673a.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v3/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v3/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v3/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "anyhow=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v3/release/deps/libanyhow-af4f35109210643f.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/candidate-target-v3/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/source_cost_probe_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-probe"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8929559881798923,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "3106c687c600d1ad5ca06c5e92a8663c1772ca677a18fd98503065aa9f660ba6"
+  },
+  {
+    "name": "candidate-v3-empty",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-probe",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/00-empty.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-empty.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.005285727325826883,
+    "stdout_sha256": "2ad6d0a3d7e4fba43852c2759c04cdb427c4353aef2a45e100107135a888aed7",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "85e2759336bb3789cf1ecf0adb3d87ba0e3ba28e24ebe7efa01c4194c5607a39"
+  },
+  {
+    "name": "candidate-v3-coincident_disk",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-probe",
+      "1",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/01-coincident_disk.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-coincident_disk.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01608011405915022,
+    "stdout_sha256": "7f1ddd48e77262de1dfeceea22f81ca129e43e57f31287be7f8278c57d98a6d1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "f7bc6e476ebf79aa9d940f2ef1bfbddec51e043f29e91e73a3101f5f5b6d3e83"
+  },
+  {
+    "name": "candidate-v3-axis",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-probe",
+      "2",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/02-axis.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-axis.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.022055762819945812,
+    "stdout_sha256": "5839923c30032050bf615bd68edff48d6be831cb356900a12ec21707b6743240",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5369530440becbfd5fd02fabe84220a6f58e3560827313f421bb9c73d57c6c68"
+  },
+  {
+    "name": "candidate-v3-rational_diagonal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-probe",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/03-rational_diagonal.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-rational_diagonal.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.05455661006271839,
+    "stdout_sha256": "479dd9b0d745eb7916d2178cd7e3c563fd98f5095a0fe10f35ff0e2b152ec64b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "07313cbffb4663fbe03585d632321fab23eba47f9d8dc4e21d1f9a355c05f1c7"
+  },
+  {
+    "name": "candidate-v3-surd_diagonal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-probe",
+      "4",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/04-surd_diagonal.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-surd_diagonal.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.2182352878153324,
+    "stdout_sha256": "4fc50d79da61c9998a94707e428291fceca26d1d1ef34cd526cf8657f8420a54",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "5aee6adab7490bde8273462a06e5728582db75ee867013c57b75b69168db5878"
+  },
+  {
+    "name": "candidate-v3-decimal_translation",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-probe",
+      "5",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/05-decimal_translation.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-decimal_translation.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.027509949170053005,
+    "stdout_sha256": "3d4f1c69d8d70f3adc8724fe95a29f358e12c7582ca7835bdfd94f47f1e0d9f1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "97c5f6eeb7b847553c01d2ba1649952266a351ef782aad2e297d6b70ee1ebdff"
+  },
+  {
+    "name": "candidate-v3-subrange",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-probe",
+      "6",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/06-subrange.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-subrange.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0376940593123436,
+    "stdout_sha256": "555aaadc9548cecdd952e005c01eb6e4705942c473a99f345bb9462c68dbeb3d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "47eed19c6b63278fc78d17d9a9993ef2e85cf0540876a61c89a6565b0af0243d"
+  },
+  {
+    "name": "candidate-v3-superrange",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-probe",
+      "7",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/07-superrange.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-superrange.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.02932093385607004,
+    "stdout_sha256": "1efb645b20c367651ae1ef0356986dc3a0c45cc213e5d582e570aae167fbbd97",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "7db55aeda88ece3e896fa82f0ad27d603cc29508ebd6b9dc002da7fe6d2d0ea8"
+  },
+  {
+    "name": "candidate-v3-disjoint_disks",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-probe",
+      "8",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/inputs/08-disjoint_disks.kicad_pcb",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/properties/kicad-native-strokes/cost-preflight-v2/candidate-v3-disjoint_disks.snapshot.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.03758238675072789,
+    "stdout_sha256": "e047932ef99ca40b116dfbfaccbaa2ff1e14be56e96068e71ae814ce17c4caed",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "resources_sha256": "0ac1ddd5c88a12d508545b1fbf2f8e22f2f4774e7d9e7d90e377c3207c2bc2bd"
+  }
+]

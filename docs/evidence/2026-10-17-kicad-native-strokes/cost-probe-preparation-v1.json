@@ -1,0 +1,9 @@
+{
+  "complete": true,
+  "runner_sha256": "5409af18751e2b3ce44cf43b2efc18501cd8c88a620119b718e84e44c36e7df7",
+  "allocator_source": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-17-native-stroke-completion/cost_probe_v2.rs",
+  "allocator_source_sha256": "a964550404cc84a17f662161a29790b367c5de2e2f453751b55723135fdfc820",
+  "body_sha256": "59fc677d0efb4fefdc659d3b3add4cae56adc463e3f2f93c8d3c5c03180421be",
+  "probe_sha256": "e7a16b75c51697ee01f67ae15359c6d542c7c4d3950e1cac8857e99263b71bf3",
+  "measurements_executed": false
+}

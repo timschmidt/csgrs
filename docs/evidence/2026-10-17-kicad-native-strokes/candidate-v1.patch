@@ -1,0 +1,551 @@
+--- a/crates/hyperdrc/README.md
++++ b/crates/hyperdrc/README.md
+@@ -218,7 +218,7 @@
+ Arrow IPC, and Parquet. Review companions include SVG, Gerber, Excellon, DXF,
+ PDF, KiCad markers/rules, IPC-D-356, GenCAD, and IPC-2581 projections.
+ 
+-### Straight-track load failures
++### Exact straight tracks and load failures
+ 
+ The KiCad loader now rejects malformed straight-track `start`, `end`, and
+ `width` fields instead of dropping, defaulting, or truncating them. Each field
+@@ -229,20 +229,29 @@
+ `load_kicad_pcb` keeps its `anyhow::Result<BoardModel>` signature. A caller can
+ downcast the error to `kicad::TrackLoadError` and inspect its zero-based segment
+ index and `TrackLoadFailure`: invalid fields, an undecided width sign, shared
+-budget exhaustion, unsupported finite geometry, or native geometry failure.
++budget exhaustion, unsupported geometry, a structured native `ExactCurveError`,
++or a native geometry validation failure. `TrackLoadFailure::Construction`
++retains the kernel diagnosis through `std::error::Error::source`.
+ No partial board is returned. The CLI reports the source path and diagnosis
+ with exit status 1, including with `--allow-findings`.
+ 
+-This is a failure-contract migration; readiness implementation version 21
+-invalidates version-20 check evidence. Coincident exact endpoints now produce
+-a native disk with radius width/2; these tracks were previously omitted, so
+-their geometry and resulting findings intentionally change. Previously
+-materialized finite track bodies retain their geometry and metadata. Those
+-bodies still come from the legacy finite rectangular adapter: exact round
+-caps, exact coordinate fidelity, and extreme source ranges remain open work. Rejecting a positive-width track that collapses
+-in this adapter makes failure visible; it does not complete that geometry.
+-Other KiCad object families retain their existing contracts. Shared refinement
+-budgets do not bound source parsing, total work, heap bytes, or cancellation.
++Straight tracks now retain exact decimal/scientific endpoints and widths through
++native round-cap construction. Coincident positive-width endpoints denote the
++existing exact disk; distinct endpoints denote the segment's round stroke.
++Endpoint caps, subrange widths and coordinates beyond binary64 range no longer
++depend on the finite rectangular adapter. The selected geometry is certified
++under STRICT even inside an ambient approximate or preview scope, and supports
++checked area, bounds, point queries and native handoff without a report projection.
++
++This is an explicit source-fidelity migration. Previously materialized rectangles
++omitted the round caps and could round coordinates; their represented sets and
++resulting findings can change. Readiness implementation version 22 invalidates
++version-21 check evidence. The original finite-range failure fixtures now require
++successful exact geometry, while malformed-source and budget failures retain
++their typed contracts. Native boundary subdivisions are not source geometry.
++The public finite `geometry::line_polygon` adapter and other KiCad object families
++retain their existing contracts and open limitations. Shared refinement budgets
++do not bound source parsing, total work, heap bytes, or cancellation.
+ 
+ ## Useful API
+ 
+--- a/crates/hyperdrc/src/kicad/tracks.rs
++++ b/crates/hyperdrc/src/kicad/tracks.rs
+@@ -1,14 +1,18 @@
+-//! Checked source fields at the legacy finite straight-track boundary.
++//! Checked exact source fields and native round-capped straight tracks.
+ 
+ use std::cmp::Ordering;
+ use std::collections::HashMap;
+ use std::fmt;
+ 
++use hypercurve::{
++    CurveFamily2, CurveOperation2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, OffsetCap,
++    OffsetCornerStyle2, Point2,
++};
+ use hyperlimit::{PredicatePolicy, compare_reals};
+ use hypersolve::work_budget::{self, BudgetExceeded};
+ 
+ use super::{CopperFeature, CopperKind, midpoint_scalar, net_name};
+-use crate::geometry::{SourceScalar, SourceUnit, line_polygon, polygons_to_profile};
++use crate::geometry::{SourceScalar, SourceUnit};
+ use crate::sexp::Sexp;
+ use crate::{LayerMetadata, PcbGeometryUncertainty, PcbRegion, Scalar};
+ 
+@@ -59,12 +63,14 @@
+     UndecidedWidth,
+     /// A shared work budget denied an operation.
+     BudgetExceeded(BudgetExceeded),
+-    /// Valid source values cannot form nonempty geometry in the finite adapter.
++    /// Valid source values did not produce the required nonempty track geometry.
+     UnsupportedGeometry {
+         /// Failed adapter requirement; this is not a source syntax error.
+         detail: &'static str,
+     },
+-    /// Native construction did not produce usable geometry.
++    /// The native curve constructor retained an invalid-input or exact-blocker diagnosis.
++    Construction(ExactCurveError),
++    /// Native construction or validation did not produce usable geometry.
+     Geometry(PcbGeometryUncertainty),
+ }
+ 
+@@ -88,8 +94,9 @@
+             TrackLoadFailure::UndecidedWidth => write!(f, "width sign is undecided under STRICT"),
+             TrackLoadFailure::BudgetExceeded(error) => write!(f, "{error}"),
+             TrackLoadFailure::UnsupportedGeometry { detail } => {
+-                write!(f, "unsupported finite track geometry: {detail}")
++                write!(f, "unsupported track geometry: {detail}")
+             }
++            TrackLoadFailure::Construction(error) => write!(f, "{error}"),
+             TrackLoadFailure::Geometry(error) => write!(f, "{error}"),
+         }
+     }
+@@ -99,6 +106,7 @@
+     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+         match &self.failure {
+             TrackLoadFailure::BudgetExceeded(error) => Some(error),
++            TrackLoadFailure::Construction(error) => Some(error),
+             TrackLoadFailure::Geometry(error) => Some(error),
+             _ => None,
+         }
+@@ -149,20 +157,6 @@
+         })
+ }
+ 
+-fn finite_point(source: &[SourceScalar; 2]) -> Result<[f64; 2], TrackLoadFailure> {
+-    let point = [
+-        source[0].to_f64_compatibility(),
+-        source[1].to_f64_compatibility(),
+-    ];
+-    check_budget()?;
+-    match point {
+-        [Some(x), Some(y)] if x.is_finite() && y.is_finite() => Ok([x, y]),
+-        _ => Err(TrackLoadFailure::UnsupportedGeometry {
+-            detail: "endpoint is outside the finite adapter range",
+-        }),
+-    }
+-}
+-
+ fn parse_segment(
+     segment: &Sexp,
+     nets: &HashMap<i32, String>,
+@@ -195,22 +189,36 @@
+         check_budget()?;
+         PcbRegion::new(native.map_err(TrackLoadFailure::Geometry)?, metadata)
+     } else {
+-        let start_finite = finite_point(&start)?;
+-        let end_finite = finite_point(&end)?;
+-        // Preserve the existing width conversion for admitted ordinary tracks.
+-        // Its round-cap and coordinate-fidelity limitations remain explicit.
+-        let width = width_field
+-            .f64_at(1)
+-            .filter(|width| width.is_finite() && *width > 0.0)
+-            .ok_or(TrackLoadFailure::UnsupportedGeometry {
+-                detail: "positive width is outside the finite adapter range",
++        // The format defines a round-capped stroke of the exact source line.
++        // STRICT suspends any ambient approximate or preview policy; retain
++        // its receipt and structured construction error before publishing.
++        let native = hypercurve::evaluate_under(PredicatePolicy::STRICT, || {
++            let line = LineSeg2::try_new(
++                Point2::new(start[0].value.clone(), start[1].value.clone()),
++                Point2::new(end[0].value.clone(), end[1].value.clone()),
++            )
++            .map_err(|cause| ExactCurveError::Invalid {
++                operation: CurveOperation2::Construction,
++                family: Some(CurveFamily2::Line),
++                cause,
+             })?;
+-        let polygon = line_polygon(start_finite, end_finite, width);
++            let path = CurvePath2::try_new(vec![line.into()])?;
++            CurveRegion2::stroke_path(
++                &path,
++                crate::scalar::half(&width.value),
++                &OffsetCornerStyle2::Round,
++                OffsetCap::Round,
++            )
++        });
+         check_budget()?;
+-        let polygon = polygon.ok_or(TrackLoadFailure::UnsupportedGeometry {
+-            detail: "positive-width track collapsed in the finite adapter",
++        let native = native.certified().ok_or_else(|| {
++            TrackLoadFailure::Geometry(crate::operations::failure(
++                "linear-stroke-construction",
++                None,
++                "missing STRICT receipt",
++            ))
+         })?;
+-        polygons_to_profile(vec![polygon], metadata)
++        PcbRegion::new(native.map_err(TrackLoadFailure::Construction)?, metadata)
+     };
+     let empty = region.try_is_empty();
+     check_budget()?;
+--- a/crates/hyperdrc/src/readiness.rs
++++ b/crates/hyperdrc/src/readiness.rs
+@@ -12,7 +12,7 @@
+ pub const CHECK_REGISTRY_VERSION: u32 = 1;
+ 
+ /// Version of shared check execution and geometry-uncertainty reporting semantics.
+-pub const CHECK_IMPLEMENTATION_VERSION: u32 = 21;
++pub const CHECK_IMPLEMENTATION_VERSION: u32 = 22;
+ 
+ /// Opinionated default check plan used by both CLI and native callers.
+ pub fn default_checks() -> &'static [Check] {
+--- /dev/null
++++ b/crates/hyperdrc/tests/kicad_native_strokes.rs
+@@ -0,0 +1,213 @@
++use hypercurve::RegionPointLocation::{Boundary, Inside, Outside};
++use hyperdrc::Scalar;
++use hyperdrc::kicad::{BoardModel, CopperKind, load_kicad_pcb};
++use std::sync::atomic::{AtomicU64, Ordering};
++
++fn scalar(token: &str) -> Scalar {
++    token.parse().unwrap()
++}
++
++fn same(actual: &Scalar, expected: &Scalar) {
++    assert_eq!(
++        hyperlimit::compare_reals(actual, expected, hyperlimit::PredicatePolicy::STRICT).value(),
++        Some(std::cmp::Ordering::Equal),
++        "actual={actual:?}, expected={expected:?}"
++    );
++}
++
++fn board(fields: &str) -> BoardModel {
++    static SEQUENCE: AtomicU64 = AtomicU64::new(0);
++    let path = std::env::temp_dir().join(format!(
++        "hyperdrc-linear-source-{}-{}.kicad_pcb",
++        std::process::id(),
++        SEQUENCE.fetch_add(1, Ordering::Relaxed)
++    ));
++    std::fs::write(
++        &path,
++        format!("(kicad_pcb (net 1 signal) (segment (layer F.Cu) (net 1) {fields}))"),
++    )
++    .unwrap();
++    let result = load_kicad_pcb(&path);
++    std::fs::remove_file(path).unwrap();
++    result.unwrap()
++}
++
++#[test]
++fn kicad_linear_tracks_include_both_round_caps() {
++    let board = board("(start 0 0) (end 2 0) (width 2)");
++    assert_eq!(board.copper.len(), 1);
++    let feature = &board.copper[0];
++    assert_eq!(feature.kind, CopperKind::Segment);
++    assert_eq!(feature.net.as_deref(), Some("signal"));
++    same(
++        &feature.region.try_area().unwrap(),
++        &(Scalar::from(4) + Scalar::pi()),
++    );
++    for (x, expected) in [
++        ("-1", Boundary),
++        ("-0.5", Inside),
++        ("3", Boundary),
++        ("3.00001", Outside),
++    ] {
++        assert_eq!(
++            feature.region.classify_xy(scalar(x), Scalar::zero()),
++            Ok(expected)
++        );
++    }
++}
++
++#[test]
++fn track_decimal_endpoints_and_width_are_never_rounded_first() {
++    let board = board(
++        "(start 9007199254740992.1 0) (end 9007199254740992.3 0) (width 0.20000000000000000000004)",
++    );
++    assert_eq!(board.copper.len(), 1);
++    let width = scalar("0.20000000000000000000004");
++    let radius = scalar("0.10000000000000000000002");
++    same(&board.copper[0].location[0], &scalar("9007199254740992.2"));
++    same(
++        &board.copper[0].region.try_area().unwrap(),
++        &(scalar("0.2") * width + Scalar::pi() * &radius * radius),
++    );
++}
++
++#[test]
++fn track_subrange_width_and_length_remain_nonzero() {
++    let board = board("(start 0 0) (end 1e-400 0) (width 2e-400)");
++    assert_eq!(board.copper.len(), 1);
++    let radius = scalar("1e-400");
++    same(
++        &board.copper[0].region.try_area().unwrap(),
++        &((Scalar::from(2) + Scalar::pi()) * &radius * radius),
++    );
++}
++
++#[test]
++fn track_superrange_coordinates_stay_native() {
++    let board = board("(start 1e400 0) (end 1e400 2) (width 2)");
++    assert_eq!(board.copper.len(), 1);
++    same(
++        &board.copper[0].region.try_area().unwrap(),
++        &(Scalar::from(4) + Scalar::pi()),
++    );
++    same(&board.copper[0].location[0], &scalar("1e400"));
++}
++
++#[test]
++fn exact_diagonal_track_area_includes_caps_without_rounding_the_width() {
++    let board = board("(start -1 -1) (end 2 3) (width 0.2)");
++    assert_eq!(board.copper.len(), 1);
++    same(
++        &board.copper[0].region.try_area().unwrap(),
++        &(Scalar::one() + scalar("0.01") * Scalar::pi()),
++    );
++}
++
++#[test]
++fn irrational_diagonal_track_keeps_line_and_arc_geometry() {
++    let board = board("(start 0 0) (end 1 1) (width 2)");
++    assert_eq!(board.copper.len(), 1);
++    same(
++        &board.copper[0].region.try_area().unwrap(),
++        &(Scalar::from(2) * Scalar::from(2).sqrt().unwrap() + Scalar::pi()),
++    );
++    assert_eq!(
++        board.copper[0]
++            .region
++            .classify_xy(Scalar::from(-1), Scalar::zero()),
++        Ok(Boundary)
++    );
++}
++
++#[test]
++fn track_caps_drive_actual_short_readiness() {
++    let mut left = board("(start 0 0) (end 2 0) (width 2)");
++    let mut right = board("(start 3 0) (end 5 0) (width 2)");
++    right.copper[0].net = Some("other".to_owned());
++    left.copper.extend(right.copper);
++    let findings =
++        hyperdrc::checks::continuity::different_net_short_readiness(&left, &[], &Scalar::zero());
++    assert_eq!(findings.len(), 1);
++    assert_eq!(findings[0].check, "different-net-short-readiness");
++}
++
++#[test]
++fn tangent_track_caps_do_not_create_filled_overlap() {
++    let left = board("(start 0 0) (end 2 0) (width 2)");
++    let right = board("(start 4 0) (end 6 0) (width 2)");
++    let overlap = left.copper[0]
++        .region
++        .try_intersection(&right.copper[0].region)
++        .unwrap();
++    assert_eq!(overlap.try_is_empty(), Ok(true));
++    assert_eq!(
++        left.copper[0]
++            .region
++            .classify_xy(Scalar::from(3), Scalar::zero()),
++        Ok(Boundary)
++    );
++    assert_eq!(
++        right.copper[0]
++            .region
++            .classify_xy(Scalar::from(3), Scalar::zero()),
++        Ok(Boundary)
++    );
++}
++
++#[test]
++fn source_strokes_retain_strict_receipts_inside_approximate_and_preview_scopes() {
++    let check = || {
++        for policy in [
++            hyperlimit::PredicatePolicy::STRICT,
++            hyperlimit::PredicatePolicy::APPROXIMATE_512,
++            hyperlimit::PredicatePolicy::STRICT,
++        ] {
++            let outcome = hypercurve::evaluate_under(policy, || {
++                let model = board("(start 0 0) (end 1 1) (width 2)");
++                let profile = model.all_copper().unwrap();
++                same(
++                    &profile.try_area().unwrap(),
++                    &(Scalar::from(2) * Scalar::from(2).sqrt().unwrap() + Scalar::pi()),
++                );
++                assert_eq!(
++                    profile.classify_xy(scalar("-1"), Scalar::zero()),
++                    Ok(Boundary)
++                );
++                assert_eq!(
++                    profile.classify_xy(scalar("-1.000000000001"), Scalar::zero()),
++                    Ok(Outside)
++                );
++                let native = profile.try_into_native().unwrap();
++                let rebuilt = hypercurve::CurveRegion2::try_from_boundary_paths(
++                    &native.boundary_paths().unwrap(),
++                    hypercurve::FillRule::NonZero,
++                )
++                .unwrap();
++                same(
++                    &rebuilt.filled_area().unwrap().unwrap(),
++                    &(Scalar::from(2) * Scalar::from(2).sqrt().unwrap() + Scalar::pi()),
++                );
++            });
++            assert!(outcome.certified().is_some());
++        }
++    };
++    check();
++    hypercurve::CurvePreviewOptions::try_approximate_512(1000.0, 1000.0)
++        .unwrap()
++        .evaluate(check);
++}
++
++#[test]
++fn fresh_zero_budget_load_retains_native_rational_direction_certificates() {
++    let outcome = hypercurve::evaluate_with_budget(
++        hyperlimit::PredicatePolicy::STRICT,
++        hypercurve::WorkBudget::ZERO,
++        || board("(start 0 0) (end 3 4) (width 2)"),
++    );
++    assert_eq!(outcome.usage, hypercurve::WorkUsage::default());
++    let model = outcome.result.unwrap().certified().unwrap();
++    same(
++        &model.copper[0].region.try_area().unwrap(),
++        &(Scalar::from(10) + Scalar::pi()),
++    );
++}
+--- a/crates/hyperdrc/tests/kicad_track_failures.rs
++++ b/crates/hyperdrc/tests/kicad_track_failures.rs
+@@ -369,32 +369,119 @@
+ }
+ 
+ #[test]
+-fn positive_source_that_the_finite_adapter_cannot_construct_is_an_error() {
+-    for fields in [
+-        "(start 0 0) (end 2 0) (width 1e-400)",
+-        "(start 0 0) (end 1e-200 0) (width 2)",
+-        "(start 1e400 0) (end 1e400 2) (width 2)",
+-        "(start -1e308 0) (end 1e308 0) (width 2)",
+-        "(start 0 0) (end 2 0) (width 1e400)",
+-        "(start 100000000000000000000 0) (end 100000000000000000001 0) (width 2)",
++fn exact_source_ranges_remain_certified_after_native_handoff() {
++    // These are the original finite-adapter failure fixtures, now admitted
++    // exactly. Endpoint components are nondecreasing in every listed case.
++    for (fields, start, end, length, width) in [
++        (
++            "(start 0 0) (end 2 0) (width 1e-400)",
++            ["0", "0"],
++            ["2", "0"],
++            "2",
++            "1e-400",
++        ),
++        (
++            "(start 0 0) (end 1e-200 0) (width 2)",
++            ["0", "0"],
++            ["1e-200", "0"],
++            "1e-200",
++            "2",
++        ),
++        (
++            "(start 1e400 0) (end 1e400 2) (width 2)",
++            ["1e400", "0"],
++            ["1e400", "2"],
++            "2",
++            "2",
++        ),
++        (
++            "(start -1e308 0) (end 1e308 0) (width 2)",
++            ["-1e308", "0"],
++            ["1e308", "0"],
++            "2e308",
++            "2",
++        ),
++        (
++            "(start 0 0) (end 2 0) (width 1e400)",
++            ["0", "0"],
++            ["2", "0"],
++            "2",
++            "1e400",
++        ),
++        (
++            "(start 100000000000000000000 0) (end 100000000000000000001 0) (width 2)",
++            ["100000000000000000000", "0"],
++            ["100000000000000000001", "0"],
++            "1",
++            "2",
++        ),
+     ] {
++        let start = start.map(|v| v.parse::<Scalar>().unwrap());
++        let end = end.map(|v| v.parse::<Scalar>().unwrap());
++        let width = width.parse::<Scalar>().unwrap();
++        let radius = (&width / Scalar::from(2)).unwrap();
++        let expected_area =
++            length.parse::<Scalar>().unwrap() * &width + Scalar::pi() * &radius * &radius;
++        let midpoint = [
++            ((&start[0] + &end[0]) / Scalar::from(2)).unwrap(),
++            ((&start[1] + &end[1]) / Scalar::from(2)).unwrap(),
++        ];
+         for policy in [
+             hyperlimit::PredicatePolicy::STRICT,
+             hyperlimit::PredicatePolicy::APPROXIMATE_512,
+             hyperlimit::PredicatePolicy::STRICT,
+         ] {
+-            let result = hypercurve::evaluate_under(policy, || board(fields)).into_unverified();
+-            let error = result.expect_err("positive source must not disappear as empty geometry");
+-            let track = error
+-                .downcast_ref::<TrackLoadError>()
+-                .expect("typed adapter failure");
+-            assert!(
+-                matches!(
+-                    track.failure,
+-                    TrackLoadFailure::UnsupportedGeometry { .. } | TrackLoadFailure::Geometry(_)
+-                ),
+-                "{track:?}"
+-            );
++            let outcome = hypercurve::evaluate_under(policy, || {
++                let model = board(fields).unwrap();
++                assert_eq!(model.copper.len(), 1);
++                assert_eq!(model.copper[0].location, midpoint);
++                let profile = model.all_copper().unwrap();
++                assert_eq!(
++                    profile.classify_xy(midpoint[0].clone(), midpoint[1].clone()),
++                    Ok(RegionPointLocation::Inside)
++                );
++                assert_eq!(
++                    profile.classify_xy(&start[0] - &radius, start[1].clone()),
++                    Ok(RegionPointLocation::Boundary)
++                );
++                let native = profile.try_into_native().unwrap();
++                let rebuilt = hypercurve::CurveRegion2::try_from_boundary_paths(
++                    &native.boundary_paths().unwrap(),
++                    hypercurve::FillRule::NonZero,
++                )
++                .unwrap();
++                for region in [&native, &rebuilt] {
++                    assert_eq!(
++                        hyperlimit::compare_reals(
++                            &region.filled_area().unwrap().unwrap(),
++                            &expected_area,
++                            hyperlimit::PredicatePolicy::STRICT,
++                        )
++                        .value(),
++                        Some(std::cmp::Ordering::Equal),
++                        "{fields}"
++                    );
++                    let bounds = region.bounds().unwrap().unwrap();
++                    for (actual, expected) in [
++                        (bounds.min_x(), &start[0] - &radius),
++                        (bounds.min_y(), &start[1] - &radius),
++                        (bounds.max_x(), &end[0] + &radius),
++                        (bounds.max_y(), &end[1] + &radius),
++                    ] {
++                        assert_eq!(
++                            hyperlimit::compare_reals(
++                                actual,
++                                &expected,
++                                hyperlimit::PredicatePolicy::STRICT,
++                            )
++                            .value(),
++                            Some(std::cmp::Ordering::Equal),
++                            "{fields}"
++                        );
++                    }
++                }
++            });
++            assert!(outcome.certified().is_some());
+         }
+     }
+ }

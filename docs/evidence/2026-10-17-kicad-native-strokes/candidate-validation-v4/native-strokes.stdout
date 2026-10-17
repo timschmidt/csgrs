@@ -1,0 +1,15 @@
+
+running 10 tests
+test exact_diagonal_track_area_includes_caps_without_rounding_the_width ... ok
+test fresh_zero_budget_load_retains_native_rational_direction_certificates ... ok
+test irrational_diagonal_track_keeps_line_and_arc_geometry ... ok
+test kicad_linear_tracks_include_both_round_caps ... ok
+test source_strokes_retain_strict_receipts_inside_approximate_and_preview_scopes ... ok
+test tangent_track_caps_do_not_create_filled_overlap ... ok
+test track_caps_drive_actual_short_readiness ... ok
+test track_decimal_endpoints_and_width_are_never_rounded_first ... ok
+test track_subrange_width_and_length_remain_nonzero ... ok
+test track_superrange_coordinates_stay_native ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
