@@ -17527,6 +17527,25 @@
     "rust_sources_changed": false,
     "cache_index_admitted": false,
     "full_plan_complete": false
+  },
+  "circle_support_fresh_cargo_qualification": {
+    "status": "fresh Hypercurve Cargo, scalar hash and configured WASM consumer checks passed; production cache admission remains open",
+    "contract": "docs/evidence/2026-10-17-circle-support-cargo/contract-v1.md",
+    "qualification": "docs/evidence/2026-10-17-circle-support-cargo/review-v1.json",
+    "checkpoint": "docs/evidence/2026-10-17-circle-support-cargo/checkpoint-v1.json",
+    "artifact_expectations": "docs/evidence/2026-10-17-circle-support-cargo/artifact-expectations-v1.json.gz",
+    "baseline_all_feature_passed": 2478,
+    "candidate_all_feature_passed": 2487,
+    "candidate_minimal_passed": 2450,
+    "scalar_hash_regressions_passed": 2,
+    "wasm_real_consumers_passed": true,
+    "wasm_runtime_option": "--disable-wasm-trap-handler",
+    "default_node_runtime_qualified": false,
+    "native_qualification_in_progress": true,
+    "cache_index_admitted": false,
+    "full_plan_complete": false,
+    "isolated_worktree": "/run/media/tim/Disk B/csgrs-properties-validation-2026-10-17-v1/paper-worktree-v1",
+    "original_worktree_integration_pending": true
   }
 },
   "status_meanings": {
